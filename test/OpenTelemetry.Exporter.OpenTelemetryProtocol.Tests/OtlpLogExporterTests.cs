@@ -1,18 +1,5 @@
-// <copyright file="OtlpLogExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -21,9 +8,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Moq;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -588,35 +574,34 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     public void Export_WhenExportClientIsProvidedInCtor_UsesProvidedExportClient()
     {
         // Arrange.
-        var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+        var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
-                        new OtlpExporterOptions(),
-                        new SdkLimitOptions(),
-                        fakeExportClient.Object);
+            new OtlpExporterOptions(),
+            new SdkLimitOptions(),
+            new ExperimentalOptions(),
+            testExportClient);
 
         // Act.
-        var result = sut.Export(emptyBatch);
+        sut.Export(emptyBatch);
 
         // Assert.
-        fakeExportClient.Verify(x => x.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default), Times.Once());
+        Assert.True(testExportClient.SendExportRequestCalled);
     }
 
     [Fact]
     public void Export_WhenExportClientThrowsException_ReturnsExportResultFailure()
     {
         // Arrange.
-        var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+        var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>(throwException: true);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
-        fakeExportClient
-            .Setup(_ => _.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default))
-            .Throws(new Exception("Test Exception"));
         var sut = new OtlpLogExporter(
-                        new OtlpExporterOptions(),
-                        new SdkLimitOptions(),
-                        fakeExportClient.Object);
+            new OtlpExporterOptions(),
+            new SdkLimitOptions(),
+            new ExperimentalOptions(),
+            testExportClient);
 
         // Act.
         var result = sut.Export(emptyBatch);
@@ -629,16 +614,14 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     public void Export_WhenExportIsSuccessful_ReturnsExportResultSuccess()
     {
         // Arrange.
-        var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+        var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
-        fakeExportClient
-            .Setup(_ => _.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default))
-            .Returns(true);
         var sut = new OtlpLogExporter(
-                        new OtlpExporterOptions(),
-                        new SdkLimitOptions(),
-                        fakeExportClient.Object);
+            new OtlpExporterOptions(),
+            new SdkLimitOptions(),
+            new ExperimentalOptions(),
+            testExportClient);
 
         // Act.
         var result = sut.Export(emptyBatch);
@@ -1175,11 +1158,13 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
         options.AddOtlpExporter();
 
-        var processors = (List<BaseProcessor<LogRecord>>)typeof(OpenTelemetryLoggerOptions).GetField("Processors", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(options);
+        var provider = new OpenTelemetryLoggerProvider(new TestOptionsMonitor<OpenTelemetryLoggerOptions>(options));
 
-        Assert.Single(processors);
+        var processor = GetProcessor(provider);
 
-        var batchProcesor = processors[0] as BatchLogRecordExportProcessor;
+        Assert.NotNull(processor);
+
+        var batchProcesor = processor as BatchLogRecordExportProcessor;
 
         Assert.NotNull(batchProcesor);
 
@@ -1201,13 +1186,15 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
             l.BatchExportProcessorOptions = new BatchExportLogRecordProcessorOptions() { ScheduledDelayMilliseconds = 1000 };
         });
 
-        var processors = (List<BaseProcessor<LogRecord>>)typeof(OpenTelemetryLoggerOptions).GetField("Processors", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(options);
+        var provider = new OpenTelemetryLoggerProvider(new TestOptionsMonitor<OpenTelemetryLoggerOptions>(options));
 
-        Assert.Single(processors);
+        var processor = GetProcessor(provider);
+
+        Assert.NotNull(processor);
 
         if (processorType == ExportProcessorType.Batch)
         {
-            var batchProcesor = processors[0] as BatchLogRecordExportProcessor;
+            var batchProcesor = processor as BatchLogRecordExportProcessor;
 
             Assert.NotNull(batchProcesor);
 
@@ -1217,7 +1204,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         }
         else
         {
-            var simpleProcesor = processors[0] as SimpleLogRecordExportProcessor;
+            var simpleProcesor = processor as SimpleLogRecordExportProcessor;
 
             Assert.NotNull(simpleProcesor);
         }
@@ -1281,8 +1268,153 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Empty(OtlpLogRecordTransformer.LogListPool);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("logging")]
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggerFactoryCreate(string optionsName)
+    {
+        RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
+            optionsName,
+            configure =>
+            {
+                var factory = LoggerFactory.Create(logging =>
+                {
+                    configure(logging.Services);
+
+                    logging.AddOpenTelemetry(o => o.AddOtlpExporter(optionsName, configure: null));
+                });
+
+                return (factory, factory);
+            });
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("logging")]
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggingBuilder(string optionsName)
+    {
+        RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
+            optionsName,
+            configure =>
+            {
+                var services = new ServiceCollection();
+
+                configure(services);
+
+                services.AddLogging(
+                    logging => logging.AddOpenTelemetry(o =>
+                        o.AddOtlpExporter(optionsName, configure: null)));
+
+                var sp = services.BuildServiceProvider();
+
+                var factory = sp.GetRequiredService<ILoggerFactory>();
+
+                return (sp, factory);
+            });
+    }
+
+    private static void RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
+        string optionsName,
+        Func<Action<IServiceCollection>, (IDisposable Container, ILoggerFactory LoggerFactory)> createLoggerFactoryFunc)
+    {
+        var values = new Dictionary<string, string>()
+        {
+            [OtlpExporterOptions.EndpointEnvVarName] = "http://test:8888",
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
+
+        var configureDelegateCalled = false;
+        var configureExportProcessorOptionsCalled = false;
+        var configureBatchOptionsCalled = false;
+
+        var tracingConfigureDelegateCalled = false;
+        var unnamedConfigureDelegateCalled = false;
+        var allConfigureDelegateCalled = false;
+
+        var testState = createLoggerFactoryFunc(services =>
+        {
+            services.AddSingleton<IConfiguration>(configuration);
+
+            services.Configure<OtlpExporterOptions>(optionsName, o =>
+            {
+                configureDelegateCalled = true;
+                Assert.Equal(new Uri("http://test:8888"), o.Endpoint);
+            });
+
+            services.Configure<LogRecordExportProcessorOptions>(optionsName, o =>
+            {
+                configureExportProcessorOptionsCalled = true;
+            });
+
+            services.Configure<BatchExportLogRecordProcessorOptions>(optionsName, o =>
+            {
+                configureBatchOptionsCalled = true;
+            });
+
+            services.Configure<OtlpExporterOptions>("tracing", o =>
+            {
+                tracingConfigureDelegateCalled = true;
+            });
+
+            services.Configure<OtlpExporterOptions>(o =>
+            {
+                unnamedConfigureDelegateCalled = true;
+            });
+
+            services.ConfigureAll<OtlpExporterOptions>(o =>
+            {
+                allConfigureDelegateCalled = true;
+            });
+        });
+
+        using var container = testState.Container;
+
+        var factory = testState.LoggerFactory;
+
+        Assert.NotNull(factory);
+
+        Assert.True(configureDelegateCalled);
+        Assert.True(configureExportProcessorOptionsCalled);
+        Assert.True(configureBatchOptionsCalled);
+
+        Assert.False(tracingConfigureDelegateCalled);
+
+        Assert.Equal(optionsName == null, unnamedConfigureDelegateCalled);
+
+        Assert.True(allConfigureDelegateCalled);
+    }
+
     private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)
     {
         return record.Attributes.FirstOrDefault(att => att.Key == key);
+    }
+
+    private static BaseProcessor<LogRecord> GetProcessor(OpenTelemetryLoggerProvider provider)
+    {
+        var sdkProvider = typeof(OpenTelemetryLoggerProvider).GetField("Provider", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(provider);
+
+        return (BaseProcessor<LogRecord>)sdkProvider.GetType().GetProperty("Processor", BindingFlags.Instance | BindingFlags.Public).GetMethod.Invoke(sdkProvider, null);
+    }
+
+    private sealed class TestOptionsMonitor<T> : IOptionsMonitor<T>
+    {
+        private readonly T instance;
+
+        public TestOptionsMonitor(T instance)
+        {
+            this.instance = instance;
+        }
+
+        public T CurrentValue => this.instance;
+
+        public T Get(string name) => this.instance;
+
+        public IDisposable OnChange(Action<T, string> listener)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -1,18 +1,5 @@
-// <copyright file="OpenTelemetryBuilderTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Logs;
@@ -74,5 +61,42 @@ public class OpenTelemetryBuilderTests
         Assert.Contains(
             loggerProvider.Resource.Attributes,
             kvp => kvp.Key == "l_key1" && (string)kvp.Value == "l_value1");
+    }
+
+    [Fact]
+    public void ConfigureResourceServiceProviderTest()
+    {
+        var services = new ServiceCollection();
+
+        services.AddSingleton<TestResourceDetector>();
+
+        services.AddOpenTelemetry()
+            .ConfigureResource(r => r.AddDetector(sp => sp.GetRequiredService<TestResourceDetector>()))
+            .WithLogging()
+            .WithMetrics()
+            .WithTracing();
+
+        using var sp = services.BuildServiceProvider();
+
+        var tracerProvider = sp.GetRequiredService<TracerProvider>() as TracerProviderSdk;
+        var meterProvider = sp.GetRequiredService<MeterProvider>() as MeterProviderSdk;
+        var loggerProvider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+
+        Assert.NotNull(tracerProvider);
+        Assert.NotNull(meterProvider);
+        Assert.NotNull(loggerProvider);
+
+        Assert.Single(tracerProvider.Resource.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
+        Assert.Single(meterProvider.Resource.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
+        Assert.Single(loggerProvider.Resource.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
+    }
+
+    private sealed class TestResourceDetector : IResourceDetector
+    {
+        public Resource Detect() => ResourceBuilder.CreateEmpty().AddAttributes(
+            new Dictionary<string, object>
+            {
+                ["key1"] = "value1",
+            }).Build();
     }
 }

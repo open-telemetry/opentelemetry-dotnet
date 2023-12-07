@@ -1,18 +1,5 @@
-// <copyright file="OpenTelemetryLoggerOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using OpenTelemetry.Internal;
@@ -25,7 +12,7 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 public class OpenTelemetryLoggerOptions
 {
-    internal readonly List<BaseProcessor<LogRecord>> Processors = new();
+    internal readonly List<Func<IServiceProvider, BaseProcessor<LogRecord>>> ProcessorFactories = new();
     internal ResourceBuilder? ResourceBuilder;
 
     /// <summary>
@@ -99,7 +86,22 @@ public class OpenTelemetryLoggerOptions
     {
         Guard.ThrowIfNull(processor);
 
-        this.Processors.Add(processor);
+        this.ProcessorFactories.Add(_ => processor);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a processor to the provider which will be retrieved using dependency injection.
+    /// </summary>
+    /// <param name="implementationFactory">The factory that creates the service.</param>
+    /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+    public OpenTelemetryLoggerOptions AddProcessor(
+        Func<IServiceProvider, BaseProcessor<LogRecord>> implementationFactory)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        this.ProcessorFactories.Add(implementationFactory);
 
         return this;
     }

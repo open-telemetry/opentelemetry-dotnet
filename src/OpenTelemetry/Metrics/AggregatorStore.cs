@@ -1,18 +1,5 @@
-// <copyright file="AggregatorStore.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -36,13 +23,6 @@ internal sealed class AggregatorStore
     private readonly object lockOverflowTag = new();
     private readonly HashSet<string>? tagKeysInteresting;
     private readonly int tagsKeysInterestingCount;
-
-    // This only applies to Delta AggregationTemporality.
-    // This decides when to change the behavior to start reclaiming MetricPoints.
-    // It is set to maxMetricPoints * 3 / 4, which means that Snapshot method would start to reclaim MetricPoints
-    // only after 75% of the MetricPoints have been used. Once the AggregatorStore starts to reclaim MetricPoints,
-    // it will continue to do so on every Snapshot and it won't go back to its default behavior.
-    private readonly int metricPointReclamationThreshold;
 
     // This holds the reclaimed MetricPoints that are available for reuse.
     private readonly Queue<int>? availableMetricPoints;
@@ -72,9 +52,6 @@ internal sealed class AggregatorStore
     private int metricCapHitMessageLogged;
     private bool zeroTagMetricPointInitialized;
     private bool overflowTagMetricPointInitialized;
-
-    // When set to true, the behavior changes to reuse MetricPoints
-    private bool reclaimMetricPoints = false;
 
     internal AggregatorStore(
         MetricStreamIdentity metricStreamIdentity,
@@ -136,11 +113,9 @@ internal sealed class AggregatorStore
             this.tagsToMetricPointIndexDictionaryDelta =
                 new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: (maxMetricPoints - reservedMetricPointsCount) * 2);
 
-            this.metricPointReclamationThreshold = maxMetricPoints * 3 / 4;
-
-            // Add a certain number of MetricPoint indices to the queue so that threads have readily available
-            // access to these MetricPoints for their use.
-            for (int i = this.metricPointReclamationThreshold + 1; i < this.maxMetricPoints; i++)
+            // Add all the indices except for the reserved ones to the queue so that threads have
+            // readily available access to these MetricPoints for their use.
+            for (int i = reservedMetricPointsCount; i < this.maxMetricPoints; i++)
             {
                 this.availableMetricPoints.Enqueue(i);
             }
@@ -185,7 +160,7 @@ internal sealed class AggregatorStore
         this.batchSize = 0;
         if (this.OutputDelta)
         {
-            if (this.ShouldReclaimUnusedMetricPoints && this.reclaimMetricPoints)
+            if (this.ShouldReclaimUnusedMetricPoints)
             {
                 this.SnapshotDeltaWithMetricPointReclaim();
             }
@@ -618,26 +593,15 @@ internal sealed class AggregatorStore
                         // check again after acquiring lock.
                         if (!this.tagsToMetricPointIndexDictionaryDelta.TryGetValue(sortedTags, out lookupData))
                         {
-                            if (this.reclaimMetricPoints)
+                            // Check for an available MetricPoint
+                            if (this.availableMetricPoints!.Count > 0)
                             {
-                                // Check for an available MetricPoint
-                                if (this.availableMetricPoints!.Count > 0)
-                                {
-                                    index = this.availableMetricPoints.Dequeue();
-                                }
-                                else
-                                {
-                                    // No MetricPoint is available for reuse
-                                    return -1;
-                                }
+                                index = this.availableMetricPoints.Dequeue();
                             }
                             else
                             {
-                                index = ++this.metricPointIndex;
-                                if (index == this.metricPointReclamationThreshold)
-                                {
-                                    this.reclaimMetricPoints = true;
-                                }
+                                // No MetricPoint is available for reuse
+                                return -1;
                             }
 
                             lookupData = new LookupData(index, sortedTags, givenTags);
@@ -675,26 +639,15 @@ internal sealed class AggregatorStore
                     // check again after acquiring lock.
                     if (!this.tagsToMetricPointIndexDictionaryDelta.TryGetValue(givenTags, out lookupData))
                     {
-                        if (this.reclaimMetricPoints)
+                        // Check for an available MetricPoint
+                        if (this.availableMetricPoints!.Count > 0)
                         {
-                            // Check for an available MetricPoint
-                            if (this.availableMetricPoints!.Count > 0)
-                            {
-                                index = this.availableMetricPoints.Dequeue();
-                            }
-                            else
-                            {
-                                // No MetricPoint is available for reuse
-                                return -1;
-                            }
+                            index = this.availableMetricPoints.Dequeue();
                         }
                         else
                         {
-                            index = ++this.metricPointIndex;
-                            if (index == this.metricPointReclamationThreshold)
-                            {
-                                this.reclaimMetricPoints = true;
-                            }
+                            // No MetricPoint is available for reuse
+                            return -1;
                         }
 
                         lookupData = new LookupData(index, Tags.EmptyTags, givenTags);

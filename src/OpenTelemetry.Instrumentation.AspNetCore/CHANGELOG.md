@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+## 1.6.0-rc.1
+
+Released 2023-Dec-01
+
+* Removed support for `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. The
+  library will now emit only the
+  [stable](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
+  semantic conventions.
+  ([#5066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5066))
+
+* Removed `netstandard2.1` target.
+  ([#5094](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5094))
+
+* Removed support for grpc instrumentation to unblock stable release of http
+  instrumentation. For details, see issue
+  [#5098](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5098)
+  ([#5097](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5097))
+
+* **Breaking Change** : Renamed `AspNetCoreInstrumentationOptions` to
+  `AspNetCoreTraceInstrumentationOptions`.
+  ([#5108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5108))
+
+## 1.6.0-beta.3
+
+Released 2023-Nov-17
+
 * Removed the Activity Status Description that was being set during
   exceptions. Activity Status will continue to be reported as `Error`.
   This is a **breaking change**. `EnrichWithException` can be leveraged
@@ -40,6 +66,17 @@ exception. The attribute value will be set to full name of exception type.
   server sends request to the scraping endpoint that contains `/metrics` in
   path.
   ([#5044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5044))
+
+* Fixes the `http.route` attribute for scenarios in which it was
+  previously missing or incorrect. Additionally, the `http.route` attribute
+  is now the same for both the metric and `Activity` emitted for a request.
+  Lastly, the `Activity.DisplayName` has been adjusted to have the format
+  `{http.request.method} {http.route}` to conform with [the specification](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md#name).
+  There remain scenarios when using conventional routing or Razor pages where
+  `http.route` is still incorrect. See [#5056](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5056)
+  and [#5057](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5057)
+  for more details.
+  ([#5026](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5026))
 
 * Removed `network.protocol.name` from `http.server.request.duration` metric as
   per spec.

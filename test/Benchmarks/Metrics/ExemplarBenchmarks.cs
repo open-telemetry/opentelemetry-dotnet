@@ -1,18 +1,5 @@
-// <copyright file="ExemplarBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -24,19 +11,19 @@ using OpenTelemetry.Tests;
 /*
 BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
 Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK 8.0.100-rc.2.23502.2
-  [Host]     : .NET 7.0.13 (7.0.1323.51816), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.13 (7.0.1323.51816), X64 RyuJIT AVX2
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-| Method                    | ExemplarFilter | Mean     | Error   | StdDev  |
-|-------------------------- |--------------- |---------:|--------:|--------:|
-| HistogramNoTagReduction   | AlwaysOff      | 316.7 ns | 1.01 ns | 0.89 ns |
-| HistogramWithTagReduction | AlwaysOff      | 298.9 ns | 2.44 ns | 2.16 ns |
-| HistogramNoTagReduction   | AlwaysOn       | 359.6 ns | 1.26 ns | 1.11 ns |
-| HistogramWithTagReduction | AlwaysOn       | 400.1 ns | 4.16 ns | 3.90 ns |
-| HistogramNoTagReduction   | HighValueOnly  | 325.3 ns | 3.33 ns | 2.78 ns |
-| HistogramWithTagReduction | HighValueOnly  | 320.7 ns | 4.91 ns | 4.60 ns |
+| Method                    | ExemplarFilter | Mean     | Error   | StdDev  | Allocated |
+|-------------------------- |--------------- |---------:|--------:|--------:|----------:|
+| HistogramNoTagReduction   | AlwaysOff      | 274.2 ns | 2.94 ns | 2.60 ns |         - |
+| HistogramWithTagReduction | AlwaysOff      | 241.6 ns | 1.78 ns | 1.58 ns |         - |
+| HistogramNoTagReduction   | AlwaysOn       | 300.9 ns | 3.10 ns | 2.90 ns |         - |
+| HistogramWithTagReduction | AlwaysOn       | 312.9 ns | 4.81 ns | 4.50 ns |         - |
+| HistogramNoTagReduction   | HighValueOnly  | 262.8 ns | 2.24 ns | 1.99 ns |         - |
+| HistogramWithTagReduction | HighValueOnly  | 258.3 ns | 5.12 ns | 5.03 ns |         - |
 */
 
 namespace Benchmarks.Metrics;

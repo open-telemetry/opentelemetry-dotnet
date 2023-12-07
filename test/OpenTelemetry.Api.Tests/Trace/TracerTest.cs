@@ -1,31 +1,23 @@
-// <copyright file="TracerTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using Microsoft.Coyote;
+using Microsoft.Coyote.SystematicTesting;
+using OpenTelemetry.Tests;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Trace.Tests;
 
 public class TracerTest : IDisposable
 {
-    // TODO: This is only a basic test. This must cover the entire shim API scenarios.
+    private readonly ITestOutputHelper output;
     private readonly Tracer tracer;
 
-    public TracerTest()
+    public TracerTest(ITestOutputHelper output)
     {
+        this.output = output;
         this.tracer = TracerProvider.Default.GetTracer("tracername", "tracerversion");
     }
 
@@ -309,6 +301,91 @@ public class TracerTest : IDisposable
         Assert.False(span3.IsRecording);
     }
 
+    [SkipUnlessEnvVarFoundFact("OTEL_RUN_COYOTE_TESTS")]
+    [Trait("CategoryName", "CoyoteConcurrencyTests")]
+    public void TracerConcurrencyTest()
+    {
+        var config = Configuration.Create()
+            .WithTestingIterations(100)
+            .WithMemoryAccessRaceCheckingEnabled(true);
+
+        var test = TestingEngine.Create(config, InnerTest);
+
+        test.Run();
+
+        this.output.WriteLine(test.GetReport());
+        this.output.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
+
+        var dir = Directory.GetCurrentDirectory();
+        if (test.TryEmitReports(dir, $"{nameof(this.TracerConcurrencyTest)}_CoyoteOutput", out IEnumerable<string> reportPaths))
+        {
+            foreach (var reportPath in reportPaths)
+            {
+                this.output.WriteLine($"Execution Report: {reportPath}");
+            }
+        }
+
+        if (test.TryEmitCoverageReports(dir, $"{nameof(this.TracerConcurrencyTest)}_CoyoteOutput", out reportPaths))
+        {
+            foreach (var reportPath in reportPaths)
+            {
+                this.output.WriteLine($"Coverage report: {reportPath}");
+            }
+        }
+
+        Assert.Equal(0, test.TestReport.NumOfFoundBugs);
+
+        static void InnerTest()
+        {
+            var testTracerProvider = new TestTracerProvider
+            {
+                ExpectedNumberOfThreads = Math.Max(1, Environment.ProcessorCount / 2),
+            };
+
+            var tracers = testTracerProvider.Tracers;
+
+            Assert.NotNull(tracers);
+
+            Thread[] getTracerThreads = new Thread[testTracerProvider.ExpectedNumberOfThreads];
+            for (int i = 0; i < testTracerProvider.ExpectedNumberOfThreads; i++)
+            {
+                getTracerThreads[i] = new Thread((object state) =>
+                {
+                    var testTracerProvider = state as TestTracerProvider;
+
+                    var id = Interlocked.Increment(ref testTracerProvider.NumberOfThreads);
+                    var name = $"Tracer{id}";
+
+                    if (id == testTracerProvider.ExpectedNumberOfThreads)
+                    {
+                        testTracerProvider.StartHandle.Set();
+                    }
+                    else
+                    {
+                        testTracerProvider.StartHandle.WaitOne();
+                    }
+
+                    var tracer = testTracerProvider.GetTracer(name);
+
+                    Assert.NotNull(tracer);
+                });
+
+                getTracerThreads[i].Start(testTracerProvider);
+            }
+
+            testTracerProvider.StartHandle.WaitOne();
+
+            testTracerProvider.Dispose();
+
+            foreach (var getTracerThread in getTracerThreads)
+            {
+                getTracerThread.Join();
+            }
+
+            Assert.Empty(tracers);
+        }
+    }
+
     public void Dispose()
     {
         Activity.Current = null;
@@ -318,5 +395,12 @@ public class TracerTest : IDisposable
     private static bool IsNoopSpan(TelemetrySpan span)
     {
         return span.Activity == null;
+    }
+
+    private sealed class TestTracerProvider : TracerProvider
+    {
+        public int ExpectedNumberOfThreads;
+        public int NumberOfThreads;
+        public EventWaitHandle StartHandle = new ManualResetEvent(false);
     }
 }

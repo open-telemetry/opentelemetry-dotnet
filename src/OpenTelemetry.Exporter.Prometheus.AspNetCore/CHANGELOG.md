@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Export OpenMetrics format from Prometheus exporters ([#5107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5107))
+
+## 1.7.0-rc.1
+
+Released 2023-Nov-29
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16

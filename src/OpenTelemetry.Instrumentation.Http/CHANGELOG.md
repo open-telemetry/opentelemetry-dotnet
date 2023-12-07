@@ -2,6 +2,42 @@
 
 ## Unreleased
 
+## 1.6.0-rc.1
+
+Released 2023-Dec-01
+
+* Removed support for `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. The
+  library will now emit only the
+  [stable](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
+  semantic conventions.
+  ([#5068](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5068))
+
+* Update activity DisplayName as per the specification.
+  ([#5078](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5078))
+
+* Removed reference to `OpenTelemetry` package. This is a **breaking change**
+  for users relying on
+  [SuppressDownstreamInstrumentation](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.GrpcNetClient#suppressdownstreaminstrumentation)
+  option in `OpenTelemetry.Instrumentation.GrpcNetClient`. For details, check
+  out this
+  [issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092).
+  ([#5077](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5077))
+
+* **Breaking Change**: Renamed `HttpClientInstrumentationOptions` to
+  `HttpClientTraceInstrumentationOptions`.
+  ([#5109](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5109))
+
+* **Breaking Change**: Removed `http.user_agent` tag from HttpClient activity.
+  ([#5110](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5110))
+
+* `HttpWebRequest` : Introduced additional values for `error.type` tag on
+  activity and `http.client.request.duration` metric.
+  ([#5111](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5111))
+
+## 1.6.0-beta.3
+
+Released 2023-Nov-17
+
 * Removed the Activity Status Description that was being set during
   exceptions. Activity Status will continue to be reported as `Error`.
   This is a **breaking change**. `EnrichWithException` can be leveraged

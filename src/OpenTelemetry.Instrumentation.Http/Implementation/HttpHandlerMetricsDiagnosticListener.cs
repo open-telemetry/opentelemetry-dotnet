@@ -1,18 +1,5 @@
-// <copyright file="HttpHandlerMetricsDiagnosticListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 #if NET6_0_OR_GREATER
@@ -25,7 +12,6 @@ using System.Net.Http;
 using System.Reflection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation;
 
@@ -38,7 +24,6 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     internal static readonly string MeterVersion = AssemblyName.Version.ToString();
     internal static readonly Meter Meter = new(MeterName, MeterVersion);
     private const string OnUnhandledExceptionEvent = "System.Net.Http.Exception";
-    private static readonly Histogram<double> HttpClientDuration = Meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
     private static readonly Histogram<double> HttpClientRequestDuration = Meter.CreateHistogram<double>("http.client.request.duration", "s", "Duration of HTTP client requests.");
 
     private static readonly PropertyFetcher<HttpRequestMessage> StopRequestFetcher = new("Request");
@@ -49,27 +34,16 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     private static readonly HttpRequestOptionsKey<string> HttpRequestOptionsErrorKey = new HttpRequestOptionsKey<string>(SemanticConventions.AttributeErrorType);
 #endif
 
-    private readonly HttpClientMetricInstrumentationOptions options;
-    private readonly bool emitOldAttributes;
-    private readonly bool emitNewAttributes;
-
-    public HttpHandlerMetricsDiagnosticListener(string name, HttpClientMetricInstrumentationOptions options)
+    public HttpHandlerMetricsDiagnosticListener(string name)
         : base(name)
     {
-        this.options = options;
-
-        this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
-        this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
     }
 
     public override void OnEventWritten(string name, object payload)
     {
         if (name == OnUnhandledExceptionEvent)
         {
-            if (this.emitNewAttributes)
-            {
-                this.OnExceptionEventWritten(Activity.Current, payload);
-            }
+            this.OnExceptionEventWritten(Activity.Current, payload);
         }
         else if (name == OnStopEvent)
         {
@@ -79,97 +53,63 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 
     public void OnStopEventWritten(Activity activity, object payload)
     {
-        if (Sdk.SuppressInstrumentation)
-        {
-            return;
-        }
-
         if (TryFetchRequest(payload, out HttpRequestMessage request))
         {
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-            if (this.emitOldAttributes)
+            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-metrics.md
+            TagList tags = default;
+
+            if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
             {
-                TagList tags = default;
-
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host));
-
-                if (!request.RequestUri.IsDefaultPort)
-                {
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
-                }
-
-                if (TryFetchResponse(payload, out HttpResponseMessage response))
-                {
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
-                }
-
-                // We are relying here on HttpClient library to set duration before writing the stop event.
-                // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
-                // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-                HttpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+            }
+            else
+            {
+                // Set to default "_OTHER" as per spec.
+                // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
             }
 
-            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
-            if (this.emitNewAttributes)
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme));
+
+            if (!request.RequestUri.IsDefaultPort)
             {
-                TagList tags = default;
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerPort, request.RequestUri.Port));
+            }
 
-                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
+            if (TryFetchResponse(payload, out HttpResponseMessage response))
+            {
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(response.Version)));
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
+
+                // Set error.type to status code for failed requests
+                // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
+                if (SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)response.StatusCode) == ActivityStatusCode.Error)
                 {
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, TelemetryHelper.GetStatusCodeString(response.StatusCode)));
                 }
-                else
-                {
-                    // Set to default "_OTHER" as per spec.
-                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
-                }
+            }
 
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme));
-
-                if (!request.RequestUri.IsDefaultPort)
-                {
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerPort, request.RequestUri.Port));
-                }
-
-                if (TryFetchResponse(payload, out HttpResponseMessage response))
-                {
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(response.Version)));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
-
-                    // Set error.type to status code for failed requests
-                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
-                    if (SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)response.StatusCode) == ActivityStatusCode.Error)
-                    {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, TelemetryHelper.GetStatusCodeString(response.StatusCode)));
-                    }
-                }
-
-                if (response == null)
-                {
+            if (response == null)
+            {
 #if !NET6_0_OR_GREATER
-                    request.Properties.TryGetValue(SemanticConventions.AttributeErrorType, out var errorType);
+                request.Properties.TryGetValue(SemanticConventions.AttributeErrorType, out var errorType);
 #else
-                    request.Options.TryGetValue(HttpRequestOptionsErrorKey, out var errorType);
+                request.Options.TryGetValue(HttpRequestOptionsErrorKey, out var errorType);
 #endif
 
-                    // Set error.type to exception type if response was not received.
-                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
-                    if (errorType != null)
-                    {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, errorType));
-                    }
+                // Set error.type to exception type if response was not received.
+                // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
+                if (errorType != null)
+                {
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, errorType));
                 }
-
-                // We are relying here on HttpClient library to set duration before writing the stop event.
-                // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
-                // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-                HttpClientRequestDuration.Record(activity.Duration.TotalSeconds, tags);
             }
+
+            // We are relying here on HttpClient library to set duration before writing the stop event.
+            // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
+            // TODO: Follow up with .NET team if we can continue to rely on this behavior.
+            HttpClientRequestDuration.Record(activity.Duration.TotalSeconds, tags);
         }
 
         // The AOT-annotation DynamicallyAccessedMembers in System.Net.Http library ensures that top-level properties on the payload object are always preserved.

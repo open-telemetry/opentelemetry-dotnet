@@ -1,18 +1,5 @@
-// <copyright file="Metric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
 
@@ -37,6 +24,7 @@ public sealed class Metric
         ("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue"),
         ("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request_lease.duration"),
         ("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration"),
+        ("OpenTelemetry.Instrumentation.AspNet", "http.server.request.duration"),
         ("OpenTelemetry.Instrumentation.AspNetCore", "http.server.request.duration"),
         ("OpenTelemetry.Instrumentation.Http", "http.client.request.duration"),
         ("System.Net.Http", "http.client.request.duration"),
@@ -169,7 +157,6 @@ public sealed class Metric
 
         this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, emitOverflowAttribute, shouldReclaimUnusedMetricPoints, exemplarFilter);
         this.Temporality = temporality;
-        this.InstrumentDisposed = false;
     }
 
     /// <summary>
@@ -208,11 +195,16 @@ public sealed class Metric
     public string MeterVersion => this.InstrumentIdentity.MeterVersion;
 
     /// <summary>
+    /// Gets the attributes (tags) for the metric stream.
+    /// </summary>
+    public IEnumerable<KeyValuePair<string, object?>>? MeterTags => this.InstrumentIdentity.MeterTags;
+
+    /// <summary>
     /// Gets the <see cref="MetricStreamIdentity"/> for the metric stream.
     /// </summary>
     internal MetricStreamIdentity InstrumentIdentity { get; private set; }
 
-    internal bool InstrumentDisposed { get; set; }
+    internal bool Active { get; set; } = true;
 
     /// <summary>
     /// Get the metric points for the metric stream.

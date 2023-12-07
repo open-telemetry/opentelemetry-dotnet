@@ -1,23 +1,9 @@
-// <copyright file="HttpWebRequestTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
-using Moq;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -49,9 +35,9 @@ public partial class HttpWebRequestTests
         bool enrichWithHttpResponseMessageCalled = false;
         bool enrichWithExceptionCalled = false;
 
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor(activityProcessor.Object)
+            .AddInMemoryExporter(exportedItems)
             .AddHttpClientInstrumentation(options =>
             {
                 options.EnrichWithHttpWebRequest = (activity, httpWebRequest) => { enrichWithHttpWebRequestCalled = true; };
@@ -92,8 +78,8 @@ public partial class HttpWebRequestTests
             tc.ResponseExpected = false;
         }
 
-        Assert.Equal(3, activityProcessor.Invocations.Count); // SetParentProvider/Begin/End called
-        var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
         ValidateHttpWebRequestActivity(activity);
         Assert.Equal(tc.SpanName, activity.DisplayName);
 
@@ -101,7 +87,7 @@ public partial class HttpWebRequestTests
             x => x.Key,
             x =>
             {
-                if (x.Key == "http.flavor")
+                if (x.Key == "network.protocol.version")
                 {
                     return "1.1";
                 }
@@ -124,6 +110,12 @@ public partial class HttpWebRequestTests
                 if (tag.Key == SpanAttributeConstants.StatusDescriptionKey)
                 {
                     Assert.Null(tagValue);
+                    continue;
+                }
+
+                if (tag.Key == SemanticConventions.AttributeErrorType)
+                {
+                    // TODO: Add validation for error.type in test cases.
                     continue;
                 }
 
@@ -168,18 +160,18 @@ public partial class HttpWebRequestTests
                 ""method"": ""GET"",
                 ""url"": ""http://{host}:{port}/"",
                 ""responseCode"": 200,
-                ""spanName"": ""HTTP GET"",
+                ""spanName"": ""GET"",
                 ""spanStatus"": ""UNSET"",
                 ""spanKind"": ""Client"",
                 ""setHttpFlavor"": true,
                 ""spanAttributes"": {
-                  ""http.scheme"": ""http"",
-                  ""http.method"": ""GET"",
-                  ""net.peer.name"": ""{host}"",
-                  ""net.peer.port"": ""{port}"",
-                  ""http.flavor"": ""1.1"",
-                  ""http.status_code"": ""200"",
-                  ""http.url"": ""http://{host}:{port}/""
+                  ""url.scheme"": ""http"",
+                  ""http.request.method"": ""GET"",
+                  ""server.address"": ""{host}"",
+                  ""server.port"": ""{port}"",
+                  ""network.protocol.version"": ""1.1"",
+                  ""http.response.status_code"": ""200"",
+                  ""url.full"": ""http://{host}:{port}/""
                 }
               }
             ",

@@ -1,18 +1,5 @@
-// <copyright file="LogBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.Logging;
@@ -20,23 +7,21 @@ using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 /*
-// * Summary *
-
-BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19044.1466 (21H2)
-Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
-.NET SDK=6.0.101
-  [Host]     : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
-  DefaultJob : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-|                                 Method |       Mean |     Error |    StdDev |  Gen 0 | Allocated |
-|--------------------------------------- |-----------:|----------:|----------:|-------:|----------:|
-|                             NoListener |  72.365 ns | 0.9425 ns | 0.8817 ns | 0.0153 |      64 B |
-|   NoListenerWithLoggerMessageGenerator |   4.769 ns | 0.0161 ns | 0.0142 ns |      - |         - |
-|                           OneProcessor | 168.330 ns | 0.6198 ns | 0.5494 ns | 0.0553 |     232 B |
-| OneProcessorWithLoggerMessageGenerator | 142.898 ns | 0.5233 ns | 0.4086 ns | 0.0401 |     168 B |
-|                          TwoProcessors | 173.727 ns | 0.5978 ns | 0.4992 ns | 0.0553 |     232 B |
-|                        ThreeProcessors | 174.295 ns | 0.7697 ns | 0.7200 ns | 0.0553 |     232 B |
+| Method                                 | Mean       | Error     | StdDev    | Median     | Gen0   | Allocated |
+|--------------------------------------- |-----------:|----------:|----------:|-----------:|-------:|----------:|
+| NoListener                             |  44.633 ns | 0.8442 ns | 1.9733 ns |  43.683 ns | 0.0102 |      64 B |
+| NoListenerWithLoggerMessageGenerator   |   1.880 ns | 0.0141 ns | 0.0125 ns |   1.879 ns |      - |         - |
+| OneProcessor                           | 126.857 ns | 1.1861 ns | 1.0514 ns | 126.730 ns | 0.0165 |     104 B |
+| OneProcessorWithLoggerMessageGenerator | 112.677 ns | 1.0021 ns | 0.8884 ns | 112.605 ns | 0.0063 |      40 B |
+| TwoProcessors                          | 129.967 ns | 0.8315 ns | 0.7371 ns | 129.850 ns | 0.0165 |     104 B |
+| ThreeProcessors                        | 130.117 ns | 1.1359 ns | 1.0626 ns | 129.991 ns | 0.0165 |     104 B |
 */
 
 namespace Benchmarks.Logs;

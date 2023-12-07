@@ -1,18 +1,5 @@
-// <copyright file="HttpWebRequestActivitySource.netfx.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 #if NETFRAMEWORK
 using System.Collections;
@@ -25,7 +12,6 @@ using System.Runtime.CompilerServices;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation;
 
@@ -49,16 +35,9 @@ internal static class HttpWebRequestActivitySource
     private static readonly string Version = AssemblyName.Version.ToString();
     private static readonly ActivitySource WebRequestActivitySource = new(ActivitySourceName, Version);
     private static readonly Meter WebRequestMeter = new(MeterName, Version);
-    private static readonly Histogram<double> HttpClientDuration = WebRequestMeter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
     private static readonly Histogram<double> HttpClientRequestDuration = WebRequestMeter.CreateHistogram<double>("http.client.request.duration", "s", "Measures the duration of outbound HTTP requests.");
 
-    private static HttpClientInstrumentationOptions tracingOptions;
-    private static HttpClientMetricInstrumentationOptions metricsOptions;
-
-    private static bool tracingEmitOldAttributes;
-    private static bool tracingEmitNewAttributes;
-    private static bool metricsEmitOldAttributes;
-    private static bool metricsEmitNewAttributes;
+    private static HttpClientTraceInstrumentationOptions tracingOptions;
 
     // Fields for reflection
     private static FieldInfo connectionGroupListField;
@@ -95,8 +74,7 @@ internal static class HttpWebRequestActivitySource
             PrepareReflectionObjects();
             PerformInjection();
 
-            TracingOptions = new HttpClientInstrumentationOptions();
-            MetricsOptions = new HttpClientMetricInstrumentationOptions();
+            TracingOptions = new HttpClientTraceInstrumentationOptions();
         }
         catch (Exception ex)
         {
@@ -105,75 +83,32 @@ internal static class HttpWebRequestActivitySource
         }
     }
 
-    internal static HttpClientInstrumentationOptions TracingOptions
+    internal static HttpClientTraceInstrumentationOptions TracingOptions
     {
         get => tracingOptions;
         set
         {
             tracingOptions = value;
-
-            tracingEmitOldAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
-            tracingEmitNewAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
-        }
-    }
-
-    internal static HttpClientMetricInstrumentationOptions MetricsOptions
-    {
-        get => metricsOptions;
-        set
-        {
-            metricsOptions = value;
-
-            metricsEmitOldAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
-            metricsEmitNewAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddRequestTagsAndInstrumentRequest(HttpWebRequest request, Activity activity)
     {
-        activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
+        RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method);
 
         if (activity.IsAllDataRequested)
         {
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-            if (tracingEmitOldAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
-                if (!request.RequestUri.IsDefaultPort)
-                {
-                    activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
-                }
+            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
+            RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
-                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+            activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
+            if (!request.RequestUri.IsDefaultPort)
+            {
+                activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
             }
 
-            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
-            if (tracingEmitNewAttributes)
-            {
-                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod))
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
-                }
-                else
-                {
-                    // Set to default "_OTHER" as per spec.
-                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
-                }
-
-                activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
-                if (!request.RequestUri.IsDefaultPort)
-                {
-                    activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
-                }
-
-                activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-            }
+            activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
 
             try
             {
@@ -193,18 +128,8 @@ internal static class HttpWebRequestActivitySource
 
         if (activity.IsAllDataRequested)
         {
-            if (tracingEmitOldAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-            }
-
-            if (tracingEmitNewAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(response.ProtocolVersion));
-                activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-            }
-
-            activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
+            activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(response.ProtocolVersion));
+            activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
 
             try
             {
@@ -228,13 +153,21 @@ internal static class HttpWebRequestActivitySource
             {
                 WebExceptionStatus.NameResolutionFailure => "name_resolution_failure",
                 WebExceptionStatus.ConnectFailure => "connect_failure",
+                WebExceptionStatus.ReceiveFailure => "receive_failure",
                 WebExceptionStatus.SendFailure => "send_failure",
+                WebExceptionStatus.PipelineFailure => "pipeline_failure",
                 WebExceptionStatus.RequestCanceled => "request_cancelled",
+                WebExceptionStatus.ProtocolError => "protocol_error",
+                WebExceptionStatus.ConnectionClosed => "connection_closed",
                 WebExceptionStatus.TrustFailure => "trust_failure",
                 WebExceptionStatus.SecureChannelFailure => "secure_channel_failure",
                 WebExceptionStatus.ServerProtocolViolation => "server_protocol_violation",
+                WebExceptionStatus.KeepAliveFailure => "keep_alive_failure",
                 WebExceptionStatus.Timeout => "timeout",
+                WebExceptionStatus.ProxyNameResolutionFailure => "proxy_name_resolution_failure",
                 WebExceptionStatus.MessageLengthLimitExceeded => "message_length_limit_exceeded",
+                WebExceptionStatus.RequestProhibitedByCachePolicy => "request_prohibited_by_cache_policy",
+                WebExceptionStatus.RequestProhibitedByProxy => "request_prohibited_by_proxy",
                 _ => wexc.GetType().FullName,
             };
         }
@@ -243,44 +176,14 @@ internal static class HttpWebRequestActivitySource
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddExceptionTags(Exception exception, Activity activity, out HttpStatusCode? statusCode, out Version protocolVersion)
+    private static void AddExceptionEvent(Exception exception, Activity activity)
     {
         Debug.Assert(activity != null, "Activity must not be null");
-
-        statusCode = null;
-        protocolVersion = null;
 
         if (!activity.IsAllDataRequested)
         {
             return;
         }
-
-        ActivityStatusCode status;
-
-        if (exception is WebException wexc && wexc.Response is HttpWebResponse response)
-        {
-            statusCode = response.StatusCode;
-            protocolVersion = response.ProtocolVersion;
-
-            if (tracingEmitOldAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)statusCode);
-            }
-
-            if (tracingEmitNewAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(protocolVersion));
-                activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, (int)statusCode);
-            }
-
-            status = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)statusCode);
-        }
-        else
-        {
-            status = ActivityStatusCode.Error;
-        }
-
-        activity.SetStatus(status);
 
         if (TracingOptions.RecordException)
         {
@@ -312,7 +215,7 @@ internal static class HttpWebRequestActivitySource
         var enableTracing = WebRequestActivitySource.HasListeners()
             && TracingOptions.EventFilterHttpWebRequest(request);
 
-        if (!enableTracing && !HttpClientDuration.Enabled && !HttpClientRequestDuration.Enabled)
+        if (!enableTracing && !HttpClientRequestDuration.Enabled)
         {
             // Tracing and metrics are not enabled, so we can skip generating signals
             // Propagation must still be done in such cases, to allow
@@ -401,6 +304,7 @@ internal static class HttpWebRequestActivitySource
         HttpStatusCode? httpStatusCode = null;
         string errorType = null;
         Version protocolVersion = null;
+        ActivityStatusCode activityStatus = ActivityStatusCode.Unset;
 
         // Activity may be null if we are not tracing in these cases:
         // 1. No listeners
@@ -417,14 +321,30 @@ internal static class HttpWebRequestActivitySource
             if (result is Exception ex)
             {
                 errorType = GetErrorType(ex);
-                if (activity != null)
-                {
-                    AddExceptionTags(ex, activity, out httpStatusCode, out protocolVersion);
-                }
-                else if (ex is WebException wexc && wexc.Response is HttpWebResponse response)
+                if (ex is WebException wexc && wexc.Response is HttpWebResponse response)
                 {
                     httpStatusCode = response.StatusCode;
                     protocolVersion = response.ProtocolVersion;
+                    activityStatus = SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)response.StatusCode);
+                    if (activityStatus == ActivityStatusCode.Error)
+                    {
+                        // override the errorType to statusCode for failures.
+                        errorType = TelemetryHelper.GetStatusCodeString(response.StatusCode);
+                    }
+
+                    if (activity != null)
+                    {
+                        AddResponseTags(response, activity);
+                        AddExceptionEvent(ex, activity);
+                    }
+                }
+                else
+                {
+                    activityStatus = ActivityStatusCode.Error;
+                    if (activity != null)
+                    {
+                        AddExceptionEvent(ex, activity);
+                    }
                 }
             }
             else
@@ -465,9 +385,11 @@ internal static class HttpWebRequestActivitySource
                     protocolVersion = response.ProtocolVersion;
                 }
 
-                if (SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)httpStatusCode.Value) == ActivityStatusCode.Error)
+                activityStatus = SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)httpStatusCode.Value);
+
+                if (activityStatus == ActivityStatusCode.Error)
                 {
-                    // override the errorType to statusCode for failures.
+                    // set the errorType to statusCode for failures.
                     errorType = TelemetryHelper.GetStatusCodeString(httpStatusCode.Value);
                 }
             }
@@ -477,89 +399,66 @@ internal static class HttpWebRequestActivitySource
             HttpInstrumentationEventSource.Log.FailedProcessResult(ex);
         }
 
-        if (tracingEmitNewAttributes && errorType != null)
+        if (activity != null && activity.IsAllDataRequested)
         {
-            activity?.SetTag(SemanticConventions.AttributeErrorType, errorType);
+            activity.SetStatus(activityStatus);
+            if (errorType != null)
+            {
+                activity.SetTag(SemanticConventions.AttributeErrorType, errorType);
+            }
         }
 
         activity?.Stop();
 
-        if (HttpClientDuration.Enabled || HttpClientRequestDuration.Enabled)
+        if (HttpClientRequestDuration.Enabled)
         {
             double durationS;
-            double durationMs;
             if (activity != null)
             {
                 durationS = activity.Duration.TotalSeconds;
-                durationMs = activity.Duration.TotalMilliseconds;
             }
             else
             {
                 var endTimestamp = Stopwatch.GetTimestamp();
                 durationS = (endTimestamp - startTimestamp) / (double)Stopwatch.Frequency;
-                durationMs = durationS * 1000;
             }
 
-            if (metricsEmitOldAttributes)
+            TagList tags = default;
+
+            if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod))
             {
-                TagList tags = default;
-
-                tags.Add(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
-                tags.Add(SemanticConventions.AttributeHttpMethod, request.Method);
-                tags.Add(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
-                tags.Add(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
-                if (!request.RequestUri.IsDefaultPort)
-                {
-                    tags.Add(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
-                }
-
-                if (httpStatusCode.HasValue)
-                {
-                    tags.Add(SemanticConventions.AttributeHttpStatusCode, (int)httpStatusCode.Value);
-                }
-
-                HttpClientDuration.Record(durationMs, tags);
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
             }
-
-            if (metricsEmitNewAttributes)
+            else
             {
-                TagList tags = default;
-
-                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod))
-                {
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
-                }
-                else
-                {
-                    // Set to default "_OTHER" as per spec.
-                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
-                }
-
-                tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
-                tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
-                if (protocolVersion != null)
-                {
-                    tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(protocolVersion));
-                }
-
-                if (!request.RequestUri.IsDefaultPort)
-                {
-                    tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
-                }
-
-                if (httpStatusCode.HasValue)
-                {
-                    tags.Add(SemanticConventions.AttributeHttpResponseStatusCode, (int)httpStatusCode.Value);
-                }
-
-                if (errorType != null)
-                {
-                    tags.Add(SemanticConventions.AttributeErrorType, errorType);
-                }
-
-                HttpClientRequestDuration.Record(durationS, tags);
+                // Set to default "_OTHER" as per spec.
+                // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
             }
+
+            tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
+            tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
+            if (protocolVersion != null)
+            {
+                tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(protocolVersion));
+            }
+
+            if (!request.RequestUri.IsDefaultPort)
+            {
+                tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
+            }
+
+            if (httpStatusCode.HasValue)
+            {
+                tags.Add(SemanticConventions.AttributeHttpResponseStatusCode, (int)httpStatusCode.Value);
+            }
+
+            if (errorType != null)
+            {
+                tags.Add(SemanticConventions.AttributeErrorType, errorType);
+            }
+
+            HttpClientRequestDuration.Record(durationS, tags);
         }
     }
 
