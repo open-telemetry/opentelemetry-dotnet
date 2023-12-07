@@ -31,9 +31,9 @@ public class PrometheusHttpListenerOptions
     public string ScrapeEndpointPath { get; set; } = "/metrics";
 
     /// <summary>
-    /// Gets or sets a value indicating whether to export OpenMetrics compatible scrape responses. Default value: true.
+    /// Gets or sets a value indicating whether to export scope info. Default value: true.
     /// </summary>
-    public bool OpenMetricsEnabled { get; set; } = true;
+    public bool ScopeInfoEnabled { get; set; } = true;
 
     /// <summary>
     /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.

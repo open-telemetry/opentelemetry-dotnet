@@ -379,16 +379,16 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool openMetricsRequested, bool writeEnclosingBraces = true)
+    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool scopeInfoEnabled, bool writeEnclosingBraces = true)
     {
-        if (tags.Count > 0 || openMetricsRequested)
+        if (tags.Count > 0 || scopeInfoEnabled)
         {
             if (writeEnclosingBraces)
             {
                 buffer[cursor++] = unchecked((byte)'{');
             }
 
-            if (openMetricsRequested)
+            if (scopeInfoEnabled)
             {
                 cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
                 buffer[cursor++] = unchecked((byte)',');

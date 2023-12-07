@@ -78,7 +78,11 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
     private static MetricReader BuildPrometheusHttpListenerMetricReader(
         PrometheusHttpListenerOptions options)
     {
-        var exporter = new PrometheusExporter(new PrometheusExporterOptions { ScrapeResponseCacheDurationMilliseconds = 0 });
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            ScrapeResponseCacheDurationMilliseconds = 0,
+            ScopeInfoEnabled = options.ScopeInfoEnabled,
+        });
 
         var reader = new BaseExportingMetricReader(exporter)
         {

@@ -35,7 +35,7 @@ public class Instrumentation : IDisposable
         string? version = typeof(Instrumentation).Assembly.GetName().Version?.ToString();
         this.ActivitySource = new ActivitySource(ActivitySourceName, version);
         this.meter = new Meter(MeterName, version);
-        this.FreezingDaysCounter = this.meter.CreateCounter<long>("weather.days.freezing", "The number of days where the temperature is below freezing");
+        this.FreezingDaysCounter = this.meter.CreateCounter<long>("weather.days.freezing", description: "The number of days where the temperature is below freezing");
     }
 
     public ActivitySource ActivitySource { get; }

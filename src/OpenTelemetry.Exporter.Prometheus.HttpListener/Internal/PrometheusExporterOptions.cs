@@ -41,4 +41,9 @@ internal sealed class PrometheusExporterOptions
             this.scrapeResponseCacheDurationMilliseconds = value;
         }
     }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to export scope info. Default value: true.
+    /// </summary>
+    public bool ScopeInfoEnabled { get; set; } = true;
 }

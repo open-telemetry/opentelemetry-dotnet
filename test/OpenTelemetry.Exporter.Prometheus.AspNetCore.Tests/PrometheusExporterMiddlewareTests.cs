@@ -32,6 +32,8 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 
 public sealed class PrometheusExporterMiddlewareTests
 {
+    private const string MeterVersion = "1.0.1";
+
     private static readonly string MeterName = Utils.GetCurrentMethodName();
 
     [Fact]
@@ -248,12 +250,31 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
+    public Task PrometheusExporterMiddlewareIntegration_TextPlainResponse_NoScopeInfo()
+    {
+        return RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            acceptHeader: "text/plain",
+            scopeInfoEnabled: false);
+    }
+
+    [Fact]
     public Task PrometheusExporterMiddlewareIntegration_UseOpenMetricsVersionHeader()
     {
         return RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             acceptHeader: "application/openmetrics-text; version=1.0.0");
+    }
+
+    [Fact]
+    public Task PrometheusExporterMiddlewareIntegration_NoScopeInfo()
+    {
+        return RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            scopeInfoEnabled: false);
     }
 
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
@@ -264,7 +285,8 @@ public sealed class PrometheusExporterMiddlewareTests
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions> configureOptions = null,
         bool skipMetrics = false,
-        string acceptHeader = "application/openmetrics-text")
+        string acceptHeader = "application/openmetrics-text",
+        bool scopeInfoEnabled = true)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
 
@@ -279,6 +301,7 @@ public sealed class PrometheusExporterMiddlewareTests
                             .AddMeter(MeterName)
                             .AddPrometheusExporter(o =>
                             {
+                                o.ScopeInfoEnabled = scopeInfoEnabled;
                                 configureOptions?.Invoke(o);
                             }));
                    }
@@ -294,7 +317,7 @@ public sealed class PrometheusExporterMiddlewareTests
             new KeyValuePair<string, object>("key2", "value2"),
         };
 
-        using var meter = new Meter(MeterName);
+        using var meter = new Meter(MeterName, MeterVersion);
 
         var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
@@ -331,14 +354,7 @@ public sealed class PrometheusExporterMiddlewareTests
             }
 
             string content = await response.Content.ReadAsStringAsync();
-
-            string expected = requestOpenMetrics
-                ? "# TYPE counter_double_total counter\n"
-                  + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+\\.\\d{3})\n"
-                  + "# EOF\n"
-                : "# TYPE counter_double_total counter\n"
-                  + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
-                  + "# EOF\n";
+            string expected = GetExpectedContent(requestOpenMetrics, scopeInfoEnabled);
 
             var matches = Regex.Matches(content, ("^" + expected + "$").Replace('\'', '"'));
 
@@ -356,6 +372,37 @@ public sealed class PrometheusExporterMiddlewareTests
         validateResponse?.Invoke(response);
 
         await host.StopAsync();
+    }
+
+    private static string GetExpectedContent(bool requestedOpenMetrics, bool scopeInfoEnabled)
+    {
+        if (requestedOpenMetrics && scopeInfoEnabled)
+        {
+            return "# TYPE otel_scope_info info\n"
+                   + "# HELP otel_scope_info Scope metadata\n"
+                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
+                   + "# TYPE counter_double_total counter\n"
+                   + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
+                   + "# EOF\n";
+        }
+
+        if (!requestedOpenMetrics && scopeInfoEnabled)
+        {
+            return "# TYPE counter_double_total counter\n"
+                   + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
+                   + "# EOF\n";
+        }
+
+        if (requestedOpenMetrics && !scopeInfoEnabled)
+        {
+            return "# TYPE counter_double_total counter\n"
+                   + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+\\.\\d{3})\n"
+                   + "# EOF\n";
+        }
+
+        return "# TYPE counter_double_total counter\n"
+               + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
+               + "# EOF\n";
     }
 }
 #endif
