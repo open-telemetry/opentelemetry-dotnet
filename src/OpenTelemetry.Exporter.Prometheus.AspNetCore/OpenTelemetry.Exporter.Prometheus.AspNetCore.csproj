@@ -28,6 +28,7 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusSerializerExt.cs" Link="Includes/PrometheusSerializerExt.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusType.cs" Link="Includes/PrometheusType.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusMetric.cs" Link="Includes/PrometheusMetric.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusHeadersParser.cs" Link="Includes/PrometheusHeadersParser.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
   </ItemGroup>
 

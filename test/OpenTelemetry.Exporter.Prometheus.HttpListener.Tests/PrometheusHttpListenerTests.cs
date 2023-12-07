@@ -1,18 +1,5 @@
-// <copyright file="PrometheusHttpListenerTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
 using System.Net;
@@ -90,14 +77,28 @@ public class PrometheusHttpListenerTests
         await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
     }
 
-    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false)
+    [Fact]
+    public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics()
     {
+        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty);
+    }
+
+    [Fact]
+    public async Task PrometheusExporterHttpServerIntegration_UseOpenMetricsVersionHeader()
+    {
+        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
+    }
+
+    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text")
+    {
+        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
+
         Random random = new Random();
         int retryAttempts = 5;
         int port = 0;
         string address = null;
 
-        MeterProvider provider;
+        MeterProvider provider = null;
         using var meter = new Meter(this.meterName);
 
         while (retryAttempts-- != 0)
@@ -105,10 +106,24 @@ public class PrometheusHttpListenerTests
             port = random.Next(2000, 5000);
             address = $"http://localhost:{port}/";
 
-            provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { address })
-                .Build();
+            try
+            {
+                provider = Sdk.CreateMeterProviderBuilder()
+                    .AddMeter(meter.Name)
+                    .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { address })
+                    .Build();
+
+                break;
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        if (provider == null)
+        {
+            throw new InvalidOperationException("HttpListener could not be started");
         }
 
         var tags = new KeyValuePair<string, object>[]
@@ -125,21 +140,45 @@ public class PrometheusHttpListenerTests
         }
 
         using HttpClient client = new HttpClient();
+
+        if (!string.IsNullOrEmpty(acceptHeader))
+        {
+            client.DefaultRequestHeaders.Add("Accept", acceptHeader);
+        }
+
         using var response = await client.GetAsync($"{address}metrics");
 
         if (!skipMetrics)
         {
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
-            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
 
-            Assert.Matches(
-                "^# TYPE counter_double_total counter\ncounter_double_total{key1='value1',key2='value2'} 101.17 \\d+\n\n# EOF\n$".Replace('\'', '"'),
-                await response.Content.ReadAsStringAsync());
+            if (requestOpenMetrics)
+            {
+                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
+            }
+            else
+            {
+                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            var expected = requestOpenMetrics
+                ? "# TYPE counter_double_total counter\n"
+                  + "counter_double_total{key1='value1',key2='value2'} 101.17 \\d+\\.\\d{3}\n"
+                  + "# EOF\n"
+                : "# TYPE counter_double_total counter\n"
+                  + "counter_double_total{key1='value1',key2='value2'} 101.17 \\d+\n"
+                  + "# EOF\n";
+
+            Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);
         }
         else
         {
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
+
+        provider.Dispose();
     }
 }
