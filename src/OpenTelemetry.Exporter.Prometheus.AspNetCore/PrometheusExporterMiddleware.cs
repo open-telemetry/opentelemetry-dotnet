@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -64,7 +65,9 @@ internal sealed class PrometheusExporterMiddleware
 
         try
         {
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+            var openMetricsRequested = AcceptsOpenMetrics(httpContext.Request);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
+
             try
             {
                 if (collectionResponse.View.Count > 0)
@@ -75,7 +78,9 @@ internal sealed class PrometheusExporterMiddleware
 #else
                     response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
 #endif
-                    response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+                    response.ContentType = openMetricsRequested
+                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
+                        : "text/plain; charset=utf-8; version=0.0.4";
 
                     await response.Body.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
                 }
@@ -101,5 +106,25 @@ internal sealed class PrometheusExporterMiddleware
         }
 
         this.exporter.OnExport = null;
+    }
+
+    private static bool AcceptsOpenMetrics(HttpRequest request)
+    {
+        var acceptHeader = request.Headers.Accept;
+
+        if (StringValues.IsNullOrEmpty(acceptHeader))
+        {
+            return false;
+        }
+
+        foreach (var header in acceptHeader)
+        {
+            if (PrometheusHeadersParser.AcceptsOpenMetrics(header))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

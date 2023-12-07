@@ -110,6 +110,18 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
+    private static bool AcceptsOpenMetrics(HttpListenerRequest request)
+    {
+        var acceptHeader = request.Headers["Accept"];
+
+        if (string.IsNullOrEmpty(acceptHeader))
+        {
+            return false;
+        }
+
+        return PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
+    }
+
     private void WorkerProc()
     {
         this.httpListener.Start();
@@ -148,7 +160,9 @@ internal sealed class PrometheusHttpListener : IDisposable
     {
         try
         {
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+            var openMetricsRequested = AcceptsOpenMetrics(context.Request);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
+
             try
             {
                 context.Response.Headers.Add("Server", string.Empty);
@@ -156,7 +170,9 @@ internal sealed class PrometheusHttpListener : IDisposable
                 {
                     context.Response.StatusCode = 200;
                     context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-                    context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+                    context.Response.ContentType = openMetricsRequested
+                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
+                        : "text/plain; charset=utf-8; version=0.0.4";
 
                     await context.Response.OutputStream.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
                 }
