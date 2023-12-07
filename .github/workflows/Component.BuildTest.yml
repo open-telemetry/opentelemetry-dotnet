@@ -48,7 +48,7 @@ jobs:
         fetch-depth: 0
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
 
     - name: dotnet restore ${{ inputs.project-name }}
       run: dotnet restore ${{ inputs.project-name }} ${{ inputs.project-build-commands }}
