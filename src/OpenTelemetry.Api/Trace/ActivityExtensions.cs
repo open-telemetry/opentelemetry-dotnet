@@ -75,7 +75,7 @@ public static class ActivityExtensions
     /// <param name="ex">Exception to be recorded.</param>
     /// <param name="tags">Additional tags to record on the event.</param>
     /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md"/>.
-    /// "exception.stacktrace" is represented using the value of <a href=https://learn.microsoft.com/dotnet/api/system.exception.tostring/>.
+    /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void RecordException(this Activity activity, Exception? ex, in TagList tags)
