@@ -45,9 +45,9 @@ internal sealed class PrometheusCollectionManager
     }
 
 #if NET6_0_OR_GREATER
-    public ValueTask<CollectionResponse> EnterCollect()
+    public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested)
 #else
-    public Task<CollectionResponse> EnterCollect()
+    public Task<CollectionResponse> EnterCollect(bool openMetricsRequested)
 #endif
     {
         this.EnterGlobalLock();
@@ -93,7 +93,7 @@ internal sealed class PrometheusCollectionManager
         this.ExitGlobalLock();
 
         CollectionResponse response;
-        var result = this.ExecuteCollect();
+        var result = this.ExecuteCollect(openMetricsRequested);
         if (result)
         {
             this.previousDataViewGeneratedAtUtc = DateTime.UtcNow;
@@ -168,9 +168,10 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool ExecuteCollect()
+    private bool ExecuteCollect(bool openMetricsRequested)
     {
         this.exporter.OnExport = this.onCollectRef;
+        this.exporter.OpenMetricsRequested = openMetricsRequested;
         var result = this.exporter.Collect(Timeout.Infinite);
         this.exporter.OnExport = null;
         return result;
@@ -193,7 +194,13 @@ internal sealed class PrometheusCollectionManager
                 {
                     try
                     {
-                        cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric));
+                        cursor = PrometheusSerializer.WriteMetric(
+                            this.buffer,
+                            cursor,
+                            metric,
+                            this.GetPrometheusMetric(metric),
+                            this.exporter.OpenMetricsRequested);
+
                         break;
                     }
                     catch (IndexOutOfRangeException)

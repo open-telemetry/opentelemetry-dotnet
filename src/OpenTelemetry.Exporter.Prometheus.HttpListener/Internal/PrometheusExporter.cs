@@ -63,6 +63,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 
     internal int ScrapeResponseCacheDurationMilliseconds { get; }
 
+    internal bool OpenMetricsRequested { get; set; }
+
     /// <inheritdoc/>
     public override ExportResult Export(in Batch<Metric> metrics)
     {
