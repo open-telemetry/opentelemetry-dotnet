@@ -1,18 +1,5 @@
-// <copyright file="PrometheusHttpListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Net;
 using OpenTelemetry.Exporter.Prometheus;
@@ -110,6 +97,18 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
+    private static bool AcceptsOpenMetrics(HttpListenerRequest request)
+    {
+        var acceptHeader = request.Headers["Accept"];
+
+        if (string.IsNullOrEmpty(acceptHeader))
+        {
+            return false;
+        }
+
+        return PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
+    }
+
     private void WorkerProc()
     {
         this.httpListener.Start();
@@ -148,7 +147,9 @@ internal sealed class PrometheusHttpListener : IDisposable
     {
         try
         {
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+            var openMetricsRequested = AcceptsOpenMetrics(context.Request);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
+
             try
             {
                 context.Response.Headers.Add("Server", string.Empty);
@@ -156,7 +157,9 @@ internal sealed class PrometheusHttpListener : IDisposable
                 {
                     context.Response.StatusCode = 200;
                     context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-                    context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+                    context.Response.ContentType = openMetricsRequested
+                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
+                        : "text/plain; charset=utf-8; version=0.0.4";
 
                     await context.Response.OutputStream.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
                 }
