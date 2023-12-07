@@ -68,7 +68,6 @@ public sealed class PrometheusCollectionManagerTests
                 collectTasks[i] = Task.Run(async () =>
                 {
                     var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
-
                     try
                     {
                         return new Response
@@ -133,7 +132,6 @@ public sealed class PrometheusCollectionManagerTests
                 collectTasks[i] = Task.Run(async () =>
                 {
                     var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
-
                     try
                     {
                         return new Response

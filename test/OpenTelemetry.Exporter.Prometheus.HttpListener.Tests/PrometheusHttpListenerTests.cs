@@ -16,7 +16,6 @@
 
 using System.Diagnostics.Metrics;
 using System.Net;
-using System.Net.Http.Headers;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
