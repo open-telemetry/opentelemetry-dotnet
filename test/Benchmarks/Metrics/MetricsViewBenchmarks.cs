@@ -1,18 +1,5 @@
-// <copyright file="MetricsViewBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -22,20 +9,20 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
 Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK=7.0.203
-  [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-|         Method |   ViewConfig |     Mean |   Error |  StdDev | Allocated |
-|--------------- |------------- |---------:|--------:|--------:|----------:|
-| CounterHotPath |       NoView | 254.6 ns | 1.62 ns | 1.27 ns |         - |
-| CounterHotPath |       ViewNA | 257.9 ns | 3.00 ns | 2.80 ns |         - |
-| CounterHotPath |  ViewApplied | 282.7 ns | 5.60 ns | 6.45 ns |         - |
-| CounterHotPath | ViewToRename | 256.8 ns | 0.83 ns | 0.70 ns |         - |
-| CounterHotPath |  ViewZeroTag | 112.1 ns | 1.87 ns | 1.75 ns |         - |
+| Method         | ViewConfig   | Mean      | Error    | StdDev   | Allocated |
+|--------------- |------------- |----------:|---------:|---------:|----------:|
+| CounterHotPath | NoView       | 217.94 ns | 3.950 ns | 3.502 ns |         - |
+| CounterHotPath | ViewNA       | 206.09 ns | 1.634 ns | 1.364 ns |         - |
+| CounterHotPath | ViewApplied  | 210.63 ns | 4.116 ns | 5.904 ns |         - |
+| CounterHotPath | ViewToRename | 207.05 ns | 1.592 ns | 1.329 ns |         - |
+| CounterHotPath | ViewZeroTag  |  68.67 ns | 0.613 ns | 0.573 ns |         - |
 */
 
 namespace Benchmarks.Metrics;

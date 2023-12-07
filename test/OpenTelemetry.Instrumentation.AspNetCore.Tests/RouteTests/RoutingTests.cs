@@ -1,30 +1,14 @@
-// <copyright file="RoutingTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 #nullable enable
 
 using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using RouteTests.TestApplication;
 using Xunit;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace RouteTests;
 
@@ -49,20 +33,14 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
 
     [Theory]
     [MemberData(nameof(TestData))]
-    public async Task TestHttpRoute(RoutingTestCases.TestCase testCase, bool useLegacyConventions)
+    public async Task TestHttpRoute(RoutingTestCases.TestCase testCase)
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { [SemanticConventionOptInKeyName] = useLegacyConventions ? null : "http" })
-            .Build();
-
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
             .AddAspNetCoreInstrumentation()
             .AddInMemoryExporter(this.exportedActivities)
             .Build()!;
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
             .AddAspNetCoreInstrumentation()
             .AddInMemoryExporter(this.exportedMetrics)
             .Build()!;
@@ -91,8 +69,8 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
         var activity = Assert.Single(this.exportedActivities);
         var metricPoint = Assert.Single(metricPoints);
 
-        GetTagsFromActivity(useLegacyConventions, activity, out var activityHttpStatusCode, out var activityHttpMethod, out var activityHttpRoute);
-        GetTagsFromMetricPoint(useLegacyConventions && Environment.Version.Major < 8, metricPoint, out var metricHttpStatusCode, out var metricHttpMethod, out var metricHttpRoute);
+        GetTagsFromActivity(activity, out var activityHttpStatusCode, out var activityHttpMethod, out var activityHttpRoute);
+        GetTagsFromMetricPoint(Environment.Version.Major < 8, metricPoint, out var metricHttpStatusCode, out var metricHttpMethod, out var metricHttpRoute);
 
         Assert.Equal(testCase.ExpectedStatusCode, activityHttpStatusCode);
         Assert.Equal(testCase.ExpectedStatusCode, metricHttpStatusCode);
@@ -113,27 +91,23 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
 
         Assert.Equal(expectedActivityDisplayName, activity.DisplayName);
 
-        // Only produce README files based on final semantic conventions
-        if (!useLegacyConventions)
+        var testResult = new RoutingTestResult
         {
-            var testResult = new RoutingTestResult
-            {
-                IdealHttpRoute = testCase.ExpectedHttpRoute,
-                ActivityDisplayName = activity.DisplayName,
-                ActivityHttpRoute = activityHttpRoute,
-                MetricHttpRoute = metricHttpRoute,
-                TestCase = testCase,
-                RouteInfo = RouteInfo.Current,
-            };
+            IdealHttpRoute = testCase.ExpectedHttpRoute,
+            ActivityDisplayName = activity.DisplayName,
+            ActivityHttpRoute = activityHttpRoute,
+            MetricHttpRoute = metricHttpRoute,
+            TestCase = testCase,
+            RouteInfo = RouteInfo.Current,
+        };
 
-            this.fixture.AddTestResult(testResult);
-        }
+        this.fixture.AddTestResult(testResult);
     }
 
-    private static void GetTagsFromActivity(bool useLegacyConventions, Activity activity, out int httpStatusCode, out string httpMethod, out string? httpRoute)
+    private static void GetTagsFromActivity(Activity activity, out int httpStatusCode, out string httpMethod, out string? httpRoute)
     {
-        var expectedStatusCodeKey = useLegacyConventions ? OldHttpStatusCode : HttpStatusCode;
-        var expectedHttpMethodKey = useLegacyConventions ? OldHttpMethod : HttpMethod;
+        var expectedStatusCodeKey = HttpStatusCode;
+        var expectedHttpMethodKey = HttpMethod;
         httpStatusCode = Convert.ToInt32(activity.GetTagItem(expectedStatusCodeKey));
         httpMethod = (activity.GetTagItem(expectedHttpMethodKey) as string)!;
         httpRoute = activity.GetTagItem(HttpRoute) as string ?? string.Empty;
@@ -141,8 +115,8 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
 
     private static void GetTagsFromMetricPoint(bool useLegacyConventions, MetricPoint metricPoint, out int httpStatusCode, out string httpMethod, out string? httpRoute)
     {
-        var expectedStatusCodeKey = useLegacyConventions ? OldHttpStatusCode : HttpStatusCode;
-        var expectedHttpMethodKey = useLegacyConventions ? OldHttpMethod : HttpMethod;
+        var expectedStatusCodeKey = HttpStatusCode;
+        var expectedHttpMethodKey = HttpMethod;
 
         httpStatusCode = 0;
         httpMethod = string.Empty;

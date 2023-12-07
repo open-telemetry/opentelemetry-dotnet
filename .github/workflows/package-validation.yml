@@ -16,7 +16,7 @@ jobs:
         fetch-depth: 0
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
 
     - name: Pack
       run: dotnet pack OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=false
@@ -33,7 +33,7 @@ jobs:
         fetch-depth: 0
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
 
     - name: Pack
       run: dotnet pack OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=true

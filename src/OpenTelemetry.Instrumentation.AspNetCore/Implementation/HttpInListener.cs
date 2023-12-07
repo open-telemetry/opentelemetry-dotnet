@@ -1,18 +1,5 @@
-// <copyright file="HttpInListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 #if NET6_0_OR_GREATER
@@ -32,7 +19,6 @@ using OpenTelemetry.Instrumentation.GrpcNetClient;
 #endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
@@ -65,20 +51,14 @@ internal class HttpInListener : ListenerHandler
     private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
     private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
 #endif
-    private readonly AspNetCoreInstrumentationOptions options;
-    private readonly bool emitOldAttributes;
-    private readonly bool emitNewAttributes;
+    private readonly AspNetCoreTraceInstrumentationOptions options;
 
-    public HttpInListener(AspNetCoreInstrumentationOptions options)
+    public HttpInListener(AspNetCoreTraceInstrumentationOptions options)
         : base(DiagnosticSourceName)
     {
         Guard.ThrowIfNull(options);
 
         this.options = options;
-
-        this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
-
-        this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
     }
 
     public override void OnEventWritten(string name, object payload)
@@ -118,11 +98,6 @@ internal class HttpInListener : ListenerHandler
         // This method is in the WriteEvent("Start", payload) path.
         // By this time, samplers have already run and
         // activity.IsAllDataRequested populated accordingly.
-
-        if (Sdk.SuppressInstrumentation)
-        {
-            return;
-        }
 
         HttpContext context = payload as HttpContext;
         if (context == null)
@@ -197,67 +172,36 @@ internal class HttpInListener : ListenerHandler
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
             activity.DisplayName = this.GetDisplayName(request.Method);
 
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-            if (this.emitOldAttributes)
+            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
+
+            if (request.Host.HasValue)
             {
-                if (request.Host.HasValue)
+                activity.SetTag(SemanticConventions.AttributeServerAddress, request.Host.Host);
+
+                if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
                 {
-                    activity.SetTag(SemanticConventions.AttributeNetHostName, request.Host.Host);
-
-                    if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
-                    {
-                        activity.SetTag(SemanticConventions.AttributeNetHostPort, request.Host.Port);
-                    }
-                }
-
-                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.Scheme);
-                activity.SetTag(SemanticConventions.AttributeHttpTarget, path);
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
-                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
-
-                if (request.Headers.TryGetValue("User-Agent", out var values))
-                {
-                    var userAgent = values.Count > 0 ? values[0] : null;
-                    if (!string.IsNullOrEmpty(userAgent))
-                    {
-                        activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
-                    }
+                    activity.SetTag(SemanticConventions.AttributeServerPort, request.Host.Port);
                 }
             }
 
-            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
-            if (this.emitNewAttributes)
+            if (request.QueryString.HasValue)
             {
-                if (request.Host.HasValue)
+                // QueryString should be sanitized. see: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4571
+                activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
+            }
+
+            RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
+
+            activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
+            activity.SetTag(SemanticConventions.AttributeUrlPath, path);
+            activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
+
+            if (request.Headers.TryGetValue("User-Agent", out var values))
+            {
+                var userAgent = values.Count > 0 ? values[0] : null;
+                if (!string.IsNullOrEmpty(userAgent))
                 {
-                    activity.SetTag(SemanticConventions.AttributeServerAddress, request.Host.Host);
-
-                    if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
-                    {
-                        activity.SetTag(SemanticConventions.AttributeServerPort, request.Host.Port);
-                    }
-                }
-
-                if (request.QueryString.HasValue)
-                {
-                    // QueryString should be sanitized. see: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4571
-                    activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
-                }
-
-                RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
-
-                activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
-                activity.SetTag(SemanticConventions.AttributeUrlPath, path);
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
-
-                if (request.Headers.TryGetValue("User-Agent", out var values))
-                {
-                    var userAgent = values.Count > 0 ? values[0] : null;
-                    if (!string.IsNullOrEmpty(userAgent))
-                    {
-                        activity.SetTag(SemanticConventions.AttributeUserAgentOriginal, userAgent);
-                    }
+                    activity.SetTag(SemanticConventions.AttributeUserAgentOriginal, userAgent);
                 }
             }
 
@@ -294,31 +238,19 @@ internal class HttpInListener : ListenerHandler
             }
 #endif
 
-            if (this.emitOldAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-            }
+            activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+            /*
+            #if !NETSTANDARD2_0
 
-            if (this.emitNewAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-            }
-
-#if !NETSTANDARD2_0
-            if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
-            {
-                this.AddGrpcAttributes(activity, grpcMethod, context);
-            }
-            else if (activity.Status == ActivityStatusCode.Unset)
-            {
-                activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
-            }
-#else
+                        if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
+                        {
+                            this.AddGrpcAttributes(activity, grpcMethod, context);
+                        }
+            */
             if (activity.Status == ActivityStatusCode.Unset)
             {
                 activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
             }
-#endif
 
             try
             {
@@ -366,10 +298,7 @@ internal class HttpInListener : ListenerHandler
                 return;
             }
 
-            if (this.emitNewAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
-            }
+            activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
 
             if (this.options.RecordException)
             {
@@ -398,51 +327,6 @@ internal class HttpInListener : ListenerHandler
             => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
     }
 
-    private static string GetUri(HttpRequest request)
-    {
-        // this follows the suggestions from https://github.com/dotnet/aspnetcore/issues/28906
-        var scheme = request.Scheme ?? string.Empty;
-
-        // HTTP 1.0 request with NO host header would result in empty Host.
-        // Use placeholder to avoid incorrect URL like "http:///"
-        var host = request.Host.Value ?? UnknownHostName;
-        var pathBase = request.PathBase.Value ?? string.Empty;
-        var path = request.Path.Value ?? string.Empty;
-        var queryString = request.QueryString.Value ?? string.Empty;
-        var length = scheme.Length + Uri.SchemeDelimiter.Length + host.Length + pathBase.Length
-                     + path.Length + queryString.Length;
-
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
-        return string.Create(length, (scheme, host, pathBase, path, queryString), (span, parts) =>
-        {
-            CopyTo(ref span, parts.scheme);
-            CopyTo(ref span, Uri.SchemeDelimiter);
-            CopyTo(ref span, parts.host);
-            CopyTo(ref span, parts.pathBase);
-            CopyTo(ref span, parts.path);
-            CopyTo(ref span, parts.queryString);
-
-            static void CopyTo(ref Span<char> buffer, ReadOnlySpan<char> text)
-            {
-                if (!text.IsEmpty)
-                {
-                    text.CopyTo(buffer);
-                    buffer = buffer.Slice(text.Length);
-                }
-            }
-        });
-#else
-        return new System.Text.StringBuilder(length)
-            .Append(scheme)
-            .Append(Uri.SchemeDelimiter)
-            .Append(host)
-            .Append(pathBase)
-            .Append(path)
-            .Append(queryString)
-            .ToString();
-#endif
-    }
-
 #if !NETSTANDARD2_0
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
@@ -454,9 +338,7 @@ internal class HttpInListener : ListenerHandler
 
     private string GetDisplayName(string httpMethod, string httpRoute = null)
     {
-        var normalizedMethod = this.emitNewAttributes
-            ? RequestMethodHelper.GetNormalizedHttpMethod(httpMethod)
-            : httpMethod;
+        var normalizedMethod = RequestMethodHelper.GetNormalizedHttpMethod(httpMethod);
 
         return string.IsNullOrEmpty(httpRoute)
             ? normalizedMethod
@@ -474,27 +356,14 @@ internal class HttpInListener : ListenerHandler
 
         activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
 
-        if (this.emitOldAttributes)
-        {
-            if (context.Connection.RemoteIpAddress != null)
-            {
-                // TODO: This attribute was changed in v1.13.0 https://github.com/open-telemetry/opentelemetry-specification/pull/2614
-                activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
-            }
+        // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/rpc/rpc-spans.md
 
-            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
+        if (context.Connection.RemoteIpAddress != null)
+        {
+            activity.SetTag(SemanticConventions.AttributeClientAddress, context.Connection.RemoteIpAddress.ToString());
         }
 
-        // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/rpc/rpc-spans.md
-        if (this.emitNewAttributes)
-        {
-            if (context.Connection.RemoteIpAddress != null)
-            {
-                activity.SetTag(SemanticConventions.AttributeClientAddress, context.Connection.RemoteIpAddress.ToString());
-            }
-
-            activity.SetTag(SemanticConventions.AttributeClientPort, context.Connection.RemotePort);
-        }
+        activity.SetTag(SemanticConventions.AttributeClientPort, context.Connection.RemotePort);
 
         bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
         if (validConversion)

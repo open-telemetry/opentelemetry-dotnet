@@ -90,46 +90,68 @@ public void ConfigureServices(IServiceCollection services)
 
 #### List of metrics produced
 
-A different metric is emitted depending on whether a user opts-in to the new
-Http Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`.
+When the application targets `.NET6.0` or `.NET7.0`, the instrumentation emits
+the following metric:
 
-* By default, the instrumentation emits the following metric.
+| Name                              | Details                                                                                                                                                 |
+|-----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `http.server.request.duration`    | [Specification](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md#metric-httpserverrequestduration) |
 
-    | Name  | Instrument Type | Unit | Description | Attributes |
-    |-------|-----------------|------|-------------|------------|
-    | `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. | http.flavor, http.scheme, http.method, http.status_code, net.host.name, net.host.port, http.route |
+Starting from `.NET8.0`, metrics instrumentation is natively implemented, and
+the ASP.NET Core library has incorporated support for [built-in
+metrics](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore)
+following the OpenTelemetry semantic conventions. The library includes additional
+metrics beyond those defined in the
+[specification](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-metrics.md),
+covering additional scenarios for ASP.NET Core users. When the application
+targets `.NET8.0` and newer versions, the instrumentation library automatically
+enables all `built-in` metrics by default.
 
-* If user sets the environment variable to `http`, the instrumentation emits
-  the following metric.
+Note that the `AddAspNetCoreInstrumentation()` extension simplifies the process
+of enabling all built-in metrics via a single line of code. Alternatively, for
+more granular control over emitted metrics, you can utilize the `AddMeter()`
+extension on `MeterProviderBuilder` for meters listed in
+[built-in-metrics-aspnetcore](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore).
+Using `AddMeter()` for metrics activation eliminates the need to take dependency
+on the instrumentation library package and calling
+`AddAspNetCoreInstrumentation()`.
 
-    | Name  | Instrument Type | Unit | Description | Attributes |
-    |-------|-----------------|------|-------------|------------|
-    | `http.server.request.duration` | Histogram | `s` | Measures the duration of inbound HTTP requests. | network.protocol.version, url.scheme, http.request.method, http.response.status_code, http.route |
+If you utilize `AddAspNetCoreInstrumentation()` and wish to exclude unnecessary
+metrics, you can utilize
+[Views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument)
+to achieve this.
 
-    This metric is emitted in `seconds` as per the semantic convention. While
-    the convention [recommends using custom histogram buckets](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
-    , this feature is not yet available via .NET Metrics API.
-    A [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
+**Note:** There is no difference in features or emitted metrics when enabling
+metrics using `AddMeter()` or `AddAspNetCoreInstrumentation()` on `.NET8.0` and
+newer versions.
+
+> **Note**
+> The `http.server.request.duration` metric is emitted in `seconds` as
+    per the semantic convention. While the convention [recommends using custom
+    histogram
+    buckets](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md)
+    , this feature is not yet available via .NET Metrics API. A
+    [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
     has been included in OTel SDK starting version `1.6.0` which applies
-    recommended buckets by default for `http.server.request.duration`.
-
-* If user sets the environment variable to `http/dup`, the instrumentation
-  emits both `http.server.duration` and `http.server.request.duration`.
+    recommended buckets by default for `http.server.request.duration`. This
+    applies to all targeted frameworks.
 
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
-`AspNetCoreInstrumentationOptions`, which allows adding [`Filter`](#filter),
+`AspNetCoreTraceInstrumentationOptions`, which allows adding [`Filter`](#filter),
 [`Enrich`](#enrich) as explained below.
 
 // TODO: This section could be refined.
-When used with [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md),
-all configurations to `AspNetCoreInstrumentationOptions` can be done in the `ConfigureServices`
+When used with
+[`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md),
+all configurations to `AspNetCoreTraceInstrumentationOptions` can be done in the
+`ConfigureServices`
 method of you applications `Startup` class as shown below.
 
 ```csharp
 // Configure
-services.Configure<AspNetCoreInstrumentationOptions>(options =>
+services.Configure<AspNetCoreTraceInstrumentationOptions>(options =>
 {
     options.Filter = (httpContext) =>
     {
@@ -148,7 +170,7 @@ services.AddOpenTelemetry()
 
 This instrumentation by default collects all the incoming http requests. It
 allows filtering of requests by using the `Filter` function in
-`AspNetCoreInstrumentationOptions`. This defines the condition for allowable
+`AspNetCoreTraceInstrumentationOptions`. This defines the condition for allowable
 requests. The Filter receives the `HttpContext` of the incoming
 request, and does not collect telemetry about the request if the Filter
 returns false or throws exception.
@@ -214,6 +236,23 @@ get access to `HttpRequest` and `HttpResponse`.
 This instrumentation automatically sets Activity Status to Error if an unhandled
 exception is thrown. Additionally, `RecordException` feature may be turned on,
 to store the exception to the Activity itself as ActivityEvent.
+
+## Activity Duration and http.server.request.duration metric calculation
+
+`Activity.Duration` and `http.server.request.duration` values represents the
+time used to handle an inbound HTTP request as measured at the hosting layer of
+ASP.NET Core. The time measurement starts once the underlying web host has:
+
+* Sufficiently parsed the HTTP request headers on the inbound network stream to
+  identify the new request.
+* Initialized the context data structures such as the
+  [HttpContext](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.http.httpcontext).
+
+The time ends when:
+
+* The ASP.NET Core handler pipeline is finished executing.
+* All response data has been sent.
+* The context data structures for the request are being disposed.
 
 ## Troubleshooting
 

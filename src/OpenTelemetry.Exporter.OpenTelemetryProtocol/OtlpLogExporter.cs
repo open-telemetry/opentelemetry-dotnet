@@ -1,18 +1,7 @@
-// <copyright file="OtlpLogExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
+
+#nullable enable
 
 using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -33,14 +22,14 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     private readonly IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient;
     private readonly OtlpLogRecordTransformer otlpLogRecordTransformer;
 
-    private OtlpResource.Resource processResource;
+    private OtlpResource.Resource? processResource;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
     /// </summary>
     /// <param name="options">Configuration options for the exporter.</param>
     public OtlpLogExporter(OtlpExporterOptions options)
-        : this(options, new(), null)
+        : this(options, sdkLimitOptions: new(), experimentalOptions: new(), exportClient: null)
     {
     }
 
@@ -49,14 +38,17 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// </summary>
     /// <param name="exporterOptions">Configuration options for the exporter.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
+    /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
     /// <param name="exportClient">Client used for sending export request.</param>
     internal OtlpLogExporter(
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
-        IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient = null)
+        ExperimentalOptions experimentalOptions,
+        IExportClient<OtlpCollector.ExportLogsServiceRequest>? exportClient = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
+        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
         // Each of the Otlp exporters: Traces, Metrics, and Logs set the same value for `OtlpKeyValueTransformer.LogUnsupportedAttributeType`
         // and `ConfigurationExtensions.LogInvalidEnvironmentVariable` so it should be fine even if these exporters are used together.
@@ -76,13 +68,14 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         }
         else
         {
-            this.exportClient = exporterOptions.GetLogExportClient();
+            this.exportClient = exporterOptions!.GetLogExportClient();
         }
 
-        this.otlpLogRecordTransformer = new OtlpLogRecordTransformer(sdkLimitOptions, new());
+        this.otlpLogRecordTransformer = new OtlpLogRecordTransformer(sdkLimitOptions!, experimentalOptions!);
     }
 
-    internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
+    internal OtlpResource.Resource ProcessResource
+        => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
 
     /// <inheritdoc/>
     public override ExportResult Export(in Batch<LogRecord> logRecordBatch)
@@ -90,7 +83,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
-        OtlpCollector.ExportLogsServiceRequest request = null;
+        OtlpCollector.ExportLogsServiceRequest? request = null;
 
         try
         {

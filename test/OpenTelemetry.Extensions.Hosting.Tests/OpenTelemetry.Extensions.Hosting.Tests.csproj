@@ -4,6 +4,7 @@
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
+    <DefineConstants>$(DefineConstants);BUILDING_HOSTING_TESTS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,10 +19,23 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Note: These are SDK tests which we link and run here using the
+    IMetricsBuilder/IMetricsListener API added at the host level in .NET 8
+    instead of the direct lower-level MeterListener API added in .NET 6. -->
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\AggregatorTestsBase.cs" Link="Includes\Metrics\AggregatorTestsBase.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\KnownHistogramBuckets.cs" Link="Includes\Metrics\KnownHistogramBuckets.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricApiTestsBase.cs" Link="Includes\Metrics\MetricApiTestsBase.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricExemplarTests.cs" Link="Includes\Metrics\MetricExemplarTests.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricTestData.cs" Link="Includes\Metrics\MetricTestData.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricTestsBase.cs" Link="Includes\Metrics\MetricTestsBase.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricViewTests.cs" Link="Includes\Metrics\MetricViewTests.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\InMemoryEventListener.cs" Link="Includes\InMemoryEventListener.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Moq" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>

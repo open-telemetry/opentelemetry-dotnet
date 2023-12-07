@@ -1,25 +1,11 @@
-// <copyright file="SqlEventSourceTests.netfx.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 #if NETFRAMEWORK
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
-using Moq;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -48,9 +34,9 @@ public class SqlEventSourceTests
     [InlineData(CommandType.StoredProcedure, "sp_who", true)]
     public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false)
     {
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor(activityProcessor.Object)
+            .AddInMemoryExporter(exportedItems)
             .AddSqlClientInstrumentation(options =>
             {
                 options.SetDbStatementForText = captureText;
@@ -78,9 +64,8 @@ public class SqlEventSourceTests
         {
         }
 
-        Assert.Equal(3, activityProcessor.Invocations.Count);
-
-        var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
 
         VerifyActivityData(commandText, captureText, isFailure, dataSource, activity);
     }
@@ -105,9 +90,9 @@ public class SqlEventSourceTests
     {
         using IFakeBehavingSqlEventSource fakeSqlEventSource = (IFakeBehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
 
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor(activityProcessor.Object)
+            .AddInMemoryExporter(exportedItems)
             .AddSqlClientInstrumentation(options =>
             {
                 options.SetDbStatementForText = captureText;
@@ -132,9 +117,9 @@ public class SqlEventSourceTests
 
         fakeSqlEventSource.WriteEndExecuteEvent(objectId, compositeState, sqlExceptionNumber);
         shutdownSignal.Dispose();
-        Assert.Equal(5, activityProcessor.Invocations.Count); // SetTracerProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+        Assert.Single(exportedItems);
 
-        var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+        var activity = exportedItems[0];
 
         VerifyActivityData(commandText, captureText, isFailure, "127.0.0.1", activity, enableConnectionLevelAttributes);
     }
@@ -146,9 +131,9 @@ public class SqlEventSourceTests
     {
         using IFakeMisbehavingSqlEventSource fakeSqlEventSource = (IFakeMisbehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
 
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor(activityProcessor.Object)
+            .AddInMemoryExporter(exportedItems)
             .AddSqlClientInstrumentation()
             .Build();
 
@@ -156,7 +141,7 @@ public class SqlEventSourceTests
 
         shutdownSignal.Dispose();
 
-        Assert.Equal(3, activityProcessor.Invocations.Count); // SetTracerProvider/OnShutdown/Dispose called.
+        Assert.Empty(exportedItems);
     }
 
     [Theory]
@@ -166,9 +151,9 @@ public class SqlEventSourceTests
     {
         using IFakeMisbehavingSqlEventSource fakeSqlEventSource = (IFakeMisbehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
 
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor(activityProcessor.Object)
+            .AddInMemoryExporter(exportedItems)
             .AddSqlClientInstrumentation()
             .Build();
 
@@ -177,7 +162,7 @@ public class SqlEventSourceTests
         fakeSqlEventSource.WriteEndExecuteEvent("arg1", "arg2", "arg3", "arg4");
         shutdownSignal.Dispose();
 
-        Assert.Equal(3, activityProcessor.Invocations.Count); // SetTracerProvider/OnShutdown/Dispose called.
+        Assert.Empty(exportedItems);
     }
 
     [Theory]
@@ -187,9 +172,9 @@ public class SqlEventSourceTests
     {
         using IFakeBehavingSqlEventSource fakeSqlEventSource = (IFakeBehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
 
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor(activityProcessor.Object)
+            .AddInMemoryExporter(exportedItems)
             .AddSqlClientInstrumentation()
             .Build();
 
@@ -211,9 +196,9 @@ public class SqlEventSourceTests
 
         fakeSqlEventSource.WriteEndExecuteEvent(objectId, compositeState, 0);
         shutdownSignal.Dispose();
-        Assert.Equal(5, activityProcessor.Invocations.Count); // SetTracerProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+        Assert.Single(exportedItems);
 
-        var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+        var activity = exportedItems[0];
 
         const bool captureText = false;
         VerifyActivityData(commandText, captureText, false, "127.0.0.1", activity, false);

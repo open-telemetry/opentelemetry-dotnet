@@ -1,18 +1,5 @@
-// <copyright file="HttpWebRequestActivitySourceTests.netfx.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 #if NETFRAMEWORK
 using System.Collections.Concurrent;
@@ -37,7 +24,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
 
     static HttpWebRequestActivitySourceTests()
     {
-        HttpClientInstrumentationOptions options = new()
+        HttpClientTraceInstrumentationOptions options = new()
         {
             EnrichWithHttpWebRequest = (activity, httpWebRequest) =>
             {
@@ -776,20 +763,20 @@ public class HttpWebRequestActivitySourceTests : IDisposable
     private static void VerifyActivityStartTags(string netPeerName, int? netPeerPort, string method, string url, Activity activity)
     {
         Assert.NotNull(activity.TagObjects);
-        Assert.Equal(method, activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
+        Assert.Equal(method, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod));
         if (netPeerPort != null)
         {
-            Assert.Equal(netPeerPort, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
+            Assert.Equal(netPeerPort, activity.GetTagValue(SemanticConventions.AttributeServerPort));
         }
 
-        Assert.Equal(netPeerName, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
+        Assert.Equal(netPeerName, activity.GetTagValue(SemanticConventions.AttributeServerAddress));
 
-        Assert.Equal(url, activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
+        Assert.Equal(url, activity.GetTagValue(SemanticConventions.AttributeUrlFull));
     }
 
     private static void VerifyActivityStopTags(int statusCode, Activity activity)
     {
-        Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
+        Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpResponseStatusCode));
     }
 
     private static void ActivityEnrichment(Activity activity, string method, object obj)

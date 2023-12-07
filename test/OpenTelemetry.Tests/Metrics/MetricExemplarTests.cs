@@ -1,18 +1,5 @@
-// <copyright file="MetricExemplarTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -40,14 +27,14 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
         var counter = meter.CreateCounter<double>("testCounter");
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(new AlwaysOnExemplarFilter())
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
-            })
-            .Build();
+            }));
 
         var measurementValues = GenerateRandomValues(10);
         foreach (var value in measurementValues)
@@ -94,14 +81,14 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
         var histogram = meter.CreateHistogram<double>("testHistogram");
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(new AlwaysOnExemplarFilter())
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
-            })
-            .Build();
+            }));
 
         var measurementValues = GenerateRandomValues(10);
         foreach (var value in measurementValues)
@@ -147,15 +134,15 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
         var histogram = meter.CreateHistogram<double>("testHistogram");
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(new AlwaysOnExemplarFilter())
             .AddView(histogram.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "key1" } })
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
-            })
-            .Build();
+            }));
 
         var measurementValues = GenerateRandomValues(10);
         foreach (var value in measurementValues)
