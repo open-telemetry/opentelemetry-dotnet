@@ -38,7 +38,6 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         Guard.ThrowIfNull(options);
 
         this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
-        this.OpenMetricsEnabled = options.OpenMetricsEnabled;
 
         this.CollectionManager = new PrometheusCollectionManager(this);
     }
@@ -57,8 +56,6 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         get => this.funcExport;
         set => this.funcExport = value;
     }
-
-    internal bool? OpenMetricsRequested { get; set; }
 
     internal Action OnDispose { get; set; }
 

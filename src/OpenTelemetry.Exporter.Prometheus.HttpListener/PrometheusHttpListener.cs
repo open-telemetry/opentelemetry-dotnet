@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Specialized;
 using System.Net;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
@@ -23,8 +22,6 @@ namespace OpenTelemetry.Exporter;
 
 internal sealed class PrometheusHttpListener : IDisposable
 {
-    private const string OpenMetricsMediaType = "application/openmetrics-text";
-
     private readonly PrometheusExporter exporter;
     private readonly HttpListener httpListener = new();
     private readonly object syncObject = new();
@@ -205,29 +202,5 @@ internal sealed class PrometheusHttpListener : IDisposable
         catch
         {
         }
-    }
-
-    private bool AcceptsOpenMetrics(NameValueCollection headers)
-    {
-        var requestAccept = headers["Accept"];
-
-        if (string.IsNullOrEmpty(requestAccept))
-        {
-            return false;
-        }
-
-        var acceptTypes = requestAccept.Split(',');
-
-        foreach (var acceptType in acceptTypes)
-        {
-            var acceptSubType = acceptType.Split(';').FirstOrDefault()?.Trim();
-
-            if (acceptSubType == OpenMetricsMediaType)
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

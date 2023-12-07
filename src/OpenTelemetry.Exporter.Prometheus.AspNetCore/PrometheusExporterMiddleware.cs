@@ -28,8 +28,6 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 internal sealed class PrometheusExporterMiddleware
 {
-    private const string OpenMetricsMediaType = "application/openmetrics-text";
-
     private readonly PrometheusExporter exporter;
 
     /// <summary>

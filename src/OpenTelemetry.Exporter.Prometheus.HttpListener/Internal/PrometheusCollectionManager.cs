@@ -176,7 +176,6 @@ internal sealed class PrometheusCollectionManager
         this.exporter.OpenMetricsRequested = openMetricsRequested;
         var result = this.exporter.Collect(Timeout.Infinite);
         this.exporter.OnExport = null;
-        this.exporter.OpenMetricsRequested = null;
         return result;
     }
 
@@ -186,7 +185,7 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
-            if (this.exporter.OpenMetricsEnabled)
+            if (this.exporter.OpenMetricsRequested)
             {
                 this.scopes.Clear();
 
@@ -202,12 +201,7 @@ internal sealed class PrometheusCollectionManager
                 {
                     try
                     {
-                        cursor = PrometheusSerializer.WriteMetric(
-                            this.buffer,
-                            cursor,
-                            metric,
-                            this.GetPrometheusMetric(metric),
-                            this.exporter.OpenMetricsRequested);
+                        cursor = PrometheusSerializer.WriteScopeInfo(this.buffer, cursor, scope);
 
                         break;
                     }
@@ -243,8 +237,7 @@ internal sealed class PrometheusCollectionManager
                             cursor,
                             metric,
                             this.GetPrometheusMetric(metric),
-                            this.exporter.OpenMetricsEnabled,
-                            this.exporter.OpenMetricsRequested ?? false);
+                            this.exporter.OpenMetricsRequested);
 
                         break;
                     }

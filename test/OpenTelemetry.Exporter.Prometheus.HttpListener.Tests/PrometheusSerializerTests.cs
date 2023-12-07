@@ -528,6 +528,7 @@ public sealed class PrometheusSerializerTests
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
+    [Fact]
     public void SumWithOpenMetricsFormat()
     {
         var buffer = new byte[85000];
