@@ -1,4 +1,4 @@
-// <copyright file="AspNetCoreInstrumentationOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="AspNetCoreTraceInstrumentationOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore;
 /// <summary>
 /// Options for requests instrumentation.
 /// </summary>
-public class AspNetCoreInstrumentationOptions
+public class AspNetCoreTraceInstrumentationOptions
 {
     /// <summary>
     /// Gets or sets a filter function that determines whether or not to

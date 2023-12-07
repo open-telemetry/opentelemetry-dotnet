@@ -17,7 +17,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
-using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -68,9 +67,7 @@ internal sealed class PrometheusExporterMiddleware
 
         try
         {
-            var openMetricsRequested =
-                this.exporter.OpenMetricsEnabled && this.AcceptsOpenMetrics(httpContext.Request);
-
+            var openMetricsRequested = AcceptsOpenMetrics(httpContext.Request);
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
 
             try
@@ -83,15 +80,9 @@ internal sealed class PrometheusExporterMiddleware
 #else
                     response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
 #endif
-
-                    if (openMetricsRequested)
-                    {
-                        response.ContentType = "application/openmetrics-text; version=1.0.0; charset=utf-8";
-                    }
-                    else
-                    {
-                        response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
-                    }
+                    response.ContentType = openMetricsRequested
+                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
+                        : "text/plain; charset=utf-8; version=0.0.4";
 
                     await response.Body.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
                 }
@@ -119,22 +110,18 @@ internal sealed class PrometheusExporterMiddleware
         this.exporter.OnExport = null;
     }
 
-    private bool AcceptsOpenMetrics(HttpRequest request)
+    private static bool AcceptsOpenMetrics(HttpRequest request)
     {
-        var requestAccept = request.Headers[HeaderNames.Accept];
+        var acceptHeader = request.Headers.Accept;
 
-        if (StringValues.IsNullOrEmpty(requestAccept))
+        if (StringValues.IsNullOrEmpty(acceptHeader))
         {
             return false;
         }
 
-        var acceptTypes = requestAccept.ToString().Split(',');
-
-        foreach (var acceptType in acceptTypes)
+        foreach (var header in acceptHeader)
         {
-            var acceptSubType = acceptType.Split(';').FirstOrDefault()?.Trim();
-
-            if (acceptSubType == OpenMetricsMediaType)
+            if (PrometheusHeadersParser.AcceptsOpenMetrics(header))
             {
                 return true;
             }

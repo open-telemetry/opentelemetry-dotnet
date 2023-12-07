@@ -202,7 +202,14 @@ internal sealed class PrometheusCollectionManager
                 {
                     try
                     {
-                        cursor = PrometheusSerializer.WriteScopeInfo(this.buffer, cursor, scope);
+                        cursor = PrometheusSerializer.WriteMetric(
+                            this.buffer,
+                            cursor,
+                            metric,
+                            this.GetPrometheusMetric(metric),
+                            this.exporter.OpenMetricsRequested);
+
+                        break;
                     }
                     catch (IndexOutOfRangeException)
                     {

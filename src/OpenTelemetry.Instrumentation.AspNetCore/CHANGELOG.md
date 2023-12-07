@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-rc.1
+
+Released 2023-Dec-01
+
 * Removed support for `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. The
   library will now emit only the
   [stable](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
@@ -15,6 +19,10 @@
   instrumentation. For details, see issue
   [#5098](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5098)
   ([#5097](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5097))
+
+* **Breaking Change** : Renamed `AspNetCoreInstrumentationOptions` to
+  `AspNetCoreTraceInstrumentationOptions`.
+  ([#5108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5108))
 
 ## 1.6.0-beta.3
 

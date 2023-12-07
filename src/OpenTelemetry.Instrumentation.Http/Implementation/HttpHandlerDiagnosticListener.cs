@@ -47,7 +47,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
     private static readonly PropertyFetcher<Exception> StopExceptionFetcher = new("Exception");
     private static readonly PropertyFetcher<TaskStatus> StopRequestStatusFetcher = new("RequestTaskStatus");
-    private readonly HttpClientInstrumentationOptions options;
+    private readonly HttpClientTraceInstrumentationOptions options;
 
     static HttpHandlerDiagnosticListener()
     {
@@ -61,7 +61,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         }
     }
 
-    public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options)
+    public HttpHandlerDiagnosticListener(HttpClientTraceInstrumentationOptions options)
         : base("HttpHandlerDiagnosticListener")
     {
         this.options = options;
@@ -166,15 +166,6 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
             }
 
             activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-
-            if (request.Headers.TryGetValues("User-Agent", out var userAgentValues))
-            {
-                var userAgent = userAgentValues.FirstOrDefault();
-                if (!string.IsNullOrEmpty(userAgent))
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
-                }
-            }
 
             try
             {

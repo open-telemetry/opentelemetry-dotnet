@@ -18,7 +18,6 @@ using System.Diagnostics;
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
@@ -220,26 +219,12 @@ public partial class HttpWebRequestTests : IDisposable
         ActivityContext parentContext = default;
         ActivityContext contextFromPropagator = default;
 
-        var propagator = new Mock<TextMapPropagator>();
-#if NETFRAMEWORK
-        propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
-            .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, carrier, setter) =>
-            {
-                contextFromPropagator = context.ActivityContext;
-
-                setter(carrier, "traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
-                setter(carrier, "tracestate", contextFromPropagator.TraceState);
-            });
-#else
-        propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-            .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, carrier, setter) =>
-            {
-                contextFromPropagator = context.ActivityContext;
-
-                setter(carrier, "traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
-                setter(carrier, "tracestate", contextFromPropagator.TraceState);
-            });
-#endif
+        var propagator = new CustomTextMapPropagator
+        {
+            Injected = (PropagationContext context) => contextFromPropagator = context.ActivityContext,
+        };
+        propagator.InjectValues.Add("custom_traceParent", context => $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
+        propagator.InjectValues.Add("custom_traceState", context => Activity.Current.TraceStateString);
 
         var exportedItems = new List<Activity>();
 
@@ -250,7 +235,7 @@ public partial class HttpWebRequestTests : IDisposable
             .Build())
         {
             var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator);
 
             Activity parent = null;
             if (createParentActivity)
@@ -312,11 +297,11 @@ public partial class HttpWebRequestTests : IDisposable
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
             {
-                services.Configure<HttpClientInstrumentationOptions>(name, o => configurationDelegateInvocations++);
+                services.Configure<HttpClientTraceInstrumentationOptions>(name, o => configurationDelegateInvocations++);
             })
             .AddHttpClientInstrumentation(name, options =>
             {
-                Assert.IsType<HttpClientInstrumentationOptions>(options);
+                Assert.IsType<HttpClientTraceInstrumentationOptions>(options);
             })
             .Build();
 

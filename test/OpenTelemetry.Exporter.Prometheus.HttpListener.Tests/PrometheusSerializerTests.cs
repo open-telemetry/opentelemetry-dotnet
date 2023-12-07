@@ -528,13 +528,12 @@ public sealed class PrometheusSerializerTests
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
-    [Fact]
-    public void SumWithScopeInfo()
+    public void SumWithOpenMetricsFormat()
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
 
-        using var meter = new Meter("meter_name", "meter_version");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddInMemoryExporter(metrics)
@@ -550,7 +549,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
              + "# TYPE test_updown_counter gauge\n"
-             + "test_updown_counter{otel_scope_name='meter_name',otel_scope_version='meter_version'} -1 \\d+\\.\\d{3}\n"
+             + "test_updown_counter -1 \\d+\\.\\d{3}\n"
              + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -561,7 +560,7 @@ public sealed class PrometheusSerializerTests
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
 
-        using var meter = new Meter("meter_name", "meter_version");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddInMemoryExporter(metrics)
@@ -577,30 +576,30 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='0'} 0 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='5'} 0 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='10'} 0 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='25'} 1 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='50'} 1 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='75'} 1 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='100'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='250'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='500'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='750'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='1000'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='2500'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='5000'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='7500'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='10000'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='\\+Inf'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_sum{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1'} 118 \\d+\\.\\d{3}\n"
-                + "test_histogram_count{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1'} 2 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='0'} 0 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='5'} 0 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='10'} 0 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='25'} 1 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='50'} 1 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='75'} 1 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='100'} 2 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='250'} 2 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='500'} 2 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='750'} 2 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='1000'} 2 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='2500'} 2 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='5000'} 2 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='7500'} 2 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='10000'} 2 \\d+\\.\\d{3}\n"
+                + "test_histogram_bucket{x='1',le='\\+Inf'} 2 \\d+\\.\\d{3}\n"
+                + "test_histogram_sum{x='1'} 118 \\d+\\.\\d{3}\n"
+                + "test_histogram_count{x='1'} 2 \\d+\\.\\d{3}\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
     private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false)
     {
-        return PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric), useOpenMetrics, useOpenMetrics);
+        return PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric), useOpenMetrics);
     }
 }

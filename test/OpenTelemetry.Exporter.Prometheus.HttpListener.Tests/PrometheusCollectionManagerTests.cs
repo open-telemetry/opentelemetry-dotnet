@@ -30,7 +30,7 @@ public sealed class PrometheusCollectionManagerTests
     [InlineData(300, true)] // default value for AspNetCore, no possibility to set on HttpListener
     [InlineData(300, false)] // default value for AspNetCore, no possibility to set on HttpListener
 #endif
-    public async Task EnterExitCollectTest(int scrapeResponseCacheDurationMilliseconds, bool requestOpenMetrics)
+    public async Task EnterExitCollectTest(int scrapeResponseCacheDurationMilliseconds, bool openMetricsRequested)
     {
         bool cacheEnabled = scrapeResponseCacheDurationMilliseconds != 0;
         using var meter = new Meter(Utils.GetCurrentMethodName());
@@ -67,7 +67,8 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
-                    var response = await exporter.CollectionManager.EnterCollect(requestOpenMetrics);
+                    var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
+
                     try
                     {
                         return new Response
@@ -100,7 +101,7 @@ public sealed class PrometheusCollectionManagerTests
             counter.Add(100);
 
             // This should use the cache and ignore the second counter update.
-            var task = exporter.CollectionManager.EnterCollect(requestOpenMetrics);
+            var task = exporter.CollectionManager.EnterCollect(openMetricsRequested);
             Assert.True(task.IsCompleted);
             var response = await task;
             try
@@ -131,7 +132,8 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
-                    var response = await exporter.CollectionManager.EnterCollect(requestOpenMetrics);
+                    var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
+
                     try
                     {
                         return new Response

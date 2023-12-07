@@ -240,13 +240,21 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
-    public async Task PrometheusExporterMiddlewareIntegration_DisableOpenMetrics()
+    public Task PrometheusExporterMiddlewareIntegration_TextPlainResponse()
     {
-        await RunPrometheusExporterMiddlewareIntegrationTest(
+        return RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-            configureOptions: o => o.OpenMetricsEnabled = false,
-            useOpenMetrics: false);
+            acceptHeader: "text/plain");
+    }
+
+    [Fact]
+    public Task PrometheusExporterMiddlewareIntegration_UseOpenMetricsVersionHeader()
+    {
+        return RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            acceptHeader: "application/openmetrics-text; version=1.0.0");
     }
 
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
@@ -257,8 +265,10 @@ public sealed class PrometheusExporterMiddlewareTests
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions> configureOptions = null,
         bool skipMetrics = false,
-        bool useOpenMetrics = true)
+        string acceptHeader = "application/openmetrics-text")
     {
+        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
+
         using var host = await new HostBuilder()
            .ConfigureWebHost(webBuilder => webBuilder
                .UseTestServer()
@@ -298,9 +308,9 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var client = host.GetTestClient();
 
-        if (useOpenMetrics)
+        if (!string.IsNullOrEmpty(acceptHeader))
         {
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/openmetrics-text"));
+            client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
         using var response = await client.GetAsync(path);
@@ -312,7 +322,7 @@ public sealed class PrometheusExporterMiddlewareTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
 
-            if (useOpenMetrics)
+            if (requestOpenMetrics)
             {
                 Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
             }
@@ -323,20 +333,15 @@ public sealed class PrometheusExporterMiddlewareTests
 
             string content = await response.Content.ReadAsStringAsync();
 
-            string expected = useOpenMetrics
-                ? "# TYPE otel_scope_info info\n"
-                  + "# HELP otel_scope_info Scope metadata\n"
-                  + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
-                  + "# TYPE counter_double_total counter\n"
-                  + $"counter_double_total{{otel_scope_name='{MeterName}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
+            string expected = requestOpenMetrics
+                ? "# TYPE counter_double_total counter\n"
+                  + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+\\.\\d{3})\n"
                   + "# EOF\n"
                 : "# TYPE counter_double_total counter\n"
                   + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
                   + "# EOF\n";
 
-            var matches = Regex.Matches(
-                content,
-                ("^" + expected + "$").Replace('\'', '"'));
+            var matches = Regex.Matches(content, ("^" + expected + "$").Replace('\'', '"'));
 
             Assert.Single(matches);
 
