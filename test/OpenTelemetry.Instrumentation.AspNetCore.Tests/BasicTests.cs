@@ -960,6 +960,7 @@ public sealed class BasicTests
         int numberOfUnSubscribedEvents = 0;
         int numberOfSubscribedEvents = 0;
         int numberOfExceptionCallbacks = 0;
+        bool exceptionHandled = false;
 
         // configure SDK
         this.tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -1004,18 +1005,18 @@ public sealed class BasicTests
                 })
                 .Build();
 
+        TestMiddleware.Create(builder => builder
+            .UseExceptionHandler(handler =>
+                handler.Run(async (ctx) =>
+                {
+                    exceptionHandled = true;
+                    await ctx.Response.WriteAsync("handled");
+                })));
+
         using (var client = this.factory
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
-                builder.Configure(app => app
-                    .UseExceptionHandler(handler =>
-                    {
-                        handler.Run(async (ctx) =>
-                        {
-                            await ctx.Response.WriteAsync("handled");
-                        });
-                    }));
             })
             .CreateClient())
         {
@@ -1033,6 +1034,7 @@ public sealed class BasicTests
         Assert.Equal(0, numberOfExceptionCallbacks);
         Assert.Equal(0, numberOfUnSubscribedEvents);
         Assert.Equal(2, numberOfSubscribedEvents);
+        Assert.True(exceptionHandled);
     }
 
     public void Dispose()
