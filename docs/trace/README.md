@@ -6,7 +6,7 @@
 
 `ActivitySource` SHOULD only be created once and reused throughout the
 application lifetime. This
-[example](../../docs/traces/getting-started-console/Program.cs) shows how
+[example](./getting-started-console/Program.cs) shows how
 `ActivitySource` is created as a `static` field and then used in the
 application. You could also look at this ASP.NET Core
 [example](../../examples/AspNetCore/Program.cs) which shows a more Dependency
