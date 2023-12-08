@@ -271,6 +271,7 @@ public static class OtlpLogExporterHelperExtensions
                 sdkOptionsManager);
         });
     }
+#endif
 
     internal static BaseProcessor<LogRecord> BuildOtlpLogExporter(
         IServiceProvider sp,
@@ -352,7 +353,6 @@ public static class OtlpLogExporterHelperExtensions
                 processorOptions.BatchExportProcessorOptions.MaxExportBatchSize);
         }
     }
-#endif
 
     private static OtlpExporterOptions GetOtlpExporterOptions(IServiceProvider sp, string? name, string finalName)
     {
