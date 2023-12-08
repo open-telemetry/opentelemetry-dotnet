@@ -61,7 +61,7 @@ public static class ActivityExtensions
     /// </summary>
     /// <param name="activity">Activity instance.</param>
     /// <param name="ex">Exception to be recorded.</param>
-    /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md"/>.
+    /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -74,7 +74,7 @@ public static class ActivityExtensions
     /// <param name="activity">Activity instance.</param>
     /// <param name="ex">Exception to be recorded.</param>
     /// <param name="tags">Additional tags to record on the event.</param>
-    /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md"/>.
+    /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
