@@ -1,3 +1,5 @@
+# Called by ci.yml to perform package validation
+# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
 name: Package Validation
 
 on:

@@ -1,3 +1,5 @@
+# Called by ci.yml to run documentation build
+# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
 name: Build docfx
 
 on:

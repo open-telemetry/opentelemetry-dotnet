@@ -1,3 +1,5 @@
+# Called by ci.yml to perform dotnet format linting
+# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
 name: Lint - dotnet format
 
 on:
