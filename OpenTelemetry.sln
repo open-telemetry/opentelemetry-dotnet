@@ -32,7 +32,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\docfx.cmd = build\docfx.cmd
 		build\docker-compose.net6.0.yml = build\docker-compose.net6.0.yml
 		build\docker-compose.net7.0.yml = build\docker-compose.net7.0.yml
-		build\docker-compose.net8.0.yml = build\docker-compose.net8.0.yml
 		build\finalize-publicapi.ps1 = build\finalize-publicapi.ps1
 		build\GlobalAttrExclusions.txt = build\GlobalAttrExclusions.txt
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
@@ -259,6 +258,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\ActivityHelperExtensions.cs = src\Shared\ActivityHelperExtensions.cs
 		src\Shared\ActivityInstrumentationHelper.cs = src\Shared\ActivityInstrumentationHelper.cs
+		src\Shared\DiagnosticDefinitions.cs = src\Shared\DiagnosticDefinitions.cs
 		src\Shared\ExceptionExtensions.cs = src\Shared\ExceptionExtensions.cs
 		src\Shared\Guard.cs = src\Shared\Guard.cs
 		src\Shared\HttpSemanticConventionHelper.cs = src\Shared\HttpSemanticConventionHelper.cs
@@ -315,6 +315,18 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-aspnetcore", "docs\logs\getting-started-aspnetcore\getting-started-aspnetcore.csproj", "{99B4D965-8782-4694-8DFA-B7A3630CEF60}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "links-creation", "docs\trace\links-creation-with-new-activities\links-creation.csproj", "{B4856711-6D4C-4246-A686-49458D4C1301}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "diagnostics", "diagnostics", "{52AF6D7D-9E66-4234-9A2C-5D16C6F22B40}"
+	ProjectSection(SolutionItems) = preProject
+		docs\diagnostics\README.md = docs\diagnostics\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "experimental-apis", "experimental-apis", "{17A22B0E-6EC3-4A39-B955-0A486AD06699}"
+	ProjectSection(SolutionItems) = preProject
+		docs\diagnostics\experimental-apis\OTEL1000.md = docs\diagnostics\experimental-apis\OTEL1000.md
+		docs\diagnostics\experimental-apis\OTEL1001.md = docs\diagnostics\experimental-apis\OTEL1001.md
+		docs\diagnostics\experimental-apis\README.md = docs\diagnostics\experimental-apis\README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -643,6 +655,8 @@ Global
 		{1C459B5B-C702-46FF-BF1A-EE795E420FFA} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 		{99B4D965-8782-4694-8DFA-B7A3630CEF60} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{B4856711-6D4C-4246-A686-49458D4C1301} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
+		{52AF6D7D-9E66-4234-9A2C-5D16C6F22B40} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
+		{17A22B0E-6EC3-4A39-B955-0A486AD06699} = {52AF6D7D-9E66-4234-9A2C-5D16C6F22B40}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

@@ -3,6 +3,11 @@
 
 #nullable enable
 
+#if NET8_0_OR_GREATER && EXPOSE_EXPERIMENTAL_FEATURES
+using System.Diagnostics.CodeAnalysis;
+using OpenTelemetry.Internal;
+#endif
+
 namespace OpenTelemetry.Logs;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
@@ -10,6 +15,9 @@ namespace OpenTelemetry.Logs;
 /// Contains extension methods for the <see cref="LogRecordSeverity"/> enum.
 /// </summary>
 /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+[Experimental(DiagnosticDefinitions.LogBridgeApiExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
 public
 #else
 /// <summary>

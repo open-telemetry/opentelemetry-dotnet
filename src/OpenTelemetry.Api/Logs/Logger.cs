@@ -3,6 +3,11 @@
 
 #nullable enable
 
+#if NET8_0_OR_GREATER && EXPOSE_EXPERIMENTAL_FEATURES
+using System.Diagnostics.CodeAnalysis;
+using OpenTelemetry.Internal;
+#endif
+
 namespace OpenTelemetry.Logs;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
@@ -10,6 +15,9 @@ namespace OpenTelemetry.Logs;
 /// Logger is the class responsible for creating log records.
 /// </summary>
 /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
+#if NET8_0_OR_GREATER
+[Experimental(DiagnosticDefinitions.LogBridgeApiExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
 public
 #else
 /// <summary>
@@ -17,7 +25,7 @@ public
 /// </summary>
 internal
 #endif
-    abstract class Logger
+abstract class Logger
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Logger"/> class.
