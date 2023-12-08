@@ -1,24 +1,10 @@
-// <copyright file="HttpWebRequestTests.Basic.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
@@ -220,26 +206,12 @@ public partial class HttpWebRequestTests : IDisposable
         ActivityContext parentContext = default;
         ActivityContext contextFromPropagator = default;
 
-        var propagator = new Mock<TextMapPropagator>();
-#if NETFRAMEWORK
-        propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
-            .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, carrier, setter) =>
-            {
-                contextFromPropagator = context.ActivityContext;
-
-                setter(carrier, "traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
-                setter(carrier, "tracestate", contextFromPropagator.TraceState);
-            });
-#else
-        propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-            .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, carrier, setter) =>
-            {
-                contextFromPropagator = context.ActivityContext;
-
-                setter(carrier, "traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
-                setter(carrier, "tracestate", contextFromPropagator.TraceState);
-            });
-#endif
+        var propagator = new CustomTextMapPropagator
+        {
+            Injected = (PropagationContext context) => contextFromPropagator = context.ActivityContext,
+        };
+        propagator.InjectValues.Add("custom_traceParent", context => $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
+        propagator.InjectValues.Add("custom_traceState", context => Activity.Current.TraceStateString);
 
         var exportedItems = new List<Activity>();
 
@@ -250,7 +222,7 @@ public partial class HttpWebRequestTests : IDisposable
             .Build())
         {
             var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator);
 
             Activity parent = null;
             if (createParentActivity)

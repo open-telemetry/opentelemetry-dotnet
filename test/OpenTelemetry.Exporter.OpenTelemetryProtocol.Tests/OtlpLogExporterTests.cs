@@ -1,18 +1,5 @@
-// <copyright file="OtlpLogExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -22,9 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -720,37 +705,34 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     public void Export_WhenExportClientIsProvidedInCtor_UsesProvidedExportClient()
     {
         // Arrange.
-        var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+        var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
             new OtlpExporterOptions(),
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            fakeExportClient.Object);
+            testExportClient);
 
         // Act.
-        var result = sut.Export(emptyBatch);
+        sut.Export(emptyBatch);
 
         // Assert.
-        fakeExportClient.Verify(x => x.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default), Times.Once());
+        Assert.True(testExportClient.SendExportRequestCalled);
     }
 
     [Fact]
     public void Export_WhenExportClientThrowsException_ReturnsExportResultFailure()
     {
         // Arrange.
-        var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+        var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>(throwException: true);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
-        fakeExportClient
-            .Setup(_ => _.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default))
-            .Throws(new Exception("Test Exception"));
         var sut = new OtlpLogExporter(
             new OtlpExporterOptions(),
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            fakeExportClient.Object);
+            testExportClient);
 
         // Act.
         var result = sut.Export(emptyBatch);
@@ -763,17 +745,14 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     public void Export_WhenExportIsSuccessful_ReturnsExportResultSuccess()
     {
         // Arrange.
-        var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+        var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
-        fakeExportClient
-            .Setup(_ => _.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default))
-            .Returns(true);
         var sut = new OtlpLogExporter(
             new OtlpExporterOptions(),
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            fakeExportClient.Object);
+            testExportClient);
 
         // Act.
         var result = sut.Export(emptyBatch);
