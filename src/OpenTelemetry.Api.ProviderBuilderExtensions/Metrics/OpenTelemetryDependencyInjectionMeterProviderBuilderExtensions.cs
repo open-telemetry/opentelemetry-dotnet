@@ -112,10 +112,10 @@ public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensio
 
     /// <summary>
     /// Register a callback action to configure the <see
-    /// cref="IServiceCollection"/> where tracing services are configured.
+    /// cref="IServiceCollection"/> where metrics services are configured.
     /// </summary>
     /// <remarks>
-    /// Note: Tracing services are only available during the application
+    /// Note: Metrics services are only available during the application
     /// configuration phase.
     /// </remarks>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
