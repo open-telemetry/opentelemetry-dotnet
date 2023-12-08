@@ -25,7 +25,7 @@ Instead of manually creating `Activity`, check if you can leverage
 instrumentation libraries, such as [ASP.NET
 Core](../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md),
 [HttpClient](../../src/OpenTelemetry.Instrumentation.Http/README.md) which will
-not only create and populate `Activity` with tags(attributes), but also takes
+not only create and populate `Activity` with tags(attributes), but also take
 care of propagating/restoring the context across process boundaries. If the
 `Activity` produced by the instrumentation library is missing some information
 you need, it is generally recommend to enrich the existing Activity with that
