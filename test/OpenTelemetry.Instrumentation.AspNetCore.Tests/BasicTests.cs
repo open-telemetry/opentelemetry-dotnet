@@ -1053,6 +1053,8 @@ public sealed class BasicTests
         var result = bool.Parse(await response.Content.ReadAsStringAsync());
 
         Assert.True(response.IsSuccessStatusCode);
+
+        // Confirm that Activity.Current and IHttpActivityFeature activity are same
         Assert.True(result);
     }
 #endif

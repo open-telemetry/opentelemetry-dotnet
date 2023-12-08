@@ -41,7 +41,7 @@ public class ChildActivityController : Controller
     public bool GetActivityEquality()
     {
         var activity = this.HttpContext.Features.GetRequiredFeature<IHttpActivityFeature>().Activity;
-        var equal = Activity.Current?.Id == activity.Id;
+        var equal = Activity.Current == activity;
         return equal;
     }
 }
