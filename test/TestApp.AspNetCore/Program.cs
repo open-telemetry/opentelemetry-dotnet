@@ -47,6 +47,8 @@ public class Program
 
         app.UseMiddleware<ActivityMiddleware>();
 
+        app.AddTestMiddleware();
+
         app.Run();
     }
 }
