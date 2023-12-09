@@ -28,7 +28,7 @@ Core](../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md),
 not only create and populate `Activity` with tags(attributes), but also take
 care of propagating/restoring the context across process boundaries. If the
 `Activity` produced by the instrumentation library is missing some information
-you need, it is generally recommend to enrich the existing Activity with that
+you need, it is generally recommended to enrich the existing Activity with that
 information, as opposed to creating a new one.
 
 ## Common issues that lead to missing traces
