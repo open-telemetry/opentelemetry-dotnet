@@ -69,6 +69,8 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
                 services.Configure<LogRecordExportProcessorOptions>("Exporter3", o => namedExporterOptionsConfigureOptionsInvocations++);
             })
             .AddOtlpExporter()
+            .AddOtlpExporter("Exporter2", o => { })
+            .AddOtlpExporter("Exporter3", o => { })
             .Build();
 
         Assert.Equal(2, defaultExporterOptionsConfigureOptionsInvocations);
