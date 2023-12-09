@@ -10,5 +10,5 @@ internal static class DiagnosticDefinitions
     public const string ExperimentalApiUrlFormat = "https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/diagnostics/experimental-apis/README.md#{0}";
 
     public const string LoggerProviderExperimentalApi = "OTEL1000";
-    public const string LogBridgeApiExperimentalApi = "OTEL1001";
+    public const string LogBridgeExperimentalApi = "OTEL1001";
 }
