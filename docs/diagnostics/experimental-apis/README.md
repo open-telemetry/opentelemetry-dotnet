@@ -23,7 +23,7 @@ Details: [OTEL1000](./OTEL1000.md)
 
 ### OTEL1001
 
-Description: Log Bridge API
+Description: Logs Bridge API
 
 Details: [OTEL1001](./OTEL1001.md)
 

@@ -43,7 +43,7 @@ internal
     /// </summary>
     /// <returns><see cref="Logger"/> instance.</returns>
 #if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.LogBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     public Logger GetLogger()
         => this.GetLogger(name: null, version: null);
@@ -54,7 +54,7 @@ internal
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
 #if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.LogBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     public Logger GetLogger(string? name)
         => this.GetLogger(name, version: null);
@@ -66,7 +66,7 @@ internal
     /// <param name="version">Optional version of the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
 #if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.LogBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     public Logger GetLogger(string? name, string? version)
     {
@@ -87,7 +87,7 @@ internal
     /// <param name="logger"><see cref="Logger"/>.</param>
     /// <returns><see langword="true"/> if the logger was created.</returns>
 #if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.LogBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     protected virtual bool TryCreateLogger(
         string? name,
