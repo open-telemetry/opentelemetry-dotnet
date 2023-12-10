@@ -587,7 +587,7 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void SumWithOpenScopeInfo()
+    public void SumWithScopeVersion()
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -610,7 +610,7 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void HistogramOneDimensionWithScopeInfo()
+    public void HistogramOneDimensionWithScopeVersion()
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
