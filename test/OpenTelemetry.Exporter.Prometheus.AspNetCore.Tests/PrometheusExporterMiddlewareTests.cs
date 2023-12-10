@@ -328,7 +328,10 @@ public sealed class PrometheusExporterMiddlewareTests
                   + "# TYPE counter_double_total counter\n"
                   + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
                   + "# EOF\n"
-                : "# TYPE counter_double_total counter\n"
+                : "# TYPE otel_scope_info info\n"
+                  + "# HELP otel_scope_info Scope metadata\n"
+                  + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
+                  + "# TYPE counter_double_total counter\n"
                   + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
                   + "# EOF\n";
 

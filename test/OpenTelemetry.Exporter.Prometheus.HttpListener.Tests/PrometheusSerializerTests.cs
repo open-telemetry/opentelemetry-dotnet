@@ -31,7 +31,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
-                + "test_gauge 123 \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -57,7 +57,7 @@ public sealed class PrometheusSerializerTests
             ("^"
                 + "# TYPE test_gauge gauge\n"
                 + "# HELP test_gauge Hello, world!\n"
-                + "test_gauge 123 \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -83,7 +83,7 @@ public sealed class PrometheusSerializerTests
             ("^"
                 + "# TYPE test_gauge_seconds gauge\n"
                 + "# UNIT test_gauge_seconds seconds\n"
-                + "test_gauge_seconds 123 \\d+\n"
+                + $"test_gauge_seconds{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -110,7 +110,7 @@ public sealed class PrometheusSerializerTests
                 + "# TYPE test_gauge_seconds gauge\n"
                 + "# UNIT test_gauge_seconds seconds\n"
                 + "# HELP test_gauge_seconds Hello, world!\n"
-                + "test_gauge_seconds 123 \\d+\n"
+                + $"test_gauge_seconds{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -137,7 +137,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
-                + "test_gauge{tagKey='tagValue'} 123 \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',tagKey='tagValue'}} 123 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -164,7 +164,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
-                + "test_gauge{tagKey='true'} 123 \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',tagKey='true'}} 123 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -194,9 +194,9 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
-                + "test_gauge{x='1',y='2'} -Inf \\d+\n"
-                + "test_gauge{x='3',y='4'} \\+Inf \\d+\n"
-                + "test_gauge{x='5',y='6'} Nan \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2'}} -Inf \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='3',y='4'}} \\+Inf \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='5',y='6'}} Nan \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -223,7 +223,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_counter_total counter\n"
-                + "test_counter_total \\+Inf \\d+\n"
+                + $"test_counter_total{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} \\+Inf \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -250,7 +250,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_updown_counter gauge\n"
-                + "test_updown_counter -1 \\d+\n"
+                + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} -1 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -277,24 +277,24 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + "test_histogram_bucket{le='0'} 0 \\d+\n"
-                + "test_histogram_bucket{le='5'} 0 \\d+\n"
-                + "test_histogram_bucket{le='10'} 0 \\d+\n"
-                + "test_histogram_bucket{le='25'} 1 \\d+\n"
-                + "test_histogram_bucket{le='50'} 1 \\d+\n"
-                + "test_histogram_bucket{le='75'} 1 \\d+\n"
-                + "test_histogram_bucket{le='100'} 2 \\d+\n"
-                + "test_histogram_bucket{le='250'} 2 \\d+\n"
-                + "test_histogram_bucket{le='500'} 2 \\d+\n"
-                + "test_histogram_bucket{le='750'} 2 \\d+\n"
-                + "test_histogram_bucket{le='1000'} 2 \\d+\n"
-                + "test_histogram_bucket{le='2500'} 2 \\d+\n"
-                + "test_histogram_bucket{le='5000'} 2 \\d+\n"
-                + "test_histogram_bucket{le='7500'} 2 \\d+\n"
-                + "test_histogram_bucket{le='10000'} 2 \\d+\n"
-                + "test_histogram_bucket{le='\\+Inf'} 2 \\d+\n"
-                + "test_histogram_sum 118 \\d+\n"
-                + "test_histogram_count 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='0'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='25'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='50'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='75'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='100'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='250'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='500'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='750'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='1000'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='2500'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5000'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='7500'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10000'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='\\+Inf'}} 2 \\d+\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 118 \\d+\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 2 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -321,24 +321,24 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + "test_histogram_bucket{x='1',le='0'} 0 \\d+\n"
-                + "test_histogram_bucket{x='1',le='5'} 0 \\d+\n"
-                + "test_histogram_bucket{x='1',le='10'} 0 \\d+\n"
-                + "test_histogram_bucket{x='1',le='25'} 1 \\d+\n"
-                + "test_histogram_bucket{x='1',le='50'} 1 \\d+\n"
-                + "test_histogram_bucket{x='1',le='75'} 1 \\d+\n"
-                + "test_histogram_bucket{x='1',le='100'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',le='250'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',le='500'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',le='750'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',le='1000'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',le='2500'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',le='5000'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',le='7500'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',le='10000'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',le='\\+Inf'} 2 \\d+\n"
-                + "test_histogram_sum{x='1'} 118 \\d+\n"
-                + "test_histogram_count{x='1'} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='0'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='25'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='50'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='75'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='100'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='250'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='500'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='750'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='1000'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='2500'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5000'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='7500'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10000'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='\\+Inf'}} 2 \\d+\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 118 \\d+\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 2 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -365,24 +365,24 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + "test_histogram_bucket{x='1',y='2',le='0'} 0 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='5'} 0 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='10'} 0 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='25'} 1 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='50'} 1 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='75'} 1 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='100'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='250'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='500'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='750'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='1000'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='2500'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='5000'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='7500'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='10000'} 2 \\d+\n"
-                + "test_histogram_bucket{x='1',y='2',le='\\+Inf'} 2 \\d+\n"
-                + "test_histogram_sum{x='1',y='2'} 118 \\d+\n"
-                + "test_histogram_count{x='1',y='2'} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='0'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='5'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='10'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='25'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='50'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='75'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='100'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='250'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='500'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='750'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='1000'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='2500'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='5000'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='7500'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='10000'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='\\+Inf'}} 2 \\d+\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2'}} 118 \\d+\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2'}} 2 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -410,24 +410,24 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + "test_histogram_bucket{le='0'} 0 \\d+\n"
-                + "test_histogram_bucket{le='5'} 0 \\d+\n"
-                + "test_histogram_bucket{le='10'} 0 \\d+\n"
-                + "test_histogram_bucket{le='25'} 1 \\d+\n"
-                + "test_histogram_bucket{le='50'} 1 \\d+\n"
-                + "test_histogram_bucket{le='75'} 1 \\d+\n"
-                + "test_histogram_bucket{le='100'} 1 \\d+\n"
-                + "test_histogram_bucket{le='250'} 1 \\d+\n"
-                + "test_histogram_bucket{le='500'} 1 \\d+\n"
-                + "test_histogram_bucket{le='750'} 1 \\d+\n"
-                + "test_histogram_bucket{le='1000'} 1 \\d+\n"
-                + "test_histogram_bucket{le='2500'} 1 \\d+\n"
-                + "test_histogram_bucket{le='5000'} 1 \\d+\n"
-                + "test_histogram_bucket{le='7500'} 1 \\d+\n"
-                + "test_histogram_bucket{le='10000'} 1 \\d+\n"
-                + "test_histogram_bucket{le='\\+Inf'} 3 \\d+\n"
-                + "test_histogram_sum \\+Inf \\d+\n"
-                + "test_histogram_count 3 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='0'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='25'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='50'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='75'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='100'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='250'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='500'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='750'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='1000'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='2500'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5000'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='7500'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10000'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='\\+Inf'}} 3 \\d+\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} \\+Inf \\d+\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 3 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -455,24 +455,24 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + "test_histogram_bucket{le='0'} 0 \\d+\n"
-                + "test_histogram_bucket{le='5'} 0 \\d+\n"
-                + "test_histogram_bucket{le='10'} 0 \\d+\n"
-                + "test_histogram_bucket{le='25'} 1 \\d+\n"
-                + "test_histogram_bucket{le='50'} 1 \\d+\n"
-                + "test_histogram_bucket{le='75'} 1 \\d+\n"
-                + "test_histogram_bucket{le='100'} 1 \\d+\n"
-                + "test_histogram_bucket{le='250'} 1 \\d+\n"
-                + "test_histogram_bucket{le='500'} 1 \\d+\n"
-                + "test_histogram_bucket{le='750'} 1 \\d+\n"
-                + "test_histogram_bucket{le='1000'} 1 \\d+\n"
-                + "test_histogram_bucket{le='2500'} 1 \\d+\n"
-                + "test_histogram_bucket{le='5000'} 1 \\d+\n"
-                + "test_histogram_bucket{le='7500'} 1 \\d+\n"
-                + "test_histogram_bucket{le='10000'} 1 \\d+\n"
-                + "test_histogram_bucket{le='\\+Inf'} 3 \\d+\n"
-                + "test_histogram_sum Nan \\d+\n"
-                + "test_histogram_count 3 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='0'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10'}} 0 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='25'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='50'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='75'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='100'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='250'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='500'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='750'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='1000'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='2500'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5000'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='7500'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10000'}} 1 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='\\+Inf'}} 3 \\d+\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} Nan \\d+\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 3 \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -521,7 +521,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
              + "# TYPE test_updown_counter gauge\n"
-             + "test_updown_counter -1 \\d+\\.\\d{3}\n"
+             + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} -1 \\d+\\.\\d{{3}}\n"
              + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -548,24 +548,24 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + "test_histogram_bucket{x='1',le='0'} 0 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='5'} 0 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='10'} 0 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='25'} 1 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='50'} 1 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='75'} 1 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='100'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='250'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='500'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='750'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='1000'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='2500'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='5000'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='7500'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='10000'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_bucket{x='1',le='\\+Inf'} 2 \\d+\\.\\d{3}\n"
-                + "test_histogram_sum{x='1'} 118 \\d+\\.\\d{3}\n"
-                + "test_histogram_count{x='1'} 2 \\d+\\.\\d{3}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='0'}} 0 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5'}} 0 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10'}} 0 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='25'}} 1 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='50'}} 1 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='75'}} 1 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='100'}} 2 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='250'}} 2 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='500'}} 2 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='750'}} 2 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='1000'}} 2 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='2500'}} 2 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5000'}} 2 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='7500'}} 2 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10000'}} 2 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='\\+Inf'}} 2 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 118 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 2 \\d+\\.\\d{{3}}\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -591,7 +591,7 @@ public sealed class PrometheusSerializerTests
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
-        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName(), "1.0.0");
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddInMemoryExporter(metrics)
@@ -604,7 +604,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
              + "# TYPE test_updown_counter gauge\n"
-             + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} -1 \\d+\\.\\d{{3}}\n"
+             + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0'}} -1 \\d+\\.\\d{{3}}\n"
              + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }

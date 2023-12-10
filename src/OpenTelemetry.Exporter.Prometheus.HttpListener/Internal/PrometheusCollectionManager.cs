@@ -172,38 +172,35 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
-            if (this.exporter.OpenMetricsRequested)
+            this.scopes.Clear();
+
+            foreach (var metric in metrics)
             {
-                this.scopes.Clear();
-
-                foreach (var metric in metrics)
+                if (PrometheusSerializer.CanWriteMetric(metric))
                 {
-                    if (PrometheusSerializer.CanWriteMetric(metric))
-                    {
-                        this.scopes.Add(metric.MeterName);
-                    }
+                    this.scopes.Add(metric.MeterName);
                 }
+            }
 
-                foreach (var scope in this.scopes)
+            foreach (var scope in this.scopes)
+            {
+                try
                 {
-                    try
-                    {
-                        cursor = PrometheusSerializer.WriteScopeInfo(this.buffer, cursor, scope);
+                    cursor = PrometheusSerializer.WriteScopeInfo(this.buffer, cursor, scope);
 
-                        break;
-                    }
-                    catch (IndexOutOfRangeException)
+                    break;
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    if (!this.IncreaseBufferSize())
                     {
-                        if (!this.IncreaseBufferSize())
-                        {
-                            // there are two cases we might run into the following condition:
-                            // 1. we have many metrics to be exported - in this case we probably want
-                            //    to put some upper limit and allow the user to configure it.
-                            // 2. we got an IndexOutOfRangeException which was triggered by some other
-                            //    code instead of the buffer[cursor++] - in this case we should give up
-                            //    at certain point rather than allocating like crazy.
-                            throw;
-                        }
+                        // there are two cases we might run into the following condition:
+                        // 1. we have many metrics to be exported - in this case we probably want
+                        //    to put some upper limit and allow the user to configure it.
+                        // 2. we got an IndexOutOfRangeException which was triggered by some other
+                        //    code instead of the buffer[cursor++] - in this case we should give up
+                        //    at certain point rather than allocating like crazy.
+                        throw;
                     }
                 }
             }
