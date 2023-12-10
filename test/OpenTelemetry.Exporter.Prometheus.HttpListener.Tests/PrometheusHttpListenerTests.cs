@@ -99,55 +99,12 @@ public class PrometheusHttpListenerTests
     }
 
     [Fact]
-    public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics_NoScopeInfo()
-    {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty, scopeInfoEnabled: false);
-    }
-
-    [Fact]
     public async Task PrometheusExporterHttpServerIntegration_UseOpenMetricsVersionHeader()
     {
         await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
     }
 
-    [Fact]
-    public async Task PrometheusExporterHttpServerIntegration_NoScopeInfo()
-    {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(scopeInfoEnabled: false);
-    }
-
-    private static string GetExpectedContent(bool requestedOpenMetrics, bool scopeInfoEnabled)
-    {
-        if (requestedOpenMetrics && scopeInfoEnabled)
-        {
-            return "# TYPE otel_scope_info info\n"
-                   + "# HELP otel_scope_info Scope metadata\n"
-                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
-                   + "# TYPE counter_double_total counter\n"
-                   + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
-                   + "# EOF\n";
-        }
-
-        if (!requestedOpenMetrics && scopeInfoEnabled)
-        {
-            return "# TYPE counter_double_total counter\n"
-                   + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
-                   + "# EOF\n";
-        }
-
-        if (requestedOpenMetrics && !scopeInfoEnabled)
-        {
-            return "# TYPE counter_double_total counter\n"
-                   + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+\\.\\d{3})\n"
-                   + "# EOF\n";
-        }
-
-        return "# TYPE counter_double_total counter\n"
-               + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
-               + "# EOF\n";
-    }
-
-    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text", bool scopeInfoEnabled = true)
+    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text")
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
 
@@ -170,7 +127,6 @@ public class PrometheusHttpListenerTests
                     .AddMeter(meter.Name)
                     .AddPrometheusHttpListener(options =>
                     {
-                        options.ScopeInfoEnabled = scopeInfoEnabled;
                         options.UriPrefixes = new string[] { address };
                     })
                     .Build();
@@ -225,7 +181,17 @@ public class PrometheusHttpListenerTests
             }
 
             var content = await response.Content.ReadAsStringAsync();
-            var expected = GetExpectedContent(requestOpenMetrics, scopeInfoEnabled);
+
+            var expected = requestOpenMetrics
+                ? "# TYPE otel_scope_info info\n"
+                  + "# HELP otel_scope_info Scope metadata\n"
+                  + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
+                  + "# TYPE counter_double_total counter\n"
+                  + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
+                  + "# EOF\n"
+                : "# TYPE counter_double_total counter\n"
+                  + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
+                  + "# EOF\n";
 
             Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);
         }

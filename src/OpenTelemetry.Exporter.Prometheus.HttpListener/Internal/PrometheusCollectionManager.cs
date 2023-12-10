@@ -185,7 +185,7 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
-            if (this.exporter.ScopeInfoEnabled && this.exporter.OpenMetricsRequested)
+            if (this.exporter.OpenMetricsRequested)
             {
                 this.scopes.Clear();
 
@@ -237,8 +237,7 @@ internal sealed class PrometheusCollectionManager
                             cursor,
                             metric,
                             this.GetPrometheusMetric(metric),
-                            this.exporter.OpenMetricsRequested,
-                            this.exporter.ScopeInfoEnabled);
+                            this.exporter.OpenMetricsRequested);
 
                         break;
                     }

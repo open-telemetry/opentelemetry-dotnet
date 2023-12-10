@@ -379,37 +379,32 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool scopeInfoEnabled, bool writeEnclosingBraces = true)
+    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
     {
-        if (tags.Count > 0 || scopeInfoEnabled)
+        if (writeEnclosingBraces)
         {
-            if (writeEnclosingBraces)
-            {
-                buffer[cursor++] = unchecked((byte)'{');
-            }
+            buffer[cursor++] = unchecked((byte)'{');
+        }
 
-            if (scopeInfoEnabled)
-            {
-                cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
-                buffer[cursor++] = unchecked((byte)',');
+        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
+        buffer[cursor++] = unchecked((byte)',');
 
-                if (!string.IsNullOrEmpty(metric.MeterVersion))
-                {
-                    cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
-                    buffer[cursor++] = unchecked((byte)',');
-                }
-            }
+        if (!string.IsNullOrEmpty(metric.MeterVersion))
+        {
+            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
+            buffer[cursor++] = unchecked((byte)',');
+        }
 
-            foreach (var tag in tags)
-            {
-                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                buffer[cursor++] = unchecked((byte)',');
-            }
+        foreach (var tag in tags)
+        {
+            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+            buffer[cursor++] = unchecked((byte)',');
+        }
 
-            if (writeEnclosingBraces)
-            {
-                buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
-            }
+        if (writeEnclosingBraces)
+        {
+            buffer[cursor - 1] =
+                unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
         }
 
         return cursor;

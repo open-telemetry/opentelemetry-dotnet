@@ -42,14 +42,5 @@ public class PrometheusAspNetCoreOptions
         set => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds = value;
     }
 
-    /// <summary>
-    /// Gets or sets a value indicating whether to export scope info. Default value: true.
-    /// </summary>
-    public bool ScopeInfoEnabled
-    {
-        get => this.ExporterOptions.ScopeInfoEnabled;
-        set => this.ExporterOptions.ScopeInfoEnabled = value;
-    }
-
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
 }

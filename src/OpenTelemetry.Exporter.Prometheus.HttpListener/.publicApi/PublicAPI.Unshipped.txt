@@ -1,6 +1,4 @@
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions
-OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScopeInfoEnabled.get -> bool
-OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScopeInfoEnabled.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.UriPrefixes.get -> System.Collections.Generic.IReadOnlyCollection<string>
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.UriPrefixes.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.PrometheusHttpListenerOptions() -> void
