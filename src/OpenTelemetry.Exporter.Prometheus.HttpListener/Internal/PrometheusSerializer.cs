@@ -390,8 +390,7 @@ internal static partial class PrometheusSerializer
 
         if (writeEnclosingBraces)
         {
-            buffer[cursor - 1] =
-                unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
+            buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
         }
 
         return cursor;
