@@ -15,6 +15,9 @@ namespace OpenTelemetry.Logs;
 /// Contains extension methods for the <see cref="LoggerProviderBuilder"/> class.
 /// </summary>
 #if EXPOSE_EXPERIMENTAL_FEATURES
+#if NET8_0_OR_GREATER
+[Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
 public
 #else
 internal
