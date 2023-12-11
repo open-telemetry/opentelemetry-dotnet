@@ -50,7 +50,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         }
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     [Fact]
     public void AddOtlpExporterWithNamedOptions()
     {
@@ -77,7 +76,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal(2, defaultExporterOptionsConfigureOptionsInvocations);
         Assert.Equal(4, namedExporterOptionsConfigureOptionsInvocations);
     }
-#endif
 
     [Fact]
     public void UserHttpFactoryCalledWhenUsingHttpProtobuf()
