@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -277,6 +280,9 @@ public sealed class LogRecord
     /// known at the source.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -296,6 +302,9 @@ public sealed class LogRecord
     /// Gets or sets the log <see cref="LogRecordSeverity"/>.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -314,6 +323,9 @@ public sealed class LogRecord
     /// Gets the <see cref="Logs.Logger"/> which emitted the <see cref="LogRecord"/>.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public Logger? Logger { get; internal set; }
 #else
     /// <summary>
