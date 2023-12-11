@@ -15,6 +15,7 @@
 // </copyright>
 
 #if !NETFRAMEWORK
+using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,6 +23,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -88,6 +91,7 @@ public class AspNetCoreInstrumentationNewBenchmarks
     private WebApplication app;
     private TracerProvider tracerProvider;
     private MeterProvider meterProvider;
+    private ActivityListener activityListener;
 
     [Flags]
     public enum EnableInstrumentationOption
@@ -106,6 +110,11 @@ public class AspNetCoreInstrumentationNewBenchmarks
         /// Instrumentation is enbled only for Metrics.
         /// </summary>
         Metrics = 2,
+
+        /// <summary>
+        /// Instrumentation is enbled only for Metrics.
+        /// </summary>
+        Middleware = 3,
     }
 
     [Params(0, 1, 2, 3)]
@@ -119,7 +128,7 @@ public class AspNetCoreInstrumentationNewBenchmarks
             .AddInMemoryCollection(config)
             .Build();
 
-        if (this.EnableInstrumentation == EnableInstrumentationOption.None)
+        if (this.EnableInstrumentation == EnableInstrumentationOption.None || this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Middleware))
         {
             this.StartWebApplication();
             this.httpClient = new HttpClient();
@@ -175,8 +184,13 @@ public class AspNetCoreInstrumentationNewBenchmarks
     [GlobalCleanup(Target = nameof(GetRequestForAspNetCoreApp))]
     public void GetRequestForAspNetCoreAppGlobalCleanup()
     {
-        if (this.EnableInstrumentation == EnableInstrumentationOption.None)
+        if (this.EnableInstrumentation == EnableInstrumentationOption.None || this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Middleware))
         {
+            if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Middleware))
+            {
+                this.activityListener.Dispose();
+            }
+
             this.httpClient.Dispose();
             this.app.DisposeAsync().GetAwaiter().GetResult();
         }
@@ -212,8 +226,28 @@ public class AspNetCoreInstrumentationNewBenchmarks
     private void StartWebApplication()
     {
         var builder = WebApplication.CreateBuilder();
+        if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Middleware))
+        {
+            this.activityListener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "Microsoft.AspNetCore",
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
+                ActivityStarted = activity => { },
+                ActivityStopped = activity => { },
+            };
+
+            ActivitySource.AddActivityListener(this.activityListener);
+            builder.Services.AddSingleton(new TelemetryMiddleware(new AspNetCoreTraceInstrumentationOptions()));
+        }
+
         builder.Logging.ClearProviders();
         var app = builder.Build();
+
+        if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Middleware))
+        {
+            app.UseMiddleware<TelemetryMiddleware>();
+        }
+
         app.MapGet("/", async context => await context.Response.WriteAsync($"Hello World!"));
         app.RunAsync();
 

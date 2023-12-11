@@ -15,21 +15,53 @@
 // </copyright>
 
 using System.Diagnostics;
+using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure OpenTelemetry with tracing and auto-start.
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource
-        .AddService(serviceName: builder.Environment.ApplicationName))
-    .WithTracing(tracing => tracing
-        .AddAspNetCoreInstrumentation()
-        .AddConsoleExporter());
+var instrumentationOptions = new InstrumentationOptions();
 
+builder.Configuration.GetSection("InstrumentationOptions").Bind(instrumentationOptions);
+
+Console.WriteLine("EnableInstrumentation: " + instrumentationOptions.EnableInstrumentation);
+Console.WriteLine("EnableMiddlewareInstrumentation: " + instrumentationOptions.EnableMiddlewareInstrumentation);
+
+// Configure OpenTelemetry with tracing and auto-start.
+if (instrumentationOptions.EnableInstrumentation)
+{
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(resource => resource
+        .AddService(serviceName: builder.Environment.ApplicationName))
+        .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation());
+}
+
+if (instrumentationOptions.EnableMiddlewareInstrumentation)
+{
+    ActivitySource.AddActivityListener(new ActivityListener
+    {
+        ShouldListenTo = source => source.Name == "Microsoft.AspNetCore",
+        Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
+        ActivityStarted = activity => { },
+        ActivityStopped = activity => { },
+    });
+    builder.Services.AddSingleton(new TelemetryMiddleware(new AspNetCoreTraceInstrumentationOptions()));
+}
+
+builder.Logging.ClearProviders();
 var app = builder.Build();
 
-app.MapGet("/", () => $"Hello World! OpenTelemetry Trace: {Activity.Current?.Id}");
+if (instrumentationOptions.EnableMiddlewareInstrumentation)
+{
+    app.UseMiddleware<TelemetryMiddleware>();
+}
+
+app.MapGet("/", () =>
+{
+    return $"Hello World! OpenTelemetry Trace: {Activity.Current?.Id}";
+});
 
 app.Run();
