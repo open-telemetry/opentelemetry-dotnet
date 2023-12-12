@@ -15,7 +15,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Extension methods to simplify registering of HttpClient instrumentation.
 /// </summary>
-public static class HttpClientMeterProviderBuilderExtensions
+public static class HttpClientInstrumentationMeterProviderBuilderExtensions
 {
     /// <summary>
     /// Enables HttpClient instrumentation.
