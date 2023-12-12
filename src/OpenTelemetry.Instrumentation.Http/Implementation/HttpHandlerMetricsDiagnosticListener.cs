@@ -164,13 +164,13 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 
     public override void OnEventWritten(string name, object payload)
     {
-        if (name == OnUnhandledExceptionEvent)
-        {
-            OnExceptionEventWritten(Activity.Current, payload);
-        }
-        else if (name == OnStopEvent)
+        if (name == OnStopEvent)
         {
             OnStopEventWritten(Activity.Current, payload);
+        }
+        else if (name == OnUnhandledExceptionEvent)
+        {
+            OnExceptionEventWritten(Activity.Current, payload);
         }
     }
 }
