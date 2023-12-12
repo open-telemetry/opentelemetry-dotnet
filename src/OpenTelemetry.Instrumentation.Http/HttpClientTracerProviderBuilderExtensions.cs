@@ -12,7 +12,7 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Extension methods to simplify registering of HttpClient instrumentation.
 /// </summary>
-public static class TracerProviderBuilderExtensions
+public static class HttpClientTracerProviderBuilderExtensions
 {
     /// <summary>
     /// Enables HttpClient instrumentation.

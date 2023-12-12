@@ -15,7 +15,7 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Extension methods to simplify registering of ASP.NET Core request instrumentation.
 /// </summary>
-public static class TracerProviderBuilderExtensions
+public static class AspNetCoreTracerProviderBuilderExtensions
 {
     /// <summary>
     /// Enables the incoming requests automatic data collection for ASP.NET Core.
