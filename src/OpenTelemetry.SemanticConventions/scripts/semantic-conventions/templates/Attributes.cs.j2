@@ -16,7 +16,10 @@
   {%- endif -%}
 {%- endmacro -%}
 
-// <copyright file="{{class}}.cs" company="OpenTelemetry Authors">
+{%- set filtered_attributes = attributes_and_templates | select(filter) | list %}
+{%- if filtered_attributes | count > 0 %}
+{%- set class_name = root_namespace | to_camelcase(True) ~ "Attributes" %}
+// <copyright file="{{class_name}}.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,27 +42,12 @@ using System;
 namespace {{pkg | trim}}
 {
     /// <summary>
-    /// Constants for semantic attribute names outlined by the OpenTelemetry specifications.
-    {% if class == "TraceSemanticConventions" %}
-    /// <see href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/trace.md"/>.
-    {% elif class == "ResourceSemanticConventions" %}
-    /// <see href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md"/>.
-    {% endif %}
+    /// Describes semantic conventions for attributes in the <c>{{root_namespace}}</c> namespace.
     /// </summary>
-    /// <remarks>
-    /// Schema and specification version: {{schemaUrl}}.
-    /// </remarks>
-    public static class {{class}}
+    public static class {{class_name}}
     {
-{% if class == "TraceSemanticConventions" %}
-        /// <summary>
-        /// Attribute for db.instance.
-        /// </summary>
-        public const string AttributeDbInstance = "db.instance";
+{%- for attribute in filtered_attributes %}
 
-{% endif %}
-{% for attribute in attributes if attribute.is_local and not attribute.ref %}
-  {% if not loop.first %}{{"\n"}}{% endif %}
         /// <summary>
         /// {{format_xml_doc(attribute.brief | render_markdown(code="<c>{0}</c>", paragraph="{0}"))}}
         /// </summary>
@@ -68,30 +56,16 @@ namespace {{pkg | trim}}
         /// {{format_remarks(attribute.note | to_doc_brief | escape | render_markdown(code="<c>{0}</c>", paragraph="{0}"))}}.
         /// </remarks>
   {% endif %}
-  {% if attribute.deprecated %}
+  {% if attribute | is_deprecated %}
         [Obsolete("{{attribute.deprecated | to_doc_brief}}")]
   {% endif %}
-        public const string Attribute{{attribute.fqn  | replace("-","_") | to_camelcase(True)}} = "{{attribute.fqn}}";
-{% endfor %}
-{% for semconv in semconvs.values() | unique(attribute="prefix") %}
-  {% if semconv.prefix %}
-
-        /// <summary>
-        /// Prefix for '{{semconv.semconv_id}}'.
-        /// </summary>
-        public static readonly string Prefix{{semconv.semconv_id | replace("-","_") | to_camelcase(True)}} = "{{semconv.prefix}}";
+  {% if attribute | is_template %}
+        public const string {{attribute.fqn | to_camelcase(True)}}Template = "{{attribute.fqn}}";
+  {% else %}
+        public const string {{attribute.fqn | to_camelcase(True)}} = "{{attribute.fqn}}";
   {% endif %}
 {% endfor %}
-{% for semconv in semconvs.values() %}
-  {% if semconv.GROUP_TYPE_NAME == 'event' %}
-
-        /// <summary>
-        /// Event name for '{{semconv.semconv_id}}'.
-        /// </summary>
-        public static readonly string Event{{semconv.semconv_id | replace("-","_") | to_camelcase(True)}} = "{{semconv.name}}";
-  {% endif %}
-{% endfor %}
-{% for attribute in attributes if attribute.is_local and not attribute.ref %}
+{%- for attribute in filtered_attributes %}
   {% if attribute.is_enum %}
   {% set class_name = attribute.fqn | to_camelcase(True) ~ "Values" %}
   {% set type = attribute.attr_type.enum_type %}
@@ -106,11 +80,10 @@ namespace {{pkg | trim}}
             /// {{format_xml_doc(member.brief | render_markdown(code="<c>{0}</c>", paragraph="{0}"))}}
             /// </summary>
             public const {{ type }} {{ member.member_id | to_camelcase(True) }} = {{ print_value(type, member.value) }};
-            {% if not loop.last %}{{"\n"}}{% endif %}
             {% endfor %}
         }
   {% endif %}
 {% endfor %}
     }
 }
-
+{%- endif %}
