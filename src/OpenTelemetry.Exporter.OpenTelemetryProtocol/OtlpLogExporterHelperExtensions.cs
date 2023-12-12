@@ -4,6 +4,9 @@
 #nullable enable
 
 using System.Diagnostics;
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -113,6 +116,9 @@ public static class OtlpLogExporterHelperExtensions
     /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -133,6 +139,9 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
     /// <param name="configureExporter">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -156,6 +165,9 @@ public static class OtlpLogExporterHelperExtensions
     /// configuring <see cref="OtlpExporterOptions"/> and <see
     /// cref="LogRecordExportProcessorOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     internal
@@ -172,6 +184,9 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="name">Name which is used when retrieving options.</param>
     /// <param name="configureExporter">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -250,6 +265,9 @@ public static class OtlpLogExporterHelperExtensions
     /// configuring <see cref="OtlpExporterOptions"/> and <see
     /// cref="LogRecordExportProcessorOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -321,15 +339,11 @@ public static class OtlpLogExporterHelperExtensions
         LogRecordExportProcessorOptions processorOptions,
         Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
     {
-        if (sp == null)
-        {
-            throw new ArgumentNullException(nameof(sp));
-        }
-
+        Debug.Assert(sp != null, "sp was null");
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(processorOptions != null, "processorOptions was null");
 
-        var config = sp.GetRequiredService<IConfiguration>();
+        var config = sp!.GetRequiredService<IConfiguration>();
 
         var sdkLimitOptions = new SdkLimitOptions(config);
         var experimentalOptions = new ExperimentalOptions(config);

@@ -1,4 +1,3 @@
-#nullable enable
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.LoggerProviderBuilder! builder) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.LoggerProviderBuilder! builder, string? name, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions!, OpenTelemetry.Logs.LogRecordExportProcessorOptions!>! configureExporterAndProcessor) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.LoggerProviderBuilder! builder, string? name, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions!>? configureExporter) -> OpenTelemetry.Logs.LoggerProviderBuilder!
