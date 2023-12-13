@@ -153,7 +153,7 @@ public static class OtlpLogExporterHelperExtensions
     internal
 #endif
     static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions> configureExporter)
-     => AddOtlpExporter(builder, name: null, configureExporter: configureExporter);
+     => AddOtlpExporter(builder, name: null, configureExporter);
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -173,7 +173,7 @@ public static class OtlpLogExporterHelperExtensions
     internal
 #endif
     static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
-     => AddOtlpExporter(builder, name: null, configureExporterAndProcessor: configureExporterAndProcessor);
+     => AddOtlpExporter(builder, name: null, configureExporterAndProcessor);
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -181,8 +181,8 @@ public static class OtlpLogExporterHelperExtensions
     /// </summary>
     /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
-    /// <param name="name">Name which is used when retrieving options.</param>
-    /// <param name="configureExporter">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="configureExporter">Optional callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
 #if NET8_0_OR_GREATER
     [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
@@ -193,8 +193,8 @@ public static class OtlpLogExporterHelperExtensions
     /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProvider.
     /// </summary>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
-    /// <param name="name">Name which is used when retrieving options.</param>
-    /// <param name="configureExporter">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="configureExporter">Optional callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
     internal
 #endif
@@ -214,8 +214,7 @@ public static class OtlpLogExporterHelperExtensions
                 services.Configure(finalOptionsName, configureExporter);
             }
 
-            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-            services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+            RegisterOptions(services);
         });
 
         return builder.AddProcessor(sp =>
@@ -245,12 +244,14 @@ public static class OtlpLogExporterHelperExtensions
             // There should only be one provider for a given service
             // collection so SdkLimitOptions is treated as a single default
             // instance.
-            var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+            var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-            return BuildOtlpLogExporterProcessor(
+            return BuildOtlpLogExporter(
+                sp,
                 exporterOptions,
                 sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName),
-                sdkOptionsManager);
+                sdkLimitOptions,
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
         });
     }
 
@@ -260,8 +261,8 @@ public static class OtlpLogExporterHelperExtensions
     /// </summary>
     /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
-    /// <param name="name">Name which is used when retrieving options.</param>
-    /// <param name="configureExporterAndProcessor">Callback action for
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="configureExporterAndProcessor">Optional callback action for
     /// configuring <see cref="OtlpExporterOptions"/> and <see
     /// cref="LogRecordExportProcessorOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
@@ -274,8 +275,8 @@ public static class OtlpLogExporterHelperExtensions
     /// Adds an OTLP exporter to the LoggerProvider.
     /// </summary>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
-    /// <param name="name">Name which is used when retrieving options.</param>
-    /// <param name="configureExporterAndProcessor">Callback action for
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="configureExporterAndProcessor">Optional callback action for
     /// configuring <see cref="OtlpExporterOptions"/> and <see
     /// cref="LogRecordExportProcessorOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
@@ -284,20 +285,15 @@ public static class OtlpLogExporterHelperExtensions
     static LoggerProviderBuilder AddOtlpExporter(
         this LoggerProviderBuilder builder,
         string? name,
-        Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
+        Action<OtlpExporterOptions, LogRecordExportProcessorOptions>? configureExporterAndProcessor)
     {
         var finalOptionsName = name ?? Options.DefaultName;
 
-        builder.ConfigureServices(services =>
-        {
-            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-            services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
-        });
+        builder.ConfigureServices(RegisterOptions);
 
         return builder.AddProcessor(sp =>
         {
             OtlpExporterOptions exporterOptions;
-            LogRecordExportProcessorOptions processorOptions;
 
             if (name == null)
             {
@@ -307,29 +303,31 @@ public static class OtlpLogExporterHelperExtensions
                 // name, delegates for all signals will mix together. See:
                 // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
                 exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
-                processorOptions = sp.GetRequiredService<IOptionsFactory<LogRecordExportProcessorOptions>>().Create(finalOptionsName);
-
-                // Configuration delegate is executed inline on the fresh instance.
-                configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
             }
             else
             {
                 // When using named options we can properly utilize Options
                 // API to create or reuse an instance.
                 exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
-                processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
             }
+
+            var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
+
+            // Configuration delegate is executed inline.
+            configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
 
             // Note: Not using finalOptionsName here for SdkLimitOptions.
             // There should only be one provider for a given service
             // collection so SdkLimitOptions is treated as a single default
             // instance.
-            var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+            var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-            return BuildOtlpLogExporterProcessor(
+            return BuildOtlpLogExporter(
+                sp,
                 exporterOptions,
                 processorOptions,
-                sdkOptionsManager);
+                sdkLimitOptions,
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
         });
     }
 
@@ -340,18 +338,51 @@ public static class OtlpLogExporterHelperExtensions
         Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
     {
         Debug.Assert(sp != null, "sp was null");
-        Debug.Assert(exporterOptions != null, "exporterOptions was null");
-        Debug.Assert(processorOptions != null, "processorOptions was null");
 
         var config = sp!.GetRequiredService<IConfiguration>();
 
         var sdkLimitOptions = new SdkLimitOptions(config);
         var experimentalOptions = new ExperimentalOptions(config);
 
+        return BuildOtlpLogExporter(sp!, exporterOptions, processorOptions, sdkLimitOptions, experimentalOptions, configureExporterInstance);
+    }
+
+    private static BaseProcessor<LogRecord> BuildOtlpLogExporter(
+        IServiceProvider sp,
+        OtlpExporterOptions exporterOptions,
+        LogRecordExportProcessorOptions processorOptions,
+        SdkLimitOptions sdkLimitOptions,
+        ExperimentalOptions experimentalOptions,
+        Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
+    {
+        // Note: sp is not currently used by this method but it should be used
+        // at some point for IHttpClientFactory integration.
+        Debug.Assert(sp != null, "sp was null");
+        Debug.Assert(exporterOptions != null, "exporterOptions was null");
+        Debug.Assert(processorOptions != null, "processorOptions was null");
+        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
+        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
+
+        /*
+         * Note:
+         *
+         * We don't currently enable IHttpClientFactory for OtlpLogExporter.
+         *
+         * The DefaultHttpClientFactory requires the ILoggerFactory in its ctor:
+         * https://github.com/dotnet/runtime/blob/fa40ecf7d36bf4e31d7ae968807c1c529bac66d6/src/libraries/Microsoft.Extensions.Http/src/DefaultHttpClientFactory.cs#L64
+         *
+         * This creates a circular reference: ILoggerFactory ->
+         * OpenTelemetryLoggerProvider -> OtlpLogExporter -> IHttpClientFactory
+         * -> ILoggerFactory
+         *
+         * exporterOptions.TryEnableIHttpClientFactoryIntegration(sp,
+         * "OtlpLogExporter");
+         */
+
         BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
             exporterOptions!,
-            sdkLimitOptions,
-            experimentalOptions);
+            sdkLimitOptions!,
+            experimentalOptions!);
 
         if (configureExporterInstance != null)
         {
@@ -375,39 +406,11 @@ public static class OtlpLogExporterHelperExtensions
         }
     }
 
-    internal static BaseProcessor<LogRecord> BuildOtlpLogExporterProcessor(OtlpExporterOptions exporterOptions, LogRecordExportProcessorOptions processorOptions, SdkLimitOptions sdkLimitOptions)
+    private static void RegisterOptions(IServiceCollection services)
     {
-        /*
-         * Note:
-         *
-         * We don't currently enable IHttpClientFactory for OtlpLogExporter.
-         *
-         * The DefaultHttpClientFactory requires the ILoggerFactory in its ctor:
-         * https://github.com/dotnet/runtime/blob/fa40ecf7d36bf4e31d7ae968807c1c529bac66d6/src/libraries/Microsoft.Extensions.Http/src/DefaultHttpClientFactory.cs#L64
-         *
-         * This creates a circular reference: ILoggerFactory ->
-         * OpenTelemetryLoggerProvider -> OtlpLogExporter -> IHttpClientFactory
-         * -> ILoggerFactory
-         *
-         * exporterOptions.TryEnableIHttpClientFactoryIntegration(sp,
-         * "OtlpLogExporter");
-         */
-
-        BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(exporterOptions, sdkLimitOptions, experimentalOptions: new());
-
-        if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
-        {
-            return new SimpleLogRecordExportProcessor(otlpExporter);
-        }
-        else
-        {
-            return new BatchLogRecordExportProcessor(
-                otlpExporter,
-                processorOptions.BatchExportProcessorOptions.MaxQueueSize,
-                processorOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                processorOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                processorOptions.BatchExportProcessorOptions.MaxExportBatchSize);
-        }
+        OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
+        services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+        services.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
     }
 
     private static OtlpExporterOptions GetOtlpExporterOptions(IServiceProvider sp, string? name, string finalName)
