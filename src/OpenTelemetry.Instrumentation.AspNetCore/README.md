@@ -10,17 +10,15 @@ collect metrics and traces about incoming web requests. This instrumentation
 also collects traces from incoming gRPC requests using
 [Grpc.AspNetCore](https://www.nuget.org/packages/Grpc.AspNetCore).
 
-**Note: This component is based on the OpenTelemetry semantic conventions for
+**Note: This component is based on the
+[v1.23](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0) of
+http semantic conventions for
 [metrics](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md)
 and
 [traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md).
-These conventions are
-[Experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md),
-and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).
-Until a [stable
-version](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/telemetry-stability.md)
-is released, there can be breaking changes. You can track the progress from
-[milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/23).**
+
+Instrumentation support for gRPC server requests is supported via an
+[experimental](#experimental-support-for-grpc-requests) feature flag.
 
 ## Steps to enable OpenTelemetry.Instrumentation.AspNetCore
 
@@ -31,7 +29,7 @@ Add a reference to the
 package. Also, add any other instrumentations & exporters you will need.
 
 ```shell
-dotnet add package --prerelease OpenTelemetry.Instrumentation.AspNetCore
+dotnet add package OpenTelemetry.Instrumentation.AspNetCore
 ```
 
 ### Step 2: Enable ASP.NET Core Instrumentation at application startup
@@ -138,6 +136,8 @@ newer versions.
 
 ## Advanced configuration
 
+### Tracing
+
 This instrumentation can be configured to change the default behavior by using
 `AspNetCoreTraceInstrumentationOptions`, which allows adding [`Filter`](#filter),
 [`Enrich`](#enrich) as explained below.
@@ -166,7 +166,7 @@ services.AddOpenTelemetry()
         .AddConsoleExporter());
 ```
 
-### Filter
+#### Filter
 
 This instrumentation by default collects all the incoming http requests. It
 allows filtering of requests by using the `Filter` function in
@@ -194,7 +194,7 @@ instrumentation. OpenTelemetry has a concept of a
 [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling),
 and the `Filter` option does the filtering *after* the Sampler is invoked.
 
-### Enrich
+#### Enrich
 
 This instrumentation library provides `EnrichWithHttpRequest`,
 `EnrichWithHttpResponse` and `EnrichWithException` options that can be used to
@@ -231,13 +231,13 @@ is the general extensibility point to add additional properties to any activity.
 The `Enrich` option is specific to this instrumentation, and is provided to
 get access to `HttpRequest` and `HttpResponse`.
 
-### RecordException
+#### RecordException
 
 This instrumentation automatically sets Activity Status to Error if an unhandled
 exception is thrown. Additionally, `RecordException` feature may be turned on,
 to store the exception to the Activity itself as ActivityEvent.
 
-## Activity Duration and http.server.request.duration metric calculation
+## Activity duration and http.server.request.duration metric calculation
 
 `Activity.Duration` and `http.server.request.duration` values represents the
 time used to handle an inbound HTTP request as measured at the hosting layer of
@@ -253,6 +253,31 @@ The time ends when:
 * The ASP.NET Core handler pipeline is finished executing.
 * All response data has been sent.
 * The context data structures for the request are being disposed.
+
+## Experimental support for gRPC requests
+
+gRPC instrumentation can be enabled by setting
+`OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` flag to
+`True`. The flag can be set as an environment variable or via IConfiguration as
+shown below.
+
+```csharp
+var appBuilder = WebApplication.CreateBuilder(args);
+
+appBuilder.Configuration.AddInMemoryCollection(
+    new Dictionary<string, string?>
+    {
+        ["OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION"] = "true",
+    });
+
+appBuilder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+    .AddAspNetCoreInstrumentation());
+```
+
+ Semantic conventions for RPC are still
+ [experimental](https://github.com/open-telemetry/semantic-conventions/tree/main/docs/rpc)
+ and hence the instrumentation only offers it as an experimental feature.
 
 ## Troubleshooting
 
