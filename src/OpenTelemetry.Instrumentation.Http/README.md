@@ -11,7 +11,7 @@ and
 [System.Net.HttpWebRequest](https://docs.microsoft.com/dotnet/api/system.net.httpwebrequest)
 and collects metrics and traces about outgoing HTTP requests.
 
-**Note: This component is based on the
+This component is based on the
 [v1.23](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
 of http semantic conventions. For details on the default set of attributes that
 are added, checkout [Traces](#traces) and [Metrics](#metrics) sections below.
