@@ -4,6 +4,7 @@
     <TargetFrameworks>$(TargetFrameworksForAspNetCoreInstrumentation)</TargetFrameworks>
     <Description>ASP.NET Core instrumentation for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);distributed-tracing;AspNetCore</PackageTags>
+    <MinVerTagPrefix>Instrumentation.AspNetCore-</MinVerTagPrefix>
     <IncludeDiagnosticSourceInstrumentationHelpers>true</IncludeDiagnosticSourceInstrumentationHelpers>
 
     <!-- this is temporary. will remove in future PR. -->
