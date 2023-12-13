@@ -31,7 +31,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     private static readonly PropertyFetcher<Exception> StopExceptionFetcher = new("Exception");
     private static readonly PropertyFetcher<HttpRequestMessage> RequestFetcher = new("Request");
 #if NET6_0_OR_GREATER
-    private static readonly HttpRequestOptionsKey<string> HttpRequestOptionsErrorKey = new HttpRequestOptionsKey<string>(SemanticConventions.AttributeErrorType);
+    private static readonly HttpRequestOptionsKey<string> HttpRequestOptionsErrorKey = new(SemanticConventions.AttributeErrorType);
 #endif
 
     public HttpHandlerMetricsDiagnosticListener(string name)
@@ -39,19 +39,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     {
     }
 
-    public override void OnEventWritten(string name, object payload)
-    {
-        if (name == OnUnhandledExceptionEvent)
-        {
-            this.OnExceptionEventWritten(Activity.Current, payload);
-        }
-        else if (name == OnStopEvent)
-        {
-            this.OnStopEventWritten(Activity.Current, payload);
-        }
-    }
-
-    public void OnStopEventWritten(Activity activity, object payload)
+    public static void OnStopEventWritten(Activity activity, object payload)
     {
         if (TryFetchRequest(payload, out HttpRequestMessage request))
         {
@@ -129,11 +117,11 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
             StopResponseFetcher.TryFetch(payload, out response) && response != null;
     }
 
-    public void OnExceptionEventWritten(Activity activity, object payload)
+    public static void OnExceptionEventWritten(Activity activity, object payload)
     {
         if (!TryFetchException(payload, out Exception exc) || !TryFetchRequest(payload, out HttpRequestMessage request))
         {
-            HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerMetricsDiagnosticListener), nameof(this.OnExceptionEventWritten));
+            HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerMetricsDiagnosticListener), nameof(OnExceptionEventWritten));
             return;
         }
 
@@ -171,6 +159,18 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
             }
 
             return true;
+        }
+    }
+
+    public override void OnEventWritten(string name, object payload)
+    {
+        if (name == OnStopEvent)
+        {
+            OnStopEventWritten(Activity.Current, payload);
+        }
+        else if (name == OnUnhandledExceptionEvent)
+        {
+            OnExceptionEventWritten(Activity.Current, payload);
         }
     }
 }
