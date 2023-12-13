@@ -13,9 +13,9 @@ also collects traces from incoming gRPC requests using
 **Note: This component is based on the
 [v1.23](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0) of
 http semantic conventions for
-[metrics](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md)
+[metrics](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-metrics.md)
 and
-[traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md).
+[traces](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-spans.md).
 
 Instrumentation support for gRPC server requests is supported via an
 [experimental](#experimental-support-for-grpc-requests) feature flag.
