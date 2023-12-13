@@ -26,28 +26,23 @@ var instrumentationOptions = new InstrumentationOptions();
 
 builder.Configuration.GetSection("InstrumentationOptions").Bind(instrumentationOptions);
 
-Console.WriteLine("EnableInstrumentation: " + instrumentationOptions.EnableInstrumentation);
+Console.WriteLine("EnableOTelInstrumentation: " + instrumentationOptions.EnableInstrumentation);
 Console.WriteLine("EnableMiddlewareInstrumentation: " + instrumentationOptions.EnableMiddlewareInstrumentation);
 
 // Configure OpenTelemetry with tracing and auto-start.
 if (instrumentationOptions.EnableInstrumentation)
 {
     builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource => resource
-        .AddService(serviceName: builder.Environment.ApplicationName))
         .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation());
 }
 
 if (instrumentationOptions.EnableMiddlewareInstrumentation)
 {
-    ActivitySource.AddActivityListener(new ActivityListener
-    {
-        ShouldListenTo = source => source.Name == "Microsoft.AspNetCore",
-        Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
-        ActivityStarted = activity => { },
-        ActivityStopped = activity => { },
-    });
+    builder.Services.AddOpenTelemetry()
+       .WithTracing(tracing => tracing
+       .AddSource("Microsoft.AspNetCore"));
+
     builder.Services.AddSingleton(new TelemetryMiddleware(new AspNetCoreTraceInstrumentationOptions()));
 }
 
