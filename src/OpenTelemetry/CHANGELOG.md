@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* `LogRecord.Attributes` and `LogRecord.StateValues` will now automatically
+  update if `LogRecord.State` is set inside a processor.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.7.0
 
 Released 2023-Dec-08
