@@ -1,18 +1,5 @@
-// <copyright file="HttpHandlerMetricsDiagnosticListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 #if NET6_0_OR_GREATER
@@ -44,7 +31,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     private static readonly PropertyFetcher<Exception> StopExceptionFetcher = new("Exception");
     private static readonly PropertyFetcher<HttpRequestMessage> RequestFetcher = new("Request");
 #if NET6_0_OR_GREATER
-    private static readonly HttpRequestOptionsKey<string> HttpRequestOptionsErrorKey = new HttpRequestOptionsKey<string>(SemanticConventions.AttributeErrorType);
+    private static readonly HttpRequestOptionsKey<string> HttpRequestOptionsErrorKey = new(SemanticConventions.AttributeErrorType);
 #endif
 
     public HttpHandlerMetricsDiagnosticListener(string name)
@@ -52,19 +39,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     {
     }
 
-    public override void OnEventWritten(string name, object payload)
-    {
-        if (name == OnUnhandledExceptionEvent)
-        {
-            this.OnExceptionEventWritten(Activity.Current, payload);
-        }
-        else if (name == OnStopEvent)
-        {
-            this.OnStopEventWritten(Activity.Current, payload);
-        }
-    }
-
-    public void OnStopEventWritten(Activity activity, object payload)
+    public static void OnStopEventWritten(Activity activity, object payload)
     {
         if (TryFetchRequest(payload, out HttpRequestMessage request))
         {
@@ -142,11 +117,11 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
             StopResponseFetcher.TryFetch(payload, out response) && response != null;
     }
 
-    public void OnExceptionEventWritten(Activity activity, object payload)
+    public static void OnExceptionEventWritten(Activity activity, object payload)
     {
         if (!TryFetchException(payload, out Exception exc) || !TryFetchRequest(payload, out HttpRequestMessage request))
         {
-            HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerMetricsDiagnosticListener), nameof(this.OnExceptionEventWritten));
+            HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerMetricsDiagnosticListener), nameof(OnExceptionEventWritten));
             return;
         }
 
@@ -184,6 +159,18 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
             }
 
             return true;
+        }
+    }
+
+    public override void OnEventWritten(string name, object payload)
+    {
+        if (name == OnStopEvent)
+        {
+            OnStopEventWritten(Activity.Current, payload);
+        }
+        else if (name == OnUnhandledExceptionEvent)
+        {
+            OnExceptionEventWritten(Activity.Current, payload);
         }
     }
 }

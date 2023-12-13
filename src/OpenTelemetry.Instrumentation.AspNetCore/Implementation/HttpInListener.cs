@@ -1,35 +1,18 @@
-// <copyright file="HttpInListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Reflection;
-#if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
-#endif
 using Microsoft.AspNetCore.Http;
 #if !NETSTANDARD
 using Microsoft.AspNetCore.Routing;
 #endif
 using OpenTelemetry.Context.Propagation;
-#if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
-#endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -56,7 +39,17 @@ internal class HttpInListener : ListenerHandler
     private const string DiagnosticSourceName = "Microsoft.AspNetCore";
     private const string UnknownHostName = "UNKNOWN-HOST";
 
-    private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
+    private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) =>
+    {
+        if (request.Headers.TryGetValue(name, out var value))
+        {
+            // This causes allocation as the `StringValues` struct has to be casted to an `IEnumerable<string>` object.
+            return value;
+        }
+
+        return Enumerable.Empty<string>();
+    };
+
     private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
 
 #if !NET6_0_OR_GREATER
@@ -183,7 +176,7 @@ internal class HttpInListener : ListenerHandler
 #endif
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = this.GetDisplayName(request.Method);
+            activity.DisplayName = GetDisplayName(request.Method);
 
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
 
@@ -246,20 +239,18 @@ internal class HttpInListener : ListenerHandler
             var routePattern = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
             if (!string.IsNullOrEmpty(routePattern))
             {
-                activity.DisplayName = this.GetDisplayName(context.Request.Method, routePattern);
+                activity.DisplayName = GetDisplayName(context.Request.Method, routePattern);
                 activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
             }
 #endif
 
             activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-            /*
-            #if !NETSTANDARD2_0
 
-                        if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
-                        {
-                            this.AddGrpcAttributes(activity, grpcMethod, context);
-                        }
-            */
+            if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
+            {
+                AddGrpcAttributes(activity, grpcMethod, context);
+            }
+
             if (activity.Status == ActivityStatusCode.Unset)
             {
                 activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
@@ -340,27 +331,15 @@ internal class HttpInListener : ListenerHandler
             => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
     }
 
-#if !NETSTANDARD2_0
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
     {
         grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
         return !string.IsNullOrEmpty(grpcMethod);
     }
-#endif
 
-    private string GetDisplayName(string httpMethod, string httpRoute = null)
-    {
-        var normalizedMethod = RequestMethodHelper.GetNormalizedHttpMethod(httpMethod);
-
-        return string.IsNullOrEmpty(httpRoute)
-            ? normalizedMethod
-            : $"{normalizedMethod} {httpRoute}";
-    }
-
-#if !NETSTANDARD2_0
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
+    private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
     {
         // The RPC semantic conventions indicate the span name
         // should not have a leading forward slash.
@@ -402,5 +381,13 @@ internal class HttpInListener : ListenerHandler
             }
         }
     }
-#endif
+
+    private static string GetDisplayName(string httpMethod, string httpRoute = null)
+    {
+        var normalizedMethod = RequestMethodHelper.GetNormalizedHttpMethod(httpMethod);
+
+        return string.IsNullOrEmpty(httpRoute)
+            ? normalizedMethod
+            : $"{normalizedMethod} {httpRoute}";
+    }
 }

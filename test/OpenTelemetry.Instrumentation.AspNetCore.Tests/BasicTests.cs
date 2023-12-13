@@ -1,18 +1,5 @@
-// <copyright file="BasicTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Text.Json;
@@ -960,6 +947,7 @@ public sealed class BasicTests
         int numberOfUnSubscribedEvents = 0;
         int numberOfSubscribedEvents = 0;
         int numberOfExceptionCallbacks = 0;
+        bool exceptionHandled = false;
 
         // configure SDK
         this.tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -1004,18 +992,18 @@ public sealed class BasicTests
                 })
                 .Build();
 
+        TestMiddleware.Create(builder => builder
+            .UseExceptionHandler(handler =>
+                handler.Run(async (ctx) =>
+                {
+                    exceptionHandled = true;
+                    await ctx.Response.WriteAsync("handled");
+                })));
+
         using (var client = this.factory
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
-                builder.Configure(app => app
-                    .UseExceptionHandler(handler =>
-                    {
-                        handler.Run(async (ctx) =>
-                        {
-                            await ctx.Response.WriteAsync("handled");
-                        });
-                    }));
             })
             .CreateClient())
         {
@@ -1033,6 +1021,7 @@ public sealed class BasicTests
         Assert.Equal(0, numberOfExceptionCallbacks);
         Assert.Equal(0, numberOfUnSubscribedEvents);
         Assert.Equal(2, numberOfSubscribedEvents);
+        Assert.True(exceptionHandled);
     }
 
     public void Dispose()

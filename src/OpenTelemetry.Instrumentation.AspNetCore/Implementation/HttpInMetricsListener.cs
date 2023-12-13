@@ -1,18 +1,5 @@
-// <copyright file="HttpInMetricsListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -55,32 +42,12 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     {
     }
 
-    public override void OnEventWritten(string name, object payload)
-    {
-        switch (name)
-        {
-            case OnUnhandledDiagnosticsExceptionEvent:
-            case OnUnhandledHostingExceptionEvent:
-                {
-                    this.OnExceptionEventWritten(name, payload);
-                }
-
-                break;
-            case OnStopEvent:
-                {
-                    this.OnStopEventWritten(name, payload);
-                }
-
-                break;
-        }
-    }
-
-    public void OnExceptionEventWritten(string name, object payload)
+    public static void OnExceptionEventWritten(string name, object payload)
     {
         // We need to use reflection here as the payload type is not a defined public type.
         if (!TryFetchException(payload, out Exception exc) || !TryFetchHttpContext(payload, out HttpContext ctx))
         {
-            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnExceptionEventWritten), HttpServerRequestDurationMetricName);
+            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(OnExceptionEventWritten), HttpServerRequestDurationMetricName);
             return;
         }
 
@@ -101,12 +68,12 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             => HttpContextPropertyFetcher.TryFetch(payload, out ctx) && ctx != null;
     }
 
-    public void OnStopEventWritten(string name, object payload)
+    public static void OnStopEventWritten(string name, object payload)
     {
         var context = payload as HttpContext;
         if (context == null)
         {
-            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName);
+            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(OnStopEventWritten), HttpServerRequestDurationMetricName);
             return;
         }
 
@@ -136,5 +103,25 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
         // TODO: Follow up with .NET team if we can continue to rely on this behavior.
         HttpServerRequestDuration.Record(Activity.Current.Duration.TotalSeconds, tags);
+    }
+
+    public override void OnEventWritten(string name, object payload)
+    {
+        switch (name)
+        {
+            case OnUnhandledDiagnosticsExceptionEvent:
+            case OnUnhandledHostingExceptionEvent:
+                {
+                    OnExceptionEventWritten(name, payload);
+                }
+
+                break;
+            case OnStopEvent:
+                {
+                    OnStopEventWritten(name, payload);
+                }
+
+                break;
+        }
     }
 }

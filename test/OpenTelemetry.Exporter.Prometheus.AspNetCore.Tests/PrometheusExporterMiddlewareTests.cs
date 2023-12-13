@@ -1,18 +1,5 @@
-// <copyright file="PrometheusExporterMiddlewareTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 #if !NETFRAMEWORK
 using System.Diagnostics.Metrics;
@@ -238,6 +225,24 @@ public sealed class PrometheusExporterMiddlewareTests
             registerMeterProvider: false);
     }
 
+    [Fact]
+    public Task PrometheusExporterMiddlewareIntegration_TextPlainResponse()
+    {
+        return RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            acceptHeader: "text/plain");
+    }
+
+    [Fact]
+    public Task PrometheusExporterMiddlewareIntegration_UseOpenMetricsVersionHeader()
+    {
+        return RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            acceptHeader: "application/openmetrics-text; version=1.0.0");
+    }
+
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
         string path,
         Action<IApplicationBuilder> configure,
@@ -245,8 +250,11 @@ public sealed class PrometheusExporterMiddlewareTests
         Action<HttpResponseMessage> validateResponse = null,
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions> configureOptions = null,
-        bool skipMetrics = false)
+        bool skipMetrics = false,
+        string acceptHeader = "application/openmetrics-text")
     {
+        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
+
         using var host = await new HostBuilder()
            .ConfigureWebHost(webBuilder => webBuilder
                .UseTestServer()
@@ -284,7 +292,14 @@ public sealed class PrometheusExporterMiddlewareTests
             counter.Add(0.99D, tags);
         }
 
-        using var response = await host.GetTestClient().GetAsync(path);
+        using var client = host.GetTestClient();
+
+        if (!string.IsNullOrEmpty(acceptHeader))
+        {
+            client.DefaultRequestHeaders.Add("Accept", acceptHeader);
+        }
+
+        using var response = await client.GetAsync(path);
 
         var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
@@ -292,22 +307,31 @@ public sealed class PrometheusExporterMiddlewareTests
         {
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
-            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+
+            if (requestOpenMetrics)
+            {
+                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
+            }
+            else
+            {
+                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+            }
 
             string content = await response.Content.ReadAsStringAsync();
 
-            var matches = Regex.Matches(
-                content,
-                ("^"
-                    + "# TYPE counter_double_total counter\n"
-                    + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
-                    + "\n"
-                    + "# EOF\n"
-                    + "$").Replace('\'', '"'));
+            string expected = requestOpenMetrics
+                ? "# TYPE counter_double_total counter\n"
+                  + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+\\.\\d{3})\n"
+                  + "# EOF\n"
+                : "# TYPE counter_double_total counter\n"
+                  + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
+                  + "# EOF\n";
+
+            var matches = Regex.Matches(content, ("^" + expected + "$").Replace('\'', '"'));
 
             Assert.Single(matches);
 
-            var timestamp = long.Parse(matches[0].Groups[1].Value);
+            var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty));
 
             Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
         }
