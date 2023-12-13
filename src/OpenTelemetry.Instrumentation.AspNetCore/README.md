@@ -9,6 +9,8 @@ which instruments [ASP.NET Core](https://docs.microsoft.com/aspnet/core) and
 collect metrics and traces about incoming web requests. This instrumentation
 also collects traces from incoming gRPC requests using
 [Grpc.AspNetCore](https://www.nuget.org/packages/Grpc.AspNetCore).
+Instrumentation support for gRPC server requests is supported via an
+[experimental](#experimental-support-for-grpc-requests) feature flag.
 
 **Note: This component is based on the
 [v1.23](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
@@ -47,9 +49,6 @@ more details.
 * `http.route`
 * `network.protocol.version`
 * `url.scheme`
-
-Instrumentation support for gRPC server requests is supported via an
-[experimental](#experimental-support-for-grpc-requests) feature flag.
 
 ## Steps to enable OpenTelemetry.Instrumentation.AspNetCore
 
