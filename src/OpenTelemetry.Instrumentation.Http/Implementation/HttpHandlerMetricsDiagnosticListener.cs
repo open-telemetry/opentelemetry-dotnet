@@ -46,16 +46,8 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-metrics.md
             TagList tags = default;
 
-            if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
-            {
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
-            }
-            else
-            {
-                // Set to default "_OTHER" as per spec.
-                // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
-            }
+            var httpMethod = RequestMethodHelper.GetNormalizedHttpMethod(request.Method.Method);
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
 
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme));
