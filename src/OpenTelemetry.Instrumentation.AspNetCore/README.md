@@ -14,41 +14,8 @@ Instrumentation support for gRPC server requests is supported via an
 
 **Note: This component is based on the
 [v1.23](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
-of http semantic conventions.
-
-Following list of attributes are added by default on activity. See
-[http-spans](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-spans.md)
-for more details about each individual attribute:
-
-* `error.type`
-* `http.request.method`
-* `http.request.method_original`
-* `http.response.status_code`
-* `http.route`
-* `network.protocol.version`
-* `user_agent.original`
-* `server.address`
-* `server.port`
-* `url.path`
-* `url.query`
-* `url.scheme`
-
-[Enrich Api](#enrich) can be used if any additional attributes are
-required on activity.
-
-Follwing list of attributes are added by default on
-`http.server.request.duration` metric. See
-[http-metrics](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-metrics.md)
-for more details about each individual attribute. `.NET8.0` and above supports
-additional metrics, see [list of metrics produced](list-of-metrics-produced) for
-more details.
-
-* `error.type`
-* `http.response.status_code`
-* `http.request.method`
-* `http.route`
-* `network.protocol.version`
-* `url.scheme`
+of http semantic conventions. For details on the default set of attributes that
+are added, checkout [Traces](#traces) and [Metrics](#metrics) sections below.
 
 ## Steps to enable OpenTelemetry.Instrumentation.AspNetCore
 
@@ -94,6 +61,26 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
+Following list of attributes are added by default on activity. See
+[http-spans](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-spans.md)
+for more details about each individual attribute:
+
+* `error.type`
+* `http.request.method`
+* `http.request.method_original`
+* `http.response.status_code`
+* `http.route`
+* `network.protocol.version`
+* `user_agent.original`
+* `server.address`
+* `server.port`
+* `url.path`
+* `url.query`
+* `url.scheme`
+
+[Enrich Api](#enrich) can be used if any additional attributes are
+required on activity.
+
 #### Metrics
 
 The following example demonstrates adding ASP.NET Core instrumentation with the
@@ -115,6 +102,20 @@ public void ConfigureServices(IServiceCollection services)
             .AddConsoleExporter());
 }
 ```
+
+Following list of attributes are added by default on
+`http.server.request.duration` metric. See
+[http-metrics](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-metrics.md)
+for more details about each individual attribute. `.NET8.0` and above supports
+additional metrics, see [list of metrics produced](list-of-metrics-produced) for
+more details.
+
+* `error.type`
+* `http.response.status_code`
+* `http.request.method`
+* `http.route`
+* `network.protocol.version`
+* `url.scheme`
 
 #### List of metrics produced
 
