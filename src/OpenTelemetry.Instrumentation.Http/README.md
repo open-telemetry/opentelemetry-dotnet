@@ -12,11 +12,39 @@ and
 and collects metrics and traces about outgoing HTTP requests.
 
 **Note: This component is based on the
-[v1.23](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0) of
-http semantic conventions for
-[metrics](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-metrics.md)
-and
-[traces](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-spans.md).
+[v1.23](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
+of http semantic conventions.
+
+Following list of attributes are added by default on activity. See
+[http-spans](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-spans.md)
+for more details about each individual attribute:
+
+* `error.type`
+* `http.request.method`
+* `http.request.method_original`
+* `http.response.status_code`
+* `network.protocol.version`
+* `server.address`
+* `server.port`
+* `url.full`
+
+[Enrich Api](#enrich-httpclient-api) can be used if any additional attributes are
+required on activity.
+
+Follwing list of attributes are added by default on
+`http.client.request.duration` metric. See
+[http-metrics](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-metrics.md)
+for more details about each individual attribute. `.NET8.0` and above supports
+additional metrics, see [list of metrics produced](list-of-metrics-produced) for
+more details.
+
+* `error.type`
+* `http.request.method`
+* `http.response.status_code`
+* `network.protocol.version`
+* `server.address`
+* `server.port`
+* `url.scheme`
 
 ## Steps to enable OpenTelemetry.Instrumentation.Http
 
