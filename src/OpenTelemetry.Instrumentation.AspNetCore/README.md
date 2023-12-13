@@ -107,7 +107,7 @@ Following list of attributes are added by default on
 `http.server.request.duration` metric. See
 [http-metrics](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-metrics.md)
 for more details about each individual attribute. `.NET8.0` and above supports
-additional metrics, see [list of metrics produced](list-of-metrics-produced) for
+additional metrics, see [list of metrics produced](#list-of-metrics-produced) for
 more details.
 
 * `error.type`
