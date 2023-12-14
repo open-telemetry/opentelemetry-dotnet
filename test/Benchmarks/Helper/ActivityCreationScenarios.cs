@@ -13,21 +13,9 @@ internal static class ActivityCreationScenarios
         activity?.Stop();
     }
 
-    public static void CreateActivityWithKind(ActivitySource source)
-    {
-        using var activity = source.StartActivity("name", ActivityKind.Client);
-        activity?.Stop();
-    }
-
     public static void CreateActivityFromParentContext(ActivitySource source, ActivityContext parentCtx)
     {
         using var activity = source.StartActivity("name", ActivityKind.Internal, parentCtx);
-        activity?.Stop();
-    }
-
-    public static void CreateActivityFromParentId(ActivitySource source, string parentId)
-    {
-        using var activity = source.StartActivity("name", ActivityKind.Internal, parentId);
         activity?.Stop();
     }
 
@@ -37,6 +25,19 @@ internal static class ActivityCreationScenarios
         activity?.SetTag("tag1", "string");
         activity?.SetTag("tag2", 1);
         activity?.SetTag("tag3", true);
+        activity?.SetTag("tag4", "string-again");
+        activity?.SetTag("tag5", "string-more");
+        activity?.Stop();
+    }
+
+    public static void CreateActivityWithAddAttributes(ActivitySource source)
+    {
+        using var activity = source.StartActivity("name");
+        activity?.AddTag("tag1", "string");
+        activity?.AddTag("tag2", 1);
+        activity?.AddTag("tag3", true);
+        activity?.SetTag("tag4", "string-again");
+        activity?.SetTag("tag5", "string-more");
         activity?.Stop();
     }
 }
