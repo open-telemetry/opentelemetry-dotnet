@@ -19,8 +19,8 @@ BenchmarkDotNet v0.13.10, Windows 11 (10.0.22621.2861)
 |----------------------------------------------- |----------:|---------:|----------:|----------:|
 | CreateActivity_NoopProcessor                   | 247.22 ns | 4.977 ns | 13.198 ns | 240.34 ns |
 | CreateActivity_WithParentContext_NoopProcessor |  55.17 ns | 1.131 ns |  1.111 ns |  54.98 ns |
-| CreateActivity_WithSetAttributes_NoopProcessor | 333.13 ns | 2.415 ns |  1.885 ns | 332.76 ns |
-| CreateActivity_WithAddAttributes_NoopProcessor | 339.23 ns | 6.686 ns | 10.210 ns | 335.73 ns |
+| CreateActivity_WithSetTags_NoopProcessor       | 375.2 ns | 7.52 ns | 18.44 ns | 370.4 ns |
+| CreateActivity_WithAddTags_NoopProcessor       | 340.9 ns | 6.27 ns | 12.81 ns | 336.1 ns |
 */
 
 namespace Benchmarks.Trace;
@@ -54,10 +54,10 @@ public class ActivityCreationBenchmarks
     public void CreateActivity_WithParentContext_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentContext(this.benchmarkSource, this.parentCtx);
 
     [Benchmark]
-    public void CreateActivity_WithSetAttributes_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithSetAttributes(this.benchmarkSource);
+    public void CreateActivity_WithSetTags_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithSetTags(this.benchmarkSource);
 
     [Benchmark]
-    public void CreateActivity_WithAddAttributes_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAddAttributes(this.benchmarkSource);
+    public void CreateActivity_WithAddTags_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAddTags(this.benchmarkSource);
 
     internal class NoopActivityProcessor : BaseProcessor<Activity>
     {

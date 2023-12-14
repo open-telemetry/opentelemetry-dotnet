@@ -19,7 +19,7 @@ internal static class ActivityCreationScenarios
         activity?.Stop();
     }
 
-    public static void CreateActivityWithSetAttributes(ActivitySource source)
+    public static void CreateActivityWithSetTags(ActivitySource source)
     {
         using var activity = source.StartActivity("name");
         activity?.SetTag("tag1", "string");
@@ -30,7 +30,7 @@ internal static class ActivityCreationScenarios
         activity?.Stop();
     }
 
-    public static void CreateActivityWithAddAttributes(ActivitySource source)
+    public static void CreateActivityWithAddTags(ActivitySource source)
     {
         using var activity = source.StartActivity("name");
         activity?.AddTag("tag1", "string");
