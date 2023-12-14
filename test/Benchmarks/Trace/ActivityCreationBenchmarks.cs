@@ -17,10 +17,10 @@ BenchmarkDotNet v0.13.10, Windows 11 (10.0.22621.2861)
 
 | Method                                         | Mean      | Error    | StdDev    | Median    |
 |----------------------------------------------- |----------:|---------:|----------:|----------:|
-| CreateActivity_NoopProcessor                   | 245.32 ns | 4.934 ns | 10.408 ns | 239.75 ns |
-| CreateActivity_WithParentContext_NoopProcessor |  53.81 ns | 1.090 ns |  1.850 ns |  53.48 ns |
-| CreateActivity_WithSetAttributes_NoopProcessor | 363.87 ns | 7.200 ns | 16.830 ns | 367.81 ns |
-| CreateActivity_WithAddAttributes_NoopProcessor | 340.51 ns | 2.072 ns |  1.731 ns | 340.35 ns |
+| CreateActivity_NoopProcessor                   | 247.22 ns | 4.977 ns | 13.198 ns | 240.34 ns |
+| CreateActivity_WithParentContext_NoopProcessor |  55.17 ns | 1.131 ns |  1.111 ns |  54.98 ns |
+| CreateActivity_WithSetAttributes_NoopProcessor | 333.13 ns | 2.415 ns |  1.885 ns | 332.76 ns |
+| CreateActivity_WithAddAttributes_NoopProcessor | 339.23 ns | 6.686 ns | 10.210 ns | 335.73 ns |
 */
 
 namespace Benchmarks.Trace;

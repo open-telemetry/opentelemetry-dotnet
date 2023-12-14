@@ -36,8 +36,8 @@ internal static class ActivityCreationScenarios
         activity?.AddTag("tag1", "string");
         activity?.AddTag("tag2", 1);
         activity?.AddTag("tag3", true);
-        activity?.SetTag("tag4", "string-again");
-        activity?.SetTag("tag5", "string-more");
+        activity?.AddTag("tag4", "string-again");
+        activity?.AddTag("tag5", "string-more");
         activity?.Stop();
     }
 }
