@@ -49,7 +49,7 @@ public class WeatherForecastController : ControllerBase
         // that calculating the forecast is an expensive operation and therefore
         // something to be distinguished from the overall request.
         // Note: Tags can be added to the current activity without the need for
-        // a manual activity using Acitivty.Current?.SetTag()
+        // a manual activity using Activity.Current?.SetTag()
         using var activity = this.activitySource.StartActivity("calculate forecast");
 
         var rng = new Random();

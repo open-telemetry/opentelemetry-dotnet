@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
@@ -9,6 +12,9 @@ namespace OpenTelemetry.Logs;
 /// Contains extension methods for the <see cref="LoggerProvider"/> class.
 /// </summary>
 #if EXPOSE_EXPERIMENTAL_FEATURES
+#if NET8_0_OR_GREATER
+[Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
 public
 #else
 internal

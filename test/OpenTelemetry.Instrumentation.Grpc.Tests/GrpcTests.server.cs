@@ -3,8 +3,19 @@
 
 #if NET6_0_OR_GREATER
 using System.Diagnostics;
+using System.Net;
+using Greet;
+using Grpc.Core;
+using Grpc.Net.Client;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Grpc.Services.Tests;
+using OpenTelemetry.Instrumentation.GrpcNetClient;
+using OpenTelemetry.Trace;
 using Xunit;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
+using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests;
 
@@ -21,34 +32,26 @@ public partial class GrpcTests : IDisposable
         this.server = new GrpcServer<GreeterService>();
     }
 
-    /*
     [Theory]
     [InlineData(null)]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void GrpcAspNetCoreInstrumentationAddsCorrectAttributes(bool? enableGrpcAspNetCoreSupport)
+    [InlineData("true")]
+    [InlineData("false")]
+    [InlineData("True")]
+    [InlineData("False")]
+    public void GrpcAspNetCoreInstrumentationAddsCorrectAttributes(string enableGrpcAspNetCoreSupport)
     {
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+            .AddInMemoryCollection(new Dictionary<string, string>
+            {
+                [SemanticConventionOptInKeyName] = "http",
+                ["OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION"] = enableGrpcAspNetCoreSupport,
+            })
             .Build();
 
         var exportedItems = new List<Activity>();
-        var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder()
-            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration));
-
-        if (enableGrpcAspNetCoreSupport.HasValue)
-        {
-            tracerProviderBuilder.AddAspNetCoreInstrumentation(options =>
-            {
-                options.EnableGrpcAspNetCoreSupport = enableGrpcAspNetCoreSupport.Value;
-            });
-        }
-        else
-        {
-            tracerProviderBuilder.AddAspNetCoreInstrumentation();
-        }
-
-        using var tracerProvider = tracerProviderBuilder
+        using var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddAspNetCoreInstrumentation()
             .AddInMemoryExporter(exportedItems)
             .Build();
 
@@ -66,7 +69,7 @@ public partial class GrpcTests : IDisposable
 
         Assert.Equal(ActivityKind.Server, activity.Kind);
 
-        if (!enableGrpcAspNetCoreSupport.HasValue || enableGrpcAspNetCoreSupport.Value)
+        if (enableGrpcAspNetCoreSupport != null && enableGrpcAspNetCoreSupport.Equals("true", StringComparison.OrdinalIgnoreCase))
         {
             Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
             Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
@@ -99,30 +102,28 @@ public partial class GrpcTests : IDisposable
     [Theory(Skip = "Skipping for .NET 6 and higher due to bug #3023")]
 #endif
     [InlineData(null)]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void GrpcAspNetCoreInstrumentationAddsCorrectAttributesWhenItCreatesNewActivity(bool? enableGrpcAspNetCoreSupport)
+    [InlineData("true")]
+    [InlineData("false")]
+    [InlineData("True")]
+    [InlineData("False")]
+    public void GrpcAspNetCoreInstrumentationAddsCorrectAttributesWhenItCreatesNewActivity(string enableGrpcAspNetCoreSupport)
     {
         try
         {
             // B3Propagator along with the headers passed to the client.SayHello ensure that the instrumentation creates a sibling activity
             Sdk.SetDefaultTextMapPropagator(new Extensions.Propagators.B3Propagator());
             var exportedItems = new List<Activity>();
-            var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
+            var configuration = new ConfigurationBuilder()
+           .AddInMemoryCollection(new Dictionary<string, string>
+           {
+               [SemanticConventionOptInKeyName] = "http",
+               ["OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION"] = enableGrpcAspNetCoreSupport,
+           })
+           .Build();
 
-            if (enableGrpcAspNetCoreSupport.HasValue)
-            {
-                tracerProviderBuilder.AddAspNetCoreInstrumentation(options =>
-                {
-                    options.EnableGrpcAspNetCoreSupport = enableGrpcAspNetCoreSupport.Value;
-                });
-            }
-            else
-            {
-                tracerProviderBuilder.AddAspNetCoreInstrumentation();
-            }
-
-            using var tracerProvider = tracerProviderBuilder
+            using var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+                .AddAspNetCoreInstrumentation()
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -146,7 +147,7 @@ public partial class GrpcTests : IDisposable
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
 
-            if (!enableGrpcAspNetCoreSupport.HasValue || enableGrpcAspNetCoreSupport.Value)
+            if (enableGrpcAspNetCoreSupport != null && enableGrpcAspNetCoreSupport.Equals("true", StringComparison.OrdinalIgnoreCase))
             {
                 Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
                 Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
@@ -183,7 +184,7 @@ public partial class GrpcTests : IDisposable
             }));
         }
     }
-    */
+
     public void Dispose()
     {
         this.server.Dispose();

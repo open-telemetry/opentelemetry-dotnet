@@ -76,6 +76,9 @@ public static class OpenTelemetryLoggingExtensions
     /// </remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -90,7 +93,7 @@ public static class OpenTelemetryLoggingExtensions
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
     internal
 #endif
-        static ILoggingBuilder UseOpenTelemetry(
+            static ILoggingBuilder UseOpenTelemetry(
         this ILoggingBuilder builder)
         => AddOpenTelemetryInternal(builder, configureBuilder: null, configureOptions: null);
 
@@ -102,6 +105,9 @@ public static class OpenTelemetryLoggingExtensions
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <param name="configure">Optional <see cref="LoggerProviderBuilder"/> configuration action.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -113,7 +119,7 @@ public static class OpenTelemetryLoggingExtensions
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
     internal
 #endif
-        static ILoggingBuilder UseOpenTelemetry(
+            static ILoggingBuilder UseOpenTelemetry(
         this ILoggingBuilder builder,
         Action<LoggerProviderBuilder> configure)
     {
@@ -131,6 +137,9 @@ public static class OpenTelemetryLoggingExtensions
     /// <param name="configureBuilder">Optional <see cref="LoggerProviderBuilder"/> configuration action.</param>
     /// <param name="configureOptions">Optional <see cref="OpenTelemetryLoggerOptions"/> configuration action.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -143,7 +152,7 @@ public static class OpenTelemetryLoggingExtensions
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
     internal
 #endif
-        static ILoggingBuilder UseOpenTelemetry(
+            static ILoggingBuilder UseOpenTelemetry(
         this ILoggingBuilder builder,
         Action<LoggerProviderBuilder>? configureBuilder,
         Action<OpenTelemetryLoggerOptions>? configureOptions)
