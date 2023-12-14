@@ -52,7 +52,7 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 * [Grpc.Net.Client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
-* [HTTP clients](./src/OpenTelemetry.Instrumentation.Http/README.md)
+* [HTTP client](./src/OpenTelemetry.Instrumentation.Http/README.md)
 * [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 Here are the [exporter
