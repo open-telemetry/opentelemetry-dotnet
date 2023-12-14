@@ -54,7 +54,7 @@ public class ActivityCreationBenchmarks
     public void CreateActivity_WithParentContext_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentContext(this.benchmarkSource, this.parentCtx);
 
     [Benchmark]
-    public void CreateActivity_WithSetAttributes_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAttributes(this.benchmarkSource);
+    public void CreateActivity_WithSetAttributes_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithSetAttributes(this.benchmarkSource);
 
     [Benchmark]
     public void CreateActivity_WithAddAttributes_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAddAttributes(this.benchmarkSource);

@@ -19,7 +19,7 @@ internal static class ActivityCreationScenarios
         activity?.Stop();
     }
 
-    public static void CreateActivityWithAttributes(ActivitySource source)
+    public static void CreateActivityWithSetAttributes(ActivitySource source)
     {
         using var activity = source.StartActivity("name");
         activity?.SetTag("tag1", "string");
