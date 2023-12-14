@@ -1,2 +1,0 @@
-*REMOVED*OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnableGrpcAspNetCoreSupport.get -> bool
-*REMOVED*OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnableGrpcAspNetCoreSupport.set -> void
