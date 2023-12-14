@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Export OpenMetrics format from Prometheus exporters ([#5107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5107))
-* Added ability to export otel_scope_info from Prometheus exporters ([#5086](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5086))
+* For scrape requests with OpenMetrics format, otel_scope_info is automatically added ([#5086](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5086))
 
 ## 1.7.0-rc.1
 
