@@ -2,7 +2,7 @@
 
 ## Best Practices
 
-### ActivitySource singleton
+### ActivitySource should be singleton
 
 `ActivitySource` SHOULD only be created once and reused throughout the
 application lifetime. This
@@ -30,6 +30,14 @@ care of propagating/restoring the context across process boundaries. If the
 `Activity` produced by the instrumentation library is missing some information
 you need, it is generally recommended to enrich the existing Activity with that
 information, as opposed to creating a new one.
+
+### Modelling static tags as Resource
+
+Tags such as `MachineName`, `Environment` etc. which are static throughout the
+process lifetime should be be modelled as `Resource`, instead of adding them
+to each `Activity`. Refer to this
+[doc](../../docs/traces/customizing-the-sdk/README.md#resource) for details and
+examples.
 
 ## Common issues that lead to missing traces
 

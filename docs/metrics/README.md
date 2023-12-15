@@ -2,20 +2,23 @@
 
 ## Best Practices
 
-- Instruments SHOULD only be created once and reused throughout the application
-  lifetime. This
-  [example](../../docs/metrics/getting-started-console/Program.cs) shows how an
-  instrument is created a `static` field and then used in the application. You
-  could also look at this ASP.NET Core
-  [example](../../examples/AspNetCore/Program.cs) which shows a more Dependency
-  Injection friendly way of doing this by extracting the `Meter` and an
-  instrument into a dedicated class called
-  [Instrumentation](../../examples/AspNetCore/Instrumentation.cs) which is then
-  added as a `Singleton` service.
+### Instruments should be singleton
 
-- When emitting metrics with tags, DO NOT change the order in which you provide
-  tags. Changing the order of tag keys would increase the time taken by the SDK
-  to record the measurement.
+Instruments SHOULD only be created once and reused throughout the application
+lifetime. This [example](../../docs/metrics/getting-started-console/Program.cs)
+shows how an instrument is created a `static` field and then used in the
+application. You could also look at this ASP.NET Core
+[example](../../examples/AspNetCore/Program.cs) which shows a more Dependency
+Injection friendly way of doing this by extracting the `Meter` and an instrument
+into a dedicated class called
+[Instrumentation](../../examples/AspNetCore/Instrumentation.cs) which is then
+added as a `Singleton` service.
+
+### Ordering of Tags
+
+When emitting metrics with tags, DO NOT change the order in which you provide
+tags. Changing the order of tag keys would increase the time taken by the SDK to
+record the measurement.
 
 ```csharp
 // If you emit the tag keys in this order: name -> color -> taste, stick to this order of tag keys for subsequent measurements.
@@ -26,6 +29,8 @@ MyFruitCounter.Add(5, new("name", "apple"), new("color", "red"), new("taste", "s
 // Same measurement with the order of tags changed: color -> name -> taste. This order of tags is different from the one that was first encountered by the SDK.
 MyFruitCounter.Add(7, new("color", "red"), new("name", "apple"), new("taste", "sweet")); // <--- DON'T DO THIS
 ```
+
+### Use TagList where appropriate
 
 For the best performance, it is highly recommended to pass in tags in certain
 ways so allocations are only happening on the stack rather than the heap,
@@ -49,7 +54,6 @@ var tags = new TagList
 // Uses a TagList as there are more than three tags
 counter.Add(100, tags); // <--- DO THIS
 
-
 // Avoid the below mentioned approaches when there are more than three tags
 var tag1 = new KeyValuePair<string, object>("DimName1", "DimValue1");
 var tag2 = new KeyValuePair<string, object>("DimName2", "DimValue2");
@@ -63,11 +67,17 @@ counter.Add(100, readOnlySpanOfTags); // <--- DON'T DO THIS
 ```
 
 - When emitting metrics with more than eight tags, the SDK allocates memory on
-  the hot-path. You SHOULD try to keep the number of tags less than or equal to
-  eight. Check if you can extract any shared tags such as `MachineName`,
-  `Environment` etc. into `Resource` attributes. Refer to this
-  [doc](../../docs/metrics/customizing-the-sdk/README.md#resource) for more
-  information.
+the hot-path. You SHOULD try to keep the number of tags less than or equal to
+eight. If you are exceeding this, check if you can model some of the tags as
+Resource, as [shown here](#modelling-static-tags-as-resource).
+
+### Modelling static tags as Resource
+
+Tags such as `MachineName`, `Environment` etc. which are static throughout the
+process lifetime should be be modelled as `Resource`, instead of adding them
+to each `Activity`. Refer to this
+[doc](../../docs/traces/customizing-the-sdk/README.md#resource) for details and
+examples.
 
 ## Common issues that lead to missing metrics
 

@@ -33,7 +33,11 @@ public class Program
             // The following adds subscription to activities from all Activity Sources
             // whose name starts with "AbcCompany.XyzProduct.".
             .AddSource("AbcCompany.XyzProduct.*")
-            .ConfigureResource(resourceBuilder => resourceBuilder.AddTelemetrySdk())
+            .ConfigureResource(r => r.AddAttributes(new List<KeyValuePair<string, object>>
+                {
+                    new KeyValuePair<string, object>("static-attribute1", "v1"),
+                    new KeyValuePair<string, object>("static-attribute2", "v2"),
+                }))
             .ConfigureResource(r => r.AddService("MyServiceName"))
             .AddConsoleExporter()
             .Build();

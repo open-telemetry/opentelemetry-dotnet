@@ -577,14 +577,27 @@ is to use a resource indicating this
 [Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
 and [Telemetry
 SDK](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk).
-The `ConfigureResource` method on `MeterProviderBuilder` can be used to set a
-configure the resource on the provider. When the provider is built, it
-automatically builds the final `Resource` from the configured `ResourceBuilder`.
-There can only be a single `Resource` associated with a
-provider. It is not possible to change the resource builder *after* the provider
-is built, by calling the `Build()` method on the `MeterProviderBuilder`.
+The `ConfigureResource` method on `MeterProviderBuilder` can be used to
+configure the resource on the provider. `ConfigureResource` accepts an `Action`
+to configure the `ResourceBuilder`. Multiple calls to `ConfigureResource` can be
+made. When the provider is built, it builds the final `Resource` combining all
+the `ConfigureResource` calls. There can only be a single `Resource` associated
+with a provider. It is not possible to change the resource builder *after* the
+provider is built, by calling the `Build()` method on the
+`MeterProviderBuilder`.
+
 `ResourceBuilder` offers various methods to construct resource comprising of
-multiple attributes from various sources.
+attributes from various sources. For example, `AddService()` adds
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
+resource. `AddAttributes` can be used to add any additional attribute to the
+`Resource`. It also allows adding `ResourceDetector`s.
+
+It is recommended to model attributes that are static throughout the lifetime of
+the process as Resources, instead of adding them as attributes(tags) on each
+measurement.
+
+Follow [this](../extending-the-sdk/README.md#resource-detector) document
+to learn about writing custom resource detectors.
 
 The snippet below shows configuring the `Resource` associated with the provider.
 
@@ -594,7 +607,12 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .ConfigureResource(r => r.AddService("MyServiceName"))
+    .ConfigureResource(r => r.AddAttributes(new List<KeyValuePair<string, object>>
+                {
+                    new KeyValuePair<string, object>("static-attribute1", "v1"),
+                    new KeyValuePair<string, object>("static-attribute2", "v2"),
+                }))
+    .ConfigureResource(resourceBuilder => resourceBuilder.AddService("service-name"))
     .Build();
 ```
 
