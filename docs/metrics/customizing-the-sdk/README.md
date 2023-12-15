@@ -596,7 +596,7 @@ It is recommended to model attributes that are static throughout the lifetime of
 the process as Resources, instead of adding them as attributes(tags) on each
 measurement.
 
-Follow [this](../extending-the-sdk/README.md#resource-detector) document
+Follow [this](../../trace/extending-the-sdk/README.md#resource-detector) document
 to learn about writing custom resource detectors.
 
 The snippet below shows configuring the `Resource` associated with the provider.
