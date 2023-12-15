@@ -2,9 +2,12 @@
 
 ## Unreleased
 
-* `LogRecord.Attributes` and `LogRecord.StateValues` will now automatically
-  update if `LogRecord.State` is set inside a processor.
-  ([#5169](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5169))
+* Fixed an issue where `LogRecord.Attributes` (or `LogRecord.StateValues` alias)
+  could become out of sync with `LogRecord.State` if either is set directly via
+  the public setters. This was done to further mitigate issues introduced in
+  1.5.0 causing attributes added using custom processor(s) to be missing after
+  upgrading. For details see:
+  [#5169](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5169)
 
 ## 1.7.0
 
