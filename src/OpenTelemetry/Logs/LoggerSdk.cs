@@ -38,7 +38,7 @@ internal sealed class LoggerSdk : Logger
 
             logRecord.Logger = this;
 
-            logRecord.Attributes = attributes.Export(ref logRecord.AttributeStorage);
+            logRecord.AttributeData = attributes.Export(ref logRecord.AttributeStorage);
 
             processor.OnEnd(logRecord);
 
