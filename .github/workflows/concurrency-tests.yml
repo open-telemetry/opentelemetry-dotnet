@@ -28,7 +28,7 @@ jobs:
 
     - name: Publish Artifacts
       if: always() && !cancelled()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.os }}-${{ matrix.project }}-${{ matrix.version }}-coyoteoutput
         path: '**/*_CoyoteOutput.*'

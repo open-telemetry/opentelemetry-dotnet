@@ -39,7 +39,7 @@ jobs:
       run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build
 
     - name: Publish Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ github.ref_name }}-packages
         path: '**/bin/**/*.*nupkg'

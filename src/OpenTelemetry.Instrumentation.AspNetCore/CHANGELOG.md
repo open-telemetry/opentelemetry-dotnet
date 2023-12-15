@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.7.0
+
+Released 2023-Dec-13
+
+## 1.6.0 - First stable release of this library
+
+Released 2023-Dec-13
+
 * Re-introduced support for gRPC instrumentation as an opt-in experimental
   feature. From now onwards, gRPC can be enabled by setting
   `OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` flag to
