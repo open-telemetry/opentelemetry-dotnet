@@ -11,18 +11,10 @@ and
 [System.Net.HttpWebRequest](https://docs.microsoft.com/dotnet/api/system.net.httpwebrequest)
 and collects metrics and traces about outgoing HTTP requests.
 
-**Note: This component is based on the OpenTelemetry semantic conventions for
-[metrics](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md)
-and
-[traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md).
-These conventions are
-[Experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md),
-and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).
-Until a [stable
-version](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/telemetry-stability.md)
-is released, there can be [breaking changes](./CHANGELOG.md). You can track the
-progress from
-[milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/23).**
+This component is based on the
+[v1.23](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
+of http semantic conventions. For details on the default set of attributes that
+are added, checkout [Traces](#traces) and [Metrics](#metrics) sections below.
 
 ## Steps to enable OpenTelemetry.Instrumentation.Http
 
@@ -33,7 +25,7 @@ Add a reference to the
 package. Also, add any other instrumentations & exporters you will need.
 
 ```shell
-dotnet add package --prerelease OpenTelemetry.Instrumentation.Http
+dotnet add package OpenTelemetry.Instrumentation.Http
 ```
 
 ### Step 2: Enable HTTP Instrumentation at application startup
@@ -64,6 +56,22 @@ public class Program
     }
 }
 ```
+
+Following list of attributes are added by default on activity. See
+[http-spans](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-spans.md)
+for more details about each individual attribute:
+
+* `error.type`
+* `http.request.method`
+* `http.request.method_original`
+* `http.response.status_code`
+* `network.protocol.version`
+* `server.address`
+* `server.port`
+* `url.full`
+
+[Enrich Api](#enrich-httpclient-api) can be used if any additional attributes are
+required on activity.
 
 #### Metrics
 
@@ -96,6 +104,21 @@ enable this instrumentation in an ASP.NET core application.
 Refer to this
 [example](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/src/OpenTelemetry.Instrumentation.AspNet/README.md)
 to see how to enable this instrumentation in an ASP.NET application.
+
+Following list of attributes are added by default on
+`http.client.request.duration` metric. See
+[http-metrics](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http/http-metrics.md)
+for more details about each individual attribute. `.NET8.0` and above supports
+additional metrics, see [list of metrics produced](#list-of-metrics-produced) for
+more details.
+
+* `error.type`
+* `http.request.method`
+* `http.response.status_code`
+* `network.protocol.version`
+* `server.address`
+* `server.port`
+* `url.scheme`
 
 #### List of metrics produced
 
@@ -147,6 +170,8 @@ newer versions.
 
 ## Advanced configuration
 
+### Tracing
+
 This instrumentation can be configured to change the default behavior by using
 `HttpClientTraceInstrumentationOptions`. It is important to note that there are
 differences between .NET Framework and newer .NET/.NET Core runtimes which
@@ -155,9 +180,9 @@ govern what options are used. On .NET Framework, `HttpClient` uses the
 `HttpClient` API. As such, depending on the runtime, only one half of the
 "filter" & "enrich" options are used.
 
-### .NET & .NET Core
+#### .NET & .NET Core
 
-#### Filter HttpClient API
+##### Filter HttpClient API
 
 This instrumentation by default collects all the outgoing HTTP requests. It
 allows filtering of requests by using the `FilterHttpRequestMessage` function
@@ -189,7 +214,7 @@ to this instrumentation. OpenTelemetry has a concept of a
 and the `FilterHttpRequestMessage` option does the filtering *after* the Sampler
 is invoked.
 
-#### Enrich HttpClient API
+##### Enrich HttpClient API
 
 This instrumentation library provides options that can be used to
 enrich the activity with additional information. These actions are called
@@ -228,9 +253,9 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-### .NET Framework
+#### .NET Framework
 
-#### Filter HttpWebRequest API
+##### Filter HttpWebRequest API
 
 This instrumentation by default collects all the outgoing HTTP requests. It
 allows filtering of requests by using the `FilterHttpWebRequest` function
@@ -262,7 +287,7 @@ this instrumentation. OpenTelemetry has a concept of a
 and the `FilterHttpWebRequest` option does the filtering *after* the Sampler is
 invoked.
 
-#### Enrich HttpWebRequest API
+##### Enrich HttpWebRequest API
 
 This instrumentation library provides options that can be used to
 enrich the activity with additional information. These actions are called
@@ -306,13 +331,13 @@ general extensibility point to add additional properties to any activity. The
 `Enrich` option is specific to this instrumentation, and is provided to get
 access to raw request, response, and exception objects.
 
-### RecordException
+#### RecordException
 
 This instrumentation automatically sets Activity Status to Error if the Http
 StatusCode is >= 400. Additionally, `RecordException` feature may be turned on,
 to store the exception to the Activity itself as ActivityEvent.
 
-## Activity Duration and http.client.request.duration metric calculation
+## Activity duration and http.client.request.duration metric calculation
 
 `Activity.Duration` and `http.client.request.duration` values represents the
 time the underlying client handler takes to complete the request. Completing the

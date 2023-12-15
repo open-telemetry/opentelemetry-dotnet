@@ -14,6 +14,7 @@ internal sealed class PrometheusCollectionManager
     private readonly int scrapeResponseCacheDurationMilliseconds;
     private readonly Func<Batch<Metric>, ExportResult> onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
+    private readonly HashSet<string> scopes;
     private int metricsCacheCount;
     private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private int globalLockState;
@@ -29,6 +30,7 @@ internal sealed class PrometheusCollectionManager
         this.scrapeResponseCacheDurationMilliseconds = this.exporter.ScrapeResponseCacheDurationMilliseconds;
         this.onCollectRef = this.OnCollect;
         this.metricsCache = new Dictionary<Metric, PrometheusMetric>();
+        this.scopes = new HashSet<string>();
     }
 
 #if NET6_0_OR_GREATER
@@ -170,6 +172,37 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
+            this.scopes.Clear();
+
+            foreach (var metric in metrics)
+            {
+                if (PrometheusSerializer.CanWriteMetric(metric))
+                {
+                    if (this.scopes.Add(metric.MeterName))
+                    {
+                        try
+                        {
+                            cursor = PrometheusSerializer.WriteScopeInfo(this.buffer, cursor, metric.MeterName);
+
+                            break;
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            if (!this.IncreaseBufferSize())
+                            {
+                                // there are two cases we might run into the following condition:
+                                // 1. we have many metrics to be exported - in this case we probably want
+                                //    to put some upper limit and allow the user to configure it.
+                                // 2. we got an IndexOutOfRangeException which was triggered by some other
+                                //    code instead of the buffer[cursor++] - in this case we should give up
+                                //    at certain point rather than allocating like crazy.
+                                throw;
+                            }
+                        }
+                    }
+                }
+            }
+
             foreach (var metric in metrics)
             {
                 if (!PrometheusSerializer.CanWriteMetric(metric))
@@ -194,12 +227,6 @@ internal sealed class PrometheusCollectionManager
                     {
                         if (!this.IncreaseBufferSize())
                         {
-                            // there are two cases we might run into the following condition:
-                            // 1. we have many metrics to be exported - in this case we probably want
-                            //    to put some upper limit and allow the user to configure it.
-                            // 2. we got an IndexOutOfRangeException which was triggered by some other
-                            //    code instead of the buffer[cursor++] - in this case we should give up
-                            //    at certain point rather than allocating like crazy.
                             throw;
                         }
                     }
