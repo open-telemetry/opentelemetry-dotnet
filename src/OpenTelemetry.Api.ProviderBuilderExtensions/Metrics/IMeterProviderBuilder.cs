@@ -23,10 +23,10 @@ internal interface IMeterProviderBuilder : IDeferredMeterProviderBuilder
 
     /// <summary>
     /// Register a callback action to configure the <see
-    /// cref="IServiceCollection"/> where metric services are configured.
+    /// cref="IServiceCollection"/> where metrics services are configured.
     /// </summary>
     /// <remarks>
-    /// Note: Metric services are only available during the application
+    /// Note: Metrics services are only available during the application
     /// configuration phase. This method should throw a <see
     /// cref="NotSupportedException"/> if services are configured after the
     /// application <see cref="IServiceProvider"/> has been created.

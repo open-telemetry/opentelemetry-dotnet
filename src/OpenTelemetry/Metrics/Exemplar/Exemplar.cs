@@ -1,6 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+using OpenTelemetry.Internal;
+#endif
+
 using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics;
@@ -10,6 +15,9 @@ namespace OpenTelemetry.Metrics;
 /// Represents an Exemplar data.
 /// </summary>
 /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
+#if NET8_0_OR_GREATER
+[Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
 public
 #else
 /// <summary>

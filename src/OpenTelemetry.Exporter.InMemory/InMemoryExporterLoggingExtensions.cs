@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -36,6 +39,9 @@ public static class InMemoryExporterLoggingExtensions
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <param name="exportedItems">Collection which will be populated with the exported <see cref="LogRecord"/>.</param>
     /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>

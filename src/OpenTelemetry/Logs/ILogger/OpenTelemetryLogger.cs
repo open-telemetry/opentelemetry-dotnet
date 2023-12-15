@@ -79,7 +79,7 @@ internal sealed class OpenTelemetryLogger : ILogger
 
             LogRecordData.SetActivityContext(ref data, activity);
 
-            var attributes = record.Attributes =
+            var attributes = record.AttributeData =
                 ProcessState(record, ref iloggerData, in state, this.options.IncludeAttributes, this.options.ParseStateValues);
 
             if (!TryGetOriginalFormatFromAttributes(attributes, out var originalFormat))
@@ -133,7 +133,7 @@ internal sealed class OpenTelemetryLogger : ILogger
         }
     }
 
-    private static IReadOnlyList<KeyValuePair<string, object?>>? ProcessState<TState>(
+    internal static IReadOnlyList<KeyValuePair<string, object?>>? ProcessState<TState>(
         LogRecord logRecord,
         ref LogRecord.LogRecordILoggerData iLoggerData,
         in TState state,

@@ -19,6 +19,8 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 
 public sealed class PrometheusExporterMiddlewareTests
 {
+    private const string MeterVersion = "1.0.1";
+
     private static readonly string MeterName = Utils.GetCurrentMethodName();
 
     [Fact]
@@ -281,7 +283,7 @@ public sealed class PrometheusExporterMiddlewareTests
             new KeyValuePair<string, object>("key2", "value2"),
         };
 
-        using var meter = new Meter(MeterName);
+        using var meter = new Meter(MeterName, MeterVersion);
 
         var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
@@ -320,11 +322,14 @@ public sealed class PrometheusExporterMiddlewareTests
             string content = await response.Content.ReadAsStringAsync();
 
             string expected = requestOpenMetrics
-                ? "# TYPE counter_double_total counter\n"
-                  + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+\\.\\d{3})\n"
+                ? "# TYPE otel_scope_info info\n"
+                  + "# HELP otel_scope_info Scope metadata\n"
+                  + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
+                  + "# TYPE counter_double_total counter\n"
+                  + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
                   + "# EOF\n"
                 : "# TYPE counter_double_total counter\n"
-                  + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
+                  + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
                   + "# EOF\n";
 
             var matches = Regex.Matches(content, ("^" + expected + "$").Replace('\'', '"'));

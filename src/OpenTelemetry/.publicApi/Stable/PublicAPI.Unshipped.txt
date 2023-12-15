@@ -1,4 +1,3 @@
-OpenTelemetry.Metrics.Metric.MeterTags.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>?
 OpenTelemetry.OpenTelemetrySdk
 OpenTelemetry.OpenTelemetrySdk.Dispose() -> void
 OpenTelemetry.OpenTelemetrySdk.MeterProvider.get -> OpenTelemetry.Metrics.MeterProvider!
