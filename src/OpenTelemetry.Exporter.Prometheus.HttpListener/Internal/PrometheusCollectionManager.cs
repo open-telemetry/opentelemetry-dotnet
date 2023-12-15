@@ -178,29 +178,27 @@ internal sealed class PrometheusCollectionManager
             {
                 if (PrometheusSerializer.CanWriteMetric(metric))
                 {
-                    this.scopes.Add(metric.MeterName);
-                }
-            }
-
-            foreach (var scope in this.scopes)
-            {
-                try
-                {
-                    cursor = PrometheusSerializer.WriteScopeInfo(this.buffer, cursor, scope);
-
-                    break;
-                }
-                catch (IndexOutOfRangeException)
-                {
-                    if (!this.IncreaseBufferSize())
+                    if (this.scopes.Add(metric.MeterName))
                     {
-                        // there are two cases we might run into the following condition:
-                        // 1. we have many metrics to be exported - in this case we probably want
-                        //    to put some upper limit and allow the user to configure it.
-                        // 2. we got an IndexOutOfRangeException which was triggered by some other
-                        //    code instead of the buffer[cursor++] - in this case we should give up
-                        //    at certain point rather than allocating like crazy.
-                        throw;
+                        try
+                        {
+                            cursor = PrometheusSerializer.WriteScopeInfo(this.buffer, cursor, metric.MeterName);
+
+                            break;
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            if (!this.IncreaseBufferSize())
+                            {
+                                // there are two cases we might run into the following condition:
+                                // 1. we have many metrics to be exported - in this case we probably want
+                                //    to put some upper limit and allow the user to configure it.
+                                // 2. we got an IndexOutOfRangeException which was triggered by some other
+                                //    code instead of the buffer[cursor++] - in this case we should give up
+                                //    at certain point rather than allocating like crazy.
+                                throw;
+                            }
+                        }
                     }
                 }
             }
