@@ -32,24 +32,11 @@ internal static partial class PrometheusSerializer
         {
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
-                var tags = metricPoint.Tags;
                 var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                 // Counter and Gauge
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
-
-                if (tags.Count > 0)
-                {
-                    buffer[cursor++] = unchecked((byte)'{');
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
-                }
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -100,12 +87,7 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
+                    cursor = WriteTags(buffer, cursor, metric, tags, writeEnclosingBraces: false);
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
@@ -131,19 +113,7 @@ internal static partial class PrometheusSerializer
                 // Histogram sum
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-
-                if (tags.Count > 0)
-                {
-                    buffer[cursor++] = unchecked((byte)'{');
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
-                }
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -157,19 +127,7 @@ internal static partial class PrometheusSerializer
                 // Histogram count
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-
-                if (tags.Count > 0)
-                {
-                    buffer[cursor++] = unchecked((byte)'{');
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
-                }
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
 
                 buffer[cursor++] = unchecked((byte)' ');
 

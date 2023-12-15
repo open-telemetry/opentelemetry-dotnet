@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus;
 
@@ -314,6 +315,31 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName)
+    {
+        if (string.IsNullOrEmpty(scopeName))
+        {
+            return cursor;
+        }
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope_info info");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope_info Scope metadata");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "otel_scope_info");
+        buffer[cursor++] = unchecked((byte)'{');
+        cursor = WriteLabel(buffer, cursor, "otel_scope_name", scopeName);
+        buffer[cursor++] = unchecked((byte)'}');
+        buffer[cursor++] = unchecked((byte)' ');
+        buffer[cursor++] = unchecked((byte)'1');
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteTimestamp(byte[] buffer, int cursor, long value, bool useOpenMetrics)
     {
         if (useOpenMetrics)
@@ -337,6 +363,37 @@ internal static partial class PrometheusSerializer
         }
 
         return WriteLong(buffer, cursor, value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
+    {
+        if (writeEnclosingBraces)
+        {
+            buffer[cursor++] = unchecked((byte)'{');
+        }
+
+        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
+        buffer[cursor++] = unchecked((byte)',');
+
+        if (!string.IsNullOrEmpty(metric.MeterVersion))
+        {
+            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
+            buffer[cursor++] = unchecked((byte)',');
+        }
+
+        foreach (var tag in tags)
+        {
+            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+            buffer[cursor++] = unchecked((byte)',');
+        }
+
+        if (writeEnclosingBraces)
+        {
+            buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
+        }
+
+        return cursor;
     }
 
     private static string MapPrometheusType(PrometheusType type)
