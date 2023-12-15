@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Export OpenMetrics format from Prometheus exporters ([#5107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5107))
-* For requests with OpenMetrics format, scope info is automatically added 
+* For requests with OpenMetrics format, scope info is automatically added
   ([#5086](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5086)
   [#5182](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5182))
 
