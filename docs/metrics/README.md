@@ -76,7 +76,7 @@ Resource, as [shown here](#modelling-static-tags-as-resource).
 Tags such as `MachineName`, `Environment` etc. which are static throughout the
 process lifetime should be be modelled as `Resource`, instead of adding them
 to each `Activity`. Refer to this
-[doc](../../docs/traces/customizing-the-sdk/README.md#resource) for details and
+[doc](./customizing-the-sdk/README.md#resource) for details and
 examples.
 
 ## Common issues that lead to missing metrics
