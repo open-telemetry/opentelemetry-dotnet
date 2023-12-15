@@ -12,7 +12,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Extension methods to simplify registering of ASP.NET Core request instrumentation.
 /// </summary>
-public static class MeterProviderBuilderExtensions
+public static class AspNetCoreInstrumentationMeterProviderBuilderExtensions
 {
     /// <summary>
     /// Enables the incoming requests automatic data collection for ASP.NET Core.

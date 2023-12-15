@@ -323,6 +323,9 @@ public static class MeterProviderBuilderExtensions
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -334,7 +337,7 @@ public static class MeterProviderBuilderExtensions
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     internal
 #endif
-        static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
+            static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
     {
         Guard.ThrowIfNull(exemplarFilter);
 

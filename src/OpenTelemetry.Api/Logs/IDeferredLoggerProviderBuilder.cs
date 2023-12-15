@@ -3,6 +3,11 @@
 
 #nullable enable
 
+#if NET8_0_OR_GREATER && EXPOSE_EXPERIMENTAL_FEATURES
+using System.Diagnostics.CodeAnalysis;
+using OpenTelemetry.Internal;
+#endif
+
 namespace OpenTelemetry.Logs;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
@@ -12,6 +17,9 @@ namespace OpenTelemetry.Logs;
 /// dependency injection.
 /// </summary>
 /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+[Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
 public
 #else
 /// <summary>
@@ -21,7 +29,7 @@ public
 /// </summary>
 internal
 #endif
-    interface IDeferredLoggerProviderBuilder
+interface IDeferredLoggerProviderBuilder
 {
     /// <summary>
     /// Register a callback action to configure the <see

@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## 1.7.0
+
+Released 2023-Dec-13
+
+## 1.6.0 - First stable release of this library
+
+Released 2023-Dec-13
+
+* Re-introduced support for gRPC instrumentation as an opt-in experimental
+  feature. From now onwards, gRPC can be enabled by setting
+  `OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` flag to
+  `True`. `OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` can
+  be set as an environment variable or via IConfiguration. The change is
+  introduced in order to support stable release of `http` instrumentation.
+  Semantic conventions for RPC is still
+  [experimental](https://github.com/open-telemetry/semantic-conventions/tree/main/docs/rpc)
+  and hence the package will only support it as an opt-in experimental feature.
+  Note that the support was removed in `1.6.0-rc.1` version of the package and
+  versions released before `1.6.0-rc.1` had gRPC instrumentation enabled by
+  default.
+  ([#5130](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5130))
+
 ## 1.6.0-rc.1
 
 Released 2023-Dec-01
