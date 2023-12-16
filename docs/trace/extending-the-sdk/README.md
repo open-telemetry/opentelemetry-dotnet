@@ -6,7 +6,7 @@ Quick links:
 * [Building your own instrumentation library](#instrumentation-library)
 * [Building your own processor](#processor)
 * [Building your own sampler](#sampler)
-* [Building your own resource detector](../../resources/README.md)
+* [Building your own resource detector](../../resources/README.md#resource-detector)
 * [Registration extension method guidance for library authors](#registration-extension-method-guidance-for-library-authors)
 * [References](#references)
 
