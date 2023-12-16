@@ -6,7 +6,7 @@ Quick links:
 * [Building your own instrumentation library](#instrumentation-library)
 * [Building your own processor](#processor)
 * [Building your own sampler](#sampler)
-* [Building your own resource detector](#resource-detector)
+* [Building your own resource detector](../../resources/README.md)
 * [Registration extension method guidance for library authors](#registration-extension-method-guidance-for-library-authors)
 * [References](#references)
 
@@ -339,21 +339,6 @@ class MySampler : Sampler
 ```
 
 A demo sampler is shown [here](./MySampler.cs).
-
-## Resource Detector
-
-OpenTelemetry .NET SDK provides a resource detector for detecting resource
-information from the `OTEL_RESOURCE_ATTRIBUTES` and `OTEL_SERVICE_NAME`
-environment variables.
-
-Custom resource detectors can be implemented:
-
-* ResourceDetectors should inherit from
-  `OpenTelemetry.Resources.IResourceDetector`, (which belongs to the
-  [OpenTelemetry](../../../src/OpenTelemetry/README.md) package), and implement
-  the `Detect` method.
-
-A demo ResourceDetector is shown [here](./MyResourceDetector.cs).
 
 ## Registration extension method guidance for library authors
 

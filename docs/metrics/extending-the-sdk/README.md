@@ -4,6 +4,7 @@
 * [Building your own reader](#reader)
 * [Building your own exemplar filter](#exemplarfilter)
 * [Building your own exemplar reservoir](#exemplarreservoir)
+* [Building your own resource detector](../../resources/README.md)
 * [References](#references)
 
 ## Exporter
