@@ -69,15 +69,14 @@ counter.Add(100, readOnlySpanOfTags); // <--- DON'T DO THIS
 - When emitting metrics with more than eight tags, the SDK allocates memory on
 the hot-path. You SHOULD try to keep the number of tags less than or equal to
 eight. If you are exceeding this, check if you can model some of the tags as
-Resource, as [shown here](#modelling-static-tags-as-resource).
+Resource, as [shown here](#modeling-static-tags-as-resource).
 
-### Modelling static tags as Resource
+### Modeling static tags as Resource
 
 Tags such as `MachineName`, `Environment` etc. which are static throughout the
-process lifetime should be be modelled as `Resource`, instead of adding them
-to each `Activity`. Refer to this
-[doc](./customizing-the-sdk/README.md#resource) for details and
-examples.
+process lifetime should be be modeled as `Resource`, instead of adding them to
+each metric measurement. Refer to this
+[doc](./customizing-the-sdk/README.md#resource) for details and examples.
 
 ## Common issues that lead to missing metrics
 

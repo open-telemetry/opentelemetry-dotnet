@@ -589,7 +589,7 @@ provider is built, by calling the `Build()` method on the
 `ResourceBuilder` offers various methods to construct resource comprising of
 attributes from various sources. For example, `AddService()` adds
 [Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
-resource. `AddAttributes` can be used to add any additional attribute to the
+resource. `AddAttributes` can be used to add any additional attributes to the
 `Resource`. It also allows adding `ResourceDetector`s.
 
 It is recommended to model attributes that are static throughout the lifetime of
