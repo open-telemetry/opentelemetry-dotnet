@@ -16,7 +16,12 @@ public class Program
     public static void Main()
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureResource(res => res.AddService("example-service"))
+            .ConfigureResource(resource => resource.AddAttributes(new List<KeyValuePair<string, object>>
+                {
+                    new KeyValuePair<string, object>("static-attribute1", "v1"),
+                    new KeyValuePair<string, object>("static-attribute2", "v2"),
+                }))
+            .ConfigureResource(resource => resource.AddService("MyServiceName"))
             .AddMeter(Meter1.Name)
             .AddMeter(Meter2.Name)
 
