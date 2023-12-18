@@ -285,7 +285,60 @@ writing custom exporters.
 
 ### Resource
 
-Information about resources is shown [here](../../resources/README.md).
+[Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
+is the immutable representation of the entity producing the telemetry. If no
+`Resource` is explicitly configured, the
+[default](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#semantic-attributes-with-sdk-provided-default-value)
+is to use a resource indicating this
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
+and [Telemetry
+SDK](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk).
+The `ConfigureResource` method on `TracerProviderBuilder` can be used to
+configure the resource on the provider. `ConfigureResource` accepts an `Action`
+to configure the `ResourceBuilder`. Multiple calls to `ConfigureResource` can be
+made. When the provider is built, it builds the final `Resource` combining all
+the `ConfigureResource` calls. There can only be a single `Resource` associated
+with a provider. It is not possible to change the resource builder *after* the
+provider is built, by calling the `Build()` method on the
+`TracerProviderBuilder`.
+
+`ResourceBuilder` offers various methods to construct resource comprising of
+attributes from various sources. For example, `AddService()` adds
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
+resource. `AddAttributes` can be used to add any additional attribute to the
+`Resource`. It also allows adding `ResourceDetector`s.
+
+It is recommended to model attributes that are static throughout the lifetime of
+the process as Resources, instead of adding them as attributes(tags) on each
+`Activity`.
+
+Follow [this](../extending-the-sdk/README.md#resource-detector) document
+to learn about writing custom resource detectors.
+
+The snippet below shows configuring the `Resource` associated with the provider.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .ConfigureResource(r => r.AddAttributes(new List<KeyValuePair<string, object>>
+                {
+                    new KeyValuePair<string, object>("static-attribute1", "v1"),
+                    new KeyValuePair<string, object>("static-attribute2", "v2"),
+                }))
+    .ConfigureResource(resourceBuilder => resourceBuilder.AddService("service-name"))
+    .Build();
+```
+
+It is also possible to configure the `Resource` by using following
+environmental variables:
+
+| Environment variable       | Description                                        |
+| -------------------------- | -------------------------------------------------- |
+| `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
+| `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
 
 ### Samplers
 
