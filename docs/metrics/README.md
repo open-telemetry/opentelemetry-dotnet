@@ -6,7 +6,7 @@
 
 Instruments SHOULD only be created once and reused throughout the application
 lifetime. This [example](../../docs/metrics/getting-started-console/Program.cs)
-shows how an instrument is created a `static` field and then used in the
+shows how an instrument is created as a `static` field and then used in the
 application. You could also look at this ASP.NET Core
 [example](../../examples/AspNetCore/Program.cs) which shows a more Dependency
 Injection friendly way of doing this by extracting the `Meter` and an instrument
