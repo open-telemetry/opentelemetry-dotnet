@@ -19,6 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		NuGet.config = NuGet.config
 		OpenTelemetry.proj = OpenTelemetry.proj
 		README.md = README.md
+		THIRD-PARTY-NOTICES = THIRD-PARTY-NOTICES
 		VERSIONING.md = VERSIONING.md
 	EndProjectSection
 EndProject
