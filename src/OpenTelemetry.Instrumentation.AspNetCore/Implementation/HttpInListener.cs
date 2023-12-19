@@ -39,7 +39,17 @@ internal class HttpInListener : ListenerHandler
     private const string DiagnosticSourceName = "Microsoft.AspNetCore";
     private const string UnknownHostName = "UNKNOWN-HOST";
 
-    private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
+    private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) =>
+    {
+        if (request.Headers.TryGetValue(name, out var value))
+        {
+            // This causes allocation as the `StringValues` struct has to be casted to an `IEnumerable<string>` object.
+            return value;
+        }
+
+        return Enumerable.Empty<string>();
+    };
+
     private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
 
 #if !NET6_0_OR_GREATER

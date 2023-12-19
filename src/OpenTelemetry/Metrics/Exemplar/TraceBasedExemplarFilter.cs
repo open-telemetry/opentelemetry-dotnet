@@ -1,6 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+using OpenTelemetry.Internal;
+#endif
+
 using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics;
@@ -11,6 +16,9 @@ namespace OpenTelemetry.Metrics;
 /// which are recorded in the context of a sampled parent activity (span).
 /// </summary>
 /// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+[Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
 public
 #else
 /// <summary>

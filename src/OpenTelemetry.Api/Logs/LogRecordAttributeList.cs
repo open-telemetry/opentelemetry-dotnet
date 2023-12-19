@@ -6,6 +6,9 @@
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
+#if NET8_0_OR_GREATER && EXPOSE_EXPERIMENTAL_FEATURES
+using System.Diagnostics.CodeAnalysis;
+#endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -16,6 +19,9 @@ namespace OpenTelemetry.Logs;
 /// Stores attributes to be added to a log message.
 /// </summary>
 /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+[Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
 public
 #else
 /// <summary>
