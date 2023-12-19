@@ -27,29 +27,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void ResolutionOrderTest(bool requestLoggerProviderDirectly)
-    {
-        IServiceCollection services = new ServiceCollection();
-
-        services.AddLogging(builder => builder.AddOpenTelemetry());
-
-        using var serviceProvider = services.BuildServiceProvider();
-
-        if (requestLoggerProviderDirectly)
-        {
-            var provider = serviceProvider.GetRequiredService<LoggerProvider>();
-            Assert.NotNull(provider);
-        }
-        else
-        {
-            var factory = serviceProvider.GetRequiredService<ILoggerFactory>();
-            Assert.NotNull(factory);
-        }
-    }
-
     [Fact]
     public void AddOtlpExporterWithNamedOptions()
     {

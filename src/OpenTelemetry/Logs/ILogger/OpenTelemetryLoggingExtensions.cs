@@ -174,11 +174,11 @@ public static class OpenTelemetryLoggingExtensions
         RegisterLoggerProviderOptions(services);
 
         /* Note: This ensures IConfiguration is available when using
-       * IServiceCollections NOT attached to a host. For example when
-       * performing:
-       *
-       * new ServiceCollection().AddLogging(b => b.AddOpenTelemetry())
-       */
+         * IServiceCollections NOT attached to a host. For example when
+         * performing:
+         *
+         * new ServiceCollection().AddLogging(b => b.AddOpenTelemetry())
+         */
         services.AddOpenTelemetrySharedProviderBuilderServices();
 
         if (configureOptions != null)

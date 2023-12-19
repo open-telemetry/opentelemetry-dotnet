@@ -266,7 +266,54 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Throws<ArgumentNullException>(() => sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CircularReferenceTest(bool requestLoggerProviderDirectly)
+    {
+        var services = new ServiceCollection();
+
+        services.AddLogging(logging => logging.AddOpenTelemetry());
+
+        services.ConfigureOpenTelemetryLoggerProvider(builder => builder.AddProcessor<TestLogProcessorWithILoggerFactoryDependency>());
+
+        using var sp = services.BuildServiceProvider();
+
+        if (requestLoggerProviderDirectly)
+        {
+            var provider = sp.GetRequiredService<LoggerProvider>();
+            Assert.NotNull(provider);
+        }
+        else
+        {
+            var factory = sp.GetRequiredService<ILoggerFactory>();
+            Assert.NotNull(factory);
+        }
+    }
+
     private class TestLogProcessor : BaseProcessor<LogRecord>
     {
+    }
+
+    private class TestLogProcessorWithILoggerFactoryDependency : BaseProcessor<LogRecord>
+    {
+        private readonly ILogger logger;
+
+        public TestLogProcessorWithILoggerFactoryDependency(ILoggerFactory loggerFactory)
+        {
+            // Note: It is NOT recommended to log from inside a processor. This
+            // test is meant to mirror someone injecting IHttpClientFactory
+            // (which itself uses ILoggerFactory) as part of an exporter. That
+            // is a more realistic scenario but needs a dependency to do that so
+            // here we approximate the graph.
+            this.logger = loggerFactory.CreateLogger("MyLogger");
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            this.logger.LogInformation("Dispose called");
+
+            base.Dispose(disposing);
+        }
     }
 }
