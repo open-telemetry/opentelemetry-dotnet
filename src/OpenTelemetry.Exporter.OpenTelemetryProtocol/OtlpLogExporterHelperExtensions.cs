@@ -129,7 +129,7 @@ public static class OtlpLogExporterHelperExtensions
     internal
 #endif
         static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder)
-    => AddOtlpExporter(builder, name: null, configureExporter: null);
+        => AddOtlpExporter(builder, name: null, configureExporter: null);
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -152,8 +152,8 @@ public static class OtlpLogExporterHelperExtensions
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
     internal
 #endif
-    static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions> configureExporter)
-     => AddOtlpExporter(builder, name: null, configureExporter);
+        static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions> configureExporter)
+        => AddOtlpExporter(builder, name: null, configureExporter);
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -172,8 +172,8 @@ public static class OtlpLogExporterHelperExtensions
 #else
     internal
 #endif
-    static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
-     => AddOtlpExporter(builder, name: null, configureExporterAndProcessor);
+        static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
+        => AddOtlpExporter(builder, name: null, configureExporterAndProcessor);
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -198,7 +198,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
     internal
 #endif
-    static LoggerProviderBuilder AddOtlpExporter(
+        static LoggerProviderBuilder AddOtlpExporter(
         this LoggerProviderBuilder builder,
         string? name,
         Action<OtlpExporterOptions>? configureExporter)
@@ -282,7 +282,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
     internal
 #endif
-    static LoggerProviderBuilder AddOtlpExporter(
+        static LoggerProviderBuilder AddOtlpExporter(
         this LoggerProviderBuilder builder,
         string? name,
         Action<OtlpExporterOptions, LogRecordExportProcessorOptions>? configureExporterAndProcessor)
