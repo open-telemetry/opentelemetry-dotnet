@@ -20,8 +20,8 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackagePrimaryLicenseFile>$(RepoRoot)\LICENSE.txt</PackagePrimaryLicenseFile>
-    <PackageThirdPartyNoticesFile>$(RepoRoot)\THIRD-PARTY-NOTICES.txt</PackageThirdPartyNoticesFile>
+    <PackagePrimaryLicenseFile>$(RepoRoot)\LICENSE.TXT</PackagePrimaryLicenseFile>
+    <PackageThirdPartyNoticesFile>$(RepoRoot)\THIRD-PARTY-NOTICES.TXT</PackageThirdPartyNoticesFile>
   </PropertyGroup>
 
   <PropertyGroup Label="SourceLinkProperties">
