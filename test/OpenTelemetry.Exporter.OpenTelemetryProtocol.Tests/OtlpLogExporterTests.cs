@@ -33,6 +33,9 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         int defaultConfigureExporterOptionsInvocations = 0;
         int namedConfigureExporterOptionsInvocations = 0;
 
+        int defaultConfigureSdkLimitsOptionsInvocations = 0;
+        int namedConfigureSdkLimitsOptionsInvocations = 0;
+
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .ConfigureServices(services =>
             {
@@ -47,6 +50,10 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
                 services.Configure<OtlpExporterOptions>("Exporter3", o => namedConfigureExporterOptionsInvocations++);
                 services.Configure<LogRecordExportProcessorOptions>("Exporter3", o => namedConfigureExporterOptionsInvocations++);
                 services.Configure<ExperimentalOptions>("Exporter3", o => namedConfigureExporterOptionsInvocations++);
+
+                services.Configure<SdkLimitOptions>(o => defaultConfigureSdkLimitsOptionsInvocations++);
+                services.Configure<SdkLimitOptions>("Exporter2", o => namedConfigureSdkLimitsOptionsInvocations++);
+                services.Configure<SdkLimitOptions>("Exporter3", o => namedConfigureSdkLimitsOptionsInvocations++);
             })
             .AddOtlpExporter()
             .AddOtlpExporter("Exporter2", o => { })
@@ -55,6 +62,11 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
         Assert.Equal(3, defaultConfigureExporterOptionsInvocations);
         Assert.Equal(6, namedConfigureExporterOptionsInvocations);
+
+        // Note: SdkLimitOptions does NOT support named options. We only allow a
+        // single instance for a given IServiceCollection.
+        Assert.Equal(1, defaultConfigureSdkLimitsOptionsInvocations);
+        Assert.Equal(0, namedConfigureSdkLimitsOptionsInvocations);
     }
 
     [Fact]
