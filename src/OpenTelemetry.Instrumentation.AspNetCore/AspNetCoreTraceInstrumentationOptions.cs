@@ -104,5 +104,6 @@ public class AspNetCoreTraceInstrumentationOptions
     /// </remarks>
     internal bool EnableGrpcAspNetCoreSupport { get; set; }
 
-    internal List<string> KnownHttpMethods { get; set; } = new();
+    internal List<string> KnownHttpMethods { get; set; } =
+        [];
 }

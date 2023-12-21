@@ -50,7 +50,7 @@ public static class AspNetCoreInstrumentationTracerProviderBuilderExtensions
     {
         Guard.ThrowIfNull(builder);
 
-        // Note: Warm-up the status code and method mapping.
+        // Note: Warm-up the status code.
         _ = TelemetryHelper.BoxedStatusCodes;
 
         name ??= Options.DefaultName;

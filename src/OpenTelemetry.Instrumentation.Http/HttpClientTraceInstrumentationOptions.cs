@@ -129,11 +129,8 @@ public class HttpClientTraceInstrumentationOptions
     /// </remarks>
     public bool RecordException { get; set; }
 
-#if NET8_0_OR_GREATER
-    internal FrozenDictionary<string, string> KnownHttpMethods { get; set; }
-#else
-    internal Dictionary<string, string> KnownHttpMethods { get; set; } = RequestMethodHelper.GetKnownMethods(null);
-#endif
+    internal List<string> KnownHttpMethods { get; set; } =
+        [];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool EventFilterHttpRequestMessage(string activityName, object arg1)

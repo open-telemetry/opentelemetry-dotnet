@@ -37,6 +37,7 @@ internal static class HttpWebRequestActivitySource
     private static readonly Meter WebRequestMeter = new(MeterName, Version);
     private static readonly Histogram<double> HttpClientRequestDuration = WebRequestMeter.CreateHistogram<double>("http.client.request.duration", "s", "Measures the duration of outbound HTTP requests.");
 
+    private static readonly RequestMethodHelper RequestMethodHelper;
     private static HttpClientTraceInstrumentationOptions tracingOptions;
 
     // Fields for reflection
@@ -75,6 +76,7 @@ internal static class HttpWebRequestActivitySource
             PerformInjection();
 
             TracingOptions = new HttpClientTraceInstrumentationOptions();
+            RequestMethodHelper = new RequestMethodHelper(TracingOptions.KnownHttpMethods);
         }
         catch (Exception ex)
         {
@@ -95,12 +97,12 @@ internal static class HttpWebRequestActivitySource
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddRequestTagsAndInstrumentRequest(HttpWebRequest request, Activity activity)
     {
-        RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method, tracingOptions.KnownHttpMethods);
+        RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method);
 
         if (activity.IsAllDataRequested)
         {
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
-            RequestMethodHelper.SetHttpMethodTag(activity, request.Method, tracingOptions.KnownHttpMethods);
+            RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
             if (!request.RequestUri.IsDefaultPort)
@@ -359,12 +361,11 @@ internal static class HttpWebRequestActivitySource
                     // Disposed HttpWebResponse throws when accessing properties, so let's make a copy of the data to ensure that doesn't happen.
 
                     HttpWebResponse responseCopy = httpWebResponseCtor(
-                        new object[]
-                        {
+                        [
                             uriAccessor(response), verbAccessor(response), coreResponseDataAccessor(response), mediaTypeAccessor(response),
                             usesProxySemanticsAccessor(response), DecompressionMethods.None,
                             isWebSocketResponseAccessor(response), connectionGroupNameAccessor(response),
-                        });
+                        ]);
 
                     if (activity != null)
                     {

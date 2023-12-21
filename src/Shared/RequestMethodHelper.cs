@@ -52,7 +52,7 @@ internal class RequestMethodHelper
 #if NET8_0_OR_GREATER
     public string GetNormalizedHttpMethod(string method)
 #else
-    public string GetNormalizedHttpMethod(string method, Dictionary<string, string> knownMethods = null)
+    public string GetNormalizedHttpMethod(string method)
 #endif
     {
         return this.knownMethods.TryGetValue(method, out var normalizedMethod)
@@ -80,25 +80,11 @@ internal class RequestMethodHelper
 #if NET8_0_OR_GREATER
     public void SetHttpClientActivityDisplayName(Activity activity, string method)
 #else
-    public void SetHttpClientActivityDisplayName(Activity activity, string method, Dictionary<string, string> knownMethods)
+    public void SetHttpClientActivityDisplayName(Activity activity, string method)
 #endif
     {
         // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#name
         activity.DisplayName = this.knownMethods.TryGetValue(method, out var httpMethod) ? httpMethod : "HTTP";
-    }
-
-#if NET8_0_OR_GREATER
-    private static FrozenDictionary<string, string> GetKnownMethods(string configuredKnownMethods)
-#else
-    private static Dictionary<string, string> GetKnownMethods(string configuredKnownMethods)
-#endif
-    {
-        var splitArray = configuredKnownMethods.Split(',')
-                .Select(x => x.Trim())
-                .Where(x => !string.IsNullOrEmpty(x))
-                .ToList();
-
-        return GetKnownMethods(splitArray);
     }
 
 #if NET8_0_OR_GREATER
@@ -113,14 +99,14 @@ internal class RequestMethodHelper
         {
             if (configuredKnownMethods.Count > 0)
             {
-                knownMethods = DefaultKnownMethods.Where(x => configuredKnownMethods.Contains(x.Key, StringComparer.InvariantCultureIgnoreCase));
+                knownMethods = DefaultKnownMethods.Where(x => configuredKnownMethods.Contains(x.Key, StringComparer.OrdinalIgnoreCase));
             }
         }
 
 #if NET8_0_OR_GREATER
         return FrozenDictionary.ToFrozenDictionary(knownMethods, StringComparer.OrdinalIgnoreCase);
 #else
-        return knownMethods.ToDictionary(x => x.Key, x => x.Value);
+        return knownMethods.ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase);
 #endif
     }
 }

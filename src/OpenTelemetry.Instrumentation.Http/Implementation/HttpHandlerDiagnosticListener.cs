@@ -35,6 +35,7 @@ internal sealed class HttpHandlerDiagnosticListener(HttpClientTraceInstrumentati
     private static readonly PropertyFetcher<Exception> StopExceptionFetcher = new("Exception");
     private static readonly PropertyFetcher<TaskStatus> StopRequestStatusFetcher = new("RequestTaskStatus");
     private readonly HttpClientTraceInstrumentationOptions options = options;
+    private readonly RequestMethodHelper requestMethodHelper = new(options.KnownHttpMethods);
 
     static HttpHandlerDiagnosticListener()
     {
@@ -129,7 +130,7 @@ internal sealed class HttpHandlerDiagnosticListener(HttpClientTraceInstrumentati
                 return;
             }
 
-            RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method.Method, this.options.KnownHttpMethods);
+            this.requestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method.Method);
 
             if (!IsNet7OrGreater)
             {
@@ -138,7 +139,7 @@ internal sealed class HttpHandlerDiagnosticListener(HttpClientTraceInstrumentati
             }
 
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
-            RequestMethodHelper.SetHttpMethodTag(activity, request.Method.Method, this.options.KnownHttpMethods);
+            this.requestMethodHelper.SetHttpMethodTag(activity, request.Method.Method);
 
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
             if (!request.RequestUri.IsDefaultPort)

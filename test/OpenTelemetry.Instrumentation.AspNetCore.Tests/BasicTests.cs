@@ -1068,18 +1068,18 @@ public sealed class BasicTests
 
         var exportedItems = new List<Activity>();
 
+        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddAspNetCoreInstrumentation()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
         using var client = this.factory
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
             })
             .CreateClient();
-
-        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddAspNetCoreInstrumentation()
-            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-            .AddInMemoryExporter(exportedItems)
-            .Build();
 
         using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
         using var response = await client.SendAsync(request);
@@ -1093,8 +1093,11 @@ public sealed class BasicTests
 
     [Theory]
     [InlineData("GET,POST,PUT", "GET", null)]
+    [InlineData("get,post,put", "GET", null)]
     [InlineData("POST,PUT", "_OTHER", "GET")]
+    [InlineData("post,put", "_OTHER", "GET")]
     [InlineData("fooBar", "_OTHER", "GET")]
+    [InlineData("foo,bar", "_OTHER", "GET")]
     public async Task KnownHttpMethodsAreBeingRespected_Programmatically(string knownMethods, string expectedMethod, string expectedOriginalMethod)
     {
         var exportedItems = new List<Activity>();
@@ -1123,6 +1126,8 @@ public sealed class BasicTests
 
         using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
         using var response = await client.SendAsync(request);
+
+        this.tracerProvider.Dispose();
 
         Assert.Single(exportedItems);
         var activity = exportedItems[0];

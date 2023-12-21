@@ -15,7 +15,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation;
 
-internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
+internal sealed class HttpHandlerMetricsDiagnosticListener(string name) : ListenerHandler(name)
 {
     internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
 
@@ -34,10 +34,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     private static readonly HttpRequestOptionsKey<string> HttpRequestOptionsErrorKey = new(SemanticConventions.AttributeErrorType);
 #endif
 
-    public HttpHandlerMetricsDiagnosticListener(string name)
-        : base(name)
-    {
-    }
+    private static readonly RequestMethodHelper RequestMethodHelper = new(string.Empty);
 
     public static void OnStopEventWritten(Activity activity, object payload)
     {
