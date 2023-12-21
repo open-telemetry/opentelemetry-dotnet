@@ -11,7 +11,6 @@ using System.Net.Http;
 #endif
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Instrumentation.Http.Implementation;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.Http;
 
