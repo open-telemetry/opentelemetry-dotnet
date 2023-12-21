@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Net.Http;
 #endif
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Metrics;
