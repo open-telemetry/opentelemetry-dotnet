@@ -118,11 +118,10 @@ internal class HttpInListener : ListenerHandler
         if (textMapPropagator is not TraceContextPropagator)
         {
             var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
-            var activityContext = new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true);
             if (ctx.ActivityContext.IsValid()
-                && !((ctx.ActivityContext.TraceId == activityContext.TraceId)
-                    && (ctx.ActivityContext.SpanId == activityContext.SpanId)
-                    && (ctx.ActivityContext.TraceState == activityContext.TraceState)))
+                && !((ctx.ActivityContext.TraceId == activity.TraceId)
+                    && (ctx.ActivityContext.SpanId == activity.ParentSpanId)
+                    && (ctx.ActivityContext.TraceState == activity.TraceStateString)))
             {
                 // Create a new activity with its parent set from the extracted context.
                 // This makes the new activity as a "sibling" of the activity created by
