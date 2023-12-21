@@ -58,6 +58,7 @@ internal class HttpInListener : ListenerHandler
     private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
 #endif
     private readonly AspNetCoreTraceInstrumentationOptions options;
+    private readonly RequestMethodHelper requestMethodHelper;
 
     public HttpInListener(AspNetCoreTraceInstrumentationOptions options)
         : base(DiagnosticSourceName)
@@ -65,6 +66,7 @@ internal class HttpInListener : ListenerHandler
         Guard.ThrowIfNull(options);
 
         this.options = options;
+        this.requestMethodHelper = new RequestMethodHelper(this.options.KnownHttpMethods);
     }
 
     public override void OnEventWritten(string name, object payload)
@@ -105,8 +107,7 @@ internal class HttpInListener : ListenerHandler
         // By this time, samplers have already run and
         // activity.IsAllDataRequested populated accordingly.
 
-        HttpContext context = payload as HttpContext;
-        if (context == null)
+        if (payload is not HttpContext context)
         {
             AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity), activity.OperationName);
             return;
@@ -176,7 +177,7 @@ internal class HttpInListener : ListenerHandler
 #endif
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = GetDisplayName(request.Method);
+            activity.DisplayName = this.GetDisplayName(request.Method);
 
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
 
@@ -196,7 +197,7 @@ internal class HttpInListener : ListenerHandler
                 activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
             }
 
-            RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
+            this.requestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
             activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
             activity.SetTag(SemanticConventions.AttributeUrlPath, path);
@@ -226,8 +227,7 @@ internal class HttpInListener : ListenerHandler
     {
         if (activity.IsAllDataRequested)
         {
-            HttpContext context = payload as HttpContext;
-            if (context == null)
+            if (payload is not HttpContext context)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity), activity.OperationName);
                 return;
@@ -239,7 +239,7 @@ internal class HttpInListener : ListenerHandler
             var routePattern = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
             if (!string.IsNullOrEmpty(routePattern))
             {
-                activity.DisplayName = GetDisplayName(context.Request.Method, routePattern);
+                activity.DisplayName = this.GetDisplayName(context.Request.Method, routePattern);
                 activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
             }
 #endif
@@ -382,9 +382,9 @@ internal class HttpInListener : ListenerHandler
         }
     }
 
-    private static string GetDisplayName(string httpMethod, string httpRoute = null)
+    private string GetDisplayName(string httpMethod, string httpRoute = null)
     {
-        var normalizedMethod = RequestMethodHelper.GetNormalizedHttpMethod(httpMethod);
+        var normalizedMethod = this.requestMethodHelper.GetNormalizedHttpMethod(httpMethod);
 
         return string.IsNullOrEmpty(httpRoute)
             ? normalizedMethod

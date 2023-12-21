@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -28,6 +31,15 @@ public class AspNetCoreTraceInstrumentationOptions
         if (configuration.TryGetBoolValue("OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION", out var enableGrpcInstrumentation))
         {
             this.EnableGrpcAspNetCoreSupport = enableGrpcInstrumentation;
+        }
+
+        if (configuration.TryGetStringValue("OTEL_INSTRUMENTATION_HTTP_KNOWN_METHODS", out var knownHttpMethods))
+        {
+            this.KnownHttpMethods = knownHttpMethods
+                .Split(',')
+                .Select(x => x.Trim())
+                .Where(x => !string.IsNullOrEmpty(x))
+                .ToList();
         }
     }
 
@@ -91,4 +103,6 @@ public class AspNetCoreTraceInstrumentationOptions
     /// https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md.
     /// </remarks>
     internal bool EnableGrpcAspNetCoreSupport { get; set; }
+
+    internal List<string> KnownHttpMethods { get; set; } = new();
 }

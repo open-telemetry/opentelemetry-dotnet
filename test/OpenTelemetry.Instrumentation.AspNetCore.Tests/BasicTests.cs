@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -1022,6 +1023,112 @@ public sealed class BasicTests
         Assert.Equal(0, numberOfUnSubscribedEvents);
         Assert.Equal(2, numberOfSubscribedEvents);
         Assert.True(exceptionHandled);
+    }
+
+    [Theory]
+    [InlineData("GET", null)]
+    public async Task KnownHttpMethodsAreBeingRespected_Defaults(string expectedMethod, string expectedOriginalMethod)
+    {
+        var exportedItems = new List<Activity>();
+
+        using var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient();
+
+        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
+        using var response = await client.SendAsync(request);
+
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
+
+        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+        Assert.Equal(expectedOriginalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
+    }
+
+    [Theory]
+    [InlineData("GET,POST,PUT", "GET", null)]
+    [InlineData("POST,PUT", "_OTHER", "GET")]
+    [InlineData("fooBar", "_OTHER", "GET")]
+    [InlineData("", "GET", null)]
+    [InlineData(",", "GET", null)]
+    public async Task KnownHttpMethodsAreBeingRespected_EnvVar(string knownMethods, string expectedMethod, string expectedOriginalMethod)
+    {
+        var config = new KeyValuePair<string, string>[] { new("OTEL_INSTRUMENTATION_HTTP_KNOWN_METHODS", knownMethods) };
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(config)
+            .Build();
+
+        var exportedItems = new List<Activity>();
+
+        using var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient();
+
+        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddAspNetCoreInstrumentation()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
+        using var response = await client.SendAsync(request);
+
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
+
+        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+        Assert.Equal(expectedOriginalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
+    }
+
+    [Theory]
+    [InlineData("GET,POST,PUT", "GET", null)]
+    [InlineData("POST,PUT", "_OTHER", "GET")]
+    [InlineData("fooBar", "_OTHER", "GET")]
+    public async Task KnownHttpMethodsAreBeingRespected_Programmatically(string knownMethods, string expectedMethod, string expectedOriginalMethod)
+    {
+        var exportedItems = new List<Activity>();
+
+        using var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient();
+
+        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddAspNetCoreInstrumentation(options =>
+            {
+                var splitArray = knownMethods.Split(',')
+                    .Select(x => x.Trim())
+                    .Where(x => !string.IsNullOrEmpty(x));
+
+                foreach (var item in splitArray)
+                {
+                    options.KnownHttpMethods.Add(item);
+                }
+            })
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
+        using var response = await client.SendAsync(request);
+
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
+
+        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+        Assert.Equal(expectedOriginalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
     }
 
     public void Dispose()

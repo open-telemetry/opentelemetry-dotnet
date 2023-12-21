@@ -27,9 +27,8 @@ public static class AspNetCoreInstrumentationMeterProviderBuilderExtensions
 #if NET8_0_OR_GREATER
         return builder.ConfigureMeters();
 #else
-        // Note: Warm-up the status code and method mapping.
+        // Note: Warm-up the status code.
         _ = TelemetryHelper.BoxedStatusCodes;
-        _ = RequestMethodHelper.KnownMethods;
 
         builder.AddMeter(HttpInMetricsListener.InstrumentationName);
 

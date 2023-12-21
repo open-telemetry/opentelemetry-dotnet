@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 using System.Diagnostics;
 using System.Net;
 #if NETFRAMEWORK
@@ -8,6 +11,7 @@ using System.Net.Http;
 #endif
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Instrumentation.Http.Implementation;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.Http;
 
@@ -124,6 +128,12 @@ public class HttpClientTraceInstrumentationOptions
     /// />.</para>
     /// </remarks>
     public bool RecordException { get; set; }
+
+#if NET8_0_OR_GREATER
+    internal FrozenDictionary<string, string> KnownHttpMethods { get; set; }
+#else
+    internal Dictionary<string, string> KnownHttpMethods { get; set; } = RequestMethodHelper.GetKnownMethods(null);
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool EventFilterHttpRequestMessage(string activityName, object arg1)

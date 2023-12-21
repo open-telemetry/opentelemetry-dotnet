@@ -32,9 +32,8 @@ public static class HttpClientInstrumentationMeterProviderBuilderExtensions
             .AddMeter("System.Net.Http")
             .AddMeter("System.Net.NameResolution");
 #else
-        // Note: Warm-up the status code and method mapping.
+        // Note: Warm-up the status code.
         _ = TelemetryHelper.BoxedStatusCodes;
-        _ = RequestMethodHelper.KnownMethods;
 
 #if NETFRAMEWORK
         builder.AddMeter(HttpWebRequestActivitySource.MeterName);

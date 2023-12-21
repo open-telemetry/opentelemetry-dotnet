@@ -95,12 +95,12 @@ internal static class HttpWebRequestActivitySource
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddRequestTagsAndInstrumentRequest(HttpWebRequest request, Activity activity)
     {
-        RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method);
+        RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method, tracingOptions.KnownHttpMethods);
 
         if (activity.IsAllDataRequested)
         {
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
-            RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
+            RequestMethodHelper.SetHttpMethodTag(activity, request.Method, tracingOptions.KnownHttpMethods);
 
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
             if (!request.RequestUri.IsDefaultPort)

@@ -15,7 +15,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation;
 
-internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
+internal sealed class HttpHandlerDiagnosticListener(HttpClientTraceInstrumentationOptions options) : ListenerHandler("HttpHandlerDiagnosticListener")
 {
     internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
     internal static readonly bool IsNet7OrGreater;
@@ -34,7 +34,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
     private static readonly PropertyFetcher<Exception> StopExceptionFetcher = new("Exception");
     private static readonly PropertyFetcher<TaskStatus> StopRequestStatusFetcher = new("RequestTaskStatus");
-    private readonly HttpClientTraceInstrumentationOptions options;
+    private readonly HttpClientTraceInstrumentationOptions options = options;
 
     static HttpHandlerDiagnosticListener()
     {
@@ -46,12 +46,6 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         {
             IsNet7OrGreater = false;
         }
-    }
-
-    public HttpHandlerDiagnosticListener(HttpClientTraceInstrumentationOptions options)
-        : base("HttpHandlerDiagnosticListener")
-    {
-        this.options = options;
     }
 
     public override void OnEventWritten(string name, object payload)
@@ -135,7 +129,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 return;
             }
 
-            RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method.Method);
+            RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method.Method, this.options.KnownHttpMethods);
 
             if (!IsNet7OrGreater)
             {
@@ -144,7 +138,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
             }
 
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
-            RequestMethodHelper.SetHttpMethodTag(activity, request.Method.Method);
+            RequestMethodHelper.SetHttpMethodTag(activity, request.Method.Method, this.options.KnownHttpMethods);
 
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
             if (!request.RequestUri.IsDefaultPort)

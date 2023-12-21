@@ -47,9 +47,8 @@ public static class HttpClientInstrumentationTracerProviderBuilderExtensions
     {
         Guard.ThrowIfNull(builder);
 
-        // Note: Warm-up the status code and method mapping.
+        // Note: Warm-up the status code.
         _ = TelemetryHelper.BoxedStatusCodes;
-        _ = RequestMethodHelper.KnownMethods;
 
         name ??= Options.DefaultName;
 

@@ -9,21 +9,13 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Internal;
 
-internal static class RequestMethodHelper
+internal class RequestMethodHelper
 {
     // The value "_OTHER" is used for non-standard HTTP methods.
     // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
     public const string OtherHttpMethod = "_OTHER";
 
-#if NET8_0_OR_GREATER
-    internal static readonly FrozenDictionary<string, string> KnownMethods;
-#else
-    internal static readonly Dictionary<string, string> KnownMethods;
-#endif
-
-    static RequestMethodHelper()
-    {
-        var knownMethodSet = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, string> DefaultKnownMethods = new(StringComparer.OrdinalIgnoreCase)
         {
             { "GET", "GET" },
             { "PUT", "PUT" },
@@ -36,24 +28,45 @@ internal static class RequestMethodHelper
             { "CONNECT", "CONNECT" },
         };
 
-        // KnownMethods ignores case. Use the value returned by the dictionary to have a consistent case.
 #if NET8_0_OR_GREATER
-        KnownMethods = FrozenDictionary.ToFrozenDictionary(knownMethodSet, StringComparer.OrdinalIgnoreCase);
+    private readonly FrozenDictionary<string, string> knownMethods;
 #else
-        KnownMethods = knownMethodSet;
+    private Dictionary<string, string> knownMethods;
 #endif
+
+    public RequestMethodHelper(string configuredKnownMethods)
+    {
+        var splitArray = configuredKnownMethods.Split(',')
+                .Select(x => x.Trim())
+                .Where(x => !string.IsNullOrEmpty(x))
+                .ToList();
+
+        this.knownMethods = GetKnownMethods(splitArray);
     }
 
-    public static string GetNormalizedHttpMethod(string method)
+    public RequestMethodHelper(List<string> configuredKnownMethods)
     {
-        return KnownMethods.TryGetValue(method, out var normalizedMethod)
+        this.knownMethods = GetKnownMethods(configuredKnownMethods);
+    }
+
+#if NET8_0_OR_GREATER
+    public string GetNormalizedHttpMethod(string method)
+#else
+    public string GetNormalizedHttpMethod(string method, Dictionary<string, string> knownMethods = null)
+#endif
+    {
+        return this.knownMethods.TryGetValue(method, out var normalizedMethod)
             ? normalizedMethod
             : OtherHttpMethod;
     }
 
-    public static void SetHttpMethodTag(Activity activity, string method)
+#if NET8_0_OR_GREATER
+    public void SetHttpMethodTag(Activity activity, string method)
+#else
+    public void SetHttpMethodTag(Activity activity, string method)
+#endif
     {
-        if (KnownMethods.TryGetValue(method, out var normalizedMethod))
+        if (this.knownMethods.TryGetValue(method, out var normalizedMethod))
         {
             activity?.SetTag(SemanticConventions.AttributeHttpRequestMethod, normalizedMethod);
         }
@@ -64,9 +77,50 @@ internal static class RequestMethodHelper
         }
     }
 
-    public static void SetHttpClientActivityDisplayName(Activity activity, string method)
+#if NET8_0_OR_GREATER
+    public void SetHttpClientActivityDisplayName(Activity activity, string method)
+#else
+    public void SetHttpClientActivityDisplayName(Activity activity, string method, Dictionary<string, string> knownMethods)
+#endif
     {
         // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#name
-        activity.DisplayName = KnownMethods.TryGetValue(method, out var httpMethod) ? httpMethod : "HTTP";
+        activity.DisplayName = this.knownMethods.TryGetValue(method, out var httpMethod) ? httpMethod : "HTTP";
+    }
+
+#if NET8_0_OR_GREATER
+    private static FrozenDictionary<string, string> GetKnownMethods(string configuredKnownMethods)
+#else
+    private static Dictionary<string, string> GetKnownMethods(string configuredKnownMethods)
+#endif
+    {
+        var splitArray = configuredKnownMethods.Split(',')
+                .Select(x => x.Trim())
+                .Where(x => !string.IsNullOrEmpty(x))
+                .ToList();
+
+        return GetKnownMethods(splitArray);
+    }
+
+#if NET8_0_OR_GREATER
+    private static FrozenDictionary<string, string> GetKnownMethods(List<string> configuredKnownMethods)
+#else
+    private static Dictionary<string, string> GetKnownMethods(List<string> configuredKnownMethods)
+#endif
+    {
+        IEnumerable<KeyValuePair<string, string>> knownMethods = DefaultKnownMethods;
+
+        if (configuredKnownMethods != null)
+        {
+            if (configuredKnownMethods.Count > 0)
+            {
+                knownMethods = DefaultKnownMethods.Where(x => configuredKnownMethods.Contains(x.Key, StringComparer.InvariantCultureIgnoreCase));
+            }
+        }
+
+#if NET8_0_OR_GREATER
+        return FrozenDictionary.ToFrozenDictionary(knownMethods, StringComparer.OrdinalIgnoreCase);
+#else
+        return knownMethods.ToDictionary(x => x.Key, x => x.Value);
+#endif
     }
 }
