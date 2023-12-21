@@ -37,8 +37,8 @@ internal static class HttpWebRequestActivitySource
     private static readonly Meter WebRequestMeter = new(MeterName, Version);
     private static readonly Histogram<double> HttpClientRequestDuration = WebRequestMeter.CreateHistogram<double>("http.client.request.duration", "s", "Measures the duration of outbound HTTP requests.");
 
-    private static readonly RequestMethodHelper RequestMethodHelper;
     private static HttpClientTraceInstrumentationOptions tracingOptions;
+    private static RequestMethodHelper requestMethodHelper;
 
     // Fields for reflection
     private static FieldInfo connectionGroupListField;
@@ -76,7 +76,6 @@ internal static class HttpWebRequestActivitySource
             PerformInjection();
 
             TracingOptions = new HttpClientTraceInstrumentationOptions();
-            RequestMethodHelper = new RequestMethodHelper(TracingOptions.KnownHttpMethods);
         }
         catch (Exception ex)
         {
@@ -91,18 +90,19 @@ internal static class HttpWebRequestActivitySource
         set
         {
             tracingOptions = value;
+            requestMethodHelper = new RequestMethodHelper(tracingOptions.KnownHttpMethods);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddRequestTagsAndInstrumentRequest(HttpWebRequest request, Activity activity)
     {
-        RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method);
+        requestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method);
 
         if (activity.IsAllDataRequested)
         {
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
-            RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
+            requestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
             if (!request.RequestUri.IsDefaultPort)
@@ -426,7 +426,7 @@ internal static class HttpWebRequestActivitySource
 
             TagList tags = default;
 
-            var httpMethod = RequestMethodHelper.GetNormalizedHttpMethod(request.Method);
+            var httpMethod = requestMethodHelper.GetNormalizedHttpMethod(request.Method);
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
 
             tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);

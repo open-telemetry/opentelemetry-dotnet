@@ -31,7 +31,7 @@ internal class RequestMethodHelper
 #if NET8_0_OR_GREATER
     private readonly FrozenDictionary<string, string> knownMethods;
 #else
-    private Dictionary<string, string> knownMethods;
+    private readonly Dictionary<string, string> knownMethods;
 #endif
 
     public RequestMethodHelper(string configuredKnownMethods)
