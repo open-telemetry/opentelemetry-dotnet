@@ -733,11 +733,11 @@ public partial class HttpClientTests : IDisposable
     }
 
     [Theory]
-    //[InlineData("GET,POST,PUT", "GET", null)]
-    //[InlineData("get,post,put", "GET", null)]
-    //[InlineData("POST,PUT", "_OTHER", "GET")]
-    //[InlineData("post,put", "_OTHER", "GET")]
-    //[InlineData("fooBar", "_OTHER", "GET")]
+    [InlineData("GET,POST,PUT", "GET", null)]
+    [InlineData("get,post,put", "GET", null)]
+    [InlineData("POST,PUT", "_OTHER", "GET")]
+    [InlineData("post,put", "_OTHER", "GET")]
+    [InlineData("fooBar", "_OTHER", "GET")]
     [InlineData("foo,bar", "_OTHER", "GET")]
     public async Task KnownHttpMethodsAreBeingRespected(string knownMethods, string expectedMethod, string expectedOriginalMethod)
     {
