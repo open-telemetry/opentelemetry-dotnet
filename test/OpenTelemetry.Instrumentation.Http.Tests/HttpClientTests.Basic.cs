@@ -414,17 +414,17 @@ public partial class HttpClientTests : IDisposable
     }
 
     [Theory]
-    //[InlineData("CONNECT", "CONNECT")]
-    //[InlineData("DELETE", "DELETE")]
-    //[InlineData("GET", "GET")]
-    //[InlineData("PUT", "PUT")]
-    //[InlineData("HEAD", "HEAD")]
-    //[InlineData("OPTIONS", "OPTIONS")]
-    //[InlineData("PATCH", "PATCH")]
+    [InlineData("CONNECT", "CONNECT")]
+    [InlineData("DELETE", "DELETE")]
+    [InlineData("GET", "GET")]
+    [InlineData("PUT", "PUT")]
+    [InlineData("HEAD", "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS")]
+    [InlineData("PATCH", "PATCH")]
     [InlineData("Get", "GET")]
-    //[InlineData("POST", "POST")]
-    //[InlineData("TRACE", "TRACE")]
-    //[InlineData("CUSTOM", "_OTHER")]
+    [InlineData("POST", "POST")]
+    [InlineData("TRACE", "TRACE")]
+    [InlineData("CUSTOM", "_OTHER")]
     public async Task HttpRequestMethodIsSetonRequestDurationMetricAsPerSpec(string originalMethod, string expectedMethod)
     {
         var metricItems = new List<Metric>();
