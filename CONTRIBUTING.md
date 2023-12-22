@@ -270,7 +270,7 @@ project:
 * The license of the file is
   [permissive](https://en.wikipedia.org/wiki/Permissive_free_software_licence).
 
-* The license of the file is left in-tact.
+* The license of the file is left intact.
 
 * The contribution is correctly attributed in the [3rd party
   notices](./THIRD-PARTY-NOTICES.TXT) file in the repository, as needed.
