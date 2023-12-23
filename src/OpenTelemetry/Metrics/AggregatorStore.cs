@@ -1033,7 +1033,6 @@ internal sealed class AggregatorStore
                         OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
                     }
 
-                    Interlocked.Increment(ref this.DroppedMeasurements);
                     return;
                 }
             }
@@ -1078,7 +1077,6 @@ internal sealed class AggregatorStore
                         OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
                     }
 
-                    Interlocked.Increment(ref this.DroppedMeasurements);
                     return;
                 }
             }
