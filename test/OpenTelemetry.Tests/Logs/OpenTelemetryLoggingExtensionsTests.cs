@@ -289,6 +289,12 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             var factory = sp.GetRequiredService<ILoggerFactory>();
             Assert.NotNull(factory);
         }
+
+        var loggerProvider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+
+        Assert.NotNull(loggerProvider);
+
+        Assert.True(loggerProvider.Processor is TestLogProcessorWithILoggerFactoryDependency);
     }
 
     private class TestLogProcessor : BaseProcessor<LogRecord>
