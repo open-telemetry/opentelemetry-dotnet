@@ -226,18 +226,22 @@ public static class OpenTelemetryLoggingExtensions
                          * There is a possibility of a circular reference when
                          * accessing LoggerProvider from the IServiceProvider.
                          *
-                         * If LoggerProvider is the first thing accessed, and
-                         * it requires some service which accesses ILogger
-                         * (for example, IHttpClientFactory), then the
-                         * OpenTelemetryLoggerProvider will try to access the
-                         * LoggerProvider inside the initial access to
-                         * LoggerProvider.
+                         * If LoggerProvider is the first thing accessed, and it
+                         * requires some service which accesses ILogger (for
+                         * example, IHttpClientFactory), then the
+                         * OpenTelemetryLoggerProvider will try to access a new
+                         * (second) LoggerProvider while still in the process of
+                         * building the first one:
+                         *
+                         * LoggerProvider -> IHttpClientFactory ->
+                         * ILoggerFactory -> OpenTelemetryLoggerProvider ->
+                         * LoggerProvider
                          *
                          * This check uses the provider reference captured on
                          * LoggerProviderBuilderSdk during construction of
-                         * LoggerProviderSdk to detect if a provider has
-                         * already been created to give to
-                         * OpenTelemetryLoggerProvider.
+                         * LoggerProviderSdk to detect if a provider has already
+                         * been created to give to OpenTelemetryLoggerProvider
+                         * and stop the loop.
                          */
                         provider = sp.GetRequiredService<LoggerProvider>();
                         Debug.Assert(provider == state.Provider, "state.Provider did not match resolved LoggerProvider.");
