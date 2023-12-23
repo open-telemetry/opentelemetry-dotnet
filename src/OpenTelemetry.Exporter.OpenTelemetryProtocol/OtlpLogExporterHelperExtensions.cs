@@ -60,13 +60,18 @@ public static class OtlpLogExporterHelperExtensions
 
         return loggerOptions.AddProcessor(sp =>
         {
-            var exporterOptions = GetOtlpExporterOptions(sp, name, finalOptionsName);
+            var exporterOptions = GetOptions<OtlpExporterOptions>(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
             configure?.Invoke(exporterOptions);
 
-            return BuildOtlpLogExporter(sp, exporterOptions, processorOptions);
+            return BuildOtlpLogExporter(
+                sp,
+                exporterOptions,
+                processorOptions,
+                GetOptions(sp, Options.DefaultName, Options.DefaultName, (sp, c, n) => new SdkLimitOptions(c)),
+                GetOptions(sp, name, finalOptionsName, (sp, c, n) => new ExperimentalOptions(c)));
         });
     }
 
@@ -99,13 +104,18 @@ public static class OtlpLogExporterHelperExtensions
 
         return loggerOptions.AddProcessor(sp =>
         {
-            var exporterOptions = GetOtlpExporterOptions(sp, name, finalOptionsName);
+            var exporterOptions = GetOptions<OtlpExporterOptions>(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
             configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
 
-            return BuildOtlpLogExporter(sp, exporterOptions, processorOptions);
+            return BuildOtlpLogExporter(
+                sp,
+                exporterOptions,
+                processorOptions,
+                GetOptions(sp, Options.DefaultName, Options.DefaultName, (sp, c, n) => new SdkLimitOptions(c)),
+                GetOptions(sp, name, finalOptionsName, (sp, c, n) => new ExperimentalOptions(c)));
         });
     }
 
@@ -335,22 +345,6 @@ public static class OtlpLogExporterHelperExtensions
         IServiceProvider sp,
         OtlpExporterOptions exporterOptions,
         LogRecordExportProcessorOptions processorOptions,
-        Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
-    {
-        Debug.Assert(sp != null, "sp was null");
-
-        var config = sp!.GetRequiredService<IConfiguration>();
-
-        var sdkLimitOptions = new SdkLimitOptions(config);
-        var experimentalOptions = new ExperimentalOptions(config);
-
-        return BuildOtlpLogExporter(sp!, exporterOptions, processorOptions, sdkLimitOptions, experimentalOptions, configureExporterInstance);
-    }
-
-    private static BaseProcessor<LogRecord> BuildOtlpLogExporter(
-        IServiceProvider sp,
-        OtlpExporterOptions exporterOptions,
-        LogRecordExportProcessorOptions processorOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
         Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
@@ -413,7 +407,12 @@ public static class OtlpLogExporterHelperExtensions
         services.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
     }
 
-    private static OtlpExporterOptions GetOtlpExporterOptions(IServiceProvider sp, string? name, string finalName)
+    private static T GetOptions<T>(
+        IServiceProvider sp,
+        string? name,
+        string finalName,
+        Func<IServiceProvider, IConfiguration, string, T> createOptionsFunc)
+        where T : class, new()
     {
         // Note: If OtlpExporter has been registered for tracing and/or metrics
         // then IOptionsFactory will be set by a call to
@@ -421,15 +420,15 @@ public static class OtlpLogExporterHelperExtensions
         // are only using logging, we don't have an opportunity to do that
         // registration so we manually create a factory.
 
-        var optionsFactory = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>();
-        if (optionsFactory is not DelegatingOptionsFactory<OtlpExporterOptions>)
+        var optionsFactory = sp.GetRequiredService<IOptionsFactory<T>>();
+        if (optionsFactory is not DelegatingOptionsFactory<T>)
         {
-            optionsFactory = new DelegatingOptionsFactory<OtlpExporterOptions>(
-                (c, n) => OtlpExporterOptions.CreateOtlpExporterOptions(sp, c, n),
+            optionsFactory = new DelegatingOptionsFactory<T>(
+                (c, n) => createOptionsFunc(sp, c, n),
                 sp.GetRequiredService<IConfiguration>(),
-                sp.GetServices<IConfigureOptions<OtlpExporterOptions>>(),
-                sp.GetServices<IPostConfigureOptions<OtlpExporterOptions>>(),
-                sp.GetServices<IValidateOptions<OtlpExporterOptions>>());
+                sp.GetServices<IConfigureOptions<T>>(),
+                sp.GetServices<IPostConfigureOptions<T>>(),
+                sp.GetServices<IValidateOptions<T>>());
 
             return optionsFactory.Create(finalName);
         }
@@ -445,6 +444,6 @@ public static class OtlpLogExporterHelperExtensions
 
         // If we have a valid factory AND we are using named options, we can
         // safely use the Options API fully.
-        return sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalName);
+        return sp.GetRequiredService<IOptionsMonitor<T>>().Get(finalName);
     }
 }
