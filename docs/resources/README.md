@@ -32,7 +32,8 @@ internal class MyResourceDetector : IResourceDetector
 }
 ```
 
-There are two different ways to add the custom `ResourceDetector` to the OTEL signals, via the `Sdk.Create` approach:
+There are two different ways to add the custom `ResourceDetector` to the
+OTEL signals, via the `Sdk.Create` approach:
 
 ```csharp
 using System.Diagnostics;
@@ -54,19 +55,22 @@ public class Program
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("OTel.Demo")
-            .SetResourceBuilder(ResourceBuilder.CreateEmpty().AddDetector(new MyResourceDetector()))
+            .SetResourceBuilder(ResourceBuilder.CreateEmpty().AddDetector(
+                new MyResourceDetector()))
             .Build();
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .SetResourceBuilder(ResourceBuilder.CreateEmpty().AddDetector(new MyResourceDetector()))
+            .SetResourceBuilder(ResourceBuilder.CreateEmpty().AddDetector(
+                new MyResourceDetector()))
             .Build();
 
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddOpenTelemetry(options =>
             {
-                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddDetector(
-                    new MyResourceDetector()));
+                options.SetResourceBuilder(ResourceBuilder
+                    .CreateDefault().AddDetector(
+                        new MyResourceDetector()));
             });
         });
 
@@ -85,7 +89,8 @@ public class Program
             counter.Add(1, new("tag1", "value1"), new("tag2", "value2"));
 
         var logger = loggerFactory.CreateLogger("OTel.Demo");
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+        logger
+            .LogInformation("Hello from {name} {price}.", "tomato", 2.99);
     }
 }
 ```
@@ -96,8 +101,9 @@ or via `OpenTelemetry.Extensions.Hosting` method:
     services.AddSingleton<MyResourceDetector>();
 
     services.AddOpenTelemetry()
-        .ConfigureResource(builder =>
-            builder.AddDetector(sp => sp.GetRequiredService<MyResourceDetector>()))
+        .ConfigureResource(builder => builder
+            .AddDetector(sp =>
+                sp.GetRequiredService<MyResourceDetector>()))
         .WithTracing(builder => builder.AddConsoleExporter())
         .WithMetrics(builder => builder.AddConsoleExporter());
 ```
