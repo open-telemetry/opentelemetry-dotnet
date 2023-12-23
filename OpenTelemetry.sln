@@ -337,6 +337,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "experimental-apis", "experi
 		docs\diagnostics\experimental-apis\README.md = docs\diagnostics\experimental-apis\README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "resources", "resources", "{A115CE4C-71A8-4B95-96A5-C1DF46FD94C2}"
+	ProjectSection(SolutionItems) = preProject
+		docs\resources\README.md = docs\resources\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -666,6 +671,7 @@ Global
 		{B4856711-6D4C-4246-A686-49458D4C1301} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{52AF6D7D-9E66-4234-9A2C-5D16C6F22B40} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{17A22B0E-6EC3-4A39-B955-0A486AD06699} = {52AF6D7D-9E66-4234-9A2C-5D16C6F22B40}
+		{A115CE4C-71A8-4B95-96A5-C1DF46FD94C2} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
