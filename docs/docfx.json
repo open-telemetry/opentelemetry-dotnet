@@ -29,7 +29,9 @@
       {
         "files": [
           ".editorconfig",
-          "**.cs"
+          "**.cs",
+          "LICENSE.TXT",
+          "THIRD-PARTY-NOTICES.TXT"
         ]
       }
     ],
