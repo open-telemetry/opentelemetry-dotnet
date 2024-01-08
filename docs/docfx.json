@@ -21,8 +21,6 @@
       {
         "files": [
           "**.md",
-          "LICENSE.TXT",
-          "THIRD-PARTY-NOTICES.TXT",
           "toc.yml"
         ]
       }
@@ -31,7 +29,9 @@
       {
         "files": [
           ".editorconfig",
-          "**.cs"
+          "**.cs",
+          "LICENSE.TXT",
+          "THIRD-PARTY-NOTICES.TXT"
         ]
       }
     ],
