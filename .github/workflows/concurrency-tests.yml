@@ -1,17 +1,12 @@
-name: Coyote Concurrency Tests
+# Called by ci.yml to run coyote concurrency tests
+# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
+name: Concurrency Tests
 
 on:
-  push:
-    branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
-  pull_request:
-    branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
+  workflow_call:
 
 jobs:
-  coyote-concurrency-tests:
+  run-concurrency-tests:
 
     strategy:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
@@ -23,8 +18,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 # fetching all
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4

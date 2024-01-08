@@ -1,13 +1,12 @@
-name: docfx
+# Called by ci.yml to run documentation build
+# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
+name: Build docfx
 
 on:
-  push:
-    branches: [ 'main*' ]
-  pull_request:
-    branches: [ 'main*' ]
+  workflow_call:
 
 jobs:
-  build:
+  run-docfx-build:
     runs-on: windows-latest
 
     steps:
