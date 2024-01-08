@@ -21,6 +21,8 @@
       {
         "files": [
           "**.md",
+          "LICENSE.TXT",
+          "THIRD-PARTY-NOTICES.TXT",
           "toc.yml"
         ]
       }
