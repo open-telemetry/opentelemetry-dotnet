@@ -1,68 +1,182 @@
 name: Build
 
 on:
-  push:
-    branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
   pull_request:
     branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
 
 jobs:
-  build-test-stable:
-    strategy:
-      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
-      matrix:
-        os: [ windows-latest, ubuntu-latest ]
-        version: [ net462, net6.0, net7.0, net8.0 ]
-        exclude:
-        - os: ubuntu-latest
-          version: net462
+  lint-misspell-sanitycheck:
+    uses: ./.github/workflows/sanitycheck.yml
 
-    runs-on: ${{ matrix.os }}
+  detect-changes:
+    runs-on: windows-latest
+    outputs:
+      changes: ${{ steps.changes.outputs.changes }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: AurorNZ/paths-filter@v3
+      id: changes
       with:
-        fetch-depth: 0 # fetching all
+        filters: |
+          md: ['**.md']
+          build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props']
+          shared: ['src/Shared/**']
+          code: ['**.cs', '**.csproj', '.editorconfig']
+          packaged-code: ['src/**', '!**/*.md']
+          api-code: ['*/OpenTelemetry.Api*/**', '!**/*.md']
+          api-packages: ['src/OpenTelemetry.Api*/**', '!**/*.md']
+          instrumentation: ['*/OpenTelemetry.Instrumentation*/**', 'test/TestApp.AspNetCore/**', '!**/*.md']
+          instrumentation-packages: ['src/OpenTelemetry.Instrumentation*/**', '!**/*.md']
+          sdk-code: ['src/OpenTelemetry/**', 'test/OpenTelemetry.Tests/**', '!**/*.md']
+          sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
+          otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
 
-    - name: Setup dotnet
-      uses: actions/setup-dotnet@v4
+  lint-md:
+    needs: detect-changes
+    if: contains(needs.detect-changes.outputs.changes, 'md')
+    uses: ./.github/workflows/markdownlint.yml
 
-    - name: Install dependencies
-      run: dotnet restore
+  lint-dotnet-format:
+    needs: detect-changes
+    if: contains(needs.detect-changes.outputs.changes, 'code')
+    uses: ./.github/workflows/dotnet-format.yml
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=false
+  build-test-solution-stable:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/Component.BuildTest.yml
+    with:
+      project-name: 'OpenTelemetry.sln'
+      project-build-commands: '-p:ExposeExperimentalFeatures=false'
+      code-cov-name: 'Solution-Stable'
 
-    - name: Test ${{ matrix.version }}
-      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
+  build-test-solution-experimental:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/Component.BuildTest.yml
+    with:
+      project-name: 'OpenTelemetry.sln'
+      project-build-commands: '-p:ExposeExperimentalFeatures=true'
+      code-cov-name: 'Solution-Experimental'
 
-  build-test-experimental:
+  # Build instrumentation libraries using stable packages released to NuGet
+  build-test-instrumentation-stable:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'instrumentation-packages')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/Component.BuildTest.yml
+    with:
+      project-name: './build/InstrumentationLibraries.proj'
+      project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=false'
+      code-cov-name: 'Instrumentation-Stable'
+
+  # Build instrumentation libraries using stable packages released to NuGet
+  build-test-instrumentation-experimental:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'instrumentation-packages')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/Component.BuildTest.yml
+    with:
+      project-name: './build/InstrumentationLibraries.proj'
+      project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=true'
+      code-cov-name: 'Instrumentation-Experimental'
+
+  otlp-integration-test:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'api-packages')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
+      || contains(needs.detect-changes.outputs.changes, 'otlp')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    runs-on: ubuntu-latest
     strategy:
-      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
+      fail-fast: false
       matrix:
-        os: [ windows-latest, ubuntu-latest ]
-        version: [ net462, net6.0, net7.0, net8.0 ]
-        exclude:
-        - os: ubuntu-latest
-          version: net462
-
-    runs-on: ${{ matrix.os }}
+        version: [ net6.0, net7.0, net8.0 ]
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 # fetching all
+      - uses: actions/checkout@v4
+      - name: Run OTLP Exporter docker-compose
+        run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
-    - name: Setup dotnet
-      uses: actions/setup-dotnet@v4
+  w3c-trace-context-integration-test:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'api-packages')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
+      || contains(needs.detect-changes.outputs.changes, 'instrumentation')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [ net6.0, net7.0 ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run W3C Trace Context docker-compose
+        run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
-    - name: Install dependencies
-      run: dotnet restore
+  validate-packages:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'packaged-code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/package-validation.yml
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
+  generate-docs:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'packaged-code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/docfx.yml
 
-    - name: Test ${{ matrix.version }}
-      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
+  verify-aot-compat:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'packaged-code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/verifyaotcompat.yml
+
+  concurrency-tests:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'api-code')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/concurrency-tests.yml
+
+  build-test:
+    needs: [
+      lint-misspell-sanitycheck,
+      detect-changes,
+      lint-md,
+      lint-dotnet-format,
+      build-test-solution-stable,
+      build-test-solution-experimental,
+      build-test-instrumentation-stable,
+      build-test-instrumentation-experimental,
+      otlp-integration-test,
+      w3c-trace-context-integration-test,
+      validate-packages,
+      generate-docs,
+      verify-aot-compat,
+      concurrency-tests
+      ]
+    if: always() && !cancelled() && !contains(needs.*.result, 'failure')
+    runs-on: windows-latest
+    steps:
+    - run: echo 'build complete'

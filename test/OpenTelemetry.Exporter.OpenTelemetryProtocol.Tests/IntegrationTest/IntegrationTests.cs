@@ -238,6 +238,8 @@ public sealed class IntegrationTests : IDisposable
                             sp,
                             exporterOptions,
                             processorOptions,
+                            new SdkLimitOptions(),
+                            new ExperimentalOptions(),
                             configureExporterInstance: otlpExporter =>
                             {
                                 delegatingExporter = new DelegatingExporter<LogRecord>

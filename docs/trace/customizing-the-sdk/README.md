@@ -303,12 +303,14 @@ provider is built, by calling the `Build()` method on the
 `TracerProviderBuilder`.
 
 `ResourceBuilder` offers various methods to construct resource comprising of
-multiple attributes from various sources. Examples include `AddTelemetrySdk()`
-which adds [Telemetry
-Sdk](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk)
-resource, and `AddService()` which adds
+attributes from various sources. For example, `AddService()` adds
 [Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
-resource. It also allows adding `ResourceDetector`s.
+resource. `AddAttributes` can be used to add any additional attribute to the
+`Resource`. It also allows adding `ResourceDetector`s.
+
+It is recommended to model attributes that are static throughout the lifetime of
+the process as Resources, instead of adding them as attributes(tags) on each
+`Activity`.
 
 Follow [this](../extending-the-sdk/README.md#resource-detector) document
 to learn about writing custom resource detectors.
@@ -321,7 +323,11 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .ConfigureResource(resourceBuilder => resourceBuilder.AddTelemetrySdk())
+    .ConfigureResource(r => r.AddAttributes(new List<KeyValuePair<string, object>>
+                {
+                    new KeyValuePair<string, object>("static-attribute1", "v1"),
+                    new KeyValuePair<string, object>("static-attribute2", "v2"),
+                }))
     .ConfigureResource(resourceBuilder => resourceBuilder.AddService("service-name"))
     .Build();
 ```
