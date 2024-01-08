@@ -253,3 +253,29 @@ expanding.
 some housekeeping needs to be done in public API definitions (`.publicApi`
 folder). This can be done automatically via a code fix offered by the public API
 analyzer.
+
+## License requirements
+
+OpenTelemetry .NET is licensed under the [Apache License, Version
+2.0](./LICENSE.TXT).
+
+### Copying files from other projects
+
+OpenTelemetry .NET uses some files from other projects, typically where a binary
+distribution does not exist or would be inconvenient.
+
+The following rules must be followed for PRs that include files from another
+project:
+
+* The license of the file is
+  [permissive](https://en.wikipedia.org/wiki/Permissive_free_software_licence).
+
+* The license of the file is left intact.
+
+* The contribution is correctly attributed in the [3rd party
+  notices](./THIRD-PARTY-NOTICES.TXT) file in the repository, as needed.
+
+See
+[EnvironmentVariablesExtensions.cs](./src/Shared/EnvironmentVariables/EnvironmentVariablesExtensions.cs)
+for an example of a file copied from another project and attributed in the [3rd
+party notices](./THIRD-PARTY-NOTICES.TXT) file.

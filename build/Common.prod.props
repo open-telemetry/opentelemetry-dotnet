@@ -13,13 +13,15 @@
     <PackageTags>Observability;OpenTelemetry;Monitoring;Telemetry;Tracing;Metrics;Logging</PackageTags>
     <PackageIcon>opentelemetry-icon-color.png</PackageIcon>
     <PackageProjectUrl>https://opentelemetry.io</PackageProjectUrl>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Authors>OpenTelemetry Authors</Authors>
     <Copyright>Copyright The OpenTelemetry Authors</Copyright>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageOutputPath Condition="$(Build_ArtifactStagingDirectory) != ''">$(Build_ArtifactStagingDirectory)</PackageOutputPath>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackagePrimaryLicenseFile>$(RepoRoot)\LICENSE.TXT</PackagePrimaryLicenseFile>
+    <PackageThirdPartyNoticesFile>$(RepoRoot)\THIRD-PARTY-NOTICES.TXT</PackageThirdPartyNoticesFile>
   </PropertyGroup>
 
   <PropertyGroup Label="SourceLinkProperties">

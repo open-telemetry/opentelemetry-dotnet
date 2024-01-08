@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* **Experimental (pre-release builds only):** Added
+  `LoggerProviderBuilder.AddOtlpExporter` registration extensions.
+  [#5103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5103)
+
 ## 1.7.0
 
 Released 2023-Dec-08

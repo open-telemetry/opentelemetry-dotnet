@@ -15,11 +15,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\ci-concurrency.yml = .github\workflows\ci-concurrency.yml
 		CONTRIBUTING.md = CONTRIBUTING.md
 		global.json = global.json
-		LICENSE = LICENSE
 		NuGet.config = NuGet.config
+		LICENSE.TXT = LICENSE.TXT
 		OpenTelemetry.proj = OpenTelemetry.proj
 		README.md = README.md
 		VERSIONING.md = VERSIONING.md
+		THIRD-PARTY-NOTICES.TXT = THIRD-PARTY-NOTICES.TXT
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E-03FA-4FFF-89A5-C51F107623FD}"
@@ -32,6 +33,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\docfx.cmd = build\docfx.cmd
 		build\docker-compose.net6.0.yml = build\docker-compose.net6.0.yml
 		build\docker-compose.net7.0.yml = build\docker-compose.net7.0.yml
+		build\docker-compose.net8.0.yml = build\docker-compose.net8.0.yml
 		build\finalize-publicapi.ps1 = build\finalize-publicapi.ps1
 		build\GlobalAttrExclusions.txt = build\GlobalAttrExclusions.txt
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
@@ -76,6 +78,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Open
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F1D0972B-38CF-49C2-9F4B-4C5DE02FB71D}"
 	ProjectSection(SolutionItems) = preProject
+		.github\codecov.yml = .github\codecov.yml
 		.github\CODEOWNERS = .github\CODEOWNERS
 		.github\PULL_REQUEST_TEMPLATE.md = .github\PULL_REQUEST_TEMPLATE.md
 	EndProjectSection
@@ -89,26 +92,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEM
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
 	ProjectSection(SolutionItems) = preProject
-		.github\workflows\ci-aot-md.yml = .github\workflows\ci-aot-md.yml
-		.github\workflows\ci-aot.yml = .github\workflows\ci-aot.yml
-		.github\workflows\ci-concurrency-md.yml = .github\workflows\ci-concurrency-md.yml
-		.github\workflows\ci-concurrency.yml = .github\workflows\ci-concurrency.yml
-		.github\workflows\ci-instrumentation-libraries-md.yml = .github\workflows\ci-instrumentation-libraries-md.yml
-		.github\workflows\ci-instrumentation-libraries.yml = .github\workflows\ci-instrumentation-libraries.yml
-		.github\workflows\ci-md.yml = .github\workflows\ci-md.yml
 		.github\workflows\ci.yml = .github\workflows\ci.yml
-		.github\workflows\code-coverage.yml = .github\workflows\code-coverage.yml
 		.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
+		.github\workflows\Component.BuildTest.yml = .github\workflows\Component.BuildTest.yml
+		.github\workflows\concurrency-tests.yml = .github\workflows\concurrency-tests.yml
 		.github\workflows\docfx.yml = .github\workflows\docfx.yml
-		.github\workflows\dotnet-format-md.yml = .github\workflows\dotnet-format-md.yml
 		.github\workflows\dotnet-format.yml = .github\workflows\dotnet-format.yml
-		.github\workflows\integration-md.yml = .github\workflows\integration-md.yml
-		.github\workflows\integration.yml = .github\workflows\integration.yml
 		.github\workflows\markdownlint.yml = .github\workflows\markdownlint.yml
 		.github\workflows\package-validation.yml = .github\workflows\package-validation.yml
 		.github\workflows\publish-packages-1.0.yml = .github\workflows\publish-packages-1.0.yml
 		.github\workflows\sanitycheck.yml = .github\workflows\sanitycheck.yml
 		.github\workflows\stale.yml = .github\workflows\stale.yml
+		.github\workflows\verifyaotcompat.yml = .github\workflows\verifyaotcompat.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C1542297-8763-4DF4-957C-489ED771C21D}"

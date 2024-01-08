@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 #if EXPOSE_EXPERIMENTAL_FEATURES
 using System.ComponentModel;
 #endif
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -169,9 +170,15 @@ public static class OpenTelemetryLoggingExtensions
 
         var services = builder.Services;
 
-        // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
+        // Note: This will bind logger options element (e.g., "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
         RegisterLoggerProviderOptions(services);
 
+        /* Note: This ensures IConfiguration is available when using
+         * IServiceCollections NOT attached to a host. For example when
+         * performing:
+         *
+         * new ServiceCollection().AddLogging(b => b.AddOpenTelemetry())
+         */
         services.AddOpenTelemetrySharedProviderBuilderServices();
 
         if (configureOptions != null)
@@ -206,10 +213,45 @@ public static class OpenTelemetryLoggingExtensions
 
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
-                sp => new OpenTelemetryLoggerProvider(
-                    sp.GetRequiredService<LoggerProvider>(),
-                    sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
-                    disposeProvider: false)));
+                sp =>
+                {
+                    var state = sp.GetRequiredService<LoggerProviderBuilderSdk>();
+
+                    var provider = state.Provider;
+                    if (provider == null)
+                    {
+                        /*
+                         * Note:
+                         *
+                         * There is a possibility of a circular reference when
+                         * accessing LoggerProvider from the IServiceProvider.
+                         *
+                         * If LoggerProvider is the first thing accessed, and it
+                         * requires some service which accesses ILogger (for
+                         * example, IHttpClientFactory), then the
+                         * OpenTelemetryLoggerProvider will try to access a new
+                         * (second) LoggerProvider while still in the process of
+                         * building the first one:
+                         *
+                         * LoggerProvider -> IHttpClientFactory ->
+                         * ILoggerFactory -> OpenTelemetryLoggerProvider ->
+                         * LoggerProvider
+                         *
+                         * This check uses the provider reference captured on
+                         * LoggerProviderBuilderSdk during construction of
+                         * LoggerProviderSdk to detect if a provider has already
+                         * been created to give to OpenTelemetryLoggerProvider
+                         * and stop the loop.
+                         */
+                        provider = sp.GetRequiredService<LoggerProvider>();
+                        Debug.Assert(provider == state.Provider, "state.Provider did not match resolved LoggerProvider.");
+                    }
+
+                    return new OpenTelemetryLoggerProvider(
+                        provider,
+                        sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
+                        disposeProvider: false);
+                }));
 
         return builder;
 

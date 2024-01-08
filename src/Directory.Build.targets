@@ -19,4 +19,15 @@
     <Using Remove="System.Net.Http" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <None Include="$(PackagePrimaryLicenseFile)"
+          PackagePath="$([System.IO.Path]::GetFileName('$(PackagePrimaryLicenseFile)'))"
+          Pack="true"
+          Visible="false" />
+    <None Include="$(PackageThirdPartyNoticesFile)"
+          PackagePath="$([System.IO.Path]::GetFileName('$(PackageThirdPartyNoticesFile)'))"
+          Pack="true"
+          Visible="false" />
+  </ItemGroup>
+
 </Project>
