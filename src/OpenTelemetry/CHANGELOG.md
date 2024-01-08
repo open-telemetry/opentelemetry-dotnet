@@ -10,9 +10,9 @@
   [#5169](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5169)
 
 * Fixed an issue where the created activity from ASP.NET Core was replaced
-  with a new one. This replacement should only happen when the activity context 
-  from the used propagator has a different trace id, parent span id or trace state 
-  compared to the current activity. For details see:
+  with a new one. This replacement should only happen when the activity context
+  from the used propagator has a different trace id, parent span id or trace
+  state compared to the current activity. For details see:
   [#5136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5136)
 
 ## 1.7.0
