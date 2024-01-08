@@ -1,13 +1,12 @@
-name: sanitycheck
+# Called by ci.yml to perform general linting
+# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
+name: Lint - Spelling & Encoding
 
 on:
-  push:
-    branches: [ 'main*' ]
-  pull_request:
-    branches: [ 'main*' ]
+  workflow_call:
 
 jobs:
-  misspell:
+  run-misspell:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +21,7 @@ jobs:
     - name: run misspell
       run: ./bin/misspell -error .
 
-  encoding:
+  run-sanitycheck:
     runs-on: ubuntu-latest
 
     steps:
