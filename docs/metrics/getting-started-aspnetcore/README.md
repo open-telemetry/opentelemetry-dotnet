@@ -20,14 +20,8 @@ packages:
 ```sh
 dotnet add package OpenTelemetry.Exporter.Console
 dotnet add package OpenTelemetry.Extensions.Hosting
-dotnet add package OpenTelemetry.Instrumentation.AspNetCore --prerelease
+dotnet add package OpenTelemetry.Instrumentation.AspNetCore
 ```
-
-> **Note** This quickstart guide uses prerelease packages. For a quickstart
-> which only relies on stable packages see: [Getting Started - Console
-> Application](../getting-started-console/README.md). For more information about
-> when instrumentation will be marked as stable see: [Instrumentation-1.0.0
-> milestone](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/23).
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 
