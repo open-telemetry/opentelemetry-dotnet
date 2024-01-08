@@ -23,7 +23,32 @@ comment:
   require_changes: no
 
 ignore:
-  - "docs/**/*"
-  - "examples/**/*"
-  - "test/**/*"
   - "**.md"
+  - ".github"
+  - ".vscode"
+  - "build"
+  - "docs"
+  - "examples"
+  - "src/Shared"
+  - "test"
+
+flags:
+  unittests-Solution-Stable:
+    carryforward: true
+    paths:
+      - src
+
+  unittests-Solution-Experimental:
+    carryforward: true
+    paths:
+      - src
+
+  unittests-Instrumentation-Stable:
+    carryforward: true
+    paths:
+      - src
+
+  unittests-Instrumentation-Experimental:
+    carryforward: true
+    paths:
+      - src

@@ -1,19 +1,15 @@
-name: Publish AOTCompatibility testApp
+# Called by ci.yml to perform AOT validation
+# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
+name: Publish & Verify AOT Compatibility
 
 on:
-  push:
-    branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
-  pull_request:
-    branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
+  workflow_call:
 
 jobs:
-  aot-test:
+  run-verify-aot-compat:
+
     strategy:
-      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
+      fail-fast: false # ensures the entire test matrix is run, even if one permutation fails
       matrix:
         os: [ ubuntu-latest ]
         version: [ net8.0 ]
@@ -21,8 +17,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 # fetching all
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
@@ -30,3 +24,4 @@ jobs:
     - name: publish AOT testApp, assert static analysis warning count, and run the app
       shell: pwsh
       run: .\build\test-aot-compatibility.ps1 ${{ matrix.version }}
+
