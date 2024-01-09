@@ -43,7 +43,6 @@ internal class RequestMethodHelper
         this.KnownMethods = GetKnownMethods(configuredKnownMethods);
     }
 
-
 #if NET8_0_OR_GREATER
     public FrozenDictionary<string, string> KnownMethods { get; private set; }
 #else
