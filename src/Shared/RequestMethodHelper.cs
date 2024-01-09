@@ -28,12 +28,6 @@ internal class RequestMethodHelper
             { "CONNECT", "CONNECT" },
         };
 
-#if NET8_0_OR_GREATER
-    private readonly FrozenDictionary<string, string> knownMethods;
-#else
-    private readonly Dictionary<string, string> knownMethods;
-#endif
-
     public RequestMethodHelper(string configuredKnownMethods)
     {
         var splitArray = configuredKnownMethods.Split(',')
@@ -41,13 +35,20 @@ internal class RequestMethodHelper
                 .Where(x => !string.IsNullOrEmpty(x))
                 .ToList();
 
-        this.knownMethods = GetKnownMethods(splitArray);
+        this.KnownMethods = GetKnownMethods(splitArray);
     }
 
     public RequestMethodHelper(List<string> configuredKnownMethods)
     {
-        this.knownMethods = GetKnownMethods(configuredKnownMethods);
+        this.KnownMethods = GetKnownMethods(configuredKnownMethods);
     }
+
+
+#if NET8_0_OR_GREATER
+    public FrozenDictionary<string, string> KnownMethods { get; private set; }
+#else
+    public Dictionary<string, string> KnownMethods { get; private set; }
+#endif
 
 #if NET8_0_OR_GREATER
     public string GetNormalizedHttpMethod(string method)
@@ -55,7 +56,7 @@ internal class RequestMethodHelper
     public string GetNormalizedHttpMethod(string method)
 #endif
     {
-        return this.knownMethods.TryGetValue(method, out var normalizedMethod)
+        return this.KnownMethods.TryGetValue(method, out var normalizedMethod)
             ? normalizedMethod
             : OtherHttpMethod;
     }
@@ -66,7 +67,7 @@ internal class RequestMethodHelper
     public void SetHttpMethodTag(Activity activity, string method)
 #endif
     {
-        if (this.knownMethods.TryGetValue(method, out var normalizedMethod))
+        if (this.KnownMethods.TryGetValue(method, out var normalizedMethod))
         {
             activity?.SetTag(SemanticConventions.AttributeHttpRequestMethod, normalizedMethod);
         }
@@ -84,7 +85,7 @@ internal class RequestMethodHelper
 #endif
     {
         // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#name
-        activity.DisplayName = this.knownMethods.TryGetValue(method, out var httpMethod) ? httpMethod : "HTTP";
+        activity.DisplayName = this.KnownMethods.TryGetValue(method, out var httpMethod) ? httpMethod : "HTTP";
     }
 
 #if NET8_0_OR_GREATER

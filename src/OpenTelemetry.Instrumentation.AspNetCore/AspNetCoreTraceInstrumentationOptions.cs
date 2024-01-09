@@ -32,11 +32,9 @@ public class AspNetCoreTraceInstrumentationOptions
 
         if (configuration.TryGetStringValue("OTEL_INSTRUMENTATION_HTTP_KNOWN_METHODS", out var knownHttpMethods))
         {
-            this.KnownHttpMethods = knownHttpMethods
-                .Split(',')
-                .Select(x => x.Trim())
-                .Where(x => !string.IsNullOrEmpty(x))
-                .ToList();
+            var requestMethodHelper = new RequestMethodHelper(knownHttpMethods);
+            this.KnownHttpMethods =
+                [.. requestMethodHelper.KnownMethods.Keys];
         }
     }
 

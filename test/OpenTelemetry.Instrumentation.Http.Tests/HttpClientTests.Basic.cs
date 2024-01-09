@@ -5,6 +5,7 @@ using System.Diagnostics;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
@@ -733,13 +734,70 @@ public partial class HttpClientTests : IDisposable
     }
 
     [Theory]
+    [InlineData("GET", null)]
+    public async Task KnownHttpMethodsAreBeingRespected_Defaults(string expectedMethod, string expectedOriginalMethod)
+    {
+        var exportedItems = new List<Activity>();
+
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddHttpClientInstrumentation()
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var c = new HttpClient();
+        await c.GetAsync(this.url);
+
+        tracerProvider.Dispose();
+
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
+
+        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+        Assert.Equal(expectedOriginalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
+    }
+
+    [Theory]
+    [InlineData("GET,POST,PUT", "GET", null)]
+    [InlineData("POST,PUT", "_OTHER", "GET")]
+    [InlineData("fooBar", "GET", null)]
+    [InlineData("fooBar,POST", "_OTHER", "GET")]
+    [InlineData("", "GET", null)]
+    [InlineData(",", "GET", null)]
+    public async Task KnownHttpMethodsAreBeingRespected_EnvVar(string knownMethods, string expectedMethod, string expectedOriginalMethod)
+    {
+        var config = new KeyValuePair<string, string>[] { new("OTEL_INSTRUMENTATION_HTTP_KNOWN_METHODS", knownMethods) };
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(config)
+            .Build();
+
+        var exportedItems = new List<Activity>();
+
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddHttpClientInstrumentation()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var c = new HttpClient();
+        await c.GetAsync(this.url);
+
+        tracerProvider.Dispose();
+
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
+
+        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+        Assert.Equal(expectedOriginalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
+    }
+
+    [Theory]
     [InlineData("GET,POST,PUT", "GET", null)]
     [InlineData("get,post,put", "GET", null)]
     [InlineData("POST,PUT", "_OTHER", "GET")]
     [InlineData("post,put", "_OTHER", "GET")]
     [InlineData("fooBar", "_OTHER", "GET")]
     [InlineData("foo,bar", "_OTHER", "GET")]
-    public async Task KnownHttpMethodsAreBeingRespected(string knownMethods, string expectedMethod, string expectedOriginalMethod)
+    public async Task KnownHttpMethodsAreBeingRespected_Programmatically(string knownMethods, string expectedMethod, string expectedOriginalMethod)
     {
         var exportedItems = new List<Activity>();
 

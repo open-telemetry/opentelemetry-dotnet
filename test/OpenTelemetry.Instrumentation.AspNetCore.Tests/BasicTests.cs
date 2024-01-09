@@ -1055,8 +1055,11 @@ public sealed class BasicTests
 
     [Theory]
     [InlineData("GET,POST,PUT", "GET", null)]
+    [InlineData("get,post,put", "GET", null)]
     [InlineData("POST,PUT", "_OTHER", "GET")]
-    [InlineData("fooBar", "_OTHER", "GET")]
+    [InlineData("post,put", "_OTHER", "GET")]
+    [InlineData("fooBar", "GET", null)]
+    [InlineData("fooBar,POST", "_OTHER", "GET")]
     [InlineData("", "GET", null)]
     [InlineData(",", "GET", null)]
     public async Task KnownHttpMethodsAreBeingRespected_EnvVar(string knownMethods, string expectedMethod, string expectedOriginalMethod)

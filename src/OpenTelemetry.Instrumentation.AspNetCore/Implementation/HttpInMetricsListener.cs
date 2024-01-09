@@ -34,6 +34,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
     private static readonly PropertyFetcher<HttpContext> HttpContextPropertyFetcher = new("HttpContext");
     private static readonly object ErrorTypeHttpContextItemsKey = new();
+    private static readonly RequestMethodHelper RequestMethodHelper = new(string.Empty);
 
     private static readonly Histogram<double> HttpServerRequestDuration = Meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Duration of HTTP server requests.");
 
@@ -84,8 +85,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
 
-        var requestMethodHelper = new RequestMethodHelper(string.Empty);
-        var httpMethod = requestMethodHelper.GetNormalizedHttpMethod(context.Request.Method);
+        var httpMethod = RequestMethodHelper.GetNormalizedHttpMethod(context.Request.Method);
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
 
 #if NET6_0_OR_GREATER

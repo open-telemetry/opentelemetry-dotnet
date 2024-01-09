@@ -7,7 +7,9 @@ using System.Net;
 using System.Net.Http;
 #endif
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Instrumentation.Http.Implementation;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.Http;
 
@@ -16,6 +18,24 @@ namespace OpenTelemetry.Instrumentation.Http;
 /// </summary>
 public class HttpClientTraceInstrumentationOptions
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpClientTraceInstrumentationOptions"/> class.
+    /// </summary>
+    public HttpClientTraceInstrumentationOptions()
+        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+    {
+    }
+
+    internal HttpClientTraceInstrumentationOptions(IConfiguration configuration)
+    {
+        if (configuration.TryGetStringValue("OTEL_INSTRUMENTATION_HTTP_KNOWN_METHODS", out var knownHttpMethods))
+        {
+            var requestMethodHelper = new RequestMethodHelper(knownHttpMethods);
+            this.KnownHttpMethods =
+                [.. requestMethodHelper.KnownMethods.Keys];
+        }
+    }
+
     /// <summary>
     /// Gets or sets a filter function that determines whether or not to
     /// collect telemetry on a per request basis.
