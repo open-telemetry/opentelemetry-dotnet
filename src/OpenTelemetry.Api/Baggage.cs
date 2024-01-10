@@ -150,22 +150,6 @@ public readonly struct Baggage : IEquatable<Baggage>
         => baggage == default ? Current.GetBaggage(name) : baggage.GetBaggage(name);
 
     /// <summary>
-    /// Returns the value associated with the given name, or <see langword="null"/> if the given name is not present.
-    /// </summary>
-    /// <param name="name">Baggage item name.</param>
-    /// <param name="value">When this method returns, contains the Baggage item value associated with the specified name, if the name is found; otherwise <see langword="null"/>.</param>
-    /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
-    /// <returns><see langword="true"/> if the <see cref="Baggage"/> contains an element with the specified name; otherwise, <see langword="false"/>.</returns>
-    public static bool TryGetBaggage(
-        string name,
-#if NET6_0_OR_GREATER
-        [NotNullWhen(true)]
-#endif
-        out string? value,
-        Baggage baggage = default)
-        => baggage == default ? Current.TryGetBaggage(name, out value) : baggage.TryGetBaggage(name, out value);
-
-    /// <summary>
     /// Returns a new <see cref="Baggage"/> which contains the new key/value pair.
     /// </summary>
     /// <param name="name">Baggage item name.</param>
@@ -235,33 +219,11 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
     public string? GetBaggage(string name)
     {
-        return this.TryGetBaggage(name, out var value)
-            ? value
-            : null;
-    }
-
-    /// <summary>
-    /// Returns the value associated with the given name, or <see langword="null"/> if the given name is not present.
-    /// </summary>
-    /// <param name="name">Baggage item name.</param>
-    /// <param name="value">When this method returns, contains the Baggage item value associated with the specified name, if the name is found; otherwise <see langword="null"/>.</param>
-    /// <returns><see langword="true"/> if the <see cref="Baggage"/> contains an element with the specified name; otherwise, <see langword="false"/>.</returns>
-    public bool TryGetBaggage(
-        string name,
-#if NET6_0_OR_GREATER
-        [NotNullWhen(true)]
-#endif
-        out string? value)
-    {
         Guard.ThrowIfNullOrEmpty(name);
 
-        if (this.baggage == null)
-        {
-            value = null;
-            return false;
-        }
-
-        return this.baggage.TryGetValue(name, out value);
+        return this.baggage != null && this.baggage.TryGetValue(name, out var value)
+            ? value
+            : null;
     }
 
     /// <summary>

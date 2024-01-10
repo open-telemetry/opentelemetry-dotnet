@@ -1,2 +1,0 @@
-OpenTelemetry.Baggage.TryGetBaggage(string! name, out string? value) -> bool
-static OpenTelemetry.Baggage.TryGetBaggage(string! name, out string? value, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> bool

@@ -47,22 +47,10 @@ public class BaggageTests
         Assert.Equal(V1, Baggage.GetBaggage(K1));
         Assert.Equal(V1, Baggage.GetBaggage(K1.ToLower()));
         Assert.Equal(V1, Baggage.GetBaggage(K1.ToUpper()));
-        Assert.True(Baggage.TryGetBaggage(K1, out var value));
-        Assert.Equal(V1, value);
-        Assert.True(Baggage.TryGetBaggage(K1.ToLower(), out value));
-        Assert.Equal(V1, value);
-        Assert.True(Baggage.TryGetBaggage(K1.ToUpper(), out value));
-        Assert.Equal(V1, value);
         Assert.Null(Baggage.GetBaggage("NO_KEY"));
-        Assert.False(Baggage.TryGetBaggage("NO_KEY", out value));
-        Assert.Null(value);
         Assert.Equal(V2, Baggage.Current.GetBaggage(K2));
 
         Assert.Throws<ArgumentException>(() => Baggage.GetBaggage(null!));
-        Assert.Throws<ArgumentException>(() => Baggage.TryGetBaggage(null!, out value));
-
-        Assert.False(default(Baggage).TryGetBaggage("NO_KEY", out value));
-        Assert.Null(value);
     }
 
     [Fact]
@@ -233,8 +221,6 @@ public class BaggageTests
         Assert.Equal(2, baggage.Count);
         Assert.Contains(baggage.GetBaggage(), kvp => kvp.Key == K1);
         Assert.Equal("VALUE2", Baggage.GetBaggage("key2", baggage));
-        Assert.True(Baggage.TryGetBaggage("key2", out var value, baggage));
-        Assert.Equal("VALUE2", value);
     }
 
     [Fact]
