@@ -14,6 +14,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using TestApp.AspNetCore;
@@ -1055,13 +1056,12 @@ public sealed class BasicTests
 
     [Theory]
     [InlineData("GET,POST,PUT", "GET", null)]
-    [InlineData("get,post,put", "GET", null)]
+    [InlineData("get,post,put", "get", null)]
     [InlineData("POST,PUT", "_OTHER", "GET")]
     [InlineData("post,put", "_OTHER", "GET")]
-    [InlineData("fooBar", "GET", null)]
+    [InlineData("fooBar", "_OTHER", "GET")]
     [InlineData("fooBar,POST", "_OTHER", "GET")]
-    [InlineData("", "GET", null)]
-    [InlineData(",", "GET", null)]
+    [InlineData(",", "_OTHER", "GET")]
     public async Task KnownHttpMethodsAreBeingRespected_EnvVar(string knownMethods, string expectedMethod, string expectedOriginalMethod)
     {
         var config = new KeyValuePair<string, string>[] { new("OTEL_INSTRUMENTATION_HTTP_KNOWN_METHODS", knownMethods) };
@@ -1086,51 +1086,6 @@ public sealed class BasicTests
 
         using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
         using var response = await client.SendAsync(request);
-
-        Assert.Single(exportedItems);
-        var activity = exportedItems[0];
-
-        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
-        Assert.Equal(expectedOriginalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
-    }
-
-    [Theory]
-    [InlineData("GET,POST,PUT", "GET", null)]
-    [InlineData("get,post,put", "GET", null)]
-    [InlineData("POST,PUT", "_OTHER", "GET")]
-    [InlineData("post,put", "_OTHER", "GET")]
-    [InlineData("fooBar", "_OTHER", "GET")]
-    [InlineData("foo,bar", "_OTHER", "GET")]
-    public async Task KnownHttpMethodsAreBeingRespected_Programmatically(string knownMethods, string expectedMethod, string expectedOriginalMethod)
-    {
-        var exportedItems = new List<Activity>();
-
-        using var client = this.factory
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
-            })
-            .CreateClient();
-
-        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddAspNetCoreInstrumentation(options =>
-            {
-                var splitArray = knownMethods.Split(',')
-                    .Select(x => x.Trim())
-                    .Where(x => !string.IsNullOrEmpty(x));
-
-                foreach (var item in splitArray)
-                {
-                    options.KnownHttpMethods.Add(item);
-                }
-            })
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
-        using var response = await client.SendAsync(request);
-
-        this.tracerProvider.Dispose();
 
         Assert.Single(exportedItems);
         var activity = exportedItems[0];
@@ -1234,7 +1189,8 @@ public sealed class BasicTests
         }
     }
 
-    private class TestHttpInListener(AspNetCoreTraceInstrumentationOptions options) : HttpInListener(options)
+    private class TestHttpInListener(AspNetCoreTraceInstrumentationOptions options)
+        : HttpInListener(options, new RequestMethodHelper(new ConfigurationBuilder().Build()))
     {
         public Action<string, object> OnEventWrittenCallback;
 

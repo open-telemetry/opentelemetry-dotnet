@@ -1,46 +1,55 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 #if NET8_0_OR_GREATER
 using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Internal;
 
-internal class RequestMethodHelper
+internal sealed class RequestMethodHelper
 {
     // The value "_OTHER" is used for non-standard HTTP methods.
     // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
     public const string OtherHttpMethod = "_OTHER";
 
-    private static readonly Dictionary<string, string> DefaultKnownMethods = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly List<string> DefaultKnownMethods = new()
         {
-            { "GET", "GET" },
-            { "PUT", "PUT" },
-            { "POST", "POST" },
-            { "DELETE", "DELETE" },
-            { "HEAD", "HEAD" },
-            { "OPTIONS", "OPTIONS" },
-            { "TRACE", "TRACE" },
-            { "PATCH", "PATCH" },
-            { "CONNECT", "CONNECT" },
+            { "GET" },
+            { "PUT" },
+            { "POST" },
+            { "DELETE" },
+            { "HEAD" },
+            { "OPTIONS" },
+            { "TRACE" },
+            { "PATCH" },
+            { "CONNECT" },
         };
 
-    public RequestMethodHelper(string configuredKnownMethods)
+    public RequestMethodHelper(IConfiguration configuration)
     {
-        var splitArray = configuredKnownMethods.Split(',')
+        Debug.Assert(configuration != null, "configuration was null");
+
+        if (configuration!.TryGetStringValue("OTEL_INSTRUMENTATION_HTTP_KNOWN_METHODS", out var knownHttpMethods))
+        {
+            var splitArray = knownHttpMethods!.Split(',')
                 .Select(x => x.Trim())
                 .Where(x => !string.IsNullOrEmpty(x))
                 .ToList();
 
-        this.KnownMethods = GetKnownMethods(splitArray);
-    }
-
-    public RequestMethodHelper(List<string> configuredKnownMethods)
-    {
-        this.KnownMethods = GetKnownMethods(configuredKnownMethods);
+            this.KnownMethods = GetKnownMethods(splitArray);
+        }
+        else
+        {
+            this.KnownMethods = GetKnownMethods(DefaultKnownMethods);
+        }
     }
 
 #if NET8_0_OR_GREATER
@@ -48,6 +57,13 @@ internal class RequestMethodHelper
 #else
     public Dictionary<string, string> KnownMethods { get; private set; }
 #endif
+
+    public static void RegisterServices(IServiceCollection services)
+    {
+        Debug.Assert(services != null, "services was null");
+
+        services!.TryAddSingleton<RequestMethodHelper>();
+    }
 
 #if NET8_0_OR_GREATER
     public string GetNormalizedHttpMethod(string method)
@@ -93,15 +109,9 @@ internal class RequestMethodHelper
     private static Dictionary<string, string> GetKnownMethods(List<string> configuredKnownMethods)
 #endif
     {
-        IEnumerable<KeyValuePair<string, string>> knownMethods = DefaultKnownMethods;
+        Debug.Assert(configuredKnownMethods != null, "configuredKnownMethods was null");
 
-        if (configuredKnownMethods != null)
-        {
-            if (configuredKnownMethods.Count > 0)
-            {
-                knownMethods = DefaultKnownMethods.Where(x => configuredKnownMethods.Contains(x.Key, StringComparer.OrdinalIgnoreCase));
-            }
-        }
+        var knownMethods = configuredKnownMethods.ToDictionary(x => x, x => x, StringComparer.OrdinalIgnoreCase);
 
 #if NET8_0_OR_GREATER
         return FrozenDictionary.ToFrozenDictionary(knownMethods, StringComparer.OrdinalIgnoreCase);

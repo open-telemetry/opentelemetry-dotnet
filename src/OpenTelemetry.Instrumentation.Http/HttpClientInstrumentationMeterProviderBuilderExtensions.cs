@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #if !NET8_0_OR_GREATER
+using Microsoft.Extensions.DependencyInjection;
 #if !NETFRAMEWORK
 using OpenTelemetry.Instrumentation.Http;
 #endif
@@ -35,12 +36,23 @@ public static class HttpClientInstrumentationMeterProviderBuilderExtensions
         // Note: Warm-up the status code.
         _ = TelemetryHelper.BoxedStatusCodes;
 
+        builder.ConfigureServices(RequestMethodHelper.RegisterServices);
+
 #if NETFRAMEWORK
         builder.AddMeter(HttpWebRequestActivitySource.MeterName);
+
+        if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+        {
+            deferredMeterProviderBuilder.Configure((sp, builder) =>
+            {
+                HttpWebRequestActivitySource.RequestMethodHelper = sp.GetRequiredService<RequestMethodHelper>();
+            });
+        }
 #else
         builder.AddMeter(HttpHandlerMetricsDiagnosticListener.MeterName);
 
-        builder.AddInstrumentation(new HttpClientMetrics());
+        builder.AddInstrumentation(sp => new HttpClientMetrics(
+            sp.GetRequiredService<RequestMethodHelper>()));
 #endif
         return builder;
 #endif

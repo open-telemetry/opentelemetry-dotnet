@@ -29,13 +29,6 @@ public class AspNetCoreTraceInstrumentationOptions
         {
             this.EnableGrpcAspNetCoreSupport = enableGrpcInstrumentation;
         }
-
-        if (configuration.TryGetStringValue("OTEL_INSTRUMENTATION_HTTP_KNOWN_METHODS", out var knownHttpMethods))
-        {
-            var requestMethodHelper = new RequestMethodHelper(knownHttpMethods);
-            this.KnownHttpMethods =
-                [.. requestMethodHelper.KnownMethods.Keys];
-        }
     }
 
     /// <summary>
@@ -98,7 +91,4 @@ public class AspNetCoreTraceInstrumentationOptions
     /// https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md.
     /// </remarks>
     internal bool EnableGrpcAspNetCoreSupport { get; set; }
-
-    internal List<string> KnownHttpMethods { get; set; } =
-        [];
 }

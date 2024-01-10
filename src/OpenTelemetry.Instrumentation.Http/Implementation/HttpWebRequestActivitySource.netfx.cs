@@ -9,6 +9,7 @@ using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
@@ -76,6 +77,7 @@ internal static class HttpWebRequestActivitySource
             PerformInjection();
 
             TracingOptions = new HttpClientTraceInstrumentationOptions();
+            RequestMethodHelper = new RequestMethodHelper(new ConfigurationBuilder().AddEnvironmentVariables().Build());
         }
         catch (Exception ex)
         {
@@ -89,20 +91,32 @@ internal static class HttpWebRequestActivitySource
         get => tracingOptions;
         set
         {
+            Debug.Assert(value != null, "value was null");
+
             tracingOptions = value;
-            requestMethodHelper = new RequestMethodHelper(tracingOptions.KnownHttpMethods);
+        }
+    }
+
+    internal static RequestMethodHelper RequestMethodHelper
+    {
+        get => requestMethodHelper;
+        set
+        {
+            Debug.Assert(value != null, "value was null");
+
+            requestMethodHelper = value;
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddRequestTagsAndInstrumentRequest(HttpWebRequest request, Activity activity)
     {
-        requestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method);
+        RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method);
 
         if (activity.IsAllDataRequested)
         {
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
-            requestMethodHelper.SetHttpMethodTag(activity, request.Method);
+            RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
             if (!request.RequestUri.IsDefaultPort)
@@ -426,8 +440,9 @@ internal static class HttpWebRequestActivitySource
 
             TagList tags = default;
 
-            var httpMethod = requestMethodHelper.GetNormalizedHttpMethod(request.Method);
-            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+            tags.Add(new KeyValuePair<string, object>(
+                SemanticConventions.AttributeHttpRequestMethod,
+                RequestMethodHelper.GetNormalizedHttpMethod(request.Method)));
 
             tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
             tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);

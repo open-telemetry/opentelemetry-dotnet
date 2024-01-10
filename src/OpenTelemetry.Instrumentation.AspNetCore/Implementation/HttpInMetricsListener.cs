@@ -34,16 +34,42 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
     private static readonly PropertyFetcher<HttpContext> HttpContextPropertyFetcher = new("HttpContext");
     private static readonly object ErrorTypeHttpContextItemsKey = new();
-    private static readonly RequestMethodHelper RequestMethodHelper = new(string.Empty);
 
     private static readonly Histogram<double> HttpServerRequestDuration = Meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Duration of HTTP server requests.");
 
-    internal HttpInMetricsListener(string name)
+    private readonly RequestMethodHelper requestMethodHelper;
+
+    internal HttpInMetricsListener(
+        string name,
+        RequestMethodHelper requestMethodHelper)
         : base(name)
     {
+        Debug.Assert(requestMethodHelper != null, "requestMethodHelper was null");
+
+        this.requestMethodHelper = requestMethodHelper;
     }
 
-    public static void OnExceptionEventWritten(string name, object payload)
+    public override void OnEventWritten(string name, object payload)
+    {
+        switch (name)
+        {
+            case OnUnhandledDiagnosticsExceptionEvent:
+            case OnUnhandledHostingExceptionEvent:
+                {
+                    OnExceptionEventWritten(name, payload);
+                }
+
+                break;
+            case OnStopEvent:
+                {
+                    this.OnStopEventWritten(name, payload);
+                }
+
+                break;
+        }
+    }
+
+    private static void OnExceptionEventWritten(string name, object payload)
     {
         // We need to use reflection here as the payload type is not a defined public type.
         if (!TryFetchException(payload, out Exception exc) || !TryFetchHttpContext(payload, out HttpContext ctx))
@@ -69,12 +95,11 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             => HttpContextPropertyFetcher.TryFetch(payload, out ctx) && ctx != null;
     }
 
-    public static void OnStopEventWritten(string name, object payload)
+    private void OnStopEventWritten(string name, object payload)
     {
-        var context = payload as HttpContext;
-        if (context == null)
+        if (payload is not HttpContext context)
         {
-            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(OnStopEventWritten), HttpServerRequestDurationMetricName);
+            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnStopEventWritten), HttpServerRequestDurationMetricName);
             return;
         }
 
@@ -85,8 +110,9 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
 
-        var httpMethod = RequestMethodHelper.GetNormalizedHttpMethod(context.Request.Method);
-        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+        tags.Add(new KeyValuePair<string, object>(
+            SemanticConventions.AttributeHttpRequestMethod,
+            this.requestMethodHelper.GetNormalizedHttpMethod(context.Request.Method)));
 
 #if NET6_0_OR_GREATER
         var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
@@ -104,25 +130,5 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
         // TODO: Follow up with .NET team if we can continue to rely on this behavior.
         HttpServerRequestDuration.Record(Activity.Current.Duration.TotalSeconds, tags);
-    }
-
-    public override void OnEventWritten(string name, object payload)
-    {
-        switch (name)
-        {
-            case OnUnhandledDiagnosticsExceptionEvent:
-            case OnUnhandledHostingExceptionEvent:
-                {
-                    OnExceptionEventWritten(name, payload);
-                }
-
-                break;
-            case OnStopEvent:
-                {
-                    OnStopEventWritten(name, payload);
-                }
-
-                break;
-        }
     }
 }

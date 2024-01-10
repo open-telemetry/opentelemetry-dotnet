@@ -59,7 +59,7 @@ public static class HttpClientInstrumentationTracerProviderBuilderExtensions
                 services.Configure(name, configureHttpClientTraceInstrumentationOptions);
             }
 
-            services.RegisterOptionsFactory(configuration => new HttpClientTraceInstrumentationOptions(configuration));
+            RequestMethodHelper.RegisterServices(services);
         });
 
 #if NETFRAMEWORK
@@ -69,9 +69,8 @@ public static class HttpClientInstrumentationTracerProviderBuilderExtensions
         {
             deferredTracerProviderBuilder.Configure((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsMonitor<HttpClientTraceInstrumentationOptions>>().Get(name);
-
-                HttpWebRequestActivitySource.TracingOptions = options;
+                HttpWebRequestActivitySource.TracingOptions = sp.GetRequiredService<IOptionsMonitor<HttpClientTraceInstrumentationOptions>>().Get(name);
+                HttpWebRequestActivitySource.RequestMethodHelper = sp.GetRequiredService<RequestMethodHelper>();
             });
         }
 #else
@@ -79,9 +78,9 @@ public static class HttpClientInstrumentationTracerProviderBuilderExtensions
 
         builder.AddInstrumentation(sp =>
         {
-            var options = sp.GetRequiredService<IOptionsMonitor<HttpClientTraceInstrumentationOptions>>().Get(name);
-
-            return new HttpClientInstrumentation(options);
+            return new HttpClientInstrumentation(
+                sp.GetRequiredService<IOptionsMonitor<HttpClientTraceInstrumentationOptions>>().Get(name),
+                sp.GetRequiredService<RequestMethodHelper>());
         });
 #endif
         return builder;

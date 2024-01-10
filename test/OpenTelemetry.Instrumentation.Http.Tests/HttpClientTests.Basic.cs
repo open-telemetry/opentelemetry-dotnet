@@ -758,11 +758,12 @@ public partial class HttpClientTests : IDisposable
 
     [Theory]
     [InlineData("GET,POST,PUT", "GET", null)]
+    [InlineData("get,post,put", "get", null)]
     [InlineData("POST,PUT", "_OTHER", "GET")]
-    [InlineData("fooBar", "GET", null)]
+    [InlineData("post,put", "_OTHER", "GET")]
+    [InlineData("fooBar", "_OTHER", "GET")]
     [InlineData("fooBar,POST", "_OTHER", "GET")]
-    [InlineData("", "GET", null)]
-    [InlineData(",", "GET", null)]
+    [InlineData(",", "_OTHER", "GET")]
     public async Task KnownHttpMethodsAreBeingRespected_EnvVar(string knownMethods, string expectedMethod, string expectedOriginalMethod)
     {
         var config = new KeyValuePair<string, string>[] { new("OTEL_INSTRUMENTATION_HTTP_KNOWN_METHODS", knownMethods) };
@@ -775,45 +776,6 @@ public partial class HttpClientTests : IDisposable
         var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation()
             .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        using var c = new HttpClient();
-        await c.GetAsync(this.url);
-
-        tracerProvider.Dispose();
-
-        Assert.Single(exportedItems);
-        var activity = exportedItems[0];
-
-        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
-        Assert.Equal(expectedOriginalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
-    }
-
-    [Theory]
-    [InlineData("GET,POST,PUT", "GET", null)]
-    [InlineData("get,post,put", "GET", null)]
-    [InlineData("POST,PUT", "_OTHER", "GET")]
-    [InlineData("post,put", "_OTHER", "GET")]
-    [InlineData("fooBar", "_OTHER", "GET")]
-    [InlineData("foo,bar", "_OTHER", "GET")]
-    public async Task KnownHttpMethodsAreBeingRespected_Programmatically(string knownMethods, string expectedMethod, string expectedOriginalMethod)
-    {
-        var exportedItems = new List<Activity>();
-
-        var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddHttpClientInstrumentation(
-                opt =>
-                {
-                    var splitArray = knownMethods.Split(',')
-                        .Select(x => x.Trim())
-                        .Where(x => !string.IsNullOrEmpty(x));
-
-                    foreach (var item in splitArray)
-                    {
-                        opt.KnownHttpMethods.Add(item);
-                    }
-                })
             .AddInMemoryExporter(exportedItems)
             .Build();
 

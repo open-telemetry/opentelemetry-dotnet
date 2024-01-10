@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Instrumentation.Http.Implementation;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.Http;
 
@@ -31,11 +32,9 @@ internal sealed class HttpClientInstrumentation : IDisposable
     private readonly Func<string, object, object, bool> isEnabledNet7OrGreater = (eventName, _, _)
         => !ExcludedDiagnosticSourceEventsNet7OrGreater.Contains(eventName);
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
-    /// </summary>
-    /// <param name="options">Configuration options for HTTP client instrumentation.</param>
-    public HttpClientInstrumentation(HttpClientTraceInstrumentationOptions options)
+    public HttpClientInstrumentation(
+        HttpClientTraceInstrumentationOptions options,
+        RequestMethodHelper requestMethodHelper)
     {
         // For .NET7.0 activity will be created using activitySource.
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
@@ -45,11 +44,17 @@ internal sealed class HttpClientInstrumentation : IDisposable
         // so that the sampler's decision is respected.
         if (HttpHandlerDiagnosticListener.IsNet7OrGreater)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), this.isEnabledNet7OrGreater, HttpInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
+                new HttpHandlerDiagnosticListener(options, requestMethodHelper),
+                this.isEnabledNet7OrGreater,
+                HttpInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         }
         else
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), this.isEnabled, HttpInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
+                new HttpHandlerDiagnosticListener(options, requestMethodHelper),
+                this.isEnabled,
+                HttpInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         }
 
         this.diagnosticSourceSubscriber.Subscribe();

@@ -63,6 +63,7 @@ public static class AspNetCoreInstrumentationTracerProviderBuilderExtensions
             }
 
             services.RegisterOptionsFactory(configuration => new AspNetCoreTraceInstrumentationOptions(configuration));
+            RequestMethodHelper.RegisterServices(services);
         });
 
         if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
@@ -75,10 +76,10 @@ public static class AspNetCoreInstrumentationTracerProviderBuilderExtensions
 
         return builder.AddInstrumentation(sp =>
         {
-            var options = sp.GetRequiredService<IOptionsMonitor<AspNetCoreTraceInstrumentationOptions>>().Get(name);
-
             return new AspNetCoreInstrumentation(
-                new HttpInListener(options));
+                new HttpInListener(
+                    sp.GetRequiredService<IOptionsMonitor<AspNetCoreTraceInstrumentationOptions>>().Get(name),
+                    sp.GetRequiredService<RequestMethodHelper>()));
         });
     }
 

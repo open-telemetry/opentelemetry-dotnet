@@ -3,6 +3,7 @@
 
 #if !NET8_0_OR_GREATER
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore;
 
@@ -25,9 +26,9 @@ internal sealed class AspNetCoreMetrics : IDisposable
 
     private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
-    internal AspNetCoreMetrics()
+    internal AspNetCoreMetrics(RequestMethodHelper requestMethodHelper)
     {
-        var metricsListener = new HttpInMetricsListener("Microsoft.AspNetCore");
+        var metricsListener = new HttpInMetricsListener("Microsoft.AspNetCore", requestMethodHelper);
         this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(metricsListener, this.isEnabled, AspNetCoreInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         this.diagnosticSourceSubscriber.Subscribe();
     }

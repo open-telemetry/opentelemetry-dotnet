@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #if !NET8_0_OR_GREATER
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 #endif
@@ -30,9 +31,12 @@ public static class AspNetCoreInstrumentationMeterProviderBuilderExtensions
         // Note: Warm-up the status code.
         _ = TelemetryHelper.BoxedStatusCodes;
 
+        builder.ConfigureServices(RequestMethodHelper.RegisterServices);
+
         builder.AddMeter(HttpInMetricsListener.InstrumentationName);
 
-        builder.AddInstrumentation(new AspNetCoreMetrics());
+        builder.AddInstrumentation(sp => new AspNetCoreMetrics(
+            sp.GetRequiredService<RequestMethodHelper>()));
 
         return builder;
 #endif

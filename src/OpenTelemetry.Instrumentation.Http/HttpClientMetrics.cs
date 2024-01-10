@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Instrumentation.Http.Implementation;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.Http;
 
@@ -21,13 +22,10 @@ internal sealed class HttpClientMetrics : IDisposable
     private readonly Func<string, object, object, bool> isEnabled = (activityName, obj1, obj2)
         => !ExcludedDiagnosticSourceEvents.Contains(activityName);
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="HttpClientMetrics"/> class.
-    /// </summary>
-    public HttpClientMetrics()
+    public HttpClientMetrics(RequestMethodHelper requestMethodHelper)
     {
         this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-            new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener"),
+            new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener", requestMethodHelper),
             this.isEnabled,
             HttpInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         this.diagnosticSourceSubscriber.Subscribe();

@@ -60,13 +60,16 @@ internal class HttpInListener : ListenerHandler
     private readonly AspNetCoreTraceInstrumentationOptions options;
     private readonly RequestMethodHelper requestMethodHelper;
 
-    public HttpInListener(AspNetCoreTraceInstrumentationOptions options)
+    public HttpInListener(
+        AspNetCoreTraceInstrumentationOptions options,
+        RequestMethodHelper requestMethodHelper)
         : base(DiagnosticSourceName)
     {
-        Guard.ThrowIfNull(options);
+        Debug.Assert(options != null, "options was null");
+        Debug.Assert(requestMethodHelper != null, "requestMethodHelper was null");
 
         this.options = options;
-        this.requestMethodHelper = new RequestMethodHelper(this.options.KnownHttpMethods);
+        this.requestMethodHelper = requestMethodHelper;
     }
 
     public override void OnEventWritten(string name, object payload)

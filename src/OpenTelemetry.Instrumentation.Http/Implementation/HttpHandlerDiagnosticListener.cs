@@ -15,7 +15,9 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation;
 
-internal sealed class HttpHandlerDiagnosticListener(HttpClientTraceInstrumentationOptions options) : ListenerHandler("HttpHandlerDiagnosticListener")
+internal sealed class HttpHandlerDiagnosticListener(
+    HttpClientTraceInstrumentationOptions options,
+    RequestMethodHelper requestMethodHelper) : ListenerHandler("HttpHandlerDiagnosticListener")
 {
     internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
     internal static readonly bool IsNet7OrGreater;
@@ -35,7 +37,7 @@ internal sealed class HttpHandlerDiagnosticListener(HttpClientTraceInstrumentati
     private static readonly PropertyFetcher<Exception> StopExceptionFetcher = new("Exception");
     private static readonly PropertyFetcher<TaskStatus> StopRequestStatusFetcher = new("RequestTaskStatus");
     private readonly HttpClientTraceInstrumentationOptions options = options;
-    private readonly RequestMethodHelper requestMethodHelper = new(options.KnownHttpMethods);
+    private readonly RequestMethodHelper requestMethodHelper = requestMethodHelper;
 
     static HttpHandlerDiagnosticListener()
     {
