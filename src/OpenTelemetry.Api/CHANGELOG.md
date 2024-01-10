@@ -7,10 +7,10 @@
   [ExecutionContext](https://learn.microsoft.com/dotnet/api/system.threading.executioncontext)
   and will only be available downstream. Previously changes also flowed back to
   parent contexts.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5208](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5208))
 
 * Added `Baggage.TryGetBaggage` API.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5208](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5208))
 
 ## 1.7.0
 
