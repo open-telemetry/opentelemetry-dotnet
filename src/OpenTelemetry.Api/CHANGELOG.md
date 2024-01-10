@@ -9,9 +9,6 @@
   parent contexts.
   ([#5208](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5208))
 
-* Added `Baggage.TryGetBaggage` API.
-  ([#5208](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5208))
-
 ## 1.7.0
 
 Released 2023-Dec-08
