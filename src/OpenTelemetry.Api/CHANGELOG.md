@@ -2,12 +2,19 @@
 
 ## Unreleased
 
-* **Breaking change:** `Baggage.Current` behavior changed to match `AsyncLocal`
-  (copy-on-write). Changes now create a new
+* **Breaking change:** `Baggage.Current` behavior changed to align with the
+  [OpenTelemetry
+  specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/baggage/api.md#overview):
+
+  > The Baggage container MUST be immutable, so that the containing Context also
+  > remains immutable.
+
+  Changes now create a new
   [ExecutionContext](https://learn.microsoft.com/dotnet/api/system.threading.executioncontext)
   and will only be available downstream. Previously changes also flowed back to
   parent contexts.
-  ([#5208](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5208))
+
+  See: [#5208](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5208)
 
 ## 1.7.0
 
