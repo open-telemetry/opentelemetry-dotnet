@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+* **Breaking change:** `Baggage.Current` behavior changed to match `AsyncLocal`
+  (copy-on-write). Changes now create a new
+  [ExecutionContext](https://learn.microsoft.com/dotnet/api/system.threading.executioncontext)
+  and will only be available downstream. Previously changes also flowed back to
+  parent contexts.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
+* Added `Baggage.TryGetBaggage` API.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.7.0
 
 Released 2023-Dec-08
