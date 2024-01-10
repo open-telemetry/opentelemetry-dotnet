@@ -3,6 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <OTelLatestStableVer>1.7.0</OTelLatestStableVer>
   </PropertyGroup>
+
   <!--
       This section covers packages that are directly referenced by the NuGet packages published from this repository.
       Any security vulnerability in these packages or their downstream dependencies will be considered as a security
@@ -15,6 +16,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="[2.1.1,6.0)" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Features" Version="[2.1.1,6.0)" />
     <PackageVersion Include="Microsoft.CSharp" Version="[4.7.0]" />
+
     <!--
         Typically, for the Microsoft.Extensions.* packages relating to DI Abstractions, Hosting Abstractions, and Logging,
         the latest stable version should be used because:
@@ -24,14 +26,15 @@
         3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
           these packages even during major version bumps, so compatibility is not a concern here.
     -->
+
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="8.0.0" />
+
     <PackageVersion Include="OpenTelemetry" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTelemetry.Api" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="$(OTelLatestStableVer)" />
@@ -39,6 +42,7 @@
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
+
     <!--
         Typically, the latest stable version of System.Diagnostics.DiagnosticSource should be used here because:
         1) Each major version bump will have some new OpenTelemetry API capabilities (e.g. .NET 6 introduced Meter
@@ -49,13 +53,17 @@
           even during major version bumps, so compatibility is not a concern here.
     -->
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="8.0.0" />
+
     <!-- A conservative version of System.Text.Encodings.Web must be used here since there is no backward compatibility guarantee during major version bumps. -->
     <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
+
     <!-- A conservative version of System.Text.Json must be used here since there is no backward compatibility guarantee during major version bumps. -->
     <PackageVersion Include="System.Text.Json" Version="4.7.2" />
+
     <!-- A conservative version of System.Threading.Tasks.Extensions must be used here since there is no backward compatibility guarantee during major version bumps. -->
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
+
   <!--
       This section covers packages that are **not** directly referenced by the NuGet packages published from this repository.
       For example, these packages are used in the tests, examples or referenced as "PrivateAssets", but not in the NuGet packages themselves.
@@ -86,6 +94,7 @@
     <PackageVersion Include="xunit" Version="[2.6.2,3.0)" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="[2.5.4,3.0)" />
   </ItemGroup>
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="6.0.21" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.21" />
