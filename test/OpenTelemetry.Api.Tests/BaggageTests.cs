@@ -266,23 +266,57 @@ public class BaggageTests
     }
 
     [Fact]
-    public async Task AsyncLocalTests()
+    public void FlowTest()
     {
         Baggage.SetBaggage("key1", "value1");
 
-        await InnerTask();
+        InnerTask();
 
         Baggage.SetBaggage("key4", "value4");
 
+        // Note: Changes from the InnerTask are observed
+        Assert.Equal(4, Baggage.Current.Count);
+        Assert.Equal("value1", Baggage.GetBaggage("key1"));
+        Assert.Equal("value2", Baggage.GetBaggage("key2"));
+        Assert.Equal("value3", Baggage.GetBaggage("key3"));
+        Assert.Equal("value4", Baggage.GetBaggage("key4"));
+
+        static void InnerTask()
+        {
+            Baggage.SetBaggage("key2", "value2");
+            Baggage.SetBaggage("key3", "value3");
+
+            Assert.Equal(3, Baggage.Current.Count);
+            Assert.Equal("value1", Baggage.GetBaggage("key1"));
+            Assert.Equal("value2", Baggage.GetBaggage("key2"));
+            Assert.Equal("value3", Baggage.GetBaggage("key3"));
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AsyncAwaitFlowTest(bool yield)
+    {
+        Baggage.SetBaggage("key1", "value1");
+
+        await InnerTask(yield);
+
+        Baggage.SetBaggage("key4", "value4");
+
+        // Note: Changes from the InnerTask are NOT observed
         Assert.Equal(2, Baggage.Current.Count);
         Assert.Equal("value1", Baggage.GetBaggage("key1"));
         Assert.Equal("value4", Baggage.GetBaggage("key4"));
 
-        static async Task InnerTask()
+        static async Task InnerTask(bool yield)
         {
             Baggage.SetBaggage("key2", "value2");
 
-            await Task.Yield();
+            if (yield)
+            {
+                await Task.Yield();
+            }
 
             Baggage.SetBaggage("key3", "value3");
 
