@@ -34,5 +34,5 @@ public static partial class ApplicationLogs
     [LoggerMessage(LogLevel.Critical)]
     public static partial void FoodRecallNotice(
         this ILogger logger,
-        [LogProperties] FoodRecallNotice foodRecallNotice);
+        [LogProperties(OmitReferenceName = true)] FoodRecallNotice foodRecallNotice);
 }
