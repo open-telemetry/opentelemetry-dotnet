@@ -5,7 +5,7 @@
 * Added `Baggage.Attach` API which can be used to establish a new `Baggage`
   context which will flow on the current thread and across tasks until
   detached/disposed.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5218](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5218))
 
 ## 1.7.0
 
