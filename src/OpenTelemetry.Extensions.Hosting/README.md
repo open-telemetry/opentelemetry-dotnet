@@ -29,13 +29,13 @@ Targeting `Microsoft.Extensions.DependencyInjection.IServiceCollection`:
   [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection)
   and then returns an `OpenTelemetryBuilder` class.
 
-  > **Note**
+  > [!NOTE]
   > `AddOpenTelemetry` should be called by application host code only. Library
   authors see: [Registration extension method guidance for library
   authors](../../docs/trace/extending-the-sdk/README.md#registration-extension-method-guidance-for-library-authors).
   <!-- This comment is to make sure the two notes above and below are not merged
   -->
-  > **Note**
+  > [!NOTE]
   > Multiple calls to `AddOpenTelemetry` will **NOT** result in multiple
   providers. Only a single `TracerProvider` and/or `MeterProvider` will be
   created in the target `IServiceCollection`. To establish multiple providers

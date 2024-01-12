@@ -150,20 +150,20 @@ metrics, you can utilize
 [Views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument)
 to achieve this.
 
-**Note:** There is no difference in features or emitted metrics when enabling
-metrics using `AddMeter()` or `AddAspNetCoreInstrumentation()` on `.NET8.0` and
-newer versions.
-
-> **Note**
-> The `http.server.request.duration` metric is emitted in `seconds` as
-    per the semantic convention. While the convention [recommends using custom
-    histogram
-    buckets](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md)
-    , this feature is not yet available via .NET Metrics API. A
-    [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
-    has been included in OTel SDK starting version `1.6.0` which applies
-    recommended buckets by default for `http.server.request.duration`. This
-    applies to all targeted frameworks.
+> [!NOTE]
+> There is no difference in features or emitted metrics when enabling metrics
+using `AddMeter()` or `AddAspNetCoreInstrumentation()` on `.NET8.0` and newer
+versions.
+<!-- This comment is to make sure the two notes above and below are not merged -->
+> [!NOTE]
+> The `http.server.request.duration` metric is emitted in `seconds` as per the
+semantic convention. While the convention [recommends using custom histogram
+buckets](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md)
+, this feature is not yet available via .NET Metrics API. A
+[workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
+has been included in OTel SDK starting version `1.6.0` which applies recommended
+buckets by default for `http.server.request.duration`. This applies to all
+targeted frameworks.
 
 ## Advanced configuration
 
