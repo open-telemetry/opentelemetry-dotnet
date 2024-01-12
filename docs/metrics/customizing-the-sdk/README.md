@@ -102,7 +102,7 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 
 See [Program.cs](./Program.cs) for complete example.
 
-> **Note**
+> [!NOTE]
 > A common mistake while configuring `MeterProvider` is forgetting to
 add the required `Meter`s to the provider. It is recommended to leverage the
 wildcard subscription model where it makes sense. For example, if your
@@ -323,7 +323,7 @@ within the maximum number of buckets defined by `MaxSize`. The default
     })
 ```
 
-> **Note**
+> [!NOTE]
 > The SDK currently does not support any changes to `Aggregation` type
 by using Views.
 
@@ -377,7 +377,7 @@ ignored. The SDK chooses the key/value combinations in the order in which they
 are emitted. `SetMaxMetricPointsPerMetricStream` can be used to override the
 default.
 
-> **Note**
+> [!NOTE]
 > One `MetricPoint` is reserved for every `MetricStream` for the
 special case where there is no key/value pair associated with the metric. The
 maximum number of `MetricPoint`s has to accommodate for this special case.
@@ -444,7 +444,7 @@ AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Ex
 AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
 ```
 
-> **Note**
+> [!NOTE]
 > The above limit is *per* metric stream, and applies to all the metric
 streams. There is no ability to apply different limits for each instrument at
 this moment.
@@ -503,7 +503,7 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 
-> **Note**
+> [!NOTE]
 > As of today, there is no separate toggle for enable/disable Exemplar feature.
 Exemplars can be disabled by setting filter as `AlwaysOffExemplarFilter`, which
 is also the default (i.e Exemplar feature is disabled by default). Users can
@@ -538,7 +538,7 @@ reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
 size (currently defaulting to 1) determines the maximum number of exemplars
 stored.
 
-> **Note**
+> [!NOTE]
 > Currently there is no ability to change or configure Reservoir.
 
 ### Instrumentation

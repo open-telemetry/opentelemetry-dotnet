@@ -75,7 +75,7 @@ customize the `LogRecordExportProcessorOptions` or see the [Environment
 Variables](#environment-variables) section below on how to customize using
 environment variables.
 
-> **Note**
+> [!NOTE]
 > For details on how to configure logging with OpenTelemetry check the
 [Console](../../docs/logs/getting-started-console/README.md) or [ASP.NET
 Core](../../docs/logs/getting-started-aspnetcore/README.md) tutorial.
@@ -85,7 +85,7 @@ Attributes. Scopes must be enabled at the SDK level using
 [IncludeScopes](../../docs/logs/customizing-the-sdk/Readme.md#includescopes)
 setting on `OpenTelemetryLoggerOptions`.
 
-> **Note**
+> [!NOTE]
 > Scope attributes with key set as empty string or `{OriginalFormat}`
 are ignored by exporter. Duplicate keys are exported as is.
 
@@ -94,7 +94,7 @@ are ignored by exporter. Duplicate keys are exported as is.
 You can configure the `OtlpExporter` through `OtlpExporterOptions`
 and environment variables.
 
-> **Note**
+> [!NOTE]
 > The `OtlpExporterOptions` type setters take precedence over the environment variables.
 
 This can be achieved by providing an `Action<OtlpExporterOptions>` delegate to
@@ -132,7 +132,7 @@ appBuilder.Services.AddOptions<OtlpExporterOptions>()
     });
 ```
 
-> **Note**
+> [!NOTE]
 > The `OtlpExporterOptions` class is shared by logging, metrics, and tracing. To
 > bind configuration specific to each signal use the `name` parameter on the
 > `AddOtlpExporter` extensions:

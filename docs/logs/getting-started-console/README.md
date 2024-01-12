@@ -97,7 +97,7 @@ public static partial class ApplicationLogs
 }
 ```
 
-> **Note**
+> [!NOTE]
 > For applications which use `ILogger` with [dependency injection
 (DI)](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
 (e.g. [ASP.NET Core](https://learn.microsoft.com/aspnet/core) and [.NET
