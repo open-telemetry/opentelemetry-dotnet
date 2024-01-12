@@ -265,20 +265,57 @@ public class BaggageTests
         Assert.Equal(expectedBaggage.GetHashCode(), baggage.GetHashCode());
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task SynchronousFlowTest(bool detach)
+    [Fact]
+    public void AttachTest()
     {
         Baggage.SetBaggage("key1", "value1");
 
-        InnerMethod(detach);
+        Assert.Equal(1, Baggage.Current.Count);
+        Assert.Equal("value1", Baggage.GetBaggage("key1"));
 
-        await InnerTask(detach);
+        using (Baggage.Attach())
+        {
+            Assert.Empty(Baggage.GetBaggage());
+
+            Baggage.SetBaggage("key2", "value2");
+
+            Assert.Equal(1, Baggage.Current.Count);
+            Assert.Equal("value2", Baggage.GetBaggage("key2"));
+        }
+
+        Assert.Equal(1, Baggage.Current.Count);
+        Assert.Equal("value1", Baggage.GetBaggage("key1"));
+
+        using (Baggage.Attach(Baggage.Current.SetBaggage("key2", "value2")))
+        {
+            Assert.Equal(2, Baggage.Current.Count);
+            Assert.Equal("value1", Baggage.GetBaggage("key1"));
+            Assert.Equal("value2", Baggage.GetBaggage("key2"));
+
+            Baggage.SetBaggage("key3", "value3");
+
+            Assert.Equal(3, Baggage.Current.Count);
+            Assert.Equal("value3", Baggage.GetBaggage("key3"));
+        }
+
+        Assert.Equal(1, Baggage.Current.Count);
+        Assert.Equal("value1", Baggage.GetBaggage("key1"));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task SynchronousFlowTests(bool attach)
+    {
+        Baggage.SetBaggage("key1", "value1");
+
+        InnerMethod(attach);
+
+        await InnerTask(attach);
 
         Baggage.SetBaggage("key4", "value4");
 
-        if (detach)
+        if (attach)
         {
             // Note: Changes from InnerMethod & InnerTask are NOT observed
             Assert.Equal(2, Baggage.Current.Count);
@@ -295,9 +332,9 @@ public class BaggageTests
             Assert.Equal("value4", Baggage.GetBaggage("key4"));
         }
 
-        static void InnerMethod(bool detach)
+        static void InnerMethod(bool attach)
         {
-            using (detach ? Baggage.Detach() : null)
+            using (attach ? Baggage.Attach() : null)
             {
                 Baggage.SetBaggage("key2", "value2");
 
@@ -305,9 +342,9 @@ public class BaggageTests
             }
         }
 
-        static Task InnerTask(bool detach)
+        static Task InnerTask(bool attach)
         {
-            using (detach ? Baggage.Detach() : null)
+            using (attach ? Baggage.Attach() : null)
             {
                 Baggage.SetBaggage("key3", "value3");
 
@@ -323,15 +360,15 @@ public class BaggageTests
     [InlineData(false, true)]
     [InlineData(true, false)]
     [InlineData(true, true)]
-    public async Task AsynchronousFlowTest(bool detach, bool yield)
+    public async Task AsynchronousFlowTests(bool attach, bool yield)
     {
         Baggage.SetBaggage("key1", "value1");
 
-        await InnerTask(detach, yield);
+        await InnerTask(attach, yield);
 
         Baggage.SetBaggage("key4", "value4");
 
-        if (detach)
+        if (attach)
         {
             // Note: Changes from InnerTask are NOT observed
             Assert.Equal(2, Baggage.Current.Count);
@@ -348,9 +385,9 @@ public class BaggageTests
             Assert.Equal("value4", Baggage.GetBaggage("key4"));
         }
 
-        static async Task InnerTask(bool detach, bool yield)
+        static async Task InnerTask(bool attach, bool yield)
         {
-            using (detach ? Baggage.Detach() : null)
+            using (attach ? Baggage.Attach() : null)
             {
                 Baggage.SetBaggage("key2", "value2");
 

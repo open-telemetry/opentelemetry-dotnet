@@ -88,6 +88,39 @@ public readonly struct Baggage : IEquatable<Baggage>
     public static bool operator !=(Baggage left, Baggage right) => !(left == right);
 
     /// <summary>
+    /// Attach a new empty <see cref="Baggage"/> context which will flow on the
+    /// current thread and with tasks until detached. Call <see
+    /// cref="IDisposable.Dispose"/> on the returned object to restore the
+    /// context to the prior state (detach).
+    /// </summary>
+    /// <returns><see cref="IDisposable"/> which will restore the context to the
+    /// prior state.</returns>
+    public static IDisposable Attach()
+        => Attach(baggage: default);
+
+    /// <summary>
+    /// Attach a new <see cref="Baggage"/> context which will flow on the
+    /// current thread and with tasks until detached. Call <see
+    /// cref="IDisposable.Dispose"/> on the returned object to restore the
+    /// context to the prior state (detach).
+    /// </summary>
+    /// <param name="baggage"><see cref="Baggage"/> to attach.</param>
+    /// <returns><see cref="IDisposable"/> which will restore the context to the
+    /// prior state.</returns>
+    public static IDisposable Attach(Baggage baggage)
+    {
+        var container = RuntimeContextSlot.Get();
+
+        RuntimeContextSlot.Set(
+            new BaggageHolder
+            {
+                Baggage = baggage,
+            });
+
+        return new AttachedBaggageContextState(container);
+    }
+
+    /// <summary>
     /// Create a <see cref="Baggage"/> instance from dictionary of baggage key/value pairs.
     /// </summary>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
@@ -118,32 +151,6 @@ public readonly struct Baggage : IEquatable<Baggage>
         }
 
         return new Baggage(baggageCopy);
-    }
-
-    public static IDisposable Detach()
-        => Detach(static b => b.ClearBaggage());
-
-    public static IDisposable Detach(Func<Baggage, Baggage> baggageInitializationFunc)
-    {
-        Guard.ThrowIfNull(baggageInitializationFunc);
-
-        var container = RuntimeContextSlot.Get();
-
-        RuntimeContextSlot.Set(
-            new BaggageHolder
-            {
-                Baggage = baggageInitializationFunc(container?.Baggage ?? default),
-            });
-
-        return new DetachedBaggage(container);
-    }
-
-    private sealed class DetachedBaggage(BaggageHolder? baggageHolder) : IDisposable
-    {
-        public void Dispose()
-        {
-            RuntimeContextSlot.Set(baggageHolder!);
-        }
     }
 
     /// <summary>
@@ -181,9 +188,13 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     public static Baggage SetBaggage(string name, string? value, Baggage baggage = default)
     {
-        return Current = baggage == default
-            ? Current.SetBaggage(name, value)
-            : baggage.SetBaggage(name, value);
+        var baggageHolder = EnsureBaggageHolder();
+        lock (baggageHolder)
+        {
+            return baggageHolder.Baggage = baggage == default
+                ? baggageHolder.Baggage.SetBaggage(name, value)
+                : baggage.SetBaggage(name, value);
+        }
     }
 
     /// <summary>
@@ -195,9 +206,13 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems, Baggage baggage = default)
     {
-        return Current = baggage == default
-            ? Current.SetBaggage(baggageItems)
-            : baggage.SetBaggage(baggageItems);
+        var baggageHolder = EnsureBaggageHolder();
+        lock (baggageHolder)
+        {
+            return baggageHolder.Baggage = baggage == default
+                ? baggageHolder.Baggage.SetBaggage(baggageItems)
+                : baggage.SetBaggage(baggageItems);
+        }
     }
 
     /// <summary>
@@ -209,9 +224,13 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     public static Baggage RemoveBaggage(string name, Baggage baggage = default)
     {
-        return Current = baggage == default
-            ? Current.RemoveBaggage(name)
-            : baggage.RemoveBaggage(name);
+        var baggageHolder = EnsureBaggageHolder();
+        lock (baggageHolder)
+        {
+            return baggageHolder.Baggage = baggage == default
+                ? baggageHolder.Baggage.RemoveBaggage(name)
+                : baggage.RemoveBaggage(name);
+        }
     }
 
     /// <summary>
@@ -222,9 +241,13 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     public static Baggage ClearBaggage(Baggage baggage = default)
     {
-        return Current = baggage == default
-            ? Current.ClearBaggage()
-            : baggage.ClearBaggage();
+        var baggageHolder = EnsureBaggageHolder();
+        lock (baggageHolder)
+        {
+            return baggageHolder.Baggage = baggage == default
+                ? baggageHolder.Baggage.ClearBaggage()
+                : baggage.ClearBaggage();
+        }
     }
 
     /// <summary>
@@ -394,5 +417,13 @@ public readonly struct Baggage : IEquatable<Baggage>
     private sealed class BaggageHolder
     {
         public Baggage Baggage;
+    }
+
+    private sealed class AttachedBaggageContextState(BaggageHolder? previousBaggageHolder) : IDisposable
+    {
+        public void Dispose()
+        {
+            RuntimeContextSlot.Set(previousBaggageHolder!);
+        }
     }
 }

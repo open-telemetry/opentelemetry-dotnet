@@ -1,0 +1,2 @@
+static OpenTelemetry.Baggage.Attach() -> System.IDisposable!
+static OpenTelemetry.Baggage.Attach(OpenTelemetry.Baggage baggage) -> System.IDisposable!
