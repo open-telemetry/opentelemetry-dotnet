@@ -17,8 +17,7 @@ namespace OpenTelemetry;
 /// </remarks>
 public readonly struct Baggage : IEquatable<Baggage>
 {
-    private static readonly RuntimeContextSlot<Dictionary<string, string>> RuntimeContextSlot
-        = RuntimeContext.RegisterSlot<Dictionary<string, string>>("otel.baggage");
+    private static readonly RuntimeContextSlot<BaggageHolder> RuntimeContextSlot = RuntimeContext.RegisterSlot<BaggageHolder>("otel.baggage");
 
     private static readonly Dictionary<string, string> EmptyBaggage = [];
 
@@ -65,8 +64,8 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </remarks>
     public static Baggage Current
     {
-        get => new(RuntimeContextSlot.Get() ?? EmptyBaggage);
-        set => RuntimeContextSlot.Set(value.baggage ?? EmptyBaggage);
+        get => RuntimeContextSlot.Get()?.Baggage ?? default;
+        set => EnsureBaggageHolder().Baggage = value;
     }
 
     /// <summary>
@@ -119,6 +118,32 @@ public readonly struct Baggage : IEquatable<Baggage>
         }
 
         return new Baggage(baggageCopy);
+    }
+
+    public static IDisposable Detach()
+        => Detach(static b => b.ClearBaggage());
+
+    public static IDisposable Detach(Func<Baggage, Baggage> baggageInitializationFunc)
+    {
+        Guard.ThrowIfNull(baggageInitializationFunc);
+
+        var container = RuntimeContextSlot.Get();
+
+        RuntimeContextSlot.Set(
+            new BaggageHolder
+            {
+                Baggage = baggageInitializationFunc(container?.Baggage ?? default),
+            });
+
+        return new DetachedBaggage(container);
+    }
+
+    private sealed class DetachedBaggage(BaggageHolder? baggageHolder) : IDisposable
+    {
+        public void Dispose()
+        {
+            RuntimeContextSlot.Set(baggageHolder!);
+        }
     }
 
     /// <summary>
@@ -352,5 +377,22 @@ public readonly struct Baggage : IEquatable<Baggage>
         }
 
         return hash;
+    }
+
+    private static BaggageHolder EnsureBaggageHolder()
+    {
+        var baggageHolder = RuntimeContextSlot.Get();
+        if (baggageHolder == null)
+        {
+            baggageHolder = new BaggageHolder();
+            RuntimeContextSlot.Set(baggageHolder);
+        }
+
+        return baggageHolder;
+    }
+
+    private sealed class BaggageHolder
+    {
+        public Baggage Baggage;
     }
 }
