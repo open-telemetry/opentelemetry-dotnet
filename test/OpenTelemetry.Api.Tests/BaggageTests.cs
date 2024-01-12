@@ -266,37 +266,49 @@ public class BaggageTests
     }
 
     [Fact]
-    public void FlowTest()
+    public async Task SynchronousFlowTest()
     {
         Baggage.SetBaggage("key1", "value1");
 
-        InnerTask();
+        InnerMethod();
+
+        await InnerTask();
 
         Baggage.SetBaggage("key4", "value4");
 
-        // Note: Changes from the InnerTask are observed
+        // Note: Changes from InnerMethod & InnerTask are observed
         Assert.Equal(4, Baggage.Current.Count);
         Assert.Equal("value1", Baggage.GetBaggage("key1"));
         Assert.Equal("value2", Baggage.GetBaggage("key2"));
         Assert.Equal("value3", Baggage.GetBaggage("key3"));
         Assert.Equal("value4", Baggage.GetBaggage("key4"));
 
-        static void InnerTask()
+        static void InnerMethod()
         {
             Baggage.SetBaggage("key2", "value2");
+
+            Assert.Equal(2, Baggage.Current.Count);
+            Assert.Equal("value1", Baggage.GetBaggage("key1"));
+            Assert.Equal("value2", Baggage.GetBaggage("key2"));
+        }
+
+        static Task InnerTask()
+        {
             Baggage.SetBaggage("key3", "value3");
 
             Assert.Equal(3, Baggage.Current.Count);
             Assert.Equal("value1", Baggage.GetBaggage("key1"));
             Assert.Equal("value2", Baggage.GetBaggage("key2"));
             Assert.Equal("value3", Baggage.GetBaggage("key3"));
+
+            return Task.CompletedTask;
         }
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task AsyncAwaitFlowTest(bool yield)
+    public async Task AsynchronousFlowTest(bool yield)
     {
         Baggage.SetBaggage("key1", "value1");
 
