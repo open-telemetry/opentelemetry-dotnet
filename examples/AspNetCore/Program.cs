@@ -12,14 +12,14 @@ using OpenTelemetry.Trace;
 
 var appBuilder = WebApplication.CreateBuilder(args);
 
-// Note: Switch between Zipkin/OTLP/Console by setting UseTracingExporter in appsettings.json.
-var tracingExporter = appBuilder.Configuration.GetValue("UseTracingExporter", defaultValue: "console")!.ToLowerInvariant();
+// Note: Switch between Zipkin/Kafka/OTLP/Console by setting UseTracExporter in appsettings.json.
+var traceExporter = appBuilder.Configuration.GetValue("UseTraceExporter", defaultValue: "console")!.ToLowerInvariant();
 
-// Note: Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.
+// Note: Switch between Prometheus/Kafka/OTLP/Console by setting UseMetricsExporter in appsettings.json.
 var metricsExporter = appBuilder.Configuration.GetValue("UseMetricsExporter", defaultValue: "console")!.ToLowerInvariant();
 
-// Note: Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
-var logExporter = appBuilder.Configuration.GetValue("UseLogExporter", defaultValue: "console")!.ToLowerInvariant();
+// Note: Switch between Kafka/OTLP/Console by setting UseLogsExporter in appsettings.json.
+var logsExporter = appBuilder.Configuration.GetValue("UseLogsExporter", defaultValue: "console")!.ToLowerInvariant();
 
 // Note: Switch between Explicit/Exponential by setting HistogramAggregation in appsettings.json
 var histogramAggregation = appBuilder.Configuration.GetValue("HistogramAggregation", defaultValue: "explicit")!.ToLowerInvariant();
@@ -52,7 +52,7 @@ appBuilder.Services.AddOpenTelemetry()
         // Use IConfiguration binding for AspNetCore instrumentation options.
         appBuilder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(appBuilder.Configuration.GetSection("AspNetCoreInstrumentation"));
 
-        switch (tracingExporter)
+        switch (traceExporter)
         {
             case "zipkin":
                 builder.AddZipkinExporter();
@@ -61,6 +61,14 @@ appBuilder.Services.AddOpenTelemetry()
                 {
                     // Use IConfiguration binding for Zipkin exporter options.
                     services.Configure<ZipkinExporterOptions>(appBuilder.Configuration.GetSection("Zipkin"));
+                });
+                break;
+
+            case "kafka":
+                builder.AddKafkaExporter(kafkaExporterOptions =>
+                {
+                    kafkaExporterOptions.BootstrapServers = appBuilder.Configuration.GetValue("Kafka:BootstrapServers", defaultValue: "localhost:9092");
+                    kafkaExporterOptions.Timeout = appBuilder.Configuration.GetValue("Kafka:Timeout", 1000);
                 });
                 break;
 
@@ -112,6 +120,13 @@ appBuilder.Services.AddOpenTelemetry()
             case "prometheus":
                 builder.AddPrometheusExporter();
                 break;
+            case "kafka":
+                builder.AddKafkaExporter(kafkaExporterOptions =>
+                {
+                    kafkaExporterOptions.BootstrapServers = appBuilder.Configuration.GetValue("Kafka:BootstrapServers", defaultValue: "localhost:9092");
+                    kafkaExporterOptions.Timeout = appBuilder.Configuration.GetValue("Kafka:Timeout", 1000);
+                });
+                break;
             case "otlp":
                 builder.AddOtlpExporter(otlpOptions =>
                 {
@@ -137,8 +152,15 @@ appBuilder.Logging.AddOpenTelemetry(options =>
     configureResource(resourceBuilder);
     options.SetResourceBuilder(resourceBuilder);
 
-    switch (logExporter)
+    switch (logsExporter)
     {
+        case "kafka":
+            options.AddKafkaExporter(kafkaExporterOptions =>
+            {
+                kafkaExporterOptions.BootstrapServers = appBuilder.Configuration.GetValue("Kafka:BootstrapServers", defaultValue: "localhost:9092");
+                kafkaExporterOptions.Timeout = appBuilder.Configuration.GetValue("Kafka:Timeout", 1000);
+            });
+            break;
         case "otlp":
             options.AddOtlpExporter(otlpOptions =>
             {

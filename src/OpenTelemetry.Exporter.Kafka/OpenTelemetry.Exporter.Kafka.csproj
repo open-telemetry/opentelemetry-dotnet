@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>$(TargetFrameworksForLibrariesExtended)</TargetFrameworks>
+    <Description>Kafka exporter for OpenTelemetry .NET</Description>
+    <PackageTags>$(PackageTags)</PackageTags>
+    <MinVerTagPrefix>core-</MinVerTagPrefix>
+
+    <!-- this is temporary. will remove in future PR. -->
+    <Nullable>disable</Nullable>
+    <DefineConstants>BUILDING_INTERNAL_PERSISTENT_STORAGE;$(DefineConstants)</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn),1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\Shared\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\PeerServiceResolver.cs" Link="Includes\PeerServiceResolver.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\TagAndValueTransformer.cs" Link="Includes\TagAndValueTransformer.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\TagTransformer.cs" Link="Includes\TagTransformer.cs" />
+
+    <!-- Note: When '$(ExposeExperimentalFeatures)' == 'false' these links are
+    NOT required because this project sees API + SDK internals -->
+    <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticDefinitions.cs" Link="Includes\DiagnosticDefinitions.cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\EnvironmentVariables\*.cs" Link="Includes\EnvironmentVariables\%(Filename).cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\Options\*.cs" Link="Includes\Options\%(Filename).cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\ResourceSemanticConventions.cs" Link="Includes\ResourceSemanticConventions.cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\StatusHelper.cs" Link="Includes\StatusHelper.cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" RequiresExposedExperimentalFeatures="true" />
+
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\Implementation\ActivityExtensions.cs" Link="Includes\ActivityExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\Implementation\ExperimentalOptions.cs" Link="Includes\ExperimentalOptions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\Implementation\ExportClient\IExportClient.cs" Link="Includes\IExportClient.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\Implementation\MetricItemExtensions.cs" Link="Includes\MetricItemExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\Implementation\OpenTelemetryProtocolExporterEventSource.cs" Link="Includes\OpenTelemetryProtocolExporterEventSource.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\Implementation\OtlpKeyValueTransformer.cs" Link="Includes\OtlpKeyValueTransformer.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\Implementation\OtlpLogRecordTransformer.cs" Link="Includes\OtlpLogRecordTransformer.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\Implementation\ResourceExtensions.cs" Link="Includes\ResourceExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\Implementation\SdkLimitOptions.cs" Link="Includes\SdkLimitOptions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\Implementation\TimestampHelpers.cs" Link="Includes\TimestampHelpers.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="$(RepoRoot)/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/**/*.proto" Access="internal" GrpcServices="None" >
+      <ProtoRoot>$(RepoRoot)/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/Implementation</ProtoRoot>
+    </Protobuf>
+  </ItemGroup>
+
+</Project>

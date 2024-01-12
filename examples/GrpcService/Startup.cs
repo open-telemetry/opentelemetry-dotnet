@@ -26,7 +26,7 @@ public class Startup
                     .ConfigureResource(r => r.AddService(this.Configuration.GetValue("ServiceName", defaultValue: "otel-test")!))
                     .AddAspNetCoreInstrumentation();
 
-                // Switch between Otlp/Zipkin/Console by setting UseExporter in appsettings.json.
+                // Switch between Otlp/Kafka/Zipkin/Console by setting UseExporter in appsettings.json.
                 var exporter = this.Configuration.GetValue("UseExporter", defaultValue: "console")!.ToLowerInvariant();
                 switch (exporter)
                 {
@@ -34,6 +34,13 @@ public class Startup
                         builder.AddOtlpExporter(otlpOptions =>
                         {
                             otlpOptions.Endpoint = new Uri(this.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317")!);
+                        });
+                        break;
+                    case "kafka":
+                        builder.AddKafkaExporter(kafkaExporterOptions =>
+                        {
+                            kafkaExporterOptions.BootstrapServers = this.Configuration.GetValue("Kafka:BootstrapServers", defaultValue: "localhost:9092");
+                            kafkaExporterOptions.Timeout = this.Configuration.GetValue("Kafka:Timeout", 1000);
                         });
                         break;
                     case "zipkin":

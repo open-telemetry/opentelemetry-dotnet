@@ -1,0 +1,55 @@
+#nullable enable
+OpenTelemetry.Exporter.Kafka.KafkaExporterOptions
+OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.KafkaExporterOptions() -> void
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.BootstrapServers.get -> string
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.BootstrapServers.set -> void
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.ProducerConfig.get -> string
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.ProducerConfig.set -> void
+OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.GetTopicTimeout.get -> int
+OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.GetTopicTimeout.set -> void
+OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.Timeout.get -> int
+OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.Timeout.set -> void
+OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.ExportProcessorType.set -> void
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.BatchExportProcessorOptions.get -> OpenTelemetry.BatchExportProcessorOptions<System.Diagnostics.Activity>
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.BatchExportProcessorOptions.set -> void
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.TopicLogs.get -> string
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.TopicLogs.set -> void
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.TopicMetrics.get -> string
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.TopicMetrics.set -> void
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.TopicTrace.get -> string
+~OpenTelemetry.Exporter.Kafka.KafkaExporterOptions.TopicTrace.set -> void
+
+OpenTelemetry.Exporter.Kafka.KafkaLogsExporter
+OpenTelemetry.Exporter.Kafka.KafkaLogsExporter.KafkaLogsExporter(OpenTelemetry.Exporter.Kafka.KafkaExporterOptions! options) -> void
+override OpenTelemetry.Exporter.Kafka.KafkaLogsExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Logs.LogRecord!> logRecordBatch) -> OpenTelemetry.ExportResult
+override OpenTelemetry.Exporter.Kafka.KafkaLogsExporter.OnShutdown(int timeoutMilliseconds) -> bool
+
+OpenTelemetry.Logs.KafkaLogsExporterExtensions
+static OpenTelemetry.Logs.KafkaLogsExporterExtensions.AddKafkaExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions! loggerOptions) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
+static OpenTelemetry.Logs.KafkaLogsExporterExtensions.AddKafkaExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions! loggerOptions, System.Action<OpenTelemetry.Exporter.Kafka.KafkaExporterOptions!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
+static OpenTelemetry.Logs.KafkaLogsExporterExtensions.AddKafkaExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions! loggerOptions, string? name, System.Action<OpenTelemetry.Exporter.Kafka.KafkaExporterOptions!>? configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
+static OpenTelemetry.Logs.KafkaLogsExporterExtensions.AddKafkaExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions! loggerOptions, System.Action<OpenTelemetry.Exporter.Kafka.KafkaExporterOptions!, OpenTelemetry.Logs.LogRecordExportProcessorOptions!>! configureExporterAndProcessor) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
+static OpenTelemetry.Logs.KafkaLogsExporterExtensions.AddKafkaExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions! loggerOptions, string? name, System.Action<OpenTelemetry.Exporter.Kafka.KafkaExporterOptions!, OpenTelemetry.Logs.LogRecordExportProcessorOptions!>? configureExporterAndProcessor) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
+
+OpenTelemetry.Exporter.Kafka.KafkaMetricsExporter
+OpenTelemetry.Exporter.Kafka.KafkaMetricsExporter.KafkaMetricsExporter(OpenTelemetry.Exporter.Kafka.KafkaExporterOptions! options) -> void
+override OpenTelemetry.Exporter.Kafka.KafkaMetricsExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric!> metricBatch) -> OpenTelemetry.ExportResult
+override OpenTelemetry.Exporter.Kafka.KafkaMetricsExporter.OnShutdown(int timeoutMilliseconds) -> bool
+
+OpenTelemetry.Metrics.KafkaMetricsExporterExtensions
+static OpenTelemetry.Metrics.KafkaMetricsExporterExtensions.AddKafkaExporter(this OpenTelemetry.Metrics.MeterProviderBuilder! builder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.KafkaMetricsExporterExtensions.AddKafkaExporter(this OpenTelemetry.Metrics.MeterProviderBuilder! builder, System.Action<OpenTelemetry.Exporter.Kafka.KafkaExporterOptions!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.KafkaMetricsExporterExtensions.AddKafkaExporter(this OpenTelemetry.Metrics.MeterProviderBuilder! builder, string? name, System.Action<OpenTelemetry.Exporter.Kafka.KafkaExporterOptions!>? configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.KafkaMetricsExporterExtensions.AddKafkaExporter(this OpenTelemetry.Metrics.MeterProviderBuilder! builder, System.Action<OpenTelemetry.Exporter.Kafka.KafkaExporterOptions!, OpenTelemetry.Metrics.MetricReaderOptions!>! configureExporterAndMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.KafkaMetricsExporterExtensions.AddKafkaExporter(this OpenTelemetry.Metrics.MeterProviderBuilder! builder, string? name, System.Action<OpenTelemetry.Exporter.Kafka.KafkaExporterOptions!, OpenTelemetry.Metrics.MetricReaderOptions!>? configureExporterAndMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+
+OpenTelemetry.Exporter.Kafka.KafkaTraceExporter
+OpenTelemetry.Exporter.Kafka.KafkaTraceExporter.KafkaTraceExporter(OpenTelemetry.Exporter.Kafka.KafkaExporterOptions! options) -> void
+override OpenTelemetry.Exporter.Kafka.KafkaTraceExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity!> activityBatch) -> OpenTelemetry.ExportResult
+override OpenTelemetry.Exporter.Kafka.KafkaTraceExporter.OnShutdown(int timeoutMilliseconds) -> bool
+
+OpenTelemetry.Trace.KafkaTraceExporterExtensions
+static OpenTelemetry.Trace.KafkaTraceExporterExtensions.AddKafkaExporter(this OpenTelemetry.Trace.TracerProviderBuilder! builder) -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Trace.KafkaTraceExporterExtensions.AddKafkaExporter(this OpenTelemetry.Trace.TracerProviderBuilder! builder, System.Action<OpenTelemetry.Exporter.Kafka.KafkaExporterOptions!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Trace.KafkaTraceExporterExtensions.AddKafkaExporter(this OpenTelemetry.Trace.TracerProviderBuilder! builder, string? name, System.Action<OpenTelemetry.Exporter.Kafka.KafkaExporterOptions!>? configure) -> OpenTelemetry.Trace.TracerProviderBuilder!

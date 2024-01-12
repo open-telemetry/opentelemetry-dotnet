@@ -70,6 +70,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Ho
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj", "{A38AC295-2745-4B85-8B6B-DCA864CEDD5B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Kafka", "src\OpenTelemetry.Exporter.Kafka\OpenTelemetry.Exporter.Kafka.csproj", "{A8C50B82-85FD-88A5-AE82-885FEF8E8855}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Console", "src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj", "{1AFFF251-3B0C-47CA-BE94-937083732C0A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Zipkin.Tests", "test\OpenTelemetry.Exporter.Zipkin.Tests\OpenTelemetry.Exporter.Zipkin.Tests.csproj", "{1D778D2E-9523-450E-A6E0-A36897C7E78E}"
@@ -390,6 +392,10 @@ Global
 		{A38AC295-2745-4B85-8B6B-DCA864CEDD5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A38AC295-2745-4B85-8B6B-DCA864CEDD5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A38AC295-2745-4B85-8B6B-DCA864CEDD5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8C50B82-85FD-88A5-AE82-885FEF8E8855}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8C50B82-85FD-88A5-AE82-885FEF8E8855}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8C50B82-85FD-88A5-AE82-885FEF8E8855}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8C50B82-85FD-88A5-AE82-885FEF8E8855}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1AFFF251-3B0C-47CA-BE94-937083732C0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1AFFF251-3B0C-47CA-BE94-937083732C0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1AFFF251-3B0C-47CA-BE94-937083732C0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
