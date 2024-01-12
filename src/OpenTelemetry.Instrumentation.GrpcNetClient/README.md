@@ -7,7 +7,7 @@ This is an [Instrumentation Library](https://github.com/open-telemetry/opentelem
 which instruments [Grpc.Net.Client](https://www.nuget.org/packages/Grpc.Net.Client)
 and collects traces about outgoing gRPC requests.
 
-> [!NOTE]
+> [!CAUTION]
 > This component is based on the OpenTelemetry semantic conventions for
 [traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md).
 These conventions are
