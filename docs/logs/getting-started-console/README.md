@@ -115,5 +115,6 @@ learn more.
 
 * [Compile-time logging source
   generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
+* [Logging with Complex Objects](../complex-objects/README.md)
 * [Customizing the OpenTelemetry .NET SDK](../customizing-the-sdk/README.md)
 * [Extending the OpenTelemetry .NET SDK](../extending-the-sdk/README.md)
