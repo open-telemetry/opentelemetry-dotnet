@@ -92,9 +92,9 @@ LogRecord.Attributes (Key:Value):
 ```
 
 > [!NOTE]
-> In this tutorial we used
+> In this tutorial we've used
 [LogPropertiesAttribute.OmitReferenceName](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.logpropertiesattribute.omitreferencename)
-which changes the style of attribute names. There are more options available,
+which changed the style of attribute names. There are more options available,
 check out the [learn more](#learn-more) section for more information.
 
 ## Learn more
