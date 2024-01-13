@@ -65,22 +65,14 @@ internal sealed class RequestMethodHelper
         services!.TryAddSingleton<RequestMethodHelper>();
     }
 
-#if NET8_0_OR_GREATER
     public string GetNormalizedHttpMethod(string method)
-#else
-    public string GetNormalizedHttpMethod(string method)
-#endif
     {
         return this.KnownMethods.TryGetValue(method, out var normalizedMethod)
             ? normalizedMethod
             : OtherHttpMethod;
     }
 
-#if NET8_0_OR_GREATER
     public void SetHttpMethodTag(Activity activity, string method)
-#else
-    public void SetHttpMethodTag(Activity activity, string method)
-#endif
     {
         if (this.KnownMethods.TryGetValue(method, out var normalizedMethod))
         {
@@ -93,11 +85,7 @@ internal sealed class RequestMethodHelper
         }
     }
 
-#if NET8_0_OR_GREATER
     public void SetHttpClientActivityDisplayName(Activity activity, string method)
-#else
-    public void SetHttpClientActivityDisplayName(Activity activity, string method)
-#endif
     {
         // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#name
         activity.DisplayName = this.KnownMethods.TryGetValue(method, out var httpMethod) ? httpMethod : "HTTP";
