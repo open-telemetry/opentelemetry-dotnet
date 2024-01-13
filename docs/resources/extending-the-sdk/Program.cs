@@ -33,9 +33,8 @@ public class Program
         {
             builder.AddOpenTelemetry(options =>
             {
-                options.SetResourceBuilder(ResourceBuilder
-                    .CreateDefault().AddDetector(
-                        new MyResourceDetector()));
+                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddDetector(
+                    new MyResourceDetector()));
             });
         });
 
