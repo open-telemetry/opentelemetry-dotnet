@@ -5,6 +5,7 @@
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -167,14 +168,18 @@ internal class TestApplicationFactory
         var builder = WebApplication.CreateBuilder();
         builder.Logging.ClearProviders();
 
-#if NET6_0_OR_GREATER
-        builder.Services.AddProblemDetails();
-#endif
-
         var app = builder.Build();
 
 #if NET6_0_OR_GREATER
-        app.UseExceptionHandler();
+        app.UseExceptionHandler(exceptionHandlerApp =>
+        {
+            exceptionHandlerApp.Run(async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+                await context.Response.WriteAsync(exceptionHandlerPathFeature?.Error.Message ?? "An exception was thrown.");
+            });
+        });
 #endif
         app.Urls.Clear();
         app.Urls.Add("http://[::1]:0");
