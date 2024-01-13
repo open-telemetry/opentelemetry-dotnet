@@ -7,7 +7,7 @@ to specific code patterns identified through static analysis.
 
 ## Experimental APIs
 
-Range: OTEL1XXX
+Range: OTEL1000 - OTEL1999
 
 Experimental APIs exposed in OpenTelemetry .NET pre-relase builds. APIs are
 exposed experimentally when either the OpenTelemetry Specification has
