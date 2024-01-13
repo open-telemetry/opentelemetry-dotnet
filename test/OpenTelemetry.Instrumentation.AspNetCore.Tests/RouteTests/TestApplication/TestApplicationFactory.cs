@@ -170,7 +170,6 @@ internal class TestApplicationFactory
 
         var app = builder.Build();
 
-#if NET6_0_OR_GREATER
         app.UseExceptionHandler(exceptionHandlerApp =>
         {
             exceptionHandlerApp.Run(async context =>
@@ -180,7 +179,7 @@ internal class TestApplicationFactory
                 await context.Response.WriteAsync(exceptionHandlerPathFeature?.Error.Message ?? "An exception was thrown.");
             });
         });
-#endif
+
         app.Urls.Clear();
         app.Urls.Add("http://[::1]:0");
 
