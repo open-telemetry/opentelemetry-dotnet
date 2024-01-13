@@ -51,10 +51,12 @@ public class Program
 
         var counter = MeterDemoSource.CreateCounter<long>("counter");
         for (var i = 0; i < 20000; i++)
-            counter.Add(1, new("tag1", "value1"), new("tag2", "value2"));
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("tag1", "value1"), new KeyValuePair<string, object?>("tag2", "value2"));
+        }
 
         var logger = loggerFactory.CreateLogger("OTel.Demo");
         logger
-            .LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            .LogInformation("Hello from {Name} {Price}", "tomato", 2.99);
     }
 }
