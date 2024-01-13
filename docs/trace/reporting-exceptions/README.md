@@ -142,7 +142,7 @@ It might be useful to automatically capture the unhandled exceptions, travel
 through the unfinished activities and export them for troubleshooting. Here goes
 one possible way of doing this:
 
-> **Warning**
+> [!CAUTION]
 > Use `AppDomain.UnhandledException` with caution. A throw in the
 handler puts the process into an unrecoverable state.
 

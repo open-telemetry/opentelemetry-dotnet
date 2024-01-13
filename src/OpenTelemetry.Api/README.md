@@ -452,8 +452,9 @@ and
 [extract](../../examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs)
 context.
 
-**Note on instrumentation libraries**: If you are using the instrumentation
-libraries shipped from this repo [e.g. [ASP.NET
+> [!NOTE]
+> If you are using the instrumentation libraries shipped from this repo [e.g.
+[ASP.NET
 Core](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore)
 or
 [HttpClient](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.Http)],
@@ -503,7 +504,7 @@ Windows-based .NET implementation).
 
     The above requires import of the `System.Diagnostics.Metrics` namespace.
 
-    > **Note**
+    > [!NOTE]
     > It is important to note that `Meter` instances are created by
     using its constructor, and *not* by calling a `GetMeter` method on the
     `MeterProvider`. This is an important distinction from the [OpenTelemetry

@@ -97,7 +97,7 @@ public static partial class ApplicationLogs
 }
 ```
 
-> **Note**
+> [!NOTE]
 > For applications which use `ILogger` with [dependency injection
 (DI)](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
 (e.g. [ASP.NET Core](https://learn.microsoft.com/aspnet/core) and [.NET
@@ -115,5 +115,6 @@ learn more.
 
 * [Compile-time logging source
   generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
+* [Logging with Complex Objects](../complex-objects/README.md)
 * [Customizing the OpenTelemetry .NET SDK](../customizing-the-sdk/README.md)
 * [Extending the OpenTelemetry .NET SDK](../extending-the-sdk/README.md)
