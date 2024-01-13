@@ -167,13 +167,13 @@ internal class TestApplicationFactory
         var builder = WebApplication.CreateBuilder();
         builder.Logging.ClearProviders();
 
-#if NET7_0_OR_GREATER
+#if NET6_0_OR_GREATER
         builder.Services.AddProblemDetails();
 #endif
 
         var app = builder.Build();
 
-#if NET7_0_OR_GREATER
+#if NET6_0_OR_GREATER
         app.UseExceptionHandler();
 #endif
         app.Urls.Clear();

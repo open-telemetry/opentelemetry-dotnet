@@ -201,7 +201,6 @@
   },
   {
     "name": "Exception Handled by Exception Handler Middleware",
-    "minimumDotnetVersion": 7,
     "testApplicationScenario": "ExceptionMiddleware",
     "httpMethod": "GET",
     "path": "/Exception",
