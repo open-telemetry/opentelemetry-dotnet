@@ -7,9 +7,9 @@ Specification has explicitly marked some feature as
 or when the SIG members are still working through the design for a feature and
 want to solicit feedback from the community.
 
-> **Note**
+> [!NOTE]
 > Experimental APIs are exposed as `public` in pre-release builds and `internal`
-> in stable builds.
+in stable builds.
 
 ## Active
 
