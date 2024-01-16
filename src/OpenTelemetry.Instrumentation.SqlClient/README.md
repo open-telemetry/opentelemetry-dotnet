@@ -11,12 +11,12 @@ and
 [System.Data.SqlClient](https://www.nuget.org/packages/System.Data.SqlClient)
 and collects traces about database operations.
 
-> **Warning**
+> [!WARNING]
 > Instrumentation is not working with `Microsoft.Data.SqlClient` v3.* due to
 the [issue](https://github.com/dotnet/SqlClient/pull/1258). It was fixed in 4.0
 and later.
->
-> **Note**
+<!-- This comment is to make sure the two notes above and below are not merged -->
+> [!CAUTION]
 > This component is based on the OpenTelemetry semantic conventions for
 [traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md).
 These conventions are
@@ -148,7 +148,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-> **Note**
+> [!NOTE]
 > When using the built-in `System.Data.SqlClient` only stored procedure
 command names will ever be captured. When using the `Microsoft.Data.SqlClient`
 NuGet package (v1.1+) stored procedure command names, full query text, and other
@@ -156,7 +156,7 @@ command text will be captured.
 
 ### EnableConnectionLevelAttributes
 
-> **Note**
+> [!NOTE]
 > EnableConnectionLevelAttributes is supported on all runtimes.
 
 By default, `EnabledConnectionLevelAttributes` is disabled and this
@@ -180,7 +180,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 ### Enrich
 
-> **Note**
+> [!NOTE]
 > Enrich is supported on .NET and .NET Core runtimes only.
 
 This option can be used to enrich the activity with additional information from
@@ -217,7 +217,7 @@ access to `SqlCommand` object.
 
 ### RecordException
 
-> **Note**
+> [!NOTE]
 > RecordException is supported on .NET and .NET Core runtimes only.
 
 This option can be set to instruct the instrumentation to record SqlExceptions
@@ -236,7 +236,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 ### Filter
 
-> **Note**
+> [!NOTE]
 > Filter is supported on .NET and .NET Core runtimes only.
 
 This option can be used to filter out activities based on the properties of the
