@@ -105,7 +105,7 @@ internal class HttpInListener : ListenerHandler
         // By this time, samplers have already run and
         // activity.IsAllDataRequested populated accordingly.
 
-        HttpContext context = payload as HttpContext;
+        var context = payload as HttpContext;
         if (context == null)
         {
             AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity), activity.OperationName);
@@ -118,9 +118,10 @@ internal class HttpInListener : ListenerHandler
         if (textMapPropagator is not TraceContextPropagator)
         {
             var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
-
             if (ctx.ActivityContext.IsValid()
-                && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
+                && !((ctx.ActivityContext.TraceId == activity.TraceId)
+                    && (ctx.ActivityContext.SpanId == activity.ParentSpanId)
+                    && (ctx.ActivityContext.TraceState == activity.TraceStateString)))
             {
                 // Create a new activity with its parent set from the extracted context.
                 // This makes the new activity as a "sibling" of the activity created by
