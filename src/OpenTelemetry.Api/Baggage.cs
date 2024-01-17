@@ -17,6 +17,9 @@ namespace OpenTelemetry;
 /// </remarks>
 public readonly struct Baggage : IEquatable<Baggage>
 {
+    private const string BaggageCurrentSetterObsoleteMessage = "Call Baggage.Attach instead to modify Baggage.Current. The set method on Baggage.Current will be removed in a future version.";
+    private const string BaggageStaticMethodObsoleteMessage = "To read the current Baggage call the get method on Baggage.Current. To modify the current Baggage call Baggage.Attach. The static helper methods on Baggage which read or modify Baggage.Current will be removed in a future version.";
+
     private static readonly RuntimeContextSlot<BaggageHolder> RuntimeContextSlot = RuntimeContext.RegisterSlot<BaggageHolder>("otel.baggage");
 
     private static readonly Dictionary<string, string> EmptyBaggage = [];
@@ -65,6 +68,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     public static Baggage Current
     {
         get => RuntimeContextSlot.Get()?.Baggage ?? default;
+        [Obsolete(BaggageCurrentSetterObsoleteMessage)]
         set => EnsureBaggageHolder().Baggage = value;
     }
 
@@ -158,6 +162,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </summary>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns>Baggage key/value pairs.</returns>
+    [Obsolete(BaggageStaticMethodObsoleteMessage)]
     public static IReadOnlyDictionary<string, string> GetBaggage(Baggage baggage = default)
         => baggage == default ? Current.GetBaggage() : baggage.GetBaggage();
 
@@ -166,6 +171,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </summary>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns><see cref="Dictionary{TKey, TValue}.Enumerator"/>.</returns>
+    [Obsolete(BaggageStaticMethodObsoleteMessage)]
     public static Dictionary<string, string>.Enumerator GetEnumerator(Baggage baggage = default)
         => baggage == default ? Current.GetEnumerator() : baggage.GetEnumerator();
 
@@ -175,6 +181,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <param name="name">Baggage item name.</param>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
+    [Obsolete(BaggageStaticMethodObsoleteMessage)]
     public static string? GetBaggage(string name, Baggage baggage = default)
         => baggage == default ? Current.GetBaggage(name) : baggage.GetBaggage(name);
 
@@ -186,6 +193,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
+    [Obsolete(BaggageStaticMethodObsoleteMessage)]
     public static Baggage SetBaggage(string name, string? value, Baggage baggage = default)
     {
         var baggageHolder = EnsureBaggageHolder();
@@ -204,6 +212,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
+    [Obsolete(BaggageStaticMethodObsoleteMessage)]
     public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems, Baggage baggage = default)
     {
         var baggageHolder = EnsureBaggageHolder();
@@ -222,6 +231,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
+    [Obsolete(BaggageStaticMethodObsoleteMessage)]
     public static Baggage RemoveBaggage(string name, Baggage baggage = default)
     {
         var baggageHolder = EnsureBaggageHolder();
@@ -239,6 +249,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
+    [Obsolete(BaggageStaticMethodObsoleteMessage)]
     public static Baggage ClearBaggage(Baggage baggage = default)
     {
         var baggageHolder = EnsureBaggageHolder();
