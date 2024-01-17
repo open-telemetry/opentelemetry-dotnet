@@ -7,7 +7,7 @@ to specific code patterns identified through static analysis.
 
 ## Experimental APIs
 
-Range: OTEL1XXX
+Range: OTEL1000 - OTEL1999
 
 Experimental APIs exposed in OpenTelemetry .NET pre-relase builds. APIs are
 exposed experimentally when either the OpenTelemetry Specification has
@@ -16,8 +16,9 @@ explicitly marked some feature as
 or when the SIG members are still working through the design for a feature and
 want to solicit feedback from the community.
 
-> **Note** Experimental APIs are exposed as `public` in pre-release builds and
-> `internal` in stable builds.
+> [!NOTE]
+> Experimental APIs are exposed as `public` in pre-release builds and `internal`
+in stable builds.
 
 For defined diagnostics see: [OpenTelemetry .NET Experimental
 APIs](./experimental-apis/README.md)

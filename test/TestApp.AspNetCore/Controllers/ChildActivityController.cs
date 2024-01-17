@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry;
 
@@ -33,5 +34,14 @@ public class ChildActivityController : Controller
     {
         var result = Baggage.Current.GetBaggage();
         return result;
+    }
+
+    [HttpGet]
+    [Route("api/GetActivityEquality")]
+    public bool GetActivityEquality()
+    {
+        var activity = this.HttpContext.Features.GetRequiredFeature<IHttpActivityFeature>().Activity;
+        var equal = Activity.Current == activity;
+        return equal;
     }
 }

@@ -123,7 +123,7 @@ guidelines.
 This section describes the steps required to write a custom instrumentation
 library.
 
-> **Note**
+> [!NOTE]
 > If you are writing a new library or modifying an existing library the
 recommendation is to use the [ActivitySource API/OpenTelemetry
 API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
@@ -180,35 +180,36 @@ Writing an instrumentation library typically involves 3 steps.
     * If the instrumentation library requires state management tied to that of
        `TracerProvider` then it should:
 
-       * Implement `IDisposable`.
+      * Implement `IDisposable`.
 
-       * Provide an extension method which calls `AddSource` (to enable its
-         `ActivitySource`) and `AddInstrumentation` (to enable state management)
-         on the `TracerProviderBuilder` being configured.
+      * Provide an extension method which calls `AddSource` (to enable its
+        `ActivitySource`) and `AddInstrumentation` (to enable state management)
+        on the `TracerProviderBuilder` being configured.
 
-       An example instrumentation using this approach is [SqlClient
-       instrumentation](../../../src/OpenTelemetry.Instrumentation.SqlClient/TracerProviderBuilderExtensions.cs).
+        An example instrumentation using this approach is [SqlClient
+        instrumentation](../../../src/OpenTelemetry.Instrumentation.SqlClient/TracerProviderBuilderExtensions.cs).
 
-       **CAUTION**: The instrumentation libraries requiring state management are
-       usually hard to auto-instrument. Therefore, they take the risk of not
-       being supported by [OpenTelemetry .NET Automatic
-       Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation).
+      > [!WARNING]
+      > The instrumentation libraries requiring state management are
+      usually hard to auto-instrument. Therefore, they take the risk of not
+      being supported by [OpenTelemetry .NET Automatic
+      Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation).
 
     * If the instrumentation library does not require any state management, then
       providing an extension method is optional.
 
-       * If an extension is provided it should call `AddSource` on the
-         `TracerProviderBuilder` being configured to enable its
-         `ActivitySource`.
+      * If an extension is provided it should call `AddSource` on the
+        `TracerProviderBuilder` being configured to enable its
+        `ActivitySource`.
 
-       * If an extension is not provided, then the name of the `ActivitySource`
-         used by the instrumented library must be documented so that end users
-         can enable it by calling `AddSource` on the `TracerProviderBuilder`
-         being configured.
+      * If an extension is not provided, then the name of the `ActivitySource`
+        used by the instrumented library must be documented so that end users
+        can enable it by calling `AddSource` on the `TracerProviderBuilder`
+        being configured.
 
-         > **Note**
-         > Changing the name of the source should be considered a
-         breaking change.
+        > [!NOTE]
+        > Changing the name of the source should be considered a
+        breaking change.
 
 ### Special case : Instrumentation for libraries producing legacy Activity
 
@@ -357,7 +358,7 @@ A demo ResourceDetector is shown [here](./MyResourceDetector.cs).
 
 ## Registration extension method guidance for library authors
 
-> **Note**
+> [!NOTE]
 > This information applies to the OpenTelemetry SDK version 1.4.0 and
 newer only.
 
@@ -366,7 +367,7 @@ register custom OpenTelemetry components into their `TracerProvider`s. These
 extension methods can target either the `TracerProviderBuilder` or the
 `IServiceCollection` classes. Both of these patterns are described below.
 
-> **Note**
+> [!NOTE]
 > Libraries providing SDK plugins such as exporters, resource detectors,
 and/or samplers should take a dependency on the [OpenTelemetry SDK
 package](https://www.nuget.org/packages/opentelemetry). Library authors
@@ -402,7 +403,7 @@ When providing registration extensions:
   from starting. The OpenTelemetry SDK is allowed to crash if it cannot be
   started. It **MUST NOT** crash once running.
 
-> **Note**
+> [!NOTE]
 > The SDK implementation of `TracerProviderBuilder` ensures that the
 [.NET
 Configuration](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration)
@@ -631,7 +632,7 @@ single `AddMyLibrary` extension to configure the library itself and optionally
 turn on OpenTelemetry integration for multiple signals (tracing & metrics in
 this case).
 
-> **Note**
+> [!NOTE]
 > `ConfigureOpenTelemetryTracerProvider` and
 `ConfigureOpenTelemetryMeterProvider` do not automatically start OpenTelemetry.
 The host is responsible for either calling `AddOpenTelemetry` in the

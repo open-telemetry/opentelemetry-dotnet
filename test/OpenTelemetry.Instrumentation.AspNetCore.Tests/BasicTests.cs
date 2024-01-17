@@ -1024,6 +1024,43 @@ public sealed class BasicTests
         Assert.True(exceptionHandled);
     }
 
+#if NET6_0_OR_GREATER
+    [Fact]
+    public async Task NoSiblingActivityCreatedWhenTraceFlagsNone()
+    {
+        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .SetSampler(new AlwaysOnSampler())
+            .AddAspNetCoreInstrumentation()
+            .Build();
+
+        using var testFactory = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(services =>
+                {
+                    this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation()
+                    .Build();
+                });
+
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            });
+        using var client = testFactory.CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetActivityEquality");
+        var traceId = ActivityTraceId.CreateRandom();
+        var spanId = ActivitySpanId.CreateRandom();
+        request.Headers.Add("traceparent", $"00-{traceId}-{spanId}-00");
+
+        var response = await client.SendAsync(request);
+        var result = bool.Parse(await response.Content.ReadAsStringAsync());
+
+        Assert.True(response.IsSuccessStatusCode);
+
+        // Confirm that Activity.Current and IHttpActivityFeature activity are same
+        Assert.True(result);
+    }
+#endif
+
     public void Dispose()
     {
         this.tracerProvider?.Dispose();

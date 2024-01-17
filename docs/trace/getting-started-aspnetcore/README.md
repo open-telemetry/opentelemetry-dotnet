@@ -78,7 +78,7 @@ builder.Services.AddOpenTelemetry()
         .AddConsoleExporter());
 ```
 
-> **Note**
+> [!NOTE]
 > The `AddOpenTelemetry` extension is part of the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package.
