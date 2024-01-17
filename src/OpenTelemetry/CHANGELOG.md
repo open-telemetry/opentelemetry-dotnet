@@ -18,7 +18,7 @@
 * Fixed an issue where `SimpleExemplarReservoir` was not resetting internal
   state for cumulative temporality.
   [#5230](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5230)
-  
+
 ## 1.7.0
 
 Released 2023-Dec-08
