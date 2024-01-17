@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using Xunit;
 
 namespace OpenTelemetry.Tests;
@@ -29,16 +27,12 @@ public class BaggageTests
     {
         var list = new List<KeyValuePair<string, string>>(2)
         {
-            new(K1, V1),
-            new(K2, V2),
+            new KeyValuePair<string, string>(K1, V1),
+            new KeyValuePair<string, string>(K2, V2),
         };
 
         Baggage.SetBaggage(K1, V1);
         var baggage = Baggage.Current.SetBaggage(K2, V2);
-
-        Assert.Throws<ArgumentException>(() => Baggage.SetBaggage(null!, "value"));
-        Assert.Throws<ArgumentNullException>(() => Baggage.SetBaggage(null!));
-
         Baggage.Current = baggage;
 
         Assert.NotEmpty(Baggage.GetBaggage());
@@ -50,7 +44,7 @@ public class BaggageTests
         Assert.Null(Baggage.GetBaggage("NO_KEY"));
         Assert.Equal(V2, Baggage.Current.GetBaggage(K2));
 
-        Assert.Throws<ArgumentException>(() => Baggage.GetBaggage(null!));
+        Assert.Throws<ArgumentException>(() => Baggage.GetBaggage(null));
     }
 
     [Fact]
@@ -58,12 +52,12 @@ public class BaggageTests
     {
         var list = new List<KeyValuePair<string, string>>(2)
         {
-            new(K1, V1),
+            new KeyValuePair<string, string>(K1, V1),
         };
 
-        Baggage.Current.SetBaggage(new KeyValuePair<string, string?>(K1, V1));
+        Baggage.Current.SetBaggage(new KeyValuePair<string, string>(K1, V1));
         var baggage = Baggage.SetBaggage(K1, V1);
-        Baggage.SetBaggage(new Dictionary<string, string?> { [K1] = V1 }, baggage);
+        Baggage.SetBaggage(new Dictionary<string, string> { [K1] = V1 }, baggage);
 
         Assert.Equal(list, Baggage.GetBaggage());
     }
@@ -84,11 +78,10 @@ public class BaggageTests
         Assert.Empty(Baggage.SetBaggage(K1, null).GetBaggage());
 
         Baggage.SetBaggage(K1, V1);
-        Baggage.SetBaggage(new Dictionary<string, string?>
+        Baggage.SetBaggage(new Dictionary<string, string>
         {
             [K1] = null,
             [K2] = V2,
-            [string.Empty] = "ignored",
         });
         Assert.Equal(1, Baggage.Current.Count);
         Assert.Contains(Baggage.GetBaggage(), kvp => kvp.Key == K2);
@@ -101,7 +94,7 @@ public class BaggageTests
         var empty2 = Baggage.RemoveBaggage(K1);
         Assert.True(empty == empty2);
 
-        var baggage = Baggage.SetBaggage(new Dictionary<string, string?>
+        var baggage = Baggage.SetBaggage(new Dictionary<string, string>
         {
             [K1] = V1,
             [K2] = V2,
@@ -119,7 +112,7 @@ public class BaggageTests
     [Fact]
     public void ClearTest()
     {
-        var baggage = Baggage.SetBaggage(new Dictionary<string, string?>
+        var baggage = Baggage.SetBaggage(new Dictionary<string, string>
         {
             [K1] = V1,
             [K2] = V2,
@@ -158,8 +151,8 @@ public class BaggageTests
     {
         var list = new List<KeyValuePair<string, string>>(2)
         {
-            new(K1, V1),
-            new(K2, V2),
+            new KeyValuePair<string, string>(K1, V1),
+            new KeyValuePair<string, string>(K2, V2),
         };
 
         var baggage = Baggage.SetBaggage(K1, V1);
@@ -173,7 +166,7 @@ public class BaggageTests
         var tag2 = enumerator.Current;
         Assert.False(enumerator.MoveNext());
 
-        Assert.Equal(list, [tag1, tag2]);
+        Assert.Equal(list, new List<KeyValuePair<string, string>> { tag1, tag2 });
 
         Baggage.ClearBaggage();
 
@@ -214,8 +207,7 @@ public class BaggageTests
             ["key2"] = "value2",
             ["KEY2"] = "VALUE2",
             ["KEY3"] = "VALUE3",
-            ["Key3"] = null!,
-            [string.Empty] = "ignored",
+            ["Key3"] = null,
         });
 
         Assert.Equal(2, baggage.Count);
@@ -240,7 +232,7 @@ public class BaggageTests
 
         baggage = Baggage.SetBaggage(K1, V1);
 
-        var baggage2 = Baggage.SetBaggage(Enumerable.Empty<KeyValuePair<string, string?>>());
+        var baggage2 = Baggage.SetBaggage(null);
 
         Assert.Equal(baggage, baggage2);
 
@@ -266,76 +258,42 @@ public class BaggageTests
     }
 
     [Fact]
-    public async Task SynchronousFlowTest()
+    public async Task AsyncLocalTests()
     {
         Baggage.SetBaggage("key1", "value1");
-
-        InnerMethod();
 
         await InnerTask();
 
         Baggage.SetBaggage("key4", "value4");
 
-        // Note: Changes from InnerMethod & InnerTask are observed
         Assert.Equal(4, Baggage.Current.Count);
         Assert.Equal("value1", Baggage.GetBaggage("key1"));
         Assert.Equal("value2", Baggage.GetBaggage("key2"));
         Assert.Equal("value3", Baggage.GetBaggage("key3"));
         Assert.Equal("value4", Baggage.GetBaggage("key4"));
 
-        static void InnerMethod()
+        static async Task InnerTask()
         {
             Baggage.SetBaggage("key2", "value2");
 
-            Assert.Equal(2, Baggage.Current.Count);
-            Assert.Equal("value1", Baggage.GetBaggage("key1"));
-            Assert.Equal("value2", Baggage.GetBaggage("key2"));
-        }
+            await Task.Yield();
 
-        static Task InnerTask()
-        {
             Baggage.SetBaggage("key3", "value3");
 
-            Assert.Equal(3, Baggage.Current.Count);
-            Assert.Equal("value1", Baggage.GetBaggage("key1"));
-            Assert.Equal("value2", Baggage.GetBaggage("key2"));
-            Assert.Equal("value3", Baggage.GetBaggage("key3"));
-
-            return Task.CompletedTask;
+            // key2 & key3 changes don't flow backward automatically
         }
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task AsynchronousFlowTest(bool yield)
+    [Fact]
+    public void ThreadSafetyTest()
     {
-        Baggage.SetBaggage("key1", "value1");
+        Baggage.SetBaggage("rootKey", "rootValue"); // Note: Required to establish a root ExecutionContext containing the BaggageHolder we use as a lock
 
-        await InnerTask(yield);
-
-        Baggage.SetBaggage("key4", "value4");
-
-        // Note: Changes from the InnerTask are NOT observed
-        Assert.Equal(2, Baggage.Current.Count);
-        Assert.Equal("value1", Baggage.GetBaggage("key1"));
-        Assert.Equal("value4", Baggage.GetBaggage("key4"));
-
-        static async Task InnerTask(bool yield)
+        Parallel.For(0, 100, (i) =>
         {
-            Baggage.SetBaggage("key2", "value2");
+            Baggage.SetBaggage($"key{i}", $"value{i}");
+        });
 
-            if (yield)
-            {
-                await Task.Yield();
-            }
-
-            Baggage.SetBaggage("key3", "value3");
-
-            Assert.Equal(3, Baggage.Current.Count);
-            Assert.Equal("value1", Baggage.GetBaggage("key1"));
-            Assert.Equal("value2", Baggage.GetBaggage("key2"));
-            Assert.Equal("value3", Baggage.GetBaggage("key3"));
-        }
+        Assert.Equal(101, Baggage.Current.Count);
     }
 }
