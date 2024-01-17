@@ -19,8 +19,10 @@ public class MetricExemplarTests : MetricTestsBase
         this.output = output;
     }
 
-    [Fact]
-    public void TestExemplarsCounter()
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    public void TestExemplarsCounter(MetricReaderTemporalityPreference temporality)
     {
         DateTime testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
@@ -33,7 +35,7 @@ public class MetricExemplarTests : MetricTestsBase
             .SetExemplarFilter(new AlwaysOnExemplarFilter())
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
-                metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+                metricReaderOptions.TemporalityPreference = temporality;
             }));
 
         var measurementValues = GenerateRandomValues(10);
