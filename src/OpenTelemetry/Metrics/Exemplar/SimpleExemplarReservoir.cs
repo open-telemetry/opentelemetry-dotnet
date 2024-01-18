@@ -57,9 +57,13 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
             if (reset)
             {
                 this.runningExemplars[i].Timestamp = default;
-                this.measurementsSeen = 0;
             }
         }
+
+        // Reset internal state irrespective of temporality.
+        // This ensures incoming measurements have fair chance
+        // of making it to the reservoir.
+        this.measurementsSeen = 0;
 
         return this.tempExemplars;
     }
