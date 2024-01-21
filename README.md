@@ -149,20 +149,21 @@ Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/ma
 
 ## Release Schedule
 
-Only the [core components](./VERSIONING.md#core-components) of the repo have
-released a stable version. Components which are marked
-[pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
-are still work in progress and can undergo many breaking changes before stable
-release.
+See the [project
+milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
+for details on upcoming releases. The dates and features described in issues and
+milestones are estimates, and subject to change.
 
 See the [release
 notes](https://github.com/open-telemetry/opentelemetry-dotnet/releases) for
 existing releases.
 
-See the [project
-milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
-for details on upcoming releases. The dates and features described in issues and
-milestones are estimates, and subject to change.
+> [!CAUTION]
+> Certain components, marked as
+[pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
+are still work in progress and can undergo breaking changes before stable
+release. Check the individual `README.md` file for each component to understand its
+current state.
 
 Daily builds from this repo are published to MyGet, and can be installed from
 [this source](https://www.myget.org/F/opentelemetry/api/v3/index.json).
