@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 #if !NETSTANDARD
 using Microsoft.AspNetCore.Routing;
 #endif
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Internal;
@@ -51,6 +52,8 @@ internal class HttpInListener : ListenerHandler
     };
 
     private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
+    private static readonly object BaggageScopeHttpContextKey = new();
+    private static readonly bool IsBaggageContextDetachRequiredDueToCustomRuntimeContext = RuntimeContext.ContextSlotType != typeof(AsyncLocalRuntimeContextSlot<>);
 
 #if !NET6_0_OR_GREATER
     private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
@@ -105,8 +108,7 @@ internal class HttpInListener : ListenerHandler
         // By this time, samplers have already run and
         // activity.IsAllDataRequested populated accordingly.
 
-        var context = payload as HttpContext;
-        if (context == null)
+        if (payload is not HttpContext context)
         {
             AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity), activity.OperationName);
             return;
@@ -146,7 +148,15 @@ internal class HttpInListener : ListenerHandler
                 activity = newOne;
             }
 
-            Baggage.Current = ctx.Baggage;
+            var baggage = ctx.Baggage;
+            if (baggage != default || IsBaggageContextDetachRequiredDueToCustomRuntimeContext)
+            {
+                var scope = Baggage.Attach(baggage);
+                if (IsBaggageContextDetachRequiredDueToCustomRuntimeContext)
+                {
+                    context.Items[BaggageScopeHttpContextKey] = scope;
+                }
+            }
         }
 
         // enrich Activity from payload only if sampling decision
@@ -225,70 +235,80 @@ internal class HttpInListener : ListenerHandler
 
     public void OnStopActivity(Activity activity, object payload)
     {
-        if (activity.IsAllDataRequested)
+        try
         {
-            HttpContext context = payload as HttpContext;
-            if (context == null)
+            if (payload is not HttpContext context)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity), activity.OperationName);
                 return;
             }
 
-            var response = context.Response;
+            if (activity.IsAllDataRequested)
+            {
+                var response = context.Response;
 
 #if !NETSTANDARD
-            var routePattern = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
-            if (!string.IsNullOrEmpty(routePattern))
-            {
-                activity.DisplayName = GetDisplayName(context.Request.Method, routePattern);
-                activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
-            }
+                var routePattern = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+                if (!string.IsNullOrEmpty(routePattern))
+                {
+                    activity.DisplayName = GetDisplayName(context.Request.Method, routePattern);
+                    activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
+                }
 #endif
 
-            activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
 
-            if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
-            {
-                AddGrpcAttributes(activity, grpcMethod, context);
+                if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
+                {
+                    AddGrpcAttributes(activity, grpcMethod, context);
+                }
+
+                if (activity.Status == ActivityStatusCode.Unset)
+                {
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
+                }
+
+                try
+                {
+                    this.options.EnrichWithHttpResponse?.Invoke(activity, response);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInListener), nameof(this.OnStopActivity), activity.OperationName, ex);
+                }
             }
 
-            if (activity.Status == ActivityStatusCode.Unset)
+            if (context.Items.TryGetValue(BaggageScopeHttpContextKey, out var tempScope)
+                && tempScope is IDisposable baggageScope)
             {
-                activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
-            }
-
-            try
-            {
-                this.options.EnrichWithHttpResponse?.Invoke(activity, response);
-            }
-            catch (Exception ex)
-            {
-                AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInListener), nameof(this.OnStopActivity), activity.OperationName, ex);
+                baggageScope.Dispose();
             }
         }
-
-#if NET7_0_OR_GREATER
-        var tagValue = activity.GetTagValue("IsCreatedByInstrumentation");
-        if (ReferenceEquals(tagValue, bool.TrueString))
-#else
-        if (activity.TryCheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString))
-#endif
+        finally
         {
-            // If instrumentation started a new Activity, it must
-            // be stopped here.
-            activity.SetTag("IsCreatedByInstrumentation", null);
-            activity.Stop();
+#if NET7_0_OR_GREATER
+            var tagValue = activity.GetTagValue("IsCreatedByInstrumentation");
+            if (ReferenceEquals(tagValue, bool.TrueString))
+#else
+            if (activity.TryCheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString))
+#endif
+            {
+                // If instrumentation started a new Activity, it must
+                // be stopped here.
+                activity.SetTag("IsCreatedByInstrumentation", null);
+                activity.Stop();
 
-            // After the activity.Stop() code, Activity.Current becomes null.
-            // If Asp.Net Core uses Activity.Current?.Stop() - it'll not stop the activity
-            // it created.
-            // Currently Asp.Net core does not use Activity.Current, instead it stores a
-            // reference to its activity, and calls .Stop on it.
+                // After the activity.Stop() code, Activity.Current becomes null.
+                // If Asp.Net Core uses Activity.Current?.Stop() - it'll not stop the activity
+                // it created.
+                // Currently Asp.Net core does not use Activity.Current, instead it stores a
+                // reference to its activity, and calls .Stop on it.
 
-            // TODO: Should we still restore Activity.Current here?
-            // If yes, then we need to store the asp.net core activity inside
-            // the one created by the instrumentation.
-            // And retrieve it here, and set it to Current.
+                // TODO: Should we still restore Activity.Current here?
+                // If yes, then we need to store the asp.net core activity inside
+                // the one created by the instrumentation.
+                // And retrieve it here, and set it to Current.
+            }
         }
     }
 
