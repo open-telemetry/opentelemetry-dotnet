@@ -38,8 +38,7 @@ public class Program
         {
             activity?.SetTag("foo", 1);
 
-            // emit logs within the context
-            // of activity
+            // Emit logs within the context of activity
             logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
         }
     }
