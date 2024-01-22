@@ -14,7 +14,7 @@ into a dedicated class called
 [Instrumentation](../../examples/AspNetCore/Instrumentation.cs) which is then
 added as a `Singleton` service.
 
-### Ordering of Tags
+### Ordering of tags
 
 When emitting metrics with tags, DO NOT change the order in which you provide
 tags. Changing the order of tag keys would increase the time taken by the SDK to
@@ -30,43 +30,49 @@ MyFruitCounter.Add(5, new("name", "apple"), new("color", "red"), new("taste", "s
 MyFruitCounter.Add(7, new("color", "red"), new("name", "apple"), new("taste", "sweet")); // <--- DON'T DO THIS
 ```
 
-### Use TagList where appropriate
+### Use TagList accordingly
 
-For the best performance, it is highly recommended to pass in tags in certain
-ways so allocations are only happening on the stack rather than the heap,
-which eliminates pressure on the GC (garbage collector):
+There are two different ways of passing tags to an instrument API:
 
-- When reporting measurements with 3 tags or less,
-  emit the tags individually.
-- When reporting measurements with more than 3 tags, use
-  [`TagList`](https://learn.microsoft.com/dotnet/api/system.diagnostics.taglist?view=net-7.0#remarks)
-  for better performance.
+* Pass the tags directly to the instrument API:
 
-```csharp
-var tags = new TagList
-{
-    { "DimName1", "DimValue1" },
-    { "DimName2", "DimValue2" },
-    { "DimName3", "DimValue3" },
-    { "DimName4", "DimValue4" },
-};
+  ```csharp
+  counter.Add(100, ("Key1", "Value1"), ("Key2", "Value2"));
+  ```
 
-// Uses a TagList as there are more than three tags
-counter.Add(100, tags); // <--- DO THIS
+* Use TagList:
 
-// Avoid the below mentioned approaches when there are more than three tags
-var tag1 = new KeyValuePair<string, object>("DimName1", "DimValue1");
-var tag2 = new KeyValuePair<string, object>("DimName2", "DimValue2");
-var tag3 = new KeyValuePair<string, object>("DimName3", "DimValue3");
-var tag4 = new KeyValuePair<string, object>("DimName4", "DimValue4");
+  ```csharp
+  var tags = new TagList
+  {
+      { "DimName1", "DimValue1" },
+      { "DimName2", "DimValue2" },
+      { "DimName3", "DimValue3" },
+      { "DimName4", "DimValue4" },
+  };
 
-counter.Add(100, tag1, tag2, tag3, tag4); // <--- DON'T DO THIS
+  counter.Add(100, tags);
+  ```
 
-var readOnlySpanOfTags = new KeyValuePair<string, object>[4] { tag1, tag2, tag3, tag4};
-counter.Add(100, readOnlySpanOfTags); // <--- DON'T DO THIS
-```
+Here is the rule of thumb:
 
-- When emitting metrics with more than eight tags, the SDK allocates memory on
+* When reporting measurements with 3 tags or less, pass the tags directly to the
+  instrument API.
+* When reporting measurements with 4 to 8 tags (inclusive), use
+  [`TagList`](https://learn.microsoft.com/dotnet/api/system.diagnostics.taglist?#remarks)
+  to avoid heap allocation if avoiding GC pressure is a primary performance
+  goal. For high performance code which consider reducing CPU utilization more
+  important (e.g. to reduce latency, to save battery, etc.) than optimizing
+  memory allocations, use profiler and stress test to determine which approach
+  is better.
+  Here are some [metrics benchmark
+  results](../../test/Benchmarks/Metrics/MetricsBenchmarks.cs) for reference.
+* When reporting measurements with more than 8 tags, the two approaches share
+  very similar CPU performance and heap allocation. `TagList` is recommended due
+  to its better readability and maintainability.
+
+> [!NOTE]
+> When emitting metrics with more than eight tags, the SDK allocates memory on
 the hot-path. You SHOULD try to keep the number of tags less than or equal to
 eight. If you are exceeding this, check if you can model some of the tags as
 Resource, as [shown here](#modeling-static-tags-as-resource).
@@ -80,22 +86,22 @@ each metric measurement. Refer to this
 
 ## Common issues that lead to missing metrics
 
-- The `Meter` used to create the instruments is not added to the
+* The `Meter` used to create the instruments is not added to the
   `MeterProvider`. Use `AddMeter` method to enable the processing for the
   required metrics.
-- Instrument name is invalid. When naming instruments, ensure that the name you
+* Instrument name is invalid. When naming instruments, ensure that the name you
   choose meets the criteria defined in the
   [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument-name-syntax).
   A few notable characters that are not allowed in the instrument name: `/`
   (forward slash), `\` (backward slash), any space character in the name.
-- MetricPoint limit is reached. By default, the SDK limits the number of maximum
+* MetricPoint limit is reached. By default, the SDK limits the number of maximum
   MetricPoints (unique combination of keys and values for a given Metric stream)
   to `2000`. This limit can be configured using
   `SetMaxMetricPointsPerMetricStream` method. Refer to this
   [doc](../../docs/metrics/customizing-the-sdk/README.md#changing-maximum-metricpoints-per-metricstream)
   for more information. The SDK would not process any newer unique key-value
   combination that it encounters, once this limit is reached.
-- MeterProvider is disposed. You need to ensure that the `MeterProvider`
+* MeterProvider is disposed. You need to ensure that the `MeterProvider`
   instance is kept active for metrics to be collected. In a typical application,
   a single MeterProvider is built at application startup, and is disposed of at
   application shutdown. For an ASP.NET Core application, use `AddOpenTelemetry`
