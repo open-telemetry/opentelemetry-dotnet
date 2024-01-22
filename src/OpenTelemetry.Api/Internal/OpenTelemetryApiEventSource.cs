@@ -108,4 +108,10 @@ internal sealed class OpenTelemetryApiEventSource : EventSource
     {
         this.WriteEvent(11, format, error);
     }
+
+    [Event(12, Message = "Baggage detached out of order.", Level = EventLevel.Warning)]
+    public void BaggageDetachedOutOfOrder()
+    {
+        this.WriteEvent(12);
+    }
 }
