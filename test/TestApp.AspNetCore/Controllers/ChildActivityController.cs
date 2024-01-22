@@ -40,7 +40,7 @@ public class ChildActivityController : Controller
     [Route("api/GetActivityEquality")]
     public bool GetActivityEquality()
     {
-        var activity = this.HttpContext.Features.GetRequiredFeature<IHttpActivityFeature>().Activity;
+        var activity = this.HttpContext.Features.Get<IHttpActivityFeature>()?.Activity;
         var equal = Activity.Current == activity;
         return equal;
     }
