@@ -2,10 +2,11 @@
 
 ## Unreleased
 
-* Fixed an issue where the created activity from ASP.NET Core was replaced
-  with a new one. This replacement should only happen when the activity context
-  from the used propagator has a different trace id, parent span id or trace
-  state compared to the current activity. For details see:
+* Fixed an issue where the activity instance returned by `Activity.Current` was
+  different than instance obtained from `IHttpActivityFeature.Activity`. Check
+  out issue
+  [#4466](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4466)
+  for more details.
   [#5136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5136)
 
 ## 1.7.0
