@@ -13,13 +13,13 @@ internal class MyEnrichingProcessor : BaseProcessor<Activity>
 
         // Enriching from Baggage.
         // The below snippet adds every Baggage item.
-        foreach (var baggage in Baggage.GetBaggage())
+        foreach (var baggage in Baggage.Current.GetBaggage())
         {
             activity.SetTag(baggage.Key, baggage.Value);
         }
 
         // The below snippet adds specific Baggage item.
-        var deviceTypeFromBaggage = Baggage.GetBaggage("device.type");
+        var deviceTypeFromBaggage = Baggage.Current.GetBaggage("device.type");
         if (deviceTypeFromBaggage != null)
         {
             activity.SetTag("device.type", deviceTypeFromBaggage);

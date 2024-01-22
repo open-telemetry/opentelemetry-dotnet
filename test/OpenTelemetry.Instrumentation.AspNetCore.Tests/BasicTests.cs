@@ -354,10 +354,12 @@ public sealed class BasicTests
             var expectedParentSpanId = ActivitySpanId.CreateRandom();
             var expectedTraceState = "rojo=1,congo=2";
             var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState, true);
-            var expectedBaggage = Baggage.SetBaggage("key1", "value1").SetBaggage("key2", "value2");
+            var expectedBaggage = Baggage.Create().SetBaggage("key1", "value1").SetBaggage("key2", "value2");
             Sdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
 
             // Arrange
+            using var scope = Baggage.Attach(expectedBaggage);
+
             using var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
                     {
@@ -407,10 +409,12 @@ public sealed class BasicTests
             var expectedParentSpanId = ActivitySpanId.CreateRandom();
             var expectedTraceState = "rojo=1,congo=2";
             var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState);
-            var expectedBaggage = Baggage.SetBaggage("key1", "value1").SetBaggage("key2", "value2");
+            var expectedBaggage = Baggage.Create().SetBaggage("key1", "value1").SetBaggage("key2", "value2");
             Sdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
 
             // Arrange
+            using var scope = Baggage.Attach(expectedBaggage);
+
             bool isFilterCalled = false;
             using var testFactory = this.factory
                 .WithWebHostBuilder(builder =>

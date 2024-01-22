@@ -42,7 +42,8 @@ public class MessageReceiver : IDisposable
     {
         // Extract the PropagationContext of the upstream parent from the message headers.
         var parentContext = Propagator.Extract(default, ea.BasicProperties, this.ExtractTraceContextFromBasicProperties);
-        Baggage.Current = parentContext.Baggage;
+
+        using var scope = Baggage.Attach(parentContext.Baggage);
 
         // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
         // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/messaging/messaging-spans.md#span-name

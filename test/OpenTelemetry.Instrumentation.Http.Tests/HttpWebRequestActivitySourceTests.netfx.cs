@@ -379,7 +379,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
             parent.TraceStateString = "some=state";
             parent.Start();
 
-            Baggage.SetBaggage("k", "v");
+            using var scope = Baggage.Attach(Baggage.Create().SetBaggage("k", "v"));
 
             // Send a random Http request to generate some events
             using (var client = new HttpClient())
@@ -663,10 +663,12 @@ public class HttpWebRequestActivitySourceTests : IDisposable
     public async Task TestInvalidBaggage()
     {
         validateBaggage = true;
-        Baggage
-            .SetBaggage("key", "value")
-            .SetBaggage("bad/key", "value")
-            .SetBaggage("goodkey", "bad/value");
+
+        using var scope = Baggage.Attach(
+            Baggage.Create()
+                .SetBaggage("key", "value")
+                .SetBaggage("bad/key", "value")
+                .SetBaggage("goodkey", "bad/value"));
 
         using var eventRecords = new ActivitySourceRecorder();
 
@@ -777,34 +779,6 @@ public class HttpWebRequestActivitySourceTests : IDisposable
     private static void VerifyActivityStopTags(int statusCode, Activity activity)
     {
         Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpResponseStatusCode));
-    }
-
-    private static void ActivityEnrichment(Activity activity, string method, object obj)
-    {
-        switch (method)
-        {
-            case "OnStartActivity":
-                Assert.True(obj is HttpWebRequest);
-                VerifyHeaders(obj as HttpWebRequest);
-
-                if (validateBaggage)
-                {
-                    ValidateBaggage(obj as HttpWebRequest);
-                }
-
-                break;
-
-            case "OnStopActivity":
-                Assert.True(obj is HttpWebResponse);
-                break;
-
-            case "OnException":
-                Assert.True(obj is Exception);
-                break;
-
-            default:
-                break;
-        }
     }
 
     private static void ValidateBaggage(HttpWebRequest request)
