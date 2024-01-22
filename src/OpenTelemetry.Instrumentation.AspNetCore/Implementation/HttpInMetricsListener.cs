@@ -29,8 +29,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
     private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
 
-    private const string EventName = "OnStopActivity";
-    private const string NetworkProtocolName = "http";
     private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
     private static readonly PropertyFetcher<HttpContext> HttpContextPropertyFetcher = new("HttpContext");
     private static readonly object ErrorTypeHttpContextItemsKey = new();

@@ -37,7 +37,6 @@ internal class HttpInListener : ListenerHandler
     internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
     private const string DiagnosticSourceName = "Microsoft.AspNetCore";
-    private const string UnknownHostName = "UNKNOWN-HOST";
 
     private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) =>
     {
@@ -52,11 +51,6 @@ internal class HttpInListener : ListenerHandler
 
     private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
 
-#if !NET6_0_OR_GREATER
-    private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
-    private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
-    private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
-#endif
     private readonly AspNetCoreTraceInstrumentationOptions options;
 
     public HttpInListener(AspNetCoreTraceInstrumentationOptions options)
