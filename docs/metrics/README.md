@@ -73,10 +73,10 @@ Here is the rule of thumb:
   to its better readability and maintainability.
 
 > [!NOTE]
-> When reporting measurements with more than eight tags, the API allocates
-memory on the hot-path. You SHOULD try to keep the number of tags less than or
-equal to eight. If you are exceeding this, check if you can model some of the
-tags as Resource, as [shown here](#modeling-static-tags-as-resource).
+> When reporting measurements with more than 8 tags, the API allocates memory on
+the hot-path. You SHOULD try to keep the number of tags less than or equal to 8.
+If you are exceeding this, check if you can model some of the tags as Resource,
+as [shown here](#modeling-static-tags-as-resource).
 
 ### Modeling static tags as Resource
 
