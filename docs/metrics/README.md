@@ -40,7 +40,8 @@ There are two different ways of passing tags to an instrument API:
   counter.Add(100, ("Key1", "Value1"), ("Key2", "Value2"));
   ```
 
-* Use TagList:
+* Use
+  [`TagList`](https://learn.microsoft.com/dotnet/api/system.diagnostics.taglist):
 
   ```csharp
   var tags = new TagList
