@@ -4,6 +4,5 @@
     <PackageVersion Update="System.Text.Json" Version="7.0.1" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.10" />
-    <PackageVersion Include="Microsoft.Extensions.Features" Version="8.0.0" />
   </ItemGroup>
 </Project>
