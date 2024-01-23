@@ -22,14 +22,14 @@ OpenTelemetry .NET:
 
 :stop_sign: Avoid string interpolation.
 
-> [!WARNING]
-> The following code has bad performance due to string interpolation:
+> [!WARNING] The following code has bad performance due to [string
+> interpolation](https://learn.microsoft.com/dotnet/csharp/tutorials/string-interpolation):
 
 ```csharp
-var name = "tomato";
+var food = "tomato";
 var price = 2.99;
 
-logger.LogInformation($"Hello from {name} {price}.");
+logger.LogInformation($"Hello from {food} {price}.");
 ```
 
 Refer to the [logging performance
@@ -64,10 +64,10 @@ public static partial class Food
     public static partial void SayHello(ILogger logger, string food, double price);
 }
 
-var name = "tomato";
+var food = "tomato";
 var price = 2.99;
 
-Food.SayHello(logger, name, price);
+Food.SayHello(logger, food, price);
 ```
 
 > [!NOTE]
@@ -77,6 +77,31 @@ while using
 [LoggerMessageAttribute](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.loggermessageattribute).
 A durable `EventId` will be automatically assigned based on the hash of the
 method name during code generation.
+
+:stop_sign: Avoid the extension methods from
+[LoggerExtensions](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.loggerextensions),
+these methods are not optimized for performance.
+
+> [!WARNING]
+> The following code has bad performance due to
+> [boxing](https://learn.microsoft.com/dotnet/csharp/programming-guide/types/boxing-and-unboxing):
+
+```csharp
+var food = "tomato";
+var price = 2.99;
+
+logger.LogInformation("Hello from {food} {price}.", food, price);
+```
+
+Refer to the [logging performance
+benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
+
+:heavy_check_mark: Use
+[`LogPropertiesAttribute`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.logpropertiesattribute)
+from
+[Microsoft.Extensions.Telemetry.Abstractions](https://www.nuget.org/packages/Microsoft.Extensions.Telemetry.Abstractions/)
+if you need to log complex objects. Check out the [Logging with Complex
+Objects](./complex-objects/README.md) tutorial for more details.
 
 ### Instruments should be singleton
 
