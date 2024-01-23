@@ -6,7 +6,13 @@
   [#4466](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4466)
   where the activity instance returned by `Activity.Current` was different than
   instance obtained from `IHttpActivityFeature.Activity`.
-  [#5136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5136)
+  ([#5136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5136))
+
+* Fixed metrics instrumentation when library targeted for .NET6 or .NET 7
+  was loaded by .NET8.
+  Fixed traces instrumentation when library targeted for .NET6
+  was loaded by .NET7 or .NET8.
+  ([#5252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5252))
 
 ## 1.7.0
 

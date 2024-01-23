@@ -26,15 +26,17 @@ internal class HttpInListener : ListenerHandler
     internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
     internal const string OnUnHandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
 
-#if NET7_0_OR_GREATER
     // https://github.com/dotnet/aspnetcore/blob/8d6554e655b64da75b71e0e20d6db54a3ba8d2fb/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs#L85
     internal static readonly string AspNetCoreActivitySourceName = "Microsoft.AspNetCore";
-#endif
 
     internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
     internal static readonly string ActivitySourceName = AssemblyName.Name;
     internal static readonly Version Version = AssemblyName.Version;
     internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+
+#if !NET7_0_OR_GREATER
+    internal static readonly bool Net7OrGreater = Environment.Version.Major >= 7;
+#endif
 
     private const string DiagnosticSourceName = "Microsoft.AspNetCore";
 
@@ -120,14 +122,24 @@ internal class HttpInListener : ListenerHandler
                 // Create a new activity with its parent set from the extracted context.
                 // This makes the new activity as a "sibling" of the activity created by
                 // Asp.Net Core.
-#if NET7_0_OR_GREATER
+                Activity newOne;
+#if !NET7_0_OR_GREATER
+                if (Net7OrGreater)
+                {
+#endif
+
                 // For NET7.0 onwards activity is created using ActivitySource so,
                 // we will use the source of the activity to create the new one.
-                Activity newOne = activity.Source.CreateActivity(ActivityOperationName, ActivityKind.Server, ctx.ActivityContext);
-#else
-                Activity newOne = new Activity(ActivityOperationName);
-                newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
+                newOne = activity.Source.CreateActivity(ActivityOperationName, ActivityKind.Server, ctx.ActivityContext);
+#if !NET7_0_OR_GREATER
+                }
+                else
+                {
+                    newOne = new Activity(ActivityOperationName);
+                    newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
+                }
 #endif
+
                 newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
                 newOne.SetTag("IsCreatedByInstrumentation", bool.TrueString);
@@ -166,8 +178,11 @@ internal class HttpInListener : ListenerHandler
             }
 
 #if !NET7_0_OR_GREATER
-            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
-            ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+            if (!Net7OrGreater)
+            {
+                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+            }
 #endif
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
@@ -261,12 +276,8 @@ internal class HttpInListener : ListenerHandler
             }
         }
 
-#if NET7_0_OR_GREATER
         var tagValue = activity.GetTagValue("IsCreatedByInstrumentation");
         if (ReferenceEquals(tagValue, bool.TrueString))
-#else
-        if (activity.TryCheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString))
-#endif
         {
             // If instrumentation started a new Activity, it must
             // be stopped here.

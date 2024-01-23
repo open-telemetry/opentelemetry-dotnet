@@ -1,9 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET7_0_OR_GREATER
 using System.Diagnostics;
-#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.AspNetCore;
@@ -101,22 +99,30 @@ public static class AspNetCoreInstrumentationTracerProviderBuilderExtensions
         // For .NET7.0 onwards activity will be created using activitySource.
         // https://github.com/dotnet/aspnetcore/blob/bf3352f2422bf16fa3ca49021f0e31961ce525eb/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L327
         // For .NET6.0 and below, we will continue to use legacy way.
-#if NET7_0_OR_GREATER
-        // TODO: Check with .NET team to see if this can be prevented
-        // as this allows user to override the ActivitySource.
-        var activitySourceService = serviceProvider?.GetService<ActivitySource>();
-        if (activitySourceService != null)
+
+#if !NET7_0_OR_GREATER
+        if (HttpInListener.Net7OrGreater)
         {
-            builder.AddSource(activitySourceService.Name);
+#endif
+            // TODO: Check with .NET team to see if this can be prevented
+            // as this allows user to override the ActivitySource.
+            var activitySourceService = serviceProvider?.GetService<ActivitySource>();
+            if (activitySourceService != null)
+            {
+                builder.AddSource(activitySourceService.Name);
+            }
+            else
+            {
+                // For users not using hosting package?
+                builder.AddSource(HttpInListener.AspNetCoreActivitySourceName);
+            }
+#if !NET7_0_OR_GREATER
         }
         else
         {
-            // For users not using hosting package?
-            builder.AddSource(HttpInListener.AspNetCoreActivitySourceName);
+            builder.AddSource(HttpInListener.ActivitySourceName);
+            builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
         }
-#else
-        builder.AddSource(HttpInListener.ActivitySourceName);
-        builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
 #endif
     }
 }
