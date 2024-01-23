@@ -22,7 +22,8 @@ OpenTelemetry .NET:
 
 :stop_sign: Avoid string interpolation.
 
-> [!WARNING] The following code has bad performance due to [string
+> [!WARNING]
+> The following code has bad performance due to [string
 > interpolation](https://learn.microsoft.com/dotnet/csharp/tutorials/string-interpolation):
 
 ```csharp
@@ -78,6 +79,13 @@ while using
 A durable `EventId` will be automatically assigned based on the hash of the
 method name during code generation.
 
+:heavy_check_mark: Use
+[`LogPropertiesAttribute`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.logpropertiesattribute)
+from
+[Microsoft.Extensions.Telemetry.Abstractions](https://www.nuget.org/packages/Microsoft.Extensions.Telemetry.Abstractions/)
+if you need to log complex objects. Check out the [Logging with Complex
+Objects](./complex-objects/README.md) tutorial for more details.
+
 :stop_sign: Avoid the extension methods from
 [LoggerExtensions](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.loggerextensions),
 these methods are not optimized for performance.
@@ -95,13 +103,6 @@ logger.LogInformation("Hello from {food} {price}.", food, price);
 
 Refer to the [logging performance
 benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
-
-:heavy_check_mark: Use
-[`LogPropertiesAttribute`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.logpropertiesattribute)
-from
-[Microsoft.Extensions.Telemetry.Abstractions](https://www.nuget.org/packages/Microsoft.Extensions.Telemetry.Abstractions/)
-if you need to log complex objects. Check out the [Logging with Complex
-Objects](./complex-objects/README.md) tutorial for more details.
 
 ### Instruments should be singleton
 
