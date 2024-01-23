@@ -24,7 +24,7 @@ OpenTelemetry .NET:
 
 > [!WARNING]
 > The following code has bad performance due to [string
-> interpolation](https://learn.microsoft.com/dotnet/csharp/tutorials/string-interpolation):
+  interpolation](https://learn.microsoft.com/dotnet/csharp/tutorials/string-interpolation):
 
 ```csharp
 var food = "tomato";
@@ -73,11 +73,11 @@ Food.SayHello(logger, food, price);
 
 > [!NOTE]
 > There is no need to pass in an explicit
-[EventId](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.eventid)
-while using
-[LoggerMessageAttribute](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.loggermessageattribute).
-A durable `EventId` will be automatically assigned based on the hash of the
-method name during code generation.
+  [EventId](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.eventid)
+  while using
+  [LoggerMessageAttribute](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.loggermessageattribute).
+  A durable `EventId` will be automatically assigned based on the hash of the
+  method name during code generation.
 
 :heavy_check_mark: Use
 [`LogPropertiesAttribute`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.logpropertiesattribute)
@@ -92,7 +92,7 @@ these methods are not optimized for performance.
 
 > [!WARNING]
 > The following code has bad performance due to
-> [boxing](https://learn.microsoft.com/dotnet/csharp/programming-guide/types/boxing-and-unboxing):
+  [boxing](https://learn.microsoft.com/dotnet/csharp/programming-guide/types/boxing-and-unboxing):
 
 ```csharp
 var food = "tomato";
