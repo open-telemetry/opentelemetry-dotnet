@@ -142,8 +142,8 @@ should be sufficient.
 [LoggerFactory](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.loggerfactory)
 instances if they are created by you.
 
-* If you don't dispose the `LoggerFactory` instance before the application ends,
-  logs might get dropped due to the lack of proper flush.
+* If you forget to dispose the `LoggerFactory` instance before the application
+  ends, logs might get dropped due to the lack of proper flush.
 * If you dispose the `LoggerFactory` instance too early, any subsequent logging
   API invocation associated with the logger factory could become no-op (i.e. no
   logs will be emitted).
