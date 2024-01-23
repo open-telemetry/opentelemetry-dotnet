@@ -20,7 +20,7 @@ OpenTelemetry .NET:
   * Storage and indexing are more efficient.
 * Structured logging makes it easier to manage and consume logs.
 
-:stop_sign: Avoid string interpolation.
+:stop_sign: You should avoid string interpolation.
 
 > [!WARNING]
 > The following code has bad performance due to [string
@@ -79,14 +79,14 @@ Food.SayHello(logger, food, price);
   A durable `EventId` will be automatically assigned based on the hash of the
   method name during code generation.
 
-:heavy_check_mark: Use
+:heavy_check_mark: You can use
 [LogPropertiesAttribute](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.logpropertiesattribute)
 from
 [Microsoft.Extensions.Telemetry.Abstractions](https://www.nuget.org/packages/Microsoft.Extensions.Telemetry.Abstractions/)
 if you need to log complex objects. Check out the [Logging with Complex
 Objects](./complex-objects/README.md) tutorial for more details.
 
-:stop_sign: Avoid the extension methods from
+:stop_sign: You should avoid the extension methods from
 [LoggerExtensions](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.loggerextensions),
 these methods are not optimized for performance.
 
