@@ -52,7 +52,7 @@ package, regardless of the .NET runtime version being used:
   backward compatibility on `Microsoft.Extensions.Logging` even during major
   version bumps, so compatibility is not a concern here.
 
-## API Usage
+## Logging API
 
 :heavy_check_mark: You should use [compile-time logging source
 generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
@@ -80,7 +80,7 @@ Food.SayHello(logger, food, price);
   method name during code generation.
 
 :heavy_check_mark: Use
-[`LogPropertiesAttribute`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.logpropertiesattribute)
+[LogPropertiesAttribute](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.logpropertiesattribute)
 from
 [Microsoft.Extensions.Telemetry.Abstractions](https://www.nuget.org/packages/Microsoft.Extensions.Telemetry.Abstractions/)
 if you need to log complex objects. Check out the [Logging with Complex
@@ -103,31 +103,3 @@ logger.LogInformation("Hello from {food} {price}.", food, price);
 
 Refer to the [logging performance
 benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
-
-### Instruments should be singleton
-
-Instruments SHOULD only be created once and reused throughout the application
-lifetime. This [example](../../docs/metrics/getting-started-console/Program.cs)
-shows how an instrument is created as a `static` field and then used in the
-application. You could also look at this ASP.NET Core
-[example](../../examples/AspNetCore/Program.cs) which shows a more Dependency
-Injection friendly way of doing this by extracting the `Meter` and an instrument
-into a dedicated class called
-[Instrumentation](../../examples/AspNetCore/Instrumentation.cs) which is then
-added as a `Singleton` service.
-
-### Ordering of tags
-
-When emitting metrics with tags, DO NOT change the order in which you provide
-tags. Changing the order of tag keys would increase the time taken by the SDK to
-record the measurement.
-
-```csharp
-// If you emit the tag keys in this order: name -> color -> taste, stick to this order of tag keys for subsequent measurements.
-MyFruitCounter.Add(5, new("name", "apple"), new("color", "red"), new("taste", "sweet"));
-...
-...
-...
-// Same measurement with the order of tags changed: color -> name -> taste. This order of tags is different from the one that was first encountered by the SDK.
-MyFruitCounter.Add(7, new("color", "red"), new("name", "apple"), new("taste", "sweet")); // <--- DON'T DO THIS
-```
