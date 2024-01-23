@@ -1,18 +1,5 @@
-// <copyright file="TraceContextPropagator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -195,11 +182,12 @@ public class TraceContextPropagator : TextMapPropagator
             return false;
         }
 
-        byte options1;
+        byte optionsLowByte;
         try
         {
             spanId = ActivitySpanId.CreateFromString(traceparent.AsSpan().Slice(VersionAndTraceIdLength, SpanIdLength));
-            options1 = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength + 1]);
+            _ = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength]); // to verify if there is no bad chars on options position
+            optionsLowByte = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength + 1]);
         }
         catch (ArgumentOutOfRangeException)
         {
@@ -207,7 +195,7 @@ public class TraceContextPropagator : TextMapPropagator
             return false;
         }
 
-        if ((options1 & 1) == 1)
+        if ((optionsLowByte & 1) == 1)
         {
             traceOptions |= ActivityTraceFlags.Recorded;
         }

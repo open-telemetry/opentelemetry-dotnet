@@ -1,19 +1,12 @@
-name: dotnet format
+# Called by ci.yml to perform dotnet format linting
+# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
+name: Lint - dotnet format
 
 on:
-  push:
-    branches: [ 'main*' ]
-    paths:
-    - '**.cs'
-    - '.editorconfig'
-  pull_request:
-    branches: [ 'main*' ]
-    paths:
-    - '**.cs'
-    - '.editorconfig'
+  workflow_call:
 
 jobs:
-  check-format:
+  run-dotnet-format-stable:
     runs-on: windows-latest
 
     steps:
@@ -21,10 +14,30 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
 
-    - name: Install format tool
-      run: dotnet tool install -g dotnet-format
+    - name: dotnet restore
+      run: dotnet restore
 
     - name: dotnet format
-      run: dotnet-format --folder --check
+      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes
+      env:
+        ExposeExperimentalFeatures: false
+
+  run-dotnet-format-experimental:
+    runs-on: windows-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v4
+
+    - name: dotnet restore
+      run: dotnet restore
+
+    - name: dotnet format
+      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes
+      env:
+        ExposeExperimentalFeatures: true

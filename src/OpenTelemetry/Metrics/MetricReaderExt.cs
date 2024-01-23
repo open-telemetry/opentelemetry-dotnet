@@ -1,21 +1,9 @@
-// <copyright file="MetricReaderExt.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 
@@ -50,18 +38,9 @@ public abstract partial class MetricReader
         var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration: null);
         lock (this.instrumentCreationLock)
         {
-            if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
+            if (this.TryGetExistingMetric(in metricStreamIdentity, out var existingMetric))
             {
                 return existingMetric;
-            }
-
-            if (this.metricStreamNames.Contains(metricStreamIdentity.MetricStreamName))
-            {
-                OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
-                    metricStreamIdentity.InstrumentName,
-                    metricStreamIdentity.MeterName,
-                    "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
-                    "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
             }
 
             var index = ++this.metricIndex;
@@ -75,7 +54,8 @@ public abstract partial class MetricReader
                 Metric? metric = null;
                 try
                 {
-                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, this.exemplarFilter);
+                    bool shouldReclaimUnusedMetricPoints = this.parentProvider is MeterProviderSdk meterProviderSdk && meterProviderSdk.ShouldReclaimUnusedMetricPoints;
+                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
                 }
                 catch (NotSupportedException nse)
                 {
@@ -89,7 +69,9 @@ public abstract partial class MetricReader
 
                 this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                 this.metrics![index] = metric;
-                this.metricStreamNames.Add(metricStreamIdentity.MetricStreamName);
+
+                this.CreateOrUpdateMetricStreamRegistration(in metricStreamIdentity);
+
                 return metric;
             }
         }
@@ -134,19 +116,10 @@ public abstract partial class MetricReader
                     continue;
                 }
 
-                if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
+                if (this.TryGetExistingMetric(in metricStreamIdentity, out var existingMetric))
                 {
                     metrics.Add(existingMetric);
                     continue;
-                }
-
-                if (this.metricStreamNames.Contains(metricStreamIdentity.MetricStreamName))
-                {
-                    OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
-                        metricStreamIdentity.InstrumentName,
-                        metricStreamIdentity.MeterName,
-                        "Metric instrument has the same name as an existing one but differs by description, unit, instrument type, or aggregation configuration (like histogram bounds, tag keys etc. ). Measurements from this instrument will still be exported but may result in conflicts.",
-                        "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
                 }
 
                 if (metricStreamConfig == MetricStreamConfiguration.Drop)
@@ -162,12 +135,14 @@ public abstract partial class MetricReader
                 }
                 else
                 {
-                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, this.exemplarFilter);
+                    bool shouldReclaimUnusedMetricPoints = this.parentProvider is MeterProviderSdk meterProviderSdk && meterProviderSdk.ShouldReclaimUnusedMetricPoints;
+                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                     this.metrics![index] = metric;
                     metrics.Add(metric);
-                    this.metricStreamNames.Add(metricStreamIdentity.MetricStreamName);
+
+                    this.CreateOrUpdateMetricStreamRegistration(in metricStreamIdentity);
                 }
             }
 
@@ -213,14 +188,14 @@ public abstract partial class MetricReader
 
     internal void CompleteSingleStreamMeasurement(Metric metric)
     {
-        metric.InstrumentDisposed = true;
+        DeactivateMetric(metric);
     }
 
     internal void CompleteMeasurement(List<Metric> metrics)
     {
         foreach (var metric in metrics)
         {
-            metric.InstrumentDisposed = true;
+            DeactivateMetric(metric);
         }
     }
 
@@ -250,6 +225,41 @@ public abstract partial class MetricReader
         }
     }
 
+    private static void DeactivateMetric(Metric metric)
+    {
+        if (metric.Active)
+        {
+            // TODO: This will cause the metric to be removed from the storage
+            // array during the next collect/export. If this happens often we
+            // will run out of storage. Would it be better instead to set the
+            // end time on the metric and keep it around so it can be
+            // reactivated?
+            metric.Active = false;
+
+            OpenTelemetrySdkEventSource.Log.MetricInstrumentDeactivated(
+                metric.Name,
+                metric.MeterName);
+        }
+    }
+
+    private bool TryGetExistingMetric(in MetricStreamIdentity metricStreamIdentity, [NotNullWhen(true)] out Metric? existingMetric)
+        => this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out existingMetric)
+            && existingMetric.Active;
+
+    private void CreateOrUpdateMetricStreamRegistration(in MetricStreamIdentity metricStreamIdentity)
+    {
+        if (!this.metricStreamNames.Add(metricStreamIdentity.MetricStreamName))
+        {
+            // TODO: If a metric is deactivated and then reactivated we log the
+            // same warning as if it was a duplicate.
+            OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
+                metricStreamIdentity.InstrumentName,
+                metricStreamIdentity.MeterName,
+                "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
+                "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
+        }
+    }
+
     private Batch<Metric> GetMetricsBatch()
     {
         Debug.Assert(this.metrics != null, "this.metrics was null");
@@ -262,24 +272,19 @@ public abstract partial class MetricReader
             int metricCountCurrentBatch = 0;
             for (int i = 0; i < target; i++)
             {
-                var metric = this.metrics![i];
-                int metricPointSize = 0;
+                ref var metric = ref this.metrics![i];
                 if (metric != null)
                 {
-                    if (metric.InstrumentDisposed)
-                    {
-                        metricPointSize = metric.Snapshot();
-                        this.instrumentIdentityToMetric.TryRemove(metric.InstrumentIdentity, out var _);
-                        this.metrics[i] = null;
-                    }
-                    else
-                    {
-                        metricPointSize = metric.Snapshot();
-                    }
+                    int metricPointSize = metric.Snapshot();
 
                     if (metricPointSize > 0)
                     {
                         this.metricsCurrentBatch![metricCountCurrentBatch++] = metric;
+                    }
+
+                    if (!metric.Active)
+                    {
+                        this.RemoveMetric(ref metric);
                     }
                 }
             }
@@ -291,5 +296,26 @@ public abstract partial class MetricReader
             OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.GetMetricsBatch), ex);
             return default;
         }
+    }
+
+    private void RemoveMetric(ref Metric? metric)
+    {
+        Debug.Assert(metric != null, "metric was null");
+
+        // TODO: This logic removes the metric. If the same
+        // metric is published again we will create a new metric
+        // for it. If this happens often we will run out of
+        // storage. Instead, should we keep the metric around
+        // and set a new start time + reset its data if it comes
+        // back?
+
+        OpenTelemetrySdkEventSource.Log.MetricInstrumentRemoved(metric!.Name, metric.MeterName);
+
+        var result = this.instrumentIdentityToMetric.TryRemove(metric.InstrumentIdentity, out var _);
+        Debug.Assert(result, "result was false");
+
+        // Note: metric is a reference to the array storage so
+        // this clears the metric out of the array.
+        metric = null;
     }
 }

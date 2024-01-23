@@ -1,0 +1,41 @@
+# Called by ci.yml to perform package validation
+# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
+name: Package Validation
+
+on:
+  workflow_call:
+
+jobs:
+  run-package-validation-stable:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # Note: By default GitHub only fetches 1 commit. MinVer needs to find
+        # the version tag which is typically NOT on the first commit so we
+        # retrieve them all.
+        fetch-depth: 0
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v4
+
+    - name: Pack
+      run: dotnet pack OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=false
+
+  run-package-validation-experimental:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # Note: By default GitHub only fetches 1 commit. MinVer needs to find
+        # the version tag which is typically NOT on the first commit so we
+        # retrieve them all.
+        fetch-depth: 0
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v4
+
+    - name: Pack
+      run: dotnet pack OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=true

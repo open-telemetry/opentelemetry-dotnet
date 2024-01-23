@@ -1,18 +1,5 @@
-// <copyright file="SdkLimitOptionsTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -45,6 +32,8 @@ public sealed class SdkLimitOptionsTests : IDisposable
         Assert.Equal(128, options.SpanLinkCountLimit);
         Assert.Equal(128, options.SpanEventAttributeCountLimit);
         Assert.Equal(128, options.SpanLinkAttributeCountLimit);
+        Assert.Null(options.LogRecordAttributeValueLengthLimit);
+        Assert.Equal(128, options.LogRecordAttributeCountLimit);
     }
 
     [Fact]
@@ -79,14 +68,19 @@ public sealed class SdkLimitOptionsTests : IDisposable
         options.AttributeValueLengthLimit = 10;
         Assert.Equal(10, options.AttributeValueLengthLimit);
         Assert.Equal(10, options.SpanAttributeValueLengthLimit);
+        Assert.Equal(10, options.LogRecordAttributeValueLengthLimit);
 
         options.SpanAttributeValueLengthLimit = 20;
+        options.LogRecordAttributeValueLengthLimit = 21;
         Assert.Equal(10, options.AttributeValueLengthLimit);
         Assert.Equal(20, options.SpanAttributeValueLengthLimit);
+        Assert.Equal(21, options.LogRecordAttributeValueLengthLimit);
 
         options.SpanAttributeValueLengthLimit = null;
+        options.LogRecordAttributeValueLengthLimit = null;
         Assert.Equal(10, options.AttributeValueLengthLimit);
         Assert.Null(options.SpanAttributeValueLengthLimit);
+        Assert.Null(options.LogRecordAttributeValueLengthLimit);
     }
 
     [Fact]
@@ -99,6 +93,7 @@ public sealed class SdkLimitOptionsTests : IDisposable
         Assert.Equal(10, options.SpanAttributeCountLimit);
         Assert.Equal(10, options.SpanEventAttributeCountLimit);
         Assert.Equal(10, options.SpanLinkAttributeCountLimit);
+        Assert.Equal(10, options.LogRecordAttributeCountLimit);
 
         options.SpanAttributeCountLimit = 20;
         Assert.Equal(10, options.AttributeCountLimit);
@@ -150,6 +145,8 @@ public sealed class SdkLimitOptionsTests : IDisposable
             ["OTEL_SPAN_LINK_COUNT_LIMIT"] = "28",
             ["OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT"] = "29",
             ["OTEL_LINK_ATTRIBUTE_COUNT_LIMIT"] = "30",
+            ["OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT"] = "31",
+            ["OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT"] = "32",
         };
 
         var configuration = new ConfigurationBuilder()
@@ -166,6 +163,8 @@ public sealed class SdkLimitOptionsTests : IDisposable
         Assert.Equal(28, options.SpanLinkCountLimit);
         Assert.Equal(29, options.SpanEventAttributeCountLimit);
         Assert.Equal(30, options.SpanLinkAttributeCountLimit);
+        Assert.Equal(31, options.LogRecordAttributeValueLengthLimit);
+        Assert.Equal(32, options.LogRecordAttributeCountLimit);
     }
 
     private static void ClearEnvVars()
@@ -178,5 +177,7 @@ public sealed class SdkLimitOptionsTests : IDisposable
         Environment.SetEnvironmentVariable("OTEL_SPAN_LINK_COUNT_LIMIT", null);
         Environment.SetEnvironmentVariable("OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT", null);
         Environment.SetEnvironmentVariable("OTEL_LINK_ATTRIBUTE_COUNT_LIMIT", null);
+        Environment.SetEnvironmentVariable("OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT", null);
+        Environment.SetEnvironmentVariable("OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT", null);
     }
 }

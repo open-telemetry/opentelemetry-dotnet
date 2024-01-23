@@ -1,18 +1,5 @@
-// <copyright file="Base2ExponentialHistogramScaleBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
@@ -21,18 +8,18 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.5, OS=macOS Ventura 13.4 (22F66) [Darwin 22.5.0]
-Apple M1 Max, 1 CPU, 10 logical and 10 physical cores
-.NET SDK=7.0.101
-  [Host]     : .NET 7.0.1 (7.0.122.56804), Arm64 RyuJIT AdvSIMD
-  DefaultJob : .NET 7.0.1 (7.0.122.56804), Arm64 RyuJIT AdvSIMD
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-|           Method | Scale |     Mean |    Error |   StdDev | Allocated |
+| Method           | Scale | Mean     | Error    | StdDev   | Allocated |
 |----------------- |------ |---------:|---------:|---------:|----------:|
-| HistogramHotPath |   -11 | 29.79 ns | 0.054 ns | 0.042 ns |         - |
-| HistogramHotPath |     3 | 32.10 ns | 0.086 ns | 0.080 ns |         - |
-| HistogramHotPath |    20 | 32.08 ns | 0.076 ns | 0.063 ns |         - |
+| HistogramHotPath | -11   | 32.44 ns | 0.196 ns | 0.174 ns |         - |
+| HistogramHotPath | 3     | 42.33 ns | 0.158 ns | 0.124 ns |         - |
+| HistogramHotPath | 20    | 40.57 ns | 0.363 ns | 0.322 ns |         - |
 */
 
 namespace Benchmarks.Metrics;
@@ -42,7 +29,7 @@ public class Base2ExponentialHistogramScaleBenchmarks
     private const int MaxValue = 10000;
     private readonly Random random = new();
     private Histogram<long> histogram;
-    private MeterProvider provider;
+    private MeterProvider meterProvider;
     private Meter meter;
 
     // This is a simple benchmark that records values in the range [0, 10000].
@@ -65,7 +52,7 @@ public class Base2ExponentialHistogramScaleBenchmarks
 
         var exportedItems = new List<Metric>();
 
-        this.provider = Sdk.CreateMeterProviderBuilder()
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -79,7 +66,7 @@ public class Base2ExponentialHistogramScaleBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.provider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     [Benchmark]

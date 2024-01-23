@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(DefaultTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForLibraries)</TargetFrameworks>
     <Description>Contains extensions to start OpenTelemetry in applications using Microsoft.Extensions.Hosting</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,9 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Note: When '$(ExposeExperimentalFeatures)' == 'false' this link is NOT
-    required because this project sees API internals -->
+    <!-- Note: When '$(ExposeExperimentalFeatures)' == 'false' these links are
+    NOT required because this project sees API internals -->
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticDefinitions.cs" Link="Includes\DiagnosticDefinitions.cs" RequiresExposedExperimentalFeatures="true" />
     <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" RequiresExposedExperimentalFeatures="true" />
   </ItemGroup>
 

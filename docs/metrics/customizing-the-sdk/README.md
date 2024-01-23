@@ -102,7 +102,7 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 
 See [Program.cs](./Program.cs) for complete example.
 
-> **Note**
+> [!NOTE]
 > A common mistake while configuring `MeterProvider` is forgetting to
 add the required `Meter`s to the provider. It is recommended to leverage the
 wildcard subscription model where it makes sense. For example, if your
@@ -198,6 +198,7 @@ with the metric are of interest to you.
     MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
     MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
     MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+    // Because "color" is dropped the resulting metric values are - name:apple LongSum Value:3 and name:lemon LongSum Value:2
     ...
 
     // If you provide an empty `string` array as `TagKeys` to the `MetricStreamConfiguration`
@@ -214,6 +215,7 @@ with the metric are of interest to you.
     MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
     MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
     MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+    // Because both "name" and "color" are dropped the resulting metric value is - LongSum Value:5
     ...
 ```
 
@@ -321,7 +323,7 @@ within the maximum number of buckets defined by `MaxSize`. The default
     })
 ```
 
-> **Note**
+> [!NOTE]
 > The SDK currently does not support any changes to `Aggregation` type
 by using Views.
 
@@ -375,7 +377,7 @@ ignored. The SDK chooses the key/value combinations in the order in which they
 are emitted. `SetMaxMetricPointsPerMetricStream` can be used to override the
 default.
 
-> **Note**
+> [!NOTE]
 > One `MetricPoint` is reserved for every `MetricStream` for the
 special case where there is no key/value pair associated with the metric. The
 maximum number of `MetricPoint`s has to accommodate for this special case.
@@ -442,7 +444,7 @@ AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Ex
 AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
 ```
 
-> **Note**
+> [!NOTE]
 > The above limit is *per* metric stream, and applies to all the metric
 streams. There is no ability to apply different limits for each instrument at
 this moment.
@@ -501,7 +503,7 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 
-> **Note**
+> [!NOTE]
 > As of today, there is no separate toggle for enable/disable Exemplar feature.
 Exemplars can be disabled by setting filter as `AlwaysOffExemplarFilter`, which
 is also the default (i.e Exemplar feature is disabled by default). Users can
@@ -529,14 +531,14 @@ Histograms with buckets, and it stores at most one exemplar per histogram
 bucket. The exemplar stored is the last measurement recorded - i.e. any new
 measurement overwrites the previous one in that bucket.
 
-`SimpleExemplarReservoir` is the default reservoir used for all metrics except
+* `SimpleExemplarReservoir` is the default reservoir used for all metrics except
 Histograms with buckets. It has a fixed reservoir pool, and implements the
 equivalent of [naive
 reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
-size (currently defaulting to 10) determines the maximum number of exemplars
+size (currently defaulting to 1) determines the maximum number of exemplars
 stored.
 
-> **Note**
+> [!NOTE]
 > Currently there is no ability to change or configure Reservoir.
 
 ### Instrumentation
@@ -570,17 +572,32 @@ Refer to the individual exporter docs to learn how to use them:
 [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
 is the immutable representation of the entity producing the telemetry. If no
 `Resource` is explicitly configured, the
-[default](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value)
+[default](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#semantic-attributes-with-sdk-provided-default-value)
 is to use a resource indicating this
-[Service](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#service).
-The `ConfigureResource` method on `MeterProviderBuilder` can be used to set a
-configure the resource on the provider. When the provider is built, it
-automatically builds the final `Resource` from the configured `ResourceBuilder`.
-There can only be a single `Resource` associated with a
-provider. It is not possible to change the resource builder *after* the provider
-is built, by calling the `Build()` method on the `MeterProviderBuilder`.
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
+and [Telemetry
+SDK](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk).
+The `ConfigureResource` method on `MeterProviderBuilder` can be used to
+configure the resource on the provider. `ConfigureResource` accepts an `Action`
+to configure the `ResourceBuilder`. Multiple calls to `ConfigureResource` can be
+made. When the provider is built, it builds the final `Resource` combining all
+the `ConfigureResource` calls. There can only be a single `Resource` associated
+with a provider. It is not possible to change the resource builder *after* the
+provider is built, by calling the `Build()` method on the
+`MeterProviderBuilder`.
+
 `ResourceBuilder` offers various methods to construct resource comprising of
-multiple attributes from various sources.
+attributes from various sources. For example, `AddService()` adds
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
+resource. `AddAttributes` can be used to add any additional attributes to the
+`Resource`. It also allows adding `ResourceDetector`s.
+
+It is recommended to model attributes that are static throughout the lifetime of
+the process as Resources, instead of adding them as attributes(tags) on each
+measurement.
+
+Follow [this](../../resources/README.md#resource-detector) document
+to learn about writing custom resource detectors.
 
 The snippet below shows configuring the `Resource` associated with the provider.
 
@@ -590,7 +607,12 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .ConfigureResource(r => r.AddService("MyServiceName"))
+    .ConfigureResource(r => r.AddAttributes(new List<KeyValuePair<string, object>>
+                {
+                    new KeyValuePair<string, object>("static-attribute1", "v1"),
+                    new KeyValuePair<string, object>("static-attribute2", "v2"),
+                }))
+    .ConfigureResource(resourceBuilder => resourceBuilder.AddService("service-name"))
     .Build();
 ```
 

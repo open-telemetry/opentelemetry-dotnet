@@ -1,18 +1,5 @@
-// <copyright file="MetricPointTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>;
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Tests;
@@ -23,7 +10,7 @@ namespace OpenTelemetry.Metrics.Tests;
 public sealed class MetricPointTests : IDisposable
 {
     private readonly Meter meter;
-    private readonly MeterProvider provider;
+    private readonly MeterProvider meterProvider;
     private readonly Metric metric;
     private readonly Histogram<long> histogram;
     private readonly double[] bounds;
@@ -43,7 +30,7 @@ public sealed class MetricPointTests : IDisposable
 
         var exportedItems = new List<Metric>();
 
-        this.provider = Sdk.CreateMeterProviderBuilder()
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name)
             .AddInMemoryExporter(exportedItems)
             .AddView(this.histogram.Name, new ExplicitBucketHistogramConfiguration() { Boundaries = this.bounds })
@@ -51,7 +38,7 @@ public sealed class MetricPointTests : IDisposable
 
         this.histogram.Record(500);
 
-        this.provider.ForceFlush();
+        this.meterProvider.ForceFlush();
 
         this.metric = exportedItems[0];
         var metricPointsEnumerator = this.metric.GetMetricPoints().GetEnumerator();
@@ -62,7 +49,7 @@ public sealed class MetricPointTests : IDisposable
     public void Dispose()
     {
         this.meter?.Dispose();
-        this.provider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     [Fact]

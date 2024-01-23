@@ -1,18 +1,5 @@
-// <copyright file="InMemoryExporterMetricsExtensionsTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 #if NET6_0_OR_GREATER
 
@@ -52,7 +39,7 @@ public class InMemoryExporterMetricsExtensionsTests
                 using var meter = new Meter(meterName);
                 var counter = meter.CreateCounter<long>("meter");
                 counter.Add(10);
-            }).ConfigureAwait(false);
+            });
 
         Assert.Single(exportedItems);
         var metricPointsEnumerator = exportedItems[0].GetMetricPoints().GetEnumerator();
@@ -75,7 +62,7 @@ public class InMemoryExporterMetricsExtensionsTests
                 using var meter = new Meter(meterName);
                 var counter = meter.CreateCounter<long>("meter");
                 counter.Add(10);
-            }).ConfigureAwait(false);
+            });
 
         Assert.Single(exportedItems);
         Assert.Equal(10, exportedItems[0].MetricPoints[0].GetSumLong());
@@ -96,13 +83,13 @@ public class InMemoryExporterMetricsExtensionsTests
 
                    return Task.CompletedTask;
                })))
-           .StartAsync().ConfigureAwait(false);
+           .StartAsync();
 
-        using var response = await host.GetTestClient().GetAsync($"/{nameof(RunMetricsTest)}").ConfigureAwait(false);
+        using var response = await host.GetTestClient().GetAsync($"/{nameof(RunMetricsTest)}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        await host.StopAsync().ConfigureAwait(false);
+        await host.StopAsync();
     }
 }
 #endif

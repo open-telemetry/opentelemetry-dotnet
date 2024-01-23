@@ -5,7 +5,7 @@ This stress test is specifically for Metrics SDK, and is based on the
 
 * [Running the stress test](#running-the-stress-test)
 
-> **Note**
+> [!NOTE]
 > To run the stress tests for Histogram, comment out the `Run` method
 for `Counter` and uncomment everything related to `Histogram` in the
 [Program.cs](../OpenTelemetry.Tests.Stress.Metrics/Program.cs).
@@ -15,5 +15,5 @@ for `Counter` and uncomment everything related to `Histogram` in the
 Open a console, run the following command from the current folder:
 
 ```sh
-dotnet run --framework net7.0 --configuration Release
+dotnet run --framework net8.0 --configuration Release
 ```

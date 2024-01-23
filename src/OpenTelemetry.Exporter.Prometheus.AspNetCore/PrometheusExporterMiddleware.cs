@@ -1,21 +1,9 @@
-// <copyright file="PrometheusExporterMiddleware.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -64,14 +52,22 @@ internal sealed class PrometheusExporterMiddleware
 
         try
         {
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+            var openMetricsRequested = AcceptsOpenMetrics(httpContext.Request);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
+
             try
             {
                 if (collectionResponse.View.Count > 0)
                 {
                     response.StatusCode = 200;
+#if NET8_0_OR_GREATER
+                    response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
+#else
                     response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-                    response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+#endif
+                    response.ContentType = openMetricsRequested
+                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
+                        : "text/plain; charset=utf-8; version=0.0.4";
 
                     await response.Body.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
                 }
@@ -97,5 +93,25 @@ internal sealed class PrometheusExporterMiddleware
         }
 
         this.exporter.OnExport = null;
+    }
+
+    private static bool AcceptsOpenMetrics(HttpRequest request)
+    {
+        var acceptHeader = request.Headers.Accept;
+
+        if (StringValues.IsNullOrEmpty(acceptHeader))
+        {
+            return false;
+        }
+
+        foreach (var header in acceptHeader)
+        {
+            if (PrometheusHeadersParser.AcceptsOpenMetrics(header))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

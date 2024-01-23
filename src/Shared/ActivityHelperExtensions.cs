@@ -1,18 +1,7 @@
-// <copyright file="ActivityHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
+
+#nullable enable
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -35,7 +24,7 @@ internal static class ActivityHelperExtensions
     /// <param name="statusDescription">Status description.</param>
     /// <returns><see langword="true"/> if <see cref="Status"/> was found on the supplied Activity.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TryGetStatus(this Activity activity, out StatusCode statusCode, out string statusDescription)
+    public static bool TryGetStatus(this Activity activity, out StatusCode statusCode, out string? statusDescription)
     {
         Debug.Assert(activity != null, "Activity should not be null");
 
@@ -43,7 +32,7 @@ internal static class ActivityHelperExtensions
         statusCode = default;
         statusDescription = null;
 
-        foreach (ref readonly var tag in activity.EnumerateTagObjects())
+        foreach (ref readonly var tag in activity!.EnumerateTagObjects())
         {
             switch (tag.Key)
             {
@@ -80,11 +69,11 @@ internal static class ActivityHelperExtensions
     /// <param name="tagName">Case-sensitive tag name to retrieve.</param>
     /// <returns>Tag value or null if a match was not found.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static object GetTagValue(this Activity activity, string tagName)
+    public static object? GetTagValue(this Activity activity, string? tagName)
     {
         Debug.Assert(activity != null, "Activity should not be null");
 
-        foreach (ref readonly var tag in activity.EnumerateTagObjects())
+        foreach (ref readonly var tag in activity!.EnumerateTagObjects())
         {
             if (tag.Key == tagName)
             {
@@ -103,11 +92,11 @@ internal static class ActivityHelperExtensions
     /// <param name="tagValue">Tag value.</param>
     /// <returns><see langword="true"/> if the first tag of the supplied Activity matches the user provide tag name.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TryCheckFirstTag(this Activity activity, string tagName, out object tagValue)
+    public static bool TryCheckFirstTag(this Activity activity, string tagName, out object? tagValue)
     {
         Debug.Assert(activity != null, "Activity should not be null");
 
-        var enumerator = activity.EnumerateTagObjects();
+        var enumerator = activity!.EnumerateTagObjects();
 
         if (enumerator.MoveNext())
         {

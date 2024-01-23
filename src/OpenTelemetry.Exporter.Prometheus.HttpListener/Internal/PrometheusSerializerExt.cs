@@ -1,18 +1,5 @@
-// <copyright file="PrometheusSerializerExt.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Metrics;
 
@@ -35,7 +22,7 @@ internal static partial class PrometheusSerializer
         return true;
     }
 
-    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric)
+    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool openMetricsRequested = false)
     {
         cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric);
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric);
@@ -45,24 +32,11 @@ internal static partial class PrometheusSerializer
         {
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
-                var tags = metricPoint.Tags;
                 var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                 // Counter and Gauge
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
-
-                if (tags.Count > 0)
-                {
-                    buffer[cursor++] = unchecked((byte)'{');
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
-                }
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -94,7 +68,7 @@ internal static partial class PrometheusSerializer
 
                 buffer[cursor++] = unchecked((byte)' ');
 
-                cursor = WriteLong(buffer, cursor, timestamp);
+                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
 
                 buffer[cursor++] = ASCII_LINEFEED;
             }
@@ -113,12 +87,7 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
+                    cursor = WriteTags(buffer, cursor, metric, tags, writeEnclosingBraces: false);
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
@@ -136,7 +105,7 @@ internal static partial class PrometheusSerializer
                     cursor = WriteLong(buffer, cursor, totalCount);
                     buffer[cursor++] = unchecked((byte)' ');
 
-                    cursor = WriteLong(buffer, cursor, timestamp);
+                    cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
 
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
@@ -144,58 +113,32 @@ internal static partial class PrometheusSerializer
                 // Histogram sum
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-
-                if (tags.Count > 0)
-                {
-                    buffer[cursor++] = unchecked((byte)'{');
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
-                }
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
                 cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
                 buffer[cursor++] = unchecked((byte)' ');
 
-                cursor = WriteLong(buffer, cursor, timestamp);
+                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
 
                 buffer[cursor++] = ASCII_LINEFEED;
 
                 // Histogram count
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-
-                if (tags.Count > 0)
-                {
-                    buffer[cursor++] = unchecked((byte)'{');
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
-                }
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
                 cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
                 buffer[cursor++] = unchecked((byte)' ');
 
-                cursor = WriteLong(buffer, cursor, timestamp);
+                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
 
                 buffer[cursor++] = ASCII_LINEFEED;
             }
         }
-
-        buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
     }

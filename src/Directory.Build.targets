@@ -1,6 +1,8 @@
 <Project>
 
   <PropertyGroup>
+    <!-- Note: PackageValidationBaselineVersion is defined in targets because $(MinVerTagPrefix) is not available to props as they apply before csproj. -->
+    <PackageValidationBaselineVersion Condition="'$(MinVerTagPrefix)' == 'core-'">$(OTelLatestStableVer)</PackageValidationBaselineVersion>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
 
@@ -15,6 +17,17 @@
     https://github.com/dotnet/sdk/issues/22515
     -->
     <Using Remove="System.Net.Http" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <None Include="$(PackagePrimaryLicenseFile)"
+          PackagePath="$([System.IO.Path]::GetFileName('$(PackagePrimaryLicenseFile)'))"
+          Pack="true"
+          Visible="false" />
+    <None Include="$(PackageThirdPartyNoticesFile)"
+          PackagePath="$([System.IO.Path]::GetFileName('$(PackageThirdPartyNoticesFile)'))"
+          Pack="true"
+          Visible="false" />
   </ItemGroup>
 
 </Project>

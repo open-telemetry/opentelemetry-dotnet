@@ -2,8 +2,120 @@
 
 ## Unreleased
 
+* Fixed issue
+  [#4466](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4466)
+  where the activity instance returned by `Activity.Current` was different than
+  instance obtained from `IHttpActivityFeature.Activity`.
+  [#5136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5136)
+
+## 1.7.0
+
+Released 2023-Dec-13
+
+## 1.6.0 - First stable release of this library
+
+Released 2023-Dec-13
+
+* Re-introduced support for gRPC instrumentation as an opt-in experimental
+  feature. From now onwards, gRPC can be enabled by setting
+  `OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` flag to
+  `True`. `OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` can
+  be set as an environment variable or via IConfiguration. The change is
+  introduced in order to support stable release of `http` instrumentation.
+  Semantic conventions for RPC is still
+  [experimental](https://github.com/open-telemetry/semantic-conventions/tree/main/docs/rpc)
+  and hence the package will only support it as an opt-in experimental feature.
+  Note that the support was removed in `1.6.0-rc.1` version of the package and
+  versions released before `1.6.0-rc.1` had gRPC instrumentation enabled by
+  default.
+  ([#5130](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5130))
+
+## 1.6.0-rc.1
+
+Released 2023-Dec-01
+
+* Removed support for `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. The
+  library will now emit only the
+  [stable](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
+  semantic conventions.
+  ([#5066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5066))
+
+* Removed `netstandard2.1` target.
+  ([#5094](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5094))
+
+* Removed support for grpc instrumentation to unblock stable release of http
+  instrumentation. For details, see issue
+  [#5098](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5098)
+  ([#5097](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5097))
+
+* **Breaking Change** : Renamed `AspNetCoreInstrumentationOptions` to
+  `AspNetCoreTraceInstrumentationOptions`.
+  ([#5108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5108))
+
+## 1.6.0-beta.3
+
+Released 2023-Nov-17
+
+* Removed the Activity Status Description that was being set during
+  exceptions. Activity Status will continue to be reported as `Error`.
+  This is a **breaking change**. `EnrichWithException` can be leveraged
+  to restore this behavior.
+  ([#5025](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5025))
+
+* Updated `http.request.method` to match specification guidelines.
+  * For activity, if the method does not belong to one of the [known
+    values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)
+    then the request method will be set on an additional tag
+    `http.request.method.original` and `http.request.method` will be set to
+    `_OTHER`.
+  * For metrics, if the original method does not belong to one of the [known
+    values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)
+    then `http.request.method` on `http.server.request.duration` metric will be
+    set to `_OTHER`
+
+  `http.request.method` is set on `http.server.request.duration` metric or
+  activity when `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is set to
+  `http` or `http/dup`.
+  ([#5001](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5001))
+
+* An additional attribute `error.type` will be added to activity and
+`http.server.request.duration` metric when the request results in unhandled
+exception. The attribute value will be set to full name of exception type.
+
+  The attribute will only be added when `OTEL_SEMCONV_STABILITY_OPT_IN`
+  environment variable is set to `http` or `http/dup`.
+  ([#4986](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4986))
+
+* Fixed `network.protocol.version` attribute values to match the specification.
+  ([#5007](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5007))
+
+* Calls to `/metrics` will now be included in the `http.server.request.duration`
+  metric. This change may affect Prometheus pull scenario if the Prometheus
+  server sends request to the scraping endpoint that contains `/metrics` in
+  path.
+  ([#5044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5044))
+
+* Fixes the `http.route` attribute for scenarios in which it was
+  previously missing or incorrect. Additionally, the `http.route` attribute
+  is now the same for both the metric and `Activity` emitted for a request.
+  Lastly, the `Activity.DisplayName` has been adjusted to have the format
+  `{http.request.method} {http.route}` to conform with [the specification](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md#name).
+  There remain scenarios when using conventional routing or Razor pages where
+  `http.route` is still incorrect. See [#5056](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5056)
+  and [#5057](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5057)
+  for more details.
+  ([#5026](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5026))
+
+* Removed `network.protocol.name` from `http.server.request.duration` metric as
+  per spec.
+  ([#5049](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5049))
+
+## 1.6.0-beta.2
+
+Released 2023-Oct-26
+
 * Introduced a new metric, `http.server.request.duration` measured in seconds.
-  The OTel SDK
+  The OTel SDK (starting with version 1.6.0)
   [applies custom histogram buckets](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
   for this metric to comply with the
   [Semantic Convention for Http Metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
@@ -30,6 +142,88 @@
    [spans](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-spans.md)
    and
    [metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
+
+* Following metrics will now be enabled by default when targeting `.NET8.0` or
+  newer framework:
+
+  * **Meter** : `Microsoft.AspNetCore.Hosting`
+    * `http.server.request.duration`
+    * `http.server.active_requests`
+
+  * **Meter** : `Microsoft.AspNetCore.Server.Kestrel`
+    * `kestrel.active_connections`
+    * `kestrel.connection.duration`
+    * `kestrel.rejected_connections`
+    * `kestrel.queued_connections`
+    * `kestrel.queued_requests`
+    * `kestrel.upgraded_connections`
+    * `kestrel.tls_handshake.duration`
+    * `kestrel.active_tls_handshakes`
+
+  * **Meter** : `Microsoft.AspNetCore.Http.Connections`
+    * `signalr.server.connection.duration`
+    * `signalr.server.active_connections`
+
+  * **Meter** : `Microsoft.AspNetCore.Routing`
+    * `aspnetcore.routing.match_attempts`
+
+  * **Meter** : `Microsoft.AspNetCore.Diagnostics`
+    * `aspnetcore.diagnostics.exceptions`
+
+  * **Meter** : `Microsoft.AspNetCore.RateLimiting`
+    * `aspnetcore.rate_limiting.active_request_leases`
+    * `aspnetcore.rate_limiting.request_lease.duration`
+    * `aspnetcore.rate_limiting.queued_requests`
+    * `aspnetcore.rate_limiting.request.time_in_queue`
+    * `aspnetcore.rate_limiting.requests`
+
+  For details about each individual metric check [ASP.NET Core
+  docs
+  page](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore).
+
+  **NOTES**:
+  * When targeting `.NET8.0` framework or newer, `http.server.request.duration` metric
+    will only follow
+    [v1.22.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-metrics.md#metric-httpclientrequestduration)
+    semantic conventions specification. Ability to switch behavior to older
+    conventions using `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is
+    not available.
+  * Users can opt-out of metrics that are not required using
+    [views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument).
+
+  ([#4934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4934))
+
+* Added `network.protocol.name` dimension to `http.server.request.duration`
+metric. This change only affects users setting `OTEL_SEMCONV_STABILITY_OPT_IN`
+to `http` or `http/dup`.
+([#4934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4934))
+
+* **Breaking**: Removed `Enrich` and `Filter` support for **metrics**
+  instrumentation. With this change, `AspNetCoreMetricsInstrumentationOptions`
+  is no longer available.
+  ([#4981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4981))
+
+  * `Enrich` migration:
+
+    An enrichment API for the `http.server.request.duration` metric is available
+    inside AspNetCore for users targeting .NET 8.0 (or newer). For details see:
+    [Enrich the ASP.NET Core request
+    metric](https://learn.microsoft.com/aspnet/core/log-mon/metrics/metrics?view=aspnetcore-8.0#enrich-the-aspnet-core-request-metric).
+
+  * `Filter` migration:
+
+    There is no comparable filter mechanism currently available for any .NET
+    version. Please [share your
+    feedback](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4982)
+    if you are impacted by this feature gap.
+
+      > **Note**
+    > The [View API](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#select-specific-tags)
+    may be used to drop dimensions.
+
+* Updated description for `http.server.request.duration` metrics to match spec
+  definition.
+  ([#4990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4990))
 
 ## 1.5.1-beta.1
 

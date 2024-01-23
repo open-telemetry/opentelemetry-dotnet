@@ -1,18 +1,5 @@
-// <copyright file="LogRecordSharedPoolTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 #nullable enable
 
@@ -190,7 +177,7 @@ public sealed class LogRecordSharedPoolTests
             {
                 Random random = new Random();
 
-                await Task.Delay(random.Next(100, 150)).ConfigureAwait(false);
+                await Task.Delay(random.Next(100, 150));
 
                 for (int i = 0; i < 1000; i++)
                 {
@@ -201,12 +188,12 @@ public sealed class LogRecordSharedPoolTests
                     // This should no-op mostly.
                     pool.Return(logRecord);
 
-                    await Task.Delay(random.Next(0, 20)).ConfigureAwait(false);
+                    await Task.Delay(random.Next(0, 20));
                 }
             }));
         }
 
-        await Task.WhenAll(tasks).ConfigureAwait(false);
+        await Task.WhenAll(tasks);
 
         processor.ForceFlush();
 
@@ -248,7 +235,7 @@ public sealed class LogRecordSharedPoolTests
         {
             tasks.Add(Task.Run(async () =>
             {
-                await Task.Delay(2000).ConfigureAwait(false);
+                await Task.Delay(2000);
 
                 for (int i = 0; i < 100_000; i++)
                 {
@@ -259,7 +246,7 @@ public sealed class LogRecordSharedPoolTests
             }));
         }
 
-        await Task.WhenAll(tasks).ConfigureAwait(false);
+        await Task.WhenAll(tasks);
 
         Assert.True(pool.Count <= LogRecordSharedPool.DefaultMaxPoolSize);
     }

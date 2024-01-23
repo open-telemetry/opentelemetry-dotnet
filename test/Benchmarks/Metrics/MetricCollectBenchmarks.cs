@@ -1,18 +1,5 @@
-// <copyright file="MetricCollectBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
@@ -21,17 +8,17 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
 Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK=7.0.203
-  [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-|  Method | UseWithRef |     Mean |    Error |   StdDev | Allocated |
+| Method  | UseWithRef | Mean     | Error    | StdDev   | Allocated |
 |-------- |----------- |---------:|---------:|---------:|----------:|
-| Collect |      False | 18.45 us | 0.161 us | 0.151 us |      96 B |
-| Collect |       True | 17.71 us | 0.347 us | 0.644 us |      96 B |
+| Collect | False      | 21.03 us | 0.148 us | 0.361 us |      96 B |
+| Collect | True       | 20.37 us | 0.399 us | 0.559 us |      96 B |
 */
 
 namespace Benchmarks.Metrics;

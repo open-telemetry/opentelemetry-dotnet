@@ -1,18 +1,6 @@
-// <copyright file="TraceContextPropagatorTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
+
 using System.Diagnostics;
 using Xunit;
 
@@ -103,12 +91,16 @@ public class TraceContextPropagatorTest
         Assert.False(ctx.ActivityContext.IsValid());
     }
 
-    [Fact]
-    public void IsBlankIfInvalid()
+    [Theory]
+    [InlineData($"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-01")]
+    [InlineData($"00-{TraceId}-xyz7c989f97918e1-01")]
+    [InlineData($"00-{TraceId}-{SpanId}-x1")]
+    [InlineData($"00-{TraceId}-{SpanId}-1x")]
+    public void IsBlankIfInvalid(string invalidTraceParent)
     {
         var headers = new Dictionary<string, string>
         {
-            { TraceParent, $"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-01" },
+            { TraceParent, invalidTraceParent },
         };
 
         var f = new TraceContextPropagator();
@@ -191,8 +183,8 @@ public class TraceContextPropagatorTest
         // test_tracestate_duplicated_keys
         Assert.Empty(CallTraceContextPropagator("foo=1,foo=1"));
         Assert.Empty(CallTraceContextPropagator("foo=1,foo=2"));
-        Assert.Empty(CallTraceContextPropagator(new string[] { "foo=1", "foo=1" }));
-        Assert.Empty(CallTraceContextPropagator(new string[] { "foo=1", "foo=2" }));
+        Assert.Empty(CallTraceContextPropagator(new[] { "foo=1", "foo=1" }));
+        Assert.Empty(CallTraceContextPropagator(new[] { "foo=1", "foo=2" }));
     }
 
     [Fact]
@@ -318,7 +310,7 @@ public class TraceContextPropagatorTest
     {
         var headers = new Dictionary<string, string[]>
         {
-            { TraceParent, new string[] { $"00-{TraceId}-{SpanId}-01" } },
+            { TraceParent, new[] { $"00-{TraceId}-{SpanId}-01" } },
             { TraceState, tracestate },
         };
         var f = new TraceContextPropagator();

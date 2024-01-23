@@ -1,25 +1,10 @@
-// <copyright file="OtlpHttpTraceExportClientTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 #if !NET6_0_OR_GREATER
 using System.Net.Http;
 #endif
-using Moq;
-using Moq.Protected;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Resources;
@@ -94,42 +79,11 @@ public class OtlpHttpTraceExportClientTests
             Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
         };
 
-        var httpHandlerMock = new Mock<HttpMessageHandler>();
+        var testHttpHandler = new TestHttpMessageHandler();
 
-        HttpRequestMessage httpRequest = null;
         var httpRequestContent = Array.Empty<byte>();
 
-        httpHandlerMock.Protected()
-#if NET6_0_OR_GREATER
-            .Setup<HttpResponseMessage>("Send", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Returns((HttpRequestMessage request, CancellationToken token) =>
-            {
-                return new HttpResponseMessage();
-            })
-            .Callback<HttpRequestMessage, CancellationToken>((r, ct) =>
-            {
-                httpRequest = r;
-
-                // We have to capture content as it can't be accessed after request is disposed inside of SendExportRequest method
-                httpRequestContent = r.Content.ReadAsByteArrayAsync(ct)?.Result;
-            })
-#else
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
-            {
-                return new HttpResponseMessage();
-            })
-            .Callback<HttpRequestMessage, CancellationToken>(async (r, ct) =>
-            {
-                httpRequest = r;
-
-                // We have to capture content as it can't be accessed after request is disposed inside of SendExportRequest method
-                httpRequestContent = await r.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
-            })
-#endif
-            .Verifiable();
-
-        var exportClient = new OtlpHttpTraceExportClient(options, new HttpClient(httpHandlerMock.Object));
+        var exportClient = new OtlpHttpTraceExportClient(options, new HttpClient(testHttpHandler));
 
         var resourceBuilder = ResourceBuilder.CreateEmpty();
         if (includeServiceNameInResource)
@@ -137,8 +91,8 @@ public class OtlpHttpTraceExportClientTests
             resourceBuilder.AddAttributes(
                 new List<KeyValuePair<string, object>>
                 {
-                    new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "service_name"),
-                    new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceNamespace, "ns_1"),
+                    new(ResourceSemanticConventions.AttributeServiceName, "service_name"),
+                    new(ResourceSemanticConventions.AttributeServiceNamespace, "ns_1"),
                 });
         }
 
@@ -166,7 +120,7 @@ public class OtlpHttpTraceExportClientTests
 
         processor.Shutdown();
 
-        var batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
+        var batch = new Batch<Activity>([.. exportedItems], exportedItems.Count);
         RunTest(batch);
 
         void RunTest(Batch<Activity> batch)
@@ -177,6 +131,8 @@ public class OtlpHttpTraceExportClientTests
 
             // Act
             var result = exportClient.SendExportRequest(request);
+
+            var httpRequest = testHttpHandler.HttpRequestMessage;
 
             // Assert
             Assert.True(result);
@@ -192,11 +148,11 @@ public class OtlpHttpTraceExportClientTests
                 Assert.Contains(httpRequest.Headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value.First() == OtlpExporterOptions.StandardHeaders[i].Value);
             }
 
-            Assert.NotNull(httpRequest.Content);
+            Assert.NotNull(testHttpHandler.HttpRequestContent);
             Assert.IsType<OtlpHttpTraceExportClient.ExportRequestContent>(httpRequest.Content);
             Assert.Contains(httpRequest.Content.Headers, h => h.Key == "Content-Type" && h.Value.First() == OtlpHttpTraceExportClient.MediaContentType);
 
-            var exportTraceRequest = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(httpRequestContent);
+            var exportTraceRequest = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(testHttpHandler.HttpRequestContent);
             Assert.NotNull(exportTraceRequest);
             Assert.Single(exportTraceRequest.ResourceSpans);
 

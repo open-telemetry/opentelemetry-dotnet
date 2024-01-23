@@ -9,8 +9,35 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Suppress warnings for repo code using experimental features -->
+    <NoWarn>$(NoWarn);OTEL1000;OTEL1001;OTEL1002</NoWarn>
     <!--temporarily disable. See 3958-->
     <!--<AnalysisLevel>latest-All</AnalysisLevel>-->
+  </PropertyGroup>
+
+  <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
+  <PropertyGroup>
+    <NetFrameworkMinimumSupportedVersion>net462</NetFrameworkMinimumSupportedVersion>
+    <NetFrameworkSupportedVersions>net481;net48;net472;net471;net47;net462</NetFrameworkSupportedVersions>
+
+    <!-- production TFMs -->
+    <TargetFrameworksForLibraries>net8.0;net6.0;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibraries>
+    <TargetFrameworksForLibrariesExtended>net8.0;net6.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibrariesExtended>
+    <TargetFrameworksForAspNetCoreInstrumentation>net8.0;net7.0;net6.0;netstandard2.0</TargetFrameworksForAspNetCoreInstrumentation>
+    <TargetFrameworksForGrpcNetClientInstrumentation>net8.0;net6.0;netstandard2.1;netstandard2.0</TargetFrameworksForGrpcNetClientInstrumentation>
+    <TargetFrameworksForPrometheusAspNetCore>net8.0;net6.0</TargetFrameworksForPrometheusAspNetCore>
+
+    <!-- non-production TFMs -->
+    <TargetFrameworksForAspNetCoreTests>net8.0;net7.0;net6.0</TargetFrameworksForAspNetCoreTests>
+    <TargetFrameworksForAotCompatibilityTests>net8.0</TargetFrameworksForAotCompatibilityTests>
+    <TargetFrameworksForDocs>net8.0;net7.0;net6.0</TargetFrameworksForDocs>
+    <TargetFrameworksForDocs Condition="$(OS) == 'Windows_NT' And '$(UsingMicrosoftNETSdkWeb)' != 'True'">
+      $(TargetFrameworksForDocs);$(NetFrameworkSupportedVersions)
+    </TargetFrameworksForDocs>
+    <TargetFrameworksForTests>net8.0;net7.0;net6.0</TargetFrameworksForTests>
+    <TargetFrameworksForTests Condition="$(OS) == 'Windows_NT'">
+      $(TargetFrameworksForTests);$(NetFrameworkMinimumSupportedVersion)
+    </TargetFrameworksForTests>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -20,6 +47,7 @@
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <MSBuildTreatWarningsAsErrors>true</MSBuildTreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,9 +57,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" Condition="'$(SkipAnalysis)'!='true'" />
-    <!--
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" PrivateAssets="All" Condition="'$(SkipAnalysis)'!='true'" />
-    -->
   </ItemGroup>
 
   <ItemGroup Condition="'$(IncludeDiagnosticSourceInstrumentationHelpers)'=='true'">

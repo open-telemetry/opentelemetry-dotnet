@@ -1,18 +1,6 @@
-// <copyright file="HttpClientInstrumentation.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
+
 using OpenTelemetry.Instrumentation.Http.Implementation;
 
 namespace OpenTelemetry.Instrumentation.Http;
@@ -47,7 +35,7 @@ internal sealed class HttpClientInstrumentation : IDisposable
     /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
     /// </summary>
     /// <param name="options">Configuration options for HTTP client instrumentation.</param>
-    public HttpClientInstrumentation(HttpClientInstrumentationOptions options)
+    public HttpClientInstrumentation(HttpClientTraceInstrumentationOptions options)
     {
         // For .NET7.0 activity will be created using activitySource.
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs

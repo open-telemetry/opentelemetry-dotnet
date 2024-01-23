@@ -1,18 +1,5 @@
-// <copyright file="TracerProviderBuilderExtensionsTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -181,6 +168,7 @@ public class TracerProviderBuilderExtensionsTest
             .AddInstrumentation<MyInstrumentation>()
             .AddInstrumentation((sp, provider) => new MyInstrumentation() { Provider = provider })
             .AddInstrumentation(new MyInstrumentation())
+            .AddInstrumentation(() => (object)null)
             .Build() as TracerProviderSdk)
         {
             Assert.NotNull(provider);
@@ -401,6 +389,14 @@ public class TracerProviderBuilderExtensionsTest
         Assert.True(tracerProvider.Processor is MyProcessor);
     }
 
+    [Fact]
+    public void TracerProviderBuilderCustomImplementationBuildTest()
+    {
+        var builder = new MyTracerProviderBuilder();
+
+        Assert.Throws<NotSupportedException>(() => builder.Build());
+    }
+
     private static void RunBuilderServiceLifecycleTest(
         TracerProviderBuilder builder,
         Func<TracerProviderSdk> buildFunc,
@@ -508,6 +504,24 @@ public class TracerProviderBuilderExtensionsTest
         public override ExportResult Export(in Batch<Activity> batch)
         {
             return ExportResult.Success;
+        }
+    }
+
+    private sealed class MyTracerProviderBuilder : TracerProviderBuilder
+    {
+        public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override TracerProviderBuilder AddLegacySource(string operationName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override TracerProviderBuilder AddSource(params string[] names)
+        {
+            throw new NotImplementedException();
         }
     }
 }

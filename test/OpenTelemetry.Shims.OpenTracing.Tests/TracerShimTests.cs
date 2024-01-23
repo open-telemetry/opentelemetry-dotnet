@@ -1,22 +1,8 @@
-// <copyright file="TracerShimTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Collections;
 using System.Diagnostics;
-using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 using OpenTracing;
@@ -31,10 +17,10 @@ public class TracerShimTests
     public void CtorArgumentValidation()
     {
         // null tracer provider and text format
-        Assert.Throws<ArgumentNullException>(() => new TracerShim((TracerProvider)null, null));
+        Assert.Throws<ArgumentNullException>(() => new TracerShim(null, null));
 
         // null tracer provider
-        Assert.Throws<ArgumentNullException>(() => new TracerShim((TracerProvider)null, new TraceContextPropagator()));
+        Assert.Throws<ArgumentNullException>(() => new TracerShim(null, new TraceContextPropagator()));
     }
 
     [Fact]
@@ -61,13 +47,13 @@ public class TracerShimTests
         var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
         var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
-        var mockFormat = new Mock<IFormat<ITextMap>>();
-        var mockCarrier = new Mock<ITextMap>();
+        var testFormat = new TestFormatTextMap();
+        var testCarrier = new TestTextMap();
 
-        Assert.Throws<ArgumentNullException>(() => shim.Inject(null, mockFormat.Object, mockCarrier.Object));
-        Assert.Throws<InvalidCastException>(() => shim.Inject(new Mock<ISpanContext>().Object, mockFormat.Object, mockCarrier.Object));
-        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, null, mockCarrier.Object));
-        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, mockFormat.Object, null));
+        Assert.Throws<ArgumentNullException>(() => shim.Inject(null, testFormat, testCarrier));
+        Assert.Throws<InvalidCastException>(() => shim.Inject(new TestSpanContext(), testFormat, testCarrier));
+        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, null, testCarrier));
+        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, testFormat, null));
     }
 
     [Fact]
@@ -78,11 +64,11 @@ public class TracerShimTests
         var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
 
         // Only two specific types of ITextMap are supported, and neither is a Mock.
-        var mockCarrier = new Mock<ITextMap>();
-        shim.Inject(spanContextShim, new Mock<IFormat<ITextMap>>().Object, mockCarrier.Object);
+        var testCarrier = new TestTextMap();
+        shim.Inject(spanContextShim, new TestFormatTextMap(), testCarrier);
 
-        // Verify that the carrier mock was never called.
-        mockCarrier.Verify(x => x.Set(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        // Verify that the test carrier was never called.
+        Assert.False(testCarrier.SetCalled);
     }
 
     [Fact]
@@ -90,23 +76,22 @@ public class TracerShimTests
     {
         var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
-        Assert.Throws<ArgumentNullException>(() => shim.Extract(null, new Mock<ITextMap>().Object));
-        Assert.Throws<ArgumentNullException>(() => shim.Extract(new Mock<IFormat<ITextMap>>().Object, null));
+        Assert.Throws<ArgumentNullException>(() => shim.Extract(null, new TestTextMap()));
+        Assert.Throws<ArgumentNullException>(() => shim.Extract(new TestFormatTextMap(), null));
     }
 
     [Fact]
     public void Extract_UnknownFormatIgnored()
     {
         var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
-
-        var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+        _ = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
         // Only two specific types of ITextMap are supported, and neither is a Mock.
-        var mockCarrier = new Mock<ITextMap>();
-        var context = shim.Extract(new Mock<IFormat<ITextMap>>().Object, mockCarrier.Object);
+        var testCarrier = new TestTextMap();
+        _ = shim.Extract(new TestFormatTextMap(), testCarrier);
 
-        // Verify that the carrier mock was never called.
-        mockCarrier.Verify(x => x.GetEnumerator(), Times.Never);
+        // Verify that the test carrier was never called.
+        Assert.False(testCarrier.SetCalled);
     }
 
     [Fact]
@@ -114,20 +99,15 @@ public class TracerShimTests
     {
         var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
-        var mockCarrier = new Mock<ITextMap>();
+        var testCarrier = new TestTextMap();
 
         // The ProxyTracer uses OpenTelemetry.Context.Propagation.TraceContextPropagator, so we need to satisfy the traceparent key at the least
-        var carrierMap = new Dictionary<string, string>
-        {
-            // This is an invalid traceparent value
-            { "traceparent", "unused" },
-        };
+        testCarrier.Items["traceparent"] = "unused";
 
-        mockCarrier.Setup(x => x.GetEnumerator()).Returns(carrierMap.GetEnumerator());
-        var spanContextShim = shim.Extract(BuiltinFormats.TextMap, mockCarrier.Object) as SpanContextShim;
+        var spanContextShim = shim.Extract(BuiltinFormats.TextMap, testCarrier) as SpanContextShim;
 
         // Verify that the carrier was called
-        mockCarrier.Verify(x => x.GetEnumerator(), Times.Once);
+        Assert.True(testCarrier.GetEnumeratorCalled);
 
         Assert.Null(spanContextShim);
     }

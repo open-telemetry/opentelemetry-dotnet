@@ -1,18 +1,5 @@
-// <copyright file="IntegrationTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -234,34 +221,40 @@ public sealed class IntegrationTests : IDisposable
 
         DelegatingExporter<LogRecord> delegatingExporter = null;
         var exportResults = new List<ExportResult>();
-        var processorOptions = new LogRecordExportProcessorOptions();
-        processorOptions.ExportProcessorType = exportProcessorType;
-        processorOptions.BatchExportProcessorOptions = new()
+        var processorOptions = new LogRecordExportProcessorOptions
         {
-            ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
+            ExportProcessorType = exportProcessorType,
+            BatchExportProcessorOptions = new()
+            {
+                ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
+            },
         };
 
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder
                 .AddOpenTelemetry(options => options
-                    .AddProcessor(OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
-                        exporterOptions,
-                        processorOptions,
-                        configureExporterInstance: otlpExporter =>
-                        {
-                            delegatingExporter = new DelegatingExporter<LogRecord>
+                    .AddProcessor(sp =>
+                        OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
+                            sp,
+                            exporterOptions,
+                            processorOptions,
+                            new SdkLimitOptions(),
+                            new ExperimentalOptions(),
+                            configureExporterInstance: otlpExporter =>
                             {
-                                OnExportFunc = (batch) =>
+                                delegatingExporter = new DelegatingExporter<LogRecord>
                                 {
-                                    var result = otlpExporter.Export(batch);
-                                    exportResults.Add(result);
-                                    handle.Set();
-                                    return result;
-                                },
-                            };
-                            return delegatingExporter;
-                        })));
+                                    OnExportFunc = (batch) =>
+                                    {
+                                        var result = otlpExporter.Export(batch);
+                                        exportResults.Add(result);
+                                        handle.Set();
+                                        return result;
+                                    },
+                                };
+                                return delegatingExporter;
+                            })));
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");

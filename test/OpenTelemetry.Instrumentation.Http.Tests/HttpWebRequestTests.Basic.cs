@@ -1,24 +1,10 @@
-// <copyright file="HttpWebRequestTests.Basic.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
@@ -75,9 +61,9 @@ public partial class HttpWebRequestTests : IDisposable
     [Fact]
     public async Task BacksOffIfAlreadyInstrumented()
     {
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor(activityProcessor.Object)
+            .AddInMemoryExporter(exportedItems)
             .AddHttpClientInstrumentation()
             .Build();
 
@@ -87,15 +73,12 @@ public partial class HttpWebRequestTests : IDisposable
 
         request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-        using var response = await request.GetResponseAsync().ConfigureAwait(false);
+        using var response = await request.GetResponseAsync();
 
 #if NETFRAMEWORK
-        // Note: Back-off is part of the .NET Framework reflection only and
-        // is needed to prevent issues when the same request is re-used for
-        // things like redirects or SSL negotiation.
-        Assert.Single(activityProcessor.Invocations); // SetParentProvider called
+        Assert.Empty(exportedItems);
 #else
-        Assert.Equal(3, activityProcessor.Invocations.Count); // SetParentProvider/Begin/End called
+        Assert.Single(exportedItems);
 #endif
     }
 
@@ -105,7 +88,7 @@ public partial class HttpWebRequestTests : IDisposable
         bool httpWebRequestFilterApplied = false;
         bool httpRequestMessageFilterApplied = false;
 
-        List<Activity> exportedItems = new();
+        var exportedItems = new List<Activity>();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddInMemoryExporter(exportedItems)
@@ -129,7 +112,7 @@ public partial class HttpWebRequestTests : IDisposable
 
         request.Method = "GET";
 
-        using var response = await request.GetResponseAsync().ConfigureAwait(false);
+        using var response = await request.GetResponseAsync();
 
 #if NETFRAMEWORK
         Assert.True(httpWebRequestFilterApplied);
@@ -145,7 +128,7 @@ public partial class HttpWebRequestTests : IDisposable
     [Fact]
     public async Task RequestNotCollectedWhenInstrumentationFilterThrowsException()
     {
-        List<Activity> exportedItems = new();
+        var exportedItems = new List<Activity>();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddInMemoryExporter(exportedItems)
@@ -163,7 +146,7 @@ public partial class HttpWebRequestTests : IDisposable
 
             request.Method = "GET";
 
-            using var response = await request.GetResponseAsync().ConfigureAwait(false);
+            using var response = await request.GetResponseAsync();
 
             Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
         }
@@ -174,9 +157,9 @@ public partial class HttpWebRequestTests : IDisposable
     [Fact]
     public async Task InjectsHeadersAsync()
     {
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor(activityProcessor.Object)
+            .AddInMemoryExporter(exportedItems)
             .AddHttpClientInstrumentation()
             .Build();
 
@@ -190,10 +173,10 @@ public partial class HttpWebRequestTests : IDisposable
         parent.TraceStateString = "k1=v1,k2=v2";
         parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-        using var response = await request.GetResponseAsync().ConfigureAwait(false);
+        using var response = await request.GetResponseAsync();
 
-        Assert.Equal(3, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/End called
-        var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
 
         Assert.Equal(parent.TraceId, activity.Context.TraceId);
         Assert.Equal(parent.SpanId, activity.ParentSpanId);
@@ -223,26 +206,12 @@ public partial class HttpWebRequestTests : IDisposable
         ActivityContext parentContext = default;
         ActivityContext contextFromPropagator = default;
 
-        var propagator = new Mock<TextMapPropagator>();
-#if NETFRAMEWORK
-        propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
-            .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, carrier, setter) =>
-            {
-                contextFromPropagator = context.ActivityContext;
-
-                setter(carrier, "traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
-                setter(carrier, "tracestate", contextFromPropagator.TraceState);
-            });
-#else
-        propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-            .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, carrier, setter) =>
-            {
-                contextFromPropagator = context.ActivityContext;
-
-                setter(carrier, "traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
-                setter(carrier, "tracestate", contextFromPropagator.TraceState);
-            });
-#endif
+        var propagator = new CustomTextMapPropagator
+        {
+            Injected = (PropagationContext context) => contextFromPropagator = context.ActivityContext,
+        };
+        propagator.InjectValues.Add("custom_traceParent", context => $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
+        propagator.InjectValues.Add("custom_traceState", context => Activity.Current.TraceStateString);
 
         var exportedItems = new List<Activity>();
 
@@ -253,7 +222,7 @@ public partial class HttpWebRequestTests : IDisposable
             .Build())
         {
             var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator);
 
             Activity parent = null;
             if (createParentActivity)
@@ -272,7 +241,7 @@ public partial class HttpWebRequestTests : IDisposable
 
             request.Method = "GET";
 
-            using var response = await request.GetResponseAsync().ConfigureAwait(false);
+            using var response = await request.GetResponseAsync();
 
             parent?.Stop();
 
@@ -312,16 +281,14 @@ public partial class HttpWebRequestTests : IDisposable
 
         int configurationDelegateInvocations = 0;
 
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
             {
-                services.Configure<HttpClientInstrumentationOptions>(name, o => configurationDelegateInvocations++);
+                services.Configure<HttpClientTraceInstrumentationOptions>(name, o => configurationDelegateInvocations++);
             })
-            .AddProcessor(activityProcessor.Object)
             .AddHttpClientInstrumentation(name, options =>
             {
-                Assert.IsType<HttpClientInstrumentationOptions>(options);
+                Assert.IsType<HttpClientTraceInstrumentationOptions>(options);
             })
             .Build();
 
@@ -334,7 +301,7 @@ public partial class HttpWebRequestTests : IDisposable
         var exportedItems = new List<Activity>();
         bool exceptionThrown = false;
 
-        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation(o => o.RecordException = true)
             .AddInMemoryExporter(exportedItems)
             .Build();
@@ -345,7 +312,7 @@ public partial class HttpWebRequestTests : IDisposable
 
             request.Method = "GET";
 
-            using var response = await request.GetResponseAsync().ConfigureAwait(false);
+            using var response = await request.GetResponseAsync();
         }
         catch
         {
@@ -363,7 +330,7 @@ public partial class HttpWebRequestTests : IDisposable
         var exportedItems = new List<Activity>();
         bool exceptionThrown = false;
 
-        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation(o => o.RecordException = true)
             .AddInMemoryExporter(exportedItems)
             .Build();
@@ -374,7 +341,7 @@ public partial class HttpWebRequestTests : IDisposable
 
             request.Method = "GET";
 
-            using var response = await request.GetResponseAsync().ConfigureAwait(false);
+            using var response = await request.GetResponseAsync();
         }
         catch
         {

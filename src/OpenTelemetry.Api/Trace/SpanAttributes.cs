@@ -1,18 +1,7 @@
-// <copyright file="SpanAttributes.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
+
+#nullable enable
 
 using System.Diagnostics;
 using OpenTelemetry.Internal;
@@ -20,7 +9,7 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Trace;
 
 /// <summary>
-/// A class that represents the span attributes. Read more here https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md#attributes.
+/// A class that represents the span attributes. Read more here https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/README.md#attribute.
 /// </summary>
 /// <remarks>SpanAttributes is a wrapper around <see cref="ActivityTagsCollection"/> class.</remarks>
 public class SpanAttributes
@@ -37,12 +26,12 @@ public class SpanAttributes
     /// Initializes a new instance of the <see cref="SpanAttributes"/> class.
     /// </summary>
     /// <param name="attributes">Initial attributes to store in the collection.</param>
-    public SpanAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
+    public SpanAttributes(IEnumerable<KeyValuePair<string, object?>> attributes)
         : this()
     {
         Guard.ThrowIfNull(attributes);
 
-        foreach (KeyValuePair<string, object> kvp in attributes)
+        foreach (KeyValuePair<string, object?> kvp in attributes)
         {
             this.AddInternal(kvp.Key, kvp.Value);
         }
@@ -65,7 +54,7 @@ public class SpanAttributes
     /// </summary>
     /// <param name="key">Entry key.</param>
     /// <param name="value">Entry value.</param>
-    public void Add(string key, string value)
+    public void Add(string key, string? value)
     {
         this.AddInternal(key, value);
     }
@@ -95,7 +84,7 @@ public class SpanAttributes
     /// </summary>
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
-    public void Add(string key, long[] values)
+    public void Add(string key, long[]? values)
     {
         this.AddInternal(key, values);
     }
@@ -105,7 +94,7 @@ public class SpanAttributes
     /// </summary>
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
-    public void Add(string key, string[] values)
+    public void Add(string key, string?[]? values)
     {
         this.AddInternal(key, values);
     }
@@ -115,7 +104,7 @@ public class SpanAttributes
     /// </summary>
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
-    public void Add(string key, bool[] values)
+    public void Add(string key, bool[]? values)
     {
         this.AddInternal(key, values);
     }
@@ -125,12 +114,12 @@ public class SpanAttributes
     /// </summary>
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
-    public void Add(string key, double[] values)
+    public void Add(string key, double[]? values)
     {
         this.AddInternal(key, values);
     }
 
-    private void AddInternal(string key, object value)
+    private void AddInternal(string key, object? value)
     {
         Guard.ThrowIfNull(key);
 

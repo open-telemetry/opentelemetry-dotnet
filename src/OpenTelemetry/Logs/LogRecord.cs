@@ -1,20 +1,10 @@
-// <copyright file="LogRecord.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -28,6 +18,7 @@ public sealed class LogRecord
 {
     internal LogRecordData Data;
     internal LogRecordILoggerData ILoggerData;
+    internal IReadOnlyList<KeyValuePair<string, object?>>? AttributeData;
     internal List<KeyValuePair<string, object?>>? AttributeStorage;
     internal List<object?>? ScopeStorage;
     internal int PoolReferenceCount = int.MaxValue;
@@ -85,7 +76,7 @@ public sealed class LogRecord
                 this.Data.Body = template;
             }
 
-            this.Attributes = stateValues;
+            this.AttributeData = stateValues;
         }
     }
 
@@ -238,13 +229,30 @@ public sealed class LogRecord
     /// through <see cref="ILogger"/>.</item>
     /// <item>Set to <see langword="null"/> when <see
     /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.</item>
+    /// <item><see cref="Attributes"/> are automatically updated if <see
+    /// cref="State"/> is set directly.</item>
     /// </list>
     /// </remarks>
     [Obsolete("State cannot be accessed safely outside of an ILogger.Log call stack. Use Attributes instead to safely access the data attached to a LogRecord. State will be removed in a future version.")]
     public object? State
     {
         get => this.ILoggerData.State;
-        set => this.ILoggerData.State = value;
+        set
+        {
+            if (ReferenceEquals(this.ILoggerData.State, value))
+            {
+                return;
+            }
+
+            if (this.AttributeData is not null)
+            {
+                this.AttributeData = OpenTelemetryLogger.ProcessState(this, ref this.ILoggerData, value, includeAttributes: true, parseStateValues: false);
+            }
+            else
+            {
+                this.ILoggerData.State = value;
+            }
+        }
     }
 
     /// <summary>
@@ -262,15 +270,37 @@ public sealed class LogRecord
     /// Gets or sets the attributes attached to the log.
     /// </summary>
     /// <remarks>
-    /// Note: Set when <see
-    /// cref="OpenTelemetryLoggerOptions.IncludeAttributes"/> is enabled and
-    /// log record state implements <see cref="IReadOnlyList{T}"/> or <see
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>Set when <see
+    /// cref="OpenTelemetryLoggerOptions.IncludeAttributes"/> is enabled and log
+    /// record state implements <see cref="IReadOnlyList{T}"/> or <see
     /// cref="IEnumerable{T}"/> of <see cref="KeyValuePair{TKey, TValue}"/>s
     /// (where TKey is <c>string</c> and TValue is <c>object</c>) or <see
     /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
-    /// otherwise <see langword="null"/>.
+    /// otherwise <see langword="null"/>.</item>
+    /// <item><see cref="State"/> is automatically updated if <see
+    /// cref="Attributes"/> are set directly.</item>
+    /// </list>
     /// </remarks>
-    public IReadOnlyList<KeyValuePair<string, object?>>? Attributes { get; set; }
+    public IReadOnlyList<KeyValuePair<string, object?>>? Attributes
+    {
+        get => this.AttributeData;
+        set
+        {
+            if (ReferenceEquals(this.AttributeData, value))
+            {
+                return;
+            }
+
+            if (this.ILoggerData.State is not null)
+            {
+                this.ILoggerData.State = value;
+            }
+
+            this.AttributeData = value;
+        }
+    }
 
     /// <summary>
     /// Gets or sets the log <see cref="System.Exception"/>.
@@ -290,6 +320,9 @@ public sealed class LogRecord
     /// known at the source.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -309,6 +342,9 @@ public sealed class LogRecord
     /// Gets or sets the log <see cref="LogRecordSeverity"/>.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     /// <summary>
@@ -327,6 +363,9 @@ public sealed class LogRecord
     /// Gets the <see cref="Logs.Logger"/> which emitted the <see cref="LogRecord"/>.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public Logger? Logger { get; internal set; }
 #else
     /// <summary>
@@ -412,7 +451,7 @@ public sealed class LogRecord
         {
             Data = this.Data,
             ILoggerData = this.ILoggerData.Copy(),
-            Attributes = this.Attributes == null ? null : new List<KeyValuePair<string, object?>>(this.Attributes),
+            AttributeData = this.AttributeData is null ? null : new List<KeyValuePair<string, object?>>(this.AttributeData),
             Logger = this.Logger,
         };
     }
@@ -423,7 +462,7 @@ public sealed class LogRecord
     /// </summary>
     private void BufferLogAttributes()
     {
-        var attributes = this.Attributes;
+        var attributes = this.AttributeData;
         if (attributes == null || attributes == this.AttributeStorage)
         {
             return;
@@ -438,7 +477,7 @@ public sealed class LogRecord
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905.
         attributeStorage.AddRange(attributes);
 
-        this.Attributes = attributeStorage;
+        this.AttributeData = attributeStorage;
     }
 
     /// <summary>

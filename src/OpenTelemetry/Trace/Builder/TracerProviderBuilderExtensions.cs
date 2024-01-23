@@ -1,18 +1,5 @@
-// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 #if NET6_0_OR_GREATER
@@ -83,9 +70,9 @@ public static class TracerProviderBuilderExtensions
     /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public static TracerProviderBuilder SetSampler<
 #if NET6_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
-        T>(this TracerProviderBuilder tracerProviderBuilder)
+    T>(this TracerProviderBuilder tracerProviderBuilder)
         where T : Sampler
     {
         tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
@@ -203,9 +190,9 @@ public static class TracerProviderBuilderExtensions
     /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public static TracerProviderBuilder AddProcessor<
 #if NET6_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
-        T>(this TracerProviderBuilder tracerProviderBuilder)
+    T>(this TracerProviderBuilder tracerProviderBuilder)
         where T : BaseProcessor<Activity>
     {
         tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
@@ -249,13 +236,13 @@ public static class TracerProviderBuilderExtensions
     /// </summary>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <returns><see cref="TracerProvider"/>.</returns>
-    public static TracerProvider? Build(this TracerProviderBuilder tracerProviderBuilder)
+    public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder)
     {
         if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
         {
             return tracerProviderBuilderBase.InvokeBuild();
         }
 
-        return null;
+        throw new NotSupportedException($"Build is not supported on '{tracerProviderBuilder?.GetType().FullName ?? "null"}' instances.");
     }
 }

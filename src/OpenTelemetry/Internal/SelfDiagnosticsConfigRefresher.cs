@@ -1,24 +1,10 @@
-// <copyright file="SelfDiagnosticsConfigRefresher.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 using System.IO.MemoryMappedFiles;
-using System.Text;
 
 namespace OpenTelemetry.Internal;
 
@@ -31,7 +17,7 @@ namespace OpenTelemetry.Internal;
 /// </summary>
 internal class SelfDiagnosticsConfigRefresher : IDisposable
 {
-    public static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("If you are seeing this message, it means that the OpenTelemetry SDK has successfully created the log file used to write self-diagnostic logs. This file will be appended with logs as they appear. If you do not see any logs following this line, it means no logs of the configured LogLevel is occurring. You may change the LogLevel to show lower log levels, so that logs of lower severities will be shown.\n");
+    public static readonly byte[] MessageOnNewFile = "If you are seeing this message, it means that the OpenTelemetry SDK has successfully created the log file used to write self-diagnostic logs. This file will be appended with logs as they appear. If you do not see any logs following this line, it means no logs of the configured LogLevel is occurring. You may change the LogLevel to show lower log levels, so that logs of lower severities will be shown.\n"u8.ToArray();
 
     private const int ConfigurationUpdatePeriodMilliSeconds = 10000;
 

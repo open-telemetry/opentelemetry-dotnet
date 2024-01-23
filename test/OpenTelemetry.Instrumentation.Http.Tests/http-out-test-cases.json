@@ -3,34 +3,34 @@
     "name": "Successful GET call to localhost",
     "method": "GET",
     "url": "http://{host}:{port}/",
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "200",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "200",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
     "name": "Successfully POST call to localhost",
     "method": "POST",
     "url": "http://{host}:{port}/",
-    "spanName": "HTTP POST",
+    "spanName": "POST",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "POST",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "200",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "POST",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "200",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -38,17 +38,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/path/to/resource/",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "200",
-      "http.url": "http://{host}:{port}/path/to/resource/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "200",
+      "url.full": "http://{host}:{port}/path/to/resource/"
     }
   },
   {
@@ -56,71 +56,69 @@
     "method": "GET",
     "url": "http://{host}:{port}/path/to/resource#fragment",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "200",
-      "http.url": "http://{host}:{port}/path/to/resource#fragment"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "200",
+      "url.full": "http://{host}:{port}/path/to/resource#fragment"
     }
   },
   {
-    "name": "http.url must not contain username nor password",
+    "name": "url.full must not contain username nor password",
     "method": "GET",
     "url": "http://username:password@{host}:{port}/path/to/resource#fragment",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "200",
-      "http.url": "http://{host}:{port}/path/to/resource#fragment"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "200",
+      "url.full": "http://{host}:{port}/path/to/resource#fragment"
     }
   },
   {
     "name": "Call that cannot resolve DNS will be reported as error span",
     "method": "GET",
     "url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/",
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
-    "spanStatusHasDescription": true,
     "responseExpected": false,
     "recordException": false,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "sdlfaldfjalkdfjlkajdflkajlsdjf",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "sdlfaldfjalkdfjlkajdflkajlsdjf",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "url.full": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/"
     }
   },
   {
     "name": "Call that cannot resolve DNS will be reported as error span. And Records exception",
     "method": "GET",
     "url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/",
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
-    "spanStatusHasDescription": true,
     "responseExpected": false,
     "recordException": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "sdlfaldfjalkdfjlkajdflkajlsdjf",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "sdlfaldfjalkdfjlkajdflkajlsdjf",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "url.full": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/"
     }
   },
   {
@@ -128,17 +126,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "200",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "200",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -146,17 +144,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "200",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "200",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -164,17 +162,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 399,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "399",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "399",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -182,17 +180,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 400,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "400",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "400",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -200,17 +198,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 401,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "401",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "401",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -218,17 +216,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 403,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "403",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "403",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -236,17 +234,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 404,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "404",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "404",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -254,17 +252,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 429,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "429",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "429",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -272,17 +270,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 501,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "501",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "501",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -290,17 +288,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 503,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "503",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "503",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -308,35 +306,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 504,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "504",
-      "http.url": "http://{host}:{port}/"
-    }
-  },
-  {
-    "name": "Response code: 600",
-    "method": "GET",
-    "url": "http://{host}:{port}/",
-    "responseCode": 600,
-    "spanName": "HTTP GET",
-    "spanStatus": "Error",
-    "responseExpected": true,
-    "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "600",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "504",
+      "url.full": "http://{host}:{port}/"
     }
   },
   {
@@ -344,17 +324,17 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "200",
-      "http.url": "http://{host}:{port}/"
+      "url.scheme": "http",
+      "http.request.method": "GET",
+      "server.address": "{host}",
+      "server.port": "{port}",
+      "network.protocol.version": "{flavor}",
+      "http.response.status_code": "200",
+      "url.full": "http://{host}:{port}/"
     }
   }
 ]

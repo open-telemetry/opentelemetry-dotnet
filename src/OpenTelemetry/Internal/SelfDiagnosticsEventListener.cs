@@ -1,18 +1,5 @@
-// <copyright file="SelfDiagnosticsEventListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.ObjectModel;
 using System.Diagnostics.Tracing;
@@ -318,7 +305,12 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     /// <param name="eventData">Data of the EventSource event.</param>
     protected override void OnEventWritten(EventWrittenEventArgs eventData)
     {
-        this.WriteEvent(eventData.Message, eventData.Payload);
+        // Note: The EventSource check here works around a bug in EventListener.
+        // See: https://github.com/open-telemetry/opentelemetry-dotnet/pull/5046
+        if (eventData.EventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            this.WriteEvent(eventData.Message, eventData.Payload);
+        }
     }
 
     private void Dispose(bool disposing)

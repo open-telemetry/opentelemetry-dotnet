@@ -1,18 +1,5 @@
-// <copyright file="AggregatorTestsBase.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
 using Xunit;
@@ -29,16 +16,15 @@ public abstract class AggregatorTestsBase
     private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
 
     private readonly bool emitOverflowAttribute;
+    private readonly bool shouldReclaimUnusedMetricPoints;
     private readonly AggregatorStore aggregatorStore;
 
-    protected AggregatorTestsBase(bool emitOverflowAttribute)
+    protected AggregatorTestsBase(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
     {
-        if (emitOverflowAttribute)
-        {
-            this.emitOverflowAttribute = emitOverflowAttribute;
-        }
+        this.emitOverflowAttribute = emitOverflowAttribute;
+        this.shouldReclaimUnusedMetricPoints = shouldReclaimUnusedMetricPoints;
 
-        this.aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, emitOverflowAttribute);
+        this.aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, emitOverflowAttribute, this.shouldReclaimUnusedMetricPoints);
     }
 
     [Fact]
@@ -239,47 +225,52 @@ public abstract class AggregatorTestsBase
     }
 
     [Theory]
-    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration")]
-    [InlineData("Microsoft.AspNetCore.Http.Connections", "signalr.server.connection.duration")]
-    [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request_lease.duration")]
-    [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue")]
-    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration")]
-    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration")]
-    [InlineData("OpenTelemetry.Instrumentation.AspNetCore", "http.server.duration")]
-    [InlineData("OpenTelemetry.Instrumentation.Http", "http.client.duration")]
-    [InlineData("System.Net.Http", "http.client.connection.duration")]
-    [InlineData("System.Net.Http", "http.client.request.duration")]
-    [InlineData("System.Net.Http", "http.client.request.time_in_queue")]
-    [InlineData("System.Net.NameResolution", "dns.lookups.duration")]
-    [InlineData("General.App", "simple.alternative.counter")]
-    public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName)
+    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration", "ms", KnownHistogramBuckets.Default)]
+    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration", "By", KnownHistogramBuckets.Default)]
+    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration", null, KnownHistogramBuckets.Default)]
+    [InlineData("Microsoft.AspNetCore.Http.Connections", "signalr.server.connection.duration", "s", KnownHistogramBuckets.DefaultLongSeconds)]
+    [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request_lease.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration", "s", KnownHistogramBuckets.DefaultLongSeconds)]
+    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("OpenTelemetry.Instrumentation.AspNet", "http.server.duration", "ms", KnownHistogramBuckets.Default)]
+    [InlineData("OpenTelemetry.Instrumentation.AspNet", "http.server.request.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("OpenTelemetry.Instrumentation.AspNetCore", "http.server.duration", "ms", KnownHistogramBuckets.Default)]
+    [InlineData("OpenTelemetry.Instrumentation.Http", "http.client.duration", "ms", KnownHistogramBuckets.Default)]
+    [InlineData("System.Net.Http", "http.client.connection.duration", "s", KnownHistogramBuckets.DefaultLongSeconds)]
+    [InlineData("System.Net.Http", "http.client.request.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("System.Net.Http", "http.client.request.time_in_queue", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("System.Net.NameResolution", "dns.lookup.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("General.App", "simple.alternative.counter", "s", KnownHistogramBuckets.Default)]
+    public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName, string unit, KnownHistogramBuckets expectedHistogramBuckets)
     {
-        RunTest(meterName, instrumentName, unit: "s");
-        RunTest(meterName, instrumentName, unit: "ms");
-        RunTest(meterName, instrumentName, unit: "By");
-        RunTest(meterName, instrumentName, unit: null);
+        using var meter = new Meter(meterName);
 
-        void RunTest(string meterName, string instrumentName, string unit)
+        var instrument = meter.CreateHistogram<double>(instrumentName, unit);
+
+        var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration: null);
+
+        AggregatorStore aggregatorStore = new(
+            metricStreamIdentity,
+            AggregationType.Histogram,
+            AggregationTemporality.Cumulative,
+            maxMetricPoints: 1024,
+            this.emitOverflowAttribute,
+            this.shouldReclaimUnusedMetricPoints);
+
+        KnownHistogramBuckets actualHistogramBounds = KnownHistogramBuckets.Default;
+        if (aggregatorStore.HistogramBounds == Metric.DefaultHistogramBoundsShortSeconds)
         {
-            using var meter = new Meter(meterName);
-
-            var instrument = meter.CreateHistogram<double>(instrumentName, unit);
-
-            var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration: null);
-
-            AggregatorStore aggregatorStore = new(
-                metricStreamIdentity,
-                AggregationType.Histogram,
-                AggregationTemporality.Cumulative,
-                maxMetricPoints: 1024,
-                this.emitOverflowAttribute);
-
-            Assert.NotNull(aggregatorStore.HistogramBounds);
-            Assert.Equal(
-                unit == "s" && Metric.DefaultHistogramBoundMappings.Contains((meterName, instrumentName)) ?
-                    Metric.DefaultHistogramBoundsSeconds : Metric.DefaultHistogramBounds,
-                aggregatorStore.HistogramBounds);
+            actualHistogramBounds = KnownHistogramBuckets.DefaultShortSeconds;
         }
+        else if (aggregatorStore.HistogramBounds == Metric.DefaultHistogramBoundsLongSeconds)
+        {
+            actualHistogramBounds = KnownHistogramBuckets.DefaultLongSeconds;
+        }
+
+        Assert.NotNull(aggregatorStore.HistogramBounds);
+        Assert.Equal(expectedHistogramBuckets, actualHistogramBounds);
     }
 
     internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
@@ -343,6 +334,7 @@ public abstract class AggregatorTestsBase
             aggregationTemporality,
             maxMetricPoints: 1024,
             this.emitOverflowAttribute,
+            this.shouldReclaimUnusedMetricPoints,
             exemplarsEnabled ? new AlwaysOnExemplarFilter() : null);
 
         var expectedHistogram = new Base2ExponentialBucketHistogram();
@@ -451,7 +443,8 @@ public abstract class AggregatorTestsBase
             AggregationType.Base2ExponentialHistogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
-            this.emitOverflowAttribute);
+            this.emitOverflowAttribute,
+            this.shouldReclaimUnusedMetricPoints);
 
         aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object>>());
 
@@ -527,7 +520,7 @@ public abstract class AggregatorTestsBase
 public class AggregatorTests : AggregatorTestsBase
 {
     public AggregatorTests()
-        : base(false)
+        : base(emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: false)
     {
     }
 }
@@ -535,7 +528,23 @@ public class AggregatorTests : AggregatorTestsBase
 public class AggregatorTestsWithOverflowAttribute : AggregatorTestsBase
 {
     public AggregatorTestsWithOverflowAttribute()
-        : base(true)
+        : base(emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: false)
+    {
+    }
+}
+
+public class AggregatorTestsWithReclaimAttribute : AggregatorTestsBase
+{
+    public AggregatorTestsWithReclaimAttribute()
+        : base(emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: true)
+    {
+    }
+}
+
+public class AggregatorTestsWithBothReclaimAndOverflowAttributes : AggregatorTestsBase
+{
+    public AggregatorTestsWithBothReclaimAndOverflowAttributes()
+        : base(emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: true)
     {
     }
 }

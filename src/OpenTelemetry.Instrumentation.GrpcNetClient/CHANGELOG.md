@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+* **Breaking Change** :
+  [SuppressDownstreamInstrumentation](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.GrpcNetClient#suppressdownstreaminstrumentation)
+  option will no longer be supported when used with certain versions of
+  `OpenTelemetry.Instrumentation.Http` package. Check out this
+  [issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092)
+  for details and workaround.
+  ([#5077](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5077))
+
+## 1.6.0-beta.3
+
+Released 2023-Nov-17
+
+## 1.6.0-beta.2
+
+Released 2023-Oct-26
+
 ## 1.5.1-beta.1
 
 Released 2023-Jul-20

@@ -1,18 +1,5 @@
-// <copyright file="OtlpExporterOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Reflection;
@@ -199,11 +186,16 @@ public class OtlpExporterOptions
 
     internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
     {
-        services.RegisterOptionsFactory(
-            (sp, configuration, name) => new OtlpExporterOptions(
-                configuration,
-                sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
+        services.RegisterOptionsFactory(CreateOtlpExporterOptions);
     }
+
+    internal static OtlpExporterOptions CreateOtlpExporterOptions(
+        IServiceProvider serviceProvider,
+        IConfiguration configuration,
+        string name)
+        => new(
+            configuration,
+            serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name));
 
     private static string GetUserAgentString()
     {

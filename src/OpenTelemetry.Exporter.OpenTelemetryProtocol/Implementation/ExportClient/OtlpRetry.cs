@@ -1,18 +1,5 @@
-// <copyright file="OtlpRetry.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Net;
@@ -67,12 +54,12 @@ internal static class OtlpRetry
 
     public static bool TryGetHttpRetryResult(HttpStatusCode statusCode, DateTime? deadline, HttpResponseHeaders responseHeaders, int retryDelayMilliseconds, out RetryResult retryResult)
     {
-        return OtlpRetry.TryGetRetryResult(statusCode, IsHttpStatusCodeRetryable, deadline, responseHeaders, TryGetHttpRetryDelay, retryDelayMilliseconds, out retryResult);
+        return TryGetRetryResult(statusCode, IsHttpStatusCodeRetryable, deadline, responseHeaders, TryGetHttpRetryDelay, retryDelayMilliseconds, out retryResult);
     }
 
     public static bool TryGetGrpcRetryResult(StatusCode statusCode, DateTime? deadline, Metadata trailers, int retryDelayMilliseconds, out RetryResult retryResult)
     {
-        return OtlpRetry.TryGetRetryResult(statusCode, IsGrpcStatusCodeRetryable, deadline, trailers, TryGetGrpcRetryDelay, retryDelayMilliseconds, out retryResult);
+        return TryGetRetryResult(statusCode, IsGrpcStatusCodeRetryable, deadline, trailers, TryGetGrpcRetryDelay, retryDelayMilliseconds, out retryResult);
     }
 
     private static bool TryGetRetryResult<TStatusCode, TCarrier>(TStatusCode statusCode, Func<TStatusCode, bool, bool> isRetryable, DateTime? deadline, TCarrier carrier, Func<TStatusCode, TCarrier, TimeSpan?> throttleGetter, int nextRetryDelayMilliseconds, out RetryResult retryResult)

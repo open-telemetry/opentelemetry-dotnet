@@ -1,18 +1,5 @@
-// <copyright file="LoggerProviderBuilderExtensionsTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 #nullable enable
 
@@ -33,6 +20,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
             .AddInstrumentation<CustomInstrumentation>()
             .AddInstrumentation((sp, provider) => new CustomInstrumentation() { Provider = provider })
             .AddInstrumentation(new CustomInstrumentation())
+            .AddInstrumentation(() => (object?)null)
             .Build() as LoggerProviderSdk)
         {
             Assert.NotNull(provider);
@@ -178,6 +166,14 @@ public sealed class LoggerProviderBuilderExtensionsTests
         }
     }
 
+    [Fact]
+    public void LoggerProviderBuilderCustomImplementationBuildTest()
+    {
+        var builder = new CustomLoggerProviderBuilder();
+
+        Assert.Throws<NotSupportedException>(() => builder.Build());
+    }
+
     private sealed class CustomInstrumentation : IDisposable
     {
         public bool Disposed;
@@ -206,6 +202,14 @@ public sealed class LoggerProviderBuilderExtensionsTests
         public override ExportResult Export(in Batch<LogRecord> batch)
         {
             return ExportResult.Success;
+        }
+    }
+
+    private sealed class CustomLoggerProviderBuilder : LoggerProviderBuilder
+    {
+        public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+        {
+            throw new NotImplementedException();
         }
     }
 }

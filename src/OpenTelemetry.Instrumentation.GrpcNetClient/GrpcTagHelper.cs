@@ -1,18 +1,5 @@
-// <copyright file="GrpcTagHelper.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -67,7 +54,7 @@ internal static class GrpcTagHelper
 
     /// <summary>
     /// Helper method that populates span properties from RPC status code according
-    /// to https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#status.
+    /// to https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/grpc.md#grpc-attributes.
     /// </summary>
     /// <param name="statusCode">RPC status code.</param>
     /// <returns>Resolved span <see cref="Status"/> for the Grpc status code.</returns>

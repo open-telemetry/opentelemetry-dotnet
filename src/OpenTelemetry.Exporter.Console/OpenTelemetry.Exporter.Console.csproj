@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(DefaultTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForLibraries)</TargetFrameworks>
     <Description>Console exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);Console;distributed-tracing</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
@@ -32,6 +32,7 @@
     <!-- Note: When '$(ExposeExperimentalFeatures)' == 'false' these links are
     NOT required because this project sees API + SDK internals -->
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticDefinitions.cs" Link="Includes\DiagnosticDefinitions.cs" RequiresExposedExperimentalFeatures="true" />
     <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" RequiresExposedExperimentalFeatures="true" />
     <Compile Include="$(RepoRoot)\src\Shared\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" RequiresExposedExperimentalFeatures="true" />
   </ItemGroup>

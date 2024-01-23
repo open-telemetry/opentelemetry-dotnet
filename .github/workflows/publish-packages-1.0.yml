@@ -5,7 +5,7 @@
 ################### IMPORTANT ###################
 #################################################
 
-name: Pack and publish to MyGet
+name: Build, pack, and publish to MyGet
 
 on:
   release:
@@ -14,32 +14,32 @@ on:
     - cron: '0 0 * * *' # once in a day at 00:00
 
 jobs:
-  build-pack:
+  build-pack-publish:
     runs-on: windows-latest
-
-    env:
-      RunningDotNetPack: true
 
     steps:
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # fetching all
+        # Note: By default GitHub only fetches 1 commit. MinVer needs to find
+        # the version tag which is typically NOT on the first commit so we
+        # retrieve them all.
+        fetch-depth: 0
         ref: ${{ github.ref || 'main' }}
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
 
-    - name: Install dependencies
-      run: dotnet restore OpenTelemetry.proj
+    - name: dotnet restore
+      run: dotnet restore OpenTelemetry.proj -p:RunningDotNetPack=true
 
     - name: dotnet build
-      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }}
+      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
 
     - name: dotnet pack
-      run: dotnet pack OpenTelemetry.proj --configuration Release --no-build
+      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build
 
     - name: Publish Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ github.ref_name }}-packages
         path: '**/bin/**/*.*nupkg'

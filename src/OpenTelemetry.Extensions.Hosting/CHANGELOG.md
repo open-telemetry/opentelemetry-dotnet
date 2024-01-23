@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## 1.7.0
+
+Released 2023-Dec-08
+
+## 1.7.0-rc.1
+
+Released 2023-Nov-29
+
+* Updated `Microsoft.Extensions.Hosting.Abstractions` package
+  version to `8.0.0`.
+  ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
+
+* The `OpenTelemetryBuilder.WithMetrics` method will now register an
+  `IMetricsListener` named 'OpenTelemetry' into the `IServiceCollection` to
+  enable metric management via the new `Microsoft.Extensions.Diagnostics` .NET 8
+  APIs.
+  ([#4958](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4958))
+
+* The `OpenTelemetryBuilder.WithLogging` experimental API method will now
+  register an `ILoggerProvider` named 'OpenTelemetry' into the
+  `IServiceCollection` to enable `ILoggerFactory` integration.
+  ([#5072](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5072))
+
+## 1.7.0-alpha.1
+
+Released 2023-Oct-16
+
+* Changed the behavior of the `OpenTelemetryBuilder.AddOpenTelemetry` extension
+  to INSERT OpenTelemetry services at the beginning of the `IServiceCollection`
+  in an attempt to provide a better experience for end users capturing telemetry
+  in hosted services. Note that this does not guarantee that OpenTelemetry
+  services will be initialized while other hosted services start, so it is
+  possible to miss telemetry until OpenTelemetry services are fully initialized.
+  ([#4883](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4883))
+
 ## 1.6.0
 
 Released 2023-Sep-05

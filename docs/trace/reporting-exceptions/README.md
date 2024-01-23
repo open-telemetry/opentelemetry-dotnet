@@ -107,7 +107,7 @@ leveraging Activity status. Neither of the approach actually records the
 Exception itself to do more richer debugging. `Activity.RecordException()`
 allows the exception to be stored in the Activity as ActivityEvent as per
 [OpenTelemetry
-convention](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md),
+convention](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-spans.md),
 as shown below:
 
 ```csharp
@@ -142,7 +142,7 @@ It might be useful to automatically capture the unhandled exceptions, travel
 through the unfinished activities and export them for troubleshooting. Here goes
 one possible way of doing this:
 
-> **Warning**
+> [!CAUTION]
 > Use `AppDomain.UnhandledException` with caution. A throw in the
 handler puts the process into an unrecoverable state.
 

@@ -1,18 +1,5 @@
-// <copyright file="HistogramBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -22,35 +9,35 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
 Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK=7.0.203
-  [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-|                      Method | BoundCount |      Mean |     Error |    StdDev |    Median | Allocated |
+| Method                      | BoundCount | Mean      | Error     | StdDev    | Median    | Allocated |
 |---------------------------- |----------- |----------:|----------:|----------:|----------:|----------:|
-|            HistogramHotPath |         10 |  50.11 ns |  0.219 ns |  0.204 ns |  50.06 ns |         - |
-|  HistogramWith1LabelHotPath |         10 | 108.52 ns |  0.559 ns |  0.523 ns | 108.44 ns |         - |
-| HistogramWith3LabelsHotPath |         10 | 212.31 ns |  1.873 ns |  1.661 ns | 212.32 ns |         - |
-| HistogramWith5LabelsHotPath |         10 | 299.97 ns |  5.162 ns |  5.737 ns | 298.60 ns |         - |
-| HistogramWith7LabelsHotPath |         10 | 349.53 ns |  2.115 ns |  1.875 ns | 349.62 ns |         - |
-|            HistogramHotPath |         49 |  61.34 ns |  0.171 ns |  0.160 ns |  61.35 ns |         - |
-|  HistogramWith1LabelHotPath |         49 | 118.64 ns |  1.539 ns |  1.285 ns | 118.09 ns |         - |
-| HistogramWith3LabelsHotPath |         49 | 226.70 ns |  1.653 ns |  1.465 ns | 226.62 ns |         - |
-| HistogramWith5LabelsHotPath |         49 | 314.40 ns |  5.185 ns |  4.850 ns | 313.96 ns |         - |
-| HistogramWith7LabelsHotPath |         49 | 375.37 ns |  5.796 ns |  5.138 ns | 373.76 ns |         - |
-|            HistogramHotPath |         50 |  60.08 ns |  0.062 ns |  0.049 ns |  60.08 ns |         - |
-|  HistogramWith1LabelHotPath |         50 | 118.16 ns |  0.640 ns |  0.568 ns | 118.03 ns |         - |
-| HistogramWith3LabelsHotPath |         50 | 258.96 ns |  3.710 ns |  3.098 ns | 259.70 ns |         - |
-| HistogramWith5LabelsHotPath |         50 | 353.81 ns |  5.646 ns |  5.281 ns | 351.81 ns |         - |
-| HistogramWith7LabelsHotPath |         50 | 406.75 ns |  6.491 ns |  6.072 ns | 406.01 ns |         - |
-|            HistogramHotPath |       1000 |  86.82 ns |  0.543 ns |  0.481 ns |  86.68 ns |         - |
-|  HistogramWith1LabelHotPath |       1000 | 147.04 ns |  0.535 ns |  0.447 ns | 146.88 ns |         - |
-| HistogramWith3LabelsHotPath |       1000 | 619.11 ns | 10.943 ns | 14.608 ns | 617.10 ns |         - |
-| HistogramWith5LabelsHotPath |       1000 | 759.64 ns | 22.509 ns | 63.855 ns | 737.58 ns |         - |
-| HistogramWith7LabelsHotPath |       1000 | 760.85 ns |  6.220 ns |  5.514 ns | 761.68 ns |         - |
+| HistogramHotPath            | 10         |  38.36 ns |  0.401 ns |  0.375 ns |  38.28 ns |         - |
+| HistogramWith1LabelHotPath  | 10         |  78.66 ns |  0.258 ns |  0.241 ns |  78.67 ns |         - |
+| HistogramWith3LabelsHotPath | 10         | 162.22 ns |  0.946 ns |  0.839 ns | 162.03 ns |         - |
+| HistogramWith5LabelsHotPath | 10         | 230.90 ns |  1.262 ns |  1.181 ns | 231.12 ns |         - |
+| HistogramWith7LabelsHotPath | 10         | 288.06 ns |  1.362 ns |  1.208 ns | 288.01 ns |         - |
+| HistogramHotPath            | 49         |  48.23 ns |  0.137 ns |  0.128 ns |  48.22 ns |         - |
+| HistogramWith1LabelHotPath  | 49         |  90.52 ns |  0.404 ns |  0.358 ns |  90.47 ns |         - |
+| HistogramWith3LabelsHotPath | 49         | 170.17 ns |  0.801 ns |  0.710 ns | 170.07 ns |         - |
+| HistogramWith5LabelsHotPath | 49         | 244.93 ns |  3.935 ns |  3.681 ns | 244.85 ns |         - |
+| HistogramWith7LabelsHotPath | 49         | 308.28 ns |  5.927 ns |  5.544 ns | 306.44 ns |         - |
+| HistogramHotPath            | 50         |  49.22 ns |  0.280 ns |  0.249 ns |  49.25 ns |         - |
+| HistogramWith1LabelHotPath  | 50         |  91.70 ns |  0.589 ns |  0.492 ns |  91.68 ns |         - |
+| HistogramWith3LabelsHotPath | 50         | 213.74 ns |  4.258 ns |  5.537 ns | 212.26 ns |         - |
+| HistogramWith5LabelsHotPath | 50         | 299.59 ns |  5.940 ns | 13.408 ns | 296.23 ns |         - |
+| HistogramWith7LabelsHotPath | 50         | 342.75 ns |  5.066 ns |  4.491 ns | 341.84 ns |         - |
+| HistogramHotPath            | 1000       |  72.04 ns |  0.723 ns |  0.603 ns |  71.94 ns |         - |
+| HistogramWith1LabelHotPath  | 1000       | 118.73 ns |  2.130 ns |  1.992 ns | 117.98 ns |         - |
+| HistogramWith3LabelsHotPath | 1000       | 545.71 ns | 10.644 ns | 12.258 ns | 543.55 ns |         - |
+| HistogramWith5LabelsHotPath | 1000       | 661.81 ns | 14.837 ns | 42.091 ns | 651.99 ns |         - |
+| HistogramWith7LabelsHotPath | 1000       | 709.50 ns | 14.123 ns | 39.368 ns | 698.27 ns |         - |
 */
 
 namespace Benchmarks.Metrics;
@@ -61,7 +48,7 @@ public class HistogramBenchmarks
     private readonly Random random = new();
     private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
     private Histogram<long> histogram;
-    private MeterProvider provider;
+    private MeterProvider meterProvider;
     private Meter meter;
     private double[] bounds;
 
@@ -84,7 +71,7 @@ public class HistogramBenchmarks
 
         var exportedItems = new List<Metric>();
 
-        this.provider = Sdk.CreateMeterProviderBuilder()
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -98,7 +85,7 @@ public class HistogramBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.provider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     [Benchmark]

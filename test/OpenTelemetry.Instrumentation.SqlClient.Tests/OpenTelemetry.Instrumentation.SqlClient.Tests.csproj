@@ -1,11 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry SqlClient instrumentations</Description>
-    <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">net7.0;net6.0</TargetFrameworks>
-    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == '' and $(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
-    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != ''">$(TARGET_FRAMEWORK)</TargetFrameworks>
-
+    <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
   </PropertyGroup>
@@ -21,7 +17,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Moq" />
     <PackageReference Include="Testcontainers.MsSql" />
     <PackageReference Include="Testcontainers.SqlEdge" />
     <PackageReference Include="xunit" />

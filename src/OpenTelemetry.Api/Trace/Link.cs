@@ -1,18 +1,7 @@
-// <copyright file="Link.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
+
+#nullable enable
 
 using System.Diagnostics;
 
@@ -30,8 +19,8 @@ public readonly struct Link : IEquatable<Link>
     /// </summary>
     /// <param name="spanContext">Span context of a linked span.</param>
     public Link(in SpanContext spanContext)
+        : this(in spanContext, attributes: null)
     {
-        this.ActivityLink = new ActivityLink(spanContext.ActivityContext);
     }
 
     /// <summary>
@@ -39,7 +28,7 @@ public readonly struct Link : IEquatable<Link>
     /// </summary>
     /// <param name="spanContext">Span context of a linked span.</param>
     /// <param name="attributes">Link attributes.</param>
-    public Link(in SpanContext spanContext, SpanAttributes attributes)
+    public Link(in SpanContext spanContext, SpanAttributes? attributes)
     {
         this.ActivityLink = new ActivityLink(spanContext.ActivityContext, attributes?.Attributes);
     }
@@ -48,53 +37,39 @@ public readonly struct Link : IEquatable<Link>
     /// Gets the span context of a linked span.
     /// </summary>
     public SpanContext Context
-    {
-        get
-        {
-            return new SpanContext(this.ActivityLink.Context);
-        }
-    }
+        => new(this.ActivityLink.Context);
 
     /// <summary>
     /// Gets the collection of attributes associated with the link.
     /// </summary>
-    public IEnumerable<KeyValuePair<string, object>> Attributes
-    {
-        get
-        {
-            return this.ActivityLink.Tags;
-        }
-    }
+    public IEnumerable<KeyValuePair<string, object?>>? Attributes
+        => this.ActivityLink.Tags;
 
     /// <summary>
     /// Compare two <see cref="Link"/> for equality.
     /// </summary>
     /// <param name="link1">First link to compare.</param>
     /// <param name="link2">Second link to compare.</param>
-    public static bool operator ==(Link link1, Link link2) => link1.Equals(link2);
+    public static bool operator ==(Link link1, Link link2)
+        => link1.Equals(link2);
 
     /// <summary>
     /// Compare two <see cref="Link"/> for not equality.
     /// </summary>
     /// <param name="link1">First link to compare.</param>
     /// <param name="link2">Second link to compare.</param>
-    public static bool operator !=(Link link1, Link link2) => !link1.Equals(link2);
+    public static bool operator !=(Link link1, Link link2)
+        => !link1.Equals(link2);
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        return (obj is Link link) && this.ActivityLink.Equals(link.ActivityLink);
-    }
+    public override bool Equals(object? obj)
+        => obj is Link link && this.ActivityLink.Equals(link.ActivityLink);
 
     /// <inheritdoc />
     public override int GetHashCode()
-    {
-        return this.ActivityLink.GetHashCode();
-    }
+        => this.ActivityLink.GetHashCode();
 
     /// <inheritdoc/>
     public bool Equals(Link other)
-    {
-        return this.ActivityLink.Equals(other.ActivityLink);
-    }
+        => this.ActivityLink.Equals(other.ActivityLink);
 }

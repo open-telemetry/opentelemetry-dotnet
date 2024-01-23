@@ -1,18 +1,5 @@
-// <copyright file="ExemplarBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -22,21 +9,21 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
 Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK=7.0.203
-  [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-|                    Method | ExemplarFilter |     Mean |   Error |  StdDev | Allocated |
+| Method                    | ExemplarFilter | Mean     | Error   | StdDev  | Allocated |
 |-------------------------- |--------------- |---------:|--------:|--------:|----------:|
-|   HistogramNoTagReduction |      AlwaysOff | 315.5 ns | 5.93 ns | 5.55 ns |         - |
-| HistogramWithTagReduction |      AlwaysOff | 296.4 ns | 0.95 ns | 0.89 ns |         - |
-|   HistogramNoTagReduction |       AlwaysOn | 366.5 ns | 6.96 ns | 7.74 ns |         - |
-| HistogramWithTagReduction |       AlwaysOn | 397.1 ns | 4.09 ns | 3.82 ns |         - |
-|   HistogramNoTagReduction |  HighValueOnly | 364.8 ns | 2.73 ns | 2.28 ns |         - |
-| HistogramWithTagReduction |  HighValueOnly | 391.9 ns | 4.38 ns | 4.10 ns |         - |
+| HistogramNoTagReduction   | AlwaysOff      | 274.2 ns | 2.94 ns | 2.60 ns |         - |
+| HistogramWithTagReduction | AlwaysOff      | 241.6 ns | 1.78 ns | 1.58 ns |         - |
+| HistogramNoTagReduction   | AlwaysOn       | 300.9 ns | 3.10 ns | 2.90 ns |         - |
+| HistogramWithTagReduction | AlwaysOn       | 312.9 ns | 4.81 ns | 4.50 ns |         - |
+| HistogramNoTagReduction   | HighValueOnly  | 262.8 ns | 2.24 ns | 1.99 ns |         - |
+| HistogramWithTagReduction | HighValueOnly  | 258.3 ns | 5.12 ns | 5.03 ns |         - |
 */
 
 namespace Benchmarks.Metrics;
@@ -49,19 +36,19 @@ public class ExemplarBenchmarks
 
     private Histogram<long> histogramWithTagReduction;
 
-    private MeterProvider provider;
+    private MeterProvider meterProvider;
     private Meter meter;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1602:Enumeration items should be documented", Justification = "Test only.")]
-    public enum ExemplarFilterTouse
+    public enum ExemplarFilterToUse
     {
         AlwaysOff,
         AlwaysOn,
         HighValueOnly,
     }
 
-    [Params(ExemplarFilterTouse.AlwaysOn, ExemplarFilterTouse.AlwaysOff, ExemplarFilterTouse.HighValueOnly)]
-    public ExemplarFilterTouse ExemplarFilter { get; set; }
+    [Params(ExemplarFilterToUse.AlwaysOn, ExemplarFilterToUse.AlwaysOff, ExemplarFilterToUse.HighValueOnly)]
+    public ExemplarFilterToUse ExemplarFilter { get; set; }
 
     [GlobalSetup]
     public void Setup()
@@ -72,16 +59,16 @@ public class ExemplarBenchmarks
         var exportedItems = new List<Metric>();
 
         ExemplarFilter exemplarFilter = new AlwaysOffExemplarFilter();
-        if (this.ExemplarFilter == ExemplarFilterTouse.AlwaysOn)
+        if (this.ExemplarFilter == ExemplarFilterToUse.AlwaysOn)
         {
             exemplarFilter = new AlwaysOnExemplarFilter();
         }
-        else if (this.ExemplarFilter == ExemplarFilterTouse.HighValueOnly)
+        else if (this.ExemplarFilter == ExemplarFilterToUse.HighValueOnly)
         {
             exemplarFilter = new HighValueExemplarFilter();
         }
 
-        this.provider = Sdk.CreateMeterProviderBuilder()
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name)
             .SetExemplarFilter(exemplarFilter)
             .AddView("HistogramWithTagReduction", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
@@ -96,7 +83,7 @@ public class ExemplarBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.provider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     [Benchmark]

@@ -1,18 +1,5 @@
-// <copyright file="W3CTraceContextTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Text;
@@ -35,7 +22,7 @@ public class W3CTraceContextTests : IDisposable
      */
     private const string W3cTraceContextEnvVarName = "OTEL_W3CTRACECONTEXT";
     private static readonly Version AspNetCoreHostingVersion = typeof(Microsoft.AspNetCore.Hosting.Builder.IApplicationBuilderFactory).Assembly.GetName().Version;
-    private readonly HttpClient httpClient = new HttpClient();
+    private readonly HttpClient httpClient = new();
     private readonly ITestOutputHelper output;
 
     public W3CTraceContextTests(ITestOutputHelper output)
@@ -57,10 +44,7 @@ public class W3CTraceContextTests : IDisposable
         var builder = WebApplication.CreateBuilder();
         using var app = builder.Build();
 
-        // disabling due to failing dotnet-format
-        // TODO: investigate why dotnet-format fails.
-#pragma warning disable SA1008 // Opening parenthesis should be spaced correctly
-        app.MapPost("/", async([FromBody] Data[] data) =>
+        app.MapPost("/", async ([FromBody] Data[] data) =>
         {
             var result = string.Empty;
             if (data != null)
@@ -74,7 +58,7 @@ public class W3CTraceContextTests : IDisposable
                             Encoding.UTF8,
                             "application/json"),
                     };
-                    await this.httpClient.SendAsync(request).ConfigureAwait(false);
+                    await this.httpClient.SendAsync(request);
                 }
             }
             else
@@ -84,7 +68,6 @@ public class W3CTraceContextTests : IDisposable
 
             return result;
         });
-#pragma warning restore SA1008 // Opening parenthesis should be spaced correctly
 
         app.RunAsync();
 
@@ -103,11 +86,11 @@ public class W3CTraceContextTests : IDisposable
 
         if (AspNetCoreHostingVersion.Major <= 6)
         {
-            Assert.StartsWith("FAILED (failures=5)", lastLine);
+            Assert.StartsWith("FAILED (failures=3)", lastLine);
         }
         else
         {
-            Assert.StartsWith("FAILED (failures=3)", lastLine);
+            Assert.StartsWith("OK", lastLine);
         }
     }
 

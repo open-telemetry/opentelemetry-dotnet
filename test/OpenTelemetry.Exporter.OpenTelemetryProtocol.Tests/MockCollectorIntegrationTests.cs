@@ -1,18 +1,5 @@
-// <copyright file="MockCollectorIntegrationTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 #if !NETFRAMEWORK
 using System.Diagnostics;
@@ -63,12 +50,12 @@ public sealed class MockCollectorIntegrationTests
                        endpoints.MapGrpcService<MockTraceService>();
                    });
                }))
-           .StartAsync().ConfigureAwait(false);
+           .StartAsync();
 
         var httpClient = new HttpClient() { BaseAddress = new Uri("http://localhost:5050") };
 
         var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}").ConfigureAwait(false);
+        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
 
         var exportResults = new List<ExportResult>();
         var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri("http://localhost:4317") });
@@ -101,7 +88,7 @@ public sealed class MockCollectorIntegrationTests
         Assert.Equal(2, exportResults.Count);
         Assert.Equal(ExportResult.Success, exportResults[1]);
 
-        await host.StopAsync().ConfigureAwait(false);
+        await host.StopAsync();
     }
 
     private class MockCollectorState

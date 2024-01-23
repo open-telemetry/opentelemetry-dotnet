@@ -1,18 +1,7 @@
-// <copyright file="ActivityExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
+
+#nullable enable
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -41,10 +30,11 @@ public static class ActivityExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SetStatus(this Activity activity, Status status)
     {
-        Debug.Assert(activity != null, "Activity should not be null");
-
-        activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
-        activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+        if (activity != null)
+        {
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+        }
     }
 
     /// <summary>
@@ -57,7 +47,8 @@ public static class ActivityExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Status GetStatus(this Activity activity)
     {
-        if (!activity.TryGetStatus(out StatusCode statusCode, out string statusDescription))
+        if (activity == null
+            || !activity.TryGetStatus(out var statusCode, out var statusDescription))
         {
             return Status.Unset;
         }
@@ -66,24 +57,28 @@ public static class ActivityExtensions
     }
 
     /// <summary>
-    /// Adds an activity event containing information from the specified exception.
+    /// Adds an <see cref="ActivityEvent"/>  containing information from the specified exception.
     /// </summary>
     /// <param name="activity">Activity instance.</param>
     /// <param name="ex">Exception to be recorded.</param>
+    /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
+    /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
+    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void RecordException(this Activity activity, Exception ex)
-    {
-        activity?.RecordException(ex, default);
-    }
+    public static void RecordException(this Activity activity, Exception? ex)
+        => RecordException(activity, ex, default);
 
     /// <summary>
-    /// Adds an activity event containing information from the specified exception and additional tags.
+    /// Adds an <see cref="ActivityEvent"/> containing information from the specified exception and additional tags.
     /// </summary>
     /// <param name="activity">Activity instance.</param>
     /// <param name="ex">Exception to be recorded.</param>
     /// <param name="tags">Additional tags to record on the event.</param>
+    /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
+    /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
+    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void RecordException(this Activity activity, Exception ex, in TagList tags)
+    public static void RecordException(this Activity activity, Exception? ex, in TagList tags)
     {
         if (ex == null || activity == null)
         {

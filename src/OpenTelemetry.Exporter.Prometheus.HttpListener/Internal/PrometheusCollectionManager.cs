@@ -1,18 +1,5 @@
-// <copyright file="PrometheusCollectionManager.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Metrics;
@@ -27,6 +14,7 @@ internal sealed class PrometheusCollectionManager
     private readonly int scrapeResponseCacheDurationMilliseconds;
     private readonly Func<Batch<Metric>, ExportResult> onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
+    private readonly HashSet<string> scopes;
     private int metricsCacheCount;
     private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private int globalLockState;
@@ -42,12 +30,13 @@ internal sealed class PrometheusCollectionManager
         this.scrapeResponseCacheDurationMilliseconds = this.exporter.ScrapeResponseCacheDurationMilliseconds;
         this.onCollectRef = this.OnCollect;
         this.metricsCache = new Dictionary<Metric, PrometheusMetric>();
+        this.scopes = new HashSet<string>();
     }
 
 #if NET6_0_OR_GREATER
-    public ValueTask<CollectionResponse> EnterCollect()
+    public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested)
 #else
-    public Task<CollectionResponse> EnterCollect()
+    public Task<CollectionResponse> EnterCollect(bool openMetricsRequested)
 #endif
     {
         this.EnterGlobalLock();
@@ -93,7 +82,7 @@ internal sealed class PrometheusCollectionManager
         this.ExitGlobalLock();
 
         CollectionResponse response;
-        var result = this.ExecuteCollect();
+        var result = this.ExecuteCollect(openMetricsRequested);
         if (result)
         {
             this.previousDataViewGeneratedAtUtc = DateTime.UtcNow;
@@ -168,9 +157,10 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool ExecuteCollect()
+    private bool ExecuteCollect(bool openMetricsRequested)
     {
         this.exporter.OnExport = this.onCollectRef;
+        this.exporter.OpenMetricsRequested = openMetricsRequested;
         var result = this.exporter.Collect(Timeout.Infinite);
         this.exporter.OnExport = null;
         return result;
@@ -182,6 +172,40 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
+            if (this.exporter.OpenMetricsRequested)
+            {
+                this.scopes.Clear();
+
+                foreach (var metric in metrics)
+                {
+                    if (PrometheusSerializer.CanWriteMetric(metric))
+                    {
+                        if (this.scopes.Add(metric.MeterName))
+                        {
+                            try
+                            {
+                                cursor = PrometheusSerializer.WriteScopeInfo(this.buffer, cursor, metric.MeterName);
+
+                                break;
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                if (!this.IncreaseBufferSize())
+                                {
+                                    // there are two cases we might run into the following condition:
+                                    // 1. we have many metrics to be exported - in this case we probably want
+                                    //    to put some upper limit and allow the user to configure it.
+                                    // 2. we got an IndexOutOfRangeException which was triggered by some other
+                                    //    code instead of the buffer[cursor++] - in this case we should give up
+                                    //    at certain point rather than allocating like crazy.
+                                    throw;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             foreach (var metric in metrics)
             {
                 if (!PrometheusSerializer.CanWriteMetric(metric))
@@ -193,19 +217,19 @@ internal sealed class PrometheusCollectionManager
                 {
                     try
                     {
-                        cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric));
+                        cursor = PrometheusSerializer.WriteMetric(
+                            this.buffer,
+                            cursor,
+                            metric,
+                            this.GetPrometheusMetric(metric),
+                            this.exporter.OpenMetricsRequested);
+
                         break;
                     }
                     catch (IndexOutOfRangeException)
                     {
                         if (!this.IncreaseBufferSize())
                         {
-                            // there are two cases we might run into the following condition:
-                            // 1. we have many metrics to be exported - in this case we probably want
-                            //    to put some upper limit and allow the user to configure it.
-                            // 2. we got an IndexOutOfRangeException which was triggered by some other
-                            //    code instead of the buffer[cursor++] - in this case we should give up
-                            //    at certain point rather than allocating like crazy.
                             throw;
                         }
                     }

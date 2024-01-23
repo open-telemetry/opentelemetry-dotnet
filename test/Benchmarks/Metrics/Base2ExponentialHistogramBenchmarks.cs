@@ -1,18 +1,5 @@
-// <copyright file="Base2ExponentialHistogramBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -22,20 +9,20 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
 Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK=7.0.203
-  [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-|                      Method |      Mean |    Error |   StdDev | Allocated |
+| Method                      | Mean      | Error    | StdDev   | Allocated |
 |---------------------------- |----------:|---------:|---------:|----------:|
-|            HistogramHotPath |  54.78 ns | 0.907 ns | 0.848 ns |         - |
-|  HistogramWith1LabelHotPath | 115.37 ns | 0.388 ns | 0.363 ns |         - |
-| HistogramWith3LabelsHotPath | 228.03 ns | 3.767 ns | 3.146 ns |         - |
-| HistogramWith5LabelsHotPath | 316.60 ns | 5.980 ns | 9.311 ns |         - |
-| HistogramWith7LabelsHotPath | 366.86 ns | 2.694 ns | 3.596 ns |         - |
+| HistogramHotPath            |  42.27 ns | 0.298 ns | 0.279 ns |         - |
+| HistogramWith1LabelHotPath  |  88.90 ns | 1.103 ns | 1.032 ns |         - |
+| HistogramWith3LabelsHotPath | 166.95 ns | 1.759 ns | 1.559 ns |         - |
+| HistogramWith5LabelsHotPath | 248.19 ns | 2.523 ns | 2.237 ns |         - |
+| HistogramWith7LabelsHotPath | 310.95 ns | 5.627 ns | 4.988 ns |         - |
 */
 
 namespace Benchmarks.Metrics;
@@ -46,7 +33,7 @@ public class Base2ExponentialHistogramBenchmarks
     private readonly Random random = new();
     private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
     private Histogram<long> histogram;
-    private MeterProvider provider;
+    private MeterProvider meterProvider;
     private Meter meter;
 
     [GlobalSetup]
@@ -57,7 +44,7 @@ public class Base2ExponentialHistogramBenchmarks
 
         var exportedItems = new List<Metric>();
 
-        this.provider = Sdk.CreateMeterProviderBuilder()
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -71,7 +58,7 @@ public class Base2ExponentialHistogramBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.provider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     [Benchmark]

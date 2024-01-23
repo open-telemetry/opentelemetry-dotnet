@@ -51,9 +51,12 @@ Here are the [instrumentation
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library):
 
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-* [Grpc.Net.Client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
-* [HTTP clients](./src/OpenTelemetry.Instrumentation.Http/README.md)
-* [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
+* gRPC client:
+  [Grpc.Net.Client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
+* HTTP clients: [System.Net.Http.HttpClient and
+  System.Net.HttpWebRequest](./src/OpenTelemetry.Instrumentation.Http/README.md)
+* SQL clients: [Microsoft.Data.SqlClient and
+  System.Data.SqlClient](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 Here are the [exporter
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#exporter-library):
@@ -98,7 +101,7 @@ extension scenarios:
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
 
-We meet weekly on Tuesdays, and the time of the meeting alternates between 11AM
+We meet weekly on Tuesdays, and the time of the meeting alternates between 9AM
 PT and 4PM PT. The meeting is subject to change depending on contributors'
 availability. Check the [OpenTelemetry community
 calendar](https://calendar.google.com/calendar/embed?src=google.com_b79e3e90j7bbsa2n2p5an5lf60%40group.calendar.google.com)
@@ -123,6 +126,11 @@ If you have trouble accessing the doc, please get in touch on
 * [Reiley Yang](https://github.com/reyang), Microsoft
 * [Vishwesh Bankwar](https://github.com/vishweshbankwar), Microsoft
 
+[Triagers](https://github.com/open-telemetry/community/blob/main/community-membership.md#triager)
+([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
+
+* [Martin Thwaites](https://github.com/martinjt), Honeycomb
+
 [Emeritus
 Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):
 
@@ -141,20 +149,21 @@ Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/ma
 
 ## Release Schedule
 
-Only the [core components](./VERSIONING.md#core-components) of the repo have
-released a stable version. Components which are marked
-[pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
-are still work in progress and can undergo many breaking changes before stable
-release.
+See the [project
+milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
+for details on upcoming releases. The dates and features described in issues and
+milestones are estimates, and subject to change.
 
 See the [release
 notes](https://github.com/open-telemetry/opentelemetry-dotnet/releases) for
 existing releases.
 
-See the [project
-milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
-for details on upcoming releases. The dates and features described in issues and
-milestones are estimates, and subject to change.
+> [!CAUTION]
+> Certain components, marked as
+[pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
+are still work in progress and can undergo breaking changes before stable
+release. Check the individual `README.md` file for each component to understand its
+current state.
 
 Daily builds from this repo are published to MyGet, and can be installed from
 [this source](https://www.myget.org/F/opentelemetry/api/v3/index.json).

@@ -1,29 +1,17 @@
-// <copyright file="HttpWebRequestActivitySource.netfx.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 #if NETFRAMEWORK
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation;
 
@@ -39,17 +27,17 @@ internal static class HttpWebRequestActivitySource
     internal static readonly AssemblyName AssemblyName = typeof(HttpWebRequestActivitySource).Assembly.GetName();
     internal static readonly string ActivitySourceName = AssemblyName.Name + ".HttpWebRequest";
     internal static readonly string ActivityName = ActivitySourceName + ".HttpRequestOut";
+    internal static readonly string MeterName = AssemblyName.Name;
 
     internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
     internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
 
-    private static readonly Version Version = AssemblyName.Version;
-    private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+    private static readonly string Version = AssemblyName.Version.ToString();
+    private static readonly ActivitySource WebRequestActivitySource = new(ActivitySourceName, Version);
+    private static readonly Meter WebRequestMeter = new(MeterName, Version);
+    private static readonly Histogram<double> HttpClientRequestDuration = WebRequestMeter.CreateHistogram<double>("http.client.request.duration", "s", "Duration of HTTP client requests.");
 
-    private static HttpClientInstrumentationOptions options;
-
-    private static bool emitOldAttributes;
-    private static bool emitNewAttributes;
+    private static HttpClientTraceInstrumentationOptions tracingOptions;
 
     // Fields for reflection
     private static FieldInfo connectionGroupListField;
@@ -86,7 +74,7 @@ internal static class HttpWebRequestActivitySource
             PrepareReflectionObjects();
             PerformInjection();
 
-            Options = new HttpClientInstrumentationOptions();
+            TracingOptions = new HttpClientTraceInstrumentationOptions();
         }
         catch (Exception ex)
         {
@@ -95,57 +83,36 @@ internal static class HttpWebRequestActivitySource
         }
     }
 
-    internal static HttpClientInstrumentationOptions Options
+    internal static HttpClientTraceInstrumentationOptions TracingOptions
     {
-        get => options;
+        get => tracingOptions;
         set
         {
-            options = value;
-
-            emitOldAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
-            emitNewAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
+            tracingOptions = value;
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddRequestTagsAndInstrumentRequest(HttpWebRequest request, Activity activity)
     {
-        activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
+        RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method);
 
         if (activity.IsAllDataRequested)
         {
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-            if (emitOldAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
-                if (!request.RequestUri.IsDefaultPort)
-                {
-                    activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
-                }
+            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
+            RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
-                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+            activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
+            if (!request.RequestUri.IsDefaultPort)
+            {
+                activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
             }
 
-            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
-            if (emitNewAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
-                activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
-                if (!request.RequestUri.IsDefaultPort)
-                {
-                    activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
-                }
-
-                activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
-            }
+            activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
 
             try
             {
-                Options.EnrichWithHttpWebRequest?.Invoke(activity, request);
+                TracingOptions.EnrichWithHttpWebRequest?.Invoke(activity, request);
             }
             catch (Exception ex)
             {
@@ -157,23 +124,16 @@ internal static class HttpWebRequestActivitySource
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddResponseTags(HttpWebResponse response, Activity activity)
     {
+        Debug.Assert(activity != null, "Activity must not be null");
+
         if (activity.IsAllDataRequested)
         {
-            if (emitOldAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-            }
-
-            if (emitNewAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-            }
-
-            activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
+            activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(response.ProtocolVersion));
+            activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
 
             try
             {
-                Options.EnrichWithHttpWebResponse?.Invoke(activity, response);
+                TracingOptions.EnrichWithHttpWebResponse?.Invoke(activity, response);
             }
             catch (Exception ex)
             {
@@ -183,71 +143,56 @@ internal static class HttpWebRequestActivitySource
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddExceptionTags(Exception exception, Activity activity)
+    private static string GetErrorType(Exception exception)
     {
+        if (exception is WebException wexc)
+        {
+            // TODO: consider other Status values from
+            // https://learn.microsoft.com/dotnet/api/system.net.webexceptionstatus?view=netframework-4.6.2
+            return wexc.Status switch
+            {
+                WebExceptionStatus.NameResolutionFailure => "name_resolution_failure",
+                WebExceptionStatus.ConnectFailure => "connect_failure",
+                WebExceptionStatus.ReceiveFailure => "receive_failure",
+                WebExceptionStatus.SendFailure => "send_failure",
+                WebExceptionStatus.PipelineFailure => "pipeline_failure",
+                WebExceptionStatus.RequestCanceled => "request_cancelled",
+                WebExceptionStatus.ProtocolError => "protocol_error",
+                WebExceptionStatus.ConnectionClosed => "connection_closed",
+                WebExceptionStatus.TrustFailure => "trust_failure",
+                WebExceptionStatus.SecureChannelFailure => "secure_channel_failure",
+                WebExceptionStatus.ServerProtocolViolation => "server_protocol_violation",
+                WebExceptionStatus.KeepAliveFailure => "keep_alive_failure",
+                WebExceptionStatus.Timeout => "timeout",
+                WebExceptionStatus.ProxyNameResolutionFailure => "proxy_name_resolution_failure",
+                WebExceptionStatus.MessageLengthLimitExceeded => "message_length_limit_exceeded",
+                WebExceptionStatus.RequestProhibitedByCachePolicy => "request_prohibited_by_cache_policy",
+                WebExceptionStatus.RequestProhibitedByProxy => "request_prohibited_by_proxy",
+                _ => wexc.GetType().FullName,
+            };
+        }
+
+        return exception.GetType().FullName;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void AddExceptionEvent(Exception exception, Activity activity)
+    {
+        Debug.Assert(activity != null, "Activity must not be null");
+
         if (!activity.IsAllDataRequested)
         {
             return;
         }
 
-        ActivityStatusCode status;
-        string exceptionMessage = null;
-
-        if (exception is WebException wexc)
-        {
-            if (wexc.Response is HttpWebResponse response)
-            {
-                if (emitOldAttributes)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
-                }
-
-                if (emitNewAttributes)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, (int)response.StatusCode);
-                }
-
-                status = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode);
-            }
-            else
-            {
-                switch (wexc.Status)
-                {
-                    case WebExceptionStatus.Timeout:
-                    case WebExceptionStatus.RequestCanceled:
-                        status = ActivityStatusCode.Error;
-                        break;
-                    case WebExceptionStatus.SendFailure:
-                    case WebExceptionStatus.ConnectFailure:
-                    case WebExceptionStatus.SecureChannelFailure:
-                    case WebExceptionStatus.TrustFailure:
-                    case WebExceptionStatus.ServerProtocolViolation:
-                    case WebExceptionStatus.MessageLengthLimitExceeded:
-                        status = ActivityStatusCode.Error;
-                        exceptionMessage = exception.Message;
-                        break;
-                    default:
-                        status = ActivityStatusCode.Error;
-                        exceptionMessage = exception.Message;
-                        break;
-                }
-            }
-        }
-        else
-        {
-            status = ActivityStatusCode.Error;
-            exceptionMessage = exception.Message;
-        }
-
-        activity.SetStatus(status, exceptionMessage);
-        if (Options.RecordException)
+        if (TracingOptions.RecordException)
         {
             activity.RecordException(exception);
         }
 
         try
         {
-            Options.EnrichWithException?.Invoke(activity, exception);
+            TracingOptions.EnrichWithException?.Invoke(activity, exception);
         }
         catch (Exception ex)
         {
@@ -265,10 +210,14 @@ internal static class HttpWebRequestActivitySource
 
     private static void ProcessRequest(HttpWebRequest request)
     {
-        if (!WebRequestActivitySource.HasListeners() || !Options.EventFilterHttpWebRequest(request))
+        // There are subscribers to the ActivitySource and no user-provided filter is
+        // filtering this request.
+        var enableTracing = WebRequestActivitySource.HasListeners()
+            && TracingOptions.EventFilterHttpWebRequest(request);
+
+        if (!enableTracing && !HttpClientRequestDuration.Enabled)
         {
-            // No subscribers to the ActivitySource or User provider Filter is
-            // filtering this request.
+            // Tracing and metrics are not enabled, so we can skip generating signals
             // Propagation must still be done in such cases, to allow
             // downstream services to continue from parent context, if any.
             // Eg: Parent could be the Asp.Net activity.
@@ -283,25 +232,23 @@ internal static class HttpWebRequestActivitySource
             return;
         }
 
-        var activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+        Activity activity = enableTracing
+            ? WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client)
+            : null;
+
         var activityContext = Activity.Current?.Context ?? default;
 
         // Propagation must still be done in all cases, to allow
         // downstream services to continue from parent context, if any.
         // Eg: Parent could be the Asp.Net activity.
         InstrumentRequest(request, activityContext);
-        if (activity == null)
-        {
-            // There is a listener but it decided not to sample the current request.
-            return;
-        }
 
         IAsyncResult asyncContext = writeAResultAccessor(request);
         if (asyncContext != null)
         {
             // Flow here is for [Begin]GetRequestStream[Async].
 
-            AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+            AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext), Stopwatch.GetTimestamp());
             asyncCallbackModifier(asyncContext, callback.AsyncCallback);
         }
         else
@@ -309,17 +256,20 @@ internal static class HttpWebRequestActivitySource
             // Flow here is for [Begin]GetResponse[Async] without a prior call to [Begin]GetRequestStream[Async].
 
             asyncContext = readAResultAccessor(request);
-            AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+            AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext), Stopwatch.GetTimestamp());
             asyncCallbackModifier(asyncContext, callback.AsyncCallback);
         }
 
-        AddRequestTagsAndInstrumentRequest(request, activity);
+        if (activity != null)
+        {
+            AddRequestTagsAndInstrumentRequest(request, activity);
+        }
     }
 
     private static void HookOrProcessResult(HttpWebRequest request)
     {
         IAsyncResult writeAsyncContext = writeAResultAccessor(request);
-        if (writeAsyncContext == null || !(asyncCallbackAccessor(writeAsyncContext)?.Target is AsyncCallbackWrapper writeAsyncContextCallback))
+        if (writeAsyncContext == null || asyncCallbackAccessor(writeAsyncContext)?.Target is not AsyncCallbackWrapper writeAsyncContextCallback)
         {
             // If we already hooked into the read result during ProcessRequest or we hooked up after the fact already we don't need to do anything here.
             return;
@@ -340,19 +290,28 @@ internal static class HttpWebRequestActivitySource
         if (endCalledAccessor.Invoke(readAsyncContext) || readAsyncContext.CompletedSynchronously)
         {
             // We need to process the result directly because the read callback has already fired. Force a copy because response has likely already been disposed.
-            ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true);
+            ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true, request, writeAsyncContextCallback.StartTimestamp);
             return;
         }
 
         // Hook into the result callback if it hasn't already fired.
-        AsyncCallbackWrapper callback = new AsyncCallbackWrapper(writeAsyncContextCallback.Request, writeAsyncContextCallback.Activity, asyncCallbackAccessor(readAsyncContext));
+        AsyncCallbackWrapper callback = new AsyncCallbackWrapper(writeAsyncContextCallback.Request, writeAsyncContextCallback.Activity, asyncCallbackAccessor(readAsyncContext), Stopwatch.GetTimestamp());
         asyncCallbackModifier(readAsyncContext, callback.AsyncCallback);
     }
 
-    private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy)
+    private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy, HttpWebRequest request, long startTimestamp)
     {
+        HttpStatusCode? httpStatusCode = null;
+        string errorType = null;
+        Version protocolVersion = null;
+        ActivityStatusCode activityStatus = ActivityStatusCode.Unset;
+
+        // Activity may be null if we are not tracing in these cases:
+        // 1. No listeners
+        // 2. Request was filtered out
+        // 3. Request was not sampled
         // We could be executing on a different thread now so restore the activity if needed.
-        if (Activity.Current != activity)
+        if (activity != null && Activity.Current != activity)
         {
             Activity.Current = activity;
         }
@@ -361,7 +320,32 @@ internal static class HttpWebRequestActivitySource
         {
             if (result is Exception ex)
             {
-                AddExceptionTags(ex, activity);
+                errorType = GetErrorType(ex);
+                if (ex is WebException wexc && wexc.Response is HttpWebResponse response)
+                {
+                    httpStatusCode = response.StatusCode;
+                    protocolVersion = response.ProtocolVersion;
+                    activityStatus = SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)response.StatusCode);
+                    if (activityStatus == ActivityStatusCode.Error)
+                    {
+                        // override the errorType to statusCode for failures.
+                        errorType = TelemetryHelper.GetStatusCodeString(response.StatusCode);
+                    }
+
+                    if (activity != null)
+                    {
+                        AddResponseTags(response, activity);
+                        AddExceptionEvent(ex, activity);
+                    }
+                }
+                else
+                {
+                    activityStatus = ActivityStatusCode.Error;
+                    if (activity != null)
+                    {
+                        AddExceptionEvent(ex, activity);
+                    }
+                }
             }
             else
             {
@@ -382,11 +366,31 @@ internal static class HttpWebRequestActivitySource
                             isWebSocketResponseAccessor(response), connectionGroupNameAccessor(response),
                         });
 
-                    AddResponseTags(responseCopy, activity);
+                    if (activity != null)
+                    {
+                        AddResponseTags(responseCopy, activity);
+                    }
+
+                    httpStatusCode = responseCopy.StatusCode;
+                    protocolVersion = responseCopy.ProtocolVersion;
                 }
                 else
                 {
-                    AddResponseTags(response, activity);
+                    if (activity != null)
+                    {
+                        AddResponseTags(response, activity);
+                    }
+
+                    httpStatusCode = response.StatusCode;
+                    protocolVersion = response.ProtocolVersion;
+                }
+
+                activityStatus = SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)httpStatusCode.Value);
+
+                if (activityStatus == ActivityStatusCode.Error)
+                {
+                    // set the errorType to statusCode for failures.
+                    errorType = TelemetryHelper.GetStatusCodeString(httpStatusCode.Value);
                 }
             }
         }
@@ -395,7 +399,59 @@ internal static class HttpWebRequestActivitySource
             HttpInstrumentationEventSource.Log.FailedProcessResult(ex);
         }
 
-        activity.Stop();
+        if (activity != null && activity.IsAllDataRequested)
+        {
+            activity.SetStatus(activityStatus);
+            if (errorType != null)
+            {
+                activity.SetTag(SemanticConventions.AttributeErrorType, errorType);
+            }
+        }
+
+        activity?.Stop();
+
+        if (HttpClientRequestDuration.Enabled)
+        {
+            double durationS;
+            if (activity != null)
+            {
+                durationS = activity.Duration.TotalSeconds;
+            }
+            else
+            {
+                var endTimestamp = Stopwatch.GetTimestamp();
+                durationS = (endTimestamp - startTimestamp) / (double)Stopwatch.Frequency;
+            }
+
+            TagList tags = default;
+
+            var httpMethod = RequestMethodHelper.GetNormalizedHttpMethod(request.Method);
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+
+            tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
+            tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
+            if (protocolVersion != null)
+            {
+                tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(protocolVersion));
+            }
+
+            if (!request.RequestUri.IsDefaultPort)
+            {
+                tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
+            }
+
+            if (httpStatusCode.HasValue)
+            {
+                tags.Add(SemanticConventions.AttributeHttpResponseStatusCode, (int)httpStatusCode.Value);
+            }
+
+            if (errorType != null)
+            {
+                tags.Add(SemanticConventions.AttributeErrorType, errorType);
+            }
+
+            HttpClientRequestDuration.Record(durationS, tags);
+        }
     }
 
     private static void PrepareReflectionObjects()
@@ -503,12 +559,8 @@ internal static class HttpWebRequestActivitySource
 
     private static void PerformInjection()
     {
-        FieldInfo servicePointTableField = typeof(ServicePointManager).GetField("s_ServicePointTable", BindingFlags.Static | BindingFlags.NonPublic);
-        if (servicePointTableField == null)
-        {
-            // If anything went wrong here, just return false. There is nothing we can do.
-            throw new InvalidOperationException("Unable to access the ServicePointTable field");
-        }
+        FieldInfo servicePointTableField = typeof(ServicePointManager).GetField("s_ServicePointTable", BindingFlags.Static | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("Unable to access the ServicePointTable field");
 
         Hashtable originalTable = servicePointTableField.GetValue(null) as Hashtable;
         ServicePointHashtable newTable = new ServicePointHashtable(originalTable ?? new Hashtable());
@@ -1109,11 +1161,12 @@ internal static class HttpWebRequestActivitySource
     /// </summary>
     private sealed class AsyncCallbackWrapper
     {
-        public AsyncCallbackWrapper(HttpWebRequest request, Activity activity, AsyncCallback originalCallback)
+        public AsyncCallbackWrapper(HttpWebRequest request, Activity activity, AsyncCallback originalCallback, long startTimestamp)
         {
             this.Request = request;
             this.Activity = activity;
             this.OriginalCallback = originalCallback;
+            this.StartTimestamp = startTimestamp;
         }
 
         public HttpWebRequest Request { get; }
@@ -1122,12 +1175,21 @@ internal static class HttpWebRequestActivitySource
 
         public AsyncCallback OriginalCallback { get; }
 
+        public long StartTimestamp { get; }
+
         public void AsyncCallback(IAsyncResult asyncResult)
         {
             object result = resultAccessor(asyncResult);
             if (result is Exception || result is HttpWebResponse)
             {
-                ProcessResult(asyncResult, this.OriginalCallback, this.Activity, result, false);
+                ProcessResult(
+                    asyncResult,
+                    this.OriginalCallback,
+                    this.Activity,
+                    result,
+                    forceResponseCopy: false,
+                    this.Request,
+                    this.StartTimestamp);
             }
 
             this.OriginalCallback?.Invoke(asyncResult);

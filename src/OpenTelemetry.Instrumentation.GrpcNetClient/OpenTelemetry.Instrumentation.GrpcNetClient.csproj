@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net6.0;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForGrpcNetClientInstrumentation)</TargetFrameworks>
     <Description>gRPC for .NET client instrumentation for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);distributed-tracing</PackageTags>
     <IncludeDiagnosticSourceInstrumentationHelpers>true</IncludeDiagnosticSourceInstrumentationHelpers>
@@ -19,7 +19,7 @@
     <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(RunningDotNetPack)' == '' OR '$(RunningDotNetPack)' == 'false'">
+  <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 

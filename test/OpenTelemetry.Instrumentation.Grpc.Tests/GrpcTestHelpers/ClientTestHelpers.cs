@@ -1,18 +1,5 @@
-// <copyright file="ClientTestHelpers.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
+// SPDX-License-Identifier: Apache-2.0
 
 #if NETFRAMEWORK
 using System.Net.Http;
@@ -64,11 +51,11 @@ internal static class ClientTestHelpers
             data = response.ToByteArray();
         }
 
-        await ResponseUtils.WriteHeaderAsync(ms, data.Length, compress, CancellationToken.None).ConfigureAwait(false);
+        await ResponseUtils.WriteHeaderAsync(ms, data.Length, compress, CancellationToken.None);
 #if NET5_0_OR_GREATER
-        await ms.WriteAsync(data).ConfigureAwait(false);
+        await ms.WriteAsync(data);
 #else
-        await ms.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
+        await ms.WriteAsync(data, 0, data.Length);
 #endif
     }
 
@@ -78,7 +65,7 @@ internal static class ClientTestHelpers
         var ms = new MemoryStream();
         foreach (var response in responses)
         {
-            await WriteResponseAsync(ms, response, compressionProvider).ConfigureAwait(false);
+            await WriteResponseAsync(ms, response, compressionProvider);
         }
 
         ms.Seek(0, SeekOrigin.Begin);
