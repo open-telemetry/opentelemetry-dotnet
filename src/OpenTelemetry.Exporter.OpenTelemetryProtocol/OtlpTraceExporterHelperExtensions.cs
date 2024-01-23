@@ -106,8 +106,8 @@ public static class OtlpTraceExporterHelperExtensions
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         IServiceProvider serviceProvider,
-        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler = null,
-        Func<BaseExporter<Activity>, BaseExporter<Activity>> configureExporterInstance = null)
+        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>? transmissionHandler = null,
+        Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
     {
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
