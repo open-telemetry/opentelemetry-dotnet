@@ -40,7 +40,9 @@ benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
 
 :heavy_check_mark: You should always use the
 [`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
-interface from the latest stable version of
+interface (including
+[`ILogger<TCategoryName>`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1))
+from the latest stable version of
 [Microsoft.Extensions.Logging](https://www.nuget.org/packages/Microsoft.Extensions.Logging/)
 package, regardless of the .NET runtime version being used:
 
@@ -103,3 +105,45 @@ logger.LogInformation("Hello from {food} {price}.", food, price);
 
 Refer to the [logging performance
 benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
+
+## Logger Management
+
+In order to use
+[`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
+interface (including
+[`ILogger<TCategoryName>`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1)),
+you need to first get a logger. How to get a logger depends on two things:
+
+* The type of application you are building.
+* The place where you want to log.
+
+Here is the rule of thumb:
+
+* If you are building an application with [dependency injection
+  (DI)](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
+  (e.g. [ASP.NET Core](https://learn.microsoft.com/aspnet/core) and [.NET
+  Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)), in most
+  cases you should use the logger provided by DI, there are special cases when
+  you want log before DI logging pipeline is available or after DI logging
+  pipeline is disposed. Refer to the [Getting Started with OpenTelemetry .NET
+  Logs in 5 Minutes - ASP.NET Core
+  Application](./getting-started-aspnetcore/README.md) tutorial to learn more.
+* If you are building an application without DI, create a `LoggerFactory`
+  instance and configure OpenTelemetry to work with it. Refer to the [Getting
+  Started with OpenTelemetry .NET Logs in 5 Minutes - Console
+  Application](./getting-started-console/README.md) tutorial to learn more.
+
+:stop_sign: You should avoid creating `LoggerFactory` instances too frequently,
+`LoggerFactory` is fairly expensive and meant to be reused throughout the
+application. For most applications, one `LoggerFactory` instance per process
+should be sufficient.
+
+:heavy_check_mark: You should properly manage the lifecycle of
+[LoggerFactory](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.loggerfactory)
+instances if they are created by you.
+
+* If you don't dispose the `LoggerFactory` instance before the application ends,
+  logs might get dropped due to the lack of proper flush.
+* If you dispose the `LoggerFactory` instance too early, any subsequent logging
+  API invocation associated with the logger factory could become no-op (i.e. no
+  logs will be emitted).
