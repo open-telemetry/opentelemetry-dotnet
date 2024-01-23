@@ -136,7 +136,7 @@ Here is the rule of thumb:
 :stop_sign: You should avoid creating `LoggerFactory` instances too frequently,
 `LoggerFactory` is fairly expensive and meant to be reused throughout the
 application. For most applications, one `LoggerFactory` instance per process
-should be sufficient.
+would be sufficient.
 
 :heavy_check_mark: You should properly manage the lifecycle of
 [LoggerFactory](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.loggerfactory)
