@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Grpc.Core;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -29,7 +30,16 @@ internal sealed class OtlpGrpcTraceExportClient : BaseOtlpGrpcExportClient<OtlpC
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
 
-        this.traceClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
+        try
+        {
+            this.traceClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
+        }
+        catch (RpcException ex)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
+
+            return false;
+        }
 
         return true;
     }

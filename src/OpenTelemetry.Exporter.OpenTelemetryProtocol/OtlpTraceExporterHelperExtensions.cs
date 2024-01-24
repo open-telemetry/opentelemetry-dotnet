@@ -5,13 +5,10 @@
 
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.ExporterOpenTelemetryProtocol.Implementation.Retry;
 using OpenTelemetry.Internal;
-using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Trace;
 
@@ -64,7 +61,6 @@ public static class OtlpTraceExporterHelperExtensions
 
             OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
             services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
-            services.TryAddSingleton<OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>>();
         });
 
         return builder.AddProcessor(sp =>
@@ -96,8 +92,6 @@ public static class OtlpTraceExporterHelperExtensions
             // instance.
             var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-            var transmissionmanager = sp.GetRequiredService<OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>>();
-
             return BuildOtlpExporterProcessor(exporterOptions, sdkOptionsManager, sp);
         });
     }
@@ -106,15 +100,11 @@ public static class OtlpTraceExporterHelperExtensions
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         IServiceProvider serviceProvider,
-        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>? transmissionHandler = null,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
     {
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(
-            exporterOptions,
-            sdkLimitOptions,
-            transmissionHandler: transmissionHandler ?? serviceProvider.GetRequiredService<OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>>());
+        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions);
 
         if (configureExporterInstance != null)
         {

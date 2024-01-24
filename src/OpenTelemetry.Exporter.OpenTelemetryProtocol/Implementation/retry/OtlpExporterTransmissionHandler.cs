@@ -24,7 +24,7 @@ internal class OtlpExporterTransmissionHandler<T>
     {
         try
         {
-            return this.ExportClient == null ? false : this.ExportClient.SendExportRequest(request);
+            return this.ExportClient != null && this.ExportClient.SendExportRequest(request);
         }
         catch (Exception ex)
         {
@@ -43,7 +43,7 @@ internal class OtlpExporterTransmissionHandler<T>
     {
         try
         {
-            var result = this.ExportClient == null ? false : this.ExportClient.SendExportRequest(request);
+            var result = this.ExportClient != null && this.ExportClient.SendExportRequest(request);
             exception = null;
             return result;
         }
