@@ -7,7 +7,7 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
-namespace OpenTelemetry.ExporterOpenTelemetryProtocol.Implementation.Retry;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Retry;
 
 internal class OtlpExporterTransmissionHandler<T>
 {
