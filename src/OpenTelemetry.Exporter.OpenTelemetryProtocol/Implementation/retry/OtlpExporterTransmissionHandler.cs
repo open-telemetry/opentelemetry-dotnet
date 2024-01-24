@@ -3,8 +3,6 @@
 
 #nullable enable
 
-using OpenTelemetry.Exporter;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Retry;
