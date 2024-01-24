@@ -31,8 +31,8 @@ internal sealed class MyRedactionProcessor : BaseProcessor<LogRecord>
             get
             {
                 var item = this.state[index];
-                var entryVal = item.Value;
-                if (entryVal != null && entryVal.ToString() != null && entryVal.ToString().Contains("<secret>"))
+                var entryVal = item.Value?.ToString();
+                if (entryVal != null && entryVal.Contains("<secret>"))
                 {
                     return new KeyValuePair<string, object>(item.Key, "newRedactedValueHere");
                 }
