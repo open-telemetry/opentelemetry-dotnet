@@ -125,8 +125,9 @@ Here is the rule of thumb:
   Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)), in most
   cases you should use the logger provided by DI, there are special cases when
   you want log before DI logging pipeline is available or after DI logging
-  pipeline is disposed. Refer to the [Getting Started with OpenTelemetry .NET
-  Logs in 5 Minutes - ASP.NET Core
+  pipeline is disposed. Refer to the [.NET official
+  documentation](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#integration-with-hosts-and-dependency-injection)
+  the [Getting Started with OpenTelemetry .NET Logs in 5 Minutes - ASP.NET Core
   Application](./getting-started-aspnetcore/README.md) tutorial to learn more.
 * If you are building an application without DI, create a `LoggerFactory`
   instance and configure OpenTelemetry to work with it. Refer to the [Getting
@@ -147,3 +148,8 @@ instances if they are created by you.
 * If you dispose the `LoggerFactory` instance too early, any subsequent logging
   API invocation associated with the logger factory could become no-op (i.e. no
   logs will be emitted).
+
+:heavy_check_mark: You should use the fully qualified class name as the log
+category name. Refer to the [.NET official
+document](https://learn.microsoft.com/dotnet/core/extensions/logging#log-category)
+to clearn more.
