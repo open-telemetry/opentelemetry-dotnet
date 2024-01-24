@@ -126,7 +126,7 @@ Here is the rule of thumb:
   cases you should use the logger provided by DI, there are special cases when
   you want log before DI logging pipeline is available or after DI logging
   pipeline is disposed. Refer to the [.NET official
-  documentation](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#integration-with-hosts-and-dependency-injection)
+  documentation](https://learn.microsoft.com/dotnet/core/extensions/logging#integration-with-hosts-and-dependency-injection)
   the [Getting Started with OpenTelemetry .NET Logs in 5 Minutes - ASP.NET Core
   Application](./getting-started-aspnetcore/README.md) tutorial to learn more.
 * If you are building an application without DI, create a `LoggerFactory`
