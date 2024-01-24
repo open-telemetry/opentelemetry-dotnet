@@ -127,7 +127,7 @@ Here is the rule of thumb:
   you want log before DI logging pipeline is available or after DI logging
   pipeline is disposed. Refer to the [.NET official
   document](https://learn.microsoft.com/dotnet/core/extensions/logging#integration-with-hosts-and-dependency-injection)
-  the [Getting Started with OpenTelemetry .NET Logs in 5 Minutes - ASP.NET Core
+  and [Getting Started with OpenTelemetry .NET Logs in 5 Minutes - ASP.NET Core
   Application](./getting-started-aspnetcore/README.md) tutorial to learn more.
 * If you are building an application without DI, create a `LoggerFactory`
   instance and configure OpenTelemetry to work with it. Refer to the [Getting
