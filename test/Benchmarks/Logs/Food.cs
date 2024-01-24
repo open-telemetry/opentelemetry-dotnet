@@ -7,10 +7,6 @@ namespace Benchmarks.Logs;
 
 public static partial class Food
 {
-    [LoggerMessage(
-        EventId = 0,
-        Level = LogLevel.Information,
-        Message = "Hello from {food} {price}.")]
-    public static partial void SayHello(
-        ILogger logger, string food, double price);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Hello from {food} {price}.")]
+    public static partial void SayHello(ILogger logger, string food, double price);
 }
