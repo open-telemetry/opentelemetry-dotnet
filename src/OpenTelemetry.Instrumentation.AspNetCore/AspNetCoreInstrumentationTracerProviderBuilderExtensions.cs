@@ -104,18 +104,18 @@ public static class AspNetCoreInstrumentationTracerProviderBuilderExtensions
         if (HttpInListener.Net7OrGreater)
         {
 #endif
-            // TODO: Check with .NET team to see if this can be prevented
-            // as this allows user to override the ActivitySource.
-            var activitySourceService = serviceProvider?.GetService<ActivitySource>();
-            if (activitySourceService != null)
-            {
-                builder.AddSource(activitySourceService.Name);
-            }
-            else
-            {
-                // For users not using hosting package?
-                builder.AddSource(HttpInListener.AspNetCoreActivitySourceName);
-            }
+        // TODO: Check with .NET team to see if this can be prevented
+        // as this allows user to override the ActivitySource.
+        var activitySourceService = serviceProvider?.GetService<ActivitySource>();
+        if (activitySourceService != null)
+        {
+            builder.AddSource(activitySourceService.Name);
+        }
+        else
+        {
+            // For users not using hosting package?
+            builder.AddSource(HttpInListener.AspNetCoreActivitySourceName);
+        }
 #if !NET7_0_OR_GREATER
         }
         else
