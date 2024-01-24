@@ -45,7 +45,7 @@ public sealed class LogRecordSharedPoolTests
         Assert.Equal(1, pool.Count);
 
         // Note: This is ignored because logRecord manually created has PoolReferenceCount = int.MaxValue.
-        LogRecord manualRecord = new();
+        LogRecord manualRecord = new() { Source = LogRecord.LogRecordSource.FromSharedPool };
         Assert.Equal(int.MaxValue, manualRecord.PoolReferenceCount);
         pool.Return(manualRecord);
 
@@ -163,7 +163,7 @@ public sealed class LogRecordSharedPoolTests
         {
             for (int i = 0; i < LogRecordSharedPool.DefaultMaxPoolSize; i++)
             {
-                pool.Return(new LogRecord { PoolReferenceCount = 1 });
+                pool.Return(new LogRecord { Source = LogRecord.LogRecordSource.FromSharedPool, PoolReferenceCount = 1 });
             }
         }
 

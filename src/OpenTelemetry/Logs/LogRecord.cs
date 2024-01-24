@@ -21,6 +21,7 @@ public sealed class LogRecord
     internal IReadOnlyList<KeyValuePair<string, object?>>? AttributeData;
     internal List<KeyValuePair<string, object?>>? AttributeStorage;
     internal List<object?>? ScopeStorage;
+    internal LogRecordSource Source = LogRecordSource.CreatedManually;
     internal int PoolReferenceCount = int.MaxValue;
 
     private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
@@ -78,6 +79,15 @@ public sealed class LogRecord
 
             this.AttributeData = stateValues;
         }
+    }
+
+    internal enum LogRecordSource
+    {
+#pragma warning disable SA1602 // Enumeration items should be documented
+        CreatedManually,
+        FromThreadStaticPool,
+        FromSharedPool,
+#pragma warning restore SA1602 // Enumeration items should be documented
     }
 
     /// <summary>

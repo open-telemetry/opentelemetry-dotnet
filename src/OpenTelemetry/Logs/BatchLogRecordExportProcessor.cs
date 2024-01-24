@@ -42,13 +42,27 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
         // happen here.
         Debug.Assert(data != null, "LogRecord was null.");
 
-        data!.Buffer();
-
-        data.AddReference();
-
-        if (!this.TryExport(data))
+        switch (data.Source)
         {
-            LogRecordSharedPool.Current.Return(data);
+            case LogRecord.LogRecordSource.FromSharedPool:
+                data.Buffer();
+                data.AddReference();
+                if (!this.TryExport(data))
+                {
+                    LogRecordSharedPool.Current.Return(data);
+                }
+
+                break;
+            case LogRecord.LogRecordSource.CreatedManually:
+                data.Buffer();
+                this.TryExport(data);
+                break;
+            default:
+                Debug.Assert(data.Source == LogRecord.LogRecordSource.FromThreadStaticPool, "LogRecord source was something unexpected");
+
+                // Note: If we are using ThreadStatic pool we make a copy of the record.
+                this.TryExport(data.Copy());
+                break;
         }
     }
 }

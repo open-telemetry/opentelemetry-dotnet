@@ -22,13 +22,13 @@ public sealed class LogRecordThreadStaticPoolTests
         Assert.NotNull(LogRecordThreadStaticPool.Storage);
         Assert.Equal(logRecord, LogRecordThreadStaticPool.Storage);
 
-        LogRecordThreadStaticPool.Instance.Return(new());
+        LogRecordThreadStaticPool.Instance.Return(new() { Source = LogRecord.LogRecordSource.FromThreadStaticPool });
         Assert.NotNull(LogRecordThreadStaticPool.Storage);
         Assert.Equal(logRecord, LogRecordThreadStaticPool.Storage);
 
         LogRecordThreadStaticPool.Storage = null;
 
-        var manual = new LogRecord();
+        var manual = new LogRecord() { Source = LogRecord.LogRecordSource.FromThreadStaticPool };
         LogRecordThreadStaticPool.Instance.Return(manual);
         Assert.NotNull(LogRecordThreadStaticPool.Storage);
         Assert.Equal(manual, LogRecordThreadStaticPool.Storage);
