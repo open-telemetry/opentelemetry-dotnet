@@ -152,4 +152,4 @@ instances if they are created by you.
 :heavy_check_mark: You should use the fully qualified class name as the log
 category name. Refer to the [.NET official
 document](https://learn.microsoft.com/dotnet/core/extensions/logging#log-category)
-to clearn more.
+to learn more.
