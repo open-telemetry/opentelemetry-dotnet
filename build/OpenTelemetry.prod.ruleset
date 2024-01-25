@@ -5,10 +5,9 @@
     <Description Resource="OpenTelemetrySDKRules_Description" />
   </Localization>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
-    <Rule Id="SA1200" Action="None" />
-    <Rule Id="SA1401" Action="None" />
-    <Rule Id="SA1512" Action="None" />
-    <Rule Id="SA1518" Action="None" />
-    <Rule Id="SA1600" Action="None" />
+    <Rule Id="SA1200" Action="None" /> <!-- UsingDirectivesMustBePlacedCorrectly -->
+    <Rule Id="SA1401" Action="None" /> <!-- FieldsMustBePrivate -->
+    <Rule Id="SA1512" Action="None" /> <!-- ElementMustNotBeOnSingleLine -->
+    <Rule Id="SA1518" Action="None" /> <!-- UseLineEndingsCorrectlyAtEndOfFile -->
   </Rules>
 </RuleSet>
