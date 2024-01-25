@@ -42,7 +42,7 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
         // happen here.
         Debug.Assert(data != null, "LogRecord was null.");
 
-        switch (data.Source)
+        switch (data!.Source)
         {
             case LogRecord.LogRecordSource.FromSharedPool:
                 data.Buffer();
