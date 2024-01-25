@@ -23,13 +23,16 @@ internal sealed class LogRecordThreadStaticPool : ILogRecordPool
         {
             Debug.Assert(logRecord.Source == LogRecord.LogRecordSource.FromThreadStaticPool, "logRecord.Source was not FromThreadStaticPool");
             Storage = null;
-            return logRecord;
+        }
+        else
+        {
+            logRecord = new()
+            {
+                Source = LogRecord.LogRecordSource.FromThreadStaticPool,
+            };
         }
 
-        return new()
-        {
-            Source = LogRecord.LogRecordSource.FromThreadStaticPool,
-        };
+        return logRecord;
     }
 
     public void Return(LogRecord logRecord)
