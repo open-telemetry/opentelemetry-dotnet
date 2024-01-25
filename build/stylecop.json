@@ -1,9 +1,10 @@
-﻿{
+{
   "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
   "settings": {
     "documentationRules": {
       "copyrightText": "Copyright The OpenTelemetry Authors\nSPDX-License-Identifier: Apache-2.0",
-      "xmlHeader": false
+      "xmlHeader": false,
+      "documentInternalElements": false
     },
     "orderingRules": {
       "usingDirectivesPlacement": "outsideNamespace"
