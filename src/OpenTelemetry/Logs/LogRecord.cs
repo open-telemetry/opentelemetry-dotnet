@@ -83,11 +83,20 @@ public sealed class LogRecord
 
     internal enum LogRecordSource
     {
-#pragma warning disable SA1602 // Enumeration items should be documented
+        /// <summary>
+        /// A <see cref="LogRecord"/> created manually.
+        /// </summary>
         CreatedManually,
+
+        /// <summary>
+        /// A <see cref="LogRecord"/> rented from the <see cref="LogRecordThreadStaticPool"/>.
+        /// </summary>
         FromThreadStaticPool,
+
+        /// <summary>
+        /// A <see cref="LogRecord"/> rented from the <see cref="LogRecordSharedPool"/>.
+        /// </summary>
         FromSharedPool,
-#pragma warning restore SA1602 // Enumeration items should be documented
     }
 
     /// <summary>
