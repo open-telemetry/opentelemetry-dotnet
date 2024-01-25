@@ -15,12 +15,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\ci-concurrency.yml = .github\workflows\ci-concurrency.yml
 		CONTRIBUTING.md = CONTRIBUTING.md
 		global.json = global.json
-		NuGet.config = NuGet.config
 		LICENSE.TXT = LICENSE.TXT
+		NuGet.config = NuGet.config
 		OpenTelemetry.proj = OpenTelemetry.proj
 		README.md = README.md
-		VERSIONING.md = VERSIONING.md
 		THIRD-PARTY-NOTICES.TXT = THIRD-PARTY-NOTICES.TXT
+		VERSIONING.md = VERSIONING.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E-03FA-4FFF-89A5-C51F107623FD}"
@@ -154,7 +154,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "metrics", "metrics", "{3277
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{3862190B-E2C5-418E-AFDC-DB281FB5C705}"
 	ProjectSection(SolutionItems) = preProject
-		docs\logs\getting-started-console\README.md = docs\logs\getting-started-console\README.md
+		docs\logs\README.md = docs\logs\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MicroserviceExample", "MicroserviceExample", "{4D492D62-5150-45F9-817F-C99562E364E2}"
@@ -338,7 +338,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "resources", "resources", "{
 		docs\resources\README.md = docs\resources\README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "extending-the-sdk", "docs\resources\extending-the-sdk\extending-the-sdk.csproj", "{7BE494FC-4B0D-4340-A62A-9C9F3E7389FE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\resources\extending-the-sdk\extending-the-sdk.csproj", "{7BE494FC-4B0D-4340-A62A-9C9F3E7389FE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
