@@ -112,6 +112,11 @@ doc](https://docs.google.com/document/d/1yjjD6aBcLxlRazYrawukDgrhZMObwHARJbB9glW
 If you have trouble accessing the doc, please get in touch on
 [Slack](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
 
+The meeting is open for all to join. We invite everyone to join our meeting,
+regardless of your experience level. Whether you're a seasoned OpenTelemetry
+developer, just starting your journey, or simply curious about the work we do,
+you're more than welcome to participate!
+
 [Maintainers](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer)
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
