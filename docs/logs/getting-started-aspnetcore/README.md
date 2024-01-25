@@ -83,12 +83,9 @@ pipeline. OpenTelemetry SDK is then configured with a
 export the logs to the console for demonstration purpose (note: ConsoleExporter
 is not intended for production usage, other exporters such as [OTLP
 Exporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
-should be used instead). In addition, `OpenTelemetryLoggerOptions.IncludeScopes`
-is enabled so the logs will include the [log
-scopes](https://learn.microsoft.com/dotnet/core/extensions/logging#log-scopes).
-From the console output we can see the log scopes that are coming from the
-ASP.NET Core framework, and we can see logs from both our logger and the ASP.NET
-Core framework loggers, as indicated by the `LogRecord.CategoryName`.
+should be used instead). From the console output we can see logs from both our
+logger and the ASP.NET Core framework loggers, as indicated by the
+`LogRecord.CategoryName`.
 
 The example has demonstrated the best practice from ASP.NET Core by injecting
 generic `ILogger<T>`:

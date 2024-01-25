@@ -15,8 +15,6 @@ builder.Logging.ClearProviders();
 
 builder.Logging.AddOpenTelemetry(logging =>
 {
-    logging.IncludeScopes = true;
-
     var resourceBuilder = ResourceBuilder
         .CreateDefault()
         .AddService(builder.Environment.ApplicationName);
