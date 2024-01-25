@@ -138,6 +138,7 @@ jobs:
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'packaged-code')
+      || contains(needs.detect-changes.outputs.changes, 'md')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/docfx.yml
