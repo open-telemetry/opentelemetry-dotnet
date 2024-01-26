@@ -184,7 +184,16 @@ internal class TestApplicationFactory
         app.Urls.Clear();
         app.Urls.Add("http://[::1]:0");
 
+// TODO: Remove this condition once ASP.NET Core 8.0.2.
+// Currently, .NET 8 has a different behavior than .NET 6 and 7.
+// This is because ASP.NET Core 8+ has native metric instrumentation.
+// When ASP.NET Core 8.0.2 is released then its behavior will align with .NET 6/7.
+// See: https://github.com/dotnet/aspnetcore/issues/52648#issuecomment-1853432776
+#if !NET8_0_OR_GREATER
         app.MapGet("/Exception", (ctx) => throw new ApplicationException());
+#else
+        app.MapGet("/Exception", () => Results.Content(content: "Error", contentType: null, contentEncoding: null, statusCode: 500));
+#endif
 
         return app;
     }
