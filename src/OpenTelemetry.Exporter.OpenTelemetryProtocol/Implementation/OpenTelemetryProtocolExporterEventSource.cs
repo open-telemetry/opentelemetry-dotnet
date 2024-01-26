@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Diagnostics.Tracing;
 using OpenTelemetry.Internal;
 
@@ -22,11 +25,11 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
     }
 
     [NonEvent]
-    public void ExportMethodException(Exception ex)
+    public void ExportMethodException(Exception ex, bool isRetry = false)
     {
         if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            this.ExportMethodException(ex.ToInvariantString());
+            this.ExportMethodException(ex.ToInvariantString(), isRetry);
         }
     }
 
@@ -42,10 +45,13 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
         this.WriteEvent(3, className, methodName);
     }
 
-    [Event(4, Message = "Unknown error in export method: {0}", Level = EventLevel.Error)]
-    public void ExportMethodException(string ex)
+#if NET6_0_OR_GREATER
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
+#endif
+    [Event(4, Message = "Unknown error in export method. Message: '{0}'. IsRetry: {1}", Level = EventLevel.Error)]
+    public void ExportMethodException(string ex, bool isRetry)
     {
-        this.WriteEvent(4, ex);
+        this.WriteEvent(4, ex, isRetry);
     }
 
     [Event(5, Message = "Could not translate metric from class '{0}' and method '{1}', metric will not be recorded.", Level = EventLevel.Informational)]

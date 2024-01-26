@@ -1,4 +1,4 @@
-# Logs correlation
+# Log Correlation
 
 The getting started docs for [logs](../getting-started-console/README.md) and
 [traces](../../trace/getting-started-console/README.md) showed how to emit logs
@@ -27,29 +27,32 @@ of an active `Activity`. Running the application will show the following output
 on the console:
 
 ```text
-LogRecord.Timestamp:               2022-05-18T18:51:16.4348626Z
-LogRecord.TraceId:                 d7aca5b2422ed8d15f56b6a93be4537d
-LogRecord.SpanId:                  c90ac2ad41ab4d46
+LogRecord.Timestamp:               2024-01-26T17:55:39.2273475Z
+LogRecord.TraceId:                 aed89c3b250fb9d8e16ccab1a4a9bbb5
+LogRecord.SpanId:                  bd44308753200c58
 LogRecord.TraceFlags:              Recorded
-LogRecord.CategoryName:            Correlation.Program
-LogRecord.LogLevel:                Information
-LogRecord.State:                   Hello from tomato 2.99.
+LogRecord.CategoryName:            Program
+LogRecord.Severity:                Info
+LogRecord.SeverityText:            Information
+LogRecord.Body:                    Food `{name}` price changed to `{price}`.
+LogRecord.Attributes (Key:Value):
+    name: artichoke
+    price: 9.99
+    OriginalFormat (a.k.a Body): Food `{name}` price changed to `{price}`.
+LogRecord.EventId:                 344095174
+LogRecord.EventName:               FoodPriceChanged
 
-Resource associated with LogRecord:
-service.name: unknown_service:correlation
+...
 
-Activity.TraceId:          d7aca5b2422ed8d15f56b6a93be4537d
-Activity.SpanId:           c90ac2ad41ab4d46
-Activity.TraceFlags:           Recorded
+Activity.TraceId:            aed89c3b250fb9d8e16ccab1a4a9bbb5
+Activity.SpanId:             bd44308753200c58
+Activity.TraceFlags:         Recorded
 Activity.ActivitySourceName: MyCompany.MyProduct.MyLibrary
-Activity.DisplayName: SayHello
-Activity.Kind:        Internal
-Activity.StartTime:   2022-05-18T18:51:16.3427411Z
-Activity.Duration:    00:00:00.2248932
-Activity.Tags:
-    foo: 1
-Resource associated with Activity:
-    service.name: unknown_service:correlation
+Activity.DisplayName:        SayHello
+Activity.Kind:               Internal
+Activity.StartTime:          2024-01-26T17:55:39.2223849Z
+Activity.Duration:           00:00:00.0361682
+...
 ```
 
 As you can see, the `LogRecord` automatically had the `TraceId`, `SpanId` fields
