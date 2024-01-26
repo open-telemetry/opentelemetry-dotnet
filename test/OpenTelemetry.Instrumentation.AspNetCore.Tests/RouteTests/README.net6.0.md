@@ -592,6 +592,8 @@
 }
 ```
 
+## ExceptionMiddleware: Exception Handled by Exception Handler Middleware
+
 ```json
 {
   "IdealHttpRoute": "/Exception",
