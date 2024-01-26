@@ -7,39 +7,32 @@ using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 
-namespace Correlation;
+ActivitySource activitySource = new("MyCompany.MyProduct.MyLibrary");
 
-public class Program
+using var loggerFactory = LoggerFactory.Create(builder =>
 {
-    private static readonly ActivitySource MyActivitySource = new(
-        "MyCompany.MyProduct.MyLibrary");
-
-    public static void Main()
+    builder.AddOpenTelemetry(logging =>
     {
-        // Setup Logging
-        using var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddConsoleExporter();
-            });
-        });
+        logging.AddConsoleExporter();
+    });
+});
 
-        var logger = loggerFactory.CreateLogger<Program>();
+var logger = loggerFactory.CreateLogger<Program>();
 
-        // Setup Traces
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource("MyCompany.MyProduct.MyLibrary")
-            .AddConsoleExporter()
-            .Build();
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource("MyCompany.MyProduct.MyLibrary")
+    .AddConsoleExporter()
+    .Build();
 
-        // Emit activity
-        using (var activity = MyActivitySource.StartActivity("SayHello"))
-        {
-            activity?.SetTag("foo", 1);
+// Start an activity
+using (var activity = activitySource.StartActivity("SayHello"))
+{
+    // Write a log within the context of an activity
+    logger.FoodPriceChanged("artichoke", 9.99);
+}
 
-            // Emit logs within the context of activity
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-        }
-    }
+public static partial class ApplicationLogs
+{
+    [LoggerMessage(LogLevel.Information, "Food `{name}` price changed to `{price}`.")]
+    public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
 }
