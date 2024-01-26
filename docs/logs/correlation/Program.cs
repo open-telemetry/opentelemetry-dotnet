@@ -9,7 +9,7 @@ using OpenTelemetry.Trace;
 
 ActivitySource activitySource = new("MyCompany.MyProduct.MyLibrary");
 
-using var loggerFactory = LoggerFactory.Create(builder =>
+var loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddOpenTelemetry(logging =>
     {
@@ -19,7 +19,7 @@ using var loggerFactory = LoggerFactory.Create(builder =>
 
 var logger = loggerFactory.CreateLogger<Program>();
 
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSource("MyCompany.MyProduct.MyLibrary")
     .AddConsoleExporter()
     .Build();
@@ -30,6 +30,14 @@ using (var activity = activitySource.StartActivity("SayHello"))
     // Write a log within the context of an activity
     logger.FoodPriceChanged("artichoke", 9.99);
 }
+
+// Dispose tracer provider before the application ends.
+// This will flush the remaining spans and shutdown the tracing pipeline.
+tracerProvider.Dispose();
+
+// Dispose logger factory before the application ends.
+// This will flush the remaining logs and shutdown the logging pipeline.
+loggerFactory.Dispose();
 
 public static partial class ApplicationLogs
 {
