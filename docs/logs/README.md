@@ -153,3 +153,23 @@ instances if they are created by you.
 category name. Refer to the [.NET official
 document](https://learn.microsoft.com/dotnet/core/extensions/logging#log-category)
 to learn more.
+
+## Log Correlation
+
+In OpenTelemetry, logs are automatically correlated to traces. Check the [Log
+Correlation](./correlation/README.md) tutorial to learn more.
+
+## Log Enrichment
+
+TBD
+
+## Log Filtering
+
+Check the [Customizing OpenTelemetry .NET SDK for
+Logs](./customizing-the-sdk/README.md#log-filtering) document to learn more.
+
+## Log Redaction
+
+Logs might contain sensitive information such as passwords and credit card
+numbers, proper redaction is required to prevent privacy and security incidents.
+Check the [Log Redaction](./redaction/README.md) tutorial to learn more.

@@ -140,7 +140,7 @@ internal sealed class OtlpLogRecordTransformer
                 }
             }
 
-            if (this.experimentalOptions.EmitLogExceptionAttributes && logRecord.Exception != null)
+            if (logRecord.Exception != null)
             {
                 AddStringAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name, attributeValueLengthLimit, attributeCountLimit);
                 AddStringAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeValueLengthLimit, attributeCountLimit);

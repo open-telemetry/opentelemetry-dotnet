@@ -6,6 +6,15 @@
   `LoggerProviderBuilder.AddOtlpExporter` registration extensions.
   [#5103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5103)
 
+* Removed the `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES`
+  environment variable, following the stabilization of the exception attributes
+  `exception.type`, `exception.message`, and `exception.stacktrace` in the
+  [OpenTelemetry Semantic
+  Conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-logs.md#semantic-conventions-for-exceptions-in-logs).
+  These attributes, corresponding to `LogRecord.Exception`, are now stable and
+  will be automatically included in exports.
+  ([#5258](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5258))
+
 ## 1.7.0
 
 Released 2023-Dec-08
