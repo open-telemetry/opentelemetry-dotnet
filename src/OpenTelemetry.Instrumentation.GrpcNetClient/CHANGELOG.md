@@ -9,8 +9,8 @@
   [issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092)
   for details and workaround.
   ([#5077](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5077))
-* Removed support for `http` and `http/dup` values for`OTEL_SEMCONV_STABILITY_OPT_IN`
-  environment variable. The library will now emit only the
+* Removed `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable support. The
+  library will now emit the
   [stable](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
   HTTP semantic conventions.
   ([#5259](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5259))
