@@ -39,7 +39,7 @@ app.Logger.StartingApp();
 
 app.Run();
 
-public static partial class ApplicationLogs
+internal static partial class LoggerExtensions
 {
     [LoggerMessage(LogLevel.Information, "Starting the app...")]
     public static partial void StartingApp(this ILogger logger);

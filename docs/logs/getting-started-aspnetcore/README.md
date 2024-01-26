@@ -105,7 +105,7 @@ has been used across the example, which delivers high performance, structured
 logging, and type-checked parameters:
 
 ```csharp
-public static partial class ApplicationLogs
+internal static partial class LoggerExtensions
 {
     [LoggerMessage(LogLevel.Information, "Starting the app...")]
     public static partial void StartingApp(this ILogger logger);
