@@ -11,9 +11,9 @@
   `exception.type`, `exception.message`, and `exception.stacktrace` in the
   [OpenTelemetry Semantic
   Conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-logs.md#semantic-conventions-for-exceptions-in-logs).
-  These attributes, corresponding to `LogRecord.Exception`, are now standard and
-  will be automatically included in exports. The need for the previously
-  experimental flag is thus eliminated.
+  These attributes, corresponding to `LogRecord.Exception`, are now stable and
+  will be automatically included in exports.
+  ([#5258](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5258))
 
 ## 1.7.0
 
