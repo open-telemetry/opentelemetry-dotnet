@@ -615,11 +615,8 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal("Hello world", otlpLogRecord.Body?.StringValue);
     }
 
-    [Theory]
-    [InlineData("true")]
-    [InlineData("false")]
-    [InlineData(null)]
-    public void CheckToOtlpLogRecordExceptionAttributes(string emitExceptionAttributes)
+    [Fact]
+    public void CheckToOtlpLogRecordExceptionAttributes()
     {
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
