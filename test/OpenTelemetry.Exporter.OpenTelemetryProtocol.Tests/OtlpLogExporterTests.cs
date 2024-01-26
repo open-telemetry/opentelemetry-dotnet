@@ -589,11 +589,8 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal("state", otlpLogRecord.Body.StringValue);
     }
 
-    [Theory]
-    [InlineData("true")]
-    [InlineData("false")]
-    [InlineData(null)]
-    public void CheckToOtlpLogRecordExceptionAttributes(string emitExceptionAttributes)
+    [Fact]
+    public void CheckToOtlpLogRecordExceptionAttributes()
     {
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
@@ -609,39 +606,22 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
         var logRecord = logRecords[0];
         var loggedException = logRecord.Exception;
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EmitLogExceptionEnvVar] = emitExceptionAttributes })
-            .Build();
 
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new(configuration));
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new());
 
         var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(logRecord);
 
         Assert.NotNull(otlpLogRecord);
         var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
 
-        if (emitExceptionAttributes == "true")
-        {
-            Assert.Contains(SemanticConventions.AttributeExceptionType, otlpLogRecordAttributes);
-            Assert.Contains(logRecord.Exception.GetType().Name, otlpLogRecordAttributes);
+        Assert.Contains(SemanticConventions.AttributeExceptionType, otlpLogRecordAttributes);
+        Assert.Contains(logRecord.Exception.GetType().Name, otlpLogRecordAttributes);
 
-            Assert.Contains(SemanticConventions.AttributeExceptionMessage, otlpLogRecordAttributes);
-            Assert.Contains(logRecord.Exception.Message, otlpLogRecordAttributes);
+        Assert.Contains(SemanticConventions.AttributeExceptionMessage, otlpLogRecordAttributes);
+        Assert.Contains(logRecord.Exception.Message, otlpLogRecordAttributes);
 
-            Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes);
-            Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes);
-        }
-        else
-        {
-            Assert.DoesNotContain(SemanticConventions.AttributeExceptionType, otlpLogRecordAttributes);
-            Assert.DoesNotContain(logRecord.Exception.GetType().Name, otlpLogRecordAttributes);
-
-            Assert.DoesNotContain(SemanticConventions.AttributeExceptionMessage, otlpLogRecordAttributes);
-            Assert.DoesNotContain(logRecord.Exception.Message, otlpLogRecordAttributes);
-
-            Assert.DoesNotContain(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes);
-            Assert.DoesNotContain(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes);
-        }
+        Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes);
+        Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes);
     }
 
     [Fact]
@@ -1264,7 +1244,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         var allScopeValues = otlpLogRecord.Attributes
             .Where(_ => _.Key == scopeKey1 || _.Key == scopeKey2)
             .Select(_ => _.Value.StringValue);
-        Assert.Equal(2, otlpLogRecord.Attributes.Count);
+        Assert.Equal(5, otlpLogRecord.Attributes.Count);
         Assert.Equal(2, allScopeValues.Count());
         Assert.Contains(scopeValue1, allScopeValues);
         Assert.Contains(scopeValue2, allScopeValues);
