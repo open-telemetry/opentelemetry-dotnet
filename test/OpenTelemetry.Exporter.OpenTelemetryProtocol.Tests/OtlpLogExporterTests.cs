@@ -589,6 +589,32 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal("state", otlpLogRecord.Body.StringValue);
     }
 
+    [Fact]
+    public void LogRecordBodyIsExportedWhenUsingBridgeApi()
+    {
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(logRecords)
+            .Build())
+        {
+            var logger = loggerProvider.GetLogger();
+
+            logger.EmitLog(new LogRecordData()
+            {
+                Body = "Hello world",
+            });
+        }
+
+        Assert.Single(logRecords);
+
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new());
+
+        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(logRecords[0]);
+
+        Assert.Equal("Hello world", otlpLogRecord.Body?.StringValue);
+    }
+
     [Theory]
     [InlineData("true")]
     [InlineData("false")]
