@@ -156,7 +156,6 @@ internal sealed class OtlpLogRecordTransformer
 
             if (logRecord.Attributes != null)
             {
-                bool useTemplateFromExtensionMethod = false;
                 foreach (var attribute in logRecord.Attributes)
                 {
                     // Special casing {OriginalFormat}
@@ -165,21 +164,21 @@ internal sealed class OtlpLogRecordTransformer
                     if (attribute.Key.Equals("{OriginalFormat}") && !bodyPopulatedFromFormattedMessage)
                     {
                         otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = attribute.Value as string };
-                        useTemplateFromExtensionMethod = true;
                     }
                     else if (OtlpKeyValueTransformer.Instance.TryTransformTag(attribute, out var result, attributeValueLengthLimit))
                     {
                         AddAttribute(otlpLogRecord, result, attributeCountLimit);
                     }
                 }
-
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
                 // Supports Body set directly on LogRecord for the Logs Bridge API.
-                if (!useTemplateFromExtensionMethod && !bodyPopulatedFromFormattedMessage && logRecord.Body != null)
+                if (otlpLogRecord.Body == null && logRecord.Body != null)
                 {
                     // If {OriginalFormat} is not present in the attributes,
                     // use logRecord.Body if it is set.
                     otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.Body };
                 }
+#endif
             }
 
             if (logRecord.TraceId != default && logRecord.SpanId != default)
