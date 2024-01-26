@@ -165,7 +165,8 @@ TBD
 
 ## Log Filtering
 
-TBD
+Check the [Customizing OpenTelemetry .NET SDK for
+Logs](./customizing-the-sdk/README.md#log-filtering) document to learn more.
 
 ## Log Redaction
 
