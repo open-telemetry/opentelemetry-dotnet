@@ -88,7 +88,7 @@ has been used across the example, which delivers high performance, structured
 logging, and type-checked parameters:
 
 ```csharp
-public static partial class ApplicationLogs
+internal static partial class LoggerExtensions
 {
     [LoggerMessage(LogLevel.Information, "Food `{name}` price changed to `{price}`.")]
     public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
@@ -113,8 +113,7 @@ learn more.
 
 ## Learn more
 
-* [Compile-time logging source
-  generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
+* [Logging in C# and .NET](https://learn.microsoft.com/dotnet/core/extensions/logging)
 * [Logging with Complex Objects](../complex-objects/README.md)
 * [Customizing the OpenTelemetry .NET SDK](../customizing-the-sdk/README.md)
 * [Extending the OpenTelemetry .NET SDK](../extending-the-sdk/README.md)

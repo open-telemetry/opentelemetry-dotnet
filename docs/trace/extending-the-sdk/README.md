@@ -6,7 +6,7 @@ Quick links:
 * [Building your own instrumentation library](#instrumentation-library)
 * [Building your own processor](#processor)
 * [Building your own sampler](#sampler)
-* [Building your own resource detector](#resource-detector)
+* [Building your own resource detector](../../resources/README.md#resource-detector)
 * [Registration extension method guidance for library authors](#registration-extension-method-guidance-for-library-authors)
 * [References](#references)
 
@@ -180,35 +180,36 @@ Writing an instrumentation library typically involves 3 steps.
     * If the instrumentation library requires state management tied to that of
        `TracerProvider` then it should:
 
-       * Implement `IDisposable`.
+      * Implement `IDisposable`.
 
-       * Provide an extension method which calls `AddSource` (to enable its
-         `ActivitySource`) and `AddInstrumentation` (to enable state management)
-         on the `TracerProviderBuilder` being configured.
+      * Provide an extension method which calls `AddSource` (to enable its
+        `ActivitySource`) and `AddInstrumentation` (to enable state management)
+        on the `TracerProviderBuilder` being configured.
 
-       An example instrumentation using this approach is [SqlClient
-       instrumentation](../../../src/OpenTelemetry.Instrumentation.SqlClient/TracerProviderBuilderExtensions.cs).
+        An example instrumentation using this approach is [SqlClient
+        instrumentation](../../../src/OpenTelemetry.Instrumentation.SqlClient/TracerProviderBuilderExtensions.cs).
 
-       **CAUTION**: The instrumentation libraries requiring state management are
-       usually hard to auto-instrument. Therefore, they take the risk of not
-       being supported by [OpenTelemetry .NET Automatic
-       Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation).
+      > [!WARNING]
+      > The instrumentation libraries requiring state management are
+      usually hard to auto-instrument. Therefore, they take the risk of not
+      being supported by [OpenTelemetry .NET Automatic
+      Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation).
 
     * If the instrumentation library does not require any state management, then
       providing an extension method is optional.
 
-       * If an extension is provided it should call `AddSource` on the
-         `TracerProviderBuilder` being configured to enable its
-         `ActivitySource`.
+      * If an extension is provided it should call `AddSource` on the
+        `TracerProviderBuilder` being configured to enable its
+        `ActivitySource`.
 
-       * If an extension is not provided, then the name of the `ActivitySource`
-         used by the instrumented library must be documented so that end users
-         can enable it by calling `AddSource` on the `TracerProviderBuilder`
-         being configured.
+      * If an extension is not provided, then the name of the `ActivitySource`
+        used by the instrumented library must be documented so that end users
+        can enable it by calling `AddSource` on the `TracerProviderBuilder`
+        being configured.
 
-         > [!NOTE]
-         > Changing the name of the source should be considered a
-         breaking change.
+        > [!NOTE]
+        > Changing the name of the source should be considered a
+        breaking change.
 
 ### Special case : Instrumentation for libraries producing legacy Activity
 
@@ -339,21 +340,6 @@ class MySampler : Sampler
 ```
 
 A demo sampler is shown [here](./MySampler.cs).
-
-## Resource Detector
-
-OpenTelemetry .NET SDK provides a resource detector for detecting resource
-information from the `OTEL_RESOURCE_ATTRIBUTES` and `OTEL_SERVICE_NAME`
-environment variables.
-
-Custom resource detectors can be implemented:
-
-* ResourceDetectors should inherit from
-  `OpenTelemetry.Resources.IResourceDetector`, (which belongs to the
-  [OpenTelemetry](../../../src/OpenTelemetry/README.md) package), and implement
-  the `Detect` method.
-
-A demo ResourceDetector is shown [here](./MyResourceDetector.cs).
 
 ## Registration extension method guidance for library authors
 

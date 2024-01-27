@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* .NET Framework - fix description for `http.client.request.duration` metric.
+  ([#5234](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5234))
+
 ## 1.7.0
 
 Released 2023-Dec-13

@@ -83,12 +83,9 @@ pipeline. OpenTelemetry SDK is then configured with a
 export the logs to the console for demonstration purpose (note: ConsoleExporter
 is not intended for production usage, other exporters such as [OTLP
 Exporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
-should be used instead). In addition, `OpenTelemetryLoggerOptions.IncludeScopes`
-is enabled so the logs will include the [log
-scopes](https://learn.microsoft.com/dotnet/core/extensions/logging#log-scopes).
-From the console output we can see the log scopes that are coming from the
-ASP.NET Core framework, and we can see logs from both our logger and the ASP.NET
-Core framework loggers, as indicated by the `LogRecord.CategoryName`.
+should be used instead). From the console output we can see logs from both our
+logger and the ASP.NET Core framework loggers, as indicated by the
+`LogRecord.CategoryName`.
 
 The example has demonstrated the best practice from ASP.NET Core by injecting
 generic `ILogger<T>`:
@@ -108,7 +105,7 @@ has been used across the example, which delivers high performance, structured
 logging, and type-checked parameters:
 
 ```csharp
-public static partial class ApplicationLogs
+internal static partial class LoggerExtensions
 {
     [LoggerMessage(LogLevel.Information, "Starting the app...")]
     public static partial void StartingApp(this ILogger logger);
@@ -139,8 +136,7 @@ to work with it.
 
 ## Learn more
 
-* [Compile-time logging source
-  generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
+* [Logging in C# and .NET](https://learn.microsoft.com/dotnet/core/extensions/logging)
 * [Logging with Complex Objects](../complex-objects/README.md)
 * [Customizing the OpenTelemetry .NET SDK](../customizing-the-sdk/README.md)
 * [Extending the OpenTelemetry .NET SDK](../extending-the-sdk/README.md)

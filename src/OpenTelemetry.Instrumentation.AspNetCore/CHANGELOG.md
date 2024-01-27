@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Fixed issue
+  [#4466](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4466)
+  where the activity instance returned by `Activity.Current` was different than
+  instance obtained from `IHttpActivityFeature.Activity`.
+  [#5136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5136)
+
 ## 1.7.0
 
 Released 2023-Dec-13

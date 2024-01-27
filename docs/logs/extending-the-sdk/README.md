@@ -3,6 +3,7 @@
 * [Building your own exporter](#exporter)
 * [Building your own processor](#processor)
 * [Building your own sampler](#sampler)
+* [Building your own resource detector](../../resources/README.md#resource-detector)
 * [References](#references)
 
 ## Exporter

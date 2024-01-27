@@ -19,8 +19,10 @@ public class MetricExemplarTests : MetricTestsBase
         this.output = output;
     }
 
-    [Fact]
-    public void TestExemplarsCounter()
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    public void TestExemplarsCounter(MetricReaderTemporalityPreference temporality)
     {
         DateTime testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
@@ -33,7 +35,7 @@ public class MetricExemplarTests : MetricTestsBase
             .SetExemplarFilter(new AlwaysOnExemplarFilter())
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
-                metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+                metricReaderOptions.TemporalityPreference = temporality;
             }));
 
         var measurementValues = GenerateRandomValues(10);
@@ -48,6 +50,12 @@ public class MetricExemplarTests : MetricTestsBase
         Assert.True(metricPoint.Value.StartTime >= testStartTime);
         Assert.True(metricPoint.Value.EndTime != default);
         var exemplars = GetExemplars(metricPoint.Value);
+
+        // TODO: Modify the test to better test cumulative.
+        // In cumulative where SimpleExemplarReservoir's size is
+        // more than the count of new measurements, it is possible
+        // that the exemplar value is for a measurement that was recorded in the prior
+        // cycle. The current ValidateExemplars() does not handle this case.
         ValidateExemplars(exemplars, metricPoint.Value.StartTime, metricPoint.Value.EndTime, measurementValues, false);
 
         exportedItems.Clear();

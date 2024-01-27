@@ -7,40 +7,39 @@ using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 
-namespace Correlation;
-
 public class Program
 {
-    private static readonly ActivitySource MyActivitySource = new(
-        "MyCompany.MyProduct.MyLibrary");
+    private static readonly ActivitySource MyActivitySource = new("MyCompany.MyProduct.MyLibrary");
 
     public static void Main()
     {
-        // Setup Logging
-        using var loggerFactory = LoggerFactory.Create(builder =>
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("MyCompany.MyProduct.MyLibrary")
+            .AddConsoleExporter()
+            .Build();
+
+        var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
+            builder.AddOpenTelemetry(logging =>
             {
-                options.AddConsoleExporter();
+                logging.AddConsoleExporter();
             });
         });
 
         var logger = loggerFactory.CreateLogger<Program>();
 
-        // Setup Traces
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource("MyCompany.MyProduct.MyLibrary")
-            .AddConsoleExporter()
-            .Build();
-
-        // Emit activity
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
-            activity?.SetTag("foo", 1);
-
-            // emit logs within the context
-            // of activity
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            // Write a log within the context of an activity
+            logger.FoodPriceChanged("artichoke", 9.99);
         }
+
+        // Dispose logger factory before the application ends.
+        // This will flush the remaining logs and shutdown the logging pipeline.
+        loggerFactory.Dispose();
+
+        // Dispose tracer provider before the application ends.
+        // This will flush the remaining spans and shutdown the tracing pipeline.
+        tracerProvider.Dispose();
     }
 }

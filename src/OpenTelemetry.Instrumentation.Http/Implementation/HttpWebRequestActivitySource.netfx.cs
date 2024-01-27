@@ -35,7 +35,7 @@ internal static class HttpWebRequestActivitySource
     private static readonly string Version = AssemblyName.Version.ToString();
     private static readonly ActivitySource WebRequestActivitySource = new(ActivitySourceName, Version);
     private static readonly Meter WebRequestMeter = new(MeterName, Version);
-    private static readonly Histogram<double> HttpClientRequestDuration = WebRequestMeter.CreateHistogram<double>("http.client.request.duration", "s", "Measures the duration of outbound HTTP requests.");
+    private static readonly Histogram<double> HttpClientRequestDuration = WebRequestMeter.CreateHistogram<double>("http.client.request.duration", "s", "Duration of HTTP client requests.");
 
     private static HttpClientTraceInstrumentationOptions tracingOptions;
 

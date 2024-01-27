@@ -112,6 +112,11 @@ doc](https://docs.google.com/document/d/1yjjD6aBcLxlRazYrawukDgrhZMObwHARJbB9glW
 If you have trouble accessing the doc, please get in touch on
 [Slack](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
 
+The meeting is open for all to join. We invite everyone to join our meeting,
+regardless of your experience level. Whether you're a seasoned OpenTelemetry
+developer, just starting your journey, or simply curious about the work we do,
+you're more than welcome to participate!
+
 [Maintainers](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer)
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
@@ -149,20 +154,21 @@ Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/ma
 
 ## Release Schedule
 
-Only the [core components](./VERSIONING.md#core-components) of the repo have
-released a stable version. Components which are marked
-[pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
-are still work in progress and can undergo many breaking changes before stable
-release.
+See the [project
+milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
+for details on upcoming releases. The dates and features described in issues and
+milestones are estimates, and subject to change.
 
 See the [release
 notes](https://github.com/open-telemetry/opentelemetry-dotnet/releases) for
 existing releases.
 
-See the [project
-milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
-for details on upcoming releases. The dates and features described in issues and
-milestones are estimates, and subject to change.
+> [!CAUTION]
+> Certain components, marked as
+[pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
+are still work in progress and can undergo breaking changes before stable
+release. Check the individual `README.md` file for each component to understand its
+current state.
 
 Daily builds from this repo are published to MyGet, and can be installed from
 [this source](https://www.myget.org/F/opentelemetry/api/v3/index.json).
