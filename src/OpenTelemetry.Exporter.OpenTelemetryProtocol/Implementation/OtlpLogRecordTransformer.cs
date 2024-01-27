@@ -170,7 +170,7 @@ internal sealed class OtlpLogRecordTransformer
                         AddAttribute(otlpLogRecord, result, attributeCountLimit);
                     }
                 }
-#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+
                 // Supports Body set directly on LogRecord for the Logs Bridge API.
                 if (otlpLogRecord.Body == null && logRecord.Body != null)
                 {
@@ -178,7 +178,6 @@ internal sealed class OtlpLogRecordTransformer
                     // use logRecord.Body if it is set.
                     otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.Body };
                 }
-#endif
             }
 
             if (logRecord.TraceId != default && logRecord.SpanId != default)

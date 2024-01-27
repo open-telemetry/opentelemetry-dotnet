@@ -589,14 +589,20 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal("state", otlpLogRecord.Body.StringValue);
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+#if NET8_0_OR_GREATER
     [Fact]
     public void LogRecordBodyIsExportedWhenUsingBridgeApi()
     {
         var logRecords = new List<LogRecord>();
 
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
-            .AddInMemoryExporter(logRecords)
+            .ConfigureServices(services =>
+            {
+                services.AddLogging(builder => builder.AddOpenTelemetry(options =>
+                {
+                    options.AddInMemoryExporter(logRecords);
+                }));
+            })
             .Build())
         {
             var logger = loggerProvider.GetLogger();
