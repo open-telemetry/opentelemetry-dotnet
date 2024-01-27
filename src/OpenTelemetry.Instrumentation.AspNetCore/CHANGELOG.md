@@ -8,6 +8,15 @@
   instance obtained from `IHttpActivityFeature.Activity`.
   [#5136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5136)
 
+* Fixed an issue where the `http.route` attribute was not set on either the
+  `Activity` or `http.server.request.duration` metric generated from a
+  request when an exception handling middleware is invoked. One caveat is that
+  this fix does not address the problem for the `http.server.request.duration`
+  metric when running ASP.NET Core 8. ASP.NET Core 8 contains an equivalent fix
+  which should ship in version 8.0.2
+  (see: [dotnet/aspnetcore#52652](https://github.com/dotnet/aspnetcore/pull/52652)).
+  ([#5135](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5135))
+
 ## 1.7.0
 
 Released 2023-Dec-13
