@@ -3,10 +3,6 @@
 ## Unreleased
 
 * **Experimental (pre-release builds only):** Added
-  support for `Body` set directly on `LogRecord` via the Logs Bridge API.
-  [#5268](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5268)
-
-* **Experimental (pre-release builds only):** Added
   `LoggerProviderBuilder.AddOtlpExporter` registration extensions.
   [#5103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5103)
 
@@ -18,6 +14,10 @@
   These attributes, corresponding to `LogRecord.Exception`, are now stable and
   will be automatically included in exports.
   ([#5258](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5258))
+
+* **Experimental (pre-release builds only):** Added
+  support for `Body` set directly on `LogRecord` via the Logs Bridge API.
+  [#5268](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5268)
 
 ## 1.7.0
 
