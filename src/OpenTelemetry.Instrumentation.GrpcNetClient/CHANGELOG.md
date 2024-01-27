@@ -9,10 +9,11 @@
   [issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092)
   for details and workaround.
   ([#5077](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5077))
-* Removed `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable support. The
-  library will now emit the
-  [stable](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
-  HTTP semantic conventions.
+* Removed support for the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable
+  which toggled the use of the new conventions for the
+  [server, client, and shared network attributes](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/general/attributes.md#server-client-and-shared-network-attributes).
+  Now that this suite of attributes are stable, this instrumentation will only
+  emit the new attributes.
   ([#5259](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5259))
 
 ## 1.6.0-beta.3
