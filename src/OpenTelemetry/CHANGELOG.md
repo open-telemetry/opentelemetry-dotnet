@@ -15,7 +15,8 @@
 
 * Fixed an issue causing `LogRecord`s to be incorrectly reused when wrapping an
   instance of `BatchLogRecordExportProcessor` inside another
-  `BaseProcessor<LogRecord>`.
+  `BaseProcessor<LogRecord>` which leads to missing or incorrect data during
+  export.
   [#5255](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5255)
 
 ## 1.7.0
