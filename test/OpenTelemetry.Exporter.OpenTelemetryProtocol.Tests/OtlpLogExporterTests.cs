@@ -589,7 +589,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal("state", otlpLogRecord.Body.StringValue);
     }
 
-#if NET8_0_OR_GREATER
     [Fact]
     public void LogRecordBodyIsExportedWhenUsingBridgeApi()
     {
@@ -621,7 +620,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
         Assert.Equal("Hello world", otlpLogRecord.Body?.StringValue);
     }
-#endif
 
     [Fact]
     public void CheckToOtlpLogRecordExceptionAttributes()
