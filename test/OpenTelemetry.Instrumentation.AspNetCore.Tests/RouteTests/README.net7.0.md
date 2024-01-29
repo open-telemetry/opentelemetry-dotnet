@@ -24,6 +24,7 @@
 | :green_heart: | MinimalApi | [Action with parameter](#minimalapi-action-with-parameter) |
 | :green_heart: | MinimalApi | [Action without parameter (MapGroup)](#minimalapi-action-without-parameter-mapgroup) |
 | :green_heart: | MinimalApi | [Action with parameter (MapGroup)](#minimalapi-action-with-parameter-mapgroup) |
+| :green_heart: | ExceptionMiddleware | [Exception Handled by Exception Handler Middleware](#exceptionmiddleware-exception-handled-by-exception-handler-middleware) |
 
 ## ConventionalRouting: Root path
 
@@ -628,6 +629,25 @@
     "HttpContext.GetRouteData()": {
       "id": "123"
     },
+    "ActionDescriptor": null
+  }
+}
+```
+
+## ExceptionMiddleware: Exception Handled by Exception Handler Middleware
+
+```json
+{
+  "IdealHttpRoute": "/Exception",
+  "ActivityDisplayName": "GET /Exception",
+  "ActivityHttpRoute": "/Exception",
+  "MetricHttpRoute": "/Exception",
+  "RouteInfo": {
+    "HttpMethod": "GET",
+    "Path": "/Exception",
+    "RoutePattern.RawText": null,
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {},
     "ActionDescriptor": null
   }
 }

@@ -156,7 +156,8 @@ to learn more.
 
 ## Log Correlation
 
-In OpenTelemetry, logs are automatically correlated to traces. Check the [Log
+In OpenTelemetry, logs are automatically correlated to
+[traces](../trace/README.md). Check the [Log
 Correlation](./correlation/README.md) tutorial to learn more.
 
 ## Log Enrichment
@@ -165,8 +166,15 @@ TBD
 
 ## Log Filtering
 
-Check the [Customizing OpenTelemetry .NET SDK for
-Logs](./customizing-the-sdk/README.md#log-filtering) document to learn more.
+The [Customizing OpenTelemetry .NET SDK for
+Logs](./customizing-the-sdk/README.md#log-filtering) document has provided
+instructions for basic filtering based on logger category name and severity
+level.
+
+For more advanced filtering and sampling, the .NET team has a plan to cover it
+in .NET 9 timeframe, please use this [runtime
+issue](https://github.com/dotnet/runtime/issues/82465) to track the progress or
+provide feedback and suggestions.
 
 ## Log Redaction
 

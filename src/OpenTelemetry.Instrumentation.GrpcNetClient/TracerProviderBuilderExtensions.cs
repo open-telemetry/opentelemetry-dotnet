@@ -50,15 +50,10 @@ public static class TracerProviderBuilderExtensions
 
         name ??= Options.DefaultName;
 
-        builder.ConfigureServices(services =>
+        if (configure != null)
         {
-            if (configure != null)
-            {
-                services.Configure(name, configure);
-            }
-
-            services.RegisterOptionsFactory(configuration => new GrpcClientInstrumentationOptions(configuration));
-        });
+            builder.ConfigureServices(services => services.Configure(name, configure));
+        }
 
         builder.AddSource(GrpcClientDiagnosticListener.ActivitySourceName);
         builder.AddLegacySource("Grpc.Net.Client.GrpcOut");
