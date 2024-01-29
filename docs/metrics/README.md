@@ -5,9 +5,9 @@
 The following tutorials have demonstrated the best practices for while using
 metrics with OpenTelemetry .NET:
 
-* [Getting Started - Console Application](./getting-started-console/README.md)
 * [Getting Started - ASP.NET Core
   Application](./getting-started-aspnetcore/README.md)
+* [Getting Started - Console Application](./getting-started-console/README.md)
 
 ## Package Version
 
