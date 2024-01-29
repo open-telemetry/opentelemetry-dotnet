@@ -50,28 +50,27 @@ package, regardless of the .NET runtime version being used:
 
 :stop_sign: You should avoid creating instruments (e.g. `Counter<T>`) too
 frequently. Instruments are fairly expensive and meant to be reused throughout
-the application. For most applications, instruments are modeled as static
+the application. For most applications, instruments can be modeled as static
 readonly fields (e.g. [Program.cs](./getting-started-console/Program.cs)) or
 singleton via dependency injection (e.g.
 [Instrumentation.cs](../../examples/AspNetCore/Instrumentation.cs)).
 
-### Ordering of tags
+:stop_sign: You should avoid changing the order of tags while reporting
+measurements.
 
-When emitting metrics with tags, DO NOT change the order in which you provide
-tags. Changing the order of tag keys would increase the time taken by the SDK to
-record the measurement.
+> [!WARNING]
+> The last line of code has bad performance since the tags are not following
+  the same order:
 
 ```csharp
-// If you emit the tag keys in this order: name -> color -> taste, stick to this order of tag keys for subsequent measurements.
-MyFruitCounter.Add(5, new("name", "apple"), new("color", "red"), new("taste", "sweet"));
-...
-...
-...
-// Same measurement with the order of tags changed: color -> name -> taste. This order of tags is different from the one that was first encountered by the SDK.
-MyFruitCounter.Add(7, new("color", "red"), new("name", "apple"), new("taste", "sweet")); // <--- DON'T DO THIS
+counter.Add(2, new("name", "apple"), new("color", "red"));
+counter.Add(3, new("name", "lime"), new("color", "green"));
+counter.Add(5, new("name", "lemon"), new("color", "yellow"));
+counter.Add(8, new("color", "yellow"), new("name", "lemon")); // bad perf
 ```
 
-### Use TagList accordingly
+:heavy_check_mark: You should use TagList properly to achieve the best
+performance.
 
 There are two different ways of passing tags to an instrument API:
 
