@@ -1,5 +1,7 @@
 # Test results for ASP.NET Core 8
 
+[fake change to trigger CI]
+
 | http.route | App | Test Name |
 | - | - | - |
 | :broken_heart: | ConventionalRouting | [Root path](#conventionalrouting-root-path) |
