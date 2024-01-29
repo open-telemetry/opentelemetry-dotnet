@@ -113,8 +113,12 @@ public class TraceContextPropagator : TextMapPropagator
             return;
         }
 
+#if NET6_0_OR_GREATER
+        var traceparent = string.Create(55, context.ActivityContext, WriteTraceParentIntoSpan);
+#else
         var traceparent = string.Concat("00-", context.ActivityContext.TraceId.ToHexString(), "-", context.ActivityContext.SpanId.ToHexString());
         traceparent = string.Concat(traceparent, (context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
+#endif
 
         setter(carrier, TraceParent, traceparent);
 
@@ -425,4 +429,22 @@ public class TraceContextPropagator : TextMapPropagator
     {
         return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z');
     }
+
+#if NET6_0_OR_GREATER
+    private static void WriteTraceParentIntoSpan(Span<char> destination, ActivityContext context)
+    {
+        "00-".CopyTo(destination);
+        context.TraceId.ToHexString().CopyTo(destination.Slice(3));
+        destination[35] = '-';
+        context.SpanId.ToHexString().CopyTo(destination.Slice(36));
+        if ((context.TraceFlags & ActivityTraceFlags.Recorded) != 0)
+        {
+            "-01".CopyTo(destination.Slice(52));
+        }
+        else
+        {
+            "-00".CopyTo(destination.Slice(52));
+        }
+    }
+#endif
 }
