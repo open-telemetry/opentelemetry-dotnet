@@ -22,16 +22,17 @@ public sealed class LogRecordThreadStaticPoolTests
         Assert.NotNull(LogRecordThreadStaticPool.Storage);
         Assert.Equal(logRecord, LogRecordThreadStaticPool.Storage);
 
+        // Note: This record will be ignored because there is already something in the ThreadStatic storage.
         LogRecordThreadStaticPool.Instance.Return(new() { Source = LogRecord.LogRecordSource.FromThreadStaticPool });
         Assert.NotNull(LogRecordThreadStaticPool.Storage);
         Assert.Equal(logRecord, LogRecordThreadStaticPool.Storage);
 
         LogRecordThreadStaticPool.Storage = null;
 
-        var manual = new LogRecord() { Source = LogRecord.LogRecordSource.FromThreadStaticPool };
-        LogRecordThreadStaticPool.Instance.Return(manual);
+        var newLogRecord = new LogRecord() { Source = LogRecord.LogRecordSource.FromThreadStaticPool };
+        LogRecordThreadStaticPool.Instance.Return(newLogRecord);
         Assert.NotNull(LogRecordThreadStaticPool.Storage);
-        Assert.Equal(manual, LogRecordThreadStaticPool.Storage);
+        Assert.Equal(newLogRecord, LogRecordThreadStaticPool.Storage);
     }
 
     [Fact]
