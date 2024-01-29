@@ -125,6 +125,11 @@ internal
     /// </summary>
     public string? Body { get; set; } = null;
 
+    /// <summary>
+    /// Gets or sets the log category name.
+    /// </summary>
+    public string CategoryName { get; set; } = string.Empty;
+
     internal static void SetActivityContext(ref LogRecordData data, Activity? activity)
     {
         if (activity != null)

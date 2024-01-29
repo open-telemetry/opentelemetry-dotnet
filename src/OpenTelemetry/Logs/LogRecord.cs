@@ -142,7 +142,7 @@ public sealed class LogRecord
     /// </remarks>
     public string? CategoryName
     {
-        get => this.ILoggerData.CategoryName;
+        get => this.ILoggerData.CategoryName ?? this.Data.CategoryName;
         set => this.ILoggerData.CategoryName = value;
     }
 

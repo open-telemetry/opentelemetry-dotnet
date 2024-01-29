@@ -1,0 +1,2 @@
+OpenTelemetry.Logs.LogRecordData.CategoryName.get -> string!
+OpenTelemetry.Logs.LogRecordData.CategoryName.set -> void
