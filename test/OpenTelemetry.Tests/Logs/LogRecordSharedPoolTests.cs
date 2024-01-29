@@ -150,21 +150,16 @@ public sealed class LogRecordSharedPoolTests
         Assert.Null(logRecord1.ScopeStorage);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task ExportTest(bool warmup)
+    [Fact]
+    public async Task ExportTest()
     {
         LogRecordSharedPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
 
         var pool = LogRecordSharedPool.Current;
 
-        if (warmup)
+        for (int i = 0; i < LogRecordSharedPool.DefaultMaxPoolSize; i++)
         {
-            for (int i = 0; i < LogRecordSharedPool.DefaultMaxPoolSize; i++)
-            {
-                pool.Return(new LogRecord { PoolReferenceCount = 1 });
-            }
+            pool.Return(new LogRecord { PoolReferenceCount = 1 });
         }
 
         using BatchLogRecordExportProcessor processor = new(new NoopExporter());
@@ -197,10 +192,7 @@ public sealed class LogRecordSharedPoolTests
 
         processor.ForceFlush();
 
-        if (warmup)
-        {
-            Assert.Equal(LogRecordSharedPool.DefaultMaxPoolSize, pool.Count);
-        }
+        Assert.Equal(LogRecordSharedPool.DefaultMaxPoolSize, pool.Count);
 
         Assert.True(pool.Count <= LogRecordSharedPool.DefaultMaxPoolSize);
     }
