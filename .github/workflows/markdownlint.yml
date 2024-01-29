@@ -13,8 +13,5 @@ jobs:
     - name: check out code
       uses: actions/checkout@v4
 
-    - name: install markdownlint-cli
-      run: sudo npm install -g markdownlint-cli
-
     - name: run markdownlint
-      run: markdownlint .
+      uses: DavidAnson/markdownlint-cli2-action@v15.0.0
