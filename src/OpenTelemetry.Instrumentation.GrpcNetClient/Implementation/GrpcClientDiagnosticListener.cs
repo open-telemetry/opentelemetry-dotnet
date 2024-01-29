@@ -9,7 +9,6 @@ using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 
@@ -27,17 +26,11 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
     private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
 
     private readonly GrpcClientInstrumentationOptions options;
-    private readonly bool emitOldAttributes;
-    private readonly bool emitNewAttributes;
 
     public GrpcClientDiagnosticListener(GrpcClientInstrumentationOptions options)
         : base("Grpc.Net.Client")
     {
         this.options = options;
-
-        this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
-
-        this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
     }
 
     public override void OnEventWritten(string name, object payload)
@@ -133,34 +126,17 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
             }
 
             var uriHostNameType = Uri.CheckHostName(request.RequestUri.Host);
-            if (this.emitOldAttributes)
-            {
-                if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
-                {
-                    activity.SetTag(SemanticConventions.AttributeNetPeerIp, request.RequestUri.Host);
-                }
-                else
-                {
-                    activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
-                }
 
-                activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
+            if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
+            {
+                activity.SetTag(SemanticConventions.AttributeServerSocketAddress, request.RequestUri.Host);
+            }
+            else
+            {
+                activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
             }
 
-            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
-            if (this.emitNewAttributes)
-            {
-                if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
-                {
-                    activity.SetTag(SemanticConventions.AttributeServerSocketAddress, request.RequestUri.Host);
-                }
-                else
-                {
-                    activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
-                }
-
-                activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
-            }
+            activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
 
             try
             {

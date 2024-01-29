@@ -14,7 +14,6 @@ using OpenTelemetry.Instrumentation.Grpc.Services.Tests;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
 using Xunit;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests;
@@ -43,7 +42,6 @@ public partial class GrpcTests : IDisposable
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
-                [SemanticConventionOptInKeyName] = "http",
                 ["OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION"] = enableGrpcAspNetCoreSupport,
             })
             .Build();
@@ -116,7 +114,6 @@ public partial class GrpcTests : IDisposable
             var configuration = new ConfigurationBuilder()
            .AddInMemoryCollection(new Dictionary<string, string>
            {
-               [SemanticConventionOptInKeyName] = "http",
                ["OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION"] = enableGrpcAspNetCoreSupport,
            })
            .Build();
