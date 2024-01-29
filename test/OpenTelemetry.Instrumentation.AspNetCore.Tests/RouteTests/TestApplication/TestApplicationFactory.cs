@@ -5,6 +5,7 @@
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -33,6 +34,11 @@ public enum TestApplicationScenario
     /// An Razor Pages application.
     /// </summary>
     RazorPages,
+
+    /// <summary>
+    /// Application with Exception Handling Middleware.
+    /// </summary>
+    ExceptionMiddleware,
 }
 
 internal class TestApplicationFactory
@@ -53,6 +59,8 @@ internal class TestApplicationFactory
                 return CreateMinimalApiApplication();
             case TestApplicationScenario.RazorPages:
                 return CreateRazorPagesApplication();
+            case TestApplicationScenario.ExceptionMiddleware:
+                return CreateExceptionHandlerApplication();
             default:
                 throw new ArgumentException($"Invalid {nameof(TestApplicationScenario)}");
         }
@@ -151,6 +159,40 @@ internal class TestApplicationFactory
         app.UseStaticFiles();
         app.UseRouting();
         app.MapRazorPages();
+
+        return app;
+    }
+
+    private static WebApplication CreateExceptionHandlerApplication()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.Logging.ClearProviders();
+
+        var app = builder.Build();
+
+        app.UseExceptionHandler(exceptionHandlerApp =>
+        {
+            exceptionHandlerApp.Run(async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+                await context.Response.WriteAsync(exceptionHandlerPathFeature?.Error.Message ?? "An exception was thrown.");
+            });
+        });
+
+        app.Urls.Clear();
+        app.Urls.Add("http://[::1]:0");
+
+        // TODO: Remove this condition once ASP.NET Core 8.0.2.
+        // Currently, .NET 8 has a different behavior than .NET 6 and 7.
+        // This is because ASP.NET Core 8+ has native metric instrumentation.
+        // When ASP.NET Core 8.0.2 is released then its behavior will align with .NET 6/7.
+        // See: https://github.com/dotnet/aspnetcore/issues/52648#issuecomment-1853432776
+#if !NET8_0_OR_GREATER
+        app.MapGet("/Exception", (ctx) => throw new ApplicationException());
+#else
+        app.MapGet("/Exception", () => Results.Content(content: "Error", contentType: null, contentEncoding: null, statusCode: 500));
+#endif
 
         return app;
     }
