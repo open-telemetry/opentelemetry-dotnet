@@ -88,7 +88,7 @@ has been used across the example, which delivers high performance, structured
 logging, and type-checked parameters:
 
 ```csharp
-public static partial class ApplicationLogs
+internal static partial class LoggerExtensions
 {
     [LoggerMessage(LogLevel.Information, "Food `{name}` price changed to `{price}`.")]
     public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
