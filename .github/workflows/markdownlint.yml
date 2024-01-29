@@ -17,8 +17,5 @@ jobs:
       uses: DavidAnson/markdownlint-cli2-action@v14.0.0
       with:
         globs: |
-          *.md
-          docs/**.md
-          examples/**.md
-          src/**.md
-          test/**.md
+          **/*.md
+          !.github/**/*.md
