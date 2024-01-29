@@ -595,13 +595,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         var logRecords = new List<LogRecord>();
 
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddLogging(builder => builder.AddOpenTelemetry(options =>
-                {
-                    options.AddInMemoryExporter(logRecords);
-                }));
-            })
+            .AddInMemoryExporter(logRecords)
             .Build())
         {
             var logger = loggerProvider.GetLogger();
