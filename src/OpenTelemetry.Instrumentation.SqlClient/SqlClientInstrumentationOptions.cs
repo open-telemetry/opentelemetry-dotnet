@@ -5,9 +5,7 @@ using System.Collections.Concurrent;
 using System.Data;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.SqlClient;
 
@@ -51,26 +49,6 @@ public class SqlClientInstrumentationOptions
     private static readonly Regex NamedPipeRegex = new("pipe\\\\MSSQL\\$(.*?)\\\\", RegexOptions.Compiled);
 
     private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new(StringComparer.OrdinalIgnoreCase);
-
-    private readonly bool emitOldAttributes;
-    private readonly bool emitNewAttributes;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SqlClientInstrumentationOptions"/> class.
-    /// </summary>
-    public SqlClientInstrumentationOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
-    {
-    }
-
-    internal SqlClientInstrumentationOptions(IConfiguration configuration)
-    {
-        Debug.Assert(configuration != null, "configuration was null");
-
-        var httpSemanticConvention = GetSemanticConventionOptIn(configuration);
-        this.emitOldAttributes = httpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
-        this.emitNewAttributes = httpSemanticConvention.HasFlag(HttpSemanticConvention.New);
-    }
 
     /// <summary>
     /// Gets or sets a value indicating whether or not the <see
@@ -301,40 +279,19 @@ public class SqlClientInstrumentationOptions
                 sqlActivity.SetTag(SemanticConventions.AttributeDbMsSqlInstanceName, connectionDetails.InstanceName);
             }
 
-            if (this.emitOldAttributes)
+            if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
             {
-                if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
-                {
-                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerName, connectionDetails.ServerHostName);
-                }
-                else
-                {
-                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerIp, connectionDetails.ServerIpAddress);
-                }
-
-                if (!string.IsNullOrEmpty(connectionDetails.Port))
-                {
-                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerPort, connectionDetails.Port);
-                }
+                sqlActivity.SetTag(SemanticConventions.AttributeServerAddress, connectionDetails.ServerHostName);
+            }
+            else
+            {
+                sqlActivity.SetTag(SemanticConventions.AttributeServerSocketAddress, connectionDetails.ServerIpAddress);
             }
 
-            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/database/database-spans.md
-            if (this.emitNewAttributes)
+            if (!string.IsNullOrEmpty(connectionDetails.Port))
             {
-                if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
-                {
-                    sqlActivity.SetTag(SemanticConventions.AttributeServerAddress, connectionDetails.ServerHostName);
-                }
-                else
-                {
-                    sqlActivity.SetTag(SemanticConventions.AttributeServerSocketAddress, connectionDetails.ServerIpAddress);
-                }
-
-                if (!string.IsNullOrEmpty(connectionDetails.Port))
-                {
-                    // TODO: Should we continue to emit this if the default port (1433) is being used?
-                    sqlActivity.SetTag(SemanticConventions.AttributeServerPort, connectionDetails.Port);
-                }
+                // TODO: Should we continue to emit this if the default port (1433) is being used?
+                sqlActivity.SetTag(SemanticConventions.AttributeServerPort, connectionDetails.Port);
             }
         }
     }
