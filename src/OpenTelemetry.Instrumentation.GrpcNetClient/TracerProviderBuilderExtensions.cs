@@ -27,11 +27,11 @@ public static class TracerProviderBuilderExtensions
     /// Enables gRPC client instrumentation.
     /// </summary>
     /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-    /// <param name="configure">Callback action for configuring <see cref="GrpcClientInstrumentationOptions"/>.</param>
+    /// <param name="configure">Callback action for configuring <see cref="GrpcClientTraceInstrumentationOptions"/>.</param>
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
     public static TracerProviderBuilder AddGrpcClientInstrumentation(
         this TracerProviderBuilder builder,
-        Action<GrpcClientInstrumentationOptions> configure)
+        Action<GrpcClientTraceInstrumentationOptions> configure)
         => AddGrpcClientInstrumentation(builder, name: null, configure);
 
     /// <summary>
@@ -39,12 +39,12 @@ public static class TracerProviderBuilderExtensions
     /// </summary>
     /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
     /// <param name="name">Name which is used when retrieving options.</param>
-    /// <param name="configure">Callback action for configuring <see cref="GrpcClientInstrumentationOptions"/>.</param>
+    /// <param name="configure">Callback action for configuring <see cref="GrpcClientTraceInstrumentationOptions"/>.</param>
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
     public static TracerProviderBuilder AddGrpcClientInstrumentation(
         this TracerProviderBuilder builder,
         string name,
-        Action<GrpcClientInstrumentationOptions> configure)
+        Action<GrpcClientTraceInstrumentationOptions> configure)
     {
         Guard.ThrowIfNull(builder);
 
@@ -60,7 +60,7 @@ public static class TracerProviderBuilderExtensions
 
         return builder.AddInstrumentation(sp =>
         {
-            var options = sp.GetRequiredService<IOptionsMonitor<GrpcClientInstrumentationOptions>>().Get(name);
+            var options = sp.GetRequiredService<IOptionsMonitor<GrpcClientTraceInstrumentationOptions>>().Get(name);
 
             return new GrpcClientInstrumentation(options);
         });
