@@ -185,6 +185,96 @@ Here is the rule of thumb when managing the lifecycle of `MeterProvider`:
 * If you dispose the `MeterProvider` instance too early, any subsequent
   measurements will not be collected.
 
+## Memory Management
+
+In OpenTelemetry,
+[measurements](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#measurement)
+are reported via the metrics API. The SDK
+[aggregates](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#aggregation)
+metrics using certain algorithm and memory management strategy to achieve good
+performance and efficiency. Here are the rules which OpenTelemetry .NET follows
+while implementing the metrics aggregation logic:
+
+1. **Pre-Aggregation**: aggregation occurs within the SDK.
+2. **Memory Preallocation**: the memory used by aggregation logic is allocated
+   during the SDK initialization, so the SDK does not have to allocate memory
+   on-the-fly. This is to avoid garbage collection being triggered on the hot
+   code path.
+3. **Cardinality Limits**: the aggregation logic respects [cardinality
+   limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#cardinality-limits),
+   so the SDK does not use indefinite amount of memory when there is cardinality
+   explosion.
+
+Let's take the following example:
+
+* During the time range (T0, T1]:
+  * value = 1, name = `apple`, color = `red`
+  * value = 2, name = `lemon`, color = `yellow`
+* During the time range (T1, T2]:
+  * no fruit has been received
+* During the time range (T2, T3]
+  * value = 5, name = `apple`, color = `red`
+  * value = 2, name = `apple`, color = `green`
+  * value = 4, name = `lemon`, color = `yellow`
+  * value = 2, name = `lemon`, color = `yellow`
+  * value = 1, name = `lemon`, color = `yellow`
+  * value = 3, name = `lemon`, color = `yellow`
+
+If we aggregate the metrics as
+[Sums](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/etrics/data-model.md#sums)
+and export the results using [Cumulative
+Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/pecification/metrics/data-model.md#temporality):
+
+* (T0, T1]
+  * attributes: {name = `apple`, color = `red`}, count: `1`
+  * attributes: {verb = `lemon`, color = `yellow`}, count: `2`
+* (T1, T2]
+  * attributes: {name = `apple`, color = `red`}, count: `1`
+  * attributes: {verb = `lemon`, color = `yellow`}, count: `2`
+* (T2, T3]
+  * attributes: {name = `apple`, color = `red`}, count: `6`
+  * attributes: {name = `apple`, color = `green`}, count: `2`
+  * attributes: {verb = `lemon`, color = `yellow`}, count: `12`
+
+If we aggregate the metrics as
+[Sums](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/etrics/data-model.md#sums)
+and export the results using [Delta
+Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/pecification/metrics/data-model.md#temporality):
+
+* (T0, T1]
+  * attributes: {name = `apple`, color = `red`}, count: `1`
+  * attributes: {verb = `lemon`, color = `yellow`}, count: `2`
+* (T1, T2]
+  * nothing since we don't have any measurement received
+* (T2, T3]
+  * attributes: {name = `apple`, color = `red`}, count: `5`
+  * attributes: {name = `apple`, color = `green`}, count: `2`
+  * attributes: {verb = `lemon`, color = `yellow`}, count: `10`
+
+### Cardinality Limits
+
+The number of unique combinations of attributes is called cardinality. Taking
+the fruit example, if we know that we can only have apple/lemon as the name,
+red/yellow/green as the color, then we can say the cardinality is 6. No matter
+how many apples and lemons we have, we can always use the following table to
+summarize the total number of fruits based on the name and color.
+
+| Name  | Color  | Count |
+| ----- | ------ | ----- |
+| apple | red    | ?     |
+| apple | yellow | ?     |
+| apple | green  | ?     |
+| lemon | red    | ?     |
+| lemon | yellow | ?     |
+| lemon | green  | ?     |
+
+In other words, we know how much storage and network are needed to collect and
+consume these metrics, regardless of the traffic pattern.
+
+### Pre-Aggregation
+
+### Memory Preallocation
+
 ### Modeling static tags as Resource
 
 Tags such as `MachineName`, `Environment` etc. which are static throughout the
