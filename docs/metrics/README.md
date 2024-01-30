@@ -55,6 +55,14 @@ readonly fields (e.g. [Program.cs](./getting-started-console/Program.cs)) or
 singleton via dependency injection (e.g.
 [Instrumentation.cs](../../examples/AspNetCore/Instrumentation.cs)).
 
+:stop_sign: You should avoid invalid instrument names.
+
+> [!NOTE]
+> OpenTelemetry will not collect metrics from instruments that are using invalid
+  names. Refer to the [OpenTelemetry
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument-name-syntax)
+  for the valid syntax.
+
 :stop_sign: You should avoid changing the order of tags while reporting
 measurements.
 
@@ -118,6 +126,65 @@ the hot-path. You SHOULD try to keep the number of tags less than or equal to 8.
 If you are exceeding this, check if you can model some of the tags as Resource,
 as [shown here](#modeling-static-tags-as-resource).
 
+## MeterProvider Management
+
+:stop_sign: You should avoid creating `MeterProvider` instances too frequently,
+`MeterProvider` is fairly expensive and meant to be reused throughout the
+application. For most applications, one `MeterProvider` instance per process
+would be sufficient.
+
+```mermaid
+graph LR
+
+subgraph Meter A
+  InstrumentX
+end
+
+subgraph Meter B
+  InstrumentY
+  InstrumentZ
+end
+
+subgraph Meter Provider 2
+  MetricReader2
+  MetricExporter2
+  MetricReader3
+  MetricExporter3
+end
+
+subgraph Meter Provider 1
+  MetricReader1
+  MetricExporter1
+end
+
+InstrumentZ --> | Measurements | MetricReader2 --> MetricExporter2
+InstrumentZ --> | Measurements | MetricReader3 --> MetricExporter3
+InstrumentY --> | Measurements | MetricReader1 --> MetricExporter1
+InstrumentX --> | Measurements | MetricReader1
+```
+
+:heavy_check_mark: You should properly manage the lifecycle of `MeterProvider`
+instances if they are created by you.
+
+Here is the rule of thumb when managing the lifecycle of `MeterProvider`:
+
+* If you are building an application with [dependency injection
+  (DI)](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
+  (e.g. [ASP.NET Core](https://learn.microsoft.com/aspnet/core) and [.NET
+  Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)), in most
+  cases you should create the `MeterProvider` instance and let DI manage its
+  lifecycle. Refer to the [Getting Started with OpenTelemetry .NET Metrics in 5
+  Minutes - ASP.NET Core Application](./getting-started-aspnetcore/README.md)
+  tutorial to learn more.
+* If you are building an application without DI, create a `MeterProvider`
+  instance and manage the lifecycle explicitly. Refer to the [Getting Started
+  with OpenTelemetry .NET Metrics in 5 Minutes - Console
+  Application](./getting-started-console/README.md) tutorial to learn more.
+* If you forget to dispose the `MeterProvider` instance before the application
+  ends, metrics might get dropped due to the lack of proper flush.
+* If you dispose the `MeterProvider` instance too early, any subsequent
+  measurements will not be collected.
+
 ### Modeling static tags as Resource
 
 Tags such as `MachineName`, `Environment` etc. which are static throughout the
@@ -127,14 +194,6 @@ each metric measurement. Refer to this
 
 ## Common issues that lead to missing metrics
 
-* The `Meter` used to create the instruments is not added to the
-  `MeterProvider`. Use `AddMeter` method to enable the processing for the
-  required metrics.
-* Instrument name is invalid. When naming instruments, ensure that the name you
-  choose meets the criteria defined in the
-  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument-name-syntax).
-  A few notable characters that are not allowed in the instrument name: `/`
-  (forward slash), `\` (backward slash), any space character in the name.
 * MetricPoint limit is reached. By default, the SDK limits the number of maximum
   MetricPoints (unique combination of keys and values for a given Metric stream)
   to `2000`. This limit can be configured using
@@ -142,12 +201,3 @@ each metric measurement. Refer to this
   [doc](../../docs/metrics/customizing-the-sdk/README.md#changing-maximum-metricpoints-per-metricstream)
   for more information. The SDK would not process any newer unique key-value
   combination that it encounters, once this limit is reached.
-* MeterProvider is disposed. You need to ensure that the `MeterProvider`
-  instance is kept active for metrics to be collected. In a typical application,
-  a single MeterProvider is built at application startup, and is disposed of at
-  application shutdown. For an ASP.NET Core application, use `AddOpenTelemetry`
-  and `WithMetrics` methods from the `OpenTelemetry.Extensions.Hosting` package
-  to correctly setup `MeterProvider`. Here's a [sample ASP.NET Core
-  app](../../examples/AspNetCore/Program.cs) for reference. For simpler
-  applications such as Console apps, refer to this
-  [example](../../docs/metrics/getting-started-console/Program.cs).
