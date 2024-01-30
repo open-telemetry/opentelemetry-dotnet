@@ -5,15 +5,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
 /// <summary>Export client interface.</summary>
 /// <typeparam name="TRequest">Type of export request.</typeparam>
-internal interface IExportClient<in TRequest>
+/// <typeparam name="TResponse">Type of response.</typeparam>
+internal interface IExportClient<in TRequest, TResponse>
 {
     /// <summary>
     /// Method for sending export request to the server.
     /// </summary>
     /// <param name="request">The request to send to the server.</param>
+    /// <param name="response">The response received from the server.</param>
     /// <param name="cancellationToken">An optional token for canceling the call.</param>
     /// <returns>True if the request has been sent successfully, otherwise false.</returns>
-    bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default);
+    bool SendExportRequest(TRequest request, out TResponse response, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Method for shutting down the export client.

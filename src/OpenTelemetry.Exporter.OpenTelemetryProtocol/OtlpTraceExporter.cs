@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Net.Http;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Retry;
 using OpenTelemetry.Internal;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 using OtlpResource = OpenTelemetry.Proto.Resource.V1;
@@ -17,7 +20,10 @@ namespace OpenTelemetry.Exporter;
 public class OtlpTraceExporter : BaseExporter<Activity>
 {
     private readonly SdkLimitOptions sdkLimitOptions;
-    private readonly IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient;
+
+    private readonly OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest, HttpResponseMessage> httpHandler;
+
+    private readonly OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest, OtlpCollector.ExportTraceServiceResponse> grpcHandler;
 
     private OtlpResource.Resource processResource;
 
@@ -35,11 +41,13 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// </summary>
     /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
-    /// <param name="exportClient">Client used for sending export request.</param>
+    /// <param name="grpcHandler">grpc handler.</param>
+    /// <param name="httpHandler">http handler.</param>
     internal OtlpTraceExporter(
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
-        IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient = null)
+        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest, OtlpCollector.ExportTraceServiceResponse> grpcHandler = null,
+        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest, HttpResponseMessage> httpHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
@@ -56,13 +64,13 @@ public class OtlpTraceExporter : BaseExporter<Activity>
             OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
         };
 
-        if (exportClient != null)
+        if (exporterOptions.Protocol == OtlpExportProtocol.HttpProtobuf)
         {
-            this.exportClient = exportClient;
+            httpHandler = httpHandler ?? exporterOptions.GetHttpTraceHandler(exporterOptions);
         }
         else
         {
-            this.exportClient = exporterOptions.GetTraceExportClient();
+            grpcHandler = grpcHandler ?? exporterOptions.GetGrpcTraceHandler(exporterOptions);
         }
     }
 
@@ -80,7 +88,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         {
             request.AddBatch(this.sdkLimitOptions, this.ProcessResource, activityBatch);
 
-            if (!this.exportClient.SendExportRequest(request))
+            if (!this.exportClient.SendExportRequest(request, out _))
             {
                 return ExportResult.Failure;
             }

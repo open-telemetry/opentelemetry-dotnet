@@ -7,7 +7,7 @@ using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 /// <summary>Class for sending OTLP Logs export request over gRPC.</summary>
-internal sealed class OtlpGrpcLogExportClient : BaseOtlpGrpcExportClient<OtlpCollector.ExportLogsServiceRequest>
+internal sealed class OtlpGrpcLogExportClient : BaseOtlpGrpcExportClient<OtlpCollector.ExportLogsServiceRequest, OtlpCollector.ExportLogsServiceResponse>
 {
     private readonly OtlpCollector.LogsService.LogsServiceClient logsClient;
 
@@ -26,13 +26,14 @@ internal sealed class OtlpGrpcLogExportClient : BaseOtlpGrpcExportClient<OtlpCol
     }
 
     /// <inheritdoc/>
-    public override bool SendExportRequest(OtlpCollector.ExportLogsServiceRequest request, CancellationToken cancellationToken = default)
+    public override bool SendExportRequest(OtlpCollector.ExportLogsServiceRequest request, out OtlpCollector.ExportLogsServiceResponse response, CancellationToken cancellationToken = default)
     {
+        response = null;
         var deadline = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
 
         try
         {
-            this.logsClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
+            response = this.logsClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
         }
         catch (RpcException ex)
         {
