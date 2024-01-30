@@ -589,8 +589,10 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal("state", otlpLogRecord.Body.StringValue);
     }
 
-    [Fact]
-    public void LogRecordBodyIsExportedWhenUsingBridgeApi()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LogRecordBodyIsExportedWhenUsingBridgeApi(bool isBodySet)
     {
         var logRecords = new List<LogRecord>();
 
@@ -602,7 +604,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
             logger.EmitLog(new LogRecordData()
             {
-                Body = "Hello world",
+                Body = isBodySet ? "Hello world" : null,
             });
         }
 
@@ -612,7 +614,14 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
         var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(logRecords[0]);
 
-        Assert.Equal("Hello world", otlpLogRecord.Body?.StringValue);
+        if (isBodySet)
+        {
+            Assert.Equal("Hello world", otlpLogRecord.Body?.StringValue);
+        }
+        else
+        {
+            Assert.Null(otlpLogRecord.Body);
+        }
     }
 
     [Fact]
