@@ -22,6 +22,7 @@
 | :green_heart: | RazorPages | [Static content](#razorpages-static-content) |
 | :green_heart: | MinimalApi | [Action without parameter](#minimalapi-action-without-parameter) |
 | :green_heart: | MinimalApi | [Action with parameter](#minimalapi-action-with-parameter) |
+| :green_heart: | ExceptionMiddleware | [Exception Handled by Exception Handler Middleware](#exceptionmiddleware-exception-handled-by-exception-handler-middleware) |
 
 ## ConventionalRouting: Root path
 
@@ -586,6 +587,25 @@
     "HttpContext.GetRouteData()": {
       "id": "123"
     },
+    "ActionDescriptor": null
+  }
+}
+```
+
+## ExceptionMiddleware: Exception Handled by Exception Handler Middleware
+
+```json
+{
+  "IdealHttpRoute": "/Exception",
+  "ActivityDisplayName": "GET /Exception",
+  "ActivityHttpRoute": "/Exception",
+  "MetricHttpRoute": "/Exception",
+  "RouteInfo": {
+    "HttpMethod": "GET",
+    "Path": "/Exception",
+    "RoutePattern.RawText": null,
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {},
     "ActionDescriptor": null
   }
 }

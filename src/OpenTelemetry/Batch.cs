@@ -71,7 +71,11 @@ public readonly struct Batch<T> : IDisposable
                 T item = this.circularBuffer.Read();
                 if (typeof(T) == typeof(LogRecord))
                 {
-                    LogRecordSharedPool.Current.Return((LogRecord)(object)item);
+                    var logRecord = (LogRecord)(object)item;
+                    if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
+                    {
+                        LogRecordSharedPool.Current.Return(logRecord);
+                    }
                 }
             }
         }
@@ -134,7 +138,11 @@ public readonly struct Batch<T> : IDisposable
 
                 if (currentItem != null)
                 {
-                    LogRecordSharedPool.Current.Return((LogRecord)(object)currentItem);
+                    var logRecord = (LogRecord)(object)currentItem;
+                    if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
+                    {
+                        LogRecordSharedPool.Current.Return(logRecord);
+                    }
                 }
 
                 if (circularBuffer!.RemovedCount < enumerator.targetCount)
@@ -215,7 +223,12 @@ public readonly struct Batch<T> : IDisposable
                 var currentItem = this.current;
                 if (currentItem != null)
                 {
-                    LogRecordSharedPool.Current.Return((LogRecord)(object)currentItem);
+                    var logRecord = (LogRecord)(object)currentItem;
+                    if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
+                    {
+                        LogRecordSharedPool.Current.Return(logRecord);
+                    }
+
                     this.current = null;
                 }
             }
