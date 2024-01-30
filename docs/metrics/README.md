@@ -269,7 +269,7 @@ summarize the total number of fruits based on the name and color.
 | lemon | green  | ?     |
 
 In other words, we know how much storage and network are needed to collect and
-consume these metrics, regardless of the traffic pattern.
+transmit these metrics, regardless of the traffic pattern.
 
 ### Pre-Aggregation
 
