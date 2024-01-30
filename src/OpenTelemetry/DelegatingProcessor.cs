@@ -10,7 +10,7 @@ namespace OpenTelemetry;
 /// an inner <see cref="BaseProcessor{T}"/>.
 /// </summary>
 /// <typeparam name="T">The type of object to be processed.</typeparam>
-public class DelegatingProcessor<T> : BaseProcessor<T>
+public abstract class DelegatingProcessor<T> : BaseProcessor<T>
 {
     internal readonly BaseProcessor<T> InnerProcessor;
     private bool disposed;
@@ -19,7 +19,7 @@ public class DelegatingProcessor<T> : BaseProcessor<T>
     /// Initializes a new instance of the <see cref="DelegatingProcessor{T}"/> class.
     /// </summary>
     /// <param name="innerProcessor"><see cref="BaseProcessor{T}"/>.</param>
-    public DelegatingProcessor(BaseProcessor<T> innerProcessor)
+    protected DelegatingProcessor(BaseProcessor<T> innerProcessor)
     {
         Guard.ThrowIfNull(innerProcessor);
 
