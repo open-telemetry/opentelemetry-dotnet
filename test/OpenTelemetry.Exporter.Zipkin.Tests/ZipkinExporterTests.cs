@@ -103,11 +103,11 @@ public class ZipkinExporterTests : IDisposable
     {
         const string ActivitySourceName = "zipkin.test";
         Guid requestId = Guid.NewGuid();
-        TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        var testActivityProcessor = new TestProcessor<Activity>();
 
         int endCalledCount = 0;
 
-        testActivityProcessor.EndAction =
+        testActivityProcessor.OnEndAction =
             (a) =>
             {
                 endCalledCount++;
