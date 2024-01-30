@@ -188,6 +188,10 @@ internal sealed class LoggerProviderSdk : LoggerProvider
                 current = current.Next;
             }
         }
+        else if (processor is DelegatingProcessor<LogRecord> delegatingProcessor)
+        {
+            return this.ContainsBatchProcessor(delegatingProcessor.InnerProcessor);
+        }
 
         return false;
     }

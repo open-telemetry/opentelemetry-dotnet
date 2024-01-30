@@ -1,0 +1,7 @@
+OpenTelemetry.DelegatingProcessor<T>
+OpenTelemetry.DelegatingProcessor<T>.DelegatingProcessor(OpenTelemetry.BaseProcessor<T>! innerProcessor) -> void
+override OpenTelemetry.DelegatingProcessor<T>.Dispose(bool disposing) -> void
+override OpenTelemetry.DelegatingProcessor<T>.OnEnd(T data) -> void
+override OpenTelemetry.DelegatingProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
+override OpenTelemetry.DelegatingProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
+override OpenTelemetry.DelegatingProcessor<T>.OnStart(T data) -> void
