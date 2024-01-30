@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Internal;
 
@@ -17,7 +18,7 @@ internal sealed class LogRecordSharedPool : ILogRecordPool
     private long rentIndex;
     private long returnIndex;
 
-    public LogRecordSharedPool(int capacity)
+    private LogRecordSharedPool(int capacity)
     {
         this.Capacity = capacity;
         this.pool = new LogRecord?[capacity];
@@ -54,18 +55,24 @@ internal sealed class LogRecordSharedPool : ILogRecordPool
                     continue;
                 }
 
+                Debug.Assert(logRecord.Source == LogRecord.LogRecordSource.FromSharedPool, "logRecord.Source was not FromSharedPool");
                 logRecord.ResetReferenceCount();
                 return logRecord;
             }
         }
 
-        var newLogRecord = new LogRecord();
+        var newLogRecord = new LogRecord()
+        {
+            Source = LogRecord.LogRecordSource.FromSharedPool,
+        };
         newLogRecord.ResetReferenceCount();
         return newLogRecord;
     }
 
     public void Return(LogRecord logRecord)
     {
+        Debug.Assert(logRecord.Source == LogRecord.LogRecordSource.FromSharedPool, "logRecord.Source was not FromSharedPool");
+
         if (logRecord.RemoveReference() != 0)
         {
             return;
