@@ -157,10 +157,10 @@ subgraph Meter Provider 1
   MetricExporter1
 end
 
+InstrumentX --> | Measurements | MetricReader1
+InstrumentY --> | Measurements | MetricReader1 --> MetricExporter1
 InstrumentZ --> | Measurements | MetricReader2 --> MetricExporter2
 InstrumentZ --> | Measurements | MetricReader3 --> MetricExporter3
-InstrumentY --> | Measurements | MetricReader1 --> MetricExporter1
-InstrumentX --> | Measurements | MetricReader1
 ```
 
 :heavy_check_mark: You should properly manage the lifecycle of `MeterProvider`
