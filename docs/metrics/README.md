@@ -2,35 +2,75 @@
 
 ## Best Practices
 
-### Instruments should be singleton
+The following tutorials have demonstrated the best practices for while using
+metrics with OpenTelemetry .NET:
 
-Instruments SHOULD only be created once and reused throughout the application
-lifetime. This [example](../../docs/metrics/getting-started-console/Program.cs)
-shows how an instrument is created as a `static` field and then used in the
-application. You could also look at this ASP.NET Core
-[example](../../examples/AspNetCore/Program.cs) which shows a more Dependency
-Injection friendly way of doing this by extracting the `Meter` and an instrument
-into a dedicated class called
-[Instrumentation](../../examples/AspNetCore/Instrumentation.cs) which is then
-added as a `Singleton` service.
+* [Getting Started - ASP.NET Core
+  Application](./getting-started-aspnetcore/README.md)
+* [Getting Started - Console Application](./getting-started-console/README.md)
 
-### Ordering of tags
+## Package Version
 
-When emitting metrics with tags, DO NOT change the order in which you provide
-tags. Changing the order of tag keys would increase the time taken by the SDK to
-record the measurement.
+:heavy_check_mark: You should always use the
+[System.Diagnostics.Metrics](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics)
+APIs from the latest stable version of
+[System.Diagnostics.DiagnosticSource](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/)
+package, regardless of the .NET runtime version being used:
+
+* If you're using the latest stable version of [OpenTelemetry .NET
+  SDK](../../src/OpenTelemetry/README.md), you don't have to worry about the
+  version of `System.Diagnostics.DiagnosticSource` package because it is already
+  taken care of for you via [package
+  dependency](../../Directory.Packages.props).
+* The .NET runtime team is holding a high bar for backward compatibility on
+  `System.Diagnostics.DiagnosticSource` even during major version bumps, so
+  compatibility is not a concern here.
+
+## Metrics API
+
+:heavy_check_mark: You should understand and pick the right instrument type.
+
+  > [!NOTE]
+  > .NET runtime has provided several instrument types based on the [OpenTelemetry
+    Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument).
+    Picking the right instrument type for your use case is crucial to ensure the
+    correct semantics and performance. Check the [Instrument
+    Selection](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/supplementary-guidelines.md#instrument-selection)
+    section from the supplementary guidelines for more information.
+
+  | OpenTelemetry Specification | .NET Instrument Type |
+  | --------------------------- | -------------------- |
+  | [Asynchronous Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-counter) | [`ObservableCounter<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.observablecounter-1) |
+  | [Asynchronous Gauge](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-gauge) | [`ObservableGauge<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.observablegauge-1) |
+  | [Asynchronous UpDownCounter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-updowncounter) | [`ObservableUpDownCounter<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.observableupdowncounter-1) |
+  | [Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter) | [`Counter<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1) |
+  | [Gauge](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#gauge) (experimental) | N/A |
+  | [Histogram](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#histogram) | [`Histogram<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.histogram-1) |
+  | [UpDownCounter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#updowncounter) | [`UpDownCounter<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.updowncounter-1) |
+
+:stop_sign: You should avoid creating instruments (e.g. `Counter<T>`) too
+frequently. Instruments are fairly expensive and meant to be reused throughout
+the application. For most applications, instruments can be modeled as static
+readonly fields (e.g. [Program.cs](./getting-started-console/Program.cs)) or
+singleton via dependency injection (e.g.
+[Instrumentation.cs](../../examples/AspNetCore/Instrumentation.cs)).
+
+:stop_sign: You should avoid changing the order of tags while reporting
+measurements.
+
+> [!WARNING]
+> The last line of code has bad performance since the tags are not following
+  the same order:
 
 ```csharp
-// If you emit the tag keys in this order: name -> color -> taste, stick to this order of tag keys for subsequent measurements.
-MyFruitCounter.Add(5, new("name", "apple"), new("color", "red"), new("taste", "sweet"));
-...
-...
-...
-// Same measurement with the order of tags changed: color -> name -> taste. This order of tags is different from the one that was first encountered by the SDK.
-MyFruitCounter.Add(7, new("color", "red"), new("name", "apple"), new("taste", "sweet")); // <--- DON'T DO THIS
+counter.Add(2, new("name", "apple"), new("color", "red"));
+counter.Add(3, new("name", "lime"), new("color", "green"));
+counter.Add(5, new("name", "lemon"), new("color", "yellow"));
+counter.Add(8, new("color", "yellow"), new("name", "lemon")); // bad perf
 ```
 
-### Use TagList accordingly
+:heavy_check_mark: You should use TagList properly to achieve the best
+performance.
 
 There are two different ways of passing tags to an instrument API:
 
