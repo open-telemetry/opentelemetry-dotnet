@@ -13,7 +13,7 @@ public class TracerProviderExtensionsTest
     [Fact]
     public void Verify_ForceFlush_HandlesException()
     {
-        using var testProcessor = new DelegatingProcessor<Activity>();
+        using var testProcessor = new TestProcessor<Activity>();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddProcessor(testProcessor)
@@ -29,7 +29,7 @@ public class TracerProviderExtensionsTest
     [Fact]
     public void Verify_Shutdown_HandlesSecond()
     {
-        using var testProcessor = new DelegatingProcessor<Activity>();
+        using var testProcessor = new TestProcessor<Activity>();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddProcessor(testProcessor)
@@ -42,7 +42,7 @@ public class TracerProviderExtensionsTest
     [Fact]
     public void Verify_Shutdown_HandlesException()
     {
-        using var testProcessor = new DelegatingProcessor<Activity>
+        using var testProcessor = new TestProcessor<Activity>
         {
             OnShutdownFunc = (timeout) => throw new Exception("test exception"),
         };

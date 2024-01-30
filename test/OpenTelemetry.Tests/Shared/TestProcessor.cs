@@ -1,24 +1,18 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
-
 namespace OpenTelemetry.Tests;
 
-internal class TestActivityProcessor : BaseProcessor<Activity>
+public class TestProcessor<T> : BaseProcessor<T>
+    where T : class
 {
-    public Action<Activity> StartAction;
-    public Action<Activity> EndAction;
+    public Action<T> OnStartAction { get; set; } = (T data) => { };
 
-    public TestActivityProcessor()
-    {
-    }
+    public Action<T> OnEndAction { get; set; } = (T data) => { };
 
-    public TestActivityProcessor(Action<Activity> onStart, Action<Activity> onEnd)
-    {
-        this.StartAction = onStart;
-        this.EndAction = onEnd;
-    }
+    public Func<int, bool> OnForceFlushFunc { get; set; } = (timeout) => true;
+
+    public Func<int, bool> OnShutdownFunc { get; set; } = (timeout) => true;
 
     public bool ShutdownCalled { get; private set; } = false;
 
@@ -26,26 +20,28 @@ internal class TestActivityProcessor : BaseProcessor<Activity>
 
     public bool DisposedCalled { get; private set; } = false;
 
-    public override void OnStart(Activity span)
+    public override void OnStart(T data)
     {
-        this.StartAction?.Invoke(span);
+        this.OnStartAction(data);
     }
 
-    public override void OnEnd(Activity span)
+    public override void OnEnd(T data)
     {
-        this.EndAction?.Invoke(span);
+        this.OnEndAction(data);
     }
 
     protected override bool OnForceFlush(int timeoutMilliseconds)
     {
         this.ForceFlushCalled = true;
-        return true;
+
+        return this.OnForceFlushFunc(timeoutMilliseconds);
     }
 
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
         this.ShutdownCalled = true;
-        return true;
+
+        return this.OnShutdownFunc(timeoutMilliseconds);
     }
 
     protected override void Dispose(bool disposing)

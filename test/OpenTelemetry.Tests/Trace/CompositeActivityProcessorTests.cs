@@ -15,7 +15,7 @@ public class CompositeActivityProcessorTests
         Assert.Throws<ArgumentNullException>(() => new CompositeProcessor<Activity>(null));
         Assert.Throws<ArgumentException>(() => new CompositeProcessor<Activity>(Array.Empty<BaseProcessor<Activity>>()));
 
-        using var p1 = new TestActivityProcessor(null, null);
+        using var p1 = new TestProcessor<Activity>();
         using var processor = new CompositeProcessor<Activity>(new[] { p1 });
         Assert.Throws<ArgumentNullException>(() => processor.AddProcessor(null));
     }
@@ -25,12 +25,16 @@ public class CompositeActivityProcessorTests
     {
         var result = string.Empty;
 
-        using var p1 = new TestActivityProcessor(
-            activity => { result += "1"; },
-            activity => { result += "3"; });
-        using var p2 = new TestActivityProcessor(
-            activity => { result += "2"; },
-            activity => { result += "4"; });
+        using var p1 = new TestProcessor<Activity>()
+        {
+            OnStartAction = (_) => { result += "1"; },
+            OnEndAction = (_) => { result += "3"; },
+        };
+        using var p2 = new TestProcessor<Activity>()
+        {
+            OnStartAction = (_) => { result += "2"; },
+            OnEndAction = (_) => { result += "4"; },
+        };
 
         using var activity = new Activity("test");
 
@@ -46,9 +50,11 @@ public class CompositeActivityProcessorTests
     [Fact]
     public void CompositeActivityProcessor_ProcessorThrows()
     {
-        using var p1 = new TestActivityProcessor(
-            activity => { throw new Exception("Start exception"); },
-            activity => { throw new Exception("End exception"); });
+        using var p1 = new TestProcessor<Activity>()
+        {
+            OnStartAction = (_) => { throw new Exception("Start exception"); },
+            OnEndAction = (_) => { throw new Exception("End exception"); },
+        };
 
         using var activity = new Activity("test");
 
@@ -60,8 +66,8 @@ public class CompositeActivityProcessorTests
     [Fact]
     public void CompositeActivityProcessor_ShutsDownAll()
     {
-        using var p1 = new TestActivityProcessor(null, null);
-        using var p2 = new TestActivityProcessor(null, null);
+        using var p1 = new TestProcessor<Activity>();
+        using var p2 = new TestProcessor<Activity>();
 
         using var processor = new CompositeProcessor<Activity>(new[] { p1, p2 });
         processor.Shutdown();
@@ -75,8 +81,8 @@ public class CompositeActivityProcessorTests
     [InlineData(1)]
     public void CompositeActivityProcessor_ForceFlush(int timeout)
     {
-        using var p1 = new TestActivityProcessor(null, null);
-        using var p2 = new TestActivityProcessor(null, null);
+        using var p1 = new TestProcessor<Activity>();
+        using var p2 = new TestProcessor<Activity>();
 
         using var processor = new CompositeProcessor<Activity>(new[] { p1, p2 });
         processor.ForceFlush(timeout);
@@ -90,8 +96,8 @@ public class CompositeActivityProcessorTests
     {
         using TracerProvider provider = new TestProvider();
 
-        using var p1 = new TestActivityProcessor(null, null);
-        using var p2 = new TestActivityProcessor(null, null);
+        using var p1 = new TestProcessor<Activity>();
+        using var p2 = new TestProcessor<Activity>();
 
         using var processor = new CompositeProcessor<Activity>(new[] { p1, p2 });
 

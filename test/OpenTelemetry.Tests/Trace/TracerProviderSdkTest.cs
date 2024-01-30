@@ -348,18 +348,18 @@ public class TracerProviderSdkTest : IDisposable
     [Fact]
     public void TracerSdkSetsActivityDataRequestedToFalseWhenSuppressInstrumentationIsTrueForLegacyActivity()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestProcessor<Activity>();
 
         bool startCalled = false;
         bool endCalled = false;
 
-        testActivityProcessor.StartAction =
+        testActivityProcessor.OnStartAction =
             (a) =>
             {
                 startCalled = true;
             };
 
-        testActivityProcessor.EndAction =
+        testActivityProcessor.OnEndAction =
             (a) =>
             {
                 endCalled = true;
@@ -388,18 +388,18 @@ public class TracerProviderSdkTest : IDisposable
     {
         var activitySourceName = Utils.GetCurrentMethodName();
         var testSampler = new TestSampler();
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestProcessor<Activity>();
 
         bool startCalled = false;
         bool endCalled = false;
 
-        testActivityProcessor.StartAction =
+        testActivityProcessor.OnStartAction =
             (a) =>
             {
                 startCalled = true;
             };
 
-        testActivityProcessor.EndAction =
+        testActivityProcessor.OnEndAction =
             (a) =>
             {
                 endCalled = true;
@@ -432,12 +432,12 @@ public class TracerProviderSdkTest : IDisposable
     [Fact]
     public void SdkDoesNotProcessLegacyActivityWithNoAdditionalConfig()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestProcessor<Activity>();
 
         bool startCalled = false;
         bool endCalled = false;
 
-        testActivityProcessor.StartAction =
+        testActivityProcessor.OnStartAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -445,7 +445,7 @@ public class TracerProviderSdkTest : IDisposable
                 startCalled = true;
             };
 
-        testActivityProcessor.EndAction =
+        testActivityProcessor.OnEndAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -488,12 +488,12 @@ public class TracerProviderSdkTest : IDisposable
             },
         };
 
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestProcessor<Activity>();
 
         bool startCalled = false;
         bool endCalled = false;
 
-        testActivityProcessor.StartAction =
+        testActivityProcessor.OnStartAction =
             (a) =>
             {
                 Assert.True(samplerCalled);
@@ -502,7 +502,7 @@ public class TracerProviderSdkTest : IDisposable
                 startCalled = true;
             };
 
-        testActivityProcessor.EndAction =
+        testActivityProcessor.OnEndAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -549,12 +549,12 @@ public class TracerProviderSdkTest : IDisposable
             },
         };
 
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestProcessor<Activity>();
 
         bool startCalled = false;
         bool endCalled = false;
 
-        testActivityProcessor.StartAction =
+        testActivityProcessor.OnStartAction =
             (a) =>
             {
                 Assert.True(samplerCalled);
@@ -563,7 +563,7 @@ public class TracerProviderSdkTest : IDisposable
                 startCalled = true;
             };
 
-        testActivityProcessor.EndAction =
+        testActivityProcessor.OnEndAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -599,12 +599,12 @@ public class TracerProviderSdkTest : IDisposable
     [Fact]
     public void SdkCallsOnlyProcessorOnStartForLegacyActivityWhenActivitySourceIsUpdatedWithoutAddSource()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestProcessor<Activity>();
 
         bool startCalled = false;
         bool endCalled = false;
 
-        testActivityProcessor.StartAction =
+        testActivityProcessor.OnStartAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -612,7 +612,7 @@ public class TracerProviderSdkTest : IDisposable
                 startCalled = true;
             };
 
-        testActivityProcessor.EndAction =
+        testActivityProcessor.OnEndAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -649,12 +649,12 @@ public class TracerProviderSdkTest : IDisposable
     [Fact]
     public void SdkProcessesLegacyActivityWhenActivitySourceIsUpdatedWithAddSource()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestProcessor<Activity>();
 
         bool startCalled = false;
         bool endCalled = false;
 
-        testActivityProcessor.StartAction =
+        testActivityProcessor.OnStartAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -662,7 +662,7 @@ public class TracerProviderSdkTest : IDisposable
                 startCalled = true;
             };
 
-        testActivityProcessor.EndAction =
+        testActivityProcessor.OnEndAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -699,12 +699,12 @@ public class TracerProviderSdkTest : IDisposable
     [Fact]
     public void SdkProcessesLegacyActivityEvenAfterAddingNewProcessor()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestProcessor<Activity>();
 
         bool startCalled = false;
         bool endCalled = false;
 
-        testActivityProcessor.StartAction =
+        testActivityProcessor.OnStartAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -712,7 +712,7 @@ public class TracerProviderSdkTest : IDisposable
                 startCalled = true;
             };
 
-        testActivityProcessor.EndAction =
+        testActivityProcessor.OnEndAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -739,12 +739,12 @@ public class TracerProviderSdkTest : IDisposable
 
         // As Processors can be added anytime after Provider construction, the following validates
         // the following validates that updated processors are processing the legacy activities created from here on.
-        using var testActivityProcessorNew = new TestActivityProcessor();
+        using var testActivityProcessorNew = new TestProcessor<Activity>();
 
         bool startCalledNew = false;
         bool endCalledNew = false;
 
-        testActivityProcessorNew.StartAction =
+        testActivityProcessorNew.OnStartAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -752,7 +752,7 @@ public class TracerProviderSdkTest : IDisposable
                 startCalledNew = true;
             };
 
-        testActivityProcessorNew.EndAction =
+        testActivityProcessorNew.OnEndAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
@@ -1117,7 +1117,7 @@ public class TracerProviderSdkTest : IDisposable
     [Fact]
     public void TracerProviderSdkFlushesProcessorForcibly()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestProcessor<Activity>();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddProcessor(testActivityProcessor)
@@ -1143,11 +1143,11 @@ public class TracerProviderSdkTest : IDisposable
             },
         };
 
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestProcessor<Activity>();
 
         var onStartProcessedActivities = new List<string>();
         var onStopProcessedActivities = new List<string>();
-        testActivityProcessor.StartAction =
+        testActivityProcessor.OnStartAction =
             (a) =>
             {
                 Assert.Contains(a.OperationName, sampledActivities);
@@ -1156,7 +1156,7 @@ public class TracerProviderSdkTest : IDisposable
                 onStartProcessedActivities.Add(a.OperationName);
             };
 
-        testActivityProcessor.EndAction =
+        testActivityProcessor.OnEndAction =
             (a) =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);

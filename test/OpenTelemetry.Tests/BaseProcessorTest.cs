@@ -11,7 +11,7 @@ public class BaseProcessorTest
     public void Verify_ForceFlush_HandlesException()
     {
         // By default, ForceFlush should return true.
-        var testProcessor = new DelegatingProcessor<object>();
+        var testProcessor = new TestProcessor<object>();
         Assert.True(testProcessor.ForceFlush());
 
         // BaseExporter should catch any exceptions and return false.
@@ -23,7 +23,7 @@ public class BaseProcessorTest
     public void Verify_Shutdown_HandlesSecond()
     {
         // By default, Shutdown should return true.
-        var testProcessor = new DelegatingProcessor<object>();
+        var testProcessor = new TestProcessor<object>();
         Assert.True(testProcessor.Shutdown());
 
         // A second Shutdown should return false.
@@ -34,7 +34,7 @@ public class BaseProcessorTest
     public void Verify_Shutdown_HandlesException()
     {
         // BaseExporter should catch any exceptions and return false.
-        var exceptionTestProcessor = new DelegatingProcessor<object>
+        var exceptionTestProcessor = new TestProcessor<object>
         {
             OnShutdownFunc = (timeout) => throw new Exception("test exception"),
         };
@@ -44,7 +44,7 @@ public class BaseProcessorTest
     [Fact]
     public void NoOp()
     {
-        var testProcessor = new DelegatingProcessor<object>();
+        var testProcessor = new TestProcessor<object>();
 
         // These two methods are no-op, but account for 7% of the test coverage.
         testProcessor.OnStart(new object());

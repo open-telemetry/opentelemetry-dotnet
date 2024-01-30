@@ -593,18 +593,18 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
         }
 
         const string ActivitySourceName = "otlp.test";
-        TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        var testActivityProcessor = new TestProcessor<Activity>();
 
         bool startCalled = false;
         bool endCalled = false;
 
-        testActivityProcessor.StartAction =
+        testActivityProcessor.OnStartAction =
             (a) =>
             {
                 startCalled = true;
             };
 
-        testActivityProcessor.EndAction =
+        testActivityProcessor.OnEndAction =
             (a) =>
             {
                 endCalled = true;
