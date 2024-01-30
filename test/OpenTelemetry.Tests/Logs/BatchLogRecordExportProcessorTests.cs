@@ -23,7 +23,9 @@ public sealed class BatchLogRecordExportProcessorTests
 
         using var scope = scopeProvider.Push(exportedItems);
 
-        var logRecord = new LogRecord();
+        var pool = LogRecordSharedPool.Current;
+
+        var logRecord = pool.Rent();
 
         var state = new LogRecordTest.DisposingState("Hello world");
 
@@ -60,6 +62,7 @@ public sealed class BatchLogRecordExportProcessorTests
         processor.Shutdown();
 
         Assert.Single(exportedItems);
+        Assert.Same(logRecord, exportedItems[0]);
     }
 
     [Fact]
@@ -74,13 +77,18 @@ public sealed class BatchLogRecordExportProcessorTests
         using var processor = new BatchLogRecordExportProcessor(
             new InMemoryExporter<LogRecord>(exportedItems));
 
-        var logRecord = new LogRecord();
+        var pool = LogRecordSharedPool.Current;
+
+        var logRecord = pool.Rent();
 
         var state = new LogRecordTest.DisposingState("Hello world");
         logRecord.State = state;
 
         processor.OnEnd(logRecord);
         processor.Shutdown();
+
+        Assert.Single(exportedItems);
+        Assert.Same(logRecord, exportedItems[0]);
 
         state.Dispose();
 
@@ -92,6 +100,42 @@ public sealed class BatchLogRecordExportProcessorTests
             {
             }
         });
+    }
+
+    [Fact]
+    public void CopyMadeWhenLogRecordIsFromThreadStaticPoolTest()
+    {
+        List<LogRecord> exportedItems = new();
+
+        using var processor = new BatchLogRecordExportProcessor(
+            new InMemoryExporter<LogRecord>(exportedItems));
+
+        var pool = LogRecordThreadStaticPool.Instance;
+
+        var logRecord = pool.Rent();
+
+        processor.OnEnd(logRecord);
+        processor.Shutdown();
+
+        Assert.Single(exportedItems);
+        Assert.NotSame(logRecord, exportedItems[0]);
+    }
+
+    [Fact]
+    public void LogRecordAddedToBatchIfNotFromAnyPoolTest()
+    {
+        List<LogRecord> exportedItems = new();
+
+        using var processor = new BatchLogRecordExportProcessor(
+            new InMemoryExporter<LogRecord>(exportedItems));
+
+        var logRecord = new LogRecord();
+
+        processor.OnEnd(logRecord);
+        processor.Shutdown();
+
+        Assert.Single(exportedItems);
+        Assert.Same(logRecord, exportedItems[0]);
     }
 }
 #endif
