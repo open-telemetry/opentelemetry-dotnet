@@ -8,7 +8,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient;
 /// <summary>
 /// Options for GrpcClient instrumentation.
 /// </summary>
-public class GrpcClientInstrumentationOptions
+public class GrpcClientTraceInstrumentationOptions
 {
     /// <summary>
     /// Gets or sets a value indicating whether down stream instrumentation is suppressed (disabled).
