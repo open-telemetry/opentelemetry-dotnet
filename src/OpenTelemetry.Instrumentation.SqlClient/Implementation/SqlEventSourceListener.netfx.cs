@@ -29,13 +29,13 @@ internal sealed class SqlEventSourceListener : EventListener
     internal const int BeginExecuteEventId = 1;
     internal const int EndExecuteEventId = 2;
 
-    private readonly SqlClientInstrumentationOptions options;
+    private readonly SqlClientTraceInstrumentationOptions options;
     private EventSource adoNetEventSource;
     private EventSource mdsEventSource;
 
-    public SqlEventSourceListener(SqlClientInstrumentationOptions options = null)
+    public SqlEventSourceListener(SqlClientTraceInstrumentationOptions options = null)
     {
-        this.options = options ?? new SqlClientInstrumentationOptions();
+        this.options = options ?? new SqlClientTraceInstrumentationOptions();
     }
 
     public override void Dispose()
