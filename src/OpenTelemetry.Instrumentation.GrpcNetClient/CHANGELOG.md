@@ -15,6 +15,9 @@
   Now that this suite of attributes are stable, this instrumentation will only
   emit the new attributes.
   ([#5259](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5259))
+* **Breaking Change**: Renamed `GrpcClientInstrumentationOptions` to
+  `GrpcClientTraceInstrumentationOptions`.
+  ([#5272](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5272))
 
 ## 1.6.0-beta.3
 

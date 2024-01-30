@@ -413,9 +413,9 @@ public partial class GrpcTests
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
             {
-                services.Configure<GrpcClientInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+                services.Configure<GrpcClientTraceInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
 
-                services.Configure<GrpcClientInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                services.Configure<GrpcClientTraceInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
             })
             .AddGrpcClientInstrumentation()
             .AddGrpcClientInstrumentation("Instrumentation2", configure: null)

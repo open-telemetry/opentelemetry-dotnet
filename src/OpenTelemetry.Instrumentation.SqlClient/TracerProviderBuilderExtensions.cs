@@ -62,15 +62,10 @@ public static class TracerProviderBuilderExtensions
 
         name ??= Options.DefaultName;
 
-        builder.ConfigureServices(services =>
+        if (configureSqlClientInstrumentationOptions != null)
         {
-            if (configureSqlClientInstrumentationOptions != null)
-            {
-                services.Configure(name, configureSqlClientInstrumentationOptions);
-            }
-
-            services.RegisterOptionsFactory(configuration => new SqlClientInstrumentationOptions(configuration));
-        });
+            builder.ConfigureServices(services => services.Configure(name, configureSqlClientInstrumentationOptions));
+        }
 
         builder.AddInstrumentation(sp =>
         {

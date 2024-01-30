@@ -25,9 +25,9 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
     private static readonly PropertyFetcher<HttpRequestMessage> StartRequestFetcher = new("Request");
     private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
 
-    private readonly GrpcClientInstrumentationOptions options;
+    private readonly GrpcClientTraceInstrumentationOptions options;
 
-    public GrpcClientDiagnosticListener(GrpcClientInstrumentationOptions options)
+    public GrpcClientDiagnosticListener(GrpcClientTraceInstrumentationOptions options)
         : base("Grpc.Net.Client")
     {
         this.options = options;
