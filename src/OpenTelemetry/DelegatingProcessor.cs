@@ -53,7 +53,7 @@ public abstract class DelegatingProcessor<T> : BaseProcessor<T>
     /// <inheritdoc/>
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        return this.Shutdown(timeoutMilliseconds);
+        return this.InnerProcessor.Shutdown(timeoutMilliseconds);
     }
 
     /// <inheritdoc/>
