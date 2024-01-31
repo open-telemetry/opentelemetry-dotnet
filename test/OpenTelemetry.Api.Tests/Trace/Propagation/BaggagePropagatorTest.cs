@@ -131,7 +131,8 @@ public class BaggagePropagatorTest
         Assert.Equal("key%28%293", escapedKey);
         Assert.Equal("value%28%29%21%26%3B%3A", escapedValue);
 
-        var initialBaggage = $"key+1=value+1,{encodedKey}={encodedValue},{escapedKey}={escapedValue}";
+        var initialBaggage =
+            $"key%201=value%201,{encodedKey}={encodedValue},{escapedKey}={escapedValue},key4=%20!%22#$%25&'()*+%2C-./0123456789:%3B<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[%5C]^_`abcdefghijklmnopqrstuvwxyz{{|}}~";
         var carrier = new List<KeyValuePair<string, string>>
         {
             new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, initialBaggage),
@@ -142,11 +143,11 @@ public class BaggagePropagatorTest
         Assert.False(propagationContext == default);
         Assert.True(propagationContext.ActivityContext == default);
 
-        Assert.Equal(3, propagationContext.Baggage.Count);
+        Assert.Equal(4, propagationContext.Baggage.Count);
 
         var actualBaggage = propagationContext.Baggage.GetBaggage();
 
-        Assert.Equal(3, actualBaggage.Count);
+        Assert.Equal(4, actualBaggage.Count);
 
         Assert.True(actualBaggage.ContainsKey("key 1"));
         Assert.Equal("value 1", actualBaggage["key 1"]);
@@ -156,6 +157,9 @@ public class BaggagePropagatorTest
 
         Assert.True(actualBaggage.ContainsKey("key()3"));
         Assert.Equal("value()!&;:", actualBaggage["key()3"]);
+
+        Assert.True(actualBaggage.ContainsKey("key4"));
+        Assert.Equal(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", actualBaggage["key4"]);
     }
 
     [Fact]
@@ -195,11 +199,12 @@ public class BaggagePropagatorTest
             {
                 { "key 1", "value 1" },
                 { "key2", "!x_x,x-x&x(x\");:" },
+                { "key3", " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" },
             }));
 
         this.baggage.Inject(propagationContext, carrier, Setter);
 
         Assert.Single(carrier);
-        Assert.Equal("key+1=value+1,key2=!x_x%2Cx-x%26x(x%22)%3B%3A", carrier[BaggagePropagator.BaggageHeaderName]);
+        Assert.Equal("key%201=value%201,key2=!x_x%2Cx-x&x(x%22)%3B:,key3=%20!%22#$%25&'()*+%2C-./0123456789:%3B<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[%5C]^_`abcdefghijklmnopqrstuvwxyz{|}~", carrier[BaggagePropagator.BaggageHeaderName]);
     }
 }

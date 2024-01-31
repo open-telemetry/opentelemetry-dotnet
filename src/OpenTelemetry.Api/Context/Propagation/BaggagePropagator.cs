@@ -1,8 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Net;
 using System.Text;
+
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
@@ -94,7 +94,7 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                baggage.Append(WebUtility.UrlEncode(item.Key)).Append('=').Append(WebUtility.UrlEncode(item.Value)).Append(',');
+                baggage.Append(W3CBaggageValueEncoder.Encode(item.Key)).Append('=').Append(W3CBaggageValueEncoder.Encode(item.Value)).Append(',');
             }
             while (e.MoveNext() && ++itemCount < MaxBaggageItems && baggage.Length < MaxBaggageLength);
             baggage.Remove(baggage.Length - 1, 1);
@@ -141,8 +141,8 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                var key = WebUtility.UrlDecode(parts[0]);
-                var value = WebUtility.UrlDecode(parts[1]);
+                var key = Uri.UnescapeDataString(parts[0]);
+                var value = Uri.UnescapeDataString(parts[1]);
 
                 if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
                 {
