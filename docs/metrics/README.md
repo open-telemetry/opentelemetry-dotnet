@@ -222,9 +222,7 @@ Let's take the following example:
   * value = 1, name = `lemon`, color = `yellow`
   * value = 3, name = `lemon`, color = `yellow`
 
-If we aggregate the metrics as
-[Sums](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#sums)
-and export the results using [Cumulative Aggregation
+If we aggregate and export the metrics using [Cumulative Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/pecification/metrics/data-model.md#temporality):
 
 * (T0, T1]
@@ -238,9 +236,7 @@ Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/
   * attributes: {name = `apple`, color = `green`}, count: `2`
   * attributes: {verb = `lemon`, color = `yellow`}, count: `12`
 
-If we aggregate the metrics as
-[Sums](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#sums)
-and export the results using [Delta Aggregation
+If we aggregate and export the metrics using [Delta Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality):
 
 * (T0, T1]
