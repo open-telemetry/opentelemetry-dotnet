@@ -23,7 +23,12 @@
   methods (`ConfigureResource`, `WithMetrics`, `WithTracing`, and experimental
   `WithLogging`) for the `IOpenTelemetryBuilder` interface.
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
- 
+
+* Added `Microsoft.Extensions.Diagnostics.Abstractions` dependency so that the
+  `IOpenTelemetryBuilder.WithMetrics` extension method can configure
+  [IMetricsListener](https://learn.microsoft.com/dotNet/api/microsoft.extensions.diagnostics.metrics.imetricslistener).
+  ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
+
 ## 1.7.0
 
 Released 2023-Dec-08
