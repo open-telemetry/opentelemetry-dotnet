@@ -271,6 +271,18 @@ summarize the total number of fruits based on the name and color.
 In other words, we know how much storage and network are needed to collect and
 transmit these metrics, regardless of the traffic pattern.
 
+OpenTelemetry .NET has a default [cardinality
+limit](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#cardinality-limits)
+of `2000`. This limit can be configured using
+`SetMaxMetricPointsPerMetricStream` method. Refer to this
+[doc](../../docs/metrics/customizing-the-sdk/README.md#changing-maximum-metricpoints-per-metricstream)
+for more information.
+
+Once the cardinality limit is reached, any new measurement which cannot be
+independently aggregated because of the limit will be dropped on the floor. This
+behavior can be altered by enabling the [overflow
+attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
+
 ### Pre-Aggregation
 
 ### Memory Preallocation
@@ -281,13 +293,3 @@ Tags such as `MachineName`, `Environment` etc. which are static throughout the
 process lifetime should be be modeled as `Resource`, instead of adding them to
 each metric measurement. Refer to this
 [doc](./customizing-the-sdk/README.md#resource) for details and examples.
-
-## Common issues that lead to missing metrics
-
-* MetricPoint limit is reached. By default, the SDK limits the number of maximum
-  MetricPoints (unique combination of keys and values for a given Metric stream)
-  to `2000`. This limit can be configured using
-  `SetMaxMetricPointsPerMetricStream` method. Refer to this
-  [doc](../../docs/metrics/customizing-the-sdk/README.md#changing-maximum-metricpoints-per-metricstream)
-  for more information. The SDK would not process any newer unique key-value
-  combination that it encounters, once this limit is reached.
