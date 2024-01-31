@@ -27,11 +27,6 @@ public static class AspNetCoreInstrumentationMeterProviderBuilderExtensions
 #if NET8_0_OR_GREATER
         return builder.ConfigureMeters();
 #else
-        if (Environment.Version.Major >= 8)
-        {
-            return builder.ConfigureMeters();
-        }
-
         // Note: Warm-up the status code and method mapping.
         _ = TelemetryHelper.BoxedStatusCodes;
         _ = RequestMethodHelper.KnownMethods;

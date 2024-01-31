@@ -8,12 +8,6 @@
   instance obtained from `IHttpActivityFeature.Activity`.
   ([#5136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5136))
 
-* Fixed metrics instrumentation when library targeting .NET 6 or .NET 7
-  was loaded by .NET 8.
-  Fixed traces instrumentation when library targeting .NET 6
-  was loaded by .NET 7 or .NET 8.
-  ([#5252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5252))
-
 * Fixed an issue where the `http.route` attribute was not set on either the
   `Activity` or `http.server.request.duration` metric generated from a
   request when an exception handling middleware is invoked. One caveat is that
