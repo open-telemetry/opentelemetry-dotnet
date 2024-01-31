@@ -390,3 +390,9 @@ Tags such as `MachineName`, `Environment` etc. which are static throughout the
 process lifetime should be be modeled as `Resource`, instead of adding them to
 each metric measurement. Refer to this
 [doc](./customizing-the-sdk/README.md#resource) for details and examples.
+
+## Common issues that lead to missing metrics
+
+* The `Meter` used to create the instruments is not added to the
+  `MeterProvider`. Use `AddMeter` method to enable the processing for the
+  required metrics.
