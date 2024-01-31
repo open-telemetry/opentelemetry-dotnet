@@ -7,10 +7,10 @@
 ~OpenTelemetry.Exporter.OtlpExporterOptions.Headers.set -> void
 ~OpenTelemetry.Exporter.OtlpExporterOptions.HttpClientFactory.get -> System.Func<System.Net.Http.HttpClient>
 ~OpenTelemetry.Exporter.OtlpExporterOptions.HttpClientFactory.set -> void
-~OpenTelemetry.Exporter.OtlpMetricExporter.OtlpMetricExporter(OpenTelemetry.Exporter.OtlpExporterOptions options) -> void
-~OpenTelemetry.Exporter.OtlpTraceExporter.OtlpTraceExporter(OpenTelemetry.Exporter.OtlpExporterOptions options) -> void
-~override OpenTelemetry.Exporter.OtlpMetricExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> metrics) -> OpenTelemetry.ExportResult
-~override OpenTelemetry.Exporter.OtlpTraceExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
+OpenTelemetry.Exporter.OtlpMetricExporter.OtlpMetricExporter(OpenTelemetry.Exporter.OtlpExporterOptions! options) -> void
+OpenTelemetry.Exporter.OtlpTraceExporter.OtlpTraceExporter(OpenTelemetry.Exporter.OtlpExporterOptions! options) -> void
+override OpenTelemetry.Exporter.OtlpMetricExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric!> metrics) -> OpenTelemetry.ExportResult
+override OpenTelemetry.Exporter.OtlpTraceExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity!> activityBatch) -> OpenTelemetry.ExportResult
 OpenTelemetry.Exporter.OtlpExporterOptions
 OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.set -> void

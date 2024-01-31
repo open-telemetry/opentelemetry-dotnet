@@ -11,8 +11,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
 /// <summary>Base class for sending OTLP export request over gRPC.</summary>
 /// <typeparam name="TRequest">Type of export request.</typeparam>
-/// <typeparam name="TResponse">Type of export response.</typeparam>
-internal abstract class BaseOtlpGrpcExportClient<TRequest, TResponse> : IExportClient<TRequest, TResponse>
+internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequest>
 {
     protected BaseOtlpGrpcExportClient(OtlpExporterOptions options)
     {
@@ -39,7 +38,7 @@ internal abstract class BaseOtlpGrpcExportClient<TRequest, TResponse> : IExportC
     internal int TimeoutMilliseconds { get; }
 
     /// <inheritdoc/>
-    public abstract bool SendExportRequest(TRequest request, out TResponse response, CancellationToken cancellationToken = default);
+    public abstract ExportClientResponse SendExportRequest(TRequest request, CancellationToken cancellationToken = default);
 
     /// <inheritdoc/>
     public virtual bool Shutdown(int timeoutMilliseconds)

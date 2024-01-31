@@ -1,12 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics;
-using System.Net.Http;
-using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Retry;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 using OtlpResource = OpenTelemetry.Proto.Resource.V1;
@@ -20,19 +19,16 @@ namespace OpenTelemetry.Exporter;
 public class OtlpTraceExporter : BaseExporter<Activity>
 {
     private readonly SdkLimitOptions sdkLimitOptions;
+    private readonly OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler;
 
-    private readonly OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest, HttpResponseMessage> httpHandler;
-
-    private readonly OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest, OtlpCollector.ExportTraceServiceResponse> grpcHandler;
-
-    private OtlpResource.Resource processResource;
+    private OtlpResource.Resource? processResource;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
     public OtlpTraceExporter(OtlpExporterOptions options)
-        : this(options, new(), null)
+        : this(options, sdkLimitOptions: new(), transmissionHandler: null)
     {
     }
 
@@ -41,37 +37,22 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// </summary>
     /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
-    /// <param name="grpcHandler">grpc handler.</param>
-    /// <param name="httpHandler">http handler.</param>
+    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
     internal OtlpTraceExporter(
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
-        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest, OtlpCollector.ExportTraceServiceResponse> grpcHandler = null,
-        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest, HttpResponseMessage> httpHandler = null)
+        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>? transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
-        this.sdkLimitOptions = sdkLimitOptions;
+        this.sdkLimitOptions = sdkLimitOptions!;
 
-        OtlpKeyValueTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
-        };
+        OtlpKeyValueTransformer.LogUnsupportedAttributeType = OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType;
 
-        ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
-        };
+        ConfigurationExtensions.LogInvalidEnvironmentVariable = OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable;
 
-        if (exporterOptions.Protocol == OtlpExportProtocol.HttpProtobuf)
-        {
-            httpHandler = httpHandler ?? exporterOptions.GetHttpTraceHandler(exporterOptions);
-        }
-        else
-        {
-            grpcHandler = grpcHandler ?? exporterOptions.GetGrpcTraceHandler(exporterOptions);
-        }
+        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetTraceExportTransmissionHandler();
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
@@ -88,7 +69,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         {
             request.AddBatch(this.sdkLimitOptions, this.ProcessResource, activityBatch);
 
-            if (!this.exportClient.SendExportRequest(request, out _))
+            if (!this.transmissionHandler.SubmitRequest(request))
             {
                 return ExportResult.Failure;
             }
@@ -109,6 +90,6 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        return this.exportClient?.Shutdown(timeoutMilliseconds) ?? true;
+        return this.transmissionHandler.Shutdown(timeoutMilliseconds);
     }
 }

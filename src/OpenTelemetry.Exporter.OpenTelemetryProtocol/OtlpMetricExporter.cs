@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
@@ -16,16 +18,16 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 public class OtlpMetricExporter : BaseExporter<Metric>
 {
-    private readonly IExportClient<OtlpCollector.ExportMetricsServiceRequest, OtlpCollector.ExportMetricsServiceResponse> exportClient;
+    private readonly IExportClient<OtlpCollector.ExportMetricsServiceRequest> exportClient;
 
-    private OtlpResource.Resource processResource;
+    private OtlpResource.Resource? processResource;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
     /// </summary>
     /// <param name="options">Configuration options for the exporter.</param>
     public OtlpMetricExporter(OtlpExporterOptions options)
-        : this(options, null)
+        : this(options, exportClient: null)
     {
     }
 
@@ -34,7 +36,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
     /// <param name="exportClient">Client used for sending export request.</param>
-    internal OtlpMetricExporter(OtlpExporterOptions options, IExportClient<OtlpCollector.ExportMetricsServiceRequest, OtlpCollector.ExportMetricsServiceResponse> exportClient = null)
+    internal OtlpMetricExporter(OtlpExporterOptions options, IExportClient<OtlpCollector.ExportMetricsServiceRequest>? exportClient = null)
     {
         // Each of the Otlp exporters: Traces, Metrics, and Logs set the same value for `OtlpKeyValueTransformer.LogUnsupportedAttributeType`
         // and `ConfigurationExtensions.LogInvalidEnvironmentVariable` so it should be fine even if these exporters are used together.
@@ -72,7 +74,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         {
             request.AddMetrics(this.ProcessResource, metrics);
 
-            if (!this.exportClient.SendExportRequest(request, out _))
+            if (!this.exportClient.SendExportRequest(request).Success)
             {
                 return ExportResult.Failure;
             }

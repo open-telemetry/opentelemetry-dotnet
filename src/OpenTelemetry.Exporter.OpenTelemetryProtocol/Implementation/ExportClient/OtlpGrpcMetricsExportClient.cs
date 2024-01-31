@@ -7,7 +7,7 @@ using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 /// <summary>Class for sending OTLP metrics export request over gRPC.</summary>
-internal sealed class OtlpGrpcMetricsExportClient : BaseOtlpGrpcExportClient<OtlpCollector.ExportMetricsServiceRequest, OtlpCollector.ExportMetricsServiceResponse>
+internal sealed class OtlpGrpcMetricsExportClient : BaseOtlpGrpcExportClient<OtlpCollector.ExportMetricsServiceRequest>
 {
     private readonly OtlpCollector.MetricsService.MetricsServiceClient metricsClient;
 
@@ -26,22 +26,21 @@ internal sealed class OtlpGrpcMetricsExportClient : BaseOtlpGrpcExportClient<Otl
     }
 
     /// <inheritdoc/>
-    public override bool SendExportRequest(OtlpCollector.ExportMetricsServiceRequest request, out OtlpCollector.ExportMetricsServiceResponse response, CancellationToken cancellationToken = default)
+    public override ExportClientResponse SendExportRequest(OtlpCollector.ExportMetricsServiceRequest request, CancellationToken cancellationToken = default)
     {
-        response = null;
         var deadline = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
 
         try
         {
-            response = this.metricsClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
+            this.metricsClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
+
+            return new ExportClientGrpcResponse(success: true, exception: null);
         }
         catch (RpcException ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return false;
+            return new ExportClientGrpcResponse(success: false, exception: ex);
         }
-
-        return true;
     }
 }

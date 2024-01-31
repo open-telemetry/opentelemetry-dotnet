@@ -10,7 +10,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
 /// <summary>Base class for sending OTLP export request over HTTP.</summary>
 /// <typeparam name="TRequest">Type of export request.</typeparam>
-internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest, HttpResponseMessage>
+internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
 {
     protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
@@ -34,27 +34,31 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
     internal IReadOnlyDictionary<string, string> Headers { get; }
 
     /// <inheritdoc/>
-    public bool SendExportRequest(TRequest request, out HttpResponseMessage response, CancellationToken cancellationToken = default)
+    public ExportClientResponse SendExportRequest(TRequest request, CancellationToken cancellationToken = default)
     {
-        response = null;
         try
         {
             using var httpRequest = this.CreateHttpRequest(request);
 
             using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
-            httpResponse?.EnsureSuccessStatusCode();
+            try
+            {
+                httpResponse.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException ex)
+            {
+                return new ExportClientHttpResponse(success: false, httpResponse, ex);
+            }
 
-            response = httpResponse;
+            return new ExportClientHttpResponse(success: true, httpResponse, exception: null);
         }
         catch (HttpRequestException ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return false;
+            return new ExportClientHttpResponse(success: false, response: null, exception: ex);
         }
-
-        return true;
     }
 
     /// <inheritdoc/>
