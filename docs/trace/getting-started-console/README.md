@@ -85,7 +85,7 @@ is configured to subscribe to the activities from the source
 `ConsoleExporter` simply displays it on the console.
 
 ```csharp
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSource("MyCompany.MyProduct.MyLibrary")
     .AddConsoleExporter()
     .Build();
