@@ -16,7 +16,7 @@
   ([#5258](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5258))
 
 * **Experimental (pre-release builds only):** Added
-  support for `Body` set directly on `LogRecord` via the Logs Bridge API.
+ support for setting `Body` directly on `LogRecord` via the Logs Bridge API.
   [#5268](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5268)
 
 ## 1.7.0

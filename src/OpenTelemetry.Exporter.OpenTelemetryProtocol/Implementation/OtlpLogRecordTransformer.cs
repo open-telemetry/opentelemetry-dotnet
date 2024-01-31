@@ -171,7 +171,7 @@ internal sealed class OtlpLogRecordTransformer
                     }
                 }
 
-                // Supports Body set directly on LogRecord for the Logs Bridge API.
+                // Supports setting Body directly on LogRecord for the Logs Bridge API.
                 if (otlpLogRecord.Body == null && logRecord.Body != null)
                 {
                     // If {OriginalFormat} is not present in the attributes,
