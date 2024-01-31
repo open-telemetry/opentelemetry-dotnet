@@ -205,6 +205,8 @@ while implementing the metrics aggregation logic:
    so the SDK does not use indefinite amount of memory when there is cardinality
    explosion.
 
+### Example
+
 Let's take the following example:
 
 * During the time range (T0, T1]:
@@ -251,13 +253,67 @@ Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/
   * attributes: {name = `apple`, color = `green`}, count: `2`
   * attributes: {verb = `lemon`, color = `yellow`}, count: `10`
 
+### Pre-Aggregation
+
+Taking the [fruit example](#example), there are 6 measurements reported during
+`(T2, T3]`. Instead of exporting every individual measurement events, the SDK
+aggregates them and only export the summarized results.
+
+```mermaid
+graph LR
+
+subgraph SDK
+  Instrument --> | Measurements | Pre-Aggregation[Pre-Aggregation]
+end
+
+subgraph Collector
+  Aggregation
+end
+
+Pre-Aggregation --> | Metrics | Aggregation
+```
+
+Pre-aggregation brings serveral benefits:
+
+1. Although the amount of calculation remains the same, the amount of data
+   transmitted can be significantly reduced using pre-aggregation, thus
+   improving the overall performance.
+2. Pre-aggregation makes it possible to apply [cardinality
+   limits](#cardinality-limits) during SDK initialization, combined with [memory
+   preallocation](#memory-preallocation), they make the metrics data collection
+   behavior more predictable (e.g. a server under denial-of-service attack would
+   still produce a constant volume of metrics data, rather than flooding the
+   observability system with large volume of measurement events).
+
+There are cases where users might want to export raw measurement events instead
+of using pre-aggregation, as illustrated in the following diagram. OpenTelemetry
+does not support this scenario at the moment, if you are interested, please join
+the discussion by replying to this [feature
+ask](https://github.com/open-telemetry/opentelemetry-specification/issues/617 ).
+
+```mermaid
+graph LR
+
+subgraph SDK
+  Instrument
+end
+
+subgraph Collector
+  Aggregation
+end
+
+Instrument --> | Measurements | Aggregation
+```
+
+### Memory Preallocation
+
 ### Cardinality Limits
 
 The number of unique combinations of attributes is called cardinality. Taking
-the fruit example, if we know that we can only have apple/lemon as the name,
-red/yellow/green as the color, then we can say the cardinality is 6. No matter
-how many apples and lemons we have, we can always use the following table to
-summarize the total number of fruits based on the name and color.
+the [fruit example](#example), if we know that we can only have apple/lemon as
+the name, red/yellow/green as the color, then we can say the cardinality is 6.
+No matter how many apples and lemons we have, we can always use the following
+table to summarize the total number of fruits based on the name and color.
 
 | Name  | Color  | Count |
 | ----- | ------ | ----- |
@@ -273,8 +329,10 @@ transmit these metrics, regardless of the traffic pattern.
 
 OpenTelemetry .NET has a default [cardinality
 limit](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#cardinality-limits)
-of `2000`. This limit can be configured using
-`SetMaxMetricPointsPerMetricStream` method. Refer to this
+of `2000`. This limit can be configured at `MeterProvider` level using
+`SetMaxMetricPointsPerMetricStream` method, or at individual
+[view](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
+level. Refer to this
 [doc](../../docs/metrics/customizing-the-sdk/README.md#changing-maximum-metricpoints-per-metricstream)
 for more information.
 
@@ -282,10 +340,6 @@ Once the cardinality limit is reached, any new measurement which cannot be
 independently aggregated because of the limit will be dropped on the floor. This
 behavior can be altered by enabling the [overflow
 attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
-
-### Pre-Aggregation
-
-### Memory Preallocation
 
 ### Modeling static tags as Resource
 
