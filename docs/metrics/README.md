@@ -1,5 +1,21 @@
 # OpenTelemetry .NET Metrics
 
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Table of Contents</summary>
+
+* [Best Practices](#best-practices)
+* [Package Version](#package-version)
+* [Metrics API](#metrics-api)
+* [MeterProvider Management](#meterprovider-management)
+* [Memory Management](#memory-management)
+  * [Pre-Aggregation](#pre-aggregation)
+  * [Cardinality Limits](#cardinality-limits)
+  * [Memory Preallocation](#memory-preallocation)
+
+</details>
+<!-- markdownlint-enable MD033 -->
+
 ## Best Practices
 
 The following tutorials have demonstrated the best practices for while using
