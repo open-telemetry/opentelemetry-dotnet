@@ -224,7 +224,7 @@ Let's take the following example:
 
 If we aggregate the metrics as
 [Sums](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/etrics/data-model.md#sums)
-and export the results using [Cumulative
+and export the results using [Cumulative Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/pecification/metrics/data-model.md#temporality):
 
 * (T0, T1]
@@ -240,7 +240,7 @@ Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/
 
 If we aggregate the metrics as
 [Sums](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/etrics/data-model.md#sums)
-and export the results using [Delta
+and export the results using [Delta Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/pecification/metrics/data-model.md#temporality):
 
 * (T0, T1]
@@ -278,7 +278,7 @@ Pre-aggregation brings serveral benefits:
 
 1. Although the amount of calculation remains the same, the amount of data
    transmitted can be significantly reduced using pre-aggregation, thus
-   improving the overall performance.
+   improving the overall efficiency.
 2. Pre-aggregation makes it possible to apply [cardinality
    limits](#cardinality-limits) during SDK initialization, combined with [memory
    preallocation](#memory-preallocation), they make the metrics data collection
@@ -290,7 +290,7 @@ There are cases where users might want to export raw measurement events instead
 of using pre-aggregation, as illustrated in the following diagram. OpenTelemetry
 does not support this scenario at the moment, if you are interested, please join
 the discussion by replying to this [feature
-ask](https://github.com/open-telemetry/opentelemetry-specification/issues/617 ).
+ask](https://github.com/open-telemetry/opentelemetry-specification/issues/617).
 
 ```mermaid
 graph LR
@@ -326,19 +326,61 @@ table to summarize the total number of fruits based on the name and color.
 In other words, we know how much storage and network are needed to collect and
 transmit these metrics, regardless of the traffic pattern.
 
-OpenTelemetry .NET has a default [cardinality
+In real world applications, the cardinality can be very high. Imagine if we have
+a long running service and we collect metrics with 7 attributes and each
+attribute can have 30 different values. We might eventually end up having to
+remember the complete set of all 21,870,000,000 combinations! This cardinality
+explosion is a well-known challenge in the metrics space. For example, it can
+cause surprisingly high cost in the observability system, or even be leveraged
+by hackers to launch a denial-of-service attack.
+
+[Cardinality
 limit](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#cardinality-limits)
-of `2000`. This limit can be configured at `MeterProvider` level using
+is a throttling mechanism which allows the metrics collection system to have a
+predictable and reliable behavior when excessive cardinality happens, whether it
+was due to a malicious attack or developer making mistakes while writing code.
+
+OpenTelemetry has a default cardinality limit of `2000` per metric. This limit
+can be configured at `MeterProvider` level using
 `SetMaxMetricPointsPerMetricStream` method, or at individual
 [view](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
 level. Refer to this
 [doc](../../docs/metrics/customizing-the-sdk/README.md#changing-maximum-metricpoints-per-metricstream)
 for more information.
 
-Once the cardinality limit is reached, any new measurement which cannot be
-independently aggregated because of the limit will be dropped on the floor. This
-behavior can be altered by enabling the [overflow
+> [!NOTE]
+> Setting cardinality limit per view is not yet implemented in OpenTelemetry
+  .NET. You can track the progress by following this
+  [issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5296).
+
+Given a metric, once the cardinality limit is reached, any new measurement which
+cannot be independently aggregated because of the limit will be aggregated using
+the [overflow
 attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
+
+> [!NOTE]
+> Overflow attribute was introduced in OpenTelemetry .NET
+  [1.6.0-rc.1](../../src/OpenTelemetry/CHANGELOG.md#160-rc1). It is currently an
+  experimental feature which can be turned on by setting the environment
+  variable `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`. Once
+  the [OpenTelemetry
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
+  become stable, this feature will be turned on by default.
+
+When [Delta Aggregation
+Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
+is used, it is possible to choose a smaller cardinality limit by allowing the
+SDK to reclaim unused metric points.
+
+> [!NOTE]
+> Overflow attribute was introduced in OpenTelemetry .NET
+  [1.7.0-alpha.1](../../src/OpenTelemetry/CHANGELOG.md#170-alpha1). It is
+  currently an experimental feature which can be turned on by setting the
+  environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`. Once the
+  [OpenTelemetry
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
+  become stable, this feature will be turned on by default.
 
 ### Memory Preallocation
 
