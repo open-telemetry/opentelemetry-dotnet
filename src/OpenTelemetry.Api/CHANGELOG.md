@@ -4,7 +4,7 @@
 
 * Added `IOpenTelemetryBuilder` interface to support authoring extensions which
   can configure multiple OpenTelemetry signals (tracing, metrics, and/or logs).
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
 
 ## 1.7.0
 

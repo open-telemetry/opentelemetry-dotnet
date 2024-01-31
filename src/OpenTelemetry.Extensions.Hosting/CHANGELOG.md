@@ -6,7 +6,7 @@
   Removed `WithLogging` experimental APIs on `OpenTelemetryBuilder`. These have
   been replaced by new extension methods in the SDK targeting
   `IOpenTelemetryBuilder`.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
 
 ## 1.7.0
 
