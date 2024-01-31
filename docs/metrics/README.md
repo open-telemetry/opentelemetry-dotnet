@@ -196,14 +196,14 @@ performance and efficiency. Here are the rules which OpenTelemetry .NET follows
 while implementing the metrics aggregation logic:
 
 1. **Pre-Aggregation**: aggregation occurs within the SDK.
-2. **Memory Preallocation**: the memory used by aggregation logic is allocated
-   during the SDK initialization, so the SDK does not have to allocate memory
-   on-the-fly. This is to avoid garbage collection being triggered on the hot
-   code path.
-3. **Cardinality Limits**: the aggregation logic respects [cardinality
+2. **Cardinality Limits**: the aggregation logic respects [cardinality
    limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#cardinality-limits),
    so the SDK does not use indefinite amount of memory when there is cardinality
    explosion.
+3. **Memory Preallocation**: the memory used by aggregation logic is allocated
+   during the SDK initialization, so the SDK does not have to allocate memory
+   on-the-fly. This is to avoid garbage collection being triggered on the hot
+   code path.
 
 ### Example
 
@@ -257,7 +257,8 @@ Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/
 
 Taking the [fruit example](#example), there are 6 measurements reported during
 `(T2, T3]`. Instead of exporting every individual measurement events, the SDK
-aggregates them and only export the summarized results.
+aggregates them and only export the summarized results. This approach, as
+illustrated in the following diagram, is called pre-aggregation:
 
 ```mermaid
 graph LR
@@ -305,8 +306,6 @@ end
 Instrument --> | Measurements | Aggregation
 ```
 
-### Memory Preallocation
-
 ### Cardinality Limits
 
 The number of unique combinations of attributes is called cardinality. Taking
@@ -340,6 +339,8 @@ Once the cardinality limit is reached, any new measurement which cannot be
 independently aggregated because of the limit will be dropped on the floor. This
 behavior can be altered by enabling the [overflow
 attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
+
+### Memory Preallocation
 
 ### Modeling static tags as Resource
 
