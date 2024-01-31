@@ -32,12 +32,12 @@ internal sealed class SqlClientDiagnosticListener : ListenerHandler
     private readonly PropertyFetcher<CommandType> commandTypeFetcher = new("CommandType");
     private readonly PropertyFetcher<object> commandTextFetcher = new("CommandText");
     private readonly PropertyFetcher<Exception> exceptionFetcher = new("Exception");
-    private readonly SqlClientInstrumentationOptions options;
+    private readonly SqlClientTraceInstrumentationOptions options;
 
-    public SqlClientDiagnosticListener(string sourceName, SqlClientInstrumentationOptions options)
+    public SqlClientDiagnosticListener(string sourceName, SqlClientTraceInstrumentationOptions options)
         : base(sourceName)
     {
-        this.options = options ?? new SqlClientInstrumentationOptions();
+        this.options = options ?? new SqlClientTraceInstrumentationOptions();
     }
 
     public override bool SupportsNullActivity => true;

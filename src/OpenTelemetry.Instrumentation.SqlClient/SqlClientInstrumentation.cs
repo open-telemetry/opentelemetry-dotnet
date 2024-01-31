@@ -44,7 +44,7 @@ internal sealed class SqlClientInstrumentation : IDisposable
     [RequiresUnreferencedCode(SqlClientTrimmingUnsupportedMessage)]
 #endif
     public SqlClientInstrumentation(
-        SqlClientInstrumentationOptions options = null)
+        SqlClientTraceInstrumentationOptions options = null)
     {
 #if NETFRAMEWORK
         this.sqlEventSourceListener = new SqlEventSourceListener(options);
