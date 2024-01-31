@@ -241,7 +241,7 @@ Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/
 If we aggregate the metrics as
 [Sums](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/etrics/data-model.md#sums)
 and export the results using [Delta Aggregation
-Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/pecification/metrics/data-model.md#temporality):
+Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality):
 
 * (T0, T1]
   * attributes: {name = `apple`, color = `red`}, count: `1`
