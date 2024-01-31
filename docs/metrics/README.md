@@ -223,7 +223,7 @@ Let's take the following example:
   * value = 3, name = `lemon`, color = `yellow`
 
 If we aggregate the metrics as
-[Sums](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/etrics/data-model.md#sums)
+[Sums](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#sums)
 and export the results using [Cumulative Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/pecification/metrics/data-model.md#temporality):
 
