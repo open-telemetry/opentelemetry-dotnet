@@ -233,7 +233,7 @@ Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/
 * (T0, T2]
   * attributes: {name = `apple`, color = `red`}, count: `1`
   * attributes: {verb = `lemon`, color = `yellow`}, count: `2`
-* (T2, T3]
+* (T0, T3]
   * attributes: {name = `apple`, color = `red`}, count: `6`
   * attributes: {name = `apple`, color = `green`}, count: `2`
   * attributes: {verb = `lemon`, color = `yellow`}, count: `12`
