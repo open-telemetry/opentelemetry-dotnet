@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* **Breaking change for users of experimental APIs (pre-release builds only):**
+  Removed `WithLogging` experimental APIs on `OpenTelemetryBuilder`. These have
+  been replaced by new extension methods in the SDK targeting
+  `IOpenTelemetryBuilder`.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.7.0
 
 Released 2023-Dec-08

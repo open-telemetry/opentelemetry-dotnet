@@ -19,6 +19,11 @@
   export.
   [#5255](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5255)
 
+* Added `OpenTelemetryBuilderSdkExtensions` class which contains extension
+  methods (`ConfigureResource`, `WithMetrics`, `WithTracing`, and experimental
+  `WithLogging`) for the `IOpenTelemetryBuilder` interface.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+ 
 ## 1.7.0
 
 Released 2023-Dec-08
