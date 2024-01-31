@@ -7,9 +7,9 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Tests;
 
-public class SqlClientInstrumentationOptionsTests
+public class SqlClientTraceInstrumentationOptionsTests
 {
-    static SqlClientInstrumentationOptionsTests()
+    static SqlClientTraceInstrumentationOptionsTests()
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
@@ -45,7 +45,7 @@ public class SqlClientInstrumentationOptionsTests
         string expectedInstanceName,
         string expectedPort)
     {
-        var sqlConnectionDetails = SqlClientInstrumentationOptions.ParseDataSource(dataSource);
+        var sqlConnectionDetails = SqlClientTraceInstrumentationOptions.ParseDataSource(dataSource);
 
         Assert.NotNull(sqlConnectionDetails);
         Assert.Equal(expectedServerHostName, sqlConnectionDetails.ServerHostName);
@@ -60,7 +60,7 @@ public class SqlClientInstrumentationOptionsTests
     [InlineData(true, "127.0.0.1,1434", null, "127.0.0.1", null, "1434")]
     [InlineData(true, "127.0.0.1\\instanceName, 1818", null, "127.0.0.1", "instanceName", "1818")]
     [InlineData(false, "localhost", "localhost", null, null, null)]
-    public void SqlClientInstrumentationOptions_EnableConnectionLevelAttributes(
+    public void SqlClientTraceInstrumentationOptions_EnableConnectionLevelAttributes(
         bool enableConnectionLevelAttributes,
         string dataSource,
         string expectedServerHostName,
@@ -70,7 +70,7 @@ public class SqlClientInstrumentationOptionsTests
     {
         var source = new ActivitySource("sql-client-instrumentation");
         var activity = source.StartActivity("Test Sql Activity");
-        var options = new SqlClientInstrumentationOptions()
+        var options = new SqlClientTraceInstrumentationOptions()
         {
             EnableConnectionLevelAttributes = enableConnectionLevelAttributes,
         };

@@ -47,12 +47,12 @@ public class SqlClientTests : IDisposable
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
             {
-                services.Configure<SqlClientInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+                services.Configure<SqlClientTraceInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
 
-                services.Configure<SqlClientInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                services.Configure<SqlClientTraceInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
             })
             .AddSqlClientInstrumentation()
-            .AddSqlClientInstrumentation("Instrumentation2", configureSqlClientInstrumentationOptions: null)
+            .AddSqlClientInstrumentation("Instrumentation2", configureSqlClientTraceInstrumentationOptions: null)
             .Build();
 
         Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
