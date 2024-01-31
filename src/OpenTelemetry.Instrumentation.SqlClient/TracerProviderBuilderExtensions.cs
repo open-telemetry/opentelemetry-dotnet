@@ -26,28 +26,28 @@ public static class TracerProviderBuilderExtensions
     [RequiresUnreferencedCode(SqlClientInstrumentation.SqlClientTrimmingUnsupportedMessage)]
 #endif
     public static TracerProviderBuilder AddSqlClientInstrumentation(this TracerProviderBuilder builder)
-        => AddSqlClientInstrumentation(builder, name: null, configureSqlClientInstrumentationOptions: null);
+        => AddSqlClientInstrumentation(builder, name: null, configureSqlClientTraceInstrumentationOptions: null);
 
     /// <summary>
     /// Enables SqlClient instrumentation.
     /// </summary>
     /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-    /// <param name="configureSqlClientInstrumentationOptions">Callback action for configuring <see cref="SqlClientInstrumentationOptions"/>.</param>
+    /// <param name="configureSqlClientTraceInstrumentationOptions">Callback action for configuring <see cref="SqlClientTraceInstrumentationOptions"/>.</param>
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
 #if NET6_0_OR_GREATER
     [RequiresUnreferencedCode(SqlClientInstrumentation.SqlClientTrimmingUnsupportedMessage)]
 #endif
     public static TracerProviderBuilder AddSqlClientInstrumentation(
         this TracerProviderBuilder builder,
-        Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
-        => AddSqlClientInstrumentation(builder, name: null, configureSqlClientInstrumentationOptions);
+        Action<SqlClientTraceInstrumentationOptions> configureSqlClientTraceInstrumentationOptions)
+        => AddSqlClientInstrumentation(builder, name: null, configureSqlClientTraceInstrumentationOptions);
 
     /// <summary>
     /// Enables SqlClient instrumentation.
     /// </summary>
     /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
     /// <param name="name">Name which is used when retrieving options.</param>
-    /// <param name="configureSqlClientInstrumentationOptions">Callback action for configuring <see cref="SqlClientInstrumentationOptions"/>.</param>
+    /// <param name="configureSqlClientTraceInstrumentationOptions">Callback action for configuring <see cref="SqlClientTraceInstrumentationOptions"/>.</param>
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
 #if NET6_0_OR_GREATER
     [RequiresUnreferencedCode(SqlClientInstrumentation.SqlClientTrimmingUnsupportedMessage)]
@@ -56,25 +56,20 @@ public static class TracerProviderBuilderExtensions
     public static TracerProviderBuilder AddSqlClientInstrumentation(
         this TracerProviderBuilder builder,
         string name,
-        Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
+        Action<SqlClientTraceInstrumentationOptions> configureSqlClientTraceInstrumentationOptions)
     {
         Guard.ThrowIfNull(builder);
 
         name ??= Options.DefaultName;
 
-        builder.ConfigureServices(services =>
+        if (configureSqlClientTraceInstrumentationOptions != null)
         {
-            if (configureSqlClientInstrumentationOptions != null)
-            {
-                services.Configure(name, configureSqlClientInstrumentationOptions);
-            }
-
-            services.RegisterOptionsFactory(configuration => new SqlClientInstrumentationOptions(configuration));
-        });
+            builder.ConfigureServices(services => services.Configure(name, configureSqlClientTraceInstrumentationOptions));
+        }
 
         builder.AddInstrumentation(sp =>
         {
-            var sqlOptions = sp.GetRequiredService<IOptionsMonitor<SqlClientInstrumentationOptions>>().Get(name);
+            var sqlOptions = sp.GetRequiredService<IOptionsMonitor<SqlClientTraceInstrumentationOptions>>().Get(name);
 
             return new SqlClientInstrumentation(sqlOptions);
         });

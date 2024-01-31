@@ -13,7 +13,7 @@ jobs:
     outputs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
-    - uses: AurorNZ/paths-filter@v3
+    - uses: AurorNZ/paths-filter@v4
       id: changes
       with:
         filters: |
@@ -32,12 +32,16 @@ jobs:
 
   lint-md:
     needs: detect-changes
-    if: contains(needs.detect-changes.outputs.changes, 'md')
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'md')
+      || contains(needs.detect-changes.outputs.changes, 'build')
     uses: ./.github/workflows/markdownlint.yml
 
   lint-dotnet-format:
     needs: detect-changes
-    if: contains(needs.detect-changes.outputs.changes, 'code')
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
     uses: ./.github/workflows/dotnet-format.yml
 
   build-test-solution-stable:

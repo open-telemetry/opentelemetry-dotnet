@@ -222,7 +222,7 @@ public class SqlEventSourceTests
         }
         else
         {
-            var connectionDetails = SqlClientInstrumentationOptions.ParseDataSource(dataSource);
+            var connectionDetails = SqlClientTraceInstrumentationOptions.ParseDataSource(dataSource);
 
             if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
             {
@@ -230,7 +230,7 @@ public class SqlEventSourceTests
             }
             else
             {
-                Assert.Equal(connectionDetails.ServerIpAddress, activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+                Assert.Equal(connectionDetails.ServerIpAddress, activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
             }
 
             if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
