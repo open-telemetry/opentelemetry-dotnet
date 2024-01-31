@@ -594,6 +594,11 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     [InlineData(false)]
     public void LogRecordBodyIsExportedWhenUsingBridgeApi(bool isBodySet)
     {
+        LogRecordAttributeList attributes = default;
+        attributes.Add("name", "tomato");
+        attributes.Add("price", 2.99);
+        attributes.Add("{OriginalFormat}", "Hello from {name} {price}.");
+
         var logRecords = new List<LogRecord>();
 
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
@@ -606,9 +611,11 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
             {
                 Body = isBodySet ? "Hello world" : null,
             });
+
+            logger.EmitLog(new LogRecordData(), attributes);
         }
 
-        Assert.Single(logRecords);
+        Assert.Equal(2, logRecords.Count);
 
         var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new());
 
@@ -622,6 +629,21 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         {
             Assert.Null(otlpLogRecord.Body);
         }
+
+        otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(logRecords[1]);
+
+        Assert.Equal(2, otlpLogRecord.Attributes.Count);
+
+        var index = 0;
+        var attribute = otlpLogRecord.Attributes[index];
+        Assert.Equal("name", attribute.Key);
+        Assert.Equal("tomato", attribute.Value.StringValue);
+
+        attribute = otlpLogRecord.Attributes[++index];
+        Assert.Equal("price", attribute.Key);
+        Assert.Equal(2.99, attribute.Value.DoubleValue);
+
+        Assert.Equal("Hello from {name} {price}.", otlpLogRecord.Body.StringValue);
     }
 
     [Fact]
