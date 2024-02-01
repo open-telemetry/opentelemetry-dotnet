@@ -50,7 +50,7 @@ public struct MetricPoint
     {
         Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
         Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
-        Debug.Assert(!aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled || lookupData != null, "LookupData was null.");
+        Debug.Assert(!aggregatorStore!.OutputDeltaWithUnusedMetricPointReclaimEnabled || lookupData != null, "LookupData was null.");
 
         this.aggType = aggType;
         this.Tags = new ReadOnlyTagCollection(tagKeysAndValues);
