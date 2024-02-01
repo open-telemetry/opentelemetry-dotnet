@@ -131,7 +131,9 @@ public class BaggagePropagatorTest
         Assert.Equal("key%28%293", escapedKey);
         Assert.Equal("value%28%29%21%26%3B%3A", escapedValue);
 
-        var initialBaggage = $"key+1=value+1,{encodedKey}={encodedValue},{escapedKey}={escapedValue}";
+        var initialBaggage =
+            $"key%201=value%201,{encodedKey}={encodedValue},{escapedKey}={escapedValue},key4=%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~,key5=%C4%85%C5%9B%C4%87,key6=1%3D1";
+
         var carrier = new List<KeyValuePair<string, string>>
         {
             new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, initialBaggage),
@@ -142,11 +144,11 @@ public class BaggagePropagatorTest
         Assert.False(propagationContext == default);
         Assert.True(propagationContext.ActivityContext == default);
 
-        Assert.Equal(3, propagationContext.Baggage.Count);
+        Assert.Equal(6, propagationContext.Baggage.Count);
 
         var actualBaggage = propagationContext.Baggage.GetBaggage();
 
-        Assert.Equal(3, actualBaggage.Count);
+        Assert.Equal(6, actualBaggage.Count);
 
         Assert.True(actualBaggage.ContainsKey("key 1"));
         Assert.Equal("value 1", actualBaggage["key 1"]);
@@ -156,6 +158,18 @@ public class BaggagePropagatorTest
 
         Assert.True(actualBaggage.ContainsKey("key()3"));
         Assert.Equal("value()!&;:", actualBaggage["key()3"]);
+
+        // x20-x7E range
+        Assert.True(actualBaggage.ContainsKey("key4"));
+        Assert.Equal(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", actualBaggage["key4"]);
+
+        // non-ASCII characters
+        Assert.True(actualBaggage.ContainsKey("key5"));
+        Assert.Equal("ąść", actualBaggage["key5"]);
+
+        // value contains '=' character
+        Assert.True(actualBaggage.ContainsKey("key6"));
+        Assert.Equal("1=1", actualBaggage["key6"]);
     }
 
     [Fact]
@@ -195,11 +209,17 @@ public class BaggagePropagatorTest
             {
                 { "key 1", "value 1" },
                 { "key2", "!x_x,x-x&x(x\");:" },
+                // x20-x7E range
+                { "key3", " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" },
+                // non-ASCII
+                { "key4", "ąść" },
+                // '=' char in value
+                { "key5", "1=1" },
             }));
 
         this.baggage.Inject(propagationContext, carrier, Setter);
 
         Assert.Single(carrier);
-        Assert.Equal("key+1=value+1,key2=!x_x%2Cx-x%26x(x%22)%3B%3A", carrier[BaggagePropagator.BaggageHeaderName]);
+        Assert.Equal("key%201=value%201,key2=%21x_x%2Cx-x%26x%28x%22%29%3B%3A,key3=%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~,key4=%C4%85%C5%9B%C4%87,key5=1%3D1", carrier[BaggagePropagator.BaggageHeaderName]);
     }
 }
