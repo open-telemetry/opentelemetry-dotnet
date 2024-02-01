@@ -15,9 +15,11 @@
   will be automatically included in exports.
   ([#5258](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5258))
 
-* **Experimental (pre-release builds only):** Added
- support for setting `Body` directly on `LogRecord` via the Logs Bridge API.
-  [#5268](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5268)
+* Updated `OtlpLogExporter` to set `body` on the data model from
+  `LogRecord.Body` if `{OriginalFormat}` attribute is NOT found and
+  `FormattedMessage` is `null`. This is typically the case when using the
+  experimental Logs Bridge API.
+  ([#5268](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5268))
 
 ## 1.7.0
 
