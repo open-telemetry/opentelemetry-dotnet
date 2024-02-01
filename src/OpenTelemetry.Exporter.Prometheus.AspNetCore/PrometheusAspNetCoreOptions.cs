@@ -18,7 +18,7 @@ public class PrometheusAspNetCoreOptions
     public string ScrapeEndpointPath { get; set; } = DefaultScrapeEndpointPath;
 
     /// <summary>
-    /// Gets or sets a value indicating whether addition of _total suffix for counter metric names is disabled.
+    /// Gets or sets a value indicating whether addition of _total suffix for counter metric names is disabled. Default value: <see langword="false"/>.
     /// </summary>
     public bool DisableTotalNameSuffixForCounters
     {
