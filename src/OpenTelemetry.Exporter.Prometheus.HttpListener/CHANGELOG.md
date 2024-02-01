@@ -11,7 +11,7 @@
 
 * **Breaking change** Updated the `PrometheusHttpListener` to throw an exception
   if it can't be started.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5304](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5304))
 
 ## 1.7.0-rc.1
 
