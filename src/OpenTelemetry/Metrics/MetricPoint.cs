@@ -50,11 +50,7 @@ public struct MetricPoint
     {
         Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
         Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
-
-        if (aggregatorStore!.OutputDelta && aggregatorStore.ShouldReclaimUnusedMetricPoints)
-        {
-            Debug.Assert(lookupData != null, "LookupData was null.");
-        }
+        Debug.Assert(!aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled || lookupData != null, "LookupData was null.");
 
         this.aggType = aggType;
         this.Tags = new ReadOnlyTagCollection(tagKeysAndValues);
@@ -445,7 +441,7 @@ public struct MetricPoint
         // by ignoring Zero points
         this.MetricPointStatus = MetricPointStatus.CollectPending;
 
-        if (this.aggregatorStore.OutputDelta)
+        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
         {
             Interlocked.Decrement(ref this.ReferenceCount);
         }
@@ -570,7 +566,7 @@ public struct MetricPoint
         // by ignoring Zero points
         this.MetricPointStatus = MetricPointStatus.CollectPending;
 
-        if (this.aggregatorStore.OutputDelta)
+        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
         {
             Interlocked.Decrement(ref this.ReferenceCount);
         }
@@ -666,7 +662,7 @@ public struct MetricPoint
         // by ignoring Zero points
         this.MetricPointStatus = MetricPointStatus.CollectPending;
 
-        if (this.aggregatorStore.OutputDelta)
+        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
         {
             Interlocked.Decrement(ref this.ReferenceCount);
         }
@@ -797,7 +793,7 @@ public struct MetricPoint
         // by ignoring Zero points
         this.MetricPointStatus = MetricPointStatus.CollectPending;
 
-        if (this.aggregatorStore.OutputDelta)
+        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
         {
             Interlocked.Decrement(ref this.ReferenceCount);
         }
