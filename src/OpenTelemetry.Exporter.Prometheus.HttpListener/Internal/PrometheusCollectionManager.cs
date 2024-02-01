@@ -283,7 +283,7 @@ internal sealed class PrometheusCollectionManager
         // Optimize writing metrics with bounded cache that has pre-calculated Prometheus names.
         if (!this.metricsCache.TryGetValue(metric, out var prometheusMetric))
         {
-            prometheusMetric = PrometheusMetric.Create(metric);
+            prometheusMetric = PrometheusMetric.Create(metric, this.exporter.DisableTotalNameSuffixForCounters);
 
             // Add to the cache if there is space.
             if (this.metricsCacheCount < MaxCachedMetrics)

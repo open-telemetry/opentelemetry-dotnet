@@ -19,7 +19,7 @@ internal sealed class PrometheusMetric
         PrometheusType.Untyped, PrometheusType.Counter, PrometheusType.Gauge, PrometheusType.Summary, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Gauge,
     };
 
-    public PrometheusMetric(string name, string unit, PrometheusType type)
+    public PrometheusMetric(string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters)
     {
         // The metric name is
         // required to match the regex: `[a-zA-Z_:]([a-zA-Z0-9_:])*`. Invalid characters
@@ -48,7 +48,7 @@ internal sealed class PrometheusMetric
         // If the metric name for monotonic Sum metric points does not end in a suffix of `_total` a suffix of `_total` MUST be added by default, otherwise the name MUST remain unchanged.
         // Exporters SHOULD provide a configuration option to disable the addition of `_total` suffixes.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L286
-        if (type == PrometheusType.Counter && !sanitizedName.EndsWith("_total"))
+        if (!disableTotalNameSuffixForCounters && type == PrometheusType.Counter && !sanitizedName.EndsWith("_total"))
         {
             sanitizedName += "_total";
         }
@@ -71,9 +71,9 @@ internal sealed class PrometheusMetric
 
     public PrometheusType Type { get; }
 
-    public static PrometheusMetric Create(Metric metric)
+    public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
     {
-        return new PrometheusMetric(metric.Name, metric.Unit, GetPrometheusType(metric));
+        return new PrometheusMetric(metric.Name, metric.Unit, GetPrometheusType(metric), disableTotalNameSuffixForCounters);
     }
 
     internal static string SanitizeMetricName(string metricName)
