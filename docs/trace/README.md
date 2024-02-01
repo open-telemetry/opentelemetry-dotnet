@@ -111,6 +111,13 @@ Here is the rule of thumb when managing the lifecycle of `TracerProvider`:
 * If you dispose the `TracerProvider` instance too early, any subsequent
   activities will not be collected.
 
+## Correlation
+
+In OpenTelemetry, traces are automatically [correlated to
+logs](../logs/README.md#log-correlation) and can be [correlated to
+metrics](../metrics/README.md#metrics-correlation) via
+[exemplars](../metrics/exemplars/README.md).
+
 ### Manually creating Activities
 
 As shown in the [getting started](getting-started-console/README.md) guide, it
@@ -126,13 +133,6 @@ care of propagating/restoring the context across process boundaries. If the
 `Activity` produced by the instrumentation library is missing some information
 you need, it is generally recommended to enrich the existing Activity with that
 information, as opposed to creating a new one.
-
-### Correlation
-
-In OpenTelemetry, traces are automatically [correlated to
-logs](../logs/README.md#log-correlation) and can be [correlated to
-metrics](../metrics/README.md#metrics-correlation) via
-[exemplars](../metrics/exemplars/README.md).
 
 ### Modelling static tags as Resource
 
