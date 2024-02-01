@@ -140,9 +140,9 @@ Here is the rule of thumb:
 
 > [!NOTE]
 > When reporting measurements with more than 8 tags, the API allocates memory on
-the hot-path. You SHOULD try to keep the number of tags less than or equal to 8.
-If you are exceeding this, check if you can model some of the tags as Resource,
-as [shown here](#modeling-static-tags-as-resource).
+  the hot-path. You SHOULD try to keep the number of tags less than or equal to 8.
+  If you are exceeding this, check if you can model some of the tags as Resource,
+  as [shown here](#metrics-enrichment).
 
 ## MeterProvider Management
 
