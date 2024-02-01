@@ -11,6 +11,8 @@
 * **Breaking Change**: Renamed `SqlClientInstrumentationOptions` to
   `SqlClientTraceInstrumentationOptions`.
   ([#5285](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5285))
+* Stop emitting `db.statement_type` attribute.
+  ([#5301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5301))
 
 ## 1.6.0-beta.3
 
