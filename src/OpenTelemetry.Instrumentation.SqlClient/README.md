@@ -75,12 +75,12 @@ For an ASP.NET application, adding instrumentation is typically done in the
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
-`SqlClientInstrumentationOptions`.
+`SqlClientTraceInstrumentationOptions`.
 
 ### Capturing database statements
 
-The `SqlClientInstrumentationOptions` class exposes two properties that can be
-used to configure how the
+The `SqlClientTraceInstrumentationOptions` class exposes two properties that can
+be used to configure how the
 [`db.statement`](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md#call-level-attributes)
 attribute is captured upon execution of a query but the behavior depends on the
 runtime used.

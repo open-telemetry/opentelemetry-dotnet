@@ -59,6 +59,8 @@ internal sealed class PrometheusHttpListener : IDisposable
                 return;
             }
 
+            this.httpListener.Start();
+
             // link the passed in token if not null
             this.tokenSource = token == default ?
                 new CancellationTokenSource() :
@@ -91,7 +93,7 @@ internal sealed class PrometheusHttpListener : IDisposable
     {
         this.Stop();
 
-        if (this.httpListener != null && this.httpListener.IsListening)
+        if (this.httpListener.IsListening)
         {
             this.httpListener.Close();
         }
@@ -111,8 +113,6 @@ internal sealed class PrometheusHttpListener : IDisposable
 
     private void WorkerProc()
     {
-        this.httpListener.Start();
-
         try
         {
             using var scope = SuppressInstrumentationScope.Begin();

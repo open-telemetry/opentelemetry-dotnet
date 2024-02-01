@@ -8,6 +8,9 @@
   Now that this suite of attributes are stable, this instrumentation will only
   emit the new attributes.
   ([#5270](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5270))
+* **Breaking Change**: Renamed `SqlClientInstrumentationOptions` to
+  `SqlClientTraceInstrumentationOptions`.
+  ([#5285](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5285))
 
 ## 1.6.0-beta.3
 

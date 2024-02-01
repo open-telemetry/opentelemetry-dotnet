@@ -76,7 +76,7 @@ is configured to subscribe to instruments from the Meter
 pre-aggregated metrics are exported to a `ConsoleExporter`.
 
 ```csharp
-using var meterProvider = Sdk.CreateMeterProviderBuilder()
+var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter("MyCompany.MyProduct.MyLibrary")
     .AddConsoleExporter()
     .Build();
