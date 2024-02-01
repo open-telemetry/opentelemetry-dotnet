@@ -413,7 +413,7 @@ while measuring an operation which normally takes 10 milliseconds).
 
 ## Metrics Correlation
 
-In OpenTelemetry, metrics can correlated to [traces](../trace/README.md) via
+In OpenTelemetry, metrics can be correlated to [traces](../trace/README.md) via
 [exemplars](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar).
 Check the [Exemplars](./exemplars/README.md) tutorial to learn more.
 
