@@ -37,9 +37,7 @@ internal class HttpInListener : ListenerHandler
 
     private const string DiagnosticSourceName = "Microsoft.AspNetCore";
 
-#if !NET7_0_OR_GREATER
     private static readonly bool Net7OrGreater = Environment.Version.Major >= 7;
-#endif
 
     private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) =>
     {
@@ -124,22 +122,17 @@ internal class HttpInListener : ListenerHandler
                 // This makes the new activity as a "sibling" of the activity created by
                 // Asp.Net Core.
                 Activity newOne;
-#if !NET7_0_OR_GREATER
                 if (Net7OrGreater)
                 {
-#endif
-
-                // For NET7.0 onwards activity is created using ActivitySource so,
-                // we will use the source of the activity to create the new one.
-                newOne = activity.Source.CreateActivity(ActivityOperationName, ActivityKind.Server, ctx.ActivityContext);
-#if !NET7_0_OR_GREATER
+                    // For NET7.0 onwards activity is created using ActivitySource so,
+                    // we will use the source of the activity to create the new one.
+                    newOne = activity.Source.CreateActivity(ActivityOperationName, ActivityKind.Server, ctx.ActivityContext);
                 }
                 else
                 {
                     newOne = new Activity(ActivityOperationName);
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
                 }
-#endif
 
                 newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
@@ -178,13 +171,11 @@ internal class HttpInListener : ListenerHandler
                 return;
             }
 
-#if !NET7_0_OR_GREATER
             if (!Net7OrGreater)
             {
                 ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
                 ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
             }
-#endif
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
             activity.DisplayName = GetDisplayName(request.Method);
