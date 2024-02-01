@@ -209,10 +209,13 @@ public class BaggagePropagatorTest
             {
                 { "key 1", "value 1" },
                 { "key2", "!x_x,x-x&x(x\");:" },
+
                 // x20-x7E range
                 { "key3", " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" },
+
                 // non-ASCII
                 { "key4", "ąść" },
+
                 // '=' char in value
                 { "key5", "1=1" },
             }));
