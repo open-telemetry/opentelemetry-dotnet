@@ -54,7 +54,7 @@
     "expectedHttpRoute": ""
   },
   {
-    "name": "Area using area:exists, default controller/action",
+    "name": "Area using `area:exists`, default controller/action",
     "testApplicationScenario": "ConventionalRouting",
     "httpMethod": "GET",
     "path": "/MyArea",
@@ -63,7 +63,7 @@
     "expectedHttpRoute": "{area:exists}/ControllerForMyArea/Default/{id?}"
   },
   {
-    "name": "Area using area:exists, non-default action",
+    "name": "Area using `area:exists`, non-default action",
     "testApplicationScenario": "ConventionalRouting",
     "httpMethod": "GET",
     "path": "/MyArea/ControllerForMyArea/NonDefault",
@@ -72,7 +72,7 @@
     "expectedHttpRoute": "{area:exists}/ControllerForMyArea/NonDefault/{id?}"
   },
   {
-    "name": "Area w/o area:exists, default controller/action",
+    "name": "Area w/o `area:exists`, default controller/action",
     "testApplicationScenario": "ConventionalRouting",
     "httpMethod": "GET",
     "path": "/SomePrefix",

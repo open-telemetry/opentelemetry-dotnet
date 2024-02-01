@@ -29,9 +29,7 @@ public class PrometheusHttpListenerTests
     [InlineData("http://example.com")]
     public void UriPrefixesPositiveTest(params string[] uriPrefixes)
     {
-        using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddPrometheusHttpListener(options => options.UriPrefixes = uriPrefixes)
-            .Build();
+        TestPrometheusHttpListenerUriPrefixOptions(uriPrefixes);
     }
 
     [Fact]
@@ -39,9 +37,7 @@ public class PrometheusHttpListenerTests
     {
         Assert.Throws<ArgumentNullException>(() =>
         {
-            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddPrometheusHttpListener(options => options.UriPrefixes = null)
-                .Build();
+            TestPrometheusHttpListenerUriPrefixOptions(null);
         });
     }
 
@@ -50,20 +46,16 @@ public class PrometheusHttpListenerTests
     {
         Assert.Throws<ArgumentException>(() =>
         {
-            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { })
-                .Build();
+            TestPrometheusHttpListenerUriPrefixOptions(new string[] { });
         });
     }
 
     [Fact]
     public void UriPrefixesInvalid()
     {
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<ArgumentException>(() =>
         {
-            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { "ftp://example.com" })
-                .Build();
+            TestPrometheusHttpListenerUriPrefixOptions(new string[] { "ftp://example.com" });
         });
     }
 
@@ -89,6 +81,77 @@ public class PrometheusHttpListenerTests
     public async Task PrometheusExporterHttpServerIntegration_UseOpenMetricsVersionHeader()
     {
         await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
+    }
+
+    [Fact]
+    public void PrometheusHttpListenerThrowsOnStart()
+    {
+        Random random = new Random();
+        int retryAttempts = 5;
+        int port = 0;
+        string address = null;
+
+        PrometheusExporter exporter = null;
+        PrometheusHttpListener listener = null;
+
+        // Step 1: Start a listener on a random port.
+        while (retryAttempts-- != 0)
+        {
+            port = random.Next(2000, 5000);
+            address = $"http://localhost:{port}/";
+
+            try
+            {
+                exporter = new PrometheusExporter(new());
+                listener = new PrometheusHttpListener(
+                    exporter,
+                    new()
+                    {
+                        UriPrefixes = new string[] { address },
+                    });
+
+                listener.Start();
+
+                break;
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        if (retryAttempts == 0)
+        {
+            throw new InvalidOperationException("PrometheusHttpListener could not be started");
+        }
+
+        // Step 2: Make sure if we start a second listener on the same port an exception is thrown.
+        Assert.Throws<HttpListenerException>(() =>
+        {
+            using var exporter = new PrometheusExporter(new());
+            using var listener = new PrometheusHttpListener(
+                exporter,
+                new()
+                {
+                    UriPrefixes = new string[] { address },
+                });
+
+            listener.Start();
+        });
+
+        exporter?.Dispose();
+        listener?.Dispose();
+    }
+
+    private static void TestPrometheusHttpListenerUriPrefixOptions(string[] uriPrefixes)
+    {
+        using var exporter = new PrometheusExporter(new());
+        using var listener = new PrometheusHttpListener(
+            exporter,
+            new()
+            {
+                UriPrefixes = uriPrefixes,
+            });
     }
 
     private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text")
