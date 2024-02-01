@@ -1,5 +1,21 @@
 # OpenTelemetry .NET Metrics
 
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Table of Contents</summary>
+
+* [Best Practices](#best-practices)
+* [Package Version](#package-version)
+* [Metrics API](#metrics-api)
+* [MeterProvider Management](#meterprovider-management)
+* [Memory Management](#memory-management)
+  * [Pre-Aggregation](#pre-aggregation)
+  * [Cardinality Limits](#cardinality-limits)
+  * [Memory Preallocation](#memory-preallocation)
+
+</details>
+<!-- markdownlint-enable MD033 -->
+
 ## Best Practices
 
 The following tutorials have demonstrated the best practices for while using
@@ -54,6 +70,14 @@ the application. For most applications, instruments can be modeled as static
 readonly fields (e.g. [Program.cs](./getting-started-console/Program.cs)) or
 singleton via dependency injection (e.g.
 [Instrumentation.cs](../../examples/AspNetCore/Instrumentation.cs)).
+
+:stop_sign: You should avoid invalid instrument names.
+
+> [!NOTE]
+> OpenTelemetry will not collect metrics from instruments that are using invalid
+  names. Refer to the [OpenTelemetry
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument-name-syntax)
+  for the valid syntax.
 
 :stop_sign: You should avoid changing the order of tags while reporting
 measurements.
@@ -118,6 +142,261 @@ the hot-path. You SHOULD try to keep the number of tags less than or equal to 8.
 If you are exceeding this, check if you can model some of the tags as Resource,
 as [shown here](#modeling-static-tags-as-resource).
 
+## MeterProvider Management
+
+:stop_sign: You should avoid creating `MeterProvider` instances too frequently,
+`MeterProvider` is fairly expensive and meant to be reused throughout the
+application. For most applications, one `MeterProvider` instance per process
+would be sufficient.
+
+```mermaid
+graph LR
+
+subgraph Meter A
+  InstrumentX
+end
+
+subgraph Meter B
+  InstrumentY
+  InstrumentZ
+end
+
+subgraph Meter Provider 2
+  MetricReader2
+  MetricExporter2
+  MetricReader3
+  MetricExporter3
+end
+
+subgraph Meter Provider 1
+  MetricReader1
+  MetricExporter1
+end
+
+InstrumentX --> | Measurements | MetricReader1
+InstrumentY --> | Measurements | MetricReader1 --> MetricExporter1
+InstrumentZ --> | Measurements | MetricReader2 --> MetricExporter2
+InstrumentZ --> | Measurements | MetricReader3 --> MetricExporter3
+```
+
+:heavy_check_mark: You should properly manage the lifecycle of `MeterProvider`
+instances if they are created by you.
+
+Here is the rule of thumb when managing the lifecycle of `MeterProvider`:
+
+* If you are building an application with [dependency injection
+  (DI)](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
+  (e.g. [ASP.NET Core](https://learn.microsoft.com/aspnet/core) and [.NET
+  Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)), in most
+  cases you should create the `MeterProvider` instance and let DI manage its
+  lifecycle. Refer to the [Getting Started with OpenTelemetry .NET Metrics in 5
+  Minutes - ASP.NET Core Application](./getting-started-aspnetcore/README.md)
+  tutorial to learn more.
+* If you are building an application without DI, create a `MeterProvider`
+  instance and manage the lifecycle explicitly. Refer to the [Getting Started
+  with OpenTelemetry .NET Metrics in 5 Minutes - Console
+  Application](./getting-started-console/README.md) tutorial to learn more.
+* If you forget to dispose the `MeterProvider` instance before the application
+  ends, metrics might get dropped due to the lack of proper flush.
+* If you dispose the `MeterProvider` instance too early, any subsequent
+  measurements will not be collected.
+
+## Memory Management
+
+In OpenTelemetry,
+[measurements](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#measurement)
+are reported via the metrics API. The SDK
+[aggregates](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#aggregation)
+metrics using certain algorithm and memory management strategy to achieve good
+performance and efficiency. Here are the rules which OpenTelemetry .NET follows
+while implementing the metrics aggregation logic:
+
+1. [**Pre-Aggregation**](#pre-aggregation): aggregation occurs within the SDK.
+2. [**Cardinality Limits**](#cardinality-limits): the aggregation logic respects
+   [cardinality
+   limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#cardinality-limits),
+   so the SDK does not use indefinite amount of memory when there is cardinality
+   explosion.
+3. [**Memory Preallocation**](#memory-preallocation): the memory used by
+   aggregation logic is allocated during the SDK initialization, so the SDK does
+   not have to allocate memory on-the-fly. This is to avoid garbage collection
+   being triggered on the hot code path.
+
+### Example
+
+Let's take the following example:
+
+* During the time range (T0, T1]:
+  * value = 1, name = `apple`, color = `red`
+  * value = 2, name = `lemon`, color = `yellow`
+* During the time range (T1, T2]:
+  * no fruit has been received
+* During the time range (T2, T3]
+  * value = 5, name = `apple`, color = `red`
+  * value = 2, name = `apple`, color = `green`
+  * value = 4, name = `lemon`, color = `yellow`
+  * value = 2, name = `lemon`, color = `yellow`
+  * value = 1, name = `lemon`, color = `yellow`
+  * value = 3, name = `lemon`, color = `yellow`
+
+If we aggregate and export the metrics using [Cumulative Aggregation
+Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/pecification/metrics/data-model.md#temporality):
+
+* (T0, T1]
+  * attributes: {name = `apple`, color = `red`}, count: `1`
+  * attributes: {verb = `lemon`, color = `yellow`}, count: `2`
+* (T0, T2]
+  * attributes: {name = `apple`, color = `red`}, count: `1`
+  * attributes: {verb = `lemon`, color = `yellow`}, count: `2`
+* (T0, T3]
+  * attributes: {name = `apple`, color = `red`}, count: `6`
+  * attributes: {name = `apple`, color = `green`}, count: `2`
+  * attributes: {verb = `lemon`, color = `yellow`}, count: `12`
+
+If we aggregate and export the metrics using [Delta Aggregation
+Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality):
+
+* (T0, T1]
+  * attributes: {name = `apple`, color = `red`}, count: `1`
+  * attributes: {verb = `lemon`, color = `yellow`}, count: `2`
+* (T1, T2]
+  * nothing since we don't have any measurement received
+* (T2, T3]
+  * attributes: {name = `apple`, color = `red`}, count: `5`
+  * attributes: {name = `apple`, color = `green`}, count: `2`
+  * attributes: {verb = `lemon`, color = `yellow`}, count: `10`
+
+### Pre-Aggregation
+
+Taking the [fruit example](#example), there are 6 measurements reported during
+`(T2, T3]`. Instead of exporting every individual measurement events, the SDK
+aggregates them and only export the summarized results. This approach, as
+illustrated in the following diagram, is called pre-aggregation:
+
+```mermaid
+graph LR
+
+subgraph SDK
+  Instrument --> | Measurements | Pre-Aggregation[Pre-Aggregation]
+end
+
+subgraph Collector
+  Aggregation
+end
+
+Pre-Aggregation --> | Metrics | Aggregation
+```
+
+Pre-aggregation brings serveral benefits:
+
+1. Although the amount of calculation remains the same, the amount of data
+   transmitted can be significantly reduced using pre-aggregation, thus
+   improving the overall efficiency.
+2. Pre-aggregation makes it possible to apply [cardinality
+   limits](#cardinality-limits) during SDK initialization, combined with [memory
+   preallocation](#memory-preallocation), they make the metrics data collection
+   behavior more predictable (e.g. a server under denial-of-service attack would
+   still produce a constant volume of metrics data, rather than flooding the
+   observability system with large volume of measurement events).
+
+There are cases where users might want to export raw measurement events instead
+of using pre-aggregation, as illustrated in the following diagram. OpenTelemetry
+does not support this scenario at the moment, if you are interested, please join
+the discussion by replying to this [feature
+ask](https://github.com/open-telemetry/opentelemetry-specification/issues/617).
+
+```mermaid
+graph LR
+
+subgraph SDK
+  Instrument
+end
+
+subgraph Collector
+  Aggregation
+end
+
+Instrument --> | Measurements | Aggregation
+```
+
+### Cardinality Limits
+
+The number of unique combinations of attributes is called cardinality. Taking
+the [fruit example](#example), if we know that we can only have apple/lemon as
+the name, red/yellow/green as the color, then we can say the cardinality is 6.
+No matter how many apples and lemons we have, we can always use the following
+table to summarize the total number of fruits based on the name and color.
+
+| Name  | Color  | Count |
+| ----- | ------ | ----- |
+| apple | red    | ?     |
+| apple | yellow | ?     |
+| apple | green  | ?     |
+| lemon | red    | ?     |
+| lemon | yellow | ?     |
+| lemon | green  | ?     |
+
+In other words, we know how much storage and network are needed to collect and
+transmit these metrics, regardless of the traffic pattern.
+
+In real world applications, the cardinality can be very high. Imagine if we have
+a long running service and we collect metrics with 7 attributes and each
+attribute can have 30 different values. We might eventually end up having to
+remember the complete set of all 21,870,000,000 combinations! This cardinality
+explosion is a well-known challenge in the metrics space. For example, it can
+cause surprisingly high cost in the observability system, or even be leveraged
+by hackers to launch a denial-of-service attack.
+
+[Cardinality
+limit](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#cardinality-limits)
+is a throttling mechanism which allows the metrics collection system to have a
+predictable and reliable behavior when excessive cardinality happens, whether it
+was due to a malicious attack or developer making mistakes while writing code.
+
+OpenTelemetry has a default cardinality limit of `2000` per metric. This limit
+can be configured at `MeterProvider` level using
+`SetMaxMetricPointsPerMetricStream` method, or at individual
+[view](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
+level. Refer to this
+[doc](../../docs/metrics/customizing-the-sdk/README.md#changing-maximum-metricpoints-per-metricstream)
+for more information.
+
+> [!NOTE]
+> Setting cardinality limit per view is not yet implemented in OpenTelemetry
+  .NET. You can track the progress by following this
+  [issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5296).
+
+Given a metric, once the cardinality limit is reached, any new measurement which
+cannot be independently aggregated because of the limit will be aggregated using
+the [overflow
+attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
+
+> [!NOTE]
+> Overflow attribute was introduced in OpenTelemetry .NET
+  [1.6.0-rc.1](../../src/OpenTelemetry/CHANGELOG.md#160-rc1). It is currently an
+  experimental feature which can be turned on by setting the environment
+  variable `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`. Once
+  the [OpenTelemetry
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
+  become stable, this feature will be turned on by default.
+
+When [Delta Aggregation
+Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
+is used, it is possible to choose a smaller cardinality limit by allowing the
+SDK to reclaim unused metric points.
+
+> [!NOTE]
+> Reclaim unused metric points feature was introduced in OpenTelemetry .NET
+  [1.7.0-alpha.1](../../src/OpenTelemetry/CHANGELOG.md#170-alpha1). It is
+  currently an experimental feature which can be turned on by setting the
+  environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`. Once the
+  [OpenTelemetry
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
+  become stable, this feature will be turned on by default.
+
+### Memory Preallocation
+
 ### Modeling static tags as Resource
 
 Tags such as `MachineName`, `Environment` etc. which are static throughout the
@@ -130,24 +409,3 @@ each metric measurement. Refer to this
 * The `Meter` used to create the instruments is not added to the
   `MeterProvider`. Use `AddMeter` method to enable the processing for the
   required metrics.
-* Instrument name is invalid. When naming instruments, ensure that the name you
-  choose meets the criteria defined in the
-  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument-name-syntax).
-  A few notable characters that are not allowed in the instrument name: `/`
-  (forward slash), `\` (backward slash), any space character in the name.
-* MetricPoint limit is reached. By default, the SDK limits the number of maximum
-  MetricPoints (unique combination of keys and values for a given Metric stream)
-  to `2000`. This limit can be configured using
-  `SetMaxMetricPointsPerMetricStream` method. Refer to this
-  [doc](../../docs/metrics/customizing-the-sdk/README.md#changing-maximum-metricpoints-per-metricstream)
-  for more information. The SDK would not process any newer unique key-value
-  combination that it encounters, once this limit is reached.
-* MeterProvider is disposed. You need to ensure that the `MeterProvider`
-  instance is kept active for metrics to be collected. In a typical application,
-  a single MeterProvider is built at application startup, and is disposed of at
-  application shutdown. For an ASP.NET Core application, use `AddOpenTelemetry`
-  and `WithMetrics` methods from the `OpenTelemetry.Extensions.Hosting` package
-  to correctly setup `MeterProvider`. Here's a [sample ASP.NET Core
-  app](../../examples/AspNetCore/Program.cs) for reference. For simpler
-  applications such as Console apps, refer to this
-  [example](../../docs/metrics/getting-started-console/Program.cs).
