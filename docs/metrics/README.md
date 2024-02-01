@@ -12,6 +12,8 @@
   * [Pre-Aggregation](#pre-aggregation)
   * [Cardinality Limits](#cardinality-limits)
   * [Memory Preallocation](#memory-preallocation)
+* [Metrics Correlation](#metrics-correlation)
+* [Metrics Enrichment](#metrics-enrichment)
 
 </details>
 <!-- markdownlint-enable MD033 -->
@@ -397,12 +399,60 @@ SDK to reclaim unused metric points.
 
 ### Memory Preallocation
 
-### Modeling static tags as Resource
+OpenTelemetry .NET SDK aims to avoid memory allocation on the hot code path.
+When this is combined with [proper use of Metrics API](#metrics-api), heap
+allocation can be avoided on the hot code path. Refer to the [metrics benchmark
+results](../../test/Benchmarks/Metrics/MetricsBenchmarks.cs) to learn more.
 
-Tags such as `MachineName`, `Environment` etc. which are static throughout the
-process lifetime should be be modeled as `Resource`, instead of adding them to
-each metric measurement. Refer to this
-[doc](./customizing-the-sdk/README.md#resource) for details and examples.
+:heavy_check_mark: You should measure memory allocation on hot code path, and
+ideally avoid any heap allocation while using the metrics API and SDK,
+especially when you use metrics to measure the performance of your application
+(for example, you do not want to spend 2 seconds doing [garbage
+collection](https://learn.microsoft.com/dotnet/standard/garbage-collection/)
+while measuring an operation which normally takes 10 milliseconds).
+
+## Metrics Correlation
+
+In OpenTelemetry, metrics can correlated to [traces](../trace/README.md) via
+[exemplars](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar).
+Check the [Exemplars](./exemplars/README.md) tutorial to learn more.
+
+## Metrics Enrichment
+
+When the metrics are being collected, they normally get stored in a [time series
+database](https://en.wikipedia.org/wiki/Time_series_database). From storage and
+consumption perspective, metrics can be multi-dimensional. Taking the [fruit
+example](#example), there are two dimensions - "name" and "color". For basic
+scenarios, all the dimensions can be reported during the [Metrics
+API](#metrics-api) invocation, however, for less trivial scenarios, the
+dimensions can come from different sources:
+
+* [Measurements](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#measurement)
+  reported via the [Metrics API](#metrics-api).
+* [Resources](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
+  configured at the `MeterProvider` level. Refer to this
+  [doc](./customizing-the-sdk/README.md#resource) for details and examples.
+* Additional attributes provided by the exporter or collector. For example,
+  [jobs and instances](https://prometheus.io/docs/concepts/jobs_instances/) in
+  Prometheus.
+
+Here is the rule of thumb when modeling the dimensions:
+
+* If the dimension value is static throughout the process lifetime (e.g. the
+  name of the machine, data center), model it as Resource, or even better, let
+  the collector add these dimensions if feasible (e.g. a collector running in
+  the same data center should know the name of the data center, rather than
+  relying on / trusting each service instance to report the data center name).
+* If the dimension value is dynamic, report it via the [Metrics
+  API](#metrics-api).
+
+> [!NOTE]
+> There were discussions around adding a new concept called
+  `MeasurementProcessor`, which allows dimensions to be added to / removed from
+  measurements dynamically. This idea did not get traction due to the complexity
+  and performance implications, refer to this [pull
+  request](https://github.com/open-telemetry/opentelemetry-specification/pull/1938)
+  for more context.
 
 ## Common issues that lead to missing metrics
 
