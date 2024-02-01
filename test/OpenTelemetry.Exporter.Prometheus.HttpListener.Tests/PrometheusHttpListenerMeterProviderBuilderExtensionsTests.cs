@@ -23,7 +23,7 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
                 services.Configure<PrometheusHttpListenerOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
             })
             .AddPrometheusHttpListener()
-            .AddPrometheusHttpListener("Exporter2", o => { })
+            .AddPrometheusHttpListener("Exporter2", o => o.ScrapeEndpointPath = "/metrics2")
             .Build();
 
         Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
