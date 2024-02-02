@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -9,6 +11,8 @@ namespace OpenTelemetry.Metrics;
 public class MetricStreamConfiguration
 {
     private string? name;
+
+    private int? maxMetricPointsPerMetricStream = 2000;
 
     /// <summary>
     /// Gets the drop configuration.
@@ -91,11 +95,39 @@ public class MetricStreamConfiguration
         }
     }
 
+    /// <summary>
+    /// Gets or sets a positive integer value
+    /// defining the maximum number of data points allowed to
+    /// per view.
+    /// </summary>
+    /// <remarks>
+    /// Note: If there is no matching view, but the MetricReader
+    /// defines a default cardinality limit value based on the
+    /// instrument an aggregation is created for, that value
+    /// will be used. The default value of 2000 will be used
+    /// if neither the view nor the MetricReader configures
+    /// MaxMetricPointsPerMetricStream.
+    /// </remarks>
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    public
+#else
+    internal
+#endif
+    int? MaxMetricPointsPerMetricStream
+    {
+        get => this.maxMetricPointsPerMetricStream;
+        set
+        {
+            if (value != null)
+            {
+                Guard.ThrowIfOutOfRange(value.Value, min: 1, max: int.MaxValue);
+            }
+
+            this.maxMetricPointsPerMetricStream = value;
+        }
+    }
+
     internal string[]? CopiedTagKeys { get; private set; }
 
     internal int? ViewId { get; set; }
-
-    // TODO: MetricPoints caps can be configured here on
-    // a per stream basis, when we add such a capability
-    // in the future.
 }

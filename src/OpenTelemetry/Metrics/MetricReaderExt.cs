@@ -136,6 +136,12 @@ public abstract partial class MetricReader
                 else
                 {
                     bool shouldReclaimUnusedMetricPoints = this.parentProvider is MeterProviderSdk meterProviderSdk && meterProviderSdk.ShouldReclaimUnusedMetricPoints;
+
+                    if (metricStreamConfig != null && metricStreamConfig.MaxMetricPointsPerMetricStream != null)
+                    {
+                        this.maxMetricPointsPerMetricStream = metricStreamConfig.MaxMetricPointsPerMetricStream.Value;
+                    }
+
                     Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
