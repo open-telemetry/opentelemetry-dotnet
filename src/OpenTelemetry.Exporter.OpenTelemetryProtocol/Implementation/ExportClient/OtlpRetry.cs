@@ -52,7 +52,7 @@ internal static class OtlpRetry
     private static readonly Random Random = new Random();
 #endif
 
-    public static bool TryGetHttpRetryResult(HttpStatusCode statusCode, DateTime? deadline, HttpResponseHeaders responseHeaders, int retryDelayMilliseconds, out RetryResult retryResult)
+    public static bool TryGetHttpRetryResult(HttpStatusCode? statusCode, DateTime? deadline, HttpResponseHeaders responseHeaders, int retryDelayMilliseconds, out RetryResult retryResult)
     {
         return TryGetRetryResult(statusCode, IsHttpStatusCodeRetryable, deadline, responseHeaders, TryGetHttpRetryDelay, retryDelayMilliseconds, out retryResult);
     }
@@ -157,7 +157,7 @@ internal static class OtlpRetry
         return null;
     }
 
-    private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode statusCode, HttpResponseHeaders headers)
+    private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode? statusCode, HttpResponseHeaders headers)
     {
         Debug.Assert(headers != null, "headers was null");
 
@@ -189,7 +189,7 @@ internal static class OtlpRetry
     }
 
 #pragma warning disable SA1313 // Parameter should begin with lower-case letter
-    private static bool IsHttpStatusCodeRetryable(HttpStatusCode statusCode, bool _)
+    private static bool IsHttpStatusCodeRetryable(HttpStatusCode? statusCode, bool _)
 #pragma warning restore SA1313 // Parameter should begin with lower-case letter
     {
         switch (statusCode)

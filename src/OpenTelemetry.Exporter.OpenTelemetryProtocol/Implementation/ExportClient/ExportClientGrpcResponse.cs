@@ -9,8 +9,9 @@ internal sealed class ExportClientGrpcResponse : ExportClientResponse
 {
     public ExportClientGrpcResponse(
         bool success,
+        DateTime deadline,
         Exception? exception)
-        : base(success, exception)
+        : base(success, deadline, exception)
     {
     }
 }

@@ -7,13 +7,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
 internal abstract class ExportClientResponse
 {
-    protected ExportClientResponse(bool success, Exception? exception)
+    protected ExportClientResponse(bool success, DateTime deadline, Exception? exception)
     {
         this.Success = success;
         this.Exception = exception;
+        this.Deadline = deadline;
     }
 
     public bool Success { get; }
 
     public Exception? Exception { get; }
+
+    public DateTime? Deadline { get; }
 }

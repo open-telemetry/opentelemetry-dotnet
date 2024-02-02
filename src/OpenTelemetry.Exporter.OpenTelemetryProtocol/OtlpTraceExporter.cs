@@ -4,6 +4,7 @@
 #nullable enable
 
 using System.Diagnostics;
+using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
@@ -39,9 +40,9 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
     /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
     internal OtlpTraceExporter(
-        OtlpExporterOptions exporterOptions,
-        SdkLimitOptions sdkLimitOptions,
-        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>? transmissionHandler = null)
+    OtlpExporterOptions exporterOptions,
+    SdkLimitOptions sdkLimitOptions,
+    OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>? transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
@@ -52,7 +53,34 @@ public class OtlpTraceExporter : BaseExporter<Activity>
 
         ConfigurationExtensions.LogInvalidEnvironmentVariable = OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable;
 
-        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetTraceExportTransmissionHandler();
+        if (exporterOptions!.RetryStrategy == RetryStrategy.InMemory)
+        {
+            this.transmissionHandler = new OtlpExporterRetryTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>(exporterOptions.GetTraceExportClient());
+        }
+        else if (exporterOptions!.RetryStrategy == RetryStrategy.Storage)
+        {
+            try
+            {
+                this.transmissionHandler = new OtlpExporterPersistentStorageRetryTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>(
+                    exporterOptions.GetTraceExportClient(),
+                    requestFactory: (byte[] data) =>
+                    {
+                        var request = new OtlpCollector.ExportTraceServiceRequest();
+                        request.MergeFrom(data);
+                        return request;
+                    },
+                    Path.Combine(exporterOptions.StorageDirectory, "traces"));
+            }
+            catch
+            {
+                // TODO: log exception
+                this.transmissionHandler = exporterOptions.GetTraceExportTransmissionHandler();
+            }
+        }
+        else
+        {
+            this.transmissionHandler = transmissionHandler ?? exporterOptions.GetTraceExportTransmissionHandler();
+        }
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();

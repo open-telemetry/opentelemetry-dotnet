@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -674,13 +675,14 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         // Arrange.
         var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
+        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
             new OtlpExporterOptions(),
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            testExportClient);
+            transmissionHandler);
 
         // Act.
         sut.Export(emptyBatch);
@@ -694,13 +696,14 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         // Arrange.
         var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>(throwException: true);
+        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
             new OtlpExporterOptions(),
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            testExportClient);
+            transmissionHandler);
 
         // Act.
         var result = sut.Export(emptyBatch);
@@ -714,13 +717,14 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         // Arrange.
         var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
+        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
             new OtlpExporterOptions(),
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            testExportClient);
+            transmissionHandler);
 
         // Act.
         var result = sut.Export(emptyBatch);

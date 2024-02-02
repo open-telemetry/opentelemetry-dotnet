@@ -3,8 +3,9 @@
 
 #nullable enable
 
+using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
@@ -18,7 +19,7 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 public class OtlpMetricExporter : BaseExporter<Metric>
 {
-    private readonly IExportClient<OtlpCollector.ExportMetricsServiceRequest> exportClient;
+    private readonly OtlpExporterTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest> transmissionHandler;
 
     private OtlpResource.Resource? processResource;
 
@@ -27,7 +28,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// </summary>
     /// <param name="options">Configuration options for the exporter.</param>
     public OtlpMetricExporter(OtlpExporterOptions options)
-        : this(options, exportClient: null)
+        : this(options, transmissionHandler: null)
     {
     }
 
@@ -35,8 +36,10 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
-    /// <param name="exportClient">Client used for sending export request.</param>
-    internal OtlpMetricExporter(OtlpExporterOptions options, IExportClient<OtlpCollector.ExportMetricsServiceRequest>? exportClient = null)
+    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
+    internal OtlpMetricExporter(
+        OtlpExporterOptions options,
+        OtlpExporterTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest>? transmissionHandler = null)
     {
         // Each of the Otlp exporters: Traces, Metrics, and Logs set the same value for `OtlpKeyValueTransformer.LogUnsupportedAttributeType`
         // and `ConfigurationExtensions.LogInvalidEnvironmentVariable` so it should be fine even if these exporters are used together.
@@ -50,13 +53,33 @@ public class OtlpMetricExporter : BaseExporter<Metric>
             OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
         };
 
-        if (exportClient != null)
+        if (options.RetryStrategy == RetryStrategy.InMemory)
         {
-            this.exportClient = exportClient;
+            this.transmissionHandler = new OtlpExporterRetryTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest>(options.GetMetricsExportClient());
+        }
+        else if (options.RetryStrategy == RetryStrategy.Storage)
+        {
+            try
+            {
+                this.transmissionHandler = new OtlpExporterPersistentStorageRetryTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest>(
+                    options.GetMetricsExportClient(),
+                    requestFactory: (byte[] data) =>
+                    {
+                        var request = new OtlpCollector.ExportMetricsServiceRequest();
+                        request.MergeFrom(data);
+                        return request;
+                    },
+                    Path.Combine(options.StorageDirectory, "metrics"));
+            }
+            catch
+            {
+                // TODO: log exception
+                this.transmissionHandler = options.GetMetricsExportTransmissionHandler();
+            }
         }
         else
         {
-            this.exportClient = options.GetMetricsExportClient();
+            this.transmissionHandler = transmissionHandler ?? options.GetMetricsExportTransmissionHandler();
         }
     }
 
@@ -74,7 +97,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         {
             request.AddMetrics(this.ProcessResource, metrics);
 
-            if (!this.exportClient.SendExportRequest(request).Success)
+            if (!this.transmissionHandler.SubmitRequest(request))
             {
                 return ExportResult.Failure;
             }
@@ -95,6 +118,6 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        return this.exportClient?.Shutdown(timeoutMilliseconds) ?? true;
+        return this.transmissionHandler?.Shutdown(timeoutMilliseconds) ?? true;
     }
 }

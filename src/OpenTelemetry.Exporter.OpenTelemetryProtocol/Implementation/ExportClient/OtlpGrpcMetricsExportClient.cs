@@ -34,13 +34,13 @@ internal sealed class OtlpGrpcMetricsExportClient : BaseOtlpGrpcExportClient<Otl
         {
             this.metricsClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
 
-            return new ExportClientGrpcResponse(success: true, exception: null);
+            return new ExportClientGrpcResponse(success: true, deadline: deadline, exception: null);
         }
         catch (RpcException ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return new ExportClientGrpcResponse(success: false, exception: ex);
+            return new ExportClientGrpcResponse(success: false, deadline: deadline, exception: ex);
         }
     }
 }

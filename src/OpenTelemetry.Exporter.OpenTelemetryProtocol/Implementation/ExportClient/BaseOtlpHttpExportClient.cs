@@ -36,6 +36,7 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
     /// <inheritdoc/>
     public ExportClientResponse SendExportRequest(TRequest request, CancellationToken cancellationToken = default)
     {
+        DateTime deadline = DateTime.UtcNow.AddMilliseconds(this.HttpClient.Timeout.TotalMilliseconds);
         try
         {
             using var httpRequest = this.CreateHttpRequest(request);
@@ -48,16 +49,16 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
             }
             catch (HttpRequestException ex)
             {
-                return new ExportClientHttpResponse(success: false, httpResponse, ex);
+                return new ExportClientHttpResponse(success: false, deadline: deadline, response: httpResponse, ex);
             }
 
-            return new ExportClientHttpResponse(success: true, httpResponse, exception: null);
+            return new ExportClientHttpResponse(success: true, deadline: deadline, response: httpResponse, exception: null);
         }
         catch (HttpRequestException ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return new ExportClientHttpResponse(success: false, response: null, exception: ex);
+            return new ExportClientHttpResponse(success: false, deadline: deadline, response: null, exception: ex);
         }
     }
 

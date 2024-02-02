@@ -9,6 +9,7 @@ using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -26,6 +27,8 @@ public class OtlpExporterOptions
     internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
     internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
     internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
+    internal const string RetryFeatureEnvVarName = "OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_RETRY";
+    internal const string StorageEnVarName = "OTEL_DOTNET_EXPERIMENTAL_OTLP_PERSISTENT_STORAGE_DIR";
 
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
@@ -86,6 +89,23 @@ public class OtlpExporterOptions
                 Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
             };
         };
+
+        if (configuration.TryGetStringValue(RetryFeatureEnvVarName, out var retryStrategy))
+        {
+            if (retryStrategy.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
+            {
+                this.RetryStrategy = RetryStrategy.InMemory;
+            }
+            else if (retryStrategy.Equals("Storage", StringComparison.OrdinalIgnoreCase))
+            {
+                this.RetryStrategy = RetryStrategy.Storage;
+            }
+        }
+
+        if (configuration.TryGetStringValue(StorageEnVarName, out var storageDir))
+        {
+            this.StorageDirectory = storageDir;
+        }
 
         this.BatchExportProcessorOptions = defaultBatchOptions;
     }
@@ -183,6 +203,16 @@ public class OtlpExporterOptions
     /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.
     /// </summary>
     internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating retry Strategy.
+    /// </summary>
+    internal RetryStrategy RetryStrategy { get; private set; } = RetryStrategy.None;
+
+    /// <summary>
+    /// Gets storage directory for persistentstorage.
+    /// </summary>
+    internal string StorageDirectory { get; private set; }
 
     internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
     {

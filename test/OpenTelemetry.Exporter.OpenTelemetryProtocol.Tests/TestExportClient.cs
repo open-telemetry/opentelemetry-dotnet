@@ -13,20 +13,29 @@ internal class TestExportClient<T>(bool throwException = false) : IExportClient<
 
     public bool ThrowException { get; set; } = throwException;
 
-    public bool SendExportRequest(T request, CancellationToken cancellationToken = default)
+    public ExportClientResponse SendExportRequest(T request, CancellationToken cancellationToken = default)
     {
+        var deadline = DateTime.UtcNow.AddMilliseconds(1000);
         if (this.ThrowException)
         {
             throw new Exception("Exception thrown from SendExportRequest");
         }
 
         this.SendExportRequestCalled = true;
-        return true;
+        return new TestExportClientResponse(true, deadline, null);
     }
 
     public bool Shutdown(int timeoutMilliseconds)
     {
         this.ShutdownCalled = true;
         return true;
+    }
+
+    private class TestExportClientResponse : ExportClientResponse
+    {
+        public TestExportClientResponse(bool success, DateTime deadline, Exception exception)
+            : base(success, deadline, exception)
+        {
+        }
     }
 }
