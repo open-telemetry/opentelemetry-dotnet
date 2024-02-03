@@ -16,10 +16,10 @@ internal enum RetryStrategy
     /// <summary>
     /// Retry by buffering telemetry in memory.
     /// </summary>
-    InMemory = 0,
+    InMemory = 1,
 
     /// <summary>
     /// Retry by buffering telemetry in storage.
     /// </summary>
-    Storage = 1,
+    Storage = 2,
 }
