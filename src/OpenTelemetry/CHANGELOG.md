@@ -19,6 +19,10 @@
   export.
   [#5255](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5255)
 
+* Updated `LogRecord` to keep `CategoryName` and `Logger` in sync when using the
+  experimental Log Bridge API.
+  [#5317](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5317)
+
 ## 1.7.0
 
 Released 2023-Dec-08
