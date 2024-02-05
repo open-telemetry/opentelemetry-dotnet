@@ -1469,6 +1469,44 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
             });
     }
 
+    [Theory]
+    [InlineData("my_instrumentation_scope_name", "my_instrumentation_scope_name")]
+    [InlineData(null, "")]
+    public void LogRecordLoggerNameIsExportedWhenUsingBridgeApi(string loggerName, string expectedScopeName)
+    {
+        LogRecordAttributeList attributes = default;
+        attributes.Add("name", "tomato");
+        attributes.Add("price", 2.99);
+        attributes.Add("{OriginalFormat}", "Hello from {name} {price}.");
+
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            var logger = loggerProvider.GetLogger(loggerName);
+
+            logger.EmitLog(new LogRecordData());
+        }
+
+        Assert.Single(logRecords);
+
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new());
+
+        var batch = new Batch<LogRecord>(new[] { logRecords[0] }, 1);
+
+        var request = otlpLogRecordTransformer.BuildExportRequest(
+            new Proto.Resource.V1.Resource(),
+            batch);
+
+        Assert.NotNull(request);
+        Assert.Single(request.ResourceLogs);
+        Assert.Single(request.ResourceLogs[0].ScopeLogs);
+
+        Assert.Equal(expectedScopeName, request.ResourceLogs[0].ScopeLogs[0].Scope?.Name);
+    }
+
     private static void RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
         string optionsName,
         Func<Action<IServiceCollection>, (IDisposable Container, ILoggerFactory LoggerFactory)> createLoggerFactoryFunc)

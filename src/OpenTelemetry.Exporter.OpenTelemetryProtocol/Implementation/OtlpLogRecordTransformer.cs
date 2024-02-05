@@ -18,6 +18,8 @@ internal sealed class OtlpLogRecordTransformer
 {
     internal static readonly ConcurrentBag<OtlpLogs.ScopeLogs> LogListPool = new();
 
+    private const string DefaultScopeName = "";
+
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
 
@@ -47,10 +49,11 @@ internal sealed class OtlpLogRecordTransformer
             var otlpLogRecord = this.ToOtlpLog(logRecord);
             if (otlpLogRecord != null)
             {
-                if (!logsByCategory.TryGetValue(logRecord.CategoryName, out var scopeLogs))
+                var scopeName = logRecord.CategoryName ?? logRecord.Logger?.Name ?? DefaultScopeName;
+                if (!logsByCategory.TryGetValue(scopeName, out var scopeLogs))
                 {
-                    scopeLogs = this.GetLogListFromPool(logRecord.CategoryName);
-                    logsByCategory.Add(logRecord.CategoryName, scopeLogs);
+                    scopeLogs = this.GetLogListFromPool(scopeName);
+                    logsByCategory.Add(scopeName, scopeLogs);
                     resourceLogs.ScopeLogs.Add(scopeLogs);
                 }
 
