@@ -83,4 +83,33 @@ internal static class ActivityHelperExtensions
 
         return null;
     }
+
+    /// <summary>
+    /// Checks if the user provided tag name is the first tag of the <see cref="Activity"/> and retrieves the tag value.
+    /// </summary>
+    /// <param name="activity">Activity instance.</param>
+    /// <param name="tagName">Tag name.</param>
+    /// <param name="tagValue">Tag value.</param>
+    /// <returns><see langword="true"/> if the first tag of the supplied Activity matches the user provide tag name.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool TryCheckFirstTag(this Activity activity, string tagName, out object? tagValue)
+    {
+        Debug.Assert(activity != null, "Activity should not be null");
+
+        var enumerator = activity!.EnumerateTagObjects();
+
+        if (enumerator.MoveNext())
+        {
+            ref readonly var tag = ref enumerator.Current;
+
+            if (tag.Key == tagName)
+            {
+                tagValue = tag.Value;
+                return true;
+            }
+        }
+
+        tagValue = null;
+        return false;
+    }
 }

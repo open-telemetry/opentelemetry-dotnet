@@ -268,7 +268,16 @@ internal class HttpInListener : ListenerHandler
             }
         }
 
-        var tagValue = activity.GetTagValue("IsCreatedByInstrumentation");
+        object tagValue;
+        if (Net7OrGreater)
+        {
+            tagValue = activity.GetTagValue("IsCreatedByInstrumentation");
+        }
+        else
+        {
+            _ = activity.TryCheckFirstTag("IsCreatedByInstrumentation", out tagValue);
+        }
+
         if (ReferenceEquals(tagValue, bool.TrueString))
         {
             // If instrumentation started a new Activity, it must
