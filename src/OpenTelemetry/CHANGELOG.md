@@ -19,6 +19,10 @@
   export.
   [#5255](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5255)
 
+* Added support for setting `CardinalityLimit`, the maximum number of data
+  points, allowed for the metric managed by the view.
+  [#5312](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5312)
+
 ## 1.7.0
 
 Released 2023-Dec-08
