@@ -34,10 +34,9 @@ internal class HttpInListener : ListenerHandler
     internal static readonly string ActivitySourceName = AssemblyName.Name;
     internal static readonly Version Version = AssemblyName.Version;
     internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+    internal static readonly bool Net7OrGreater = Environment.Version.Major >= 7;
 
     private const string DiagnosticSourceName = "Microsoft.AspNetCore";
-
-    private static readonly bool Net7OrGreater = Environment.Version.Major >= 7;
 
     private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) =>
     {
