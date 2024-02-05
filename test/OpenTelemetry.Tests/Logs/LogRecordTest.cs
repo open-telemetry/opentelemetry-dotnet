@@ -983,6 +983,39 @@ public sealed class LogRecordTest
         Assert.Equal(Sdk.InformationalVersion, logRecord.Logger.Version);
     }
 
+    [Fact]
+    public void LogRecordCategoryNameAliasForInstrumentationScopeTests()
+    {
+        LogRecord logRecord = new();
+
+        Assert.Equal(string.Empty, logRecord.CategoryName);
+        Assert.Equal(logRecord.CategoryName, logRecord.Logger.Name);
+
+        logRecord.CategoryName = "Testing";
+
+        Assert.Equal("Testing", logRecord.CategoryName);
+        Assert.Equal(logRecord.CategoryName, logRecord.Logger.Name);
+
+        logRecord.CategoryName = null;
+
+        Assert.Equal(string.Empty, logRecord.CategoryName);
+        Assert.Equal(logRecord.CategoryName, logRecord.Logger.Name);
+
+        var exportedItems = new List<LogRecord>();
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(exportedItems)
+            .Build())
+        {
+            var logger = loggerProvider.GetLogger("TestName");
+            logger.EmitLog(default);
+        }
+
+        Assert.Single(exportedItems);
+
+        Assert.Equal("TestName", exportedItems[0].CategoryName);
+        Assert.Equal(exportedItems[0].CategoryName, exportedItems[0].Logger.Name);
+    }
+
     private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
     {
         var items = exportedItems = new List<LogRecord>();
