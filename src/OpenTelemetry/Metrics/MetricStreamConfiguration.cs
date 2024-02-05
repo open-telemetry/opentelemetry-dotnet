@@ -98,6 +98,7 @@ public class MetricStreamConfiguration
         }
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets or sets a positive integer value
     /// defining the maximum number of data points allowed to for the metric
@@ -108,9 +109,8 @@ public class MetricStreamConfiguration
     /// defaults to 2000. Call <see cref="MeterProviderBuilderExtensions"/>
     /// SetMaxMetricPointsPerMetricStream"/> to confiture the SDK defaults.
     /// </remarks>
-#if EXPOSE_EXPERIMENTAL_FEATURES
 #if NET8_0_OR_GREATER
-[Experimental(DiagnosticDefinitions.CardinalityLimitExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.CardinalityLimitExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     public
 #else
