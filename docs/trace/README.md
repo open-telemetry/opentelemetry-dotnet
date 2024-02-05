@@ -107,7 +107,7 @@ Here is the rule of thumb when managing the lifecycle of `TracerProvider`:
   with OpenTelemetry .NET Traces in 5 Minutes - Console
   Application](./getting-started-console/README.md) tutorial to learn more.
 * If you forget to dispose the `TracerProvider` instance before the application
-  ends, traces might get dropped due to the lack of proper flush.
+  ends, activities might get dropped due to the lack of proper flush.
 * If you dispose the `TracerProvider` instance too early, any subsequent
   activities will not be collected.
 
