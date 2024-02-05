@@ -8,9 +8,9 @@
 | :green_heart: | ConventionalRouting | [Not Found (404)](#conventionalrouting-not-found-404) |
 | :green_heart: | ConventionalRouting | [Route template with parameter constraint](#conventionalrouting-route-template-with-parameter-constraint) |
 | :green_heart: | ConventionalRouting | [Path that does not match parameter constraint](#conventionalrouting-path-that-does-not-match-parameter-constraint) |
-| :broken_heart: | ConventionalRouting | [Area using area:exists, default controller/action](#conventionalrouting-area-using-areaexists-default-controlleraction) |
-| :broken_heart: | ConventionalRouting | [Area using area:exists, non-default action](#conventionalrouting-area-using-areaexists-non-default-action) |
-| :broken_heart: | ConventionalRouting | [Area w/o area:exists, default controller/action](#conventionalrouting-area-wo-areaexists-default-controlleraction) |
+| :broken_heart: | ConventionalRouting | [Area using `area:exists`, default controller/action](#conventionalrouting-area-using-areaexists-default-controlleraction) |
+| :broken_heart: | ConventionalRouting | [Area using `area:exists`, non-default action](#conventionalrouting-area-using-areaexists-non-default-action) |
+| :broken_heart: | ConventionalRouting | [Area w/o `area:exists`, default controller/action](#conventionalrouting-area-wo-areaexists-default-controlleraction) |
 | :green_heart: | AttributeRouting | [Default action](#attributerouting-default-action) |
 | :green_heart: | AttributeRouting | [Action without parameter](#attributerouting-action-without-parameter) |
 | :green_heart: | AttributeRouting | [Action with parameter](#attributerouting-action-with-parameter) |
@@ -24,6 +24,7 @@
 | :green_heart: | MinimalApi | [Action with parameter](#minimalapi-action-with-parameter) |
 | :green_heart: | MinimalApi | [Action without parameter (MapGroup)](#minimalapi-action-without-parameter-mapgroup) |
 | :green_heart: | MinimalApi | [Action with parameter (MapGroup)](#minimalapi-action-with-parameter-mapgroup) |
+| :green_heart: | ExceptionMiddleware | [Exception Handled by Exception Handler Middleware](#exceptionmiddleware-exception-handled-by-exception-handler-middleware) |
 
 ## ConventionalRouting: Root path
 
@@ -195,7 +196,7 @@
 }
 ```
 
-## ConventionalRouting: Area using area:exists, default controller/action
+## ConventionalRouting: Area using `area:exists`, default controller/action
 
 ```json
 {
@@ -226,7 +227,7 @@
 }
 ```
 
-## ConventionalRouting: Area using area:exists, non-default action
+## ConventionalRouting: Area using `area:exists`, non-default action
 
 ```json
 {
@@ -257,7 +258,7 @@
 }
 ```
 
-## ConventionalRouting: Area w/o area:exists, default controller/action
+## ConventionalRouting: Area w/o `area:exists`, default controller/action
 
 ```json
 {
@@ -628,6 +629,25 @@
     "HttpContext.GetRouteData()": {
       "id": "123"
     },
+    "ActionDescriptor": null
+  }
+}
+```
+
+## ExceptionMiddleware: Exception Handled by Exception Handler Middleware
+
+```json
+{
+  "IdealHttpRoute": "/Exception",
+  "ActivityDisplayName": "GET /Exception",
+  "ActivityHttpRoute": "/Exception",
+  "MetricHttpRoute": "/Exception",
+  "RouteInfo": {
+    "HttpMethod": "GET",
+    "Path": "/Exception",
+    "RoutePattern.RawText": "/Exception",
+    "IRouteDiagnosticsMetadata.Route": "/Exception",
+    "HttpContext.GetRouteData()": {},
     "ActionDescriptor": null
   }
 }

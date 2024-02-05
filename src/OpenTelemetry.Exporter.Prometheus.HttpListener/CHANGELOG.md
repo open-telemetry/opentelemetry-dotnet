@@ -2,10 +2,16 @@
 
 ## Unreleased
 
-* Export OpenMetrics format from Prometheus exporters ([#5107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5107))
+* Export OpenMetrics format from Prometheus exporters
+  ([#5107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5107))
+
 * For requests with OpenMetrics format, scope info is automatically added
   ([#5086](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5086)
   [#5182](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5182))
+
+* **Breaking change** Updated the `PrometheusHttpListener` to throw an exception
+  if it can't be started.
+  ([#5304](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5304))
 
 ## 1.7.0-rc.1
 
