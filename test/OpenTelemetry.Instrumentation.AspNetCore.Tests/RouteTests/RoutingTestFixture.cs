@@ -71,7 +71,7 @@ public class RoutingTestFixture : IDisposable
         {
             var result = this.testResults[i];
             var emoji = result.TestCase.CurrentHttpRoute == null ? ":green_heart:" : ":broken_heart:";
-            sb.AppendLine($"| {emoji} | {result.TestCase.TestApplicationScenario} | [{result.TestCase.Name}]({MakeAnchorTag(result.TestCase.TestApplicationScenario, result.TestCase.Name)}) |");
+            sb.AppendLine($"| {emoji} | {result.TestCase.TestApplicationScenario} | [{result.TestCase.Name}]({GenerateLinkFragment(result.TestCase.TestApplicationScenario, result.TestCase.Name)}) |");
         }
 
         for (var i = 0; i < this.testResults.Count; ++i)
@@ -88,10 +88,12 @@ public class RoutingTestFixture : IDisposable
         var readmeFileName = $"README.net{Environment.Version.Major}.0.md";
         File.WriteAllText(Path.Combine("..", "..", "..", "RouteTests", readmeFileName), sb.ToString());
 
-        static string MakeAnchorTag(TestApplicationScenario scenario, string name)
+        // Generates a link fragment that should comply with markdownlint rule MD051
+        // https://github.com/DavidAnson/markdownlint/blob/main/doc/md051.md
+        static string GenerateLinkFragment(TestApplicationScenario scenario, string name)
         {
             var chars = name.ToCharArray()
-                .Where(c => !char.IsPunctuation(c) || c == '-')
+                .Where(c => (!char.IsPunctuation(c) && c != '`') || c == '-')
                 .Select(c => c switch
                 {
                     '-' => '-',
