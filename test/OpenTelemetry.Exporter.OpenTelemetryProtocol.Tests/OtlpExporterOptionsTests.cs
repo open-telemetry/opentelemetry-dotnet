@@ -62,21 +62,21 @@ public class OtlpExporterOptionsTests : IDisposable
     [Fact]
     public void OtlpExporterOptions_EnvironmentVariableHeadersUrlEncoded()
     {
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, "Authentication=Basic%20AAA");
+        Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, "Authorization=Basic%20AAA");
 
         var options = new OtlpExporterOptions();
 
-        Assert.Equal("Authentication=Basic AAA", options.Headers);
+        Assert.Equal("Authorization=Basic AAA", options.Headers);
     }
 
     [Fact]
     public void OtlpExporterOptions_EnvironmentVariableHeadersNotUrlEncoded()
     {
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, "Authentication=Basic AAA");
+        Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, "Authorization=Basic AAA");
 
         var options = new OtlpExporterOptions();
 
-        Assert.Equal("Authentication=Basic AAA", options.Headers);
+        Assert.Equal("Authorization=Basic AAA", options.Headers);
     }
 
     [Fact]
