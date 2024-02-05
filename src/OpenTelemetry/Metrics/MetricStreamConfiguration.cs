@@ -12,7 +12,7 @@ public class MetricStreamConfiguration
 {
     private string? name;
 
-    private int? maxMetricPointsPerMetricStream = 2000;
+    private int? cardinalityLimit = null;
 
     /// <summary>
     /// Gets the drop configuration.
@@ -97,33 +97,30 @@ public class MetricStreamConfiguration
 
     /// <summary>
     /// Gets or sets a positive integer value
-    /// defining the maximum number of data points allowed to
-    /// per view.
+    /// defining the maximum number of data points allowed to for the metric
+    /// managed by the view.
     /// </summary>
     /// <remarks>
-    /// Note: If there is no matching view, but the MetricReader
-    /// defines a default cardinality limit value based on the
-    /// instrument an aggregation is created for, that value
-    /// will be used. The default value of 2000 will be used
-    /// if neither the view nor the MetricReader configures
-    /// MaxMetricPointsPerMetricStream.
+    /// Note: If not set, the SDK cardinality limit value will be used, which
+    /// defaults to 2000. Call <see cref="MeterProviderBuilderExtensions"/>
+    /// SetMaxMetricPointsPerMetricStream"/> to confiture the SDK defaults.
     /// </remarks>
 #if EXPOSE_EXPERIMENTAL_FEATURES
     public
 #else
     internal
 #endif
-    int? MaxMetricPointsPerMetricStream
+    int? CardinalityLimit
     {
-        get => this.maxMetricPointsPerMetricStream;
+        get => this.cardinalityLimit;
         set
         {
             if (value != null)
             {
-                Guard.ThrowIfOutOfRange(value.Value, min: 1, max: int.MaxValue);
+                Guard.ThrowIfOutOfRange(value.Value, min: 3, max: int.MaxValue);
             }
 
-            this.maxMetricPointsPerMetricStream = value;
+            this.cardinalityLimit = value;
         }
     }
 

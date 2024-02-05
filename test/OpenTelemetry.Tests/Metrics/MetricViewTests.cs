@@ -931,7 +931,7 @@ public class MetricViewTests : MetricTestsBase
             .SetMaxMetricPointsPerMetricStream(3)
             .AddView((instrument) =>
             {
-                return new MetricStreamConfiguration() { Name = "MetricStreamA", MaxMetricPointsPerMetricStream = 10000 };
+                return new MetricStreamConfiguration() { Name = "MetricStreamA", CardinalityLimit = 10000 };
             })
             .AddInMemoryExporter(exportedItems));
 
@@ -959,18 +959,18 @@ public class MetricViewTests : MetricTestsBase
             .AddMeter(meter.Name)
             .AddView((instrument) =>
             {
-                return new MetricStreamConfiguration() { Name = "MetricStreamA", Description = "description", MaxMetricPointsPerMetricStream = 256 };
+                return new MetricStreamConfiguration() { Name = "MetricStreamA", Description = "description", CardinalityLimit = 256 };
             })
             .AddView((instrument) =>
             {
                 return instrument.Description == "description1"
-                    ? new MetricStreamConfiguration() { Name = "MetricStreamB", MaxMetricPointsPerMetricStream = 3 }
-                    : new MetricStreamConfiguration() { Name = "MetricStreamC", MaxMetricPointsPerMetricStream = 200000 };
+                    ? new MetricStreamConfiguration() { Name = "MetricStreamB", CardinalityLimit = 3 }
+                    : new MetricStreamConfiguration() { Name = "MetricStreamC", CardinalityLimit = 200000 };
             })
             .AddView((instrument) =>
             {
                 // This view is ignored as the passed in MaxMetricPointsPerMetricStream is out of range.
-                return new MetricStreamConfiguration() { Name = "MetricStreamD", MaxMetricPointsPerMetricStream = -1 };
+                return new MetricStreamConfiguration() { Name = "MetricStreamD", CardinalityLimit = -1 };
             })
             .AddInMemoryExporter(exportedItems));
 
