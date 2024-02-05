@@ -921,7 +921,7 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
-    public void MaxMetricPointsPerMetricStreamofMatchingViewTakesPrecedenceOverTheMetricReaderWhenBothWereSet()
+    public void CardinalityLimitofMatchingViewTakesPrecedenceOverMetricProviderWhenBothWereSet()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
@@ -969,7 +969,7 @@ public class MetricViewTests : MetricTestsBase
             })
             .AddView((instrument) =>
             {
-                // This view is ignored as the passed in MaxMetricPointsPerMetricStream is out of range.
+                // This view is ignored as the passed in CardinalityLimit is out of range.
                 return new MetricStreamConfiguration() { Name = "MetricStreamD", CardinalityLimit = -1 };
             })
             .AddInMemoryExporter(exportedItems));

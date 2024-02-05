@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -106,6 +109,9 @@ public class MetricStreamConfiguration
     /// SetMaxMetricPointsPerMetricStream"/> to confiture the SDK defaults.
     /// </remarks>
 #if EXPOSE_EXPERIMENTAL_FEATURES
+#if NET8_0_OR_GREATER
+[Experimental(DiagnosticDefinitions.CardinalityLimitExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     internal
@@ -117,7 +123,7 @@ public class MetricStreamConfiguration
         {
             if (value != null)
             {
-                Guard.ThrowIfOutOfRange(value.Value, min: 3, max: int.MaxValue);
+                Guard.ThrowIfOutOfRange(value.Value, min: 1, max: int.MaxValue);
             }
 
             this.cardinalityLimit = value;
