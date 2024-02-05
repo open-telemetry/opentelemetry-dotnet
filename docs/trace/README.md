@@ -76,11 +76,8 @@ using (var activity = MyActivitySource.StartActivity("SayHello"))
 
 :heavy_check_mark: You should use
 [Activity.SetTag](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.settag)
-instead of
-[Activity.AddTag](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.addtag)
-and
-[Activity.SetCustomProperty](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.setcustomproperty)
-because the latter do not perform deduplication.
+to [set
+attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-attributes).
 
 ## TracerProvider Management
 
