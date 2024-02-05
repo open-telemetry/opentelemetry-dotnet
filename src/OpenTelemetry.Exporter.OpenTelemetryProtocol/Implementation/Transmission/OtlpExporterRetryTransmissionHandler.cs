@@ -43,7 +43,7 @@ internal class OtlpExporterRetryTransmissionHandler<TRequest> : OtlpExporterTran
         if (response is ExportClientGrpcResponse)
         {
             if (response.Exception is RpcException rpcException
-            && OtlpRetry.TryGetGrpcRetryResult(rpcException.StatusCode, response.Deadline, rpcException.Trailers, retryAttemptCount, out var retryResult))
+            && OtlpRetry.TryGetGrpcRetryResult(rpcException.StatusCode, response.DeadlineUtc, rpcException.Trailers, retryAttemptCount, out var retryResult))
             {
                 sleepDuration = retryResult.RetryDelay;
                 return true;
@@ -52,7 +52,7 @@ internal class OtlpExporterRetryTransmissionHandler<TRequest> : OtlpExporterTran
 
         if (response is ExportClientHttpResponse httpResponse)
         {
-            if (OtlpRetry.TryGetHttpRetryResult(httpResponse.StatusCode, response.Deadline, httpResponse.Headers, retryAttemptCount, out var retryResult))
+            if (OtlpRetry.TryGetHttpRetryResult(httpResponse.StatusCode, response.DeadlineUtc, httpResponse.Headers, retryAttemptCount, out var retryResult))
             {
                 sleepDuration = retryResult.RetryDelay;
                 return true;

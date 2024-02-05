@@ -17,7 +17,7 @@ internal sealed class OtlpExporterPersistentStorageRetryTransmissionHandler<TReq
 {
     private readonly ManualResetEvent stopEvent = new(false);
     private readonly Thread thread;
-    private readonly PersistentBlobProvider? persistentBlobProvider;
+    private readonly PersistentBlobProvider persistentBlobProvider;
     private readonly Func<byte[], TRequest>? requestFactory;
 
     public OtlpExporterPersistentStorageRetryTransmissionHandler(IExportClient<TRequest> exportClient, Func<byte[], TRequest> requestFactory, string storagePath)
