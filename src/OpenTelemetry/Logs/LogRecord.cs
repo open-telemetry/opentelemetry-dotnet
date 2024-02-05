@@ -79,7 +79,7 @@ public sealed class LogRecord
             this.AttributeData = stateValues;
         }
 
-        this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(categoryName ?? string.Empty);
+        this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(categoryName);
     }
 
     internal enum LogRecordSource
