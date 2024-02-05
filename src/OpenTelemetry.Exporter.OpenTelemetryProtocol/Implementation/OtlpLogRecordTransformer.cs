@@ -173,6 +173,14 @@ internal sealed class OtlpLogRecordTransformer
                         AddAttribute(otlpLogRecord, result, attributeCountLimit);
                     }
                 }
+
+                // Supports setting Body directly on LogRecord for the Logs Bridge API.
+                if (otlpLogRecord.Body == null && logRecord.Body != null)
+                {
+                    // If {OriginalFormat} is not present in the attributes,
+                    // use logRecord.Body if it is set.
+                    otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.Body };
+                }
             }
 
             if (logRecord.TraceId != default && logRecord.SpanId != default)
