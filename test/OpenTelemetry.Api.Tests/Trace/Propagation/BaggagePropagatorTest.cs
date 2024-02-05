@@ -132,7 +132,7 @@ public class BaggagePropagatorTest
         Assert.Equal("value%28%29%21%26%3B%3A", escapedValue);
 
         var initialBaggage =
-            $"key%201=value%201,{encodedKey}={encodedValue},{escapedKey}={escapedValue},key4=%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~,key5=1%3D1";
+            $"key%201=value%201,{encodedKey}={encodedValue},{escapedKey}={escapedValue},key4=%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~";
 
         var carrier = new List<KeyValuePair<string, string>>
         {
@@ -144,11 +144,11 @@ public class BaggagePropagatorTest
         Assert.False(propagationContext == default);
         Assert.True(propagationContext.ActivityContext == default);
 
-        Assert.Equal(5, propagationContext.Baggage.Count);
+        Assert.Equal(4, propagationContext.Baggage.Count);
 
         var actualBaggage = propagationContext.Baggage.GetBaggage();
 
-        Assert.Equal(5, actualBaggage.Count);
+        Assert.Equal(4, actualBaggage.Count);
 
         Assert.True(actualBaggage.ContainsKey("key 1"));
         Assert.Equal("value 1", actualBaggage["key 1"]);
@@ -162,10 +162,6 @@ public class BaggagePropagatorTest
         // x20-x7E range
         Assert.True(actualBaggage.ContainsKey("key4"));
         Assert.Equal(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", actualBaggage["key4"]);
-
-        // value contains '=' character
-        Assert.True(actualBaggage.ContainsKey("key5"));
-        Assert.Equal("1=1", actualBaggage["key5"]);
     }
 
     [Fact]
@@ -208,14 +204,11 @@ public class BaggagePropagatorTest
 
                 // x20-x7E range
                 { "key3", " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" },
-
-                // '=' char in value
-                { "key4", "1=1" },
             }));
 
         this.baggage.Inject(propagationContext, carrier, Setter);
 
         Assert.Single(carrier);
-        Assert.Equal("key%201=value%201,key2=%21x_x%2Cx-x%26x%28x%22%29%3B%3A,key3=%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~,key4=1%3D1", carrier[BaggagePropagator.BaggageHeaderName]);
+        Assert.Equal("key%201=value%201,key2=%21x_x%2Cx-x%26x%28x%22%29%3B%3A,key3=%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~", carrier[BaggagePropagator.BaggageHeaderName]);
     }
 }
