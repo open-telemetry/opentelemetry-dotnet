@@ -68,13 +68,15 @@ jobs:
       run: dotnet-coverage merge -r -f cobertura -o ./TestResults/Cobertura.xml ./TestResults/*.coverage
 
     - name: Upload code coverage ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-      uses: codecov/codecov-action@v3.1.5
+      uses: codecov/codecov-action@v4
       continue-on-error: true # Note: Don't fail for upload failures
       env:
         OS: ${{ matrix.os }}
         TFM: ${{ matrix.version }}
+        token: ${{ secrets.CODECOV_TOKEN }}
       with:
         file: TestResults/Cobertura.xml
         env_vars: OS,TFM
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
         name: Code Coverage for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
+        codecov_yml_path: .github/codecov.yml
