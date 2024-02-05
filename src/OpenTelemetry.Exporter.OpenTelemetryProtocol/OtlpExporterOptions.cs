@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System;
 using System.Diagnostics;
 using System.Reflection;
 #if NETFRAMEWORK
@@ -63,7 +64,7 @@ public class OtlpExporterOptions
 
         if (configuration.TryGetStringValue(HeadersEnvVarName, out var headers))
         {
-            this.Headers = headers;
+            this.Headers = Uri.UnescapeDataString(headers);
         }
 
         if (configuration.TryGetIntValue(TimeoutEnvVarName, out var timeout))

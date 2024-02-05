@@ -60,6 +60,26 @@ public class OtlpExporterOptionsTests : IDisposable
     }
 
     [Fact]
+    public void OtlpExporterOptions_EnvironmentVariableHeadersUrlEncoded()
+    {
+        Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, "Authentication=Basic%20AAA");
+
+        var options = new OtlpExporterOptions();
+
+        Assert.Equal("Authentication=Basic AAA", options.Headers);
+    }
+
+    [Fact]
+    public void OtlpExporterOptions_EnvironmentVariableHeadersNotUrlEncoded()
+    {
+        Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, "Authentication=Basic AAA");
+
+        var options = new OtlpExporterOptions();
+
+        Assert.Equal("Authentication=Basic AAA", options.Headers);
+    }
+
+    [Fact]
     public void OtlpExporterOptions_UsingIConfiguration()
     {
         var values = new Dictionary<string, string>()
