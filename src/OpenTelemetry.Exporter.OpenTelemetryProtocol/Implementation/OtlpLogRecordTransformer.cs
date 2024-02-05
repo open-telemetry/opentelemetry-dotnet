@@ -16,9 +16,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 internal sealed class OtlpLogRecordTransformer
 {
-    private const string DefaultScopeName = "unknown_scope";
-
     internal static readonly ConcurrentBag<OtlpLogs.ScopeLogs> LogListPool = new();
+
+    private const string DefaultScopeName = "";
 
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
