@@ -2,10 +2,9 @@
 
 ## Unreleased
 
-* **Breaking change for users of experimental APIs (pre-release builds only):**
-  Removed `WithLogging` experimental APIs on `OpenTelemetryBuilder`. These have
-  been replaced by new extension methods in the SDK targeting
-  `IOpenTelemetryBuilder`.
+* `OpenTelemetryBuilder` has been marked obsolete. Component authors using
+  `OpenTelemetryBuilder` for cross-cutting signal configuration extensions
+  should switch to targeting `IOpenTelemetryBuilder` instead.
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
 
 ## 1.7.0
