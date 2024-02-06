@@ -96,6 +96,9 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
     /// <inheritdoc/>
     public ILogger CreateLogger(string categoryName)
     {
+        // Lock-free reading leveraging Hashtable's thread safety feature.
+        // https://learn.microsoft.com/dotnet/api/system.collections.hashtable#thread-safety
+
         if (this.loggers[categoryName] is not ILogger logger)
         {
             lock (this.loggers)
