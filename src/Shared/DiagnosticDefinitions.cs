@@ -12,4 +12,5 @@ internal static class DiagnosticDefinitions
     public const string LoggerProviderExperimentalApi = "OTEL1000";
     public const string LogsBridgeExperimentalApi = "OTEL1001";
     public const string ExemplarExperimentalApi = "OTEL1002";
+    public const string CardinalityLimitExperimentalApi = "OTEL1003";
 }
