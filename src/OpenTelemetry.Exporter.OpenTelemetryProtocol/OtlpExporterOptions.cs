@@ -63,7 +63,7 @@ public class OtlpExporterOptions
 
         if (configuration.TryGetStringValue(HeadersEnvVarName, out var headers))
         {
-            this.Headers = Uri.UnescapeDataString(headers);
+            this.Headers = headers;
         }
 
         if (configuration.TryGetIntValue(TimeoutEnvVarName, out var timeout))
