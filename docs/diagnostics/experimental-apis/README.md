@@ -33,6 +33,12 @@ Description: Metrics Exemplar Support
 
 Details: [OTEL1002](./OTEL1002.md)
 
+### OTEL1003
+
+Description: MetricStreamConfiguration CardinalityLimit Support
+
+Details: [OTEL1003](./OTEL1003.md)
+
 ## Inactive
 
 Experimental APIs which have been released stable or removed:
