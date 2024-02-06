@@ -6,7 +6,7 @@
   [#4466](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4466)
   where the activity instance returned by `Activity.Current` was different than
   instance obtained from `IHttpActivityFeature.Activity`.
-  [#5136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5136)
+  ([#5136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5136))
 
 * Fixed an issue where the `http.route` attribute was not set on either the
   `Activity` or `http.server.request.duration` metric generated from a

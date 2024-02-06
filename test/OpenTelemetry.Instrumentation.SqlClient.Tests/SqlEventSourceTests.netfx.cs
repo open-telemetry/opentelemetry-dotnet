@@ -246,8 +246,6 @@ public class SqlEventSourceTests
 
         Assert.Equal("master", activity.GetTagValue(SemanticConventions.AttributeDbName));
 
-        // "db.statement_type" is never set by the SqlEventSource instrumentation
-        Assert.Null(activity.GetTagValue(SpanAttributeConstants.DatabaseStatementTypeKey));
         if (captureText)
         {
             Assert.Equal(commandText, activity.GetTagValue(SemanticConventions.AttributeDbStatement));

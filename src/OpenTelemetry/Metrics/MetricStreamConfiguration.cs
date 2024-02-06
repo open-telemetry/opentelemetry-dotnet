@@ -1,6 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -9,6 +14,8 @@ namespace OpenTelemetry.Metrics;
 public class MetricStreamConfiguration
 {
     private string? name;
+
+    private int? cardinalityLimit = null;
 
     /// <summary>
     /// Gets the drop configuration.
@@ -91,11 +98,44 @@ public class MetricStreamConfiguration
         }
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Gets or sets a positive integer value defining the maximum number of
+    /// data points allowed for the metric managed by the view.
+    /// </summary>
+    /// <remarks>
+    /// <para><b>WARNING</b>: This is an experimental API which might change or
+    /// be removed in the future. Use at your own risk.</para>
+    /// <para>Spec reference: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#cardinality-limits">Cardinality
+    /// limits</see>.</para>
+    /// Note: If not set, the MeterProvider cardinality limit value will be
+    /// used, which defaults to 2000. Call <see
+    /// cref="MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream"/>
+    /// to configure the MeterProvider default.
+    /// </remarks>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.CardinalityLimitExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
+    public
+#else
+    internal
+#endif
+    int? CardinalityLimit
+    {
+        get => this.cardinalityLimit;
+        set
+        {
+            if (value != null)
+            {
+                Guard.ThrowIfOutOfRange(value.Value, min: 1, max: int.MaxValue);
+            }
+
+            this.cardinalityLimit = value;
+        }
+    }
+
     internal string[]? CopiedTagKeys { get; private set; }
 
     internal int? ViewId { get; set; }
-
-    // TODO: MetricPoints caps can be configured here on
-    // a per stream basis, when we add such a capability
-    // in the future.
 }
