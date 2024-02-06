@@ -105,9 +105,10 @@ public class MetricStreamConfiguration
     /// managed by the view.
     /// </summary>
     /// <remarks>
-    /// Note: If not set, the SDK cardinality limit value will be used, which
-    /// defaults to 2000. Call <see cref="MeterProviderBuilderExtensions"/>
-    /// SetMaxMetricPointsPerMetricStream"/> to confiture the SDK defaults.
+    /// Note: If not set, the MeterProvider cardinality limit value will be
+    /// used, which defaults to 2000.
+    /// Call <see cref="MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream"/>
+    /// to configure the MeterProvider default.
     /// </remarks>
 #if NET8_0_OR_GREATER
     [Experimental(DiagnosticDefinitions.CardinalityLimitExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
