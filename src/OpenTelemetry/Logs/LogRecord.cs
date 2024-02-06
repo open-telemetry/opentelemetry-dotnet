@@ -411,10 +411,10 @@ public sealed class LogRecord
     public Logger Logger { get; internal set; } = InstrumentationScopeLogger.Default;
 #else
     /// <summary>
-    /// Gets the <see cref="Logs.Logger"/> associated with the <see
+    /// Gets or sets the <see cref="Logs.Logger"/> associated with the <see
     /// cref="LogRecord"/>.
     /// </summary>
-    internal Logger Logger { get; set; }
+    internal Logger Logger { get; set; } = InstrumentationScopeLogger.Default;
 #endif
 
     /// <summary>

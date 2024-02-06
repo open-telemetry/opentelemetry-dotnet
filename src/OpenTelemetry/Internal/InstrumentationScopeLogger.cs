@@ -21,7 +21,7 @@ internal sealed class InstrumentationScopeLogger : Logger
     {
         return string.IsNullOrWhiteSpace(name)
             ? Default
-            : Cache.GetOrAdd(name, static n => new(n));
+            : Cache.GetOrAdd(name!, static n => new(n));
     }
 
     public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
