@@ -100,14 +100,18 @@ public class MetricStreamConfiguration
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
-    /// Gets or sets a positive integer value
-    /// defining the maximum number of data points allowed to for the metric
-    /// managed by the view.
+    /// Gets or sets a positive integer value defining the maximum number of
+    /// data points allowed for the metric managed by the view.
     /// </summary>
     /// <remarks>
+    /// <para><b>WARNING</b>: This is an experimental API which might change or
+    /// be removed in the future. Use at your own risk.</para>
+    /// <para>Spec reference: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#cardinality-limits">Cardinality
+    /// limits</see>.</para>
     /// Note: If not set, the MeterProvider cardinality limit value will be
-    /// used, which defaults to 2000.
-    /// Call <see cref="MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream"/>
+    /// used, which defaults to 2000. Call <see
+    /// cref="MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream"/>
     /// to configure the MeterProvider default.
     /// </remarks>
 #if NET8_0_OR_GREATER
