@@ -108,7 +108,6 @@ internal sealed class SqlClientDiagnosticListener : ListenerHandler
                             switch (commandType)
                             {
                                 case CommandType.StoredProcedure:
-                                    activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
                                     if (this.options.SetDbStatementForStoredProcedure)
                                     {
                                         activity.SetTag(SemanticConventions.AttributeDbStatement, (string)commandText);
@@ -117,7 +116,6 @@ internal sealed class SqlClientDiagnosticListener : ListenerHandler
                                     break;
 
                                 case CommandType.Text:
-                                    activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
                                     if (this.options.SetDbStatementForText)
                                     {
                                         activity.SetTag(SemanticConventions.AttributeDbStatement, (string)commandText);
@@ -126,7 +124,6 @@ internal sealed class SqlClientDiagnosticListener : ListenerHandler
                                     break;
 
                                 case CommandType.TableDirect:
-                                    activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.TableDirect));
                                     break;
                             }
                         }
