@@ -1003,7 +1003,7 @@ public sealed class LogRecordTest
 
         var exportedItems = new List<LogRecord>();
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
-            .AddInMemoryExporter(exportedItems)
+            .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)))
             .Build())
         {
             var logger = loggerProvider.GetLogger("TestName");
