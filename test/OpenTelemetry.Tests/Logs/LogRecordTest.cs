@@ -979,8 +979,8 @@ public sealed class LogRecordTest
 
         Assert.NotNull(logRecord);
         Assert.NotNull(logRecord.Logger);
-        Assert.Equal("OpenTelemetry", logRecord.Logger.Name);
-        Assert.Equal(Sdk.InformationalVersion, logRecord.Logger.Version);
+        Assert.Equal("OpenTelemetry.Logs.Tests.LogRecordTest", logRecord.Logger.Name);
+        Assert.Null(logRecord.Logger.Version);
     }
 
     [Fact]
