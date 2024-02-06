@@ -460,7 +460,7 @@ Here is the rule of thumb when modeling the dimensions:
     rather than relying on / trusting each service instance to report the data
     center name).
   * If the dimension applies to a subset of metrics (e.g. the version of a
-    client library), model it as Meter level tags.
+    client library), model it as meter level tags.
 * If the dimension value is dynamic, report it via the [Metrics
   API](#metrics-api).
 
