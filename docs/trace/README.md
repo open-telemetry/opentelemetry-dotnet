@@ -7,6 +7,8 @@
 * [Best Practices](#best-practices)
 * [Package Version](#package-version)
 * [Tracing API](#tracing-api)
+  * [ActivitySource](#activitysource)
+  * [Activity](#activity)
 * [TracerProvider Management](#tracerprovider-management)
 * [Correlation](#correlation)
 
@@ -41,6 +43,8 @@ package, regardless of the .NET runtime version being used:
 
 ## Tracing API
 
+### ActivitySource
+
 :stop_sign: You should avoid creating
 [`ActivitySource`](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource)
 too frequently. `ActivitySource` is fairly expensive and meant to be reused
@@ -57,6 +61,8 @@ In many cases, using the fully qualified class name might be a good option.
 ```csharp
 static readonly ActivitySource MyActivitySource = new("MyCompany.MyProduct.MyLibrary");
 ```
+
+### Activity
 
 :heavy_check_mark: You should check
 [`Activity.IsAllDataRequested`](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.isalldatarequested)
@@ -78,6 +84,16 @@ using (var activity = MyActivitySource.StartActivity("SayHello"))
 [Activity.SetTag](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.settag)
 to [set
 attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-attributes).
+
+:heavy_check_mark: You should finish/stop the activity properly. This can be
+done implicitly via a `using` statement, which is recommended. You can also
+explicitly call
+[Activity.Dispose](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.dispose)
+or
+[Activity.Stop](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.stop).
+
+> [!NOTE]
+> Activities which are not yet finished/stopped will not be exported.
 
 ## TracerProvider Management
 
