@@ -41,7 +41,7 @@ public sealed class Metric
         ("System.Net.Http", "http.client.connection.duration"),
     };
 
-    private readonly AggregatorStore aggStore;
+    internal readonly AggregatorStore AggregatorStore;
 
     internal Metric(
         MetricStreamIdentity instrumentIdentity,
@@ -155,7 +155,7 @@ public sealed class Metric
             throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
         }
 
-        this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, cardinalityLimit, emitOverflowAttribute, shouldReclaimUnusedMetricPoints, exemplarFilter);
+        this.AggregatorStore = new AggregatorStore(instrumentIdentity, aggType, temporality, cardinalityLimit, emitOverflowAttribute, shouldReclaimUnusedMetricPoints, exemplarFilter);
         this.Temporality = temporality;
     }
 
@@ -211,14 +211,14 @@ public sealed class Metric
     /// </summary>
     /// <returns><see cref="MetricPointsAccessor"/>.</returns>
     public MetricPointsAccessor GetMetricPoints()
-        => this.aggStore.GetMetricPoints();
+        => this.AggregatorStore.GetMetricPoints();
 
     internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-        => this.aggStore.Update(value, tags);
+        => this.AggregatorStore.Update(value, tags);
 
     internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-        => this.aggStore.Update(value, tags);
+        => this.AggregatorStore.Update(value, tags);
 
     internal int Snapshot()
-        => this.aggStore.Snapshot();
+        => this.AggregatorStore.Snapshot();
 }
