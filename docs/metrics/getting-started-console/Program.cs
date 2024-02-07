@@ -14,10 +14,12 @@ public class Program
     {
         var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-            .AddView(instrumentName: "MyFruitCounter", new MetricStreamConfiguration { CardinalityLimit = 10 })
             .AddConsoleExporter()
             .Build();
 
+        // In this example, we have low cardinality which is below the 2000
+        // default limit. If you have high cardinality, you need to set the
+        // cardinality limit properly.
         MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
         MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
         MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
