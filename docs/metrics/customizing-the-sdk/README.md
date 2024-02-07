@@ -444,8 +444,8 @@ AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Ex
 AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
 ```
 
-To set the [cardinality limit](../README.md#cardinality-limits) at view level,
-use `MetricStreamConfiguration.CardinalityLimit`:
+To set the [cardinality limit](../README.md#cardinality-limits) at individual
+metric level, use `MetricStreamConfiguration.CardinalityLimit`:
 
 ```csharp
 var meterProvider = Sdk.CreateMeterProviderBuilder()
