@@ -69,15 +69,16 @@ MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
 MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
 ```
 
-An OpenTelemetry
-[MeterProvider](#meterprovider)
-is configured to subscribe to instruments from the Meter
-`MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
-pre-aggregated metrics are exported to a `ConsoleExporter`.
+An OpenTelemetry [MeterProvider](#meterprovider) is configured to subscribe to
+an instrument named "MyFruitCounter" from the Meter
+`MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory with a
+[cardinality limit](../README.md#cardinality-limits) of `10`. The pre-aggregated
+metrics are exported to a `ConsoleExporter`.
 
 ```csharp
 var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter("MyCompany.MyProduct.MyLibrary")
+    .AddView(instrumentName: "MyFruitCounter", new MetricStreamConfiguration() { CardinalityLimit = 10 })
     .AddConsoleExporter()
     .Build();
 ```
