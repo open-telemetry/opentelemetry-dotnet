@@ -450,7 +450,7 @@ metric level, use `MetricStreamConfiguration.CardinalityLimit`:
 ```csharp
 var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter("MyCompany.MyProduct.MyLibrary")
-    .AddView(instrumentName: "MyFruitCounter", new MetricStreamConfiguration() { CardinalityLimit = 10 })
+    .AddView(instrumentName: "MyFruitCounter", new MetricStreamConfiguration { CardinalityLimit = 10 })
     .AddConsoleExporter()
     .Build();
 ```
