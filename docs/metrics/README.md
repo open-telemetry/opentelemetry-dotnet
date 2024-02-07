@@ -429,6 +429,14 @@ dimensions can come from different sources:
 
 * [Measurements](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#measurement)
   reported via the [Metrics API](#metrics-api).
+* Additional tags provided at instrument creation time. For example, the
+  [`Meter.CreateCounter<T>(name, unit, description,
+  tags)`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.createcounter)
+  overload.
+* Additional tags provided at meter creation time. For example, the
+  [`Meter(name, version, tags,
+  scope)`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.-ctor)
+  overload.
 * [Resources](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
   configured at the `MeterProvider` level. Refer to this
   [doc](./customizing-the-sdk/README.md#resource) for details and examples.
@@ -436,13 +444,23 @@ dimensions can come from different sources:
   [jobs and instances](https://prometheus.io/docs/concepts/jobs_instances/) in
   Prometheus.
 
+> [!NOTE]
+> Instrument level tags support is not yet implemented in OpenTelemetry .NET
+  since the [OpenTelemetry
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument)
+  does not support it.
+
 Here is the rule of thumb when modeling the dimensions:
 
-* If the dimension value is static throughout the process lifetime (e.g. the
-  name of the machine, data center), model it as Resource, or even better, let
-  the collector add these dimensions if feasible (e.g. a collector running in
-  the same data center should know the name of the data center, rather than
-  relying on / trusting each service instance to report the data center name).
+* If the dimension is static throughout the process lifetime (e.g. the name of
+  the machine, data center):
+  * If the dimension applies to all metrics, model it as Resource, or even
+    better, let the collector add these dimensions if feasible (e.g. a collector
+    running in the same data center should know the name of the data center,
+    rather than relying on / trusting each service instance to report the data
+    center name).
+  * If the dimension applies to a subset of metrics (e.g. the version of a
+    client library), model it as meter level tags.
 * If the dimension value is dynamic, report it via the [Metrics
   API](#metrics-api).
 
