@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* `OpenTelemetryBuilder` has been marked obsolete. Component authors using
+  `OpenTelemetryBuilder` for cross-cutting signal configuration extensions
+  should switch to targeting `IOpenTelemetryBuilder` instead.
+  ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
+
 ## 1.7.0
 
 Released 2023-Dec-08
