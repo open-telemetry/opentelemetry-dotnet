@@ -37,26 +37,31 @@ internal sealed class OtlpExporterPersistentStorageRetryTransmissionHandler<TReq
 
     protected override bool OnSubmitRequestFailure(TRequest request, ExportClientResponse response)
     {
-        byte[]? data = null;
-        if (request is ExportTraceServiceRequest traceRequest)
+        if (RetryHelper.ShouldRetryRequest(request, response, OtlpRetry.InitialBackoffMilliseconds, out _))
         {
-            data = traceRequest.ToByteArray();
-        }
-        else if (request is ExportMetricsServiceRequest metricsRequest)
-        {
-            data = metricsRequest.ToByteArray();
-        }
-        else if (request is ExportLogsServiceRequest logsRequest)
-        {
-            data = logsRequest.ToByteArray();
+            byte[]? data = null;
+            if (request is ExportTraceServiceRequest traceRequest)
+            {
+                data = traceRequest.ToByteArray();
+            }
+            else if (request is ExportMetricsServiceRequest metricsRequest)
+            {
+                data = metricsRequest.ToByteArray();
+            }
+            else if (request is ExportLogsServiceRequest logsRequest)
+            {
+                data = logsRequest.ToByteArray();
+            }
+
+            if (data != null)
+            {
+                this.persistentBlobProvider?.TryCreateBlob(data, out _);
+            }
+
+            return true;
         }
 
-        if (data != null)
-        {
-            this.persistentBlobProvider?.TryCreateBlob(data, out _);
-        }
-
-        return true;
+        return false;
     }
 
     protected override void OnShutdown()
@@ -70,7 +75,7 @@ internal sealed class OtlpExporterPersistentStorageRetryTransmissionHandler<TReq
     {
         while (true)
         {
-            // Wait before retrying
+            // Wait 5 ms before retrying
             if (this.stopEvent.WaitOne(5000))
             {
                 break;
@@ -79,7 +84,7 @@ internal sealed class OtlpExporterPersistentStorageRetryTransmissionHandler<TReq
             int fileCount = 0;
 
             // transmit 10 files at a time.
-            while (fileCount < 10)
+            while (fileCount < 10 && !this.stopEvent.WaitOne(0))
             {
                 if (this.persistentBlobProvider != null && this.persistentBlobProvider.TryGetBlob(out var blob))
                 {
@@ -89,7 +94,7 @@ internal sealed class OtlpExporterPersistentStorageRetryTransmissionHandler<TReq
                         {
                             var request = this.requestFactory.Invoke(data);
                             var response = this.RetryRequest(request);
-                            if (response.Success)
+                            if (response.Success || !RetryHelper.ShouldRetryRequest(request, response, OtlpRetry.InitialBackoffMilliseconds, out _))
                             {
                                 blob.TryDelete();
                             }

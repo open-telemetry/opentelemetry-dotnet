@@ -3,7 +3,6 @@
 
 #nullable enable
 
-using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -18,7 +17,7 @@ internal class OtlpExporterRetryTransmissionHandler<TRequest> : OtlpExporterTran
     protected override bool OnSubmitRequestFailure(TRequest request, ExportClientResponse response)
     {
         var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
-        while (this.ShouldRetryRequest(request, response, nextRetryDelayMilliseconds, out var retryResult))
+        while (RetryHelper.ShouldRetryRequest(request, response, nextRetryDelayMilliseconds, out var retryResult))
         {
             Thread.Sleep(retryResult.RetryDelay);
 
@@ -33,29 +32,6 @@ internal class OtlpExporterRetryTransmissionHandler<TRequest> : OtlpExporterTran
 
         this.OnRequestDropped(request);
 
-        return false;
-    }
-
-    protected virtual bool ShouldRetryRequest(TRequest request, ExportClientResponse response, int retryDelayMilliseconds, out OtlpRetry.RetryResult retryResult)
-    {
-        if (response is ExportClientGrpcResponse)
-        {
-            if (response.Exception is RpcException rpcException
-            && OtlpRetry.TryGetGrpcRetryResult(rpcException.StatusCode, response.DeadlineUtc, rpcException.Trailers, retryDelayMilliseconds, out retryResult))
-            {
-                return true;
-            }
-        }
-
-        if (response is ExportClientHttpResponse httpResponse)
-        {
-            if (OtlpRetry.TryGetHttpRetryResult(httpResponse.StatusCode, response.DeadlineUtc, httpResponse.Headers, retryDelayMilliseconds, out retryResult))
-            {
-                return true;
-            }
-        }
-
-        retryResult = default;
         return false;
     }
 }
