@@ -26,6 +26,10 @@
   typically the case when using the experimental Logs Bridge API.
   ([#5300](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5300))
 
+* URL encoded values in `OTEL_EXPORTER_OTLP_HEADERS` are now correctly decoded
+  as it is mandated by the specification.
+  ([#5316](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5268))
+
 ## 1.7.0
 
 Released 2023-Dec-08
