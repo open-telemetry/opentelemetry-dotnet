@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.7.0-beta.1
+
+Released 2024-Feb-07
+
 * Removed support for the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable
   which toggled the use of the new conventions for the
   [server, client, and shared network attributes](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/general/attributes.md#server-client-and-shared-network-attributes).
