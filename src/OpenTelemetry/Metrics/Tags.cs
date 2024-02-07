@@ -52,6 +52,8 @@ internal readonly struct Tags : IEquatable<Tags>
 
     public readonly bool Equals(Tags other)
     {
+        // Equality check is done without sorting, so the order of tags matters.
+        // The consumer of this class AggregatorStore, is aware of this.
         var length = this.KeyValuePairs.Length;
 
         if (length != other.KeyValuePairs.Length)

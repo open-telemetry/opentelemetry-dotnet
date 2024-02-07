@@ -558,8 +558,11 @@ internal sealed class AggregatorStore
         {
             if (length > 1)
             {
-                // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                // Create or obtain new arrays to temporarily hold the sorted tag Keys and Values
+                // Create or obtain new arrays to temporarily hold the sorted tag Keys and Values.
+                // We could have just sorted the given tagKeysAndValues and do the lookup again,
+                // but the most likely path is that, if we did not find an entry for given order,
+                // we are unlikely to find it after sorting (unless users intentionally change tags ordering),
+                // in which cause we need to obtain a different storage anyway for sorted tags.
                 var storage = ThreadStaticStorage.GetStorage();
                 storage.CloneKeysAndValues(tagKeysAndValues, length, out var tempSortedTagKeysAndValues);
 
