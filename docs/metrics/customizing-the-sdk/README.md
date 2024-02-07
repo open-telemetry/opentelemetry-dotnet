@@ -444,10 +444,16 @@ AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Ex
 AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
 ```
 
-> [!NOTE]
-> The above limit is *per* metric stream, and applies to all the metric
-streams. There is no ability to apply different limits for each instrument at
-this moment.
+To set the [cardinality limit](../README.md#cardinality-limits) at individual
+metric level, use `MetricStreamConfiguration.CardinalityLimit`:
+
+```csharp
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
+    .AddView(instrumentName: "MyFruitCounter", new MetricStreamConfiguration { CardinalityLimit = 10 })
+    .AddConsoleExporter()
+    .Build();
+```
 
 ### Exemplars
 
