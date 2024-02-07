@@ -236,7 +236,7 @@ public static class MeterProviderBuilderExtensions
     /// This may change in the future. See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/2360.
     /// </remarks>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-    /// <param name="maxMetricPointsPerMetricStream">Maximum maximum number of metric points allowed per metric stream.</param>
+    /// <param name="maxMetricPointsPerMetricStream">Maximum number of metric points allowed per metric stream.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
     {

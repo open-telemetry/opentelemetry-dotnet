@@ -47,10 +47,11 @@ internal sealed class OtlpLogRecordTransformer
             var otlpLogRecord = this.ToOtlpLog(logRecord);
             if (otlpLogRecord != null)
             {
-                if (!logsByCategory.TryGetValue(logRecord.CategoryName, out var scopeLogs))
+                var scopeName = logRecord.Logger.Name;
+                if (!logsByCategory.TryGetValue(scopeName, out var scopeLogs))
                 {
-                    scopeLogs = this.GetLogListFromPool(logRecord.CategoryName);
-                    logsByCategory.Add(logRecord.CategoryName, scopeLogs);
+                    scopeLogs = this.GetLogListFromPool(scopeName);
+                    logsByCategory.Add(scopeName, scopeLogs);
                     resourceLogs.ScopeLogs.Add(scopeLogs);
                 }
 
@@ -169,6 +170,14 @@ internal sealed class OtlpLogRecordTransformer
                     {
                         AddAttribute(otlpLogRecord, result, attributeCountLimit);
                     }
+                }
+
+                // Supports setting Body directly on LogRecord for the Logs Bridge API.
+                if (otlpLogRecord.Body == null && logRecord.Body != null)
+                {
+                    // If {OriginalFormat} is not present in the attributes,
+                    // use logRecord.Body if it is set.
+                    otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.Body };
                 }
             }
 

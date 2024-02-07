@@ -1,6 +1,6 @@
 OpenTelemetry.Logs.LoggerProviderBuilderExtensions
 OpenTelemetry.Logs.LoggerProviderExtensions
-OpenTelemetry.Logs.LogRecord.Logger.get -> OpenTelemetry.Logs.Logger?
+OpenTelemetry.Logs.LogRecord.Logger.get -> OpenTelemetry.Logs.Logger!
 OpenTelemetry.Logs.LogRecord.Severity.get -> OpenTelemetry.Logs.LogRecordSeverity?
 OpenTelemetry.Logs.LogRecord.Severity.set -> void
 OpenTelemetry.Logs.LogRecord.SeverityText.get -> string?
@@ -18,6 +18,8 @@ OpenTelemetry.Metrics.Exemplar.TraceId.get -> System.Diagnostics.ActivityTraceId
 OpenTelemetry.Metrics.ExemplarFilter
 OpenTelemetry.Metrics.ExemplarFilter.ExemplarFilter() -> void
 OpenTelemetry.Metrics.MetricPoint.GetExemplars() -> OpenTelemetry.Metrics.Exemplar[]!
+OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.get -> int?
+OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void
 OpenTelemetry.Metrics.TraceBasedExemplarFilter
 OpenTelemetry.Metrics.TraceBasedExemplarFilter.TraceBasedExemplarFilter() -> void
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>! processor) -> OpenTelemetry.Logs.LoggerProviderBuilder!

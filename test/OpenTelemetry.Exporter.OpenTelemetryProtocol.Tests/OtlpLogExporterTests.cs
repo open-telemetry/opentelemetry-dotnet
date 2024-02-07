@@ -589,6 +589,63 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal("state", otlpLogRecord.Body.StringValue);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LogRecordBodyIsExportedWhenUsingBridgeApi(bool isBodySet)
+    {
+        LogRecordAttributeList attributes = default;
+        attributes.Add("name", "tomato");
+        attributes.Add("price", 2.99);
+        attributes.Add("{OriginalFormat}", "Hello from {name} {price}.");
+
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(logRecords)
+            .Build())
+        {
+            var logger = loggerProvider.GetLogger();
+
+            logger.EmitLog(new LogRecordData()
+            {
+                Body = isBodySet ? "Hello world" : null,
+            });
+
+            logger.EmitLog(new LogRecordData(), attributes);
+        }
+
+        Assert.Equal(2, logRecords.Count);
+
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new());
+
+        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(logRecords[0]);
+
+        if (isBodySet)
+        {
+            Assert.Equal("Hello world", otlpLogRecord.Body?.StringValue);
+        }
+        else
+        {
+            Assert.Null(otlpLogRecord.Body);
+        }
+
+        otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(logRecords[1]);
+
+        Assert.Equal(2, otlpLogRecord.Attributes.Count);
+
+        var index = 0;
+        var attribute = otlpLogRecord.Attributes[index];
+        Assert.Equal("name", attribute.Key);
+        Assert.Equal("tomato", attribute.Value.StringValue);
+
+        attribute = otlpLogRecord.Attributes[++index];
+        Assert.Equal("price", attribute.Key);
+        Assert.Equal(2.99, attribute.Value.DoubleValue);
+
+        Assert.Equal("Hello from {name} {price}.", otlpLogRecord.Body.StringValue);
+    }
+
     [Fact]
     public void CheckToOtlpLogRecordExceptionAttributes()
     {
@@ -1410,6 +1467,44 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
                 return (sp, factory);
             });
+    }
+
+    [Theory]
+    [InlineData("my_instrumentation_scope_name", "my_instrumentation_scope_name")]
+    [InlineData(null, "")]
+    public void LogRecordLoggerNameIsExportedWhenUsingBridgeApi(string loggerName, string expectedScopeName)
+    {
+        LogRecordAttributeList attributes = default;
+        attributes.Add("name", "tomato");
+        attributes.Add("price", 2.99);
+        attributes.Add("{OriginalFormat}", "Hello from {name} {price}.");
+
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            var logger = loggerProvider.GetLogger(loggerName);
+
+            logger.EmitLog(new LogRecordData());
+        }
+
+        Assert.Single(logRecords);
+
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new());
+
+        var batch = new Batch<LogRecord>(new[] { logRecords[0] }, 1);
+
+        var request = otlpLogRecordTransformer.BuildExportRequest(
+            new Proto.Resource.V1.Resource(),
+            batch);
+
+        Assert.NotNull(request);
+        Assert.Single(request.ResourceLogs);
+        Assert.Single(request.ResourceLogs[0].ScopeLogs);
+
+        Assert.Equal(expectedScopeName, request.ResourceLogs[0].ScopeLogs[0].Scope?.Name);
     }
 
     private static void RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(

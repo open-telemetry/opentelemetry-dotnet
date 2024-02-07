@@ -15,6 +15,17 @@
   will be automatically included in exports.
   ([#5258](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5258))
 
+* Updated `OtlpLogExporter` to set `body` on the data model from
+  `LogRecord.Body` if `{OriginalFormat}` attribute is NOT found and
+  `FormattedMessage` is `null`. This is typically the case when using the
+  experimental Logs Bridge API.
+  ([#5268](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5268))
+
+* Updated `OtlpLogExporter` to set instrumentation scope name on the data model
+  from `LogRecord.Logger.Name` if `LogRecord.CategoryName` is `null`. This is
+  typically the case when using the experimental Logs Bridge API.
+  ([#5300](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5300))
+
 ## 1.7.0
 
 Released 2023-Dec-08

@@ -24,7 +24,7 @@ internal sealed class OpenTelemetryLogger : ILogger
 
     private readonly LoggerProviderSdk provider;
     private readonly OpenTelemetryLoggerOptions options;
-    private readonly string categoryName;
+    private readonly InstrumentationScopeLogger instrumentationScope;
 
     internal OpenTelemetryLogger(
         LoggerProviderSdk provider,
@@ -37,7 +37,7 @@ internal sealed class OpenTelemetryLogger : ILogger
 
         this.provider = provider!;
         this.options = options!;
-        this.categoryName = categoryName!;
+        this.instrumentationScope = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(categoryName);
     }
 
     internal IExternalScopeProvider? ScopeProvider { get; set; }
@@ -65,7 +65,6 @@ internal sealed class OpenTelemetryLogger : ILogger
             iloggerData.TraceState = this.options.IncludeTraceState && activity != null
                 ? activity.TraceStateString
                 : null;
-            iloggerData.CategoryName = this.categoryName;
             iloggerData.EventId = eventId;
             iloggerData.Exception = exception;
             iloggerData.ScopeProvider = this.options.IncludeScopes ? this.ScopeProvider : null;
@@ -97,7 +96,7 @@ internal sealed class OpenTelemetryLogger : ILogger
                     : null;
             }
 
-            record.Logger = LoggerInstrumentationScope.Instance;
+            record.Logger = this.instrumentationScope;
 
             processor.OnEnd(record);
 
@@ -238,20 +237,5 @@ internal sealed class OpenTelemetryLogger : ILogger
         public void Dispose()
         {
         }
-    }
-
-    private sealed class LoggerInstrumentationScope : Logger
-    {
-        private LoggerInstrumentationScope(string name, string version)
-            : base(name)
-        {
-            this.SetInstrumentationScope(version);
-        }
-
-        public static LoggerInstrumentationScope Instance { get; }
-            = new("OpenTelemetry", Sdk.InformationalVersion);
-
-        public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
-            => throw new NotSupportedException();
     }
 }
