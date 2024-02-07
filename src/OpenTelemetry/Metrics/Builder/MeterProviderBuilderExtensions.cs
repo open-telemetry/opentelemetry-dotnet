@@ -1,10 +1,12 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+using System.ComponentModel;
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
-using System.ComponentModel;
+#endif
 using System.Diagnostics.Metrics;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
