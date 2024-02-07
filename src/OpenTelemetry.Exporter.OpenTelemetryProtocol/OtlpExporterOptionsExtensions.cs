@@ -58,6 +58,9 @@ internal static class OtlpExporterOptionsExtensions
         var headers = new THeaders();
         if (!string.IsNullOrEmpty(optionHeaders))
         {
+            // According to the specification, URL-encoded headers must be supported.
+            optionHeaders = Uri.UnescapeDataString(optionHeaders);
+
             Array.ForEach(
                 optionHeaders.Split(','),
                 (pair) =>
