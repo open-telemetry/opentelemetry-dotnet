@@ -3,9 +3,9 @@
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
 using System.ComponentModel;
+#endif
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
-#endif
 #endif
 using System.Diagnostics.Metrics;
 using System.Text.RegularExpressions;
@@ -256,40 +256,6 @@ public static class MeterProviderBuilderExtensions
         return meterProviderBuilder;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Sets a positive integer value defining the maximum number of
-    /// data points allowed for metrics managed by the MeterProvider.
-    /// </summary>
-    /// <remarks>
-    /// <para><b>WARNING</b>: This is an experimental API which might change or
-    /// be removed in the future. Use at your own risk.</para>
-    /// </remarks>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-    /// <param name="cardinalityLimit">Cardinality limit.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-#if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.CardinalityLimitExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-    public
-#else
-    internal
-#endif
-        static MeterProviderBuilder SetCardinalityLimit(this MeterProviderBuilder meterProviderBuilder, int cardinalityLimit)
-    {
-        Guard.ThrowIfOutOfRange(cardinalityLimit, min: 1, max: int.MaxValue);
-
-        meterProviderBuilder.ConfigureBuilder((sp, builder) =>
-        {
-            if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
-            {
-                meterProviderBuilderSdk.SetCardinalityLimit(cardinalityLimit);
-            }
-        });
-
-        return meterProviderBuilder;
-    }
-
     /// <summary>
     /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
     /// this provider is built from. Overwrites currently set ResourceBuilder.
@@ -349,6 +315,40 @@ public static class MeterProviderBuilderExtensions
         }
 
         throw new NotSupportedException($"Build is not supported on '{meterProviderBuilder?.GetType().FullName ?? "null"}' instances.");
+    }
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Sets a positive integer value defining the maximum number of
+    /// data points allowed for metrics managed by the MeterProvider.
+    /// </summary>
+    /// <remarks>
+    /// <para><b>WARNING</b>: This is an experimental API which might change or
+    /// be removed in the future. Use at your own risk.</para>
+    /// </remarks>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="cardinalityLimit">Cardinality limit.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.CardinalityLimitExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
+    public
+#else
+    internal
+#endif
+        static MeterProviderBuilder SetCardinalityLimit(this MeterProviderBuilder meterProviderBuilder, int cardinalityLimit)
+    {
+        Guard.ThrowIfOutOfRange(cardinalityLimit, min: 1, max: int.MaxValue);
+
+        meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+        {
+            if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            {
+                meterProviderBuilderSdk.SetCardinalityLimit(cardinalityLimit);
+            }
+        });
+
+        return meterProviderBuilder;
     }
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
