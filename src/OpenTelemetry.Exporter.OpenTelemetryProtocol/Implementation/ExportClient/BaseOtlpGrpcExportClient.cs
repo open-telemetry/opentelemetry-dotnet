@@ -13,6 +13,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 /// <typeparam name="TRequest">Type of export request.</typeparam>
 internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequest>
 {
+    protected static readonly ExportClientGrpcResponse SuccessExportResponse = new ExportClientGrpcResponse(success: true, deadlineUtc: null, exception: null);
+
     protected BaseOtlpGrpcExportClient(OtlpExporterOptions options)
     {
         Guard.ThrowIfNull(options);

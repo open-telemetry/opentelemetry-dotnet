@@ -15,10 +15,10 @@ internal sealed class ExportClientHttpResponse : ExportClientResponse
 {
     public ExportClientHttpResponse(
         bool success,
-        DateTime deadline,
+        DateTime? deadlineUtc,
         HttpResponseMessage? response,
         Exception? exception)
-        : base(success, deadline, exception)
+        : base(success, deadlineUtc, exception)
     {
         this.Headers = response?.Headers;
         this.StatusCode = response?.StatusCode;

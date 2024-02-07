@@ -12,6 +12,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 /// <typeparam name="TRequest">Type of export request.</typeparam>
 internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
 {
+    private static readonly ExportClientHttpResponse SuccessExportResponse = new ExportClientHttpResponse(success: true, deadlineUtc: null, response: null, exception: null);
+
     protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
         Guard.ThrowIfNull(options);
@@ -49,16 +51,17 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
             }
             catch (HttpRequestException ex)
             {
-                return new ExportClientHttpResponse(success: false, deadline: deadline, response: httpResponse, ex);
+                return new ExportClientHttpResponse(success: false, deadlineUtc: deadline, response: httpResponse, ex);
             }
 
-            return new ExportClientHttpResponse(success: true, deadline: deadline, response: httpResponse, exception: null);
+            // We do not need to return back response and deadline for successful response so using cached value.
+            return SuccessExportResponse;
         }
         catch (HttpRequestException ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return new ExportClientHttpResponse(success: false, deadline: deadline, response: null, exception: ex);
+            return new ExportClientHttpResponse(success: false, deadlineUtc: deadline, response: null, exception: ex);
         }
     }
 

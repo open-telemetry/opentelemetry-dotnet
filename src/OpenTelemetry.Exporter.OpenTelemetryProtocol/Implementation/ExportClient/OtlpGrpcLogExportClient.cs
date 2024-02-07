@@ -34,13 +34,14 @@ internal sealed class OtlpGrpcLogExportClient : BaseOtlpGrpcExportClient<OtlpCol
         {
             this.logsClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
 
-            return new ExportClientGrpcResponse(success: true, deadline: deadline, exception: null);
+            // We do not need to return back response and deadline for successful response so using cached value.
+            return SuccessExportResponse;
         }
         catch (RpcException ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return new ExportClientGrpcResponse(success: false, deadline: deadline, exception: ex);
+            return new ExportClientGrpcResponse(success: false, deadlineUtc: deadline, exception: ex);
         }
     }
 }

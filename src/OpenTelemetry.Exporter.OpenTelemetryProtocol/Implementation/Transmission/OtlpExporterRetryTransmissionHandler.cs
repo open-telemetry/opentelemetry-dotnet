@@ -17,14 +17,12 @@ internal class OtlpExporterRetryTransmissionHandler<TRequest> : OtlpExporterTran
 
     protected override bool OnSubmitRequestFailure(TRequest request, ExportClientResponse response)
     {
-        var retryAttemptCount = 0;
-
-        while (retryAttemptCount < 5 && this.ShouldRetryRequest(request, response, retryAttemptCount++, out var sleepDuration))
+        var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
+        while (this.ShouldRetryRequest(request, response, nextRetryDelayMilliseconds, out var retryResult))
         {
-            if (sleepDuration > TimeSpan.Zero)
-            {
-                Thread.Sleep(sleepDuration);
-            }
+            Thread.Sleep(retryResult.RetryDelay);
+
+            nextRetryDelayMilliseconds = retryResult.NextRetryDelayMilliseconds;
 
             response = this.RetryRequest(request);
             if (response.Success)
@@ -38,28 +36,26 @@ internal class OtlpExporterRetryTransmissionHandler<TRequest> : OtlpExporterTran
         return false;
     }
 
-    protected virtual bool ShouldRetryRequest(TRequest request, ExportClientResponse response, int retryAttemptCount, out TimeSpan sleepDuration)
+    protected virtual bool ShouldRetryRequest(TRequest request, ExportClientResponse response, int retryDelayMilliseconds, out OtlpRetry.RetryResult retryResult)
     {
         if (response is ExportClientGrpcResponse)
         {
             if (response.Exception is RpcException rpcException
-            && OtlpRetry.TryGetGrpcRetryResult(rpcException.StatusCode, response.DeadlineUtc, rpcException.Trailers, retryAttemptCount, out var retryResult))
+            && OtlpRetry.TryGetGrpcRetryResult(rpcException.StatusCode, response.DeadlineUtc, rpcException.Trailers, retryDelayMilliseconds, out retryResult))
             {
-                sleepDuration = retryResult.RetryDelay;
                 return true;
             }
         }
 
         if (response is ExportClientHttpResponse httpResponse)
         {
-            if (OtlpRetry.TryGetHttpRetryResult(httpResponse.StatusCode, response.DeadlineUtc, httpResponse.Headers, retryAttemptCount, out var retryResult))
+            if (OtlpRetry.TryGetHttpRetryResult(httpResponse.StatusCode, response.DeadlineUtc, httpResponse.Headers, retryDelayMilliseconds, out retryResult))
             {
-                sleepDuration = retryResult.RetryDelay;
                 return true;
             }
         }
 
-        sleepDuration = default;
+        retryResult = default;
         return false;
     }
 }
