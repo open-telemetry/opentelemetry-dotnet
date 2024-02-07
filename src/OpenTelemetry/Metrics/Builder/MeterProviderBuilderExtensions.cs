@@ -238,7 +238,7 @@ public static class MeterProviderBuilderExtensions
     /// <param name="maxMetricPointsPerMetricStream">Maximum number of metric points allowed per metric stream.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
 #if EXPOSE_EXPERIMENTAL_FEATURES
-    [Obsolete("Call SetCardinalityLimit instead this method will be removed in a future version.")]
+    [Obsolete("Call SetCardinalityLimit instead. This method will be removed in a future version.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
 #endif
     public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
