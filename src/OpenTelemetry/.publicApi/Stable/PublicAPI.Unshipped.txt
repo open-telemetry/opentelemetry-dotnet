@@ -1,6 +1,14 @@
 OpenTelemetry.OpenTelemetryBuilderSdkExtensions
+OpenTelemetry.OpenTelemetrySdk
+OpenTelemetry.OpenTelemetrySdk.Dispose() -> void
+OpenTelemetry.OpenTelemetrySdk.MeterProvider.get -> OpenTelemetry.Metrics.MeterProvider!
+OpenTelemetry.OpenTelemetrySdk.Services.get -> System.IServiceProvider!
+OpenTelemetry.OpenTelemetrySdk.TracerProvider.get -> OpenTelemetry.Trace.TracerProvider!
+OpenTelemetry.OpenTelemetrySdkExtensions
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.ConfigureResource(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithMetrics(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithMetrics(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithTracing(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithTracing(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.IOpenTelemetryBuilder!
+static OpenTelemetry.OpenTelemetrySdk.Create(System.Action<OpenTelemetry.IOpenTelemetryBuilder!>! configure) -> OpenTelemetry.OpenTelemetrySdk!
+static OpenTelemetry.OpenTelemetrySdkExtensions.GetLoggerFactory(this OpenTelemetry.OpenTelemetrySdk! sdk) -> Microsoft.Extensions.Logging.ILoggerFactory!

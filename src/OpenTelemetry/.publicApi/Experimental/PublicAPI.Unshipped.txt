@@ -22,6 +22,7 @@ OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.get -> int?
 OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void
 OpenTelemetry.Metrics.TraceBasedExemplarFilter
 OpenTelemetry.Metrics.TraceBasedExemplarFilter.TraceBasedExemplarFilter() -> void
+OpenTelemetry.OpenTelemetrySdk.LoggerProvider.get -> OpenTelemetry.Logs.LoggerProvider!
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>! processor) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>!>! implementationFactory) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddProcessor<T>(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder) -> OpenTelemetry.Logs.LoggerProviderBuilder!
