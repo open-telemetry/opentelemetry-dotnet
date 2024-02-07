@@ -928,7 +928,7 @@ public class MetricViewTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetCardinalityLimit(3)
+            .SetMaxMetricPointsPerMetricStream(3)
             .AddView((instrument) =>
             {
                 return new MetricStreamConfiguration() { Name = "MetricStreamA", CardinalityLimit = 10000 };

@@ -1,9 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-using System.ComponentModel;
-#endif
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
@@ -233,13 +230,16 @@ public static class MeterProviderBuilderExtensions
     /// This limits the number of unique combinations of key/value pairs used
     /// for reporting measurements.
     /// </summary>
-    /// <inheritdoc cref="SetCardinalityLimit(MeterProviderBuilder, int)"/>
+    /// <remarks>
+    /// If a particular key/value pair combination is used at least once,
+    /// it will contribute to the limit for the life of the process.
+    /// This may change in the future. See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/2360.
+    /// </remarks>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <param name="maxMetricPointsPerMetricStream">Maximum number of metric points allowed per metric stream.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
 #if EXPOSE_EXPERIMENTAL_FEATURES
-    [Obsolete("Call SetCardinalityLimit instead. This method will be removed in a future version.")]
-    [EditorBrowsable(EditorBrowsableState.Never)]
+    [Obsolete("Use MetricStreamConfiguration.CardinalityLimit via the AddView API instead. This method will be removed in a future version.")]
 #endif
     public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
     {
@@ -249,7 +249,7 @@ public static class MeterProviderBuilderExtensions
         {
             if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                meterProviderBuilderSdk.SetMaxMetricPointsPerMetricStream(maxMetricPointsPerMetricStream);
+                meterProviderBuilderSdk.SetDefaultCardinalityLimit(maxMetricPointsPerMetricStream);
             }
         });
 
@@ -315,40 +315,6 @@ public static class MeterProviderBuilderExtensions
         }
 
         throw new NotSupportedException($"Build is not supported on '{meterProviderBuilder?.GetType().FullName ?? "null"}' instances.");
-    }
-
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Sets a positive integer value defining the maximum number of
-    /// data points allowed for metrics managed by the MeterProvider.
-    /// </summary>
-    /// <remarks>
-    /// <para><b>WARNING</b>: This is an experimental API which might change or
-    /// be removed in the future. Use at your own risk.</para>
-    /// </remarks>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-    /// <param name="cardinalityLimit">Cardinality limit.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-#if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.CardinalityLimitExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-    public
-#else
-    internal
-#endif
-        static MeterProviderBuilder SetCardinalityLimit(this MeterProviderBuilder meterProviderBuilder, int cardinalityLimit)
-    {
-        Guard.ThrowIfOutOfRange(cardinalityLimit, min: 1, max: int.MaxValue);
-
-        meterProviderBuilder.ConfigureBuilder((sp, builder) =>
-        {
-            if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
-            {
-                meterProviderBuilderSdk.SetCardinalityLimit(cardinalityLimit);
-            }
-        });
-
-        return meterProviderBuilder;
     }
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
