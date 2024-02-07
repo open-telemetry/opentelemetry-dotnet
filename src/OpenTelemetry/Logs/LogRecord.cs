@@ -60,7 +60,6 @@ public sealed class LogRecord
         this.ILoggerData = new()
         {
             TraceState = activity?.TraceStateString,
-            CategoryName = categoryName,
             FormattedMessage = formattedMessage,
             EventId = eventId,
             Exception = exception,
@@ -79,6 +78,8 @@ public sealed class LogRecord
 
             this.AttributeData = stateValues;
         }
+
+        this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(categoryName);
     }
 
     internal enum LogRecordSource
@@ -153,16 +154,31 @@ public sealed class LogRecord
         set => this.ILoggerData.TraceState = value;
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets or sets the log category name.
     /// </summary>
     /// <remarks>
-    /// Note: <see cref="CategoryName"/> is only set when emitting logs through <see cref="ILogger"/>.
+    /// Note: <see cref="CategoryName"/> is an alias for the <see
+    /// cref="Logger.Name"/> accessed via the <see cref="Logger"/> property.
+    /// Setting a new value for <see cref="CategoryName"/> will result in a new
+    /// <see cref="Logger"/> being set.
     /// </remarks>
+#else
+    /// <summary>
+    /// Gets or sets the log category name.
+    /// </summary>
+#endif
     public string? CategoryName
     {
-        get => this.ILoggerData.CategoryName;
-        set => this.ILoggerData.CategoryName = value;
+        get => this.Logger.Name;
+        set
+        {
+            if (this.Logger.Name != value)
+            {
+                this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(value);
+            }
+        }
     }
 
     /// <summary>
@@ -379,18 +395,26 @@ public sealed class LogRecord
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
-    /// Gets the <see cref="Logs.Logger"/> which emitted the <see cref="LogRecord"/>.
+    /// Gets the <see cref="Logs.Logger"/> associated with the <see
+    /// cref="LogRecord"/>.
     /// </summary>
-    /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
+    /// <remarks>
+    /// <para><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></para>
+    /// Note: When using the Log Bridge API (for example <see
+    /// cref="Logger.EmitLog(in LogRecordData)"/>) <see cref="Logger"/> is
+    /// typically the <see cref="Logs.Logger"/> which emitted the <see
+    /// cref="LogRecord"/> however the value may be different if <see
+    /// cref="CategoryName"/> is modified.</remarks>
 #if NET8_0_OR_GREATER
     [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
-    public Logger? Logger { get; internal set; }
+    public Logger Logger { get; internal set; } = InstrumentationScopeLogger.Default;
 #else
     /// <summary>
-    /// Gets or sets the <see cref="Logs.Logger"/> which emitted the <see cref="LogRecord"/>.
+    /// Gets or sets the <see cref="Logs.Logger"/> associated with the <see
+    /// cref="LogRecord"/>.
     /// </summary>
-    internal Logger? Logger { get; set; }
+    internal Logger Logger { get; set; } = InstrumentationScopeLogger.Default;
 #endif
 
     /// <summary>
@@ -523,7 +547,6 @@ public sealed class LogRecord
     internal struct LogRecordILoggerData
     {
         public string? TraceState;
-        public string? CategoryName;
         public EventId EventId;
         public string? FormattedMessage;
         public Exception? Exception;
@@ -536,7 +559,6 @@ public sealed class LogRecord
             var copy = new LogRecordILoggerData
             {
                 TraceState = this.TraceState,
-                CategoryName = this.CategoryName,
                 EventId = this.EventId,
                 FormattedMessage = this.FormattedMessage,
                 Exception = this.Exception,
