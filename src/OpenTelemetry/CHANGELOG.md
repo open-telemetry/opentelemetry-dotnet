@@ -11,13 +11,32 @@
 
 * Fixed an issue where `SimpleExemplarReservoir` was not resetting internal
   state for cumulative temporality.
-  [#5230](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5230)
+  ([#5230](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5230))
 
 * Fixed an issue causing `LogRecord`s to be incorrectly reused when wrapping an
   instance of `BatchLogRecordExportProcessor` inside another
   `BaseProcessor<LogRecord>` which leads to missing or incorrect data during
   export.
-  [#5255](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5255)
+  ([#5255](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5255))
+
+* **Experimental (pre-release builds only):** Added support for setting
+  `CardinalityLimit` (the maximum number of data points allowed for a metric)
+  when configuring a view.
+  ([#5312](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5312))
+
+* Updated `LogRecord` to keep `CategoryName` and `Logger` in sync when using the
+  experimental Log Bridge API.
+  [#5317](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5317)
+
+* Added `OpenTelemetryBuilderSdkExtensions` class which contains extension
+  methods (`ConfigureResource`, `WithMetrics`, `WithTracing`, and experimental
+  `WithLogging`) for the `IOpenTelemetryBuilder` interface.
+  ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
+
+* Added `Microsoft.Extensions.Diagnostics.Abstractions` dependency so that the
+  `IOpenTelemetryBuilder.WithMetrics` extension method can configure
+  [IMetricsListener](https://learn.microsoft.com/dotNet/api/microsoft.extensions.diagnostics.metrics.imetricslistener).
+  ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
 
 ## 1.7.0
 

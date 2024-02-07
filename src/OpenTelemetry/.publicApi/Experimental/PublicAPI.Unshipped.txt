@@ -1,6 +1,6 @@
 OpenTelemetry.Logs.LoggerProviderBuilderExtensions
 OpenTelemetry.Logs.LoggerProviderExtensions
-OpenTelemetry.Logs.LogRecord.Logger.get -> OpenTelemetry.Logs.Logger?
+OpenTelemetry.Logs.LogRecord.Logger.get -> OpenTelemetry.Logs.Logger!
 OpenTelemetry.Logs.LogRecord.Severity.get -> OpenTelemetry.Logs.LogRecordSeverity?
 OpenTelemetry.Logs.LogRecord.Severity.set -> void
 OpenTelemetry.Logs.LogRecord.SeverityText.get -> string?
@@ -18,6 +18,8 @@ OpenTelemetry.Metrics.Exemplar.TraceId.get -> System.Diagnostics.ActivityTraceId
 OpenTelemetry.Metrics.ExemplarFilter
 OpenTelemetry.Metrics.ExemplarFilter.ExemplarFilter() -> void
 OpenTelemetry.Metrics.MetricPoint.GetExemplars() -> OpenTelemetry.Metrics.Exemplar[]!
+OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.get -> int?
+OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void
 OpenTelemetry.Metrics.TraceBasedExemplarFilter
 OpenTelemetry.Metrics.TraceBasedExemplarFilter.TraceBasedExemplarFilter() -> void
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>! processor) -> OpenTelemetry.Logs.LoggerProviderBuilder!
@@ -30,6 +32,9 @@ static OpenTelemetry.Logs.LoggerProviderExtensions.AddProcessor(this OpenTelemet
 static OpenTelemetry.Logs.LoggerProviderExtensions.ForceFlush(this OpenTelemetry.Logs.LoggerProvider! provider, int timeoutMilliseconds = -1) -> bool
 static OpenTelemetry.Logs.LoggerProviderExtensions.Shutdown(this OpenTelemetry.Logs.LoggerProvider! provider, int timeoutMilliseconds = -1) -> bool
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Metrics.ExemplarFilter! exemplarFilter) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithLogging(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
+static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithLogging(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.IOpenTelemetryBuilder!
+static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithLogging(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.Sdk.CreateLoggerProviderBuilder() -> OpenTelemetry.Logs.LoggerProviderBuilder!
 abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string!, object?>> tags) -> bool
 abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string!, object?>> tags) -> bool

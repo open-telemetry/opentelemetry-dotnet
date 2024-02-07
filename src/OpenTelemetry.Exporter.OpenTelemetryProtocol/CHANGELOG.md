@@ -21,6 +21,11 @@
   experimental Logs Bridge API.
   ([#5268](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5268))
 
+* Updated `OtlpLogExporter` to set instrumentation scope name on the data model
+  from `LogRecord.Logger.Name` if `LogRecord.CategoryName` is `null`. This is
+  typically the case when using the experimental Logs Bridge API.
+  ([#5300](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5300))
+
 ## 1.7.0
 
 Released 2023-Dec-08

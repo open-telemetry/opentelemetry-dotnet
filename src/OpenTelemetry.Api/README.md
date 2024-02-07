@@ -185,7 +185,7 @@ here as well.
 
     ```csharp
     static ActivitySource activitySource = new ActivitySource(
-        "companyname.product.instrumentationlibrary",
+        "MyCompany.MyProduct.MyLibrary",
         "1.0.0");
     ```
 
@@ -206,8 +206,10 @@ here as well.
     this activity are protected with a null check.
 
 4. Populate activity with tags following the [OpenTelemetry semantic
-   conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/trace.md).
-   It is highly recommended to check `activity.IsAllDataRequested`, before
+   conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/trace.md),
+   using the
+   [SetTag](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.settag)
+   API. It is highly recommended to check `activity.IsAllDataRequested`, before
    populating any tags which are not readily available. `IsAllDataRequested` is
    the same as
    [Span.IsRecording](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording)
@@ -221,11 +223,6 @@ here as well.
         activity.SetTag("http.url", "http://www.mywebsite.com");
     }
     ```
-
-    The recommended way to [set span
-    attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-attributes)
-    in `Activity` class is by using `SetTag()`. OpenTelemetry users should not
-    use other methods like `AddTag`, `SetCustomProperty` on `Activity`.
 
 5. Perform application/library logic.
 
