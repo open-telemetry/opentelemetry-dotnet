@@ -174,7 +174,7 @@ public abstract class MetricOverflowAttributeTestsBase
         counter.Add(10); // Record measurement for zero tags
 
         // Max number for MetricPoints available for use when emitted with tags
-        int maxMetricPointsForUse = MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault - 2;
+        int maxMetricPointsForUse = MeterProviderBuilderSdk.CardinalityLimitDefault - 2;
 
         for (int i = 0; i < maxMetricPointsForUse; i++)
         {
@@ -325,7 +325,7 @@ public abstract class MetricOverflowAttributeTestsBase
         histogram.Record(10); // Record measurement for zero tags
 
         // Max number for MetricPoints available for use when emitted with tags
-        int maxMetricPointsForUse = MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault - 2;
+        int maxMetricPointsForUse = MeterProviderBuilderSdk.CardinalityLimitDefault - 2;
 
         for (int i = 0; i < maxMetricPointsForUse; i++)
         {

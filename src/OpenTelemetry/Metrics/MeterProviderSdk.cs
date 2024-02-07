@@ -76,9 +76,12 @@ internal sealed class MeterProviderSdk : MeterProvider
             Guard.ThrowIfNull(reader);
 
             reader.SetParentProvider(this);
-            reader.SetMaxMetricStreams(state.MaxMetricStreams);
-            reader.SetMaxMetricPointsPerMetricStream(state.MaxMetricPointsPerMetricStream, isEmitOverflowAttributeKeySet);
-            reader.SetExemplarFilter(state.ExemplarFilter);
+
+            reader.ApplyParentProviderSettings(
+                state.MaxMetricStreams,
+                state.CardinalityLimit,
+                state.ExemplarFilter,
+                isEmitOverflowAttributeKeySet);
 
             if (this.reader == null)
             {

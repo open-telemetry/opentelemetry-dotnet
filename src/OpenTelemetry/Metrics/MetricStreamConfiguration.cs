@@ -111,7 +111,7 @@ public class MetricStreamConfiguration
     /// limits</see>.</para>
     /// Note: If not set, the MeterProvider cardinality limit value will be
     /// used, which defaults to 2000. Call <see
-    /// cref="MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream"/>
+    /// cref="MeterProviderBuilderExtensions.SetCardinalityLimit"/>
     /// to configure the MeterProvider default.
     /// </remarks>
 #if NET8_0_OR_GREATER

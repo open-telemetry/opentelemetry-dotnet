@@ -316,7 +316,7 @@ public abstract class MetricPointReclaimTestsBase
                 }
 
                 // This is to ensure that the lookup dictionary does not have unbounded growth
-                Assert.True(metricPointLookupDictionary.Count <= (MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault * 2));
+                Assert.True(metricPointLookupDictionary.Count <= (MeterProviderBuilderSdk.CardinalityLimitDefault * 2));
 
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {

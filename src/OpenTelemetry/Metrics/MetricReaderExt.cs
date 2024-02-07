@@ -18,7 +18,7 @@ public abstract partial class MetricReader
     private readonly ConcurrentDictionary<MetricStreamIdentity, Metric> instrumentIdentityToMetric = new();
     private readonly object instrumentCreationLock = new();
     private int maxMetricStreams;
-    private int maxMetricPointsPerMetricStream;
+    private int cardinalityLimit;
     private Metric?[]? metrics;
     private Metric[]? metricsCurrentBatch;
     private int metricIndex = -1;
@@ -55,7 +55,7 @@ public abstract partial class MetricReader
                 try
                 {
                     bool shouldReclaimUnusedMetricPoints = this.parentProvider is MeterProviderSdk meterProviderSdk && meterProviderSdk.ShouldReclaimUnusedMetricPoints;
-                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
+                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.cardinalityLimit, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
                 }
                 catch (NotSupportedException nse)
                 {
@@ -139,10 +139,10 @@ public abstract partial class MetricReader
 
                     if (metricStreamConfig != null && metricStreamConfig.CardinalityLimit != null)
                     {
-                        this.maxMetricPointsPerMetricStream = metricStreamConfig.CardinalityLimit.Value;
+                        this.cardinalityLimit = metricStreamConfig.CardinalityLimit.Value;
                     }
 
-                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
+                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.cardinalityLimit, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                     this.metrics![index] = metric;
@@ -205,26 +205,22 @@ public abstract partial class MetricReader
         }
     }
 
-    internal void SetMaxMetricStreams(int maxMetricStreams)
+    internal void ApplyParentProviderSettings(
+        int maxMetricStreams,
+        int cardinalityLimit,
+        ExemplarFilter? exemplarFilter,
+        bool isEmitOverflowAttributeKeySet)
     {
         this.maxMetricStreams = maxMetricStreams;
         this.metrics = new Metric[maxMetricStreams];
         this.metricsCurrentBatch = new Metric[maxMetricStreams];
-    }
-
-    internal void SetExemplarFilter(ExemplarFilter? exemplarFilter)
-    {
+        this.cardinalityLimit = cardinalityLimit;
         this.exemplarFilter = exemplarFilter;
-    }
-
-    internal void SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream, bool isEmitOverflowAttributeKeySet)
-    {
-        this.maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream;
 
         if (isEmitOverflowAttributeKeySet)
         {
             // We need at least two metric points. One is reserved for zero tags and the other one for overflow attribute
-            if (maxMetricPointsPerMetricStream > 1)
+            if (cardinalityLimit > 1)
             {
                 this.emitOverflowAttribute = true;
             }

@@ -38,6 +38,12 @@
   [IMetricsListener](https://learn.microsoft.com/dotNet/api/microsoft.extensions.diagnostics.metrics.imetricslistener).
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
 
+* **Experimental (pre-release builds only):** Obsoleted
+  `MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream` and added
+  `MeterProviderBuilderExtensions.SetCardinalityLimit`. The new method does the
+  same thing but has a more spec-compliant name.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.7.0
 
 Released 2023-Dec-08

@@ -1423,26 +1423,26 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         // for no tag point!
         // This may be changed later.
         counterLong.Add(10);
-        for (int i = 0; i < MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault + 1; i++)
+        for (int i = 0; i < MeterProviderBuilderSdk.CardinalityLimitDefault + 1; i++)
         {
             counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Equal(MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault, MetricPointCount());
+        Assert.Equal(MeterProviderBuilderSdk.CardinalityLimitDefault, MetricPointCount());
 
         exportedItems.Clear();
         counterLong.Add(10);
-        for (int i = 0; i < MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault + 1; i++)
+        for (int i = 0; i < MeterProviderBuilderSdk.CardinalityLimitDefault + 1; i++)
         {
             counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Equal(MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault, MetricPointCount());
+        Assert.Equal(MeterProviderBuilderSdk.CardinalityLimitDefault, MetricPointCount());
 
         counterLong.Add(10);
-        for (int i = 0; i < MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault + 1; i++)
+        for (int i = 0; i < MeterProviderBuilderSdk.CardinalityLimitDefault + 1; i++)
         {
             counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
         }
@@ -1453,7 +1453,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Equal(MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault, MetricPointCount());
+        Assert.Equal(MeterProviderBuilderSdk.CardinalityLimitDefault, MetricPointCount());
     }
 
     [Fact]
