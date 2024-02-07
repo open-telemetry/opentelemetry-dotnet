@@ -1,6 +1,6 @@
 OpenTelemetry.Logs.LoggerProviderBuilderExtensions
 OpenTelemetry.Logs.LoggerProviderExtensions
-OpenTelemetry.Logs.LogRecord.Logger.get -> OpenTelemetry.Logs.Logger?
+OpenTelemetry.Logs.LogRecord.Logger.get -> OpenTelemetry.Logs.Logger!
 OpenTelemetry.Logs.LogRecord.Severity.get -> OpenTelemetry.Logs.LogRecordSeverity?
 OpenTelemetry.Logs.LogRecord.Severity.set -> void
 OpenTelemetry.Logs.LogRecord.SeverityText.get -> string?
