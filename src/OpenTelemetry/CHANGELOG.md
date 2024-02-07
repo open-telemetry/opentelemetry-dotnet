@@ -42,7 +42,7 @@
   `MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream` and added
   `MeterProviderBuilderExtensions.SetCardinalityLimit`. The new method does the
   same thing but has a more spec-compliant name.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5328](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5328))
 
 ## 1.7.0
 
