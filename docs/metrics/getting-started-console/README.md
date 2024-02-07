@@ -86,7 +86,7 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
 > If you need to collect metrics with cardinality higher than the default limit
   `2000`, please follow the [cardinality
   limits](../README.md#cardinality-limits) guidance. Here is a quick example of
-  how to change the cardinality limit to `10`:
+  how to change the cardinality limit to `10` for this particular metric:
 
   ```csharp
   var meterProvider = Sdk.CreateMeterProviderBuilder()
