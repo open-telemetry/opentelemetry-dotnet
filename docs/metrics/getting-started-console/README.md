@@ -84,8 +84,17 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
 
 > [!NOTE]
 > If you need to collect metrics with cardinality higher than the default limit
-  `2000`, please follow the [cardinality limits](../README.md#cardinality-limits)
-  guidance.
+  `2000`, please follow the [cardinality
+  limits](../README.md#cardinality-limits) guidance. Here is a quick example of
+  how to change the cardinality limit to `10`:
+
+  ```csharp
+  var meterProvider = Sdk.CreateMeterProviderBuilder()
+      .AddMeter("MyCompany.MyProduct.MyLibrary")
+      .AddView(instrumentName: "MyFruitCounter", new MetricStreamConfiguration { CardinalityLimit = 10 })
+      .AddConsoleExporter()
+      .Build();
+  ```
 
 ```mermaid
 graph LR
