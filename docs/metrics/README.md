@@ -363,9 +363,12 @@ and the `MetricStreamConfiguration.CardinalityLimit` setting. Refer to this
 for more information.
 
 Given a metric, once the cardinality limit is reached, any new measurement which
-cannot be independently aggregated because of the limit will be aggregated using
+cannot be independently aggregated because of the limit will be dropped (a
+warning is written to the [self-diagnostic
+log](../../src/OpenTelemetry/README.md#self-diagnostics)) or aggregated using
 the [overflow
-attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
+attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
+(if enabled).
 
 > [!NOTE]
 > Overflow attribute was introduced in OpenTelemetry .NET
