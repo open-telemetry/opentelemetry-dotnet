@@ -107,6 +107,11 @@ Here is the rule of thumb:
   Minutes - Console Application](./getting-started-console/README.md) tutorial
   to learn more.
 
+:stop_sign: You should avoid creating loggers too frequently. Although loggers
+are not super expensive, they still come with CPU and memory cost, and are meant
+to be reused throughout the application. Refer to the [logging performance
+benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
+
 #### Use Logger
 
 :heavy_check_mark: You should use [compile-time logging source
