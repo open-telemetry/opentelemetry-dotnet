@@ -1,5 +1,9 @@
 # OpenTelemetry .NET Traces
 
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Table of Contents</summary>
+
 * [Best Practices](#best-practices)
 * [Package Version](#package-version)
 * [Tracing API](#tracing-api)
@@ -7,6 +11,9 @@
   * [Activity](#activity)
 * [TracerProvider Management](#tracerprovider-management)
 * [Correlation](#correlation)
+
+</details>
+<!-- markdownlint-enable MD033 -->
 
 ## Best Practices
 

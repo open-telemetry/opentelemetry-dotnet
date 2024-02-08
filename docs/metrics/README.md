@@ -1,5 +1,9 @@
 # OpenTelemetry .NET Metrics
 
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Table of Contents</summary>
+
 * [Best Practices](#best-practices)
 * [Package Version](#package-version)
 * [Metrics API](#metrics-api)
@@ -12,6 +16,9 @@
   * [Memory Preallocation](#memory-preallocation)
 * [Metrics Correlation](#metrics-correlation)
 * [Metrics Enrichment](#metrics-enrichment)
+
+</details>
+<!-- markdownlint-enable MD033 -->
 
 ## Best Practices
 

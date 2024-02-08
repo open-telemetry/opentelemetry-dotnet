@@ -1,5 +1,9 @@
 # OpenTelemetry .NET Logs
 
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Table of Contents</summary>
+
 * [Best Practices](#best-practices)
 * [Package Version](#package-version)
 * [Logging API](#logging-api)
@@ -9,6 +13,9 @@
 * [Log Enrichment](#log-enrichment)
 * [Log Filtering](#log-filtering)
 * [Log Redaction](#log-redaction)
+
+</details>
+<!-- markdownlint-enable MD033 -->
 
 ## Best Practices
 
