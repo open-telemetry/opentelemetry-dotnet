@@ -46,7 +46,7 @@ package, regardless of the .NET runtime version being used:
 ### ActivitySource
 
 :stop_sign: You should avoid creating
-[`ActivitySource`](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource)
+[`System.Diagnostics.ActivitySource`](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource)
 too frequently. `ActivitySource` is fairly expensive and meant to be reused
 throughout the application. For most applications, it can be modeled as static
 readonly field (e.g. [Program.cs](./getting-started-console/Program.cs)) or
