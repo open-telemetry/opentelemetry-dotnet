@@ -369,12 +369,13 @@ AnotherFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
 
 ### Changing the cardinality limit for a Metric
 
-A Metric contains many Metric points which are the number of unique combinations
-of key/values recorded by an instrument. To protect the SDK from unbounded
-memory usage, there is a default limit of 2000 metric points per metric which
-will be maintained by the SDK. Once the limit is hit, any new key/value
-combination for a metric will be ignored. The SDK chooses the key/value
-combinations in the order in which they are emitted.
+A Metric contains many Metric points which are the storage buckets for
+aggregation of measurements for the unique combinations of key/values recorded
+by an instrument. To protect the SDK from unbounded memory usage, there is a
+default limit of 2000 metric points per metric which will be maintained by the
+SDK. Once the limit is hit, any new key/value combination for a metric will be
+ignored. The SDK chooses the key/value combinations in the order in which they
+are emitted.
 
 To set the [cardinality limit](../README.md#cardinality-limits) for an
 individual metric, use `MetricStreamConfiguration.CardinalityLimit` setting on
