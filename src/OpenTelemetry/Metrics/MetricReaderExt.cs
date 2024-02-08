@@ -137,12 +137,14 @@ public abstract partial class MetricReader
                 {
                     bool shouldReclaimUnusedMetricPoints = this.parentProvider is MeterProviderSdk meterProviderSdk && meterProviderSdk.ShouldReclaimUnusedMetricPoints;
 
+                    var cardinalityLimit = this.cardinalityLimit;
+
                     if (metricStreamConfig != null && metricStreamConfig.CardinalityLimit != null)
                     {
-                        this.cardinalityLimit = metricStreamConfig.CardinalityLimit.Value;
+                        cardinalityLimit = metricStreamConfig.CardinalityLimit.Value;
                     }
 
-                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.cardinalityLimit, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
+                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), cardinalityLimit, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                     this.metrics![index] = metric;

@@ -919,31 +919,61 @@ public class MetricViewTests : MetricTestsBase
         Assert.Equal(10, metricPoint2.GetSumLong());
     }
 
-    [Fact]
-    public void CardinalityLimitofMatchingViewTakesPrecedenceOverMetricProviderWhenBothWereSet()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CardinalityLimitofMatchingViewTakesPrecedenceOverMeterProvider(bool setDefault)
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
 
-#pragma warning disable CS0618 // Type or member is obsolete
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
-            .AddMeter(meter.Name)
-            .SetMaxMetricPointsPerMetricStream(3)
-            .AddView((instrument) =>
+        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        {
+            if (setDefault)
             {
-                return new MetricStreamConfiguration() { Name = "MetricStreamA", CardinalityLimit = 10000 };
-            })
-            .AddInMemoryExporter(exportedItems));
+#pragma warning disable CS0618 // Type or member is obsolete
+                builder.SetMaxMetricPointsPerMetricStream(3);
 #pragma warning restore CS0618 // Type or member is obsolete
+            }
 
-        var counter = meter.CreateCounter<long>("counter");
-        counter.Add(100);
+            builder
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    if (instrument.Name == "counter2")
+                    {
+                        return new MetricStreamConfiguration() { Name = "MetricStreamA", CardinalityLimit = 10000 };
+                    }
+
+                    return null;
+                })
+                .AddInMemoryExporter(exportedItems);
+        });
+
+        var counter1 = meter.CreateCounter<long>("counter1");
+        counter1.Add(100);
+
+        var counter2 = meter.CreateCounter<long>("counter2");
+        counter2.Add(100);
+
+        var counter3 = meter.CreateCounter<long>("counter3");
+        counter3.Add(100);
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        var metric = exportedItems[0];
+        Assert.Equal(3, exportedItems.Count);
 
-        Assert.Equal(10000, metric.AggregatorStore.CardinalityLimit);
+        Assert.Equal(10000, exportedItems[1].AggregatorStore.CardinalityLimit);
+        if (setDefault)
+        {
+            Assert.Equal(3, exportedItems[0].AggregatorStore.CardinalityLimit);
+            Assert.Equal(3, exportedItems[2].AggregatorStore.CardinalityLimit);
+        }
+        else
+        {
+            Assert.Equal(2000, exportedItems[0].AggregatorStore.CardinalityLimit);
+            Assert.Equal(2000, exportedItems[2].AggregatorStore.CardinalityLimit);
+        }
     }
 
     [Fact]
