@@ -119,16 +119,16 @@ generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-gen
 pattern to achieve the best performance.
 
 ```csharp
-public static partial class Food
-{
-    [LoggerMessage(Level = LogLevel.Information, Message = "Hello from {food} {price}.")]
-    public static partial void SayHello(this ILogger logger, string food, double price);
-}
-
 var food = "tomato";
 var price = 2.99;
 
 logger.SayHello(food, price);
+
+internal static partial class LoggerExtensions
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Hello from {food} {price}.")]
+    public static partial void SayHello(this ILogger logger, string food, double price);
+}
 ```
 
 > [!NOTE]
