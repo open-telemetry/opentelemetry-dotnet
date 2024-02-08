@@ -17,7 +17,7 @@ public abstract partial class MetricReader
     private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<MetricStreamIdentity, Metric> instrumentIdentityToMetric = new();
     private readonly object instrumentCreationLock = new();
-    private int maxMetricStreams;
+    private int metricLimit;
     private int cardinalityLimit;
     private Metric?[]? metrics;
     private Metric[]? metricsCurrentBatch;
@@ -44,7 +44,7 @@ public abstract partial class MetricReader
             }
 
             var index = ++this.metricIndex;
-            if (index >= this.maxMetricStreams)
+            if (index >= this.metricLimit)
             {
                 OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricStreamIdentity.InstrumentName, metricStreamIdentity.MeterName, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProviderBuilder.AddView to drop unused instruments. Or use MeterProviderBuilder.SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
                 return null;
@@ -129,7 +129,7 @@ public abstract partial class MetricReader
                 }
 
                 var index = ++this.metricIndex;
-                if (index >= this.maxMetricStreams)
+                if (index >= this.metricLimit)
                 {
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricStreamIdentity.InstrumentName, metricStreamIdentity.MeterName, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProviderBuilder.AddView to drop unused instruments. Or use MeterProviderBuilder.SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
                 }
@@ -206,14 +206,14 @@ public abstract partial class MetricReader
     }
 
     internal void ApplyParentProviderSettings(
-        int maxMetricStreams,
+        int metricLimit,
         int cardinalityLimit,
         ExemplarFilter? exemplarFilter,
         bool isEmitOverflowAttributeKeySet)
     {
-        this.maxMetricStreams = maxMetricStreams;
-        this.metrics = new Metric[maxMetricStreams];
-        this.metricsCurrentBatch = new Metric[maxMetricStreams];
+        this.metricLimit = metricLimit;
+        this.metrics = new Metric[metricLimit];
+        this.metricsCurrentBatch = new Metric[metricLimit];
         this.cardinalityLimit = cardinalityLimit;
         this.exemplarFilter = exemplarFilter;
 
@@ -269,7 +269,7 @@ public abstract partial class MetricReader
 
         try
         {
-            var indexSnapshot = Math.Min(this.metricIndex, this.maxMetricStreams - 1);
+            var indexSnapshot = Math.Min(this.metricIndex, this.metricLimit - 1);
             var target = indexSnapshot + 1;
             int metricCountCurrentBatch = 0;
             for (int i = 0; i < target; i++)

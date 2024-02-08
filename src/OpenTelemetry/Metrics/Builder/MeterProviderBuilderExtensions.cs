@@ -218,7 +218,7 @@ public static class MeterProviderBuilderExtensions
         {
             if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                meterProviderBuilderSdk.SetMaxMetricStreams(maxMetricStreams);
+                meterProviderBuilderSdk.SetMetricLimit(maxMetricStreams);
             }
         });
 

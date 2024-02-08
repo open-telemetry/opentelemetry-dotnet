@@ -15,7 +15,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProviderBuilder
 {
-    public const int DefaultMaxMetricStreams = 1000;
+    public const int DefaultMetricLimit = 1000;
     public const int DefaultCardinalityLimit = 2000;
     private const string DefaultInstrumentationVersion = "1.0.0.0";
 
@@ -49,7 +49,7 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
     public List<Func<Instrument, MetricStreamConfiguration?>> ViewConfigs { get; } = new();
 
-    public int MaxMetricStreams { get; private set; } = DefaultMaxMetricStreams;
+    public int MetricLimit { get; private set; } = DefaultMetricLimit;
 
     public int CardinalityLimit { get; private set; } = DefaultCardinalityLimit;
 
@@ -186,9 +186,9 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
         return this;
     }
 
-    public MeterProviderBuilder SetMaxMetricStreams(int maxMetricStreams)
+    public MeterProviderBuilder SetMetricLimit(int metricLimit)
     {
-        this.MaxMetricStreams = maxMetricStreams;
+        this.MetricLimit = metricLimit;
 
         return this;
     }
