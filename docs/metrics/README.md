@@ -356,8 +356,8 @@ predictable and reliable behavior when excessive cardinality happens, whether it
 was due to a malicious attack or developer making mistakes while writing code.
 
 OpenTelemetry has a default cardinality limit of `2000` per metric. This limit
-can be configured for individual metrics by using
-[views](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
+can be configured at the individual metric level using the [View
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
 and the `MetricStreamConfiguration.CardinalityLimit` setting. Refer to this
 [doc](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric)
 for more information.
