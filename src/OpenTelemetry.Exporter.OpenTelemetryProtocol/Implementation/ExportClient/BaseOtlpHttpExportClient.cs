@@ -39,15 +39,20 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
     public ExportClientResponse SendExportRequest(TRequest request, CancellationToken cancellationToken = default)
     {
         DateTime deadline = DateTime.UtcNow.AddMilliseconds(this.HttpClient.Timeout.TotalMilliseconds);
-
-        HttpResponseMessage httpResponseMessage = null;
         try
         {
             using var httpRequest = this.CreateHttpRequest(request);
 
-            httpResponseMessage = this.SendHttpRequest(httpRequest, cancellationToken);
+            using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
-            httpResponseMessage?.EnsureSuccessStatusCode();
+            try
+            {
+                httpResponse.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException ex)
+            {
+                return new ExportClientHttpResponse(success: false, deadlineUtc: deadline, response: httpResponse, ex);
+            }
 
             // We do not need to return back response and deadline for successful response so using cached value.
             return SuccessExportResponse;
