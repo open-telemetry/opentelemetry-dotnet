@@ -14,6 +14,7 @@ internal sealed class AggregatorStore
     internal readonly bool OutputDelta;
     internal readonly bool OutputDeltaWithUnusedMetricPointReclaimEnabled;
     internal readonly int CardinalityLimit;
+    internal readonly bool EmitOverflowAttribute;
     internal long DroppedMeasurements = 0;
 
     private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute by setting env variable OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE = true. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
@@ -43,7 +44,6 @@ internal sealed class AggregatorStore
     private readonly int exponentialHistogramMaxScale;
     private readonly UpdateLongDelegate updateLongCallback;
     private readonly UpdateDoubleDelegate updateDoubleCallback;
-    private readonly bool emitOverflowAttribute;
     private readonly ExemplarFilter exemplarFilter;
     private readonly Func<KeyValuePair<string, object?>[], int, int> lookupAggregatorStore;
 
@@ -89,7 +89,7 @@ internal sealed class AggregatorStore
             this.tagsKeysInterestingCount = hs.Count;
         }
 
-        this.emitOverflowAttribute = emitOverflowAttribute;
+        this.EmitOverflowAttribute = emitOverflowAttribute;
 
         var reservedMetricPointsCount = 1;
 
@@ -227,7 +227,7 @@ internal sealed class AggregatorStore
 
         int startIndexForReclaimableMetricPoints = 1;
 
-        if (this.emitOverflowAttribute)
+        if (this.EmitOverflowAttribute)
         {
             startIndexForReclaimableMetricPoints = 2; // Index 0 and 1 are reserved for no tags and overflow
 
@@ -929,7 +929,7 @@ internal sealed class AggregatorStore
             {
                 Interlocked.Increment(ref this.DroppedMeasurements);
 
-                if (this.emitOverflowAttribute)
+                if (this.EmitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);
@@ -973,7 +973,7 @@ internal sealed class AggregatorStore
             {
                 Interlocked.Increment(ref this.DroppedMeasurements);
 
-                if (this.emitOverflowAttribute)
+                if (this.EmitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);
@@ -1017,7 +1017,7 @@ internal sealed class AggregatorStore
             {
                 Interlocked.Increment(ref this.DroppedMeasurements);
 
-                if (this.emitOverflowAttribute)
+                if (this.EmitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);
@@ -1061,7 +1061,7 @@ internal sealed class AggregatorStore
             {
                 Interlocked.Increment(ref this.DroppedMeasurements);
 
-                if (this.emitOverflowAttribute)
+                if (this.EmitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);
