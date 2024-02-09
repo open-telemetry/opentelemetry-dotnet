@@ -21,9 +21,10 @@
 
 * **Experimental (pre-release builds only):** Added support for setting
   `CardinalityLimit` (the maximum number of data points allowed for a metric)
-  when configuring a view and obsoleted
-  `MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream`. The
-  default cardinality limit for metrics remains at `2000`.
+  when configuring a view (applies to individual metrics) and obsoleted
+  `MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream` (previously
+  applied to all metrics). The default cardinality limit for metrics remains at
+  `2000`.
   ([#5312](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5312),
   [#5328](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5328))
 
