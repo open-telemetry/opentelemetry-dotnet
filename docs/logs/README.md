@@ -32,7 +32,7 @@ OpenTelemetry .NET:
 :heavy_check_mark: You should use structured logging.
 
 * Structured logging is more efficient than unstructured logging.
-  * Filtering and redaction can happen on indvidual key-value pairs instead of
+  * Filtering and redaction can happen on individual key-value pairs instead of
     the entire log message.
   * Storage and indexing are more efficient.
 * Structured logging makes it easier to manage and consume logs.
