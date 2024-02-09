@@ -4,7 +4,7 @@
 
 ## 1.7.0-beta.1
 
-Released 2024-Feb-07
+Released 2024-Feb-09
 
 * Removed support for the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable
   which toggled the use of the new conventions for the
