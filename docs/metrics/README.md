@@ -379,17 +379,19 @@ predictable and reliable behavior when excessive cardinality happens, whether it
 was due to a malicious attack or developer making mistakes while writing code.
 
 OpenTelemetry has a default cardinality limit of `2000` per metric. This limit
-can be configured at `MeterProvider` level using the
-`SetMaxMetricPointsPerMetricStream` method, or at individual
-[view](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
-level using `MetricStreamConfiguration.CardinalityLimit`. Refer to this
-[doc](../../docs/metrics/customizing-the-sdk/README.md#changing-maximum-metricpoints-per-metricstream)
+can be configured at the individual metric level using the [View
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
+and the `MetricStreamConfiguration.CardinalityLimit` setting. Refer to this
+[doc](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric)
 for more information.
 
 Given a metric, once the cardinality limit is reached, any new measurement which
-cannot be independently aggregated because of the limit will be aggregated using
-the [overflow
-attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
+cannot be independently aggregated because of the limit will be dropped or
+aggregated using the [overflow
+attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
+(if enabled). When NOT using the overflow attribute feature a warning is written
+to the [self-diagnostic log](../../src/OpenTelemetry/README.md#self-diagnostics)
+the first time an overflow is detected for a given metric.
 
 > [!NOTE]
 > Overflow attribute was introduced in OpenTelemetry .NET
