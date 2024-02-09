@@ -7,7 +7,8 @@
 * [Best Practices](#best-practices)
 * [Package Version](#package-version)
 * [Logging API](#logging-api)
-* [Logger Management](#logger-management)
+  * [ILogger](#ilogger)
+  * [LoggerFactory](#loggerfactory)
 * [Log Correlation](#log-correlation)
 * [Log Enrichment](#log-enrichment)
 * [Log Filtering](#log-filtering)
@@ -72,21 +73,62 @@ package, regardless of the .NET runtime version being used:
 
 ## Logging API
 
+### ILogger
+
+.NET supports high performance, structured logging via the
+[`Microsoft.Extensions.Logging.ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
+interface (including
+[`ILogger<TCategoryName>`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1))
+to help monitor application behavior and diagnose issues.
+
+#### Get Logger
+
+In order to use the `ILogger` interface, you need to first get a logger. How to
+get a logger depends on two things:
+
+* The type of application you are building.
+* The place where you want to log.
+
+Here is the rule of thumb:
+
+* If you are building an application with [dependency injection
+  (DI)](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
+  (e.g. [ASP.NET Core](https://learn.microsoft.com/aspnet/core) and [.NET
+  Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)), in most
+  cases you should use the logger provided by DI, there are special cases when
+  you want log before DI logging pipeline is available or after DI logging
+  pipeline is disposed. Refer to the [.NET official
+  document](https://learn.microsoft.com/dotnet/core/extensions/logging#integration-with-hosts-and-dependency-injection)
+  and [Getting Started with OpenTelemetry .NET Logs in 5 Minutes - ASP.NET Core
+  Application](./getting-started-aspnetcore/README.md) tutorial to learn more.
+* If you are building an application without DI, create a
+  [LoggerFactory](#loggerfactory) instance and configure OpenTelemetry to work
+  with it. Refer to the [Getting Started with OpenTelemetry .NET Logs in 5
+  Minutes - Console Application](./getting-started-console/README.md) tutorial
+  to learn more.
+
+:stop_sign: You should avoid creating loggers too frequently. Although loggers
+are not super expensive, they still come with CPU and memory cost, and are meant
+to be reused throughout the application. Refer to the [logging performance
+benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
+
+#### Use Logger
+
 :heavy_check_mark: You should use [compile-time logging source
 generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
 pattern to achieve the best performance.
 
 ```csharp
-public static partial class Food
-{
-    [LoggerMessage(Level = LogLevel.Information, Message = "Hello from {food} {price}.")]
-    public static partial void SayHello(ILogger logger, string food, double price);
-}
-
 var food = "tomato";
 var price = 2.99;
 
-Food.SayHello(logger, food, price);
+logger.SayHello(food, price);
+
+internal static partial class LoggerExtensions
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Hello from {food} {price}.")]
+    public static partial void SayHello(this ILogger logger, string food, double price);
+}
 ```
 
 > [!NOTE]
@@ -122,33 +164,12 @@ logger.LogInformation("Hello from {food} {price}.", food, price);
 Refer to the [logging performance
 benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
 
-## Logger Management
+## LoggerFactory
 
-In order to use
-[`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
-interface (including
-[`ILogger<TCategoryName>`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1)),
-you need to first get a logger. How to get a logger depends on two things:
-
-* The type of application you are building.
-* The place where you want to log.
-
-Here is the rule of thumb:
-
-* If you are building an application with [dependency injection
-  (DI)](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
-  (e.g. [ASP.NET Core](https://learn.microsoft.com/aspnet/core) and [.NET
-  Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)), in most
-  cases you should use the logger provided by DI, there are special cases when
-  you want log before DI logging pipeline is available or after DI logging
-  pipeline is disposed. Refer to the [.NET official
-  document](https://learn.microsoft.com/dotnet/core/extensions/logging#integration-with-hosts-and-dependency-injection)
-  and [Getting Started with OpenTelemetry .NET Logs in 5 Minutes - ASP.NET Core
-  Application](./getting-started-aspnetcore/README.md) tutorial to learn more.
-* If you are building an application without DI, create a `LoggerFactory`
-  instance and configure OpenTelemetry to work with it. Refer to the [Getting
-  Started with OpenTelemetry .NET Logs in 5 Minutes - Console
-  Application](./getting-started-console/README.md) tutorial to learn more.
+In many cases, you can use [ILogger](#ilogger) without having to interact with
+[Microsoft.Extensions.Logging.LoggerFactory](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.loggerfactory)
+directly. This section is intended for users who need to create and manage
+`LoggerFactory` explicitly.
 
 :stop_sign: You should avoid creating `LoggerFactory` instances too frequently,
 `LoggerFactory` is fairly expensive and meant to be reused throughout the

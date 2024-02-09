@@ -7,6 +7,8 @@
 * [Best Practices](#best-practices)
 * [Package Version](#package-version)
 * [Metrics API](#metrics-api)
+  * [Meter](#meter)
+  * [Instruments](#instruments)
 * [MeterProvider Management](#meterprovider-management)
 * [Memory Management](#memory-management)
   * [Pre-Aggregation](#pre-aggregation)
@@ -45,6 +47,27 @@ package, regardless of the .NET runtime version being used:
   compatibility is not a concern here.
 
 ## Metrics API
+
+### Meter
+
+:stop_sign: You should avoid creating
+[`System.Diagnostics.Metrics.Meter`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter)
+too frequently. `Meter` is fairly expensive and meant to be reused throughout
+the application. For most applications, it can be modeled as static readonly
+field (e.g. [Program.cs](./getting-started-console/Program.cs)) or singleton via
+dependency injection (e.g.
+[Instrumentation.cs](../../examples/AspNetCore/Instrumentation.cs)).
+
+:heavy_check_mark: You should use dot-separated
+[UpperCamelCase](https://en.wikipedia.org/wiki/Camel_case) as the
+[`Meter.Name`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.name).
+In many cases, using the fully qualified class name might be a good option.
+
+```csharp
+static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");
+```
+
+### Instruments
 
 :heavy_check_mark: You should understand and pick the right instrument type.
 
@@ -233,7 +256,7 @@ Let's take the following example:
   * value = 2, name = `lemon`, color = `yellow`
 * During the time range (T1, T2]:
   * no fruit has been received
-* During the time range (T2, T3]
+* During the time range (T2, T3]:
   * value = 5, name = `apple`, color = `red`
   * value = 2, name = `apple`, color = `green`
   * value = 4, name = `lemon`, color = `yellow`
@@ -242,7 +265,7 @@ Let's take the following example:
   * value = 3, name = `lemon`, color = `yellow`
 
 If we aggregate and export the metrics using [Cumulative Aggregation
-Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/pecification/metrics/data-model.md#temporality):
+Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality):
 
 * (T0, T1]
   * attributes: {name = `apple`, color = `red`}, count: `1`
@@ -331,12 +354,12 @@ table to summarize the total number of fruits based on the name and color.
 
 | Name  | Color  | Count |
 | ----- | ------ | ----- |
-| apple | red    | ?     |
-| apple | yellow | ?     |
-| apple | green  | ?     |
-| lemon | red    | ?     |
-| lemon | yellow | ?     |
-| lemon | green  | ?     |
+| apple | red    | 6     |
+| apple | yellow | 0     |
+| apple | green  | 2     |
+| lemon | red    | 0     |
+| lemon | yellow | 12    |
+| lemon | green  | 0     |
 
 In other words, we know how much storage and network are needed to collect and
 transmit these metrics, regardless of the traffic pattern.
@@ -416,7 +439,7 @@ Check the [Exemplars](./exemplars/README.md) tutorial to learn more.
 
 ## Metrics Enrichment
 
-When the metrics are being collected, they normally get stored in a [time series
+When metrics are being collected, they normally get stored in a [time series
 database](https://en.wikipedia.org/wiki/Time_series_database). From storage and
 consumption perspective, metrics can be multi-dimensional. Taking the [fruit
 example](#example), there are two dimensions - "name" and "color". For basic
