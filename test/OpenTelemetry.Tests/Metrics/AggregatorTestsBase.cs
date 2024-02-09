@@ -255,7 +255,7 @@ public abstract class AggregatorTestsBase
             metricStreamIdentity,
             AggregationType.Histogram,
             AggregationTemporality.Cumulative,
-            maxMetricPoints: 1024,
+            cardinalityLimit: 1024,
             this.emitOverflowAttribute,
             this.shouldReclaimUnusedMetricPoints);
 
@@ -332,7 +332,7 @@ public abstract class AggregatorTestsBase
             metricStreamIdentity,
             aggregationType,
             aggregationTemporality,
-            maxMetricPoints: 1024,
+            cardinalityLimit: 1024,
             this.emitOverflowAttribute,
             this.shouldReclaimUnusedMetricPoints,
             exemplarsEnabled ? new AlwaysOnExemplarFilter() : null);
@@ -442,7 +442,7 @@ public abstract class AggregatorTestsBase
             metricStreamIdentity,
             AggregationType.Base2ExponentialHistogram,
             AggregationTemporality.Cumulative,
-            maxMetricPoints: 1024,
+            cardinalityLimit: 1024,
             this.emitOverflowAttribute,
             this.shouldReclaimUnusedMetricPoints);
 
