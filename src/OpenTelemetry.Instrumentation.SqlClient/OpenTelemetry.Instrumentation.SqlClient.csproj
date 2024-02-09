@@ -4,6 +4,7 @@
     <TargetFrameworks>$(TargetFrameworksForLibraries)</TargetFrameworks>
     <Description>SqlClient instrumentation for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);distributed-tracing</PackageTags>
+    <MinVerTagPrefix>Instrumentation.SqlClient-</MinVerTagPrefix>
     <IncludeDiagnosticSourceInstrumentationHelpers>true</IncludeDiagnosticSourceInstrumentationHelpers>
 
     <!-- this is temporary. will remove in future PR. -->
