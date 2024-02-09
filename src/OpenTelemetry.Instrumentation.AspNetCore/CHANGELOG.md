@@ -4,7 +4,7 @@
 
 ## 1.7.1
 
-Released 2024-Feb-07
+Released 2024-Feb-09
 
 * Fixed issue
   [#4466](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4466)
