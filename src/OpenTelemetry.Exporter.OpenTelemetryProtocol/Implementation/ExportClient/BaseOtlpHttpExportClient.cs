@@ -61,7 +61,7 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return new ExportClientHttpResponse(success: false, deadlineUtc: deadline, response: httpResponseMessage, exception: ex);
+            return new ExportClientHttpResponse(success: false, deadlineUtc: deadline, response: null, exception: ex);
         }
     }
 
