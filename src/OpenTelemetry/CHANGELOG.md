@@ -21,8 +21,11 @@
 
 * **Experimental (pre-release builds only):** Added support for setting
   `CardinalityLimit` (the maximum number of data points allowed for a metric)
-  when configuring a view.
-  ([#5312](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5312))
+  when configuring a view and obsoleted
+  `MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream`. The
+  default cardinality limit for metrics remains at `2000`.
+  ([#5312](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5312),
+  [#5328](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5328))
 
 * Updated `LogRecord` to keep `CategoryName` and `Logger` in sync when using the
   experimental Log Bridge API.
@@ -37,11 +40,6 @@
   `IOpenTelemetryBuilder.WithMetrics` extension method can configure
   [IMetricsListener](https://learn.microsoft.com/dotNet/api/microsoft.extensions.diagnostics.metrics.imetricslistener).
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
-
-* **Experimental (pre-release builds only):** Obsoleted
-  `MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream` in favor of
-  the new View-based `CardinalityLimit` API.
-  ([#5328](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5328))
 
 ## 1.7.0
 
