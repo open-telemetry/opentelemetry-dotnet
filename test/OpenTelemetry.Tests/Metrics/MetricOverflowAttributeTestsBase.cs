@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
@@ -66,12 +65,7 @@ public abstract class MetricOverflowAttributeTestsBase
         meterProvider.ForceFlush();
 
         Assert.Single(exportedItems);
-        var metric = exportedItems[0];
-
-        var aggregatorStore = typeof(Metric).GetField("aggStore", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(metric) as AggregatorStore;
-        var emitOverflowAttribute = (bool)typeof(AggregatorStore).GetField("emitOverflowAttribute", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(aggregatorStore);
-
-        Assert.Equal(isEmitOverflowAttributeKeySet, emitOverflowAttribute);
+        Assert.Equal(isEmitOverflowAttributeKeySet, exportedItems[0].AggregatorStore.EmitOverflowAttribute);
     }
 
     [Theory]
@@ -106,12 +100,7 @@ public abstract class MetricOverflowAttributeTestsBase
         meterProvider.ForceFlush();
 
         Assert.Single(exportedItems);
-        var metric = exportedItems[0];
-
-        var aggregatorStore = typeof(Metric).GetField("aggStore", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(metric) as AggregatorStore;
-        var emitOverflowAttribute = (bool)typeof(AggregatorStore).GetField("emitOverflowAttribute", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(aggregatorStore);
-
-        Assert.Equal(isEmitOverflowAttributeKeySet, emitOverflowAttribute);
+        Assert.Equal(isEmitOverflowAttributeKeySet, exportedItems[0].AggregatorStore.EmitOverflowAttribute);
     }
 
     [Theory]
@@ -140,12 +129,7 @@ public abstract class MetricOverflowAttributeTestsBase
         meterProvider.ForceFlush();
 
         Assert.Single(exportedItems);
-        var metric = exportedItems[0];
-
-        var aggregatorStore = typeof(Metric).GetField("aggStore", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(metric) as AggregatorStore;
-        var emitOverflowAttribute = (bool)typeof(AggregatorStore).GetField("emitOverflowAttribute", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(aggregatorStore);
-
-        Assert.Equal(isEmitOverflowAttributeKeySet, emitOverflowAttribute);
+        Assert.Equal(isEmitOverflowAttributeKeySet, exportedItems[0].AggregatorStore.EmitOverflowAttribute);
     }
 
     [Theory]
@@ -174,7 +158,7 @@ public abstract class MetricOverflowAttributeTestsBase
         counter.Add(10); // Record measurement for zero tags
 
         // Max number for MetricPoints available for use when emitted with tags
-        int maxMetricPointsForUse = MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault - 2;
+        int maxMetricPointsForUse = MeterProviderBuilderSdk.DefaultCardinalityLimit - 2;
 
         for (int i = 0; i < maxMetricPointsForUse; i++)
         {
@@ -325,7 +309,7 @@ public abstract class MetricOverflowAttributeTestsBase
         histogram.Record(10); // Record measurement for zero tags
 
         // Max number for MetricPoints available for use when emitted with tags
-        int maxMetricPointsForUse = MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault - 2;
+        int maxMetricPointsForUse = MeterProviderBuilderSdk.DefaultCardinalityLimit - 2;
 
         for (int i = 0; i < maxMetricPointsForUse; i++)
         {

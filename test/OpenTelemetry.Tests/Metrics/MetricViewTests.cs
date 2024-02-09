@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
-using System.Reflection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -920,32 +919,61 @@ public class MetricViewTests : MetricTestsBase
         Assert.Equal(10, metricPoint2.GetSumLong());
     }
 
-    [Fact]
-    public void CardinalityLimitofMatchingViewTakesPrecedenceOverMetricProviderWhenBothWereSet()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CardinalityLimitofMatchingViewTakesPrecedenceOverMeterProvider(bool setDefault)
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
-            .AddMeter(meter.Name)
-            .SetMaxMetricPointsPerMetricStream(3)
-            .AddView((instrument) =>
+        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        {
+            if (setDefault)
             {
-                return new MetricStreamConfiguration() { Name = "MetricStreamA", CardinalityLimit = 10000 };
-            })
-            .AddInMemoryExporter(exportedItems));
+#pragma warning disable CS0618 // Type or member is obsolete
+                builder.SetMaxMetricPointsPerMetricStream(3);
+#pragma warning restore CS0618 // Type or member is obsolete
+            }
 
-        var counter = meter.CreateCounter<long>("counter");
-        counter.Add(100);
+            builder
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    if (instrument.Name == "counter2")
+                    {
+                        return new MetricStreamConfiguration() { Name = "MetricStreamA", CardinalityLimit = 10000 };
+                    }
+
+                    return null;
+                })
+                .AddInMemoryExporter(exportedItems);
+        });
+
+        var counter1 = meter.CreateCounter<long>("counter1");
+        counter1.Add(100);
+
+        var counter2 = meter.CreateCounter<long>("counter2");
+        counter2.Add(100);
+
+        var counter3 = meter.CreateCounter<long>("counter3");
+        counter3.Add(100);
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        var metric = exportedItems[0];
+        Assert.Equal(3, exportedItems.Count);
 
-        var aggregatorStore = typeof(Metric).GetField("aggStore", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(metric) as AggregatorStore;
-        var maxMetricPointsAttribute = (int)typeof(AggregatorStore).GetField("maxMetricPoints", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(aggregatorStore);
-
-        Assert.Equal(10000, maxMetricPointsAttribute);
+        Assert.Equal(10000, exportedItems[1].AggregatorStore.CardinalityLimit);
+        if (setDefault)
+        {
+            Assert.Equal(3, exportedItems[0].AggregatorStore.CardinalityLimit);
+            Assert.Equal(3, exportedItems[2].AggregatorStore.CardinalityLimit);
+        }
+        else
+        {
+            Assert.Equal(2000, exportedItems[0].AggregatorStore.CardinalityLimit);
+            Assert.Equal(2000, exportedItems[2].AggregatorStore.CardinalityLimit);
+        }
     }
 
     [Fact]
@@ -987,24 +1015,15 @@ public class MetricViewTests : MetricTestsBase
         var metricB = exportedItems[1];
         var metricC = exportedItems[2];
 
-        var aggregatorStoreA = typeof(Metric).GetField("aggStore", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(metricA) as AggregatorStore;
-        var maxMetricPointsAttributeA = (int)typeof(AggregatorStore).GetField("maxMetricPoints", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(aggregatorStoreA);
-
-        Assert.Equal(256, maxMetricPointsAttributeA);
+        Assert.Equal(256, metricA.AggregatorStore.CardinalityLimit);
         Assert.Equal("MetricStreamA", metricA.Name);
         Assert.Equal(20, GetAggregatedValue(metricA));
 
-        var aggregatorStoreB = typeof(Metric).GetField("aggStore", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(metricB) as AggregatorStore;
-        var maxMetricPointsAttributeB = (int)typeof(AggregatorStore).GetField("maxMetricPoints", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(aggregatorStoreB);
-
-        Assert.Equal(3, maxMetricPointsAttributeB);
+        Assert.Equal(3, metricB.AggregatorStore.CardinalityLimit);
         Assert.Equal("MetricStreamB", metricB.Name);
         Assert.Equal(10, GetAggregatedValue(metricB));
 
-        var aggregatorStoreC = typeof(Metric).GetField("aggStore", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(metricC) as AggregatorStore;
-        var maxMetricPointsAttributeC = (int)typeof(AggregatorStore).GetField("maxMetricPoints", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(aggregatorStoreC);
-
-        Assert.Equal(200000, maxMetricPointsAttributeC);
+        Assert.Equal(200000, metricC.AggregatorStore.CardinalityLimit);
         Assert.Equal("MetricStreamC", metricC.Name);
         Assert.Equal(10, GetAggregatedValue(metricC));
 

@@ -367,90 +367,24 @@ MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
 AnotherFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
 ```
 
-### Changing maximum MetricPoints per MetricStream
+### Changing the cardinality limit for a Metric
 
-A Metric stream can contain as many Metric points as the number of unique
-combination of keys and values. To protect the SDK from unbounded memory usage,
-SDK limits the maximum number of metric points per metric stream, to a default
-of 2000. Once the limit is hit, any new key/value combination for that metric is
-ignored. The SDK chooses the key/value combinations in the order in which they
-are emitted. `SetMaxMetricPointsPerMetricStream` can be used to override the
-default.
+To set the [cardinality limit](../README.md#cardinality-limits) for an
+individual metric, use `MetricStreamConfiguration.CardinalityLimit` setting on
+the View API:
 
 > [!NOTE]
-> One `MetricPoint` is reserved for every `MetricStream` for the
-special case where there is no key/value pair associated with the metric. The
-maximum number of `MetricPoint`s has to accommodate for this special case.
-
-Consider the below example. Here we set the maximum number of `MetricPoint`s
-allowed to be `3`. This means that for every `MetricStream`, the SDK will export
-measurements for up to `3` distinct key/value combinations of the metric. There
-are two instruments published here: `MyFruitCounter` and `AnotherFruitCounter`.
-There are two total `MetricStream`s created one for each of these instruments.
-SDK will limit the maximum number of distinct key/value combinations for each of
-these `MetricStream`s to `3`.
-
-```csharp
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using OpenTelemetry;
-using OpenTelemetry.Metrics;
-
-Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
-Counter<long> AnotherFruitCounter = MyMeter.CreateCounter<long>("AnotherFruitCounter");
-
-using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .AddMeter("*")
-    .AddConsoleExporter()
-    .SetMaxMetricPointsPerMetricStream(3) // The default value is 2000
-    .Build();
-
-// There are four distinct key/value combinations emitted for `MyFruitCounter`:
-// 1. No key/value pair
-// 2. (name:apple, color:red)
-// 3. (name:lemon, color:yellow)
-// 4. (name:apple, color:green)
-
-// Since the maximum number of `MetricPoint`s allowed is `3`, the SDK will only export measurements for the following three combinations:
-// 1. No key/value pair
-// 2. (name:apple, color:red)
-// 3. (name:lemon, color:yellow)
-
-MyFruitCounter.Add(1); // Exported (No key/value pair)
-MyFruitCounter.Add(1, new("name", "apple"), new("color", "red")); // Exported
-MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow")); // Exported
-MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow")); // Exported
-MyFruitCounter.Add(2, new("name", "apple"), new("color", "green")); // Not exported
-MyFruitCounter.Add(5, new("name", "apple"), new("color", "red")); // Exported
-MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow")); // Exported
-
-// There are four distinct key/value combinations emitted for `AnotherFruitCounter`:
-// 1. (name:kiwi)
-// 2. (name:banana, color:yellow)
-// 3. (name:mango, color:yellow)
-// 4. (name:banana, color:green)
-
-// Since the maximum number of `MetricPoint`s allowed is `3`, the SDK will only export measurements for the following three combinations:
-// 1. No key/value pair (This is a special case. The SDK reserves a `MetricPoint` for it even if it's not explicitly emitted.)
-// 2. (name:kiwi)
-// 3. (name:banana, color:yellow)
-
-AnotherFruitCounter.Add(4, new KeyValuePair<string, object>("name", "kiwi")); // Exported
-AnotherFruitCounter.Add(1, new("name", "banana"), new("color", "yellow")); // Exported
-AnotherFruitCounter.Add(2, new("name", "mango"), new("color", "yellow")); // Not exported
-AnotherFruitCounter.Add(1, new("name", "mango"), new("color", "yellow")); // Not exported
-AnotherFruitCounter.Add(2, new("name", "banana"), new("color", "green")); // Not exported
-AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Exported
-AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
-```
-
-To set the [cardinality limit](../README.md#cardinality-limits) at individual
-metric level, use `MetricStreamConfiguration.CardinalityLimit`:
+> `MetricStreamConfiguration.CardinalityLimit` is an experimental API only
+  available in pre-release builds. For details see:
+  [OTEL1003](../../diagnostics/experimental-apis/OTEL1003.md).
 
 ```csharp
 var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter("MyCompany.MyProduct.MyLibrary")
-    .AddView(instrumentName: "MyFruitCounter", new MetricStreamConfiguration { CardinalityLimit = 10 })
+    // Set a custom CardinalityLimit (10) for "MyFruitCounter"
+    .AddView(
+        instrumentName: "MyFruitCounter",
+        new MetricStreamConfiguration { CardinalityLimit = 10 })
     .AddConsoleExporter()
     .Build();
 ```
