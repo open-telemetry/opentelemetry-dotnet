@@ -32,7 +32,7 @@ OpenTelemetry .NET:
 :heavy_check_mark: You should use structured logging.
 
 * Structured logging is more efficient than unstructured logging.
-  * Filtering and redaction can happen on invidual key-value pairs instead of
+  * Filtering and redaction can happen on indvidual key-value pairs instead of
     the entire log message.
   * Storage and indexing are more efficient.
 * Structured logging makes it easier to manage and consume logs.
@@ -63,8 +63,8 @@ from the latest stable version of
 [Microsoft.Extensions.Logging](https://www.nuget.org/packages/Microsoft.Extensions.Logging/)
 package, regardless of the .NET runtime version being used:
 
-* If you're using the latest stable version of [OpenTelemetry .NET
-  SDK](../../src/OpenTelemetry/README.md), you don't have to worry about the
+* If you are using the latest stable version of [OpenTelemetry .NET
+  SDK](../../src/OpenTelemetry/README.md), you do not have to worry about the
   version of `Microsoft.Extensions.Logging` package because it is already taken
   care of for you via [package dependency](../../Directory.Packages.props).
 * Starting from version `3.1.0`, the .NET runtime team is holding a high bar for
