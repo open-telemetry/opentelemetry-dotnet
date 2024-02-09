@@ -72,6 +72,15 @@ public class LogBenchmarks
         this.loggerWithThreeProcessors = this.loggerFactoryWithThreeProcessor.CreateLogger<LogBenchmarks>();
     }
 
+    [GlobalCleanup]
+    public void GlobalCleanup()
+    {
+        this.loggerFactoryWithNoListener.Dispose();
+        this.loggerFactoryWithOneProcessor.Dispose();
+        this.loggerFactoryWithTwoProcessor.Dispose();
+        this.loggerFactoryWithThreeProcessor.Dispose();
+    }
+
     [Benchmark]
     public void NoListenerStringInterpolation()
     {

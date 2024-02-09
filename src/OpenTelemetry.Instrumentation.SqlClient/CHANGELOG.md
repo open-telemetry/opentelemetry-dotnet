@@ -12,6 +12,7 @@
   `SqlClientTraceInstrumentationOptions`.
   ([#5285](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5285))
 * **Breaking Change**: Stop emitting `db.statement_type` attribute.
+  This attribute was never a part of the [semantic conventions](https://github.com/open-telemetry/semantic-conventions/blob/v1.24.0/docs/database/database-spans.md#call-level-attributes).
   ([#5301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5301))
 
 ## 1.6.0-beta.3
