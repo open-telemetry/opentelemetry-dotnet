@@ -4,6 +4,7 @@
     <TargetFrameworks>$(TargetFrameworksForGrpcNetClientInstrumentation)</TargetFrameworks>
     <Description>gRPC for .NET client instrumentation for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);distributed-tracing</PackageTags>
+    <MinVerTagPrefix>Instrumentation.Grpc-</MinVerTagPrefix>
     <IncludeDiagnosticSourceInstrumentationHelpers>true</IncludeDiagnosticSourceInstrumentationHelpers>
 
     <!-- this is temporary. will remove in future PR. -->
