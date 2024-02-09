@@ -17,8 +17,8 @@ public abstract partial class MetricReader
     private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<MetricStreamIdentity, Metric> instrumentIdentityToMetric = new();
     private readonly object instrumentCreationLock = new();
-    private int maxMetricStreams;
-    private int maxMetricPointsPerMetricStream;
+    private int metricLimit;
+    private int cardinalityLimit;
     private Metric?[]? metrics;
     private Metric[]? metricsCurrentBatch;
     private int metricIndex = -1;
@@ -44,7 +44,7 @@ public abstract partial class MetricReader
             }
 
             var index = ++this.metricIndex;
-            if (index >= this.maxMetricStreams)
+            if (index >= this.metricLimit)
             {
                 OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricStreamIdentity.InstrumentName, metricStreamIdentity.MeterName, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProviderBuilder.AddView to drop unused instruments. Or use MeterProviderBuilder.SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
                 return null;
@@ -55,7 +55,7 @@ public abstract partial class MetricReader
                 try
                 {
                     bool shouldReclaimUnusedMetricPoints = this.parentProvider is MeterProviderSdk meterProviderSdk && meterProviderSdk.ShouldReclaimUnusedMetricPoints;
-                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
+                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.cardinalityLimit, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
                 }
                 catch (NotSupportedException nse)
                 {
@@ -129,7 +129,7 @@ public abstract partial class MetricReader
                 }
 
                 var index = ++this.metricIndex;
-                if (index >= this.maxMetricStreams)
+                if (index >= this.metricLimit)
                 {
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricStreamIdentity.InstrumentName, metricStreamIdentity.MeterName, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProviderBuilder.AddView to drop unused instruments. Or use MeterProviderBuilder.SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
                 }
@@ -137,12 +137,14 @@ public abstract partial class MetricReader
                 {
                     bool shouldReclaimUnusedMetricPoints = this.parentProvider is MeterProviderSdk meterProviderSdk && meterProviderSdk.ShouldReclaimUnusedMetricPoints;
 
+                    var cardinalityLimit = this.cardinalityLimit;
+
                     if (metricStreamConfig != null && metricStreamConfig.CardinalityLimit != null)
                     {
-                        this.maxMetricPointsPerMetricStream = metricStreamConfig.CardinalityLimit.Value;
+                        cardinalityLimit = metricStreamConfig.CardinalityLimit.Value;
                     }
 
-                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
+                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), cardinalityLimit, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                     this.metrics![index] = metric;
@@ -205,26 +207,22 @@ public abstract partial class MetricReader
         }
     }
 
-    internal void SetMaxMetricStreams(int maxMetricStreams)
+    internal void ApplyParentProviderSettings(
+        int metricLimit,
+        int cardinalityLimit,
+        ExemplarFilter? exemplarFilter,
+        bool isEmitOverflowAttributeKeySet)
     {
-        this.maxMetricStreams = maxMetricStreams;
-        this.metrics = new Metric[maxMetricStreams];
-        this.metricsCurrentBatch = new Metric[maxMetricStreams];
-    }
-
-    internal void SetExemplarFilter(ExemplarFilter? exemplarFilter)
-    {
+        this.metricLimit = metricLimit;
+        this.metrics = new Metric[metricLimit];
+        this.metricsCurrentBatch = new Metric[metricLimit];
+        this.cardinalityLimit = cardinalityLimit;
         this.exemplarFilter = exemplarFilter;
-    }
-
-    internal void SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream, bool isEmitOverflowAttributeKeySet)
-    {
-        this.maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream;
 
         if (isEmitOverflowAttributeKeySet)
         {
             // We need at least two metric points. One is reserved for zero tags and the other one for overflow attribute
-            if (maxMetricPointsPerMetricStream > 1)
+            if (cardinalityLimit > 1)
             {
                 this.emitOverflowAttribute = true;
             }
@@ -273,7 +271,7 @@ public abstract partial class MetricReader
 
         try
         {
-            var indexSnapshot = Math.Min(this.metricIndex, this.maxMetricStreams - 1);
+            var indexSnapshot = Math.Min(this.metricIndex, this.metricLimit - 1);
             var target = indexSnapshot + 1;
             int metricCountCurrentBatch = 0;
             for (int i = 0; i < target; i++)
