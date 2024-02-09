@@ -1,9 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
@@ -286,14 +284,9 @@ public abstract class MetricPointReclaimTestsBase
 
         private readonly bool assertNoDroppedMeasurements;
 
-        private readonly FieldInfo metricPointLookupDictionaryFieldInfo;
-
         public CustomExporter(bool assertNoDroppedMeasurements)
         {
             this.assertNoDroppedMeasurements = assertNoDroppedMeasurements;
-
-            var aggregatorStoreFields = typeof(AggregatorStore).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
-            this.metricPointLookupDictionaryFieldInfo = aggregatorStoreFields!.FirstOrDefault(field => field.Name == "tagsToMetricPointIndexDictionaryDelta");
         }
 
         public override ExportResult Export(in Batch<Metric> batch)
@@ -301,8 +294,7 @@ public abstract class MetricPointReclaimTestsBase
             foreach (var metric in batch)
             {
                 var aggStore = metric.AggregatorStore;
-                var metricPointLookupDictionary = this.metricPointLookupDictionaryFieldInfo.GetValue(aggStore) as ConcurrentDictionary<Tags, LookupData>;
-
+                var metricPointLookupDictionary = aggStore.TagsToMetricPointIndexDictionaryDelta;
                 var droppedMeasurements = aggStore.DroppedMeasurements;
 
                 if (this.assertNoDroppedMeasurements)
