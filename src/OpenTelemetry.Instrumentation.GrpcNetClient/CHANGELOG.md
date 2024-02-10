@@ -12,7 +12,7 @@ Released 2024-Feb-09
   option no longer works when used in conjunction with the
   `OpenTelemetry.Instrumentation.Http` package version `1.6.0` or greater.
   This is not a result of a change in the `OpenTelemetry.Instrumentation.GrpcNetClient`
-  package therefore this affects versions prior to this release. See this
+  package therefore this also affects versions prior to this release. See this
   [issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092)
   for details and workaround.
 * Removed support for the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable
