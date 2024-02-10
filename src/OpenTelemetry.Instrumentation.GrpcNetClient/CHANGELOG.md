@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.7.0-beta.1
+
+Released 2024-Feb-09
+
 * **Breaking Change** :
   [SuppressDownstreamInstrumentation](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.GrpcNetClient#suppressdownstreaminstrumentation)
   option will no longer be supported when used with certain versions of
