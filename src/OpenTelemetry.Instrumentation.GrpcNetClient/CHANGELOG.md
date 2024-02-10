@@ -6,13 +6,15 @@
 
 Released 2024-Feb-09
 
-* **Breaking Change** :
+* **Breaking Change**:
+  Please be advised that the
   [SuppressDownstreamInstrumentation](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.GrpcNetClient#suppressdownstreaminstrumentation)
-  option will no longer be supported when used with certain versions of
-  `OpenTelemetry.Instrumentation.Http` package. Check out this
+  option no longer works when used in conjunction with the
+  `OpenTelemetry.Instrumentation.Http` package version `1.6.0` or greater.
+  This is not a result of a change in the `OpenTelemetry.Instrumentation.GrpcNetClient`
+  package therefore this also affects versions prior to this release. See this
   [issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092)
   for details and workaround.
-  ([#5077](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5077))
 * Removed support for the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable
   which toggled the use of the new conventions for the
   [server, client, and shared network attributes](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/general/attributes.md#server-client-and-shared-network-attributes).
