@@ -117,6 +117,18 @@ public sealed class OpenTelemetrySdk : IDisposable
         this.serviceProvider.Dispose();
     }
 
+    internal sealed class NoopLoggerProvider : LoggerProvider
+    {
+    }
+
+    internal sealed class NoopMeterProvider : MeterProvider
+    {
+    }
+
+    internal sealed class NoopTracerProvider : TracerProvider
+    {
+    }
+
     private sealed class OpenTelemetrySdkBuilder : IOpenTelemetryBuilder
     {
         public OpenTelemetrySdkBuilder(IServiceCollection services)
@@ -129,17 +141,5 @@ public sealed class OpenTelemetrySdk : IDisposable
         }
 
         public IServiceCollection Services { get; }
-    }
-
-    private sealed class NoopLoggerProvider : LoggerProvider
-    {
-    }
-
-    private sealed class NoopMeterProvider : MeterProvider
-    {
-    }
-
-    private sealed class NoopTracerProvider : TracerProvider
-    {
     }
 }
