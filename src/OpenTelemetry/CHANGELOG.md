@@ -42,6 +42,12 @@
   [IMetricsListener](https://learn.microsoft.com/dotNet/api/microsoft.extensions.diagnostics.metrics.imetricslistener).
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
 
+* Added `OpenTelemetrySdk.Create` API for configuring OpenTelemetry .NET signals
+  (logging, tracing, and metrics) via a single builder. This new API simplifies
+  bootstrap and teardown, and supports cross-cutting extensions targeting
+  `IOpenTelemetryBuilder`.
+  ([#5325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5325))
+
 ## 1.7.0
 
 Released 2023-Dec-08
