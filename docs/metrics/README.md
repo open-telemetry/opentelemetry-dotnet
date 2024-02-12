@@ -385,6 +385,12 @@ and the `MetricStreamConfiguration.CardinalityLimit` setting. Refer to this
 [doc](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric)
 for more information.
 
+> [!NOTE]
+> Measurements for each unique combination of attributes are stored on a
+  `MetricPoint` in the OpenTelemetry .NET SDK. When a measurement is recorded on
+  a metric for the first time the SDK will allocate enough storage for all
+  possible `MetricPoint`s for that metric based on the cardinality limit.
+
 Given a metric, once the cardinality limit is reached, any new measurement which
 cannot be independently aggregated because of the limit will be dropped or
 aggregated using the [overflow
@@ -405,7 +411,7 @@ the first time an overflow is detected for a given metric.
 When [Delta Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
 is used, it is possible to choose a smaller cardinality limit by allowing the
-SDK to reclaim unused combinations.
+SDK to reclaim unused metric points.
 
 > [!NOTE]
 > Reclaim unused metric points feature was introduced in OpenTelemetry .NET
