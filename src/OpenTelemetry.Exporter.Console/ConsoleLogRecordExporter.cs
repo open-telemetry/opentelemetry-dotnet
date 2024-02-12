@@ -1,9 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter;
 
@@ -81,22 +83,33 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
                 this.WriteLine($"{"LogRecord.Body:",-RightPaddingLength}{logRecord.Body}");
             }
 
-            if (logRecord.Attributes != null)
+            if (logRecord.Attributes != null || logRecord.Exception != null)
             {
                 this.WriteLine("LogRecord.Attributes (Key:Value):");
-                for (int i = 0; i < logRecord.Attributes.Count; i++)
+                if (logRecord.Attributes != null)
                 {
-                    // Special casing {OriginalFormat}
-                    // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
-                    // for explanation.
-                    var valueToTransform = logRecord.Attributes[i].Key.Equals("{OriginalFormat}")
-                        ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", logRecord.Attributes[i].Value)
-                        : logRecord.Attributes[i];
-
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
+                    for (int i = 0; i < logRecord.Attributes.Count; i++)
                     {
-                        this.WriteLine($"{string.Empty,-4}{result}");
+                        // Special casing {OriginalFormat}
+                        // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
+                        // for explanation.
+                        var valueToTransform = logRecord.Attributes[i].Key.Equals("{OriginalFormat}")
+                            ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)",
+                                logRecord.Attributes[i].Value)
+                            : logRecord.Attributes[i];
+
+                        if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
+                        {
+                            this.WriteLine($"{string.Empty,-4}{result}");
+                        }
                     }
+                }
+
+                if (logRecord.Exception != null)
+                {
+                    this.PrintAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name);
+                    this.PrintAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message);
+                    this.PrintAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString());
                 }
             }
 
@@ -151,6 +164,18 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
         }
 
         return ExportResult.Success;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PrintAttribute(string key, string value)
+    {
+        var valueToTransform =
+            new KeyValuePair<string, object>(key, value);
+
+        if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
+        {
+            this.WriteLine($"{string.Empty,-4}{result}");
+        }
     }
 
     protected override void Dispose(bool disposing)
