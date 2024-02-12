@@ -457,13 +457,13 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 //   1. No key/value pair Value=1
 //   2. (name:apple, color:red) Value=6
 //   3. (name:lemon, color:yellow) Value=7
-/*MyFruitCounter.Add(1); // Exported (No key/value pair)
+MyFruitCounter.Add(1); // Exported (No key/value pair)
 MyFruitCounter.Add(1, new("name", "apple"), new("color", "red")); // Exported
 MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow")); // Exported
 MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow")); // Exported
 MyFruitCounter.Add(2, new("name", "apple"), new("color", "green")); // Not exported
 MyFruitCounter.Add(5, new("name", "apple"), new("color", "red")); // Exported
-MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow")); // Exported*/
+MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow")); // Exported
 
 // There are four distinct key/value combinations emitted for 'AnotherFruitCounter':
 //   1. (name:kiwi)
