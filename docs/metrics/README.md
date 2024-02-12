@@ -405,7 +405,7 @@ the first time an overflow is detected for a given metric.
 When [Delta Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
 is used, it is possible to choose a smaller cardinality limit by allowing the
-SDK to reclaim unused metric points.
+SDK to reclaim unused combinations.
 
 > [!NOTE]
 > Reclaim unused metric points feature was introduced in OpenTelemetry .NET
@@ -425,9 +425,9 @@ cardinality limit set the SDK will only export measurements for up to `3`
 distinct key/value combinations.
 
 > [!NOTE]
-> One `MetricPoint` is reserved on every `Metric` for the special case where
-  there are no key/value pairs associated with a measurement. When choosing a
-  cardinality limit users should account for this special case.
+> Storage for one combination is reserved on every `Metric` for the special case
+  where there are no key/value pairs associated with a measurement. When
+  choosing a cardinality limit users should account for this special case.
 
 ```csharp
 Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
