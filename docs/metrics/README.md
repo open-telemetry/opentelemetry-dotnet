@@ -436,18 +436,9 @@ Counter<long> FlowerCounter = MyMeter.CreateCounter<long>("FlowerCounter");
 
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter("*")
+    .AddView(instrumentName: "MyFruitCounter", new MetricStreamConfiguration { CardinalityLimit = 3 })
+    .AddView(instrumentName: "AnotherFruitCounter", new MetricStreamConfiguration { CardinalityLimit = 3 })
     .AddConsoleExporter()
-    .AddView(i =>
-    {
-        if (i.Name == "MyFruitCounter" || i.Name == "AnotherFruitCounter")
-        {
-            // Note: Set the cardinality limit for 'MyFruitCounter' &
-            // 'AnotherFruitCounter' to 3
-            return new MetricStreamConfiguration { CardinalityLimit = 3 };
-        }
-
-        return null;
-    })
     .Build();
 
 // There are four distinct key/value combinations emitted for 'MyFruitCounter':
