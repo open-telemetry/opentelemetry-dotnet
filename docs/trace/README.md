@@ -17,8 +17,8 @@
 
 ## Best Practices
 
-The following tutorials have demonstrated the best practices for while using
-traces with OpenTelemetry .NET:
+The following tutorials have demonstrated the best practices for using traces
+with OpenTelemetry .NET:
 
 * [Getting Started - ASP.NET Core
   Application](./getting-started-aspnetcore/README.md)
@@ -32,8 +32,8 @@ APIs from the latest stable version of
 [System.Diagnostics.DiagnosticSource](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/)
 package, regardless of the .NET runtime version being used:
 
-* If you're using the latest stable version of [OpenTelemetry .NET
-  SDK](../../src/OpenTelemetry/README.md), you don't have to worry about the
+* If you are using the latest stable version of [OpenTelemetry .NET
+  SDK](../../src/OpenTelemetry/README.md), you do not have to worry about the
   version of `System.Diagnostics.DiagnosticSource` package because it is already
   taken care of for you via [package
   dependency](../../Directory.Packages.props).
@@ -46,7 +46,7 @@ package, regardless of the .NET runtime version being used:
 ### ActivitySource
 
 :stop_sign: You should avoid creating
-[`ActivitySource`](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource)
+[`System.Diagnostics.ActivitySource`](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource)
 too frequently. `ActivitySource` is fairly expensive and meant to be reused
 throughout the application. For most applications, it can be modeled as static
 readonly field (e.g. [Program.cs](./getting-started-console/Program.cs)) or
@@ -150,10 +150,9 @@ information, as opposed to creating a new one.
 ### Modelling static tags as Resource
 
 Tags such as `MachineName`, `Environment` etc. which are static throughout the
-process lifetime should be be modelled as `Resource`, instead of adding them
-to each `Activity`. Refer to this
-[doc](./customizing-the-sdk/README.md#resource) for details and
-examples.
+process lifetime should be modelled as `Resource`, instead of adding them to
+each `Activity`. Refer to this [doc](./customizing-the-sdk/README.md#resource)
+for details and examples.
 
 ## Common issues that lead to missing traces
 
@@ -166,7 +165,7 @@ examples.
   and is disposed of at application shutdown. For an ASP.NET Core application,
   use `AddOpenTelemetry` and `WithTraces` methods from the
   `OpenTelemetry.Extensions.Hosting` package to correctly setup
-  `TracerProvider`. Here's a [sample ASP.NET Core
+  `TracerProvider`. Here is a [sample ASP.NET Core
   app](../../examples/AspNetCore/Program.cs) for reference. For simpler
   applications such as Console apps, refer to this
   [example](../../docs/trace/getting-started-console/Program.cs).
