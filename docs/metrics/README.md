@@ -419,9 +419,10 @@ SDK to reclaim unused metric points.
 
 #### Cardinality overflow example
 
-In the following example we set the maximum number of `MetricPoint`s allowed to
-be `3` for two metrics. This means that for these metrics, the SDK will only
-export measurements for up to `3` distinct key/value combinations.
+In the following example we set the cardinality limit to `3` for two metrics and
+leave the SDK default (`2000`) for one metric. For the two metrics with
+cardinality limit set the SDK will only export measurements for up to `3`
+distinct key/value combinations.
 
 > [!NOTE]
 > One `MetricPoint` is reserved on every `Metric` for the special case where
@@ -431,6 +432,7 @@ export measurements for up to `3` distinct key/value combinations.
 ```csharp
 Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
 Counter<long> AnotherFruitCounter = MyMeter.CreateCounter<long>("AnotherFruitCounter");
+Counter<long> FlowerCounter = MyMeter.CreateCounter<long>("FlowerCounter");
 
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter("*")
@@ -453,10 +455,6 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 //   2. (name:apple, color:red)
 //   3. (name:lemon, color:yellow)
 //   4. (name:apple, color:green)
-// Since the cardinality limit is 3, the SDK will only export measurements for the following three combinations:
-//   1. No key/value pair Value=1
-//   2. (name:apple, color:red) Value=6
-//   3. (name:lemon, color:yellow) Value=7
 MyFruitCounter.Add(1); // Exported (No key/value pair)
 MyFruitCounter.Add(1, new("name", "apple"), new("color", "red")); // Exported
 MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow")); // Exported
@@ -464,17 +462,16 @@ MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow")); // Exported
 MyFruitCounter.Add(2, new("name", "apple"), new("color", "green")); // Not exported
 MyFruitCounter.Add(5, new("name", "apple"), new("color", "red")); // Exported
 MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow")); // Exported
+// Since the cardinality limit is 3, the SDK will only export measurements for the following three combinations:
+//   1. No key/value pair Value=1
+//   2. (name:apple, color:red) Value=6
+//   3. (name:lemon, color:yellow) Value=7
 
 // There are four distinct key/value combinations emitted for 'AnotherFruitCounter':
 //   1. (name:kiwi)
 //   2. (name:banana, color:yellow)
 //   3. (name:mango, color:yellow)
 //   4. (name:banana, color:green)
-// Since the cardinality limit is 3, the SDK will only export measurements for the following two combinations:
-//   1. (name:kiwi) Value=4
-//   2. (name:banana, color:yellow) Value=6
-// Note: There are only 2 exported measurements (not the 3 one might expect) because there was nothing
-//  recorded for the reserved special case of measurements with no key/values.
 AnotherFruitCounter.Add(4, new KeyValuePair<string, object>("name", "kiwi")); // Exported
 AnotherFruitCounter.Add(1, new("name", "banana"), new("color", "yellow")); // Exported
 AnotherFruitCounter.Add(2, new("name", "mango"), new("color", "yellow")); // Not exported
@@ -482,6 +479,31 @@ AnotherFruitCounter.Add(1, new("name", "mango"), new("color", "yellow")); // Not
 AnotherFruitCounter.Add(2, new("name", "banana"), new("color", "green")); // Not exported
 AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Exported
 AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
+// Since the cardinality limit is 3, the SDK will only export measurements for the following two combinations:
+//   1. (name:kiwi) Value=4
+//   2. (name:banana, color:yellow) Value=6
+// Note: There are only 2 exported measurements (not the 3 one might expect) because there was nothing
+//  recorded for the reserved special case of measurements with no key/values.
+
+// There are four distinct key/value combinations emitted for 'FlowerCounter':
+//   1. (name:rose, color:red)
+//   2. (name:sun_flower)
+//   3. (name:rose, color:white)
+//   4. (name:carnation, color:purple)
+//   5. (name:carnation, color:yellow)
+FlowerCounter.Add(1, new("name", "rose"), new("color", "red")); // Exported
+FlowerCounter.Add(2, new("name", "sun_flower")); // Exported
+FlowerCounter.Add(1, new("name", "sun_flower")); // Exported
+FlowerCounter.Add(2, new("name", "rose"), new("color", "white")); // Exported
+FlowerCounter.Add(5, new("name", "rose"), new("color", "red")); // Exported
+FlowerCounter.Add(4, new("name", "carnation"), new("color", "purple")); // Exported
+FlowerCounter.Add(4, new("name", "carnation"), new("color", "yellow")); // Exported
+// Since the cardinality limit is the default 2000 all combinations are exported:
+//   1. (name:rose, color:red) Value=6
+//   2. (name:sun_flower) Value=3
+//   3. (name:rose, color:white) Value=2
+//   4. (name:carnation, color:purple) Value=4
+//   5. (name:carnation, color:yellow) Value=4
 ```
 
 ### Memory Preallocation
