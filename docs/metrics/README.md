@@ -417,6 +417,73 @@ SDK to reclaim unused metric points.
   Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
   become stable, this feature will be turned on by default.
 
+#### Cardinality overflow example
+
+In the following example we set the maximum number of `MetricPoint`s allowed to
+be `3` for two metrics. This means that for these metrics, the SDK will only
+export measurements for up to `3` distinct key/value combinations.
+
+> [!NOTE]
+> One `MetricPoint` is reserved on every `Metric` for the special case where
+  there are no key/value pairs associated with a measurement. When choosing a
+  cardinality limit users should account for this special case.
+
+```csharp
+Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
+Counter<long> AnotherFruitCounter = MyMeter.CreateCounter<long>("AnotherFruitCounter");
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("*")
+    .AddConsoleExporter()
+    .AddView(i =>
+    {
+        if (i.Name == "MyFruitCounter" || i.Name == "AnotherFruitCounter")
+        {
+            // Note: Set the cardinality limit for 'MyFruitCounter' &
+            // 'AnotherFruitCounter' to 3
+            return new MetricStreamConfiguration { CardinalityLimit = 3 };
+        }
+
+        return null;
+    })
+    .Build();
+
+// There are four distinct key/value combinations emitted for 'MyFruitCounter':
+//   1. No key/value pair
+//   2. (name:apple, color:red)
+//   3. (name:lemon, color:yellow)
+//   4. (name:apple, color:green)
+// Since the cardinality limit is 3, the SDK will only export measurements for the following three combinations:
+//   1. No key/value pair Value=1
+//   2. (name:apple, color:red) Value=6
+//   3. (name:lemon, color:yellow) Value=7
+/*MyFruitCounter.Add(1); // Exported (No key/value pair)
+MyFruitCounter.Add(1, new("name", "apple"), new("color", "red")); // Exported
+MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow")); // Exported
+MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow")); // Exported
+MyFruitCounter.Add(2, new("name", "apple"), new("color", "green")); // Not exported
+MyFruitCounter.Add(5, new("name", "apple"), new("color", "red")); // Exported
+MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow")); // Exported*/
+
+// There are four distinct key/value combinations emitted for 'AnotherFruitCounter':
+//   1. (name:kiwi)
+//   2. (name:banana, color:yellow)
+//   3. (name:mango, color:yellow)
+//   4. (name:banana, color:green)
+// Since the cardinality limit is 3, the SDK will only export measurements for the following two combinations:
+//   1. (name:kiwi) Value=4
+//   2. (name:banana, color:yellow) Value=6
+// Note: There are only 2 exported measurements (not the 3 one might expect) because there was nothing
+//  recorded for the reserved special case of measurements with no key/values.
+AnotherFruitCounter.Add(4, new KeyValuePair<string, object>("name", "kiwi")); // Exported
+AnotherFruitCounter.Add(1, new("name", "banana"), new("color", "yellow")); // Exported
+AnotherFruitCounter.Add(2, new("name", "mango"), new("color", "yellow")); // Not exported
+AnotherFruitCounter.Add(1, new("name", "mango"), new("color", "yellow")); // Not exported
+AnotherFruitCounter.Add(2, new("name", "banana"), new("color", "green")); // Not exported
+AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Exported
+AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
+```
+
 ### Memory Preallocation
 
 OpenTelemetry .NET SDK aims to avoid memory allocation on the hot code path.
