@@ -35,15 +35,15 @@ internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposab
         return new MeasurementHandlers()
         {
             ByteHandler = (instrument, value, tags, state)
-                => this.MeasurementRecordedLong(instrument, value, tags, state),
+                => MeterProviderSdk.MeasurementRecordedLong(instrument, value, tags, state),
             ShortHandler = (instrument, value, tags, state)
-                => this.MeasurementRecordedLong(instrument, value, tags, state),
+                => MeterProviderSdk.MeasurementRecordedLong(instrument, value, tags, state),
             IntHandler = (instrument, value, tags, state)
-                => this.MeasurementRecordedLong(instrument, value, tags, state),
-            LongHandler = this.MeasurementRecordedLong,
+                => MeterProviderSdk.MeasurementRecordedLong(instrument, value, tags, state),
+            LongHandler = MeterProviderSdk.MeasurementRecordedLong,
             FloatHandler = (instrument, value, tags, state)
-                => this.MeasurementRecordedDouble(instrument, value, tags, state),
-            DoubleHandler = this.MeasurementRecordedDouble,
+                => MeterProviderSdk.MeasurementRecordedDouble(instrument, value, tags, state),
+            DoubleHandler = MeterProviderSdk.MeasurementRecordedDouble,
         };
     }
 
@@ -66,15 +66,5 @@ internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposab
     private void OnCollectObservableInstruments()
     {
         this.observableInstrumentsSource?.RecordObservableInstruments();
-    }
-
-    private void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? userState)
-    {
-        MeterProviderSdk.MeasurementRecordedDouble(instrument, value, tagsRos, userState);
-    }
-
-    private void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? userState)
-    {
-        MeterProviderSdk.MeasurementRecordedLong(instrument, value, tagsRos, userState);
     }
 }
