@@ -41,26 +41,29 @@ internal sealed class MetricState
         Debug.Assert(metrics != null, "metrics was null");
         Debug.Assert(!metrics.Any(m => m == null), "metrics contained null elements");
 
+        // Note: Use an array here to elide bounds checks.
+        var metricsArray = metrics!.ToArray();
+
         return new(
             completeMeasurement: () =>
             {
-                for (int i = 0; i < metrics!.Count; i++)
+                for (int i = 0; i < metricsArray.Length; i++)
                 {
-                    MetricReader.DeactivateMetric(metrics[i]);
+                    MetricReader.DeactivateMetric(metricsArray[i]);
                 }
             },
             recordMeasurementLong: (v, t) =>
             {
-                for (int i = 0; i < metrics!.Count; i++)
+                for (int i = 0; i < metricsArray.Length; i++)
                 {
-                    metrics[i].UpdateLong(v, t);
+                    metricsArray[i].UpdateLong(v, t);
                 }
             },
             recordMeasurementDouble: (v, t) =>
             {
-                for (int i = 0; i < metrics!.Count; i++)
+                for (int i = 0; i < metricsArray.Length; i++)
                 {
-                    metrics[i].UpdateDouble(v, t);
+                    metricsArray[i].UpdateDouble(v, t);
                 }
             });
     }
