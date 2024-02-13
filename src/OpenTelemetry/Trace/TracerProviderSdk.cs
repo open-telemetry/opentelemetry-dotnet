@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
@@ -244,48 +245,58 @@ internal sealed class TracerProviderSdk : TracerProvider
             this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
         }
 
-        // Sources can be null. This happens when user
-        // is only interested in InstrumentationLibraries
-        // which do not depend on ActivitySources.
-        if (state.Sources.Any())
-        {
-            // Validation of source name is already done in builder.
-            if (state.Sources.Any(s => WildcardHelper.ContainsWildcard(s)))
-            {
-                var regex = WildcardHelper.GetWildcardRegex(state.Sources);
-
-                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not.
-                listener.ShouldListenTo = (activitySource) =>
-                    this.supportLegacyActivity ?
-                    string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
-                    regex.IsMatch(activitySource.Name);
-            }
-            else
-            {
-                var activitySources = new HashSet<string>(state.Sources, StringComparer.OrdinalIgnoreCase);
-
-                if (this.supportLegacyActivity)
-                {
-                    activitySources.Add(string.Empty);
-                }
-
-                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not.
-                listener.ShouldListenTo = (activitySource) => activitySources.Contains(activitySource.Name);
-            }
-        }
-        else
-        {
-            if (this.supportLegacyActivity)
-            {
-                listener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name);
-            }
-        }
-
+        listener.ShouldListenTo = this.GetFilter(state);
         ActivitySource.AddActivityListener(listener);
         this.listener = listener;
         OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
+    }
+
+    private Func<ActivitySource, bool>? GetFilter(TracerProviderBuilderSdk state)
+    {
+        // Sources can be empty. This happens when user
+        // is only interested in InstrumentationLibraries
+        // which do not depend on ActivitySources.
+        List<Func<ActivitySource, bool>> filters = new List<Func<ActivitySource, bool>>();
+        if (state.Sources.Any())
+        {
+            filters.Add(this.GetNameFilter(state));
+        }
+
+        if (state.SourceFilter != null)
+        {
+            filters.Add(state.SourceFilter);
+        }
+
+        if (this.supportLegacyActivity)
+        {
+            filters.Add((activitySource) => string.IsNullOrEmpty(activitySource.Name));
+        }
+
+        return (activitySource) =>
+        {
+            bool shouldListen = false;
+            for (int i = 0; i < filters.Count && !shouldListen; i++)
+            {
+                shouldListen |= filters[i](activitySource);
+            }
+
+            return shouldListen;
+        };
+    }
+
+    private Func<ActivitySource, bool> GetNameFilter(TracerProviderBuilderSdk state)
+    {
+        Debug.Assert(state.Sources.Any(), "Should only be called when there are name-based source filters.");
+
+        // Validation of source name is already done in builder.
+        if (state.Sources.Any(s => WildcardHelper.ContainsWildcard(s)))
+        {
+            var regex = WildcardHelper.GetWildcardRegex(state.Sources);
+            return (activitySource) => regex.IsMatch(activitySource.Name);
+        }
+
+        var activitySources = new HashSet<string>(state.Sources, StringComparer.OrdinalIgnoreCase);
+        return (activitySource) => activitySources.Contains(activitySource.Name);
     }
 
     internal Resource Resource { get; }

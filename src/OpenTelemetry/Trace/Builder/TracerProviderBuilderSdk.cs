@@ -33,6 +33,8 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public List<string> Sources { get; } = new();
 
+    public Func<ActivitySource, bool>? SourceFilter { get; private set; } = null;
+
     public HashSet<string> LegacyActivityOperationNames { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public Sampler? Sampler { get; private set; }
@@ -120,6 +122,13 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
             this.Sources.Add(name);
         }
 
+        return this;
+    }
+
+    public override TracerProviderBuilder AddSource(Func<ActivitySource, bool> sourceFilter)
+    {
+        Debug.Assert(sourceFilter != null, "sourceFilter was null");
+        this.SourceFilter = sourceFilter;
         return this;
     }
 
