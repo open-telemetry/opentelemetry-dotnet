@@ -28,6 +28,11 @@ internal
 #endif
     struct Exemplar
 {
+    private readonly HashSet<string> keyFilter;
+    private int tagCount;
+    private KeyValuePair<string, object?>[]? tagStorage;
+    private MetricPointValueStorage valueStorage;
+
     /// <summary>
     /// Gets the timestamp.
     /// </summary>
@@ -43,16 +48,96 @@ internal
     /// </summary>
     public ActivitySpanId? SpanId { get; internal set; }
 
-    // TODO: Leverage MetricPointValueStorage
-    // and allow double/long instead of double only.
+    /// <summary>
+    /// Gets the long value.
+    /// </summary>
+    public long LongValue
+    {
+        get => this.valueStorage.AsLong;
+        internal set => this.valueStorage.AsLong = value;
+    }
 
     /// <summary>
     /// Gets the double value.
     /// </summary>
-    public double DoubleValue { get; internal set; }
+    public double DoubleValue
+    {
+        get => this.valueStorage.AsDouble;
+        internal set => this.valueStorage.AsDouble = value;
+    }
 
     /// <summary>
     /// Gets the FilteredTags (i.e any tags that were dropped during aggregation).
     /// </summary>
-    public List<KeyValuePair<string, object?>>? FilteredTags { get; internal set; }
+    public ReadOnlyTagCollection FilteredTags
+        => new(this.keyFilter, this.tagStorage ?? Array.Empty<KeyValuePair<string, object?>>(), this.tagCount);
+
+    internal void StoreFilteredTags(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        // todo: We can't share a pointer to array when collecting hmm
+
+        this.tagCount = tags.Length;
+        if (tags.Length == 0)
+        {
+            return;
+        }
+
+        if (this.tagStorage == null || this.tagStorage.Length < this.tagCount)
+        {
+            this.tagStorage = new KeyValuePair<string, object?>[this.tagCount];
+        }
+
+        tags.CopyTo(this.tagStorage);
+    }
+
+    internal void Reset()
+    {
+        this.Timestamp = default;
+    }
+}
+
+public readonly ref struct ReadOnlyExemplarCollection
+{
+    private readonly Exemplar[] exemplars;
+
+    internal ReadOnlyExemplarCollection(Exemplar[] exemplars)
+    {
+        Debug.Assert(exemplars != null, "exemplars was null");
+
+        this.exemplars = exemplars;
+    }
+
+    public Enumerator GetEnumerator() => new(this.exemplars);
+
+    /// <summary>
+    /// Enumerates the elements of a <see cref="ReadOnlyExemplarCollection"/>.
+    /// </summary>
+    public struct Enumerator
+    {
+        private readonly Exemplar[] exemplars;
+        private int index;
+
+        internal Enumerator(Exemplar[] exemplars)
+        {
+            this.exemplars = exemplars;
+            this.index = -1;
+        }
+
+        /// <summary>
+        /// Gets the <see cref="Exemplar"/> at the current position of the enumerator.
+        /// </summary>
+        public readonly ref readonly Exemplar Current
+            => ref this.exemplars[this.index];
+
+        /// <summary>
+        /// Advances the enumerator to the next element of the <see
+        /// cref="ReadOnlyExemplarCollection"/>.
+        /// </summary>
+        /// <returns><see langword="true"/> if the enumerator was
+        /// successfully advanced to the next element; <see
+        /// langword="false"/> if the enumerator has passed the end of the
+        /// collection.</returns>
+        public bool MoveNext()
+            => ++this.index < this.exemplars.Length;
+    }
 }

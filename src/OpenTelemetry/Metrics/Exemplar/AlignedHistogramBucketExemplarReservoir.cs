@@ -10,90 +10,88 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoir
 {
-    private readonly Exemplar[] runningExemplars;
-    private readonly Exemplar[] tempExemplars;
+    private readonly AggregatorStore parentAggregatorStore;
+    private readonly Exemplar[] bufferA;
+    private readonly Exemplar[] bufferB;
+    private Exemplar[] activeBuffer;
 
-    public AlignedHistogramBucketExemplarReservoir(int length)
+    public AlignedHistogramBucketExemplarReservoir(AggregatorStore parentAggregatorStore, int length)
     {
-        this.runningExemplars = new Exemplar[length + 1];
-        this.tempExemplars = new Exemplar[length + 1];
+        Debug.Assert(parentAggregatorStore != null, "parentAggregatorStore was null");
+
+        this.parentAggregatorStore = parentAggregatorStore;
+        this.bufferA = new Exemplar[length + 1];
+        this.bufferB = new Exemplar[length + 1];
+        this.activeBuffer = this.bufferA;
     }
 
-    public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default)
+    public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
-        this.OfferAtBoundary(value, tags, index);
+        this.OfferAtBoundary(value, tags, this.FindBucketIndexForValue(value));
     }
 
-    public override void Offer(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default)
+    public override void Offer(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
-        this.OfferAtBoundary(value, tags, index);
+        this.OfferAtBoundary(value, tags, this.FindBucketIndexForValue(value));
     }
 
-    public override Exemplar[] Collect(ReadOnlyTagCollection actualTags, bool reset)
+    public override ReadOnlyExemplarCollection Collect()
     {
-        for (int i = 0; i < this.runningExemplars.Length; i++)
+        var currentBuffer = this.activeBuffer;
+
+        this.activeBuffer = currentBuffer == this.bufferA
+            ? this.bufferB
+            : this.bufferA;
+
+        if (this.parentAggregatorStore.OutputDelta)
         {
-            this.tempExemplars[i] = this.runningExemplars[i];
-            if (this.runningExemplars[i].FilteredTags != null)
+            for (int i = 0; i < this.activeBuffer.Length; i++)
             {
-                // TODO: Better data structure to avoid this Linq.
-                // This is doing filtered = alltags - storedtags.
-                // TODO: At this stage, this logic is done inside Reservoir.
-                // Kinda hard for end users who write own reservoirs.
-                // Evaluate if this logic can be moved elsewhere.
-                // TODO: The cost is paid irrespective of whether the
-                // Exporter supports Exemplar or not. One idea is to
-                // defer this until first exporter attempts read.
-                this.tempExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags!.Except(actualTags.KeyAndValues.ToList()).ToList();
-            }
-
-            if (reset)
-            {
-                this.runningExemplars[i].Timestamp = default;
+                this.activeBuffer[i].Reset();
             }
         }
 
-        return this.tempExemplars;
+        return new(currentBuffer);
     }
 
-    private void OfferAtBoundary(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index)
+    protected int FindBucketIndexForValue(double value)
     {
-        ref var exemplar = ref this.runningExemplars[index];
+
+    }
+
+    private void OfferAtBoundary<T>(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int bucketIndex)
+        where T : notnull
+    {
+        ref var exemplar = ref this.activeBuffer[bucketIndex];
+
         exemplar.Timestamp = DateTimeOffset.UtcNow;
-        exemplar.DoubleValue = value;
-        exemplar.TraceId = Activity.Current?.TraceId;
-        exemplar.SpanId = Activity.Current?.SpanId;
 
-        if (tags == default)
+        if (typeof(T) == typeof(long))
         {
-            // default tag is used to indicate
-            // the special case where all tags provided at measurement
-            // recording time are stored.
-            // In this case, Exemplars does not have to store any tags.
-            // In other words, FilteredTags will be empty.
-            return;
+            exemplar.LongValue = (long)(object)value;
         }
-
-        if (exemplar.FilteredTags == null)
+        else if (typeof(T) == typeof(double))
         {
-            exemplar.FilteredTags = new List<KeyValuePair<string, object?>>(tags.Length);
+            exemplar.DoubleValue = (double)(object)value;
         }
         else
         {
-            // Keep the list, but clear contents.
-            exemplar.FilteredTags.Clear();
+            Debug.Fail("Invalid value type");
+            exemplar.DoubleValue = Convert.ToDouble((object)value);
         }
 
-        // Though only those tags that are filtered need to be
-        // stored, finding filtered list from the full tag list
-        // is expensive. So all the tags are stored in hot path (this).
-        // During snapshot, the filtered list is calculated.
-        // TODO: Evaluate alternative approaches based on perf.
-        // TODO: This is not user friendly to Reservoir authors
-        // and must be handled as transparently as feasible.
-        foreach (var tag in tags)
+        var currentActivity = Activity.Current;
+        if (currentActivity != null)
         {
-            exemplar.FilteredTags.Add(tag);
+            exemplar.TraceId = currentActivity.TraceId;
+            exemplar.SpanId = currentActivity.SpanId;
         }
+        else
+        {
+            exemplar.TraceId = default;
+            exemplar.SpanId = default;
+        }
+
+        exemplar.StoreFilteredTags(tags);
     }
 }

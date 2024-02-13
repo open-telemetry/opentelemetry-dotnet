@@ -26,12 +26,12 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
         this.random = new Random();
     }
 
-    public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default)
+    public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         this.Offer(value, tags);
     }
 
-    public override void Offer(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default)
+    public override void Offer(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         this.Offer(value, tags);
     }
