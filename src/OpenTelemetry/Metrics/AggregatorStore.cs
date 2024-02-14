@@ -188,7 +188,7 @@ internal sealed class AggregatorStore
 
             if (this.IsExemplarEnabled())
             {
-                metricPoint.TakeSnapshotWithExemplar(outputDelta: true);
+                metricPoint.TakeSnapshotAndCollectExemplars(outputDelta: true);
             }
             else
             {
@@ -213,7 +213,7 @@ internal sealed class AggregatorStore
         {
             if (this.IsExemplarEnabled())
             {
-                metricPointWithNoTags.TakeSnapshotWithExemplar(outputDelta: true);
+                metricPointWithNoTags.TakeSnapshotAndCollectExemplars(outputDelta: true);
             }
             else
             {
@@ -236,7 +236,7 @@ internal sealed class AggregatorStore
             {
                 if (this.IsExemplarEnabled())
                 {
-                    metricPointForOverflow.TakeSnapshotWithExemplar(outputDelta: true);
+                    metricPointForOverflow.TakeSnapshotAndCollectExemplars(outputDelta: true);
                 }
                 else
                 {
@@ -301,7 +301,7 @@ internal sealed class AggregatorStore
 
             if (this.IsExemplarEnabled())
             {
-                metricPoint.TakeSnapshotWithExemplar(outputDelta: true);
+                metricPoint.TakeSnapshotAndCollectExemplars(outputDelta: true);
             }
             else
             {
@@ -330,7 +330,7 @@ internal sealed class AggregatorStore
 
             if (this.IsExemplarEnabled())
             {
-                metricPoint.TakeSnapshotWithExemplar(outputDelta: false);
+                metricPoint.TakeSnapshotAndCollectExemplars(outputDelta: false);
             }
             else
             {
@@ -946,10 +946,10 @@ internal sealed class AggregatorStore
             }
 
             // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
+            if (this.IsExemplarEnabled()
+                && this.exemplarFilter.ShouldSample(value, tags))
             {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
+                this.metricPoints[index].UpdateAndOfferExemplar(value, tags: default);
             }
             else
             {
@@ -990,10 +990,10 @@ internal sealed class AggregatorStore
             }
 
             // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
+            if (this.IsExemplarEnabled()
+                && this.exemplarFilter.ShouldSample(value, tags))
             {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
+                this.metricPoints[index].UpdateAndOfferExemplar(value, tags);
             }
             else
             {
@@ -1034,10 +1034,10 @@ internal sealed class AggregatorStore
             }
 
             // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
+            if (this.IsExemplarEnabled()
+                && this.exemplarFilter.ShouldSample(value, tags))
             {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
+                this.metricPoints[index].UpdateAndOfferExemplar(value, tags: default);
             }
             else
             {
@@ -1078,10 +1078,10 @@ internal sealed class AggregatorStore
             }
 
             // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
+            if (this.IsExemplarEnabled()
+                && this.exemplarFilter.ShouldSample(value, tags))
             {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
+                this.metricPoints[index].UpdateAndOfferExemplar(value, tags);
             }
             else
             {

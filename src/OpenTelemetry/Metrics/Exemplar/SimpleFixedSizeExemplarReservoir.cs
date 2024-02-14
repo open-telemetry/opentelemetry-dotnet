@@ -12,10 +12,10 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
 {
     private int measurementsSeen;
 
-    public SimpleFixedSizeExemplarReservoir(int poolSize)
-        : base(poolSize)
+    public SimpleFixedSizeExemplarReservoir()
+        : base(Environment.ProcessorCount)
     {
-        this.measurementsSeen = -1;
+        this.OnCollectionCompleted();
     }
 
     public override void Offer(in ExemplarMeasurement<long> measurement)
@@ -33,13 +33,13 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
         // Reset internal state irrespective of temporality.
         // This ensures incoming measurements have fair chance
         // of making it to the reservoir.
-        this.measurementsSeen = 0;
+        Interlocked.Exchange(ref this.measurementsSeen, 0);
     }
 
     private void Offer<T>(in ExemplarMeasurement<T> measurement)
         where T : struct
     {
-        var currentMeasurement = Interlocked.Increment(ref this.measurementsSeen);
+        var currentMeasurement = Interlocked.Increment(ref this.measurementsSeen) - 1;
 
         if (currentMeasurement < this.ExemplarCount)
         {

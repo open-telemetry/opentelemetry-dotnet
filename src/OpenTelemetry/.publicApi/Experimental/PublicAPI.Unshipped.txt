@@ -32,6 +32,7 @@ OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator.Current.get -> OpenT
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator.Enumerator() -> void
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator.MoveNext() -> bool
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.GetEnumerator() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator
+OpenTelemetry.Metrics.ReadOnlyExemplarCollection.MaximumCount.get -> int
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.ReadOnlyExemplarCollection() -> void
 OpenTelemetry.Metrics.TraceBasedExemplarFilter
 OpenTelemetry.Metrics.TraceBasedExemplarFilter.TraceBasedExemplarFilter() -> void

@@ -32,21 +32,22 @@ internal
     private int tagCount;
     private KeyValuePair<string, object?>[]? tagStorage;
     private MetricPointValueStorage valueStorage;
+    private volatile int isCriticalSectionOccupied;
 
     /// <summary>
     /// Gets the timestamp.
     /// </summary>
-    public DateTimeOffset Timestamp { get; internal set; }
+    public DateTimeOffset Timestamp { get; private set; }
 
     /// <summary>
     /// Gets the TraceId.
     /// </summary>
-    public ActivityTraceId? TraceId { get; internal set; }
+    public ActivityTraceId? TraceId { get; private set; }
 
     /// <summary>
     /// Gets the SpanId.
     /// </summary>
-    public ActivitySpanId? SpanId { get; internal set; }
+    public ActivitySpanId? SpanId { get; private set; }
 
     /// <summary>
     /// Gets the long value.
@@ -54,7 +55,7 @@ internal
     public long LongValue
     {
         readonly get => this.valueStorage.AsLong;
-        internal set => this.valueStorage.AsLong = value;
+        private set => this.valueStorage.AsLong = value;
     }
 
     /// <summary>
@@ -63,7 +64,7 @@ internal
     public double DoubleValue
     {
         readonly get => this.valueStorage.AsDouble;
-        internal set => this.valueStorage.AsDouble = value;
+        private set => this.valueStorage.AsDouble = value;
     }
 
     /// <summary>
@@ -72,7 +73,100 @@ internal
     public readonly ReadOnlyFilteredTagCollection FilteredTags
         => new(this.KeyFilter, this.tagStorage ?? Array.Empty<KeyValuePair<string, object?>>(), this.tagCount);
 
-    internal void StoreFilteredTags(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    internal void Update<T>(in ExemplarMeasurement<T> measurement)
+        where T : struct
+    {
+        if (Interlocked.CompareExchange(ref this.isCriticalSectionOccupied, 1, 0) != 0)
+        {
+            // Some other thread is already writing, abort.
+            return;
+        }
+
+        this.Timestamp = DateTimeOffset.UtcNow;
+
+        if (typeof(T) == typeof(long))
+        {
+            this.LongValue = (long)(object)measurement.Value;
+        }
+        else if (typeof(T) == typeof(double))
+        {
+            this.DoubleValue = (double)(object)measurement.Value;
+        }
+        else
+        {
+            Debug.Fail("Invalid value type");
+            this.DoubleValue = Convert.ToDouble(measurement.Value);
+        }
+
+        var currentActivity = Activity.Current;
+        if (currentActivity != null)
+        {
+            this.TraceId = currentActivity.TraceId;
+            this.SpanId = currentActivity.SpanId;
+        }
+        else
+        {
+            this.TraceId = default;
+            this.SpanId = default;
+        }
+
+        this.StoreRawTags(measurement.Tags);
+
+        this.isCriticalSectionOccupied = 0;
+    }
+
+    internal void Reset()
+    {
+        this.Timestamp = default;
+    }
+
+    internal readonly bool IsUpdated()
+    {
+        if (this.Timestamp == default)
+        {
+            return false;
+        }
+
+        if (this.isCriticalSectionOccupied != 0)
+        {
+            this.WaitIfUpdatingRare();
+        }
+
+        return true;
+    }
+
+    internal readonly void WaitIfUpdatingRare()
+    {
+        var spinWait = default(SpinWait);
+        while (true)
+        {
+            spinWait.SpinOnce();
+
+            if (this.isCriticalSectionOccupied == 0)
+            {
+                return;
+            }
+        }
+    }
+
+    internal readonly void Copy(ref Exemplar destination)
+    {
+        destination.Timestamp = this.Timestamp;
+        destination.TraceId = this.TraceId;
+        destination.SpanId = this.SpanId;
+        destination.valueStorage = this.valueStorage;
+        destination.KeyFilter = this.KeyFilter;
+        destination.tagCount = this.tagCount;
+        if (destination.tagCount > 0)
+        {
+            Debug.Assert(this.tagStorage != null, "tagStorage was null");
+
+            destination.tagStorage = new KeyValuePair<string, object?>[destination.tagCount];
+            Array.Copy(this.tagStorage!, 0, destination.tagStorage, 0, destination.tagCount);
+        }
+    }
+
+    private void StoreRawTags(ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         this.tagCount = tags.Length;
         if (tags.Length == 0)
@@ -86,10 +180,5 @@ internal
         }
 
         tags.CopyTo(this.tagStorage);
-    }
-
-    internal void Reset()
-    {
-        this.Timestamp = default;
     }
 }

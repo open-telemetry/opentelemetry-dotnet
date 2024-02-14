@@ -33,6 +33,15 @@ internal
     }
 
     /// <summary>
+    /// Gets the maximum number of <see cref="Exemplar" />s in the collection.
+    /// </summary>
+    /// <remarks>
+    /// Note: Enumerating the collection may return fewer results depending on
+    /// which <see cref="Exemplar"/>s in the collection received updates.
+    /// </remarks>
+    public int MaximumCount => this.exemplars.Length;
+
+    /// <summary>
     /// Returns an enumerator that iterates through the <see cref="Exemplar" />s.
     /// </summary>
     /// <returns><see cref="Enumerator"/>.</returns>
@@ -41,9 +50,15 @@ internal
 
     internal ReadOnlyExemplarCollection Copy()
     {
-        var copy = new Exemplar[this.exemplars.Length];
-        this.exemplars.CopyTo(copy, 0);
-        return new ReadOnlyExemplarCollection(copy);
+        var exemplarCopies = new Exemplar[this.exemplars.Length];
+
+        int i = 0;
+        foreach (ref readonly var exemplar in this)
+        {
+            exemplar.Copy(ref exemplarCopies[i++]);
+        }
+
+        return new ReadOnlyExemplarCollection(exemplarCopies);
     }
 
     /// <summary>
@@ -81,7 +96,7 @@ internal
                 var index = ++this.index;
                 if (index < this.exemplars.Length)
                 {
-                    if (this.exemplars[index].Timestamp == default)
+                    if (!this.exemplars[index].IsUpdated())
                     {
                         continue;
                     }
