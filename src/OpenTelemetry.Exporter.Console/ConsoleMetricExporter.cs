@@ -190,7 +190,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 var exemplarString = new StringBuilder();
                 if (metricPoint.TryGetExemplars(out var exemplars))
                 {
-                    foreach (var exemplar in exemplars)
+                    foreach (ref readonly var exemplar in exemplars)
                     {
                         if (metricType.IsDouble())
                         {
@@ -250,7 +250,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 {
                     msg.AppendLine();
                     msg.AppendLine("Exemplars");
-                    msg.Append(exemplarString.ToString());
+                    msg.Append(exemplarString);
                 }
 
                 this.WriteLine(msg.ToString());
