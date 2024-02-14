@@ -164,12 +164,14 @@ public class MetricExemplarTests : MetricTestsBase
         Assert.True(metricPoint.Value.StartTime >= testStartTime);
         Assert.True(metricPoint.Value.EndTime != default);
         var exemplars = GetExemplars(metricPoint.Value);
-        Assert.NotNull(exemplars);
         foreach (var exemplar in exemplars)
         {
-            Assert.NotNull(exemplar.FilteredTags);
-            Assert.Contains(new("key2", "value1"), exemplar.FilteredTags);
-            Assert.Contains(new("key3", "value1"), exemplar.FilteredTags);
+            Assert.NotEqual(0, exemplar.FilteredTags.MaximumCount);
+
+            var filteredTags = exemplar.FilteredTags.ToReadOnlyList();
+
+            Assert.Contains(new("key2", "value1"), filteredTags);
+            Assert.Contains(new("key3", "value1"), filteredTags);
         }
     }
 
@@ -185,14 +187,13 @@ public class MetricExemplarTests : MetricTestsBase
         return values;
     }
 
-    private static void ValidateExemplars(Exemplar[] exemplars, DateTimeOffset startTime, DateTimeOffset endTime, double[] measurementValues, bool traceContextExists)
+    private static void ValidateExemplars(ReadOnlyExemplarCollection exemplars, DateTimeOffset startTime, DateTimeOffset endTime, double[] measurementValues, bool traceContextExists)
     {
-        Assert.NotNull(exemplars);
         foreach (var exemplar in exemplars)
         {
             Assert.True(exemplar.Timestamp >= startTime && exemplar.Timestamp <= endTime, $"{startTime} < {exemplar.Timestamp} < {endTime}");
             Assert.Contains(exemplar.DoubleValue, measurementValues);
-            Assert.Null(exemplar.FilteredTags);
+            Assert.Equal(0, exemplar.FilteredTags.MaximumCount);
             if (traceContextExists)
             {
                 Assert.NotEqual(default, exemplar.TraceId);

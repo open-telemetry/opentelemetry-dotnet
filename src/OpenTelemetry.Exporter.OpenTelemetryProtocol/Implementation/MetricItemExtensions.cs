@@ -267,33 +267,29 @@ internal static class MetricItemExtensions
                             }
                         }
 
-                        var exemplars = metricPoint.GetExemplars();
-                        foreach (var examplar in exemplars)
+                        if (metricPoint.TryGetExemplars(out var exemplars))
                         {
-                            if (examplar.Timestamp != default)
+                            foreach (ref readonly var exemplar in exemplars)
                             {
                                 byte[] traceIdBytes = new byte[16];
-                                examplar.TraceId?.CopyTo(traceIdBytes);
+                                exemplar.TraceId?.CopyTo(traceIdBytes);
 
                                 byte[] spanIdBytes = new byte[8];
-                                examplar.SpanId?.CopyTo(spanIdBytes);
+                                exemplar.SpanId?.CopyTo(spanIdBytes);
 
                                 var otlpExemplar = new OtlpMetrics.Exemplar
                                 {
-                                    TimeUnixNano = (ulong)examplar.Timestamp.ToUnixTimeNanoseconds(),
+                                    TimeUnixNano = (ulong)exemplar.Timestamp.ToUnixTimeNanoseconds(),
                                     TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
                                     SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
-                                    AsDouble = examplar.DoubleValue,
+                                    AsDouble = exemplar.DoubleValue,
                                 };
 
-                                if (examplar.FilteredTags != null)
+                                foreach (var tag in exemplar.FilteredTags)
                                 {
-                                    foreach (var tag in examplar.FilteredTags)
+                                    if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
                                     {
-                                        if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
-                                        {
-                                            otlpExemplar.FilteredAttributes.Add(result);
-                                        }
+                                        otlpExemplar.FilteredAttributes.Add(result);
                                     }
                                 }
 

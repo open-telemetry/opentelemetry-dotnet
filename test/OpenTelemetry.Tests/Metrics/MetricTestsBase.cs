@@ -233,9 +233,14 @@ public class MetricTestsBase
 #endif
     }
 
-    internal static Exemplar[] GetExemplars(MetricPoint mp)
+    internal static ReadOnlyExemplarCollection GetExemplars(MetricPoint mp)
     {
-        return mp.GetExemplars().Where(exemplar => exemplar.Timestamp != default).ToArray();
+        if (mp.TryGetExemplars(out var exemplars))
+        {
+            return exemplars.Value;
+        }
+
+        return new ReadOnlyExemplarCollection(Array.Empty<Exemplar>());
     }
 
 #if BUILDING_HOSTING_TESTS

@@ -9,21 +9,32 @@ namespace OpenTelemetry.Metrics;
 internal abstract class ExemplarReservoir
 {
     /// <summary>
-    /// Offers measurement to the reservoir.
+    /// Gets a value indicating whether or not the <see
+    /// cref="ExemplarReservoir"/> should reset its state when performing
+    /// collection.
     /// </summary>
-    /// <param name="value">The value of the measurement.</param>
-    /// <param name="tags">The complete set of tags provided with the measurement.</param>
-    public abstract void Offer(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
+    public bool ResetOnCollect { get; private set; }
 
     /// <summary>
     /// Offers measurement to the reservoir.
     /// </summary>
-    /// <param name="value">The value of the measurement.</param>
-    /// <param name="tags">The complete set of tags provided with the measurement.</param>
-    public abstract void Offer(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
+    /// <param name="measurement"><see cref="ExemplarMeasurement{T}"/>.</param>
+    public abstract void Offer(in ExemplarMeasurement<long> measurement);
+
+    /// <summary>
+    /// Offers measurement to the reservoir.
+    /// </summary>
+    /// <param name="measurement"><see cref="ExemplarMeasurement{T}"/>.</param>
+    public abstract void Offer(in ExemplarMeasurement<double> measurement);
 
     /// <summary>
     /// Collects all the exemplars accumulated by the Reservoir.
     /// </summary>
+    /// <returns><see cref="ReadOnlyExemplarCollection"/>.</returns>
     public abstract ReadOnlyExemplarCollection Collect();
+
+    internal virtual void Initialize(AggregatorStore aggregatorStore)
+    {
+        this.ResetOnCollect = aggregatorStore.OutputDelta;
+    }
 }

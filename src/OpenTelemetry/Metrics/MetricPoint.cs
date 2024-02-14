@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics;
@@ -91,7 +92,7 @@ public struct MetricPoint
 
         if (aggregatorStore!.IsExemplarEnabled() && reservoir == null)
         {
-            reservoir = new SimpleExemplarReservoir(DefaultSimpleReservoirPoolSize);
+            reservoir = new SimpleFixedSizeExemplarReservoir(DefaultSimpleReservoirPoolSize);
         }
 
         if (reservoir != null)
@@ -100,6 +101,8 @@ public struct MetricPoint
             {
                 this.mpComponents = new MetricPointOptionalComponents();
             }
+
+            reservoir.Initialize(aggregatorStore);
 
             this.mpComponents.ExemplarReservoir = reservoir;
         }
@@ -345,21 +348,18 @@ public struct MetricPoint
     /// Gets the exemplars associated with the metric point.
     /// </summary>
     /// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
-    /// <returns><see cref="Exemplar"/>.</returns>
+    /// <param name="exemplars"><see cref="ReadOnlyExemplarCollection"/>.</param>
+    /// <returns><see langword="true" /> if exemplars exist; <see langword="false" /> otherwise.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public
 #else
-    /// <summary>
-    /// Gets the exemplars associated with the metric point.
-    /// </summary>
-    /// <returns><see cref="Exemplar"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal
 #endif
-        readonly Exemplar[] GetExemplars()
+        readonly bool TryGetExemplars([NotNullWhen(true)] out ReadOnlyExemplarCollection? exemplars)
     {
-        // TODO: Do not expose Exemplar data structure (array now)
-        return this.mpComponents?.Exemplars ?? Array.Empty<Exemplar>();
+        exemplars = this.mpComponents?.Exemplars;
+        return exemplars.HasValue;
     }
 
     internal readonly MetricPoint Copy()
@@ -468,7 +468,8 @@ public struct MetricPoint
 
                         // TODO: Need to ensure that the lock is always released.
                         // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                        this.mpComponents.ExemplarReservoir!.Offer(
+                            new ExemplarMeasurement<double>(number, tags));
                     }
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
@@ -488,7 +489,8 @@ public struct MetricPoint
 
                         // TODO: Need to ensure that the lock is always released.
                         // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                        this.mpComponents.ExemplarReservoir!.Offer(
+                            new ExemplarMeasurement<double>(number, tags));
                     }
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
@@ -508,7 +510,8 @@ public struct MetricPoint
 
                         // TODO: Need to ensure that the lock is always released.
                         // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                        this.mpComponents.ExemplarReservoir!.Offer(
+                            new ExemplarMeasurement<double>(number, tags));
                     }
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
@@ -689,7 +692,8 @@ public struct MetricPoint
 
                         // TODO: Need to ensure that the lock is always released.
                         // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                        this.mpComponents.ExemplarReservoir!.Offer(
+                            new ExemplarMeasurement<double>(number, tags));
                     }
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
@@ -712,7 +716,8 @@ public struct MetricPoint
 
                         // TODO: Need to ensure that the lock is always released.
                         // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                        this.mpComponents.ExemplarReservoir!.Offer(
+                            new ExemplarMeasurement<double>(number, tags));
                     }
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
@@ -735,7 +740,8 @@ public struct MetricPoint
 
                         // TODO: Need to ensure that the lock is always released.
                         // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                        this.mpComponents.ExemplarReservoir!.Offer(
+                            new ExemplarMeasurement<double>(number, tags));
                     }
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
@@ -926,8 +932,6 @@ public struct MetricPoint
                         }
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
-
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -990,7 +994,6 @@ public struct MetricPoint
                         }
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -1107,7 +1110,7 @@ public struct MetricPoint
                         this.snapshotValue.AsLong = this.runningValue.AsLong;
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect();
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
@@ -1131,7 +1134,7 @@ public struct MetricPoint
                         this.snapshotValue.AsDouble = this.runningValue.AsDouble;
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect();
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
@@ -1144,7 +1147,7 @@ public struct MetricPoint
 
                     this.snapshotValue.AsLong = this.runningValue.AsLong;
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect();
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
@@ -1157,7 +1160,7 @@ public struct MetricPoint
 
                     this.snapshotValue.AsDouble = this.runningValue.AsDouble;
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect();
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
@@ -1192,7 +1195,7 @@ public struct MetricPoint
                         }
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect();
 
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
@@ -1218,7 +1221,7 @@ public struct MetricPoint
                         histogramBuckets.RunningSum = 0;
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect();
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -1258,7 +1261,7 @@ public struct MetricPoint
                         }
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect();
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -1287,7 +1290,7 @@ public struct MetricPoint
                         histogramBuckets.RunningMax = double.NegativeInfinity;
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect();
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -1387,7 +1390,8 @@ public struct MetricPoint
 
             // TODO: Need to ensure that the lock is always released.
             // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-            this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+            this.mpComponents.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<double>(number, tags));
         }
 
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -1415,7 +1419,8 @@ public struct MetricPoint
 
             // TODO: Need to ensure that the lock is always released.
             // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-            this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+            this.mpComponents.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<double>(number, tags));
         }
 
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -1445,7 +1450,8 @@ public struct MetricPoint
 
                 // TODO: Need to ensure that the lock is always released.
                 // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                this.mpComponents.ExemplarReservoir!.Offer(number, tags, i);
+                this.mpComponents.ExemplarReservoir!.Offer(
+                    new ExemplarMeasurement<double>(number, tags, explicitBucketHistogramIndex: i));
             }
         }
 
@@ -1476,7 +1482,8 @@ public struct MetricPoint
 
                 // TODO: Need to ensure that the lock is always released.
                 // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                this.mpComponents.ExemplarReservoir!.Offer(number, tags, i);
+                this.mpComponents.ExemplarReservoir!.Offer(
+                    new ExemplarMeasurement<double>(number, tags, explicitBucketHistogramIndex: i));
             }
 
             histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);

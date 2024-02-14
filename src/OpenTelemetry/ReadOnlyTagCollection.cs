@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
-
 namespace OpenTelemetry;
 
 /// <summary>
@@ -13,31 +11,16 @@ namespace OpenTelemetry;
 public readonly struct ReadOnlyTagCollection
 {
     internal readonly KeyValuePair<string, object?>[] KeyAndValues;
-    private readonly HashSet<string>? keyFilter;
-    private readonly int count;
 
     internal ReadOnlyTagCollection(KeyValuePair<string, object?>[]? keyAndValues)
     {
         this.KeyAndValues = keyAndValues ?? Array.Empty<KeyValuePair<string, object?>>();
-        this.keyFilter = null;
-        this.count = this.KeyAndValues.Length;
-    }
-
-    internal ReadOnlyTagCollection(HashSet<string> keyFilter, KeyValuePair<string, object?>[] keyAndValues, int count)
-    {
-        Debug.Assert(keyFilter != null, "keyFilter was null");
-        Debug.Assert(keyAndValues != null, "keyAndValues was null");
-        Debug.Assert(count <= keyAndValues.Length, "count was invalid");
-
-        this.keyFilter = keyFilter;
-        this.KeyAndValues = keyAndValues;
-        this.count = count;
     }
 
     /// <summary>
     /// Gets the number of tags in the collection.
     /// </summary>
-    public int Count => this.count;
+    public int Count => this.KeyAndValues.Length;
 
     /// <summary>
     /// Returns an enumerator that iterates through the tags.
@@ -64,7 +47,7 @@ public readonly struct ReadOnlyTagCollection
         /// <summary>
         /// Gets the tag at the current position of the enumerator.
         /// </summary>
-        public KeyValuePair<string, object?> Current { get; private set; }
+        public KeyValuePair<string, object?> Current { readonly get; private set; }
 
         /// <summary>
         /// Advances the enumerator to the next element of the <see
@@ -76,24 +59,14 @@ public readonly struct ReadOnlyTagCollection
         /// collection.</returns>
         public bool MoveNext()
         {
-            while (true)
+            int index = this.index;
+
+            if (index < this.source.Count)
             {
-                int index = this.index;
-                if (index < this.source.Count)
-                {
-                    var item = this.source.KeyAndValues[index++];
-                    this.index = index;
+                this.Current = this.source.KeyAndValues[index];
 
-                    if (this.source.keyFilter?.Contains(item.Key) == true)
-                    {
-                        continue;
-                    }
-
-                    this.Current = item;
-                    return true;
-                }
-
-                break;
+                this.index++;
+                return true;
             }
 
             return false;

@@ -188,9 +188,9 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 }
 
                 var exemplarString = new StringBuilder();
-                foreach (var exemplar in metricPoint.GetExemplars())
+                if (metricPoint.TryGetExemplars(out var exemplars))
                 {
-                    if (exemplar.Timestamp != default)
+                    foreach (var exemplar in exemplars)
                     {
                         exemplarString.Append("Value: ");
                         exemplarString.Append(exemplar.DoubleValue);
@@ -201,17 +201,19 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                         exemplarString.Append(" SpanId: ");
                         exemplarString.Append(exemplar.SpanId);
 
-                        if (exemplar.FilteredTags != null && exemplar.FilteredTags.Count > 0)
+                        bool appendedTagString = false;
+                        foreach (var tag in exemplar.FilteredTags)
                         {
-                            exemplarString.Append(" Filtered Tags : ");
-
-                            foreach (var tag in exemplar.FilteredTags)
+                            if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
                             {
-                                if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
+                                if (!appendedTagString)
                                 {
-                                    exemplarString.Append(result);
-                                    exemplarString.Append(' ');
+                                    exemplarString.Append(" Filtered Tags : ");
+                                    appendedTagString = true;
                                 }
+
+                                exemplarString.Append(result);
+                                exemplarString.Append(' ');
                             }
                         }
 
