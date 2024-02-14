@@ -192,8 +192,17 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 {
                     foreach (var exemplar in exemplars)
                     {
-                        exemplarString.Append("Value: ");
-                        exemplarString.Append(exemplar.DoubleValue);
+                        if (metricType.IsDouble())
+                        {
+                            exemplarString.Append("Value: ");
+                            exemplarString.Append(exemplar.DoubleValue);
+                        }
+                        else if (metricType.IsLong())
+                        {
+                            exemplarString.Append("Value: ");
+                            exemplarString.Append(exemplar.LongValue);
+                        }
+
                         exemplarString.Append(" Timestamp: ");
                         exemplarString.Append(exemplar.Timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                         exemplarString.Append(" TraceId: ");
