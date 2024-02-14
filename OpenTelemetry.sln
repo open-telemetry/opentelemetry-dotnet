@@ -278,6 +278,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 		src\Shared\TagAndValueTransformer.cs = src\Shared\TagAndValueTransformer.cs
 		src\Shared\TagTransformer.cs = src\Shared\TagTransformer.cs
 		src\Shared\TagTransformerJsonHelper.cs = src\Shared\TagTransformerJsonHelper.cs
+		src\Shared\ThreadSafeRandom.cs = src\Shared\ThreadSafeRandom.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiagnosticSourceInstrumentation", "DiagnosticSourceInstrumentation", "{28F3EC79-660C-4659-8B73-F90DC1173316}"

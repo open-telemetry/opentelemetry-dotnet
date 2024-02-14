@@ -22,7 +22,7 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     /// Collects all the exemplars accumulated by the Reservoir.
     /// </summary>
     /// <returns><see cref="ReadOnlyExemplarCollection"/>.</returns>
-    public override ReadOnlyExemplarCollection Collect()
+    public sealed override ReadOnlyExemplarCollection Collect()
     {
         var currentBuffer = this.activeBuffer;
 
@@ -42,6 +42,8 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
             }
         }
 
+        this.OnCollectionCompleted();
+
         this.activeBuffer = inactiveBuffer;
 
         return new(currentBuffer!);
@@ -60,6 +62,10 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
         }
 
         base.Initialize(aggregatorStore);
+    }
+
+    protected virtual void OnCollectionCompleted()
+    {
     }
 
     protected void UpdateExemplar<T>(int exemplarIndex, in ExemplarMeasurement<T> measurement)

@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -8,15 +10,12 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReservoir
 {
-    private readonly Random random;
-
     private int measurementsSeen;
 
     public SimpleFixedSizeExemplarReservoir(int poolSize)
         : base(poolSize)
     {
-        this.measurementsSeen = 0;
-        this.random = new Random();
+        this.measurementsSeen = -1;
     }
 
     public override void Offer(in ExemplarMeasurement<long> measurement)
@@ -29,37 +28,30 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
         this.Offer(in measurement);
     }
 
-    public override ReadOnlyExemplarCollection Collect()
+    protected override void OnCollectionCompleted()
     {
         // Reset internal state irrespective of temporality.
         // This ensures incoming measurements have fair chance
         // of making it to the reservoir.
         this.measurementsSeen = 0;
-
-        return base.Collect();
     }
 
     private void Offer<T>(in ExemplarMeasurement<T> measurement)
         where T : struct
     {
-        if (this.measurementsSeen < this.ExemplarCount)
+        var currentMeasurement = Interlocked.Increment(ref this.measurementsSeen);
+
+        if (currentMeasurement < this.ExemplarCount)
         {
-            this.UpdateExemplar(this.measurementsSeen, in measurement);
+            this.UpdateExemplar(currentMeasurement, in measurement);
         }
         else
         {
-            int index;
-            lock (this.random)
-            {
-                index = this.random.Next(0, this.measurementsSeen);
-            }
-
+            int index = ThreadSafeRandom.Next(0, currentMeasurement);
             if (index < this.ExemplarCount)
             {
                 this.UpdateExemplar(index, in measurement);
             }
         }
-
-        Interlocked.Increment(ref this.measurementsSeen);
     }
 }
