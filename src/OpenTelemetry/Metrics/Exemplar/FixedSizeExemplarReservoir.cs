@@ -9,7 +9,7 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
 {
     private Exemplar[] bufferA = Array.Empty<Exemplar>();
     private Exemplar[] bufferB = Array.Empty<Exemplar>();
-    private Exemplar[] activeBuffer = Array.Empty<Exemplar>();
+    private Exemplar[]? activeBuffer;
 
     protected FixedSizeExemplarReservoir(int exemplarCount)
     {
@@ -26,19 +26,25 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     {
         var currentBuffer = this.activeBuffer;
 
-        this.activeBuffer = currentBuffer == this.bufferA
+        Debug.Assert(currentBuffer != null, "currentBuffer was null");
+
+        this.activeBuffer = null;
+
+        var inactiveBuffer = currentBuffer == this.bufferA
             ? this.bufferB
             : this.bufferA;
 
         if (this.ResetOnCollect)
         {
-            for (int i = 0; i < this.activeBuffer.Length; i++)
+            for (int i = 0; i < inactiveBuffer.Length; i++)
             {
-                this.activeBuffer[i].Reset();
+                inactiveBuffer[i].Reset();
             }
         }
 
-        return new(currentBuffer);
+        this.activeBuffer = inactiveBuffer;
+
+        return new(currentBuffer!);
     }
 
     internal sealed override void Initialize(AggregatorStore aggregatorStore)
@@ -56,10 +62,17 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
         base.Initialize(aggregatorStore);
     }
 
-    internal void UpdateExemplar<T>(int exemplarIndex, in ExemplarMeasurement<T> measurement)
+    protected void UpdateExemplar<T>(int exemplarIndex, in ExemplarMeasurement<T> measurement)
         where T : struct
     {
-        ref var exemplar = ref this.activeBuffer[exemplarIndex];
+        var activeBuffer = this.activeBuffer;
+        if (activeBuffer == null)
+        {
+            // Note: This is expected to happen when we race with a collection.
+            return;
+        }
+
+        ref var exemplar = ref activeBuffer[exemplarIndex];
 
         exemplar.Timestamp = DateTimeOffset.UtcNow;
 
