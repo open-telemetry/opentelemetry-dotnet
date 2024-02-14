@@ -367,198 +367,46 @@ public struct MetricPoint
         return copy;
     }
 
-    internal void Update(long number)
+    internal void Update(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
-        switch (this.aggType)
+        var measurement = new Measurement<long>
         {
-            case AggregationType.LongSumIncomingDelta:
-                {
-                    Interlocked.Add(ref this.runningValue.AsLong, number);
-                    break;
-                }
+            Value = number,
+            Tags = tags,
+        };
 
-            case AggregationType.LongSumIncomingCumulative:
-                {
-                    Interlocked.Exchange(ref this.runningValue.AsLong, number);
-                    break;
-                }
+        this.Update(ref measurement);
 
-            case AggregationType.LongGauge:
-                {
-                    Interlocked.Exchange(ref this.runningValue.AsLong, number);
-                    break;
-                }
+        if (this.ShouldOfferExemplar(ref measurement))
+        {
+            Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
 
-            case AggregationType.Histogram:
-                {
-                    this.UpdateHistogram((double)number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMax:
-                {
-                    this.UpdateHistogramWithMinMax((double)number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithBuckets:
-                {
-                    this.UpdateHistogramWithBuckets((double)number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMaxBuckets:
-                {
-                    this.UpdateHistogramWithBucketsAndMinMax((double)number);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogram:
-                {
-                    this.UpdateBase2ExponentialHistogram((double)number);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogramWithMinMax:
-                {
-                    this.UpdateBase2ExponentialHistogramWithMinMax((double)number);
-                    break;
-                }
+            this.mpComponents!.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<long>(number, tags, measurement.ExplicitBucketHistogramBucketIndex));
         }
 
-        // There is a race with Snapshot:
-        // Update() updates the value
-        // Snapshot snapshots the value
-        // Snapshot sets status to NoCollectPending
-        // Update sets status to CollectPending -- this is not right as the Snapshot
-        // already included the updated value.
-        // In the absence of any new Update call until next Snapshot,
-        // this results in exporting an Update even though
-        // it had no update.
-        // TODO: For Delta, this can be mitigated
-        // by ignoring Zero points
-        this.MetricPointStatus = MetricPointStatus.CollectPending;
-
-        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
-        {
-            Interlocked.Decrement(ref this.ReferenceCount);
-        }
+        this.CompleteUpdate();
     }
 
-    internal void UpdateAndOfferExemplar(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    internal void Update(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
-        Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-        this.Update(number);
-
-        this.mpComponents!.ExemplarReservoir!.Offer(
-            new ExemplarMeasurement<long>(number, tags));
-    }
-
-    internal void Update(double number)
-    {
-        switch (this.aggType)
+        var measurement = new Measurement<double>
         {
-            case AggregationType.DoubleSumIncomingDelta:
-                {
-                    double initValue, newValue;
-                    var sw = default(SpinWait);
-                    while (true)
-                    {
-                        initValue = this.runningValue.AsDouble;
+            Value = number,
+            Tags = tags,
+        };
 
-                        unchecked
-                        {
-                            newValue = initValue + number;
-                        }
+        this.Update(ref measurement);
 
-                        if (initValue == Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue))
-                        {
-                            break;
-                        }
+        if (this.ShouldOfferExemplar(ref measurement))
+        {
+            Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
 
-                        sw.SpinOnce();
-                    }
-
-                    break;
-                }
-
-            case AggregationType.DoubleSumIncomingCumulative:
-                {
-                    Interlocked.Exchange(ref this.runningValue.AsDouble, number);
-                    break;
-                }
-
-            case AggregationType.DoubleGauge:
-                {
-                    Interlocked.Exchange(ref this.runningValue.AsDouble, number);
-                    break;
-                }
-
-            case AggregationType.Histogram:
-                {
-                    this.UpdateHistogram(number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMax:
-                {
-                    this.UpdateHistogramWithMinMax(number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithBuckets:
-                {
-                    this.UpdateHistogramWithBuckets(number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMaxBuckets:
-                {
-                    this.UpdateHistogramWithBucketsAndMinMax(number);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogram:
-                {
-                    this.UpdateBase2ExponentialHistogram(number);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogramWithMinMax:
-                {
-                    this.UpdateBase2ExponentialHistogramWithMinMax(number);
-                    break;
-                }
+            this.mpComponents!.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<double>(number, tags, measurement.ExplicitBucketHistogramBucketIndex));
         }
 
-        // There is a race with Snapshot:
-        // Update() updates the value
-        // Snapshot snapshots the value
-        // Snapshot sets status to NoCollectPending
-        // Update sets status to CollectPending -- this is not right as the Snapshot
-        // already included the updated value.
-        // In the absence of any new Update call until next Snapshot,
-        // this results in exporting an Update even though
-        // it had no update.
-        // TODO: For Delta, this can be mitigated
-        // by ignoring Zero points
-        this.MetricPointStatus = MetricPointStatus.CollectPending;
-
-        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
-        {
-            Interlocked.Decrement(ref this.ReferenceCount);
-        }
-    }
-
-    internal void UpdateAndOfferExemplar(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-    {
-        Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-        this.Update(number);
-
-        this.mpComponents!.ExemplarReservoir!.Offer(
-            new ExemplarMeasurement<double>(number, tags));
+        this.CompleteUpdate();
     }
 
     internal void TakeSnapshot(bool outputDelta)
@@ -866,6 +714,176 @@ public struct MetricPoint
         Interlocked.Exchange(ref isCriticalSectionOccupied, 0);
     }
 
+    private bool ShouldOfferExemplar<T>(ref Measurement<T> measurement)
+        where T : struct
+    {
+        var exemplarFilter = this.aggregatorStore.ExemplarFilter;
+
+        if (exemplarFilter is AlwaysOffExemplarFilter)
+        {
+            return false;
+        }
+        else if (exemplarFilter is AlwaysOnExemplarFilter)
+        {
+            return true;
+        }
+        else if (typeof(T) == typeof(long))
+        {
+            return exemplarFilter.ShouldSample((long)(object)measurement.Value, measurement.Tags);
+        }
+        else if (typeof(T) == typeof(double))
+        {
+            return exemplarFilter.ShouldSample((double)(object)measurement.Value, measurement.Tags);
+        }
+        else
+        {
+            Debug.Fail("Invalid value type");
+            return exemplarFilter.ShouldSample(Convert.ToDouble(measurement.Value), measurement.Tags);
+        }
+    }
+
+    private void Update(ref Measurement<long> measurement)
+    {
+        var number = measurement.Value;
+
+        switch (this.aggType)
+        {
+            case AggregationType.LongSumIncomingDelta:
+                {
+                    Interlocked.Add(ref this.runningValue.AsLong, number);
+                    break;
+                }
+
+            case AggregationType.LongSumIncomingCumulative:
+                {
+                    Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                    break;
+                }
+
+            case AggregationType.LongGauge:
+                {
+                    Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                    break;
+                }
+
+            case AggregationType.Histogram:
+                {
+                    this.UpdateHistogram((double)number);
+                    break;
+                }
+
+            case AggregationType.HistogramWithMinMax:
+                {
+                    this.UpdateHistogramWithMinMax((double)number);
+                    break;
+                }
+
+            case AggregationType.HistogramWithBuckets:
+                {
+                    measurement.ExplicitBucketHistogramBucketIndex = this.UpdateHistogramWithBuckets((double)number);
+                    break;
+                }
+
+            case AggregationType.HistogramWithMinMaxBuckets:
+                {
+                    measurement.ExplicitBucketHistogramBucketIndex = this.UpdateHistogramWithBucketsAndMinMax((double)number);
+                    break;
+                }
+
+            case AggregationType.Base2ExponentialHistogram:
+                {
+                    this.UpdateBase2ExponentialHistogram((double)number);
+                    break;
+                }
+
+            case AggregationType.Base2ExponentialHistogramWithMinMax:
+                {
+                    this.UpdateBase2ExponentialHistogramWithMinMax((double)number);
+                    break;
+                }
+        }
+    }
+
+    private void Update(ref Measurement<double> measurement)
+    {
+        var number = measurement.Value;
+
+        switch (this.aggType)
+        {
+            case AggregationType.DoubleSumIncomingDelta:
+                {
+                    double initValue, newValue;
+                    var sw = default(SpinWait);
+                    while (true)
+                    {
+                        initValue = this.runningValue.AsDouble;
+
+                        unchecked
+                        {
+                            newValue = initValue + number;
+                        }
+
+                        if (initValue == Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue))
+                        {
+                            break;
+                        }
+
+                        sw.SpinOnce();
+                    }
+
+                    break;
+                }
+
+            case AggregationType.DoubleSumIncomingCumulative:
+                {
+                    Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                    break;
+                }
+
+            case AggregationType.DoubleGauge:
+                {
+                    Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                    break;
+                }
+
+            case AggregationType.Histogram:
+                {
+                    this.UpdateHistogram(number);
+                    break;
+                }
+
+            case AggregationType.HistogramWithMinMax:
+                {
+                    this.UpdateHistogramWithMinMax(number);
+                    break;
+                }
+
+            case AggregationType.HistogramWithBuckets:
+                {
+                    measurement.ExplicitBucketHistogramBucketIndex = this.UpdateHistogramWithBuckets(number);
+                    break;
+                }
+
+            case AggregationType.HistogramWithMinMaxBuckets:
+                {
+                    measurement.ExplicitBucketHistogramBucketIndex = this.UpdateHistogramWithBucketsAndMinMax(number);
+                    break;
+                }
+
+            case AggregationType.Base2ExponentialHistogram:
+                {
+                    this.UpdateBase2ExponentialHistogram(number);
+                    break;
+                }
+
+            case AggregationType.Base2ExponentialHistogramWithMinMax:
+                {
+                    this.UpdateBase2ExponentialHistogramWithMinMax(number);
+                    break;
+                }
+        }
+    }
+
     private void UpdateHistogram(double number)
     {
         Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
@@ -902,7 +920,7 @@ public struct MetricPoint
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
     }
 
-    private void UpdateHistogramWithBuckets(double number)
+    private int UpdateHistogramWithBuckets(double number)
     {
         Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
@@ -922,9 +940,11 @@ public struct MetricPoint
         }
 
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+        return i;
     }
 
-    private void UpdateHistogramWithBucketsAndMinMax(double number)
+    private int UpdateHistogramWithBucketsAndMinMax(double number)
     {
         Debug.Assert(this.mpComponents?.HistogramBuckets != null, "histogramBuckets was null");
 
@@ -947,6 +967,8 @@ public struct MetricPoint
         }
 
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+        return i;
     }
 
     private void UpdateBase2ExponentialHistogram(double number)
@@ -998,9 +1020,38 @@ public struct MetricPoint
         ReleaseLock(ref histogram.IsCriticalSectionOccupied);
     }
 
+    private void CompleteUpdate()
+    {
+        // There is a race with Snapshot:
+        // Update() updates the value
+        // Snapshot snapshots the value
+        // Snapshot sets status to NoCollectPending
+        // Update sets status to CollectPending -- this is not right as the Snapshot
+        // already included the updated value.
+        // In the absence of any new Update call until next Snapshot,
+        // this results in exporting an Update even though
+        // it had no update.
+        // TODO: For Delta, this can be mitigated
+        // by ignoring Zero points
+        this.MetricPointStatus = MetricPointStatus.CollectPending;
+
+        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
+        {
+            Interlocked.Decrement(ref this.ReferenceCount);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.NoInlining)]
     private readonly void ThrowNotSupportedMetricTypeException(string methodName)
     {
         throw new NotSupportedException($"{methodName} is not supported for this metric type.");
+    }
+
+    private ref struct Measurement<T>
+        where T : struct
+    {
+        public T Value;
+        public ReadOnlySpan<KeyValuePair<string, object?>> Tags;
+        public int ExplicitBucketHistogramBucketIndex;
     }
 }

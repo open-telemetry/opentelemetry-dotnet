@@ -122,31 +122,13 @@ internal
 
     internal readonly bool IsUpdated()
     {
-        if (this.Timestamp == default)
-        {
-            return false;
-        }
-
         if (this.isCriticalSectionOccupied != 0)
         {
-            this.WaitIfUpdatingRare();
+            this.WaitForUpdateToCompleteRare();
+            return true;
         }
 
-        return true;
-    }
-
-    internal readonly void WaitIfUpdatingRare()
-    {
-        var spinWait = default(SpinWait);
-        while (true)
-        {
-            spinWait.SpinOnce();
-
-            if (this.isCriticalSectionOccupied == 0)
-            {
-                return;
-            }
-        }
+        return this.Timestamp != default;
     }
 
     internal readonly void Copy(ref Exemplar destination)
@@ -180,5 +162,15 @@ internal
         }
 
         tags.CopyTo(this.tagStorage);
+    }
+
+    private readonly void WaitForUpdateToCompleteRare()
+    {
+        var spinWait = default(SpinWait);
+        do
+        {
+            spinWait.SpinOnce();
+        }
+        while (this.isCriticalSectionOccupied != 0);
     }
 }

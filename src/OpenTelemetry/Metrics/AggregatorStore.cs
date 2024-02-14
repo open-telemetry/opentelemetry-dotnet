@@ -17,6 +17,7 @@ internal sealed class AggregatorStore
     internal readonly int CardinalityLimit;
     internal readonly bool EmitOverflowAttribute;
     internal readonly ConcurrentDictionary<Tags, LookupData>? TagsToMetricPointIndexDictionaryDelta;
+    internal readonly ExemplarFilter ExemplarFilter;
     internal long DroppedMeasurements = 0;
 
     private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute by setting env variable OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE = true. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
@@ -43,7 +44,6 @@ internal sealed class AggregatorStore
     private readonly int exponentialHistogramMaxScale;
     private readonly UpdateLongDelegate updateLongCallback;
     private readonly UpdateDoubleDelegate updateDoubleCallback;
-    private readonly ExemplarFilter exemplarFilter;
     private readonly Func<KeyValuePair<string, object?>[], int, int> lookupAggregatorStore;
 
     private int metricPointIndex = 0;
@@ -73,7 +73,7 @@ internal sealed class AggregatorStore
         this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;
-        this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
+        this.ExemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
         if (metricStreamIdentity.TagKeys == null)
         {
             this.updateLongCallback = this.UpdateLong;
@@ -141,7 +141,7 @@ internal sealed class AggregatorStore
     {
         // Using this filter to indicate On/Off
         // instead of another separate flag.
-        return this.exemplarFilter is not AlwaysOffExemplarFilter;
+        return this.ExemplarFilter is not AlwaysOffExemplarFilter;
     }
 
     internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
@@ -931,7 +931,7 @@ internal sealed class AggregatorStore
                 if (this.EmitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
-                    this.metricPoints[1].Update(value);
+                    this.metricPoints[1].Update(value, tags: default);
                     return;
                 }
                 else
@@ -945,16 +945,7 @@ internal sealed class AggregatorStore
                 }
             }
 
-            // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled()
-                && this.exemplarFilter.ShouldSample(value, tags))
-            {
-                this.metricPoints[index].UpdateAndOfferExemplar(value, tags: default);
-            }
-            else
-            {
-                this.metricPoints[index].Update(value);
-            }
+            this.metricPoints[index].Update(value, tags: default);
         }
         catch (Exception)
         {
@@ -975,7 +966,7 @@ internal sealed class AggregatorStore
                 if (this.EmitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
-                    this.metricPoints[1].Update(value);
+                    this.metricPoints[1].Update(value, tags);
                     return;
                 }
                 else
@@ -989,16 +980,7 @@ internal sealed class AggregatorStore
                 }
             }
 
-            // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled()
-                && this.exemplarFilter.ShouldSample(value, tags))
-            {
-                this.metricPoints[index].UpdateAndOfferExemplar(value, tags);
-            }
-            else
-            {
-                this.metricPoints[index].Update(value);
-            }
+            this.metricPoints[index].Update(value, tags);
         }
         catch (Exception)
         {
@@ -1019,7 +1001,7 @@ internal sealed class AggregatorStore
                 if (this.EmitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
-                    this.metricPoints[1].Update(value);
+                    this.metricPoints[1].Update(value, tags: default);
                     return;
                 }
                 else
@@ -1033,16 +1015,7 @@ internal sealed class AggregatorStore
                 }
             }
 
-            // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled()
-                && this.exemplarFilter.ShouldSample(value, tags))
-            {
-                this.metricPoints[index].UpdateAndOfferExemplar(value, tags: default);
-            }
-            else
-            {
-                this.metricPoints[index].Update(value);
-            }
+            this.metricPoints[index].Update(value, tags: default);
         }
         catch (Exception)
         {
@@ -1063,7 +1036,7 @@ internal sealed class AggregatorStore
                 if (this.EmitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
-                    this.metricPoints[1].Update(value);
+                    this.metricPoints[1].Update(value, tags);
                     return;
                 }
                 else
@@ -1077,16 +1050,7 @@ internal sealed class AggregatorStore
                 }
             }
 
-            // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled()
-                && this.exemplarFilter.ShouldSample(value, tags))
-            {
-                this.metricPoints[index].UpdateAndOfferExemplar(value, tags);
-            }
-            else
-            {
-                this.metricPoints[index].Update(value);
-            }
+            this.metricPoints[index].Update(value, tags);
         }
         catch (Exception)
         {

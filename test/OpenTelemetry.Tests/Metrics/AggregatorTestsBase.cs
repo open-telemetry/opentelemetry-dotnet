@@ -31,38 +31,38 @@ public abstract class AggregatorTestsBase
     public void HistogramDistributeToAllBucketsDefault()
     {
         var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
-        histogramPoint.Update(-1);
-        histogramPoint.Update(0);
-        histogramPoint.Update(2);
-        histogramPoint.Update(5);
-        histogramPoint.Update(8);
-        histogramPoint.Update(10);
-        histogramPoint.Update(11);
-        histogramPoint.Update(25);
-        histogramPoint.Update(40);
-        histogramPoint.Update(50);
-        histogramPoint.Update(70);
-        histogramPoint.Update(75);
-        histogramPoint.Update(99);
-        histogramPoint.Update(100);
-        histogramPoint.Update(246);
-        histogramPoint.Update(250);
-        histogramPoint.Update(499);
-        histogramPoint.Update(500);
-        histogramPoint.Update(501);
-        histogramPoint.Update(750);
-        histogramPoint.Update(751);
-        histogramPoint.Update(1000);
-        histogramPoint.Update(1001);
-        histogramPoint.Update(2500);
-        histogramPoint.Update(2501);
-        histogramPoint.Update(5000);
-        histogramPoint.Update(5001);
-        histogramPoint.Update(7500);
-        histogramPoint.Update(7501);
-        histogramPoint.Update(10000);
-        histogramPoint.Update(10001);
-        histogramPoint.Update(10000000);
+        histogramPoint.Update(-1, tags: default);
+        histogramPoint.Update(0, tags: default);
+        histogramPoint.Update(2, tags: default);
+        histogramPoint.Update(5, tags: default);
+        histogramPoint.Update(8, tags: default);
+        histogramPoint.Update(10, tags: default);
+        histogramPoint.Update(11, tags: default);
+        histogramPoint.Update(25, tags: default);
+        histogramPoint.Update(40, tags: default);
+        histogramPoint.Update(50, tags: default);
+        histogramPoint.Update(70, tags: default);
+        histogramPoint.Update(75, tags: default);
+        histogramPoint.Update(99, tags: default);
+        histogramPoint.Update(100, tags: default);
+        histogramPoint.Update(246, tags: default);
+        histogramPoint.Update(250, tags: default);
+        histogramPoint.Update(499, tags: default);
+        histogramPoint.Update(500, tags: default);
+        histogramPoint.Update(501, tags: default);
+        histogramPoint.Update(750, tags: default);
+        histogramPoint.Update(751, tags: default);
+        histogramPoint.Update(1000, tags: default);
+        histogramPoint.Update(1001, tags: default);
+        histogramPoint.Update(2500, tags: default);
+        histogramPoint.Update(2501, tags: default);
+        histogramPoint.Update(5000, tags: default);
+        histogramPoint.Update(5001, tags: default);
+        histogramPoint.Update(7500, tags: default);
+        histogramPoint.Update(7501, tags: default);
+        histogramPoint.Update(10000, tags: default);
+        histogramPoint.Update(10001, tags: default);
+        histogramPoint.Update(10000000, tags: default);
         histogramPoint.TakeSnapshot(true);
 
         var count = histogramPoint.GetHistogramCount();
@@ -84,15 +84,15 @@ public abstract class AggregatorTestsBase
         var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
         // 5 recordings <=10
-        histogramPoint.Update(-10);
-        histogramPoint.Update(0);
-        histogramPoint.Update(1);
-        histogramPoint.Update(9);
-        histogramPoint.Update(10);
+        histogramPoint.Update(-10, tags: default);
+        histogramPoint.Update(0, tags: default);
+        histogramPoint.Update(1, tags: default);
+        histogramPoint.Update(9, tags: default);
+        histogramPoint.Update(10, tags: default);
 
         // 2 recordings >10, <=20
-        histogramPoint.Update(11);
-        histogramPoint.Update(19);
+        histogramPoint.Update(11, tags: default);
+        histogramPoint.Update(19, tags: default);
 
         histogramPoint.TakeSnapshot(true);
 
@@ -132,12 +132,12 @@ public abstract class AggregatorTestsBase
         var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
         // Act
-        histogramPoint.Update(-1);
-        histogramPoint.Update(boundaries[0]);
-        histogramPoint.Update(boundaries[boundaries.Length - 1]);
+        histogramPoint.Update(-1, tags: default);
+        histogramPoint.Update(boundaries[0], tags: default);
+        histogramPoint.Update(boundaries[boundaries.Length - 1], tags: default);
         for (var i = 0.5; i < boundaries.Length; i++)
         {
-            histogramPoint.Update(i);
+            histogramPoint.Update(i, tags: default);
         }
 
         histogramPoint.TakeSnapshot(true);
@@ -164,13 +164,13 @@ public abstract class AggregatorTestsBase
         var boundaries = Array.Empty<double>();
         var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
-        histogramPoint.Update(-10);
-        histogramPoint.Update(0);
-        histogramPoint.Update(1);
-        histogramPoint.Update(9);
-        histogramPoint.Update(10);
-        histogramPoint.Update(11);
-        histogramPoint.Update(19);
+        histogramPoint.Update(-10, tags: default);
+        histogramPoint.Update(0, tags: default);
+        histogramPoint.Update(1, tags: default);
+        histogramPoint.Update(9, tags: default);
+        histogramPoint.Update(10, tags: default);
+        histogramPoint.Update(11, tags: default);
+        histogramPoint.Update(19, tags: default);
 
         histogramPoint.TakeSnapshot(true);
 
@@ -501,7 +501,7 @@ public abstract class AggregatorTestsBase
 
         for (int i = 0; i < 10; ++i)
         {
-            args.HistogramPoint.Update(10);
+            args.HistogramPoint.Update(10, tags: default);
         }
 
         Interlocked.Increment(ref args.ThreadsFinishedAllUpdatesCount);
