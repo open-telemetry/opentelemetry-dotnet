@@ -17,7 +17,7 @@ internal sealed class AggregatorStore
     internal readonly int CardinalityLimit;
     internal readonly bool EmitOverflowAttribute;
     internal readonly ConcurrentDictionary<Tags, LookupData>? TagsToMetricPointIndexDictionaryDelta;
-    internal readonly ExemplarFilter ExemplarFilter;
+    internal readonly ExemplarSamplingHelper ExemplarSampler;
     internal long DroppedMeasurements = 0;
 
     private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute by setting env variable OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE = true. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
@@ -44,6 +44,7 @@ internal sealed class AggregatorStore
     private readonly int exponentialHistogramMaxScale;
     private readonly UpdateLongDelegate updateLongCallback;
     private readonly UpdateDoubleDelegate updateDoubleCallback;
+    private readonly ExemplarFilter exemplarFilter;
     private readonly Func<KeyValuePair<string, object?>[], int, int> lookupAggregatorStore;
 
     private int metricPointIndex = 0;
@@ -73,7 +74,7 @@ internal sealed class AggregatorStore
         this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;
-        this.ExemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
+        this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
         if (metricStreamIdentity.TagKeys == null)
         {
             this.updateLongCallback = this.UpdateLong;
@@ -125,6 +126,8 @@ internal sealed class AggregatorStore
         {
             this.lookupAggregatorStore = this.LookupAggregatorStore;
         }
+
+        this.ExemplarSampler = new(this.exemplarFilter);
     }
 
     private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
@@ -141,7 +144,7 @@ internal sealed class AggregatorStore
     {
         // Using this filter to indicate On/Off
         // instead of another separate flag.
-        return this.ExemplarFilter is not AlwaysOffExemplarFilter;
+        return this.exemplarFilter is not AlwaysOffExemplarFilter;
     }
 
     internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
@@ -1067,5 +1070,38 @@ internal sealed class AggregatorStore
         Debug.Assert(tagKeysAndValues != null, "tagKeysAndValues was null");
 
         return this.lookupAggregatorStore(tagKeysAndValues!, actualLength);
+    }
+
+    internal sealed class ExemplarSamplingHelper
+    {
+        public bool? EarlySampleDecision;
+        public ShouldSampleFunc<long> ShouldSampleLong;
+        public ShouldSampleFunc<double> ShouldSampleDouble;
+
+        public ExemplarSamplingHelper(ExemplarFilter exemplarFilter)
+        {
+            Debug.Assert(exemplarFilter != null, "exemplarFilter was null");
+
+            if (exemplarFilter is AlwaysOffExemplarFilter)
+            {
+                this.EarlySampleDecision = false;
+                this.ShouldSampleLong = static (_, _) => false;
+                this.ShouldSampleDouble = static (_, _) => false;
+            }
+            else if (exemplarFilter is AlwaysOnExemplarFilter)
+            {
+                this.EarlySampleDecision = true;
+                this.ShouldSampleLong = static (_, _) => true;
+                this.ShouldSampleDouble = static (_, _) => true;
+            }
+            else
+            {
+                this.EarlySampleDecision = null;
+                this.ShouldSampleLong = exemplarFilter!.ShouldSample;
+                this.ShouldSampleDouble = exemplarFilter.ShouldSample;
+            }
+        }
+
+        internal delegate bool ShouldSampleFunc<T>(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
     }
 }

@@ -371,20 +371,15 @@ public struct MetricPoint
 
     internal void Update(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
-        var measurement = new Measurement<long>
-        {
-            Value = number,
-            Tags = tags,
-        };
+        this.Update(number, out var explicitBucketHistogramBucketIndex);
 
-        this.Update(ref measurement);
-
-        if (this.ShouldOfferExemplar(ref measurement))
+        var exemplarSampler = this.aggregatorStore.ExemplarSampler;
+        if (exemplarSampler.EarlySampleDecision ?? exemplarSampler.ShouldSampleLong(number, tags))
         {
             Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
 
             this.mpComponents!.ExemplarReservoir!.Offer(
-                new ExemplarMeasurement<long>(number, tags, measurement.ExplicitBucketHistogramBucketIndex));
+                new ExemplarMeasurement<long>(number, tags, explicitBucketHistogramBucketIndex));
         }
 
         this.CompleteUpdate();
@@ -392,20 +387,15 @@ public struct MetricPoint
 
     internal void Update(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
-        var measurement = new Measurement<double>
-        {
-            Value = number,
-            Tags = tags,
-        };
+        this.Update(number, out var explicitBucketHistogramBucketIndex);
 
-        this.Update(ref measurement);
-
-        if (this.ShouldOfferExemplar(ref measurement))
+        var exemplarSampler = this.aggregatorStore.ExemplarSampler;
+        if (exemplarSampler.EarlySampleDecision ?? exemplarSampler.ShouldSampleDouble(number, tags))
         {
             Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
 
             this.mpComponents!.ExemplarReservoir!.Offer(
-                new ExemplarMeasurement<double>(number, tags, measurement.ExplicitBucketHistogramBucketIndex));
+                new ExemplarMeasurement<double>(number, tags, explicitBucketHistogramBucketIndex));
         }
 
         this.CompleteUpdate();
@@ -436,38 +426,9 @@ public struct MetricPoint
         Interlocked.Exchange(ref isCriticalSectionOccupied, 0);
     }
 
-    private readonly bool ShouldOfferExemplar<T>(ref Measurement<T> measurement)
-        where T : struct
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void Update(long number, out int explicitBucketHistogramBucketIndex)
     {
-        var exemplarFilter = this.aggregatorStore.ExemplarFilter;
-
-        if (exemplarFilter is AlwaysOffExemplarFilter)
-        {
-            return false;
-        }
-        else if (exemplarFilter is AlwaysOnExemplarFilter)
-        {
-            return true;
-        }
-        else if (typeof(T) == typeof(long))
-        {
-            return exemplarFilter.ShouldSample((long)(object)measurement.Value, measurement.Tags);
-        }
-        else if (typeof(T) == typeof(double))
-        {
-            return exemplarFilter.ShouldSample((double)(object)measurement.Value, measurement.Tags);
-        }
-        else
-        {
-            Debug.Fail("Invalid value type");
-            return exemplarFilter.ShouldSample(Convert.ToDouble(measurement.Value), measurement.Tags);
-        }
-    }
-
-    private void Update(ref Measurement<long> measurement)
-    {
-        var number = measurement.Value;
-
         switch (this.aggType)
         {
             case AggregationType.LongSumIncomingDelta:
@@ -502,14 +463,14 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithBuckets:
                 {
-                    measurement.ExplicitBucketHistogramBucketIndex = this.UpdateHistogramWithBuckets((double)number);
-                    break;
+                    explicitBucketHistogramBucketIndex = this.UpdateHistogramWithBuckets((double)number);
+                    return;
                 }
 
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
-                    measurement.ExplicitBucketHistogramBucketIndex = this.UpdateHistogramWithBucketsAndMinMax((double)number);
-                    break;
+                    explicitBucketHistogramBucketIndex = this.UpdateHistogramWithBucketsAndMinMax((double)number);
+                    return;
                 }
 
             case AggregationType.Base2ExponentialHistogram:
@@ -524,12 +485,13 @@ public struct MetricPoint
                     break;
                 }
         }
+
+        explicitBucketHistogramBucketIndex = -1;
     }
 
-    private void Update(ref Measurement<double> measurement)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void Update(double number, out int explicitBucketHistogramBucketIndex)
     {
-        var number = measurement.Value;
-
         switch (this.aggType)
         {
             case AggregationType.DoubleSumIncomingDelta:
@@ -582,14 +544,14 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithBuckets:
                 {
-                    measurement.ExplicitBucketHistogramBucketIndex = this.UpdateHistogramWithBuckets(number);
-                    break;
+                    explicitBucketHistogramBucketIndex = this.UpdateHistogramWithBuckets(number);
+                    return;
                 }
 
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
-                    measurement.ExplicitBucketHistogramBucketIndex = this.UpdateHistogramWithBucketsAndMinMax(number);
-                    break;
+                    explicitBucketHistogramBucketIndex = this.UpdateHistogramWithBucketsAndMinMax(number);
+                    return;
                 }
 
             case AggregationType.Base2ExponentialHistogram:
@@ -604,6 +566,8 @@ public struct MetricPoint
                     break;
                 }
         }
+
+        explicitBucketHistogramBucketIndex = -1;
     }
 
     private void UpdateHistogram(double number)
@@ -742,6 +706,7 @@ public struct MetricPoint
         ReleaseLock(ref histogram.IsCriticalSectionOccupied);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CompleteUpdate()
     {
         // There is a race with Snapshot:
@@ -1049,13 +1014,5 @@ public struct MetricPoint
     private readonly void ThrowNotSupportedMetricTypeException(string methodName)
     {
         throw new NotSupportedException($"{methodName} is not supported for this metric type.");
-    }
-
-    private ref struct Measurement<T>
-        where T : struct
-    {
-        public T Value;
-        public ReadOnlySpan<KeyValuePair<string, object?>> Tags;
-        public int ExplicitBucketHistogramBucketIndex;
     }
 }
