@@ -94,7 +94,8 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
                         // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                         // for explanation.
                         var valueToTransform = logRecord.Attributes[i].Key.Equals("{OriginalFormat}")
-                            ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)",
+                            ? new KeyValuePair<string, object>(
+                                "OriginalFormat (a.k.a Body)",
                                 logRecord.Attributes[i].Value)
                             : logRecord.Attributes[i];
 
@@ -166,6 +167,17 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
         return ExportResult.Success;
     }
 
+    protected override void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            this.disposed = true;
+            this.disposedStackTrace = Environment.StackTrace;
+        }
+
+        base.Dispose(disposing);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PrintAttribute(string key, string value)
     {
@@ -176,16 +188,5 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
         {
             this.WriteLine($"{string.Empty,-4}{result}");
         }
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            this.disposed = true;
-            this.disposedStackTrace = Environment.StackTrace;
-        }
-
-        base.Dispose(disposing);
     }
 }
