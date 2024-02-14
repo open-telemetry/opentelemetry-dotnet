@@ -186,14 +186,7 @@ internal sealed class AggregatorStore
                 continue;
             }
 
-            if (this.IsExemplarEnabled())
-            {
-                metricPoint.TakeSnapshotAndCollectExemplars(outputDelta: true);
-            }
-            else
-            {
-                metricPoint.TakeSnapshot(outputDelta: true);
-            }
+            metricPoint.TakeSnapshot(outputDelta: true);
 
             this.currentMetricPointBatch[this.batchSize] = i;
             this.batchSize++;
@@ -211,14 +204,7 @@ internal sealed class AggregatorStore
         ref var metricPointWithNoTags = ref this.metricPoints[0];
         if (metricPointWithNoTags.MetricPointStatus != MetricPointStatus.NoCollectPending)
         {
-            if (this.IsExemplarEnabled())
-            {
-                metricPointWithNoTags.TakeSnapshotAndCollectExemplars(outputDelta: true);
-            }
-            else
-            {
-                metricPointWithNoTags.TakeSnapshot(outputDelta: true);
-            }
+            metricPointWithNoTags.TakeSnapshot(outputDelta: true);
 
             this.currentMetricPointBatch[this.batchSize] = 0;
             this.batchSize++;
@@ -234,14 +220,7 @@ internal sealed class AggregatorStore
             ref var metricPointForOverflow = ref this.metricPoints[1];
             if (metricPointForOverflow.MetricPointStatus != MetricPointStatus.NoCollectPending)
             {
-                if (this.IsExemplarEnabled())
-                {
-                    metricPointForOverflow.TakeSnapshotAndCollectExemplars(outputDelta: true);
-                }
-                else
-                {
-                    metricPointForOverflow.TakeSnapshot(outputDelta: true);
-                }
+                metricPointForOverflow.TakeSnapshot(outputDelta: true);
 
                 this.currentMetricPointBatch[this.batchSize] = 1;
                 this.batchSize++;
@@ -299,14 +278,7 @@ internal sealed class AggregatorStore
                 continue;
             }
 
-            if (this.IsExemplarEnabled())
-            {
-                metricPoint.TakeSnapshotAndCollectExemplars(outputDelta: true);
-            }
-            else
-            {
-                metricPoint.TakeSnapshot(outputDelta: true);
-            }
+            metricPoint.TakeSnapshot(outputDelta: true);
 
             this.currentMetricPointBatch[this.batchSize] = i;
             this.batchSize++;
@@ -328,14 +300,7 @@ internal sealed class AggregatorStore
                 continue;
             }
 
-            if (this.IsExemplarEnabled())
-            {
-                metricPoint.TakeSnapshotAndCollectExemplars(outputDelta: false);
-            }
-            else
-            {
-                metricPoint.TakeSnapshot(outputDelta: false);
-            }
+            metricPoint.TakeSnapshot(outputDelta: false);
 
             this.currentMetricPointBatch[this.batchSize] = i;
             this.batchSize++;
