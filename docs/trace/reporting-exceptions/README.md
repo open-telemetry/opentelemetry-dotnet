@@ -95,7 +95,7 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
     }
     catch (SomeException ex)
     {
-        activity?.SetStatus(ActivityStatusCode.Error, ex.message);
+        activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
     }
 }
 ```
@@ -119,7 +119,7 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
     }
     catch (SomeException ex)
     {
-        activity?.SetStatus(ActivityStatusCode.Error, ex.message);
+        activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
         activity?.RecordException(ex);
     }
 }
