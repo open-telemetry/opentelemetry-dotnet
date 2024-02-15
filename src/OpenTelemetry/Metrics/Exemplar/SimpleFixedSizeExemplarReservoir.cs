@@ -6,9 +6,9 @@ using System.Diagnostics;
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// The SimpleExemplarReservoir implementation.
+/// The SimpleFixedSizeExemplarReservoir implementation.
 /// </summary>
-internal sealed class SimpleExemplarReservoir : ExemplarReservoir
+internal sealed class SimpleFixedSizeExemplarReservoir : ExemplarReservoir
 {
     private readonly int poolSize;
     private readonly Random random;
@@ -17,7 +17,7 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
 
     private long measurementsSeen;
 
-    public SimpleExemplarReservoir(int poolSize)
+    public SimpleFixedSizeExemplarReservoir(int poolSize)
     {
         this.poolSize = poolSize;
         this.runningExemplars = new Exemplar[poolSize];
