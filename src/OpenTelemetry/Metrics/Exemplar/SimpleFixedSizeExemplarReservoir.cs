@@ -15,7 +15,6 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
     public SimpleFixedSizeExemplarReservoir()
         : base(Environment.ProcessorCount)
     {
-        this.OnCollectionCompleted();
     }
 
     public override void Offer(in ExemplarMeasurement<long> measurement)
