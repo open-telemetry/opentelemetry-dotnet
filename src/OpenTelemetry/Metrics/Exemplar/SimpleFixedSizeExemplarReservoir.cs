@@ -6,14 +6,23 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// The SimpleExemplarReservoir implementation.
+/// The SimpleFixedSizeExemplarReservoir implementation.
 /// </summary>
+/// <remarks>
+/// Specification: <see
+/// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#simplefixedsizeexemplarreservoir"/>.
+/// </remarks>
 internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReservoir
 {
     private volatile int measurementsSeen;
 
     public SimpleFixedSizeExemplarReservoir()
-        : base(Environment.ProcessorCount)
+        : this(Environment.ProcessorCount)
+    {
+    }
+
+    public SimpleFixedSizeExemplarReservoir(int capacity)
+        : base(capacity)
     {
     }
 
@@ -40,14 +49,14 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
     {
         var currentMeasurement = Interlocked.Increment(ref this.measurementsSeen) - 1;
 
-        if (currentMeasurement < this.ExemplarCount)
+        if (currentMeasurement < this.Capacity)
         {
             this.UpdateExemplar(currentMeasurement, in measurement);
         }
         else
         {
             int index = ThreadSafeRandom.Next(0, currentMeasurement);
-            if (index < this.ExemplarCount)
+            if (index < this.Capacity)
             {
                 this.UpdateExemplar(index, in measurement);
             }

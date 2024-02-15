@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
 
@@ -11,15 +12,17 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     private readonly Exemplar[] bufferB;
     private volatile Exemplar[]? activeBuffer;
 
-    protected FixedSizeExemplarReservoir(int exemplarCount)
+    protected FixedSizeExemplarReservoir(int capacity)
     {
-        this.bufferA = new Exemplar[exemplarCount];
-        this.bufferB = new Exemplar[exemplarCount];
+        Guard.ThrowIfOutOfRange(capacity, min: 1);
+
+        this.bufferA = new Exemplar[capacity];
+        this.bufferB = new Exemplar[capacity];
         this.activeBuffer = this.bufferA;
-        this.ExemplarCount = exemplarCount;
+        this.Capacity = capacity;
     }
 
-    internal int ExemplarCount { get; }
+    internal int Capacity { get; }
 
     /// <summary>
     /// Collects all the exemplars accumulated by the Reservoir.
