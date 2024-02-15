@@ -10,7 +10,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReservoir
 {
-    private int measurementsSeen;
+    private volatile int measurementsSeen;
 
     public SimpleFixedSizeExemplarReservoir()
         : base(Environment.ProcessorCount)
@@ -33,7 +33,7 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
         // Reset internal state irrespective of temporality.
         // This ensures incoming measurements have fair chance
         // of making it to the reservoir.
-        Interlocked.Exchange(ref this.measurementsSeen, 0);
+        this.measurementsSeen = 0;
     }
 
     private void Offer<T>(in ExemplarMeasurement<T> measurement)
