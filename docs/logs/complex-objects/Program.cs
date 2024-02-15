@@ -29,7 +29,7 @@ logger.FoodRecallNotice(foodRecallNotice);
 // This will flush the remaining logs and shutdown the logging pipeline.
 loggerFactory.Dispose();
 
-public static partial class ApplicationLogs
+internal static partial class LoggerExtensions
 {
     [LoggerMessage(LogLevel.Critical)]
     public static partial void FoodRecallNotice(
