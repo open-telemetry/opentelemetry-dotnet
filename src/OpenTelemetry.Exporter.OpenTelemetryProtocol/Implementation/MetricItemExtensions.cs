@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
@@ -271,29 +272,8 @@ internal static class MetricItemExtensions
                         {
                             foreach (ref readonly var exemplar in exemplars)
                             {
-                                byte[] traceIdBytes = new byte[16];
-                                exemplar.TraceId?.CopyTo(traceIdBytes);
-
-                                byte[] spanIdBytes = new byte[8];
-                                exemplar.SpanId?.CopyTo(spanIdBytes);
-
-                                var otlpExemplar = new OtlpMetrics.Exemplar
-                                {
-                                    TimeUnixNano = (ulong)exemplar.Timestamp.ToUnixTimeNanoseconds(),
-                                    TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
-                                    SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
-                                    AsDouble = exemplar.DoubleValue,
-                                };
-
-                                foreach (var tag in exemplar.FilteredTags)
-                                {
-                                    if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
-                                    {
-                                        otlpExemplar.FilteredAttributes.Add(result);
-                                    }
-                                }
-
-                                dataPoint.Exemplars.Add(otlpExemplar);
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.DoubleValue, in exemplar));
                             }
                         }
 
@@ -375,51 +355,47 @@ internal static class MetricItemExtensions
         }
     }
 
-    /*
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static OtlpMetrics.Exemplar ToOtlpExemplar(this IExemplar exemplar)
+    private static OtlpMetrics.Exemplar ToOtlpExemplar<T>(T value, in Metrics.Exemplar exemplar)
     {
-        var otlpExemplar = new OtlpMetrics.Exemplar();
+        var otlpExemplar = new OtlpMetrics.Exemplar
+        {
+            TimeUnixNano = (ulong)exemplar.Timestamp.ToUnixTimeNanoseconds(),
+        };
 
-        if (exemplar.Value is double doubleValue)
+        if (exemplar.TraceId.HasValue)
         {
-            otlpExemplar.AsDouble = doubleValue;
+            byte[] traceIdBytes = new byte[16];
+            exemplar.TraceId?.CopyTo(traceIdBytes);
+
+            byte[] spanIdBytes = new byte[8];
+            exemplar.SpanId?.CopyTo(spanIdBytes);
+
+            otlpExemplar.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
+            otlpExemplar.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
         }
-        else if (exemplar.Value is long longValue)
+
+        if (typeof(T) == typeof(long))
         {
-            otlpExemplar.AsInt = longValue;
+            otlpExemplar.AsInt = (long)(object)value;
+        }
+        else if (typeof(T) == typeof(double))
+        {
+            otlpExemplar.AsDouble = (double)(object)value;
         }
         else
         {
-            // TODO: Determine how we want to handle exceptions here.
-            // Do we want to just skip this exemplar and move on?
-            // Should we skip recording the whole metric?
-            throw new ArgumentException();
+            Debug.Fail("Unexpected type");
+            otlpExemplar.AsDouble = Convert.ToDouble(value);
         }
 
-        otlpExemplar.TimeUnixNano = (ulong)exemplar.Timestamp.ToUnixTimeNanoseconds();
-
-        // TODO: Do the TagEnumerationState thing.
         foreach (var tag in exemplar.FilteredTags)
         {
-            otlpExemplar.FilteredAttributes.Add(tag.ToOtlpAttribute());
-        }
-
-        if (exemplar.TraceId != default)
-        {
-            byte[] traceIdBytes = new byte[16];
-            exemplar.TraceId.CopyTo(traceIdBytes);
-            otlpExemplar.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
-        }
-
-        if (exemplar.SpanId != default)
-        {
-            byte[] spanIdBytes = new byte[8];
-            exemplar.SpanId.CopyTo(spanIdBytes);
-            otlpExemplar.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
+            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+            {
+                otlpExemplar.FilteredAttributes.Add(result);
+            }
         }
 
         return otlpExemplar;
     }
-    */
 }
