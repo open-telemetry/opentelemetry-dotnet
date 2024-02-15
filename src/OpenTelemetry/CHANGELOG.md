@@ -42,11 +42,6 @@
   [IMetricsListener](https://learn.microsoft.com/dotNet/api/microsoft.extensions.diagnostics.metrics.imetricslistener).
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
 
-* Renamed `SimpleExemplarReservoir` to `SimpleFixedSizeExemplarReservoir` for
-  alignment with the name used in the [OpenTelemetry
-  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#simplefixedsizeexemplarreservoir).
-  ([#5359](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5359))
-
 ## 1.7.0
 
 Released 2023-Dec-08
