@@ -4,11 +4,11 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Logs;
 
-namespace SensitiveLogging;
+namespace DedicatedLogging;
 
-public static class PiiLoggerServiceCollectionExtensions
+public static class DedicatedLoggingServiceCollectionExtensions
 {
-    public static IServiceCollection AddPiiLogging(
+    public static IServiceCollection AddDedicatedLogging(
         this IServiceCollection services,
         IConfiguration configuration,
         Action<OpenTelemetryLoggerOptions> configureOpenTelemetry)
@@ -24,19 +24,19 @@ public static class PiiLoggerServiceCollectionExtensions
                 builder.AddOpenTelemetry(configureOpenTelemetry);
             });
 
-            return new PiiLoggerFactory(loggerFactory);
+            return new DedicatedLoggerFactory(loggerFactory);
         });
 
-        services.TryAdd(ServiceDescriptor.Singleton(typeof(IPiiLogger<>), typeof(PiiLogger<>)));
+        services.TryAdd(ServiceDescriptor.Singleton(typeof(IDedicatedLogger<>), typeof(DedicatedLogger<>)));
 
         return services;
     }
 
-    private sealed class PiiLogger<T> : IPiiLogger<T>
+    private sealed class DedicatedLogger<T> : IDedicatedLogger<T>
     {
         private readonly ILogger innerLogger;
 
-        public PiiLogger(PiiLoggerFactory loggerFactory)
+        public DedicatedLogger(DedicatedLoggerFactory loggerFactory)
         {
             this.innerLogger = loggerFactory.CreateLogger(typeof(T).FullName!);
         }
@@ -52,11 +52,11 @@ public static class PiiLoggerServiceCollectionExtensions
             => this.innerLogger.Log(logLevel, eventId, state, exception, formatter);
     }
 
-    private sealed class PiiLoggerFactory : ILoggerFactory
+    private sealed class DedicatedLoggerFactory : ILoggerFactory
     {
         private readonly ILoggerFactory innerLoggerFactory;
 
-        public PiiLoggerFactory(ILoggerFactory loggerFactory)
+        public DedicatedLoggerFactory(ILoggerFactory loggerFactory)
         {
             this.innerLoggerFactory = loggerFactory;
         }

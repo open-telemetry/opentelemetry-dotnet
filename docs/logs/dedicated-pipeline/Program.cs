@@ -1,8 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using DedicatedLogging;
 using OpenTelemetry.Logs;
-using SensitiveLogging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,27 +10,27 @@ builder.Logging.ClearProviders();
 
 builder.Logging.AddOpenTelemetry(options =>
 {
-    // Set up primary pipeline for common non-PII logs
+    // Set up primary pipeline for common app logs
     options.AddConsoleExporter();
 });
 
-builder.Services.AddPiiLogging(
-    builder.Configuration.GetSection("SensitiveLogging"), // Bind configuration for sensitive logging pipeline
+builder.Services.AddDedicatedLogging(
+    builder.Configuration.GetSection("DedicatedLogging"), // Bind configuration for dedicated logging pipeline
     options =>
     {
-        // Set up secondary pipeline for PII logs
+        // Set up secondary pipeline for dedicated logs
         options.AddConsoleExporter();
     });
 
 var app = builder.Build();
 
-app.MapGet("/", (HttpContext context, ILogger<Program> logger, IPiiLogger<Program> piiLogger) =>
+app.MapGet("/", (HttpContext context, ILogger<Program> logger, IDedicatedLogger<Program> dedicatedLogger) =>
 {
-    // Standard non-sensitive log written
+    // Standard log written
     logger.FoodPriceChanged("artichoke", 9.99);
 
-    // Sensitive log written
-    piiLogger.RequestInitiated(context.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+    // Dedicated log written
+    dedicatedLogger.RequestInitiated(context.Connection.RemoteIpAddress?.ToString() ?? "unknown");
 
     return "Hello from OpenTelemetry Logs!";
 });
@@ -43,5 +43,5 @@ internal static partial class LoggerExtensions
     public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
 
     [LoggerMessage(LogLevel.Information, "Request initiated from `{ipAddress}`.")]
-    public static partial void RequestInitiated(this IPiiLogger logger, string ipAddress);
+    public static partial void RequestInitiated(this IDedicatedLogger logger, string ipAddress);
 }
