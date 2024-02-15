@@ -45,6 +45,7 @@
 * Renamed `SimpleExemplarReservoir` to `SimpleFixedSizeExemplarReservoir` for
   alignment with the name used in the [OpenTelemetry
   Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#simplefixedsizeexemplarreservoir).
+  ([#5359](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5359))
 
 ## 1.7.0
 
