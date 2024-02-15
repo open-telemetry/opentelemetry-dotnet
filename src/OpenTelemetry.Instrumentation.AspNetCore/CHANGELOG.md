@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.7.1
+
+Released 2024-Feb-09
+
 * Fixed issue
   [#4466](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4466)
   where the activity instance returned by `Activity.Current` was different than
@@ -16,6 +20,14 @@
   which should ship in version 8.0.2
   (see: [dotnet/aspnetcore#52652](https://github.com/dotnet/aspnetcore/pull/52652)).
   ([#5135](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5135))
+
+* Fixes scenario when the `net6.0` target of this library is loaded into a
+  .NET 7+ process and the instrumentation does not behave as expected. This
+  is an unusual scenario that does not affect users consuming this package
+  normally. This fix is primarily to support the
+  [opentelemetry-dotnet-instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5252)
+  project.
+  ([#5252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5252))
 
 ## 1.7.0
 
