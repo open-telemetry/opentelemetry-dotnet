@@ -91,7 +91,7 @@ public struct MetricPoint
 
         if (aggregatorStore!.IsExemplarEnabled() && reservoir == null)
         {
-            reservoir = new SimpleExemplarReservoir(DefaultSimpleReservoirPoolSize);
+            reservoir = new SimpleFixedSizeExemplarReservoir(DefaultSimpleReservoirPoolSize);
         }
 
         if (reservoir != null)
