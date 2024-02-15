@@ -42,6 +42,11 @@
   [IMetricsListener](https://learn.microsoft.com/dotNet/api/microsoft.extensions.diagnostics.metrics.imetricslistener).
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
 
+* **Experimental (pre-release builds only):** `Exemplar` and `ExemplarReservoir`
+  APIs have been updated to match the OpenTelemetry Specification and to achieve
+  better throughput under load.
+  ([#5364](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5364))
+
 ## 1.7.0
 
 Released 2023-Dec-08
