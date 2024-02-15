@@ -356,6 +356,7 @@ internal static class MetricItemExtensions
     }
 
     private static OtlpMetrics.Exemplar ToOtlpExemplar<T>(T value, in Metrics.Exemplar exemplar)
+        where T : struct
     {
         var otlpExemplar = new OtlpMetrics.Exemplar
         {
@@ -365,10 +366,10 @@ internal static class MetricItemExtensions
         if (exemplar.TraceId.HasValue)
         {
             byte[] traceIdBytes = new byte[16];
-            exemplar.TraceId?.CopyTo(traceIdBytes);
+            exemplar.TraceId.Value.CopyTo(traceIdBytes);
 
             byte[] spanIdBytes = new byte[8];
-            exemplar.SpanId?.CopyTo(spanIdBytes);
+            exemplar.SpanId.Value.CopyTo(spanIdBytes);
 
             otlpExemplar.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
             otlpExemplar.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);

@@ -192,23 +192,26 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 {
                     foreach (ref readonly var exemplar in exemplars)
                     {
+                        exemplarString.Append("Timestamp: ");
+                        exemplarString.Append(exemplar.Timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                         if (metricType.IsDouble())
                         {
-                            exemplarString.Append("Value: ");
+                            exemplarString.Append(" Value: ");
                             exemplarString.Append(exemplar.DoubleValue);
                         }
                         else if (metricType.IsLong())
                         {
-                            exemplarString.Append("Value: ");
+                            exemplarString.Append(" Value: ");
                             exemplarString.Append(exemplar.LongValue);
                         }
 
-                        exemplarString.Append(" Timestamp: ");
-                        exemplarString.Append(exemplar.Timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
-                        exemplarString.Append(" TraceId: ");
-                        exemplarString.Append(exemplar.TraceId);
-                        exemplarString.Append(" SpanId: ");
-                        exemplarString.Append(exemplar.SpanId);
+                        if (exemplar.TraceId.HasValue)
+                        {
+                            exemplarString.Append(" TraceId: ");
+                            exemplarString.Append(exemplar.TraceId.Value.ToHexString());
+                            exemplarString.Append(" SpanId: ");
+                            exemplarString.Append(exemplar.SpanId.Value.ToHexString());
+                        }
 
                         bool appendedTagString = false;
                         foreach (var tag in exemplar.FilteredTags)
