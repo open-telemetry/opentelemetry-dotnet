@@ -16,8 +16,7 @@ public class HistogramBuckets
 
     internal readonly double[]? ExplicitBounds;
 
-    internal readonly long[]? RunningBucketCounts;
-    internal readonly long[] SnapshotBucketCounts;
+    internal readonly HistogramBucketValues[] BucketCounts;
 
     internal double RunningSum;
     internal double SnapshotSum;
@@ -62,8 +61,7 @@ public class HistogramBuckets
             }
         }
 
-        this.RunningBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : null;
-        this.SnapshotBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : new long[0];
+        this.BucketCounts = explicitBounds != null ? new HistogramBucketValues[explicitBounds.Length + 1] : Array.Empty<HistogramBucketValues>();
     }
 
     /// <summary>
@@ -76,7 +74,7 @@ public class HistogramBuckets
     {
         HistogramBuckets copy = new HistogramBuckets(this.ExplicitBounds);
 
-        Array.Copy(this.SnapshotBucketCounts, copy.SnapshotBucketCounts, this.SnapshotBucketCounts.Length);
+        Array.Copy(this.BucketCounts, copy.BucketCounts, this.BucketCounts.Length);
         copy.SnapshotSum = this.SnapshotSum;
         copy.SnapshotMin = this.SnapshotMin;
         copy.SnapshotMax = this.SnapshotMax;
@@ -137,6 +135,31 @@ public class HistogramBuckets
         return i;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Snapshot(bool outputDelta)
+    {
+        var bucketCounts = this.BucketCounts;
+
+        if (outputDelta)
+        {
+            for (int i = 0; i < bucketCounts.Length; i++)
+            {
+                ref var values = ref bucketCounts[i];
+                ref var running = ref values.RunningValue;
+                values.SnapshotValue = running;
+                running = 0L;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < bucketCounts.Length; i++)
+            {
+                ref var values = ref bucketCounts[i];
+                values.SnapshotValue = values.RunningValue;
+            }
+        }
+    }
+
     /// <summary>
     /// Enumerates the elements of a <see cref="HistogramBuckets"/>.
     /// </summary>
@@ -152,7 +175,7 @@ public class HistogramBuckets
             this.histogramMeasurements = histogramMeasurements;
             this.index = 0;
             this.Current = default;
-            this.numberOfBuckets = histogramMeasurements.SnapshotBucketCounts.Length;
+            this.numberOfBuckets = histogramMeasurements.BucketCounts.Length;
         }
 
         /// <summary>
@@ -175,7 +198,7 @@ public class HistogramBuckets
                 double explicitBound = this.index < this.numberOfBuckets - 1
                     ? this.histogramMeasurements.ExplicitBounds![this.index]
                     : double.PositiveInfinity;
-                long bucketCount = this.histogramMeasurements.SnapshotBucketCounts[this.index];
+                long bucketCount = this.histogramMeasurements.BucketCounts[this.index].SnapshotValue;
                 this.Current = new HistogramBucket(explicitBound, bucketCount);
                 this.index++;
                 return true;
@@ -183,6 +206,12 @@ public class HistogramBuckets
 
             return false;
         }
+    }
+
+    internal struct HistogramBucketValues
+    {
+        public long RunningValue;
+        public long SnapshotValue;
     }
 
     private sealed class BucketLookupNode
