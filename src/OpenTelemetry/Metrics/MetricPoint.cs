@@ -614,15 +614,13 @@ public struct MetricPoint
 
         int i = histogramBuckets!.FindBucketIndex(number);
 
-        Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
-
         AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
         unchecked
         {
             this.runningValue.AsLong++;
             histogramBuckets.RunningSum += number;
-            histogramBuckets.RunningBucketCounts![i]++;
+            histogramBuckets.BucketCounts[i].RunningValue++;
         }
 
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -640,13 +638,11 @@ public struct MetricPoint
 
         AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
-        Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
-
         unchecked
         {
             this.runningValue.AsLong++;
             histogramBuckets.RunningSum += number;
-            histogramBuckets.RunningBucketCounts![i]++;
+            histogramBuckets.BucketCounts[i].RunningValue++;
 
             histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
             histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
@@ -844,16 +840,7 @@ public struct MetricPoint
                         histogramBuckets.RunningSum = 0;
                     }
 
-                    Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
-
-                    for (int i = 0; i < histogramBuckets.RunningBucketCounts!.Length; i++)
-                    {
-                        histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
-                        if (outputDelta)
-                        {
-                            histogramBuckets.RunningBucketCounts[i] = 0;
-                        }
-                    }
+                    histogramBuckets.Snapshot(outputDelta);
 
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
@@ -906,16 +893,7 @@ public struct MetricPoint
                         histogramBuckets.RunningMax = double.NegativeInfinity;
                     }
 
-                    Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
-
-                    for (int i = 0; i < histogramBuckets.RunningBucketCounts!.Length; i++)
-                    {
-                        histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
-                        if (outputDelta)
-                        {
-                            histogramBuckets.RunningBucketCounts[i] = 0;
-                        }
-                    }
+                    histogramBuckets.Snapshot(outputDelta);
 
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
