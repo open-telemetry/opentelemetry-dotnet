@@ -77,8 +77,8 @@ public sealed class MetricPointTests : IDisposable
         Assert.NotSame(copy, histogramBuckets);
 
         // Verify fields are copied
-        Assert.NotSame(copy.SnapshotBucketCounts, histogramBuckets.SnapshotBucketCounts);
-        Assert.Equal(copy.SnapshotBucketCounts, histogramBuckets.SnapshotBucketCounts);
+        Assert.NotSame(copy.BucketCounts, histogramBuckets.BucketCounts);
+        Assert.Equal(copy.BucketCounts, histogramBuckets.BucketCounts);
         Assert.Equal(copy.SnapshotSum, histogramBuckets.SnapshotSum);
     }
 }
