@@ -44,7 +44,7 @@ internal sealed class MetricPointOptionalComponents
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AcquireLock()
     {
-        if (Interlocked.CompareExchange(ref this.isCriticalSectionOccupied, 1, 0) != 0)
+        if (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0)
         {
             this.AcquireLockRare();
         }
@@ -64,6 +64,6 @@ internal sealed class MetricPointOptionalComponents
         {
             sw.SpinOnce();
         }
-        while (Interlocked.CompareExchange(ref this.isCriticalSectionOccupied, 1, 0) != 0);
+        while (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0);
     }
 }
