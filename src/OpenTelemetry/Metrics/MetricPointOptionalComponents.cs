@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Runtime.CompilerServices;
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -20,9 +22,9 @@ internal sealed class MetricPointOptionalComponents
 
     public Exemplar[]? Exemplars;
 
-    public int IsCriticalSectionOccupied = 0;
+    private volatile int isCriticalSectionOccupied = 0;
 
-    internal MetricPointOptionalComponents Copy()
+    public MetricPointOptionalComponents Copy()
     {
         MetricPointOptionalComponents copy = new MetricPointOptionalComponents
         {
@@ -37,5 +39,31 @@ internal sealed class MetricPointOptionalComponents
         }
 
         return copy;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void AcquireLock()
+    {
+        if (Interlocked.CompareExchange(ref this.isCriticalSectionOccupied, 1, 0) != 0)
+        {
+            this.AcquireLockRare();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ReleaseLock()
+    {
+        this.isCriticalSectionOccupied = 0;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void AcquireLockRare()
+    {
+        var sw = default(SpinWait);
+        do
+        {
+            sw.SpinOnce();
+        }
+        while (Interlocked.CompareExchange(ref this.isCriticalSectionOccupied, 1, 0) != 0);
     }
 }
