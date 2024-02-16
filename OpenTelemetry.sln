@@ -340,6 +340,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "resources", "resources", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\resources\extending-the-sdk\extending-the-sdk.csproj", "{7BE494FC-4B0D-4340-A62A-9C9F3E7389FE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dedicated-pipeline", "docs\logs\dedicated-pipeline\dedicated-pipeline.csproj", "{19545B37-8518-4BDD-AD49-00C031FB3C2A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -626,6 +628,10 @@ Global
 		{7BE494FC-4B0D-4340-A62A-9C9F3E7389FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7BE494FC-4B0D-4340-A62A-9C9F3E7389FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7BE494FC-4B0D-4340-A62A-9C9F3E7389FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19545B37-8518-4BDD-AD49-00C031FB3C2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19545B37-8518-4BDD-AD49-00C031FB3C2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19545B37-8518-4BDD-AD49-00C031FB3C2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19545B37-8518-4BDD-AD49-00C031FB3C2A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -680,6 +686,7 @@ Global
 		{17A22B0E-6EC3-4A39-B955-0A486AD06699} = {52AF6D7D-9E66-4234-9A2C-5D16C6F22B40}
 		{A115CE4C-71A8-4B95-96A5-C1DF46FD94C2} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{7BE494FC-4B0D-4340-A62A-9C9F3E7389FE} = {A115CE4C-71A8-4B95-96A5-C1DF46FD94C2}
+		{19545B37-8518-4BDD-AD49-00C031FB3C2A} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
