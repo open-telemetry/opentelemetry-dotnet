@@ -2,6 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+#if NET6_0_OR_GREATER
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -59,13 +63,27 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     {
         var keyFilter = aggregatorStore.TagKeysInteresting;
 
-        for (int a = 0, b = 0;
-            a < this.bufferA.Length && b < this.bufferB.Length;
-            a++, b++)
+#if NET6_0_OR_GREATER
+        var length = this.bufferA.Length;
+        ref var a = ref MemoryMarshal.GetArrayDataReference(this.bufferA);
+        ref var b = ref MemoryMarshal.GetArrayDataReference(this.bufferB);
+        do
         {
-            this.bufferA[a].KeyFilter = keyFilter;
-            this.bufferB[b].KeyFilter = keyFilter;
+            a.KeyFilter = keyFilter;
+            b.KeyFilter = keyFilter;
+            a = ref Unsafe.Add(ref a, 1);
+            b = ref Unsafe.Add(ref b, 1);
         }
+        while (--length > 0);
+#else
+        for (int i = 0;
+            i < this.bufferA.Length && i < this.bufferB.Length;
+            i++)
+        {
+            this.bufferA[i].KeyFilter = keyFilter;
+            this.bufferB[i].KeyFilter = keyFilter;
+        }
+#endif
 
         base.Initialize(aggregatorStore);
     }
