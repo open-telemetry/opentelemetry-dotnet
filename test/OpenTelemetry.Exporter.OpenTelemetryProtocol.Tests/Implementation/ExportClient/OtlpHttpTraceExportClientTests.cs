@@ -135,7 +135,7 @@ public class OtlpHttpTraceExportClientTests
             var httpRequest = testHttpHandler.HttpRequestMessage;
 
             // Assert
-            Assert.True(result);
+            Assert.True(result.Success);
             Assert.NotNull(httpRequest);
             Assert.Equal(HttpMethod.Post, httpRequest.Method);
             Assert.Equal("http://localhost:4317/", httpRequest.RequestUri.AbsoluteUri);
