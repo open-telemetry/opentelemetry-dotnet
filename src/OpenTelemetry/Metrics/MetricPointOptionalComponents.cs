@@ -22,7 +22,7 @@ internal sealed class MetricPointOptionalComponents
 
     public Exemplar[]? Exemplars;
 
-    private volatile int isCriticalSectionOccupied = 0;
+    private int isCriticalSectionOccupied = 0;
 
     public MetricPointOptionalComponents Copy()
     {
@@ -53,7 +53,7 @@ internal sealed class MetricPointOptionalComponents
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ReleaseLock()
     {
-        this.isCriticalSectionOccupied = 0;
+        Volatile.Write(ref this.isCriticalSectionOccupied, 0);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
