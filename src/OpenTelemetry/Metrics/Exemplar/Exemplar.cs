@@ -1,12 +1,14 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 #if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+#endif
+using System.Runtime.CompilerServices;
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
 using OpenTelemetry.Internal;
 #endif
-
-using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics;
 
@@ -32,7 +34,7 @@ internal
     private int tagCount;
     private KeyValuePair<string, object?>[]? tagStorage;
     private MetricPointValueStorage valueStorage;
-    private volatile int isCriticalSectionOccupied;
+    private int isCriticalSectionOccupied;
 
     /// <summary>
     /// Gets the timestamp.
@@ -76,7 +78,7 @@ internal
     internal void Update<T>(in ExemplarMeasurement<T> measurement)
         where T : struct
     {
-        if (Interlocked.CompareExchange(ref this.isCriticalSectionOccupied, 1, 0) != 0)
+        if (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0)
         {
             // Some other thread is already writing, abort.
             return;
@@ -112,7 +114,7 @@ internal
 
         this.StoreRawTags(measurement.Tags);
 
-        this.isCriticalSectionOccupied = 0;
+        Volatile.Write(ref this.isCriticalSectionOccupied, 0);
     }
 
     internal void Reset()
@@ -122,7 +124,7 @@ internal
 
     internal readonly bool IsUpdated()
     {
-        if (this.isCriticalSectionOccupied != 0)
+        if (Volatile.Read(ref Unsafe.AsRef(in this.isCriticalSectionOccupied)) != 0)
         {
             this.WaitForUpdateToCompleteRare();
             return true;
@@ -171,6 +173,6 @@ internal
         {
             spinWait.SpinOnce();
         }
-        while (this.isCriticalSectionOccupied != 0);
+        while (Volatile.Read(ref Unsafe.AsRef(in this.isCriticalSectionOccupied)) != 0);
     }
 }

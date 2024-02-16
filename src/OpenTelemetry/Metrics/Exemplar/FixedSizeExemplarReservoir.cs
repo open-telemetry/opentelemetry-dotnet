@@ -14,7 +14,7 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
 {
     private readonly Exemplar[] bufferA;
     private readonly Exemplar[] bufferB;
-    private volatile Exemplar[]? activeBuffer;
+    private Exemplar[]? activeBuffer;
 
     protected FixedSizeExemplarReservoir(int capacity)
     {
@@ -34,11 +34,11 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     /// <returns><see cref="ReadOnlyExemplarCollection"/>.</returns>
     public sealed override ReadOnlyExemplarCollection Collect()
     {
-        var currentBuffer = this.activeBuffer;
+        var currentBuffer = Volatile.Read(ref this.activeBuffer);
 
         Debug.Assert(currentBuffer != null, "currentBuffer was null");
 
-        this.activeBuffer = null;
+        Volatile.Write(ref this.activeBuffer, null);
 
         var inactiveBuffer = currentBuffer == this.bufferA
             ? this.bufferB
@@ -54,7 +54,7 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
 
         this.OnCollectionCompleted();
 
-        this.activeBuffer = inactiveBuffer;
+        Volatile.Write(ref this.activeBuffer, inactiveBuffer);
 
         return new(currentBuffer!);
     }
@@ -95,7 +95,7 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     protected void UpdateExemplar<T>(int exemplarIndex, in ExemplarMeasurement<T> measurement)
         where T : struct
     {
-        var activeBuffer = this.activeBuffer;
+        var activeBuffer = Volatile.Read(ref this.activeBuffer);
         if (activeBuffer == null)
         {
             // Note: This is expected to happen when we race with a collection.

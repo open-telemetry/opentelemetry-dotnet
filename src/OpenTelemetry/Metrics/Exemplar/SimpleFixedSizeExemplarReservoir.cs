@@ -14,7 +14,7 @@ namespace OpenTelemetry.Metrics;
 /// </remarks>
 internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReservoir
 {
-    private volatile int measurementsSeen;
+    private int measurementsSeen;
 
     public SimpleFixedSizeExemplarReservoir()
         : this(Environment.ProcessorCount)
@@ -41,7 +41,7 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
         // Reset internal state irrespective of temporality.
         // This ensures incoming measurements have fair chance
         // of making it to the reservoir.
-        this.measurementsSeen = 0;
+        Volatile.Write(ref this.measurementsSeen, 0);
     }
 
     private void Offer<T>(in ExemplarMeasurement<T> measurement)
