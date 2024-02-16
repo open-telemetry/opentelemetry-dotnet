@@ -44,7 +44,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
-        this.sdkLimitOptions = sdkLimitOptions!;
+        this.sdkLimitOptions = sdkLimitOptions;
 
         OtlpKeyValueTransformer.LogUnsupportedAttributeType = OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType;
 
