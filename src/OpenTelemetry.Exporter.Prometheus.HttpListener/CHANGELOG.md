@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-* Added option to disable _total suffix addition to counter metrics in Prometheus exporter
+* Added option to disable _total suffix addition to counter metrics in
+  Prometheus exporter
   ([#5305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5305))
 
 * Export OpenMetrics format from Prometheus exporters
