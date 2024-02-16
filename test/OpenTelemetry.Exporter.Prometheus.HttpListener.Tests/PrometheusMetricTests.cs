@@ -146,6 +146,12 @@ public sealed class PrometheusMetricTests
     }
 
     [Fact]
+    public void Name_TotalSuffixAlreadyPresent_DisableTotalSuffixAddition_TotalNotRemoved()
+    {
+        AssertName("sample_total", "1", PrometheusType.Counter, true, "sample_total");
+    }
+
+    [Fact]
     public void Name_SpecialCaseCounterWithNumber_AppendTotal()
     {
         AssertName("sample", "2", PrometheusType.Counter, false, "sample_2_total");
