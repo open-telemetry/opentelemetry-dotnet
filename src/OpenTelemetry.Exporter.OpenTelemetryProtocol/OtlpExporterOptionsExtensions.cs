@@ -10,6 +10,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 using TraceOtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
@@ -86,6 +87,15 @@ internal static class OtlpExporterOptionsExtensions
 
         return headers;
     }
+
+    public static OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportTransmissionHandler(this OtlpExporterOptions options)
+        => new(GetTraceExportClient(options));
+
+    public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options)
+       => new(GetMetricsExportClient(options));
+
+    public static OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest> GetLogsExportTransmissionHandler(this OtlpExporterOptions options)
+       => new(GetLogExportClient(options));
 
     public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
         options.Protocol switch

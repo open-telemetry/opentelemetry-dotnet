@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
@@ -16,7 +16,7 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 public class OtlpMetricExporter : BaseExporter<Metric>
 {
-    private readonly IExportClient<OtlpCollector.ExportMetricsServiceRequest> exportClient;
+    private readonly OtlpExporterTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest> transmissionHandler;
 
     private OtlpResource.Resource processResource;
 
@@ -25,7 +25,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// </summary>
     /// <param name="options">Configuration options for the exporter.</param>
     public OtlpMetricExporter(OtlpExporterOptions options)
-        : this(options, null)
+        : this(options, transmissionHandler: null)
     {
     }
 
@@ -33,8 +33,10 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
-    /// <param name="exportClient">Client used for sending export request.</param>
-    internal OtlpMetricExporter(OtlpExporterOptions options, IExportClient<OtlpCollector.ExportMetricsServiceRequest> exportClient = null)
+    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
+    internal OtlpMetricExporter(
+        OtlpExporterOptions options,
+        OtlpExporterTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest> transmissionHandler = null)
     {
         // Each of the Otlp exporters: Traces, Metrics, and Logs set the same value for `OtlpKeyValueTransformer.LogUnsupportedAttributeType`
         // and `ConfigurationExtensions.LogInvalidEnvironmentVariable` so it should be fine even if these exporters are used together.
@@ -48,14 +50,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
             OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
         };
 
-        if (exportClient != null)
-        {
-            this.exportClient = exportClient;
-        }
-        else
-        {
-            this.exportClient = options.GetMetricsExportClient();
-        }
+        this.transmissionHandler = transmissionHandler ?? options.GetMetricsExportTransmissionHandler();
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
@@ -72,7 +67,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         {
             request.AddMetrics(this.ProcessResource, metrics);
 
-            if (!this.exportClient.SendExportRequest(request).Success)
+            if (!this.transmissionHandler.SubmitRequest(request))
             {
                 return ExportResult.Failure;
             }
@@ -93,6 +88,6 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        return this.exportClient?.Shutdown(timeoutMilliseconds) ?? true;
+        return this.transmissionHandler.Shutdown(timeoutMilliseconds);
     }
 }

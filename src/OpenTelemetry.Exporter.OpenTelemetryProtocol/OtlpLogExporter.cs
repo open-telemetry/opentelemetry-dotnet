@@ -5,7 +5,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
@@ -19,7 +19,7 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 {
-    private readonly IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient;
+    private readonly OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest> transmissionHandler;
     private readonly OtlpLogRecordTransformer otlpLogRecordTransformer;
 
     private OtlpResource.Resource? processResource;
@@ -29,7 +29,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// </summary>
     /// <param name="options">Configuration options for the exporter.</param>
     public OtlpLogExporter(OtlpExporterOptions options)
-        : this(options, sdkLimitOptions: new(), experimentalOptions: new(), exportClient: null)
+        : this(options, sdkLimitOptions: new(), experimentalOptions: new(), transmissionHandler: null)
     {
     }
 
@@ -39,12 +39,12 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// <param name="exporterOptions">Configuration options for the exporter.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
     /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
-    /// <param name="exportClient">Client used for sending export request.</param>
+    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
     internal OtlpLogExporter(
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
-        IExportClient<OtlpCollector.ExportLogsServiceRequest>? exportClient = null)
+        OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>? transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
@@ -62,14 +62,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
             OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
         };
 
-        if (exportClient != null)
-        {
-            this.exportClient = exportClient;
-        }
-        else
-        {
-            this.exportClient = exporterOptions!.GetLogExportClient();
-        }
+        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetLogsExportTransmissionHandler();
 
         this.otlpLogRecordTransformer = new OtlpLogRecordTransformer(sdkLimitOptions!, experimentalOptions!);
     }
@@ -89,7 +82,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         {
             request = this.otlpLogRecordTransformer.BuildExportRequest(this.ProcessResource, logRecordBatch);
 
-            if (!this.exportClient.SendExportRequest(request).Success)
+            if (!this.transmissionHandler.SubmitRequest(request))
             {
                 return ExportResult.Failure;
             }
@@ -113,6 +106,6 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        return this.exportClient?.Shutdown(timeoutMilliseconds) ?? true;
+        return this.transmissionHandler?.Shutdown(timeoutMilliseconds) ?? true;
     }
 }
