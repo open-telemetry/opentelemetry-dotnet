@@ -69,10 +69,10 @@ MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
 MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
 ```
 
-An OpenTelemetry
-[MeterProvider](#meterprovider)
-is configured to subscribe to instruments from the Meter
-`MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
+An OpenTelemetry [MeterProvider](#meterprovider) is configured to subscribe to
+an instrument named "MyFruitCounter" from the Meter
+`MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory with a
+default [cardinality limit](../README.md#cardinality-limits) of `2000`. The
 pre-aggregated metrics are exported to a `ConsoleExporter`.
 
 ```csharp
@@ -81,6 +81,20 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddConsoleExporter()
     .Build();
 ```
+
+> [!NOTE]
+> If you need to collect metrics with cardinality higher than the default limit
+  `2000`, please follow the [cardinality
+  limits](../README.md#cardinality-limits) guidance. Here is a quick example of
+  how to change the cardinality limit to `10` for this particular metric:
+
+  ```csharp
+  var meterProvider = Sdk.CreateMeterProviderBuilder()
+      .AddMeter("MyCompany.MyProduct.MyLibrary")
+      .AddView(instrumentName: "MyFruitCounter", new MetricStreamConfiguration { CardinalityLimit = 10 })
+      .AddConsoleExporter()
+      .Build();
+  ```
 
 ```mermaid
 graph LR
