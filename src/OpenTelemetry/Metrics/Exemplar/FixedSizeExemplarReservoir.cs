@@ -95,13 +95,24 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     protected void UpdateExemplar<T>(int exemplarIndex, in ExemplarMeasurement<T> measurement)
         where T : struct
     {
-        var activeBuffer = Volatile.Read(ref this.activeBuffer);
-        if (activeBuffer == null)
-        {
-            // Note: This is expected to happen when we race with a collection.
-            return;
-        }
+        var activeBuffer = Volatile.Read(ref this.activeBuffer)
+            ?? this.AcquireActiveBufferRare();
 
         activeBuffer[exemplarIndex].Update(in measurement);
+    }
+
+    private Exemplar[] AcquireActiveBufferRare()
+    {
+        // Note: We reach here if performing a write while racing with collect.
+
+        Exemplar[]? activeBuffer;
+        var spinWait = default(SpinWait);
+        do
+        {
+            spinWait.SpinOnce();
+        }
+        while ((activeBuffer = Volatile.Read(ref this.activeBuffer)) == null);
+
+        return activeBuffer;
     }
 }
