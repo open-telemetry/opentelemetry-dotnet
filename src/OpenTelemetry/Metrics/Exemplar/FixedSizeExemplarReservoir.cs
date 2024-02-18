@@ -69,7 +69,7 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
             }
             while (--length > 0);
 #else
-            for (int i = 0; i <= activeBuffer!.Length; i++)
+            for (int i = 0; i < activeBuffer!.Length; i++)
             {
                 ref var active = ref activeBuffer[i];
                 if (active.IsUpdated())
