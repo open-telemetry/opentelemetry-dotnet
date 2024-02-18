@@ -34,13 +34,13 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     /// <returns><see cref="ReadOnlyExemplarCollection"/>.</returns>
     public sealed override ReadOnlyExemplarCollection Collect()
     {
-        var currentBuffer = Volatile.Read(ref this.activeBuffer);
+        var activeBuffer = Volatile.Read(ref this.activeBuffer);
 
-        Debug.Assert(currentBuffer != null, "currentBuffer was null");
+        Debug.Assert(activeBuffer != null, "activeBuffer was null");
 
         Volatile.Write(ref this.activeBuffer, null);
 
-        var inactiveBuffer = currentBuffer == this.bufferA
+        var inactiveBuffer = activeBuffer == this.bufferA
             ? this.bufferB
             : this.bufferA;
 
@@ -51,12 +51,40 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
                 inactiveBuffer[i].Reset();
             }
         }
+        else
+        {
+#if NET6_0_OR_GREATER
+            var length = this.Capacity;
+            ref var inactive = ref MemoryMarshal.GetArrayDataReference(inactiveBuffer);
+            ref var active = ref MemoryMarshal.GetArrayDataReference(activeBuffer);
+            do
+            {
+                if (active.IsUpdated())
+                {
+                    active.Copy(ref inactive);
+                }
+
+                inactive = ref Unsafe.Add(ref inactive, 1);
+                active = ref Unsafe.Add(ref active, 1);
+            }
+            while (--length > 0);
+#else
+            for (int i = 0; i <= activeBuffer!.Length; i++)
+            {
+                ref var active = ref activeBuffer[i];
+                if (active.IsUpdated())
+                {
+                    active.Copy(ref inactiveBuffer[i]);
+                }
+            }
+#endif
+        }
 
         this.OnCollectionCompleted();
 
         Volatile.Write(ref this.activeBuffer, inactiveBuffer);
 
-        return new(currentBuffer!);
+        return new(activeBuffer!);
     }
 
     internal sealed override void Initialize(AggregatorStore aggregatorStore)
