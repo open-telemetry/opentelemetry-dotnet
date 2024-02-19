@@ -3,8 +3,6 @@
 
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Console.Tests;
@@ -16,42 +14,26 @@ public class ConsoleLogRecordExporterTest
     {
         using var writer = new StringWriter();
         System.Console.SetOut(writer);
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource("*")
-            .ConfigureResource(resource =>
-                resource.AddService(
-                    serviceName: "Test_VerifyExceptionAttributesAreWritten",
-                    serviceVersion: "1.0.0"))
-            .AddConsoleExporter()
-            .Build();
 
-        using ILoggerFactory factory = LoggerFactory
-            .Create(builder => builder.AddOpenTelemetry(n =>
+        using var factory = LoggerFactory
+            .Create(builder => builder.AddOpenTelemetry(logging =>
             {
-                n.AddConsoleExporter();
+                logging.AddConsoleExporter();
             }));
 
-        ILogger logger = factory.CreateLogger("Program");
-        try
-        {
-            int num1 = 5, num2 = 0, division_res = 0;
-            division_res = num1 / num2;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "You divided by 0");
-        }
+        var logger = factory.CreateLogger("Program");
+        logger.LogError(default, new Exception("Exception Message"), null);
 
         writer.Flush();
         var consoleLog = writer.ToString();
 
         Assert.Contains("exception.type", consoleLog);
-        Assert.Contains("DivideByZeroException", consoleLog);
+        Assert.Contains("Exception", consoleLog);
 
         Assert.Contains("exception.message", consoleLog);
-        Assert.Contains("Attempted to divide by zero.", consoleLog);
+        Assert.Contains("Exception Message", consoleLog);
 
         Assert.Contains("exception.stacktrace", consoleLog);
-        Assert.Contains("System.DivideByZeroException: Attempted to divide by zero.", consoleLog);
+        Assert.Contains("Exception: Exception Message", consoleLog);
     }
 }
