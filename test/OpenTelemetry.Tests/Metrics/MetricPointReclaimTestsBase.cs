@@ -1,9 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
@@ -286,28 +284,17 @@ public abstract class MetricPointReclaimTestsBase
 
         private readonly bool assertNoDroppedMeasurements;
 
-        private readonly FieldInfo aggStoreFieldInfo;
-
-        private readonly FieldInfo metricPointLookupDictionaryFieldInfo;
-
         public CustomExporter(bool assertNoDroppedMeasurements)
         {
             this.assertNoDroppedMeasurements = assertNoDroppedMeasurements;
-
-            var metricFields = typeof(Metric).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
-            this.aggStoreFieldInfo = metricFields!.FirstOrDefault(field => field.Name == "aggStore");
-
-            var aggregatorStoreFields = typeof(AggregatorStore).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
-            this.metricPointLookupDictionaryFieldInfo = aggregatorStoreFields!.FirstOrDefault(field => field.Name == "tagsToMetricPointIndexDictionaryDelta");
         }
 
         public override ExportResult Export(in Batch<Metric> batch)
         {
             foreach (var metric in batch)
             {
-                var aggStore = this.aggStoreFieldInfo.GetValue(metric) as AggregatorStore;
-                var metricPointLookupDictionary = this.metricPointLookupDictionaryFieldInfo.GetValue(aggStore) as ConcurrentDictionary<Tags, LookupData>;
-
+                var aggStore = metric.AggregatorStore;
+                var metricPointLookupDictionary = aggStore.TagsToMetricPointIndexDictionaryDelta;
                 var droppedMeasurements = aggStore.DroppedMeasurements;
 
                 if (this.assertNoDroppedMeasurements)
@@ -316,7 +303,7 @@ public abstract class MetricPointReclaimTestsBase
                 }
 
                 // This is to ensure that the lookup dictionary does not have unbounded growth
-                Assert.True(metricPointLookupDictionary.Count <= (MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault * 2));
+                Assert.True(metricPointLookupDictionary.Count <= (MeterProviderBuilderSdk.DefaultCardinalityLimit * 2));
 
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
