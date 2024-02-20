@@ -52,7 +52,7 @@ public class MetricExemplarTests : MetricTestsBase
         var exemplars = GetExemplars(metricPoint.Value);
 
         // TODO: Modify the test to better test cumulative.
-        // In cumulative where SimpleExemplarReservoir's size is
+        // In cumulative, where SimpleFixedSizeExemplarReservoir's size is
         // more than the count of new measurements, it is possible
         // that the exemplar value is for a measurement that was recorded in the prior
         // cycle. The current ValidateExemplars() does not handle this case.

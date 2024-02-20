@@ -80,7 +80,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         {
             request.AddBatch(this.sdkLimitOptions, this.ProcessResource, activityBatch);
 
-            if (!this.exportClient.SendExportRequest(request))
+            if (!this.exportClient.SendExportRequest(request).Success)
             {
                 return ExportResult.Failure;
             }

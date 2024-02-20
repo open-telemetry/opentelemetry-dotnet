@@ -1771,7 +1771,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         {
             foreach (var metricPoint in metric.GetMetricPoints())
             {
-                bucketCounts = metricPoint.GetHistogramBuckets().RunningBucketCounts;
+                bucketCounts = metricPoint.GetHistogramBuckets().BucketCounts.Select(v => v.RunningValue).ToArray();
             }
         }
 

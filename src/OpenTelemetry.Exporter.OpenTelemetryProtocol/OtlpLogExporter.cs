@@ -89,7 +89,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         {
             request = this.otlpLogRecordTransformer.BuildExportRequest(this.ProcessResource, logRecordBatch);
 
-            if (!this.exportClient.SendExportRequest(request))
+            if (!this.exportClient.SendExportRequest(request).Success)
             {
                 return ExportResult.Failure;
             }
