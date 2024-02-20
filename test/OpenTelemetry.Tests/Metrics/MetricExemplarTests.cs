@@ -38,7 +38,7 @@ public class MetricExemplarTests : MetricTestsBase
                 metricReaderOptions.TemporalityPreference = temporality;
             }));
 
-        var measurementValues = GenerateRandomValues(10);
+        var measurementValues = GenerateRandomValues(2);
         foreach (var value in measurementValues)
         {
             counter.Add(value);
@@ -49,13 +49,8 @@ public class MetricExemplarTests : MetricTestsBase
         Assert.NotNull(metricPoint);
         Assert.True(metricPoint.Value.StartTime >= testStartTime);
         Assert.True(metricPoint.Value.EndTime != default);
-        var exemplars = GetExemplars(metricPoint.Value);
 
-        // TODO: Modify the test to better test cumulative.
-        // In cumulative, where SimpleFixedSizeExemplarReservoir's size is
-        // more than the count of new measurements, it is possible
-        // that the exemplar value is for a measurement that was recorded in the prior
-        // cycle. The current ValidateExemplars() does not handle this case.
+        var exemplars = GetExemplars(metricPoint.Value);
         ValidateExemplars(exemplars, metricPoint.Value.StartTime, metricPoint.Value.EndTime, measurementValues, false);
 
         exportedItems.Clear();
@@ -64,7 +59,7 @@ public class MetricExemplarTests : MetricTestsBase
         Thread.Sleep(10); // Compensates for low resolution timing in netfx.
 #endif
 
-        measurementValues = GenerateRandomValues(10);
+        measurementValues = GenerateRandomValues(1);
         foreach (var value in measurementValues)
         {
             var act = new Activity("test").Start();
@@ -77,7 +72,18 @@ public class MetricExemplarTests : MetricTestsBase
         Assert.NotNull(metricPoint);
         Assert.True(metricPoint.Value.StartTime >= testStartTime);
         Assert.True(metricPoint.Value.EndTime != default);
+
         exemplars = GetExemplars(metricPoint.Value);
+
+        if (temporality == MetricReaderTemporalityPreference.Cumulative)
+        {
+            Assert.Equal(2, exemplars.Count);
+        }
+        else
+        {
+            Assert.Single(exemplars);
+        }
+
         ValidateExemplars(exemplars, metricPoint.Value.StartTime, metricPoint.Value.EndTime, measurementValues, true);
     }
 
@@ -187,7 +193,7 @@ public class MetricExemplarTests : MetricTestsBase
         return values;
     }
 
-    private static void ValidateExemplars(ReadOnlyExemplarCollection exemplars, DateTimeOffset startTime, DateTimeOffset endTime, double[] measurementValues, bool traceContextExists)
+    private static void ValidateExemplars(IReadOnlyList<Exemplar> exemplars, DateTimeOffset startTime, DateTimeOffset endTime, double[] measurementValues, bool traceContextExists)
     {
         foreach (var exemplar in exemplars)
         {

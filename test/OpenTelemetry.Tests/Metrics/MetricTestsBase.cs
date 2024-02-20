@@ -233,14 +233,14 @@ public class MetricTestsBase
 #endif
     }
 
-    internal static ReadOnlyExemplarCollection GetExemplars(MetricPoint mp)
+    internal static IReadOnlyList<Exemplar> GetExemplars(MetricPoint mp)
     {
         if (mp.TryGetExemplars(out var exemplars))
         {
-            return exemplars.Value;
+            return exemplars.Value.ToReadOnlyList();
         }
 
-        return new ReadOnlyExemplarCollection(Array.Empty<Exemplar>());
+        return Array.Empty<Exemplar>();
     }
 
 #if BUILDING_HOSTING_TESTS

@@ -61,6 +61,18 @@ internal
         return new ReadOnlyExemplarCollection(exemplarCopies);
     }
 
+    internal IReadOnlyList<Exemplar> ToReadOnlyList()
+    {
+        var list = new List<Exemplar>(this.MaximumCount);
+
+        foreach (var item in this)
+        {
+            list.Add(item);
+        }
+
+        return list;
+    }
+
     /// <summary>
     /// Enumerates the elements of a <see cref="ReadOnlyExemplarCollection"/>.
     /// </summary>
