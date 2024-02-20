@@ -28,4 +28,9 @@ internal sealed class PrometheusExporterOptions
             this.scrapeResponseCacheDurationMilliseconds = value;
         }
     }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether addition of _total suffix for counter metric names is disabled. Default value: <see langword="false"/>.
+    /// </summary>
+    public bool DisableTotalNameSuffixForCounters { get; set; }
 }

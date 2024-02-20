@@ -25,6 +25,7 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         Guard.ThrowIfNull(options);
 
         this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
+        this.DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters;
 
         this.CollectionManager = new PrometheusCollectionManager(this);
     }
@@ -49,6 +50,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     internal PrometheusCollectionManager CollectionManager { get; }
 
     internal int ScrapeResponseCacheDurationMilliseconds { get; }
+
+    internal bool DisableTotalNameSuffixForCounters { get; }
 
     internal bool OpenMetricsRequested { get; set; }
 
