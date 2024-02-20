@@ -56,6 +56,8 @@ internal sealed class MetricPointOptionalComponents
         Interlocked.Exchange(ref this.isCriticalSectionOccupied, 0);
     }
 
+    // Note: This method is marked as NoInlining because the whole point of it
+    // is to avoid the initialization of SpinWait unless it is needed.
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void AcquireLockRare()
     {
