@@ -12,6 +12,7 @@ public class ConsoleLogRecordExporterTest
     [Fact]
     public void VerifyExceptionAttributesAreWritten()
     {
+        var originalConsoleOut = System.Console.Out;
         using var writer = new StringWriter();
         System.Console.SetOut(writer);
 
@@ -26,6 +27,7 @@ public class ConsoleLogRecordExporterTest
 
         writer.Flush();
         var consoleLog = writer.ToString();
+        System.Console.SetOut(originalConsoleOut);
 
         Assert.Contains("exception.type", consoleLog);
         Assert.Contains("Exception", consoleLog);
