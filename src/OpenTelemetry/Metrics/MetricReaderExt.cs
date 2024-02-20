@@ -50,9 +50,10 @@ public abstract partial class MetricReader
 
     internal virtual List<Metric> AddMetricWithNoViews(Instrument instrument)
     {
+        Debug.Assert(instrument != null, "instrument was null");
         Debug.Assert(this.metrics != null, "this.metrics was null");
 
-        var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration: null);
+        var metricStreamIdentity = new MetricStreamIdentity(instrument!, metricStreamConfiguration: null);
         lock (this.instrumentCreationLock)
         {
             if (this.TryGetExistingMetric(in metricStreamIdentity, out var existingMetric))
@@ -96,9 +97,11 @@ public abstract partial class MetricReader
 
     internal virtual List<Metric> AddMetricWithViews(Instrument instrument, List<MetricStreamConfiguration?> metricStreamConfigs)
     {
+        Debug.Assert(instrument != null, "instrument was null");
+        Debug.Assert(metricStreamConfigs != null, "metricStreamConfigs was null");
         Debug.Assert(this.metrics != null, "this.metrics was null");
 
-        var maxCountMetricsToBeCreated = metricStreamConfigs.Count;
+        var maxCountMetricsToBeCreated = metricStreamConfigs!.Count;
 
         // Create list with initial capacity as the max metric count.
         // Due to duplicate/max limit, we may not end up using them
@@ -110,7 +113,7 @@ public abstract partial class MetricReader
             for (int i = 0; i < maxCountMetricsToBeCreated; i++)
             {
                 var metricStreamConfig = metricStreamConfigs[i];
-                var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfig);
+                var metricStreamIdentity = new MetricStreamIdentity(instrument!, metricStreamConfig);
 
                 if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamIdentity.InstrumentName))
                 {
