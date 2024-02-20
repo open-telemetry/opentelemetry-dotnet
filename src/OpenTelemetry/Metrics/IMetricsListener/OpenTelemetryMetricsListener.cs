@@ -35,15 +35,15 @@ internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposab
         return new MeasurementHandlers()
         {
             ByteHandler = (instrument, value, tags, state)
-                => this.MeasurementRecordedLong(instrument, value, tags, state),
+                => MeterProviderSdk.MeasurementRecordedLong(instrument, value, tags, state),
             ShortHandler = (instrument, value, tags, state)
-                => this.MeasurementRecordedLong(instrument, value, tags, state),
+                => MeterProviderSdk.MeasurementRecordedLong(instrument, value, tags, state),
             IntHandler = (instrument, value, tags, state)
-                => this.MeasurementRecordedLong(instrument, value, tags, state),
-            LongHandler = this.MeasurementRecordedLong,
+                => MeterProviderSdk.MeasurementRecordedLong(instrument, value, tags, state),
+            LongHandler = MeterProviderSdk.MeasurementRecordedLong,
             FloatHandler = (instrument, value, tags, state)
-                => this.MeasurementRecordedDouble(instrument, value, tags, state),
-            DoubleHandler = this.MeasurementRecordedDouble,
+                => MeterProviderSdk.MeasurementRecordedDouble(instrument, value, tags, state),
+            DoubleHandler = MeterProviderSdk.MeasurementRecordedDouble,
         };
     }
 
@@ -55,16 +55,7 @@ internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposab
 
     public void MeasurementsCompleted(Instrument instrument, object? userState)
     {
-        var meterProvider = this.meterProviderSdk;
-
-        if (meterProvider.ViewCount > 0)
-        {
-            meterProvider.MeasurementsCompleted(instrument, userState);
-        }
-        else
-        {
-            meterProvider.MeasurementsCompletedSingleStream(instrument, userState);
-        }
+        MeterProviderSdk.MeasurementsCompleted(instrument, userState);
     }
 
     public void Initialize(IObservableInstrumentsSource source)
@@ -75,33 +66,5 @@ internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposab
     private void OnCollectObservableInstruments()
     {
         this.observableInstrumentsSource?.RecordObservableInstruments();
-    }
-
-    private void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? userState)
-    {
-        var meterProvider = this.meterProviderSdk;
-
-        if (meterProvider.ViewCount > 0)
-        {
-            meterProvider.MeasurementRecordedDouble(instrument, value, tagsRos, userState);
-        }
-        else
-        {
-            meterProvider.MeasurementRecordedDoubleSingleStream(instrument, value, tagsRos, userState);
-        }
-    }
-
-    private void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? userState)
-    {
-        var meterProvider = this.meterProviderSdk;
-
-        if (meterProvider.ViewCount > 0)
-        {
-            meterProvider.MeasurementRecordedLong(instrument, value, tagsRos, userState);
-        }
-        else
-        {
-            meterProvider.MeasurementRecordedLongSingleStream(instrument, value, tagsRos, userState);
-        }
     }
 }

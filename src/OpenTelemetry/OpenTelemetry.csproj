@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFrameworks>$(TargetFrameworksForLibrariesExtended)</TargetFrameworks>
     <Description>OpenTelemetry .NET SDK</Description>
