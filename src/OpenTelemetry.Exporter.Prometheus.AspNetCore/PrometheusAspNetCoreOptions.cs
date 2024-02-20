@@ -18,6 +18,15 @@ public class PrometheusAspNetCoreOptions
     public string ScrapeEndpointPath { get; set; } = DefaultScrapeEndpointPath;
 
     /// <summary>
+    /// Gets or sets a value indicating whether addition of _total suffix for counter metric names is disabled. Default value: <see langword="false"/>.
+    /// </summary>
+    public bool DisableTotalNameSuffixForCounters
+    {
+        get => this.ExporterOptions.DisableTotalNameSuffixForCounters;
+        set => this.ExporterOptions.DisableTotalNameSuffixForCounters = value;
+    }
+
+    /// <summary>
     /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
     /// </summary>
     /// <remarks>
