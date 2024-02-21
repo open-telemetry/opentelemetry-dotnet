@@ -133,6 +133,9 @@ public class MetricStreamConfiguration
         }
     }
 
+    // TODO: Expose this to be complaint with the spec.
+    internal Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
+
     internal string[]? CopiedTagKeys { get; private set; }
 
     internal int? ViewId { get; set; }

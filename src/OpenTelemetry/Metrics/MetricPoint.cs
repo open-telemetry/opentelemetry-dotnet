@@ -62,7 +62,17 @@ public struct MetricPoint
 
         var isExemplarEnabled = aggregatorStore!.IsExemplarEnabled();
 
-        ExemplarReservoir? reservoir = null;
+        ExemplarReservoir? reservoir;
+        try
+        {
+            reservoir = aggregatorStore.ExemplarReservoirFactory?.Invoke();
+        }
+        catch
+        {
+            // todo: Log
+            reservoir = null;
+        }
+
         if (this.aggType == AggregationType.HistogramWithBuckets ||
             this.aggType == AggregationType.HistogramWithMinMaxBuckets)
         {
@@ -70,7 +80,7 @@ public struct MetricPoint
             this.mpComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
             if (isExemplarEnabled)
             {
-                reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds!.Length);
+                reservoir ??= new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds!.Length + 1);
             }
         }
         else if (this.aggType == AggregationType.Histogram ||
