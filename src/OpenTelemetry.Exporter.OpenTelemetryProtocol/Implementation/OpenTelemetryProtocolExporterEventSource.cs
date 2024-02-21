@@ -33,6 +33,15 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
         }
     }
 
+    [NonEvent]
+    public void SubmitRequestException(Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.SubmitRequestException(ex.ToInvariantString());
+        }
+    }
+
     [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
     public void FailedToReachCollector(string rawCollectorUri, string ex)
     {
@@ -82,5 +91,14 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
     public void InvalidEnvironmentVariable(string key, string value)
     {
         this.WriteEvent(11, key, value);
+    }
+
+#if NET6_0_OR_GREATER
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
+#endif
+    [Event(12, Message = "Unknown error in TrySubmitRequest method. Message: '{0}'. IsRetry: {1}", Level = EventLevel.Error)]
+    public void SubmitRequestException(string ex)
+    {
+        this.WriteEvent(12, ex);
     }
 }

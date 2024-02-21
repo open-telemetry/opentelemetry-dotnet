@@ -38,7 +38,7 @@ internal class OtlpExporterTransmissionHandler<TRequest>
         }
         catch (Exception ex)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
+            OpenTelemetryProtocolExporterEventSource.Log.SubmitRequestException(ex);
             this.OnRequestDropped(request);
             return false;
         }
