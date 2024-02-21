@@ -15,13 +15,7 @@ internal static class InterlockedHelper
         // we'll end up in an Interlocked.CompareExchange loop anyway.
         double currentValue = Volatile.Read(ref location);
 
-        double updatedValue;
-        unchecked
-        {
-            updatedValue = currentValue + value;
-        }
-
-        var returnedValue = Interlocked.CompareExchange(ref location, updatedValue, currentValue);
+        var returnedValue = Interlocked.CompareExchange(ref location, currentValue + value, currentValue);
         if (returnedValue != currentValue)
         {
             AddRare(ref location, value, returnedValue);
@@ -40,13 +34,7 @@ internal static class InterlockedHelper
         {
             sw.SpinOnce();
 
-            double updatedValue;
-            unchecked
-            {
-                updatedValue = currentValue + value;
-            }
-
-            var returnedValue = Interlocked.CompareExchange(ref location, updatedValue, currentValue);
+            var returnedValue = Interlocked.CompareExchange(ref location, currentValue + value, currentValue);
             if (returnedValue == currentValue)
             {
                 break;
