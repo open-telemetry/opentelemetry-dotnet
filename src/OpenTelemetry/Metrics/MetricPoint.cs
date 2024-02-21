@@ -830,11 +830,6 @@ public struct MetricPoint
                     }
                     else
                     {
-                        // TODO:
-                        // Is this thread-safe way to read double?
-                        // As long as the value is not -ve infinity,
-                        // the exchange (to 0.0) will never occur,
-                        // but we get the original value atomically.
                         this.snapshotValue.AsDouble = InterlockedHelper.Read(ref this.runningValue.AsDouble);
                     }
 
