@@ -23,8 +23,6 @@ internal sealed partial class Base2ExponentialBucketHistogram
     internal double RunningMax = double.NegativeInfinity;
     internal double SnapshotMax;
 
-    internal int IsCriticalSectionOccupied = 0;
-
     internal ExponentialHistogramData SnapshotExponentialHistogramData = new();
 
     private int scale;

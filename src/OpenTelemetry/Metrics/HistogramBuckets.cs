@@ -27,8 +27,6 @@ public class HistogramBuckets
     internal double RunningMax = double.NegativeInfinity;
     internal double SnapshotMax;
 
-    internal int IsCriticalSectionOccupied = 0;
-
     private readonly BucketLookupNode? bucketLookupTreeRoot;
 
     private readonly Func<double, int> findHistogramBucketIndex;

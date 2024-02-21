@@ -118,84 +118,97 @@ public sealed class PrometheusMetricTests
     [Fact]
     public void Name_SpecialCaseGuage_AppendRatio()
     {
-        AssertName("sample", "1", PrometheusType.Gauge, "sample_ratio");
+        AssertName("sample", "1", PrometheusType.Gauge, false, "sample_ratio");
     }
 
     [Fact]
     public void Name_GuageWithUnit_NoAppendRatio()
     {
-        AssertName("sample", "unit", PrometheusType.Gauge, "sample_unit");
+        AssertName("sample", "unit", PrometheusType.Gauge, false, "sample_unit");
     }
 
     [Fact]
     public void Name_SpecialCaseCounter_AppendTotal()
     {
-        AssertName("sample", "unit", PrometheusType.Counter, "sample_unit_total");
+        AssertName("sample", "unit", PrometheusType.Counter, false, "sample_unit_total");
     }
 
     [Fact]
     public void Name_SpecialCaseCounterWithoutUnit_DropUnitAppendTotal()
     {
-        AssertName("sample", "1", PrometheusType.Counter, "sample_total");
+        AssertName("sample", "1", PrometheusType.Counter, false, "sample_total");
+    }
+
+    [Fact]
+    public void Name_DisableTotalSuffixAddition_TotalNotAppended()
+    {
+        AssertName("sample", "1", PrometheusType.Counter, true, "sample");
+    }
+
+    [Fact]
+    public void Name_TotalSuffixAlreadyPresent_DisableTotalSuffixAddition_TotalNotRemoved()
+    {
+        AssertName("sample_total", "1", PrometheusType.Counter, true, "sample_total");
     }
 
     [Fact]
     public void Name_SpecialCaseCounterWithNumber_AppendTotal()
     {
-        AssertName("sample", "2", PrometheusType.Counter, "sample_2_total");
+        AssertName("sample", "2", PrometheusType.Counter, false, "sample_2_total");
     }
 
     [Fact]
     public void Name_UnsupportedMetricNameChars_Drop()
     {
-        AssertName("s%%ple", "%/m", PrometheusType.Summary, "s_ple_percent_per_minute");
+        AssertName("s%%ple", "%/m", PrometheusType.Summary, false, "s_ple_percent_per_minute");
     }
 
     [Fact]
     public void Name_UnitOtherThanOne_Normal()
     {
-        AssertName("metric_name", "2", PrometheusType.Summary, "metric_name_2");
+        AssertName("metric_name", "2", PrometheusType.Summary, false, "metric_name_2");
     }
 
     [Fact]
     public void Name_UnitAlreadyPresentInName_NotAppended()
     {
-        AssertName("metric_name_total", "total", PrometheusType.Counter, "metric_name_total");
+        AssertName("metric_name_total", "total", PrometheusType.Counter, false, "metric_name_total");
     }
 
     [Fact]
     public void Name_UnitAlreadyPresentInName_TotalNonCounterType_NotAppended()
     {
-        AssertName("metric_name_total", "total", PrometheusType.Summary, "metric_name_total");
+        AssertName("metric_name_total", "total", PrometheusType.Summary, false, "metric_name_total");
     }
 
     [Fact]
     public void Name_UnitAlreadyPresentInName_CustomGauge_NotAppended()
     {
-        AssertName("metric_hertz", "hertz", PrometheusType.Gauge, "metric_hertz");
+        AssertName("metric_hertz", "hertz", PrometheusType.Gauge, false, "metric_hertz");
     }
 
     [Fact]
     public void Name_UnitAlreadyPresentInName_CustomCounter_NotAppended()
     {
-        AssertName("metric_hertz_total", "hertz_total", PrometheusType.Counter, "metric_hertz_total");
+        AssertName("metric_hertz_total", "hertz_total", PrometheusType.Counter, false, "metric_hertz_total");
     }
 
     [Fact]
     public void Name_UnitAlreadyPresentInName_OrderMatters_Appended()
     {
-        AssertName("metric_total_hertz", "hertz_total", PrometheusType.Counter, "metric_total_hertz_hertz_total");
+        AssertName("metric_total_hertz", "hertz_total", PrometheusType.Counter, false, "metric_total_hertz_hertz_total");
     }
 
     [Fact]
     public void Name_StartWithNumber_UnderscoreStart()
     {
-        AssertName("2_metric_name", "By", PrometheusType.Summary, "_metric_name_bytes");
+        AssertName("2_metric_name", "By", PrometheusType.Summary, false, "_metric_name_bytes");
     }
 
-    private static void AssertName(string name, string unit, PrometheusType type, string expected)
+    private static void AssertName(
+        string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters, string expected)
     {
-        var prometheusMetric = new PrometheusMetric(name, unit, type);
+        var prometheusMetric = new PrometheusMetric(name, unit, type, disableTotalNameSuffixForCounters);
         Assert.Equal(expected, prometheusMetric.Name);
     }
 
