@@ -4,11 +4,11 @@
 using System.Diagnostics;
 #if NET6_0_OR_GREATER || NETFRAMEWORK
 using System.Runtime.CompilerServices;
-#endif
 using System.Runtime.InteropServices;
-#if !NET6_0_OR_GREATER && !NETFRAMEWORK
+#else
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.InteropServices;
 #endif
 
 namespace OpenTelemetry.Trace;
