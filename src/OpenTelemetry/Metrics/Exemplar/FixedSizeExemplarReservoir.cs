@@ -88,7 +88,7 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
 
     internal sealed override void Initialize(AggregatorStore aggregatorStore)
     {
-        var keyFilter = aggregatorStore.TagKeysInteresting;
+        var viewDefinedTagKeys = aggregatorStore.TagKeysInteresting;
 
 #if NET6_0_OR_GREATER
         var length = this.bufferA.Length;
@@ -96,8 +96,8 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
         ref var b = ref MemoryMarshal.GetArrayDataReference(this.bufferB);
         do
         {
-            a.KeyFilter = keyFilter;
-            b.KeyFilter = keyFilter;
+            a.ViewDefinedTagKeys = viewDefinedTagKeys;
+            b.ViewDefinedTagKeys = viewDefinedTagKeys;
             a = ref Unsafe.Add(ref a, 1);
             b = ref Unsafe.Add(ref b, 1);
         }
@@ -107,8 +107,8 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
             i < this.bufferA.Length && i < this.bufferB.Length;
             i++)
         {
-            this.bufferA[i].KeyFilter = keyFilter;
-            this.bufferB[i].KeyFilter = keyFilter;
+            this.bufferA[i].ViewDefinedTagKeys = viewDefinedTagKeys;
+            this.bufferB[i].ViewDefinedTagKeys = viewDefinedTagKeys;
         }
 #endif
 

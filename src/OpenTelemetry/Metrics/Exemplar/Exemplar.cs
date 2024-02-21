@@ -22,17 +22,13 @@ namespace OpenTelemetry.Metrics;
 #endif
 public
 #else
-/// <summary>
-/// Represents an Exemplar data.
-/// </summary>
-#pragma warning disable SA1623 // The property's documentation summary text should begin with: `Gets or sets`
 internal
 #endif
     struct Exemplar
 {
-    internal HashSet<string>? KeyFilter;
+    internal HashSet<string>? ViewDefinedTagKeys;
 
-    private static readonly ReadOnlyFilteredTagCollection Empty = new(keyFilter: null, Array.Empty<KeyValuePair<string, object?>>(), count: 0);
+    private static readonly ReadOnlyFilteredTagCollection Empty = new(excludedKeys: null, Array.Empty<KeyValuePair<string, object?>>(), count: 0);
     private int tagCount;
     private KeyValuePair<string, object?>[]? tagStorage;
     private MetricPointValueStorage valueStorage;
@@ -92,7 +88,7 @@ internal
             {
                 Debug.Assert(this.tagStorage != null, "tagStorage was null");
 
-                return new(this.KeyFilter, this.tagStorage!, this.tagCount);
+                return new(this.ViewDefinedTagKeys, this.tagStorage!, this.tagCount);
             }
         }
     }
@@ -161,7 +157,7 @@ internal
         destination.TraceId = this.TraceId;
         destination.SpanId = this.SpanId;
         destination.valueStorage = this.valueStorage;
-        destination.KeyFilter = this.KeyFilter;
+        destination.ViewDefinedTagKeys = this.ViewDefinedTagKeys;
         destination.tagCount = this.tagCount;
         if (destination.tagCount > 0)
         {

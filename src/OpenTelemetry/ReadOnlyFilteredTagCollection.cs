@@ -25,19 +25,19 @@ internal
 #endif
     readonly struct ReadOnlyFilteredTagCollection
 {
-    private readonly HashSet<string>? keyFilter;
+    private readonly HashSet<string>? excludedKeys;
     private readonly KeyValuePair<string, object?>[] tags;
     private readonly int count;
 
     internal ReadOnlyFilteredTagCollection(
-        HashSet<string>? keyFilter,
+        HashSet<string>? excludedKeys,
         KeyValuePair<string, object?>[] tags,
         int count)
     {
         Debug.Assert(tags != null, "tags was null");
         Debug.Assert(count <= tags!.Length, "count was invalid");
 
-        this.keyFilter = keyFilter;
+        this.excludedKeys = excludedKeys;
         this.tags = tags;
         this.count = count;
     }
@@ -107,7 +107,7 @@ internal
                 {
                     var item = this.source.tags[index];
 
-                    if (this.source.keyFilter?.Contains(item.Key) == true)
+                    if (this.source.excludedKeys?.Contains(item.Key) == true)
                     {
                         continue;
                     }
