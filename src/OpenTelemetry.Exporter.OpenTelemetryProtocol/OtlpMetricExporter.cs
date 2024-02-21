@@ -67,7 +67,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         {
             request.AddMetrics(this.ProcessResource, metrics);
 
-            if (!this.transmissionHandler.SubmitRequest(request))
+            if (!this.transmissionHandler.TrySubmitRequest(request))
             {
                 return ExportResult.Failure;
             }

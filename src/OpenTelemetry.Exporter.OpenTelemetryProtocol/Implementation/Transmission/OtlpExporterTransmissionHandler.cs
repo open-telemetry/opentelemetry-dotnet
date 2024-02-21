@@ -24,7 +24,7 @@ internal class OtlpExporterTransmissionHandler<TRequest>
     /// </summary>
     /// <param name="request">The request to send to the server.</param>
     /// <returns>True if the request is sent successfully or else false.</returns>
-    public bool SubmitRequest(TRequest request)
+    public bool TrySubmitRequest(TRequest request)
     {
         try
         {
