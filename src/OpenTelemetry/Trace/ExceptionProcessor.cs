@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+#if NET6_0_OR_GREATER || NETFRAMEWORK
+using System.Runtime.CompilerServices;
+#endif
 using System.Runtime.InteropServices;
 #if !NET6_0_OR_GREATER && !NETFRAMEWORK
 using System.Linq.Expressions;
@@ -19,7 +22,14 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
     public ExceptionProcessor()
     {
 #if NET6_0_OR_GREATER || NETFRAMEWORK
-        this.fnGetExceptionPointers = Marshal.GetExceptionPointers;
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+        {
+            this.fnGetExceptionPointers = Marshal.GetExceptionPointers;
+        }
+        else
+        {
+            throw new NotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported when running native AOT.");
+        }
 #else
         // When running on netstandard or similar the Marshal class is not a part of the netstandard API
         // but it would still most likely be available in the underlying framework, so use reflection to retrieve it.
