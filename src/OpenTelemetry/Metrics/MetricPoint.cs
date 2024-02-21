@@ -383,8 +383,8 @@ public struct MetricPoint
     {
         this.Update(number, out var explicitBucketHistogramBucketIndex);
 
-        var exemplarSampler = this.aggregatorStore.ExemplarSampler;
-        if (exemplarSampler.EarlySampleDecision ?? exemplarSampler.ShouldSampleLong(number, tags))
+        var exemplarFilter = this.aggregatorStore.ExemplarFilter;
+        if (exemplarFilter.EarlySampleDecision ?? exemplarFilter.ShouldSampleLong(number, tags))
         {
             Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
 
@@ -399,8 +399,8 @@ public struct MetricPoint
     {
         this.Update(number, out var explicitBucketHistogramBucketIndex);
 
-        var exemplarSampler = this.aggregatorStore.ExemplarSampler;
-        if (exemplarSampler.EarlySampleDecision ?? exemplarSampler.ShouldSampleDouble(number, tags))
+        var exemplarFilter = this.aggregatorStore.ExemplarFilter;
+        if (exemplarFilter.EarlySampleDecision ?? exemplarFilter.ShouldSampleDouble(number, tags))
         {
             Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
 
