@@ -44,8 +44,7 @@ internal sealed class OpenTelemetryLogger : ILogger
 
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        if (!this.IsEnabled(logLevel)
-            || Sdk.SuppressInstrumentation)
+        if (!this.IsEnabled(logLevel))
         {
             return;
         }
@@ -111,7 +110,7 @@ internal sealed class OpenTelemetryLogger : ILogger
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsEnabled(LogLevel logLevel)
     {
-        return logLevel != LogLevel.None;
+        return logLevel != LogLevel.None && !Sdk.SuppressInstrumentation;
     }
 
     public IDisposable BeginScope<TState>(TState state)
