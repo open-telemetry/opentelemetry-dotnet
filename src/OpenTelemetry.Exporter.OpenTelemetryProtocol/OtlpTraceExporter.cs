@@ -26,7 +26,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
     public OtlpTraceExporter(OtlpExporterOptions options)
-        : this(options, sdkLimitOptions: new())
+        : this(options, sdkLimitOptions: new(), transmissionHandler: null)
     {
     }
 
