@@ -22,13 +22,13 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
     public ExceptionProcessor()
     {
 #if NET6_0_OR_GREATER || NETFRAMEWORK
-        if (!RuntimeFeature.IsDynamicCodeSupported)
+        if (RuntimeFeature.IsDynamicCodeSupported)
         {
-            this.fnGetExceptionPointers = Marshal.GetExceptionPointers;
+            throw new NotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported when running native AOT.");
         }
         else
         {
-            throw new NotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported when running native AOT.");
+            this.fnGetExceptionPointers = Marshal.GetExceptionPointers;
         }
 #else
         // When running on netstandard or similar the Marshal class is not a part of the netstandard API
