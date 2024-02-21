@@ -12,6 +12,7 @@ namespace OpenTelemetry.Metrics;
 
 internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
 {
+    private static readonly Exemplar[] NeverMatchExemplarBuffer = new Exemplar[0];
     private readonly Exemplar[] bufferA;
     private readonly Exemplar[] bufferB;
     private Exemplar[]? activeBuffer;
@@ -34,11 +35,9 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     /// <returns><see cref="ReadOnlyExemplarCollection"/>.</returns>
     public sealed override ReadOnlyExemplarCollection Collect()
     {
-        var activeBuffer = Volatile.Read(ref this.activeBuffer);
+        var activeBuffer = Interlocked.Exchange(ref this.activeBuffer, null);
 
         Debug.Assert(activeBuffer != null, "activeBuffer was null");
-
-        Volatile.Write(ref this.activeBuffer, null);
 
         var inactiveBuffer = activeBuffer == this.bufferA
             ? this.bufferB
@@ -50,6 +49,8 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
             {
                 inactiveBuffer[i].Reset();
             }
+
+            this.OnReset();
         }
         else
         {
@@ -80,9 +81,7 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
 #endif
         }
 
-        this.OnCollectionCompleted();
-
-        Volatile.Write(ref this.activeBuffer, inactiveBuffer);
+        Interlocked.Exchange(ref this.activeBuffer, inactiveBuffer);
 
         return new(activeBuffer!);
     }
@@ -116,14 +115,14 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
         base.Initialize(aggregatorStore);
     }
 
-    protected virtual void OnCollectionCompleted()
+    protected virtual void OnReset()
     {
     }
 
     protected void UpdateExemplar<T>(int exemplarIndex, in ExemplarMeasurement<T> measurement)
         where T : struct
     {
-        var activeBuffer = Volatile.Read(ref this.activeBuffer)
+        var activeBuffer = Interlocked.CompareExchange(ref this.activeBuffer, null, NeverMatchExemplarBuffer)
             ?? this.AcquireActiveBufferRare();
 
         activeBuffer[exemplarIndex].Update(in measurement);
@@ -134,12 +133,13 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
         // Note: We reach here if performing a write while racing with collect.
 
         Exemplar[]? activeBuffer;
+
         var spinWait = default(SpinWait);
         do
         {
             spinWait.SpinOnce();
         }
-        while ((activeBuffer = Volatile.Read(ref this.activeBuffer)) == null);
+        while ((activeBuffer = Interlocked.CompareExchange(ref this.activeBuffer, null, NeverMatchExemplarBuffer)) == null);
 
         return activeBuffer;
     }

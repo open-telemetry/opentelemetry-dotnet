@@ -36,12 +36,9 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
         this.Offer(in measurement);
     }
 
-    protected override void OnCollectionCompleted()
+    protected override void OnReset()
     {
-        // Reset internal state irrespective of temporality.
-        // This ensures incoming measurements have fair chance
-        // of making it to the reservoir.
-        Volatile.Write(ref this.measurementsSeen, 0);
+        Interlocked.Exchange(ref this.measurementsSeen, 0);
     }
 
     private void Offer<T>(in ExemplarMeasurement<T> measurement)

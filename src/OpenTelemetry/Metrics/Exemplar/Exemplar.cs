@@ -114,7 +114,7 @@ internal
 
         this.StoreRawTags(measurement.Tags);
 
-        Volatile.Write(ref this.isCriticalSectionOccupied, 0);
+        Interlocked.Exchange(ref this.isCriticalSectionOccupied, 0);
     }
 
     internal void Reset()
@@ -124,7 +124,7 @@ internal
 
     internal readonly bool IsUpdated()
     {
-        if (Volatile.Read(ref Unsafe.AsRef(in this.isCriticalSectionOccupied)) != 0)
+        if (Interlocked.CompareExchange(ref Unsafe.AsRef(in this.isCriticalSectionOccupied), 0, 0) != 0)
         {
             this.WaitForUpdateToCompleteRare();
             return true;
@@ -173,6 +173,6 @@ internal
         {
             spinWait.SpinOnce();
         }
-        while (Volatile.Read(ref Unsafe.AsRef(in this.isCriticalSectionOccupied)) != 0);
+        while (Interlocked.CompareExchange(ref Unsafe.AsRef(in this.isCriticalSectionOccupied), 0, 0) != 0);
     }
 }
