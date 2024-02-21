@@ -70,8 +70,14 @@ internal
     }
 
     /// <summary>
-    /// Gets the FilteredTags (i.e any tags that were dropped during aggregation).
+    /// Gets the filtered tags.
     /// </summary>
+    /// <remarks>
+    /// Note: <see cref="FilteredTags"/> represents the set of tags which were
+    /// supplied at measurement but dropped due to filtering configured by a
+    /// view (<see cref="MetricStreamConfiguration.TagKeys"/>). If view tag
+    /// filtering is not configured <see cref="FilteredTags"/> will be empty.
+    /// </remarks>
     public readonly ReadOnlyFilteredTagCollection FilteredTags
         => new(this.KeyFilter, this.tagStorage ?? Array.Empty<KeyValuePair<string, object?>>(), this.tagCount);
 
