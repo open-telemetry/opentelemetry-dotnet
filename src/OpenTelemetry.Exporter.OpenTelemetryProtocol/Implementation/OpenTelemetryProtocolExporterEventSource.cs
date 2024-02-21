@@ -96,7 +96,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
 #if NET6_0_OR_GREATER
     [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
 #endif
-    [Event(12, Message = "Unknown error in TrySubmitRequest method. Message: '{0}'. IsRetry: {1}", Level = EventLevel.Error)]
+    [Event(12, Message = "Unknown error in TrySubmitRequest method. Message: '{0}'", Level = EventLevel.Error)]
     public void SubmitRequestException(string ex)
     {
         this.WriteEvent(12, ex);
