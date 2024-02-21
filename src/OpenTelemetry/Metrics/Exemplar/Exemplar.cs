@@ -31,6 +31,8 @@ internal
     struct Exemplar
 {
     internal HashSet<string>? KeyFilter;
+
+    private static readonly ReadOnlyFilteredTagCollection Empty = new(keyFilter: null, Array.Empty<KeyValuePair<string, object?>>(), count: 0);
     private int tagCount;
     private KeyValuePair<string, object?>[]? tagStorage;
     private MetricPointValueStorage valueStorage;
@@ -79,7 +81,21 @@ internal
     /// filtering is not configured <see cref="FilteredTags"/> will be empty.
     /// </remarks>
     public readonly ReadOnlyFilteredTagCollection FilteredTags
-        => new(this.KeyFilter, this.tagStorage ?? Array.Empty<KeyValuePair<string, object?>>(), this.tagCount);
+    {
+        get
+        {
+            if (this.tagCount == 0)
+            {
+                return Empty;
+            }
+            else
+            {
+                Debug.Assert(this.tagStorage != null, "tagStorage was null");
+
+                return new(this.KeyFilter, this.tagStorage!, this.tagCount);
+            }
+        }
+    }
 
     internal void Update<T>(in ExemplarMeasurement<T> measurement)
         where T : struct
