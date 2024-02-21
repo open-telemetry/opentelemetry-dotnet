@@ -11,6 +11,7 @@ public enum SamplingDecision
     /// <summary>
     /// The activity will be created but not recorded.
     /// Activity.IsAllDataRequested will return false.
+    /// Activity.Recorded will return false.
     /// </summary>
     Drop,
 
