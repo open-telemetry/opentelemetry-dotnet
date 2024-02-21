@@ -2,13 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 #if NET6_0_OR_GREATER || NETFRAMEWORK
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 #else
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.InteropServices;
 #endif
 
 namespace OpenTelemetry.Trace;
