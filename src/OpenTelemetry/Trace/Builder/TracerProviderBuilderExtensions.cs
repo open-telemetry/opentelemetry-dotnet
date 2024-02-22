@@ -238,6 +238,27 @@ public static class TracerProviderBuilderExtensions
     }
 
     /// <summary>
+    /// Adds predicate for <see cref="ActivitySource"/> that will be used to determine
+    /// if <see cref="TracerProvider"/> should subscribe to the source.
+    /// </summary>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="sourcePredicate">Activity Source predicate - if it returns true, OpenTelemetry subscribes to the corresponding source.</param>
+    /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddSource(this TracerProviderBuilder tracerProviderBuilder, Predicate<ActivitySource> sourcePredicate)
+    {
+        Guard.ThrowIfNull(sourcePredicate);
+        tracerProviderBuilder.ConfigureBuilder((_, builder) =>
+        {
+            if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            {
+                tracerProviderBuilderSdk.AddSource(sourcePredicate);
+            }
+        });
+
+        return tracerProviderBuilder;
+    }
+
+    /// <summary>
     /// Run the given actions to initialize the <see cref="TracerProvider"/>.
     /// </summary>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>

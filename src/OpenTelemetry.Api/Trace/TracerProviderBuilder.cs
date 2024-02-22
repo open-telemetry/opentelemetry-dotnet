@@ -37,13 +37,6 @@ public abstract class TracerProviderBuilder
     public abstract TracerProviderBuilder AddSource(params string[] names);
 
     /// <summary>
-    /// Adds filter for <see cref="ActivitySource"/> to subscribe to.
-    /// </summary>
-    /// <param name="sourceFilter">Activity Source filter - if it returns true, OpenTelemetry subscribes to the corresponding source.</param>
-    /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-    public abstract TracerProviderBuilder AddSource(Func<ActivitySource, bool> sourceFilter);
-
-    /// <summary>
     /// Adds a listener for <see cref="Activity"/> objects created with the given operation name to the <see cref="TracerProviderBuilder"/>.
     /// </summary>
     /// <remarks>

@@ -27,15 +27,8 @@ public class TracerProviderSdkTest : IDisposable
             .AddSource(source1.Name)
             .Build();
 
-        using (var activity = source1.StartActivity("test"))
-        {
-            Assert.NotNull(activity);
-        }
-
-        using (var activity = source2.StartActivity("test"))
-        {
-            Assert.Null(activity);
-        }
+        Assert.True(IsSourceEnabled(source1));
+        Assert.False(IsSourceEnabled(source2));
     }
 
     [Fact]
@@ -50,50 +43,97 @@ public class TracerProviderSdkTest : IDisposable
             .AddSource($"{Utils.GetCurrentMethodName()}.*")
             .Build())
         {
-            using (var activity = source1.StartActivity("test"))
-            {
-                Assert.NotNull(activity);
-            }
-
-            using (var activity = source2.StartActivity("test"))
-            {
-                Assert.NotNull(activity);
-            }
-
-            using (var activity = source3.StartActivity("test"))
-            {
-                Assert.NotNull(activity);
-            }
-
-            using (var activity = source4.StartActivity("test"))
-            {
-                Assert.NotNull(activity);
-            }
+            Assert.True(IsSourceEnabled(source1));
+            Assert.True(IsSourceEnabled(source2));
+            Assert.True(IsSourceEnabled(source3));
+            Assert.True(IsSourceEnabled(source4));
         }
 
         using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource($"{Utils.GetCurrentMethodName()}.?")
             .Build())
         {
-            using (var activity = source1.StartActivity("test"))
-            {
-                Assert.NotNull(activity);
-            }
+            Assert.True(IsSourceEnabled(source1));
+            Assert.False(IsSourceEnabled(source2));
+            Assert.False(IsSourceEnabled(source3));
+            Assert.True(IsSourceEnabled(source4));
+        }
+    }
 
-            using (var activity = source2.StartActivity("test"))
-            {
-                Assert.Null(activity);
-            }
+    [Fact]
+    public void TracerProviderSdkAddSourceWithPredicate()
+    {
+        using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A", "1.0.0");
+        using var source2 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A", "2.0.0");
+        using var source3 = new ActivitySource($"{Utils.GetCurrentMethodName()}.B");
+        using var source4 = new ActivitySource($"B.{Utils.GetCurrentMethodName()}");
 
-            using (var activity = source3.StartActivity("test"))
-            {
-                Assert.Null(activity);
-            }
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(source => source.Version == "2.0.0" || source.Name.EndsWith(".B"))
+            .Build())
+        {
+            Assert.False(IsSourceEnabled(source1));
+            Assert.True(IsSourceEnabled(source2));
+            Assert.True(IsSourceEnabled(source3));
+            Assert.False(IsSourceEnabled(source4));
+        }
+    }
 
-            using (var activity = source4.StartActivity("test"))
-            {
-                Assert.NotNull(activity);
-            }
+    [Fact]
+    public void TracerProviderSdkAddSourceWithMultiplePredicates()
+    {
+        using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A", "1.0.0");
+        using var source2 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A", "2.0.0");
+        using var source3 = new ActivitySource($"{Utils.GetCurrentMethodName()}.B");
+        using var source4 = new ActivitySource($"B.{Utils.GetCurrentMethodName()}");
+
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(source => source.Version == "2.0.0")
+            .AddSource(source => source.Name.StartsWith("B."))
+            .Build())
+        {
+            Assert.False(IsSourceEnabled(source1));
+            Assert.True(IsSourceEnabled(source2));
+            Assert.False(IsSourceEnabled(source3));
+            Assert.True(IsSourceEnabled(source4));
+        }
+    }
+
+    [Fact]
+    public void TracerProviderSdkAddSourceWithWildCardAndPredicate()
+    {
+        using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A", "1.0.0");
+        using var source2 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A", "2.0.0");
+        using var source3 = new ActivitySource($"{Utils.GetCurrentMethodName()}.B");
+        using var source4 = new ActivitySource($"B.{Utils.GetCurrentMethodName()}");
+
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("B.*")
+            .AddSource(source => source.Version == "2.0.0")
+            .Build())
+        {
+            Assert.False(IsSourceEnabled(source1));
+            Assert.True(IsSourceEnabled(source2));
+            Assert.False(IsSourceEnabled(source3));
+            Assert.True(IsSourceEnabled(source4));
+        }
+    }
+
+    [Fact]
+    public void TracerProviderSdkAddSourceWithConflictingWildCardAndPredicate()
+    {
+        using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A", "1.0.0");
+        using var source2 = new ActivitySource($"{Utils.GetCurrentMethodName()}.B");
+        using var source3 = new ActivitySource($"B.{Utils.GetCurrentMethodName()}");
+
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("B.*")
+            .AddSource(source => !source.Name.StartsWith("B."))
+            .Build())
+        {
+            Assert.True(IsSourceEnabled(source1));
+            Assert.True(IsSourceEnabled(source2));
+            Assert.True(IsSourceEnabled(source3));
         }
     }
 
@@ -1240,6 +1280,14 @@ public class TracerProviderSdkTest : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
+    }
+
+    private static bool IsSourceEnabled(ActivitySource source)
+    {
+        using (var activity = source.StartActivity("test"))
+        {
+            return activity != null;
+        }
     }
 
     private sealed class TestTracerProviderBuilder : TracerProviderBuilderBase

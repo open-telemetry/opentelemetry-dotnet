@@ -33,7 +33,7 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public List<string> Sources { get; } = new();
 
-    public Func<ActivitySource, bool>? SourceFilter { get; private set; } = null;
+    public List<Predicate<ActivitySource>> SourceSelectionPredicates { get; } = new();
 
     public HashSet<string> LegacyActivityOperationNames { get; } = new(StringComparer.OrdinalIgnoreCase);
 
@@ -125,10 +125,10 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
         return this;
     }
 
-    public override TracerProviderBuilder AddSource(Func<ActivitySource, bool> sourceFilter)
+    public TracerProviderBuilder AddSource(Predicate<ActivitySource> sourcePredicate)
     {
-        Debug.Assert(sourceFilter != null, "sourceFilter was null");
-        this.SourceFilter = sourceFilter;
+        Debug.Assert(sourcePredicate != null, "sourcePredicate was null");
+        this.SourceSelectionPredicates.Add(sourcePredicate);
         return this;
     }
 

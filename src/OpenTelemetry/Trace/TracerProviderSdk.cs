@@ -245,46 +245,44 @@ internal sealed class TracerProviderSdk : TracerProvider
             this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
         }
 
-        listener.ShouldListenTo = this.GetFilter(state);
+        listener.ShouldListenTo = this.GetPredicate(state);
         ActivitySource.AddActivityListener(listener);
         this.listener = listener;
         OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
     }
 
-    private Func<ActivitySource, bool>? GetFilter(TracerProviderBuilderSdk state)
+    private Func<ActivitySource, bool> GetPredicate(TracerProviderBuilderSdk state)
     {
+        List<Predicate<ActivitySource>> predicates = new List<Predicate<ActivitySource>>();
+
         // Sources can be empty. This happens when user
         // is only interested in InstrumentationLibraries
         // which do not depend on ActivitySources.
-        List<Func<ActivitySource, bool>> filters = new List<Func<ActivitySource, bool>>();
         if (state.Sources.Any())
         {
-            filters.Add(this.GetNameFilter(state));
+            predicates.Add(this.GetNameFilter(state));
         }
 
-        if (state.SourceFilter != null)
-        {
-            filters.Add(state.SourceFilter);
-        }
+        predicates.AddRange(state.SourceSelectionPredicates);
 
         if (this.supportLegacyActivity)
         {
-            filters.Add((activitySource) => string.IsNullOrEmpty(activitySource.Name));
+            predicates.Add((activitySource) => string.IsNullOrEmpty(activitySource.Name));
         }
 
         return (activitySource) =>
         {
             bool shouldListen = false;
-            for (int i = 0; i < filters.Count && !shouldListen; i++)
+            for (int i = 0; i < predicates.Count && !shouldListen; i++)
             {
-                shouldListen |= filters[i](activitySource);
+                shouldListen |= predicates[i](activitySource);
             }
 
             return shouldListen;
         };
     }
 
-    private Func<ActivitySource, bool> GetNameFilter(TracerProviderBuilderSdk state)
+    private Predicate<ActivitySource> GetNameFilter(TracerProviderBuilderSdk state)
     {
         Debug.Assert(state.Sources.Any(), "Should only be called when there are name-based source filters.");
 
