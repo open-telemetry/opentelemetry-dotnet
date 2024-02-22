@@ -10,3 +10,4 @@ static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithMetrics(this OpenTele
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithMetrics(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithTracing(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithTracing(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.IOpenTelemetryBuilder!
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddSource(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Predicate<System.Diagnostics.ActivitySource!>! sourcePredicate) -> OpenTelemetry.Trace.TracerProviderBuilder!
