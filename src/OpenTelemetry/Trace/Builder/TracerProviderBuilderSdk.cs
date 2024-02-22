@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using System.Xml.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
