@@ -352,7 +352,7 @@ services.AddOpenTelemetry()
 
 > [!NOTE]
 > `DefaultRequestHeaders` can be used for [HTTP Basic Access
-Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication), for
+Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication). For
 more complex authentication requirement,
 [`System.Net.Http.DelegatingHandler`](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler)
 can be used to handle token refresh, as explained
