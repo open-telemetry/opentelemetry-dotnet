@@ -42,7 +42,6 @@ internal class OtlpExporterTransmissionHandler<TRequest>
         catch (Exception ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.TrySubmitRequestException(ex);
-            this.OnRequestDropped(request);
             return false;
         }
     }
@@ -97,7 +96,6 @@ internal class OtlpExporterTransmissionHandler<TRequest>
     /// langword="false" />.</returns>
     protected virtual bool OnSubmitRequestFailure(TRequest request, ExportClientResponse response)
     {
-        this.OnRequestDropped(request);
         return false;
     }
 
@@ -115,13 +113,5 @@ internal class OtlpExporterTransmissionHandler<TRequest>
         }
 
         return response;
-    }
-
-    /// <summary>
-    /// Fired when a request is dropped.
-    /// </summary>
-    /// <param name="request">The request that was attempted to send to the server.</param>
-    protected virtual void OnRequestDropped(TRequest request)
-    {
     }
 }
