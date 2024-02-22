@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
 
@@ -20,10 +21,12 @@ internal class OtlpExporterTransmissionHandler<TRequest>
     protected IExportClient<TRequest> ExportClient { get; }
 
     /// <summary>
-    /// Sends export request to the server.
+    /// Attempts to send an export request to the server.
     /// </summary>
     /// <param name="request">The request to send to the server.</param>
-    /// <returns>True if the request is sent successfully or else false.</returns>
+    /// <returns> <see langword="true" /> if the request is sent successfully; otherwise, <see
+    /// langword="false" />.
+    /// </returns>
     public bool TrySubmitRequest(TRequest request)
     {
         try
@@ -38,7 +41,7 @@ internal class OtlpExporterTransmissionHandler<TRequest>
         }
         catch (Exception ex)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.SubmitRequestException(ex);
+            OpenTelemetryProtocolExporterEventSource.Log.TrySubmitRequestException(ex);
             this.OnRequestDropped(request);
             return false;
         }
@@ -58,7 +61,18 @@ internal class OtlpExporterTransmissionHandler<TRequest>
     /// </returns>
     public bool Shutdown(int timeoutMilliseconds)
     {
-        this.OnShutdown();
+        Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
+
+        var sw = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.StartNew();
+
+        this.OnShutdown(timeoutMilliseconds);
+
+        if (sw != null)
+        {
+            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+
+            return this.ExportClient.Shutdown((int)Math.Max(timeout, 0));
+        }
 
         return this.ExportClient.Shutdown(timeoutMilliseconds);
     }
@@ -66,7 +80,11 @@ internal class OtlpExporterTransmissionHandler<TRequest>
     /// <summary>
     /// Fired when the transmission handler is shutdown.
     /// </summary>
-    protected virtual void OnShutdown()
+    /// <param name="timeoutMilliseconds">
+    /// The number (non-negative) of milliseconds to wait, or
+    /// <c>Timeout.Infinite</c> to wait indefinitely.
+    /// </param>
+    protected virtual void OnShutdown(int timeoutMilliseconds)
     {
     }
 
@@ -75,7 +93,8 @@ internal class OtlpExporterTransmissionHandler<TRequest>
     /// </summary>
     /// <param name="request">The request that was attempted to send to the server.</param>
     /// <param name="response"><see cref="ExportClientResponse" />.</param>
-    /// <returns><see langword="true" /> if the request will be resubmitted.</returns>
+    /// <returns><see langword="true" /> If the request is resubmitted and succeeds; otherwise, <see
+    /// langword="false" />.</returns>
     protected virtual bool OnSubmitRequestFailure(TRequest request, ExportClientResponse response)
     {
         this.OnRequestDropped(request);
@@ -83,9 +102,9 @@ internal class OtlpExporterTransmissionHandler<TRequest>
     }
 
     /// <summary>
-    /// Fired when a request could not be submitted.
+    /// Fired when resending a request to the server.
     /// </summary>
-    /// <param name="request">The request that was attempted to send to the server.</param>
+    /// <param name="request">The request to be resent to the server.</param>
     /// <returns><see cref="ExportClientResponse"/>.</returns>
     protected ExportClientResponse RetryRequest(TRequest request)
     {

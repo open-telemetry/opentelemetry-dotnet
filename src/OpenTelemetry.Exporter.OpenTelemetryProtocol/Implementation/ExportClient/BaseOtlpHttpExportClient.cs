@@ -38,9 +38,9 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
     /// <inheritdoc/>
     public ExportClientResponse SendExportRequest(TRequest request, CancellationToken cancellationToken = default)
     {
-        // Using this.HttpClient.Timeout.TotalMilliseconds here as the client can be configured by the user
-        // in this case the timeout set within the client will take precedence over timeout set via otlpexporter options
-        // the value will also match the timeout set via options when the client is NOT provided by the user.
+        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
+        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
+        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
         DateTime deadline = DateTime.UtcNow.AddMilliseconds(this.HttpClient.Timeout.TotalMilliseconds);
         try
         {
