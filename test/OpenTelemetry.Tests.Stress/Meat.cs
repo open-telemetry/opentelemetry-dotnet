@@ -9,11 +9,19 @@ public partial class Program
 {
     public static void Main()
     {
-        Stress(concurrency: 1, prometheusPort: 9464);
+        RunStressTest(new()
+        {
+            Concurrency = 1,
+            PrometheusInternalMetricsPort = 9464,
+        });
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected static void Run()
+    {
+    }
+
+    protected static void WriteRunInformationToConsole(StressTestOptions options)
     {
     }
 }
