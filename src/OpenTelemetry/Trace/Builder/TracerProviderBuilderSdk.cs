@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Xml.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
@@ -127,8 +128,8 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public TracerProviderBuilder AddSource(Predicate<ActivitySource> sourcePredicate)
     {
-        Debug.Assert(sourcePredicate != null, "sourcePredicate was null");
-        this.SourceSelectionPredicates.Add(sourcePredicate);
+        Guard.ThrowIfNull(sourcePredicate);
+        this.SourceSelectionPredicates.Add(sourcePredicate!);
         return this;
     }
 
