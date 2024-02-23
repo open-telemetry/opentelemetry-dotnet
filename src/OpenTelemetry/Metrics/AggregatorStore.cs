@@ -11,7 +11,7 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class AggregatorStore
 {
-    // Constant to account for additional space for MetricPointReclaim and a case with no dimensions.
+    // Constant to account for additional space for overflow attribute and a case with no dimensions.
     internal const int AdditionalReserve = 2;
     internal readonly bool OutputDelta;
     internal readonly bool OutputDeltaWithUnusedMetricPointReclaimEnabled;
@@ -66,7 +66,7 @@ internal sealed class AggregatorStore
         this.name = metricStreamIdentity.InstrumentName;
 
         // Increase the CardinalityLimit by 2 (AdditionalReserve) to reserve additional space.
-        // This adjustment accounts for MetricPointReclaim and a case where no dimensions are provided.
+        // This adjustment accounts for overflow attribute and a case where no dimensions are provided.
         // Previously, these were included within the original cardinalityLimit, but now they are explicitly added to enhance clarity.
         this.CardinalityLimit = cardinalityLimit + AdditionalReserve;
 
