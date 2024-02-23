@@ -188,30 +188,44 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 }
 
                 var exemplarString = new StringBuilder();
-                foreach (var exemplar in metricPoint.GetExemplars())
+                if (metricPoint.TryGetExemplars(out var exemplars))
                 {
-                    if (exemplar.Timestamp != default)
+                    foreach (ref readonly var exemplar in exemplars)
                     {
-                        exemplarString.Append("Value: ");
-                        exemplarString.Append(exemplar.DoubleValue);
-                        exemplarString.Append(" Timestamp: ");
+                        exemplarString.Append("Timestamp: ");
                         exemplarString.Append(exemplar.Timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
-                        exemplarString.Append(" TraceId: ");
-                        exemplarString.Append(exemplar.TraceId);
-                        exemplarString.Append(" SpanId: ");
-                        exemplarString.Append(exemplar.SpanId);
-
-                        if (exemplar.FilteredTags != null && exemplar.FilteredTags.Count > 0)
+                        if (metricType.IsDouble())
                         {
-                            exemplarString.Append(" Filtered Tags : ");
+                            exemplarString.Append(" Value: ");
+                            exemplarString.Append(exemplar.DoubleValue);
+                        }
+                        else if (metricType.IsLong())
+                        {
+                            exemplarString.Append(" Value: ");
+                            exemplarString.Append(exemplar.LongValue);
+                        }
 
-                            foreach (var tag in exemplar.FilteredTags)
+                        if (exemplar.TraceId.HasValue)
+                        {
+                            exemplarString.Append(" TraceId: ");
+                            exemplarString.Append(exemplar.TraceId.Value.ToHexString());
+                            exemplarString.Append(" SpanId: ");
+                            exemplarString.Append(exemplar.SpanId.Value.ToHexString());
+                        }
+
+                        bool appendedTagString = false;
+                        foreach (var tag in exemplar.FilteredTags)
+                        {
+                            if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
                             {
-                                if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
+                                if (!appendedTagString)
                                 {
-                                    exemplarString.Append(result);
-                                    exemplarString.Append(' ');
+                                    exemplarString.Append(" Filtered Tags : ");
+                                    appendedTagString = true;
                                 }
+
+                                exemplarString.Append(result);
+                                exemplarString.Append(' ');
                             }
                         }
 

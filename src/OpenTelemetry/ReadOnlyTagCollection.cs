@@ -47,7 +47,7 @@ public readonly struct ReadOnlyTagCollection
         /// <summary>
         /// Gets the tag at the current position of the enumerator.
         /// </summary>
-        public KeyValuePair<string, object?> Current { get; private set; }
+        public KeyValuePair<string, object?> Current { readonly get; private set; }
 
         /// <summary>
         /// Advances the enumerator to the next element of the <see
