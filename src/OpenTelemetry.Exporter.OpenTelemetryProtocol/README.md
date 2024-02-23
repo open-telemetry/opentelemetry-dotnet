@@ -11,9 +11,9 @@ implementation.
 <summary>Table of Contents</summary>
 
 * [Installation](#installation)
-  * [Enable Trace Exporter](#enable-trace-exporter)
-  * [Enable Metric Exporter](#enable-metric-exporter)
-  * [Enable Log Exporter](#enable-log-exporter)
+* [Enable Trace Exporter](#enable-trace-exporter)
+* [Enable Metric Exporter](#enable-metric-exporter)
+* [Enable Log Exporter](#enable-log-exporter)
 * [Configuration](#configuration)
   * [OtlpExporterOptions](#otlpexporteroptions)
   * [LogRecordExportProcessorOptions](#logrecordexportprocessoroptions)
