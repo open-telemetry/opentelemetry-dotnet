@@ -190,7 +190,7 @@ appBuilder.Services.AddOptions<OtlpExporterOptions>()
   `OtlpExportProtocol.HttpProtobuf`.
 
 > [!NOTE]
-> When using `OtlpExportProtocol.HttpProtobuf`, the full URL needs to be
+> When using `OtlpExportProtocol.HttpProtobuf`, the full URL MUST be
 > provided, including the signal-specific path v1/{signal}. For example, for
 > traces, the full URL will look like <http://your-custom-endpoint/v1/traces>.
 

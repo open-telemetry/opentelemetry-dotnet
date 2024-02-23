@@ -98,7 +98,7 @@ public class OtlpExporterOptions
     /// * http://localhost:4318 for <see cref="OtlpExportProtocol.HttpProtobuf"/>.
     /// </summary>
     /// <remarks>
-    /// When using <see cref="OtlpExportProtocol.HttpProtobuf"/>, the full URL needs to be provided, including the signal-specific path v1/{signal}.
+    /// When using <see cref="OtlpExportProtocol.HttpProtobuf"/>, the full URL MUST be provided, including the signal-specific path v1/{signal}.
     /// For example, for traces, the full URL will look like http://your-custom-endpoint/v1/traces.
     /// </remarks>
     public Uri Endpoint
