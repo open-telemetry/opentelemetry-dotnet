@@ -18,6 +18,7 @@ jobs:
     outputs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
+    - uses: actions/checkout@v4
     - uses: AurorNZ/paths-filter@v4
       id: changes
       with:
