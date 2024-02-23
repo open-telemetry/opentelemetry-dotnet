@@ -1,50 +1,55 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Runtime.CompilerServices;
-using CommandLine;
 using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Tests.Stress;
 
-public partial class Program
+public static class Program
 {
-    private static ILogger logger;
-    private static Payload payload = new Payload();
-
-    public static void Main(string[] args)
+    public static int Main(string[] args)
     {
-        Parser.Default.ParseArguments<StressTestOptions>(args)
-            .WithParsed(LaunchStressTest);
+        return StressTestFactory.RunSynchronously<LogsStressTest>(args);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static void Run()
+    private sealed class LogsStressTest : StressTest<StressTestOptions>
     {
-        logger.Log(
-            logLevel: LogLevel.Information,
-            eventId: 2,
-            state: payload,
-            exception: null,
-            formatter: (state, ex) => string.Empty);
-    }
+        private static readonly Payload Payload = new();
+        private readonly ILoggerFactory loggerFactory;
+        private readonly ILogger logger;
 
-    protected static void WriteRunInformationToConsole(StressTestOptions options)
-    {
-    }
-
-    private static void LaunchStressTest(StressTestOptions options)
-    {
-        using var loggerFactory = LoggerFactory.Create(builder =>
+        public LogsStressTest(StressTestOptions options)
+            : base(options)
         {
-            builder.AddOpenTelemetry(options =>
+            this.loggerFactory = LoggerFactory.Create(builder =>
             {
-                options.AddProcessor(new DummyProcessor());
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddProcessor(new DummyProcessor());
+                });
             });
-        });
 
-        logger = loggerFactory.CreateLogger<Program>();
+            this.logger = this.loggerFactory.CreateLogger<LogsStressTest>();
+        }
 
-        RunStressTest(options);
+        protected override void RunWorkItemInParallel()
+        {
+            this.logger.Log(
+                logLevel: LogLevel.Information,
+                eventId: 2,
+                state: Payload,
+                exception: null,
+                formatter: (state, ex) => string.Empty);
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            if (isDisposing)
+            {
+                this.loggerFactory.Dispose();
+            }
+
+            base.Dispose(isDisposing);
+        }
     }
 }

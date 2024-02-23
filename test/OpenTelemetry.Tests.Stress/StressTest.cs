@@ -5,31 +5,37 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using CommandLine;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests.Stress;
 
-public partial class Program
+public abstract class StressTest<T> : IDisposable
+    where T : StressTestOptions
 {
-    private static volatile bool bContinue = true;
-    private static volatile string output = "Test results not available yet.";
+    private volatile bool bContinue = true;
+    private volatile string output = "Test results not available yet.";
 
-    static Program()
+    protected StressTest(T options)
     {
+        this.Options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
-    protected static void RunStressTest(StressTestOptions options)
-    {
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+    public T Options { get; }
 
+    public void Dispose()
+    {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    public void RunSynchronously()
+    {
 #if DEBUG
         Console.WriteLine("***WARNING*** The current build is DEBUG which may affect timing!");
         Console.WriteLine();
 #endif
+
+        var options = this.Options;
 
         if (options.Concurrency < 0)
         {
@@ -87,10 +93,10 @@ public partial class Program
                     Console.Write($", internalPrometheusEndpoint = http://localhost:{options.PrometheusInternalMetricsPort}/metrics/");
                 }
 
-                WriteRunInformationToConsole(options);
+                this.WriteRunInformationToConsole();
 
                 Console.WriteLine("), press <Esc> to stop, press <Spacebar> to toggle statistics in the console...");
-                Console.WriteLine(output);
+                Console.WriteLine(this.output);
 
                 var outputCursorTop = Console.CursorTop - 1;
 
@@ -105,10 +111,10 @@ public partial class Program
                         switch (key)
                         {
                             case ConsoleKey.Enter:
-                                Console.WriteLine(string.Format("{0} {1}", DateTime.UtcNow.ToString("O"), output));
+                                Console.WriteLine(string.Format("{0} {1}", DateTime.UtcNow.ToString("O"), this.output));
                                 break;
                             case ConsoleKey.Escape:
-                                bContinue = false;
+                                this.bContinue = false;
                                 return;
                             case ConsoleKey.Spacebar:
                                 bOutput = !bOutput;
@@ -123,19 +129,19 @@ public partial class Program
                         var tempCursorLeft = Console.CursorLeft;
                         var tempCursorTop = Console.CursorTop;
                         Console.SetCursorPosition(0, outputCursorTop);
-                        Console.WriteLine(output.PadRight(Console.BufferWidth));
+                        Console.WriteLine(this.output.PadRight(Console.BufferWidth));
                         Console.SetCursorPosition(tempCursorLeft, tempCursorTop);
                     }
 
                     var cntLoopsOld = (ulong)statistics.Sum();
-                    var cntCpuCyclesOld = GetCpuCycles();
+                    var cntCpuCyclesOld = StressTestNativeMethods.GetCpuCycles();
 
                     watch.Restart();
                     Thread.Sleep(200);
                     watch.Stop();
 
                     cntLoopsTotal = (ulong)statistics.Sum();
-                    var cntCpuCyclesNew = GetCpuCycles();
+                    var cntCpuCyclesNew = StressTestNativeMethods.GetCpuCycles();
 
                     var nLoops = cntLoopsTotal - cntLoopsOld;
                     var nCpuCycles = cntCpuCyclesNew - cntCpuCyclesOld;
@@ -147,19 +153,19 @@ public partial class Program
 
                     if (duration.HasValue)
                     {
-                        output = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {dLoopsPerSecond:n0}, CPU Cycles/Loop: {dCpuCyclesPerLoop:n0}, RemainingTime (Seconds): {(duration.Value - totalElapsedTime).TotalSeconds:n0}";
+                        this.output = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {dLoopsPerSecond:n0}, CPU Cycles/Loop: {dCpuCyclesPerLoop:n0}, RemainingTime (Seconds): {(duration.Value - totalElapsedTime).TotalSeconds:n0}";
                         if (totalElapsedTime > duration)
                         {
-                            bContinue = false;
+                            this.bContinue = false;
                             return;
                         }
                     }
                     else
                     {
-                        output = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {dLoopsPerSecond:n0}, CPU Cycles/Loop: {dCpuCyclesPerLoop:n0}, RunwayTime (Seconds): {totalElapsedTime.TotalSeconds:n0}";
+                        this.output = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {dLoopsPerSecond:n0}, CPU Cycles/Loop: {dCpuCyclesPerLoop:n0}, RunningTime (Seconds): {totalElapsedTime.TotalSeconds:n0}";
                     }
 
-                    Console.Title = output;
+                    Console.Title = this.output;
                 }
             },
             () =>
@@ -167,9 +173,9 @@ public partial class Program
                 Parallel.For(0, options.Concurrency, (i) =>
                 {
                     statistics[i] = 0;
-                    while (bContinue)
+                    while (this.bContinue)
                     {
-                        Run();
+                        this.RunWorkItemInParallel();
                         statistics[i]++;
                     }
                 });
@@ -178,10 +184,10 @@ public partial class Program
         watchForTotal.Stop();
         cntLoopsTotal = (ulong)statistics.Sum();
         var totalLoopsPerSecond = (double)cntLoopsTotal / ((double)watchForTotal.ElapsedMilliseconds / 1000.0);
-        var cntCpuCyclesTotal = GetCpuCycles();
+        var cntCpuCyclesTotal = StressTestNativeMethods.GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
         Console.WriteLine("Stopping the stress test...");
-        Console.WriteLine($"* Total Runway Time (Seconds) {watchForTotal.Elapsed.TotalSeconds:n0}");
+        Console.WriteLine($"* Total Running Time (Seconds) {watchForTotal.Elapsed.TotalSeconds:n0}");
         Console.WriteLine($"* Total Loops: {cntLoopsTotal:n0}");
         Console.WriteLine($"* Average Loops/Second: {totalLoopsPerSecond:n0}");
         Console.WriteLine($"* Average CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}");
@@ -190,34 +196,13 @@ public partial class Program
 #endif
     }
 
-    [DllImport("kernel32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool QueryProcessCycleTime(IntPtr hProcess, out ulong cycles);
-
-    private static ulong GetCpuCycles()
+    protected virtual void WriteRunInformationToConsole()
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return 0;
-        }
-
-        if (!QueryProcessCycleTime((IntPtr)(-1), out var cycles))
-        {
-            return 0;
-        }
-
-        return cycles;
     }
 
-    protected partial class StressTestOptions
+    protected abstract void RunWorkItemInParallel();
+
+    protected virtual void Dispose(bool isDisposing)
     {
-        [Option('c', "concurrency", HelpText = "The concurrency (maximum degree of parallelism) for the stress test. Default value: Environment.ProcessorCount.", Required = false)]
-        public int Concurrency { get; set; }
-
-        [Option('p', "internal_port", HelpText = "The Prometheus http listener port where Prometheus will be exposed for retrieving internal metrics while the stress test is running. Set to '0' to disable. Default value: 9464.", Required = false)]
-        public int PrometheusInternalMetricsPort { get; set; } = 9464;
-
-        [Option('d', "duration", HelpText = "The duration for the stress test to run in seconds. If set to '0' or a negative value the stress test will run until canceled. Default value: 0.", Required = false)]
-        public int DurationSeconds { get; set; }
     }
 }

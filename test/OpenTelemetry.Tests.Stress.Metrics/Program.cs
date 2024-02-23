@@ -2,26 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
-using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using CommandLine;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests.Stress;
 
-public partial class Program
+public static class Program
 {
-    private const int ArraySize = 10;
-    private const int MaxHistogramMeasurement = 1000;
-
-    private static readonly Meter TestMeter = new(Utils.GetCurrentMethodName());
-    private static readonly Histogram<long> TestHistogram = TestMeter.CreateHistogram<long>("TestHistogram");
-    private static readonly Counter<long> TestCounter = TestMeter.CreateCounter<long>("TestCounter");
-    private static readonly string[] DimensionValues = new string[ArraySize];
-    private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
-    private static TestType testType;
-
-    protected enum TestType
+    private enum MetricsStressTestType
     {
         /// <summary>Histogram.</summary>
         Histogram,
@@ -30,89 +19,109 @@ public partial class Program
         Counter,
     }
 
-    public static void Main(string[] args)
+    public static int Main(string[] args)
     {
-        Parser.Default.ParseArguments<StressTestOptions>(args)
-            .WithParsed(LaunchStressTest);
+        return StressTestFactory.RunSynchronously<MetricsStressTest, MetricsStressTestOptions>(args);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static void Run()
+    private sealed class MetricsStressTest : StressTest<MetricsStressTestOptions>
     {
-        var random = ThreadLocalRandom.Value;
-        if (testType == TestType.Histogram)
-        {
-            TestHistogram.Record(
-                random.Next(MaxHistogramMeasurement),
-                new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
-                new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
-                new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
-        }
-        else if (testType == TestType.Counter)
-        {
-            TestCounter.Add(
-               100,
-               new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
-               new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
-               new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
-        }
-    }
+        private const int ArraySize = 10;
+        private const int MaxHistogramMeasurement = 1000;
 
-    protected static void WriteRunInformationToConsole(StressTestOptions options)
-    {
-        if (options.PrometheusTestMetricsPort != 0)
-        {
-            Console.Write($", testPrometheusEndpoint = http://localhost:{options.PrometheusTestMetricsPort}/metrics/");
-        }
-    }
+        private static readonly Meter TestMeter = new(Utils.GetCurrentMethodName());
+        private static readonly Histogram<long> TestHistogram = TestMeter.CreateHistogram<long>("TestHistogram");
+        private static readonly Counter<long> TestCounter = TestMeter.CreateCounter<long>("TestCounter");
+        private static readonly string[] DimensionValues = new string[ArraySize];
+        private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
+        private readonly MeterProvider meterProvider;
 
-    private static void LaunchStressTest(StressTestOptions options)
-    {
-        for (int i = 0; i < ArraySize; i++)
+        static MetricsStressTest()
         {
-            DimensionValues[i] = $"DimValue{i}";
-        }
-
-        var builder = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(TestMeter.Name);
-
-        if (options.PrometheusTestMetricsPort != 0)
-        {
-            builder.AddPrometheusHttpListener(o => o.UriPrefixes = new string[] { $"http://localhost:{options.PrometheusTestMetricsPort}/" });
-        }
-
-        if (options.EnableExemplars)
-        {
-            builder.SetExemplarFilter(new AlwaysOnExemplarFilter());
-        }
-
-        if (options.AddViewToFilterTags)
-        {
-            builder
-                .AddView("TestCounter", new MetricStreamConfiguration { TagKeys = new string[] { "DimName1" } })
-                .AddView("TestHistogram", new MetricStreamConfiguration { TagKeys = new string[] { "DimName1" } });
-        }
-
-        if (options.AddOtlpExporter)
-        {
-            builder.AddOtlpExporter((exporterOptions, readerOptions) =>
+            for (int i = 0; i < ArraySize; i++)
             {
-                readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.OtlpExporterExportIntervalMilliseconds;
-            });
+                DimensionValues[i] = $"DimValue{i}";
+            }
         }
 
-        using var meterProvider = builder.Build();
+        public MetricsStressTest(MetricsStressTestOptions options)
+            : base(options)
+        {
+            var builder = Sdk.CreateMeterProviderBuilder().AddMeter(TestMeter.Name);
 
-        testType = options.TestType;
+            if (options.PrometheusTestMetricsPort != 0)
+            {
+                builder.AddPrometheusHttpListener(o => o.UriPrefixes = new string[] { $"http://localhost:{options.PrometheusTestMetricsPort}/" });
+            }
 
-        RunStressTest(options);
+            if (options.EnableExemplars)
+            {
+                builder.SetExemplarFilter(new AlwaysOnExemplarFilter());
+            }
+
+            if (options.AddViewToFilterTags)
+            {
+                builder
+                    .AddView("TestCounter", new MetricStreamConfiguration { TagKeys = new string[] { "DimName1" } })
+                    .AddView("TestHistogram", new MetricStreamConfiguration { TagKeys = new string[] { "DimName1" } });
+            }
+
+            if (options.AddOtlpExporter)
+            {
+                builder.AddOtlpExporter((exporterOptions, readerOptions) =>
+                {
+                    readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.OtlpExporterExportIntervalMilliseconds;
+                });
+            }
+
+            this.meterProvider = builder.Build();
+        }
+
+        protected override void WriteRunInformationToConsole()
+        {
+            if (this.Options.PrometheusTestMetricsPort != 0)
+            {
+                Console.Write($", testPrometheusEndpoint = http://localhost:{this.Options.PrometheusTestMetricsPort}/metrics/");
+            }
+        }
+
+        protected override void RunWorkItemInParallel()
+        {
+            var random = ThreadLocalRandom.Value!;
+            if (this.Options.TestType == MetricsStressTestType.Histogram)
+            {
+                TestHistogram.Record(
+                    random.Next(MaxHistogramMeasurement),
+                    new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
+                    new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
+                    new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
+            }
+            else if (this.Options.TestType == MetricsStressTestType.Counter)
+            {
+                TestCounter.Add(
+                   100,
+                   new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
+                   new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
+                   new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
+            }
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            if (isDisposing)
+            {
+                this.meterProvider.Dispose();
+            }
+
+            base.Dispose(isDisposing);
+        }
     }
 
-    protected partial class StressTestOptions
+    private sealed class MetricsStressTestOptions : StressTestOptions
     {
         [JsonConverter(typeof(JsonStringEnumConverter))]
         [Option('t', "type", HelpText = "The metrics stress test type to run. Valid values: [Histogram, Counter]. Default value: Histogram.", Required = false)]
-        public TestType TestType { get; set; } = TestType.Histogram;
+        public MetricsStressTestType TestType { get; set; } = MetricsStressTestType.Histogram;
 
         [Option('m', "metrics_port", HelpText = "The Prometheus http listener port where Prometheus will be exposed for retrieving test metrics while the stress test is running. Set to '0' to disable. Default value: 9185.", Required = false)]
         public int PrometheusTestMetricsPort { get; set; } = 9185;
@@ -128,9 +137,5 @@ public partial class Program
 
         [Option('e', "exemplars", HelpText = "Whether or not to enable exemplars for the stress test. Default value: False.", Required = false)]
         public bool EnableExemplars { get; set; }
-    }
-
-    private sealed class NoOptions
-    {
     }
 }

@@ -2,42 +2,45 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using CommandLine;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests.Stress;
 
-public partial class Program
+public static class Program
 {
-    private static readonly ActivitySource ActivitySource = new ActivitySource("OpenTelemetry.Tests.Stress");
-
-    public static void Main(string[] args)
+    public static int Main(string[] args)
     {
-        Parser.Default.ParseArguments<StressTestOptions>(args)
-            .WithParsed(LaunchStressTest);
+        return StressTestFactory.RunSynchronously<TracesStressTest>(args);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static void Run()
+    private sealed class TracesStressTest : StressTest<StressTestOptions>
     {
-        using (var activity = ActivitySource.StartActivity("test"))
+        private static readonly ActivitySource ActivitySource = new("OpenTelemetry.Tests.Stress");
+        private readonly TracerProvider tracerProvider;
+
+        public TracesStressTest(StressTestOptions options)
+            : base(options)
         {
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySource.Name)
+                .Build();
+        }
+
+        protected override void RunWorkItemInParallel()
+        {
+            using var activity = ActivitySource.StartActivity("test");
+
             activity?.SetTag("foo", "value");
         }
-    }
 
-    protected static void WriteRunInformationToConsole(StressTestOptions options)
-    {
-    }
+        protected override void Dispose(bool isDisposing)
+        {
+            if (isDisposing)
+            {
+                this.tracerProvider.Dispose();
+            }
 
-    private static void LaunchStressTest(StressTestOptions options)
-    {
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource(ActivitySource.Name)
-            .Build();
-
-        RunStressTest(options);
+            base.Dispose(isDisposing);
+        }
     }
 }
