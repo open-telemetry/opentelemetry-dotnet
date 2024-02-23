@@ -114,7 +114,7 @@ public partial class Program
         [Option('t', "type", HelpText = "The metrics stress test type to run. Valid values: [Histogram, Counter]. Default value: Histogram.", Required = false)]
         public TestType TestType { get; set; } = TestType.Histogram;
 
-        [Option('m', "metrics_port", HelpText = "The prometheus http listener port where prometheus will be exposed for retrieving test metrics while the stress test is running. Set to '0' to disable. Default value: 9185.", Required = false)]
+        [Option('m', "metrics_port", HelpText = "The Prometheus http listener port where Prometheus will be exposed for retrieving test metrics while the stress test is running. Set to '0' to disable. Default value: 9185.", Required = false)]
         public int PrometheusTestMetricsPort { get; set; } = 9185;
 
         [Option('v', "view", HelpText = "Whether or not a view should be configured to filter tags for the stress test. Default value: False.", Required = false)]
