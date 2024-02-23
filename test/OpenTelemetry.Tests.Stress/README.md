@@ -73,6 +73,10 @@ process_runtime_dotnet_gc_allocations_size_bytes 5485192 1658950184752
 
 ## Writing your own stress test
 
+> [!WARNING]
+> These instructions are out of date and should NOT be followed. They will be
+  updated soon.
+
 Create a simple console application with the following code:
 
 ```csharp
@@ -93,7 +97,7 @@ public partial class Program
 }
 ```
 
-Add the [`Skeleton.cs`](./Skeleton.cs) file to your `*.csproj` file:
+Add the Skeleton.cs file to your `*.csproj` file:
 
 ```xml
   <ItemGroup>
