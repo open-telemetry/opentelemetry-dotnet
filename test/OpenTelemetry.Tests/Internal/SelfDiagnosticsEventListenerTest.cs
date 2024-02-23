@@ -9,6 +9,7 @@ using Xunit;
 
 namespace OpenTelemetry.Internal.Tests;
 
+[Collection("Uses-OpenTelemetrySdkEventSource")] // Prevent parallel execution with other tests that exercise the SdkEventSource
 public class SelfDiagnosticsEventListenerTest
 {
     private const string LOGFILEPATH = "Diagnostics.log";
@@ -32,7 +33,7 @@ public class SelfDiagnosticsEventListenerTest
         _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
 
         // Emitting a Verbose event. Or any EventSource event with lower severity than Error.
-        OpenTelemetrySdkEventSource.Log.ActivityStarted("Activity started", "1");
+        OpenTelemetrySdkEventSource.Log.ActivityStart("Activity started", "1");
         Assert.False(configRefresher.TryGetLogStreamCalled);
     }
 
@@ -115,7 +116,7 @@ public class SelfDiagnosticsEventListenerTest
         _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
 
         // Act: emit an event with severity lower than configured
-        OpenTelemetrySdkEventSource.Log.ActivityStarted("ActivityStart", "123");
+        OpenTelemetrySdkEventSource.Log.ActivityStart("ActivityStart", "123");
 
         // Assert
         Assert.False(configRefresher.TryGetLogStreamCalled);

@@ -69,7 +69,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
             // https://github.com/dotnet/runtime/issues/61857
             var activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
             activityId = string.Concat(activityId, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded) ? "-01" : "-00");
-            this.ActivityStarted(activity.DisplayName, activityId);
+            this.ActivityStart(activity.DisplayName, activityId);
         }
     }
 
@@ -78,7 +78,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
     {
         if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
         {
-            this.ActivityStopped(activity.DisplayName, activity.Id);
+            this.ActivityStop(activity.DisplayName, activity.Id);
         }
     }
 
@@ -175,14 +175,14 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
         this.WriteEvent(16, exception);
     }
 
-    [Event(24, Message = "Activity started. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
-    public void ActivityStarted(string name, string id)
+    [Event(24, Message = "Activity started. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose, Opcode = EventOpcode.Start)]
+    public void ActivityStart(string name, string id)
     {
         this.WriteEvent(24, name, id);
     }
 
-    [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
-    public void ActivityStopped(string name, string? id)
+    [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose, Opcode = EventOpcode.Stop)]
+    public void ActivityStop(string name, string? id)
     {
         this.WriteEvent(25, name, id);
     }

@@ -17,7 +17,7 @@ public class EventSourceBenchmarks
         activity.Start();
         activity.Stop();
 
-        OpenTelemetrySdkEventSource.Log.ActivityStarted(activity.OperationName, activity.Id);
+        OpenTelemetrySdkEventSource.Log.ActivityStart(activity.OperationName, activity.Id);
     }
 
     [Benchmark]

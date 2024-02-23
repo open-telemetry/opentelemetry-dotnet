@@ -6,6 +6,7 @@ using Xunit;
 
 namespace OpenTelemetry.Tests;
 
+[Collection("Uses-OpenTelemetrySdkEventSource")] // Prevent parallel execution with other tests that exercise the SdkEventSource
 public class EventSourceTest
 {
     [Fact]
