@@ -6,8 +6,6 @@ on:
   # The build badge on the main README uses the CI results on the main branch to report the build status.
   push:
     branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
   pull_request:
     branches: [ 'main*' ]
 
