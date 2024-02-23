@@ -6,6 +6,26 @@
 [The OTLP (OpenTelemetry Protocol) exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)
 implementation.
 
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Table of Contents</summary>
+
+* [Installation](#installation)
+  * [Enable Trace Exporter](#enable-trace-exporter)
+  * [Enable Metric Exporter](#enable-metric-exporter)
+  * [Enable Log Exporter](#enable-log-exporter)
+* [Configuration](#configuration)
+  * [OtlpExporterOptions](#otlpexporteroptions)
+  * [LogRecordExportProcessorOptions](#logrecordexportprocessoroptions)
+  * [MetricReaderOptions](#metricreaderoptions)
+  * [Environment Variables](#environment-variables)
+  * [Experimental Features](#environment-variables-for-experimental-features)
+  * [Configure HttpClient](#configure-httpclient)
+* [Troubleshooting](#troubleshooting)
+
+</details>
+<!-- markdownlint-enable MD033 -->
+
 ## Prerequisite
 
 * An endpoint capable of accepting OTLP, like [OpenTelemetry
@@ -168,6 +188,11 @@ appBuilder.Services.AddOptions<OtlpExporterOptions>()
   contain a port and path. The default is "localhost:4317" for
   `OtlpExportProtocol.Grpc` and "localhost:4318" for
   `OtlpExportProtocol.HttpProtobuf`.
+
+> [!NOTE]
+> When using `OtlpExportProtocol.HttpProtobuf`, the full URL needs to be
+> provided, including the signal-specific path v1/{signal}. For example, for
+> traces, the full URL will look like <http://your-custom-endpoint/v1/traces>.
 
 * `Headers`: Optional headers for the connection.
 
