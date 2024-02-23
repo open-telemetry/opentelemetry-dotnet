@@ -963,16 +963,17 @@ public class MetricViewTests : MetricTestsBase
 
         Assert.Equal(3, exportedItems.Count);
 
-        Assert.Equal(10000, exportedItems[1].AggregatorStore.CardinalityLimit);
+        // CardinalityLimit + 2 (reserved for zero tags and overflow)
+        Assert.Equal(10002, exportedItems[1].AggregatorStore.CardinalityLimit);
         if (setDefault)
         {
-            Assert.Equal(3, exportedItems[0].AggregatorStore.CardinalityLimit);
-            Assert.Equal(3, exportedItems[2].AggregatorStore.CardinalityLimit);
+            Assert.Equal(5, exportedItems[0].AggregatorStore.CardinalityLimit);
+            Assert.Equal(5, exportedItems[2].AggregatorStore.CardinalityLimit);
         }
         else
         {
-            Assert.Equal(2000, exportedItems[0].AggregatorStore.CardinalityLimit);
-            Assert.Equal(2000, exportedItems[2].AggregatorStore.CardinalityLimit);
+            Assert.Equal(2002, exportedItems[0].AggregatorStore.CardinalityLimit);
+            Assert.Equal(2002, exportedItems[2].AggregatorStore.CardinalityLimit);
         }
     }
 
@@ -1015,15 +1016,16 @@ public class MetricViewTests : MetricTestsBase
         var metricB = exportedItems[1];
         var metricC = exportedItems[2];
 
-        Assert.Equal(256, metricA.AggregatorStore.CardinalityLimit);
+        // CardinalityLimit + 2 (reserved for zero tags and overflow)
+        Assert.Equal(258, metricA.AggregatorStore.CardinalityLimit);
         Assert.Equal("MetricStreamA", metricA.Name);
         Assert.Equal(20, GetAggregatedValue(metricA));
 
-        Assert.Equal(3, metricB.AggregatorStore.CardinalityLimit);
+        Assert.Equal(5, metricB.AggregatorStore.CardinalityLimit);
         Assert.Equal("MetricStreamB", metricB.Name);
         Assert.Equal(10, GetAggregatedValue(metricB));
 
-        Assert.Equal(200000, metricC.AggregatorStore.CardinalityLimit);
+        Assert.Equal(200002, metricC.AggregatorStore.CardinalityLimit);
         Assert.Equal("MetricStreamC", metricC.Name);
         Assert.Equal(10, GetAggregatedValue(metricC));
 

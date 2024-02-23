@@ -11,6 +11,8 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class AggregatorStore
 {
+    // Constant to account for additional space for MetricPointReclaim and a case with no dimensions.
+    internal const int AdditionalReserve = 2;
     internal readonly bool OutputDelta;
     internal readonly bool OutputDeltaWithUnusedMetricPointReclaimEnabled;
     internal readonly int CardinalityLimit;
@@ -62,11 +64,15 @@ internal sealed class AggregatorStore
         ExemplarFilter? exemplarFilter = null)
     {
         this.name = metricStreamIdentity.InstrumentName;
-        this.CardinalityLimit = cardinalityLimit;
+
+        // Increase the CardinalityLimit by 2 (AdditionalReserve) to reserve additional space.
+        // This adjustment accounts for MetricPointReclaim and a case where no dimensions are provided.
+        // Previously, these were included within the original cardinalityLimit, but now they are explicitly added to enhance clarity.
+        this.CardinalityLimit = cardinalityLimit + AdditionalReserve;
 
         this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.CardinalityLimit}";
-        this.metricPoints = new MetricPoint[cardinalityLimit];
-        this.currentMetricPointBatch = new int[cardinalityLimit];
+        this.metricPoints = new MetricPoint[this.CardinalityLimit];
+        this.currentMetricPointBatch = new int[this.CardinalityLimit];
         this.aggType = aggType;
         this.OutputDelta = temporality == AggregationTemporality.Delta;
         this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity);
@@ -104,13 +110,13 @@ internal sealed class AggregatorStore
 
         if (this.OutputDeltaWithUnusedMetricPointReclaimEnabled)
         {
-            this.availableMetricPoints = new Queue<int>(cardinalityLimit - reservedMetricPointsCount);
+            this.availableMetricPoints = new Queue<int>(this.CardinalityLimit - reservedMetricPointsCount);
 
             // There is no overload which only takes capacity as the parameter
             // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v7.0.5/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2020
             // We expect at the most (maxMetricPoints - reservedMetricPointsCount) * 2 entries- one for sorted and one for unsorted input
             this.TagsToMetricPointIndexDictionaryDelta =
-                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: (cardinalityLimit - reservedMetricPointsCount) * 2);
+                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: (this.CardinalityLimit - reservedMetricPointsCount) * 2);
 
             // Add all the indices except for the reserved ones to the queue so that threads have
             // readily available access to these MetricPoints for their use.

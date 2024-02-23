@@ -1429,7 +1429,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit, MetricPointCount());
+        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit + AggregatorStore.AdditionalReserve, MetricPointCount());
 
         exportedItems.Clear();
         counterLong.Add(10);
@@ -1439,7 +1439,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit, MetricPointCount());
+        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit + AggregatorStore.AdditionalReserve, MetricPointCount());
 
         counterLong.Add(10);
         for (int i = 0; i < MeterProviderBuilderSdk.DefaultCardinalityLimit + 1; i++)
@@ -1453,7 +1453,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit, MetricPointCount());
+        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit + AggregatorStore.AdditionalReserve, MetricPointCount());
     }
 
     [Fact]
@@ -1771,7 +1771,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         {
             foreach (var metricPoint in metric.GetMetricPoints())
             {
-                bucketCounts = metricPoint.GetHistogramBuckets().BucketCounts.Select(v => v.RunningValue).ToArray();
+                bucketCounts = metricPoint.GetHistogramBuckets().RunningBucketCounts;
             }
         }
 
