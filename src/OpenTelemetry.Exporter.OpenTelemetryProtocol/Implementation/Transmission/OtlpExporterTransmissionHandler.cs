@@ -103,15 +103,18 @@ internal class OtlpExporterTransmissionHandler<TRequest>
     /// Fired when resending a request to the server.
     /// </summary>
     /// <param name="request">The request to be resent to the server.</param>
-    /// <returns><see cref="ExportClientResponse"/>.</returns>
-    protected ExportClientResponse RetryRequest(TRequest request)
+    /// <param name="response"><see cref="ExportClientResponse" />.</param>
+    /// <returns><see langword="true" /> If the retry succeeds; otherwise, <see
+    /// langword="false" />.</returns>
+    protected bool TryRetryRequest(TRequest request, out ExportClientResponse response)
     {
-        var response = this.ExportClient.SendExportRequest(request);
+        response = this.ExportClient.SendExportRequest(request);
         if (!response.Success)
         {
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(response.Exception, isRetry: true);
+            return false;
         }
 
-        return response;
+        return true;
     }
 }
