@@ -211,7 +211,7 @@ public partial class Program
 
     protected partial class StressTestOptions
     {
-        [Option('c', "concurrency", HelpText = "The concurrency (number of executing threads) for the stress test. Default value: Environment.ProcessorCount.", Required = false)]
+        [Option('c', "concurrency", HelpText = "The concurrency (maximum degree of parallelism) for the stress test. Default value: Environment.ProcessorCount.", Required = false)]
         public int Concurrency { get; set; }
 
         [Option('p', "internal_port", HelpText = "The Prometheus http listener port where Prometheus will be exposed for retrieving internal metrics while the stress test is running. Set to '0' to disable. Default value: 9464.", Required = false)]
