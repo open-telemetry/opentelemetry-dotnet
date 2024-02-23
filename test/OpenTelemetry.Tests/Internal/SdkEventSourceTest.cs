@@ -18,44 +18,44 @@ public class SdkEventSourceTest : IDisposable
     public void Dispose()
     {
         this.listener.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
     public void ActivityStartUsesOpCodeStart()
     {
-        using (TracerProvider tracerProvider = Sdk.CreateTracerProviderBuilder()
+        using TracerProvider tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("TestSource")
-            .Build())
+            .Build();
+
+        // Clear any events that were emitted during Build.
+        this.listener.Events.Clear();
+
+        const int numActivities = 4;
+
+        using ActivitySource activitySource = new("TestSource");
+        for (int i = 0; i < numActivities; i++)
         {
-            // Clear any events that were emitted during Build.
-            this.listener.Events.Clear();
+            using Activity? activity = activitySource.StartActivity($"Test Activity {i}");
+        }
 
-            const int numActivities = 4;
+        // There should be 2 events for each activity: ActivityStart and ActivityStop.
+        Assert.Equal(numActivities * 2, this.listener.Events.Count);
 
-            using ActivitySource activitySource = new("TestSource");
-            for (int i = 0; i < numActivities; i++)
-            {
-                using Activity? activity = activitySource.StartActivity($"Test Activity {i}");
-            }
+        HashSet<Guid> activityIds = [];
+        for (int i = 0; i < numActivities; i++)
+        {
+            EventWrittenEventArgs startEvent = this.listener.Events[i * 2];
+            EventWrittenEventArgs stopEvent = this.listener.Events[(i * 2) + 1];
 
-            // There should be 2 events for each activity: ActivityStart and ActivityStop.
-            Assert.Equal(numActivities * 2, this.listener.Events.Count);
+            Assert.Equal(nameof(OpenTelemetrySdkEventSource.ActivityStart), startEvent.EventName);
+            Assert.Equal(nameof(OpenTelemetrySdkEventSource.ActivityStop), stopEvent.EventName);
 
-            HashSet<Guid> activityIds = [];
-            for (int i = 0; i < numActivities; i++)
-            {
-                EventWrittenEventArgs startEvent = this.listener.Events[i * 2];
-                EventWrittenEventArgs stopEvent = this.listener.Events[(i * 2) + 1];
+            // Start and Stop should be matched on ActivityId.
+            Assert.Equal(startEvent.ActivityId, stopEvent.ActivityId);
 
-                Assert.Equal(nameof(OpenTelemetrySdkEventSource.ActivityStart), startEvent.EventName);
-                Assert.Equal(nameof(OpenTelemetrySdkEventSource.ActivityStop), stopEvent.EventName);
-
-                // Start and Stop should be matched on ActivityId.
-                Assert.Equal(startEvent.ActivityId, stopEvent.ActivityId);
-
-                // ActivityIds should be unique.
-                Assert.True(activityIds.Add(startEvent.ActivityId));
-            }
+            // ActivityIds should be unique.
+            Assert.True(activityIds.Add(startEvent.ActivityId));
         }
     }
 
