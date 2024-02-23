@@ -172,11 +172,12 @@ public abstract class StressTest<T> : IDisposable
             {
                 Parallel.For(0, options.Concurrency, (i) =>
                 {
-                    statistics[i] = 0;
+                    ref var count = ref statistics[i];
+
                     while (this.bContinue)
                     {
                         this.RunWorkItemInParallel();
-                        statistics[i]++;
+                        count++;
                     }
                 });
             });
