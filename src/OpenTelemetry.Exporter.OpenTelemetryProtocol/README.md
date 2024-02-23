@@ -350,6 +350,14 @@ services.AddOpenTelemetry()
         }));
 ```
 
+> [!NOTE]
+> `DefaultRequestHeaders` can be used for [HTTP Basic Access
+Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication). For
+more complex authentication requirements,
+[`System.Net.Http.DelegatingHandler`](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler)
+can be used to handle token refresh, as explained
+[here](https://stackoverflow.com/questions/56204350/how-to-refresh-a-token-using-ihttpclientfactory).
+
 For users using
 [IHttpClientFactory](https://docs.microsoft.com/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
 you may also customize the named "OtlpTraceExporter" and/or "OtlpMetricExporter"
@@ -362,8 +370,9 @@ services.AddHttpClient(
         client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
 ```
 
-Note: The single instance returned by `HttpClientFactory` is reused by all
-export requests.
+> [!NOTE]
+> The single instance returned by `HttpClientFactory` is reused by all export
+requests.
 
 ## Troubleshooting
 
