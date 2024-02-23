@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
 
@@ -578,25 +579,7 @@ public struct MetricPoint
         {
             case AggregationType.DoubleSumIncomingDelta:
                 {
-                    double initValue, newValue;
-                    var sw = default(SpinWait);
-                    while (true)
-                    {
-                        initValue = this.runningValue.AsDouble;
-
-                        unchecked
-                        {
-                            newValue = initValue + number;
-                        }
-
-                        if (initValue == Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue))
-                        {
-                            break;
-                        }
-
-                        sw.SpinOnce();
-                    }
-
+                    InterlockedHelper.Add(ref this.runningValue.AsDouble, number);
                     break;
                 }
 
@@ -833,31 +816,21 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
-                        // TODO:
-                        // Is this thread-safe way to read double?
-                        // As long as the value is not -ve infinity,
-                        // the exchange (to 0.0) will never occur,
-                        // but we get the original value atomically.
-                        double initValue = Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity);
+                        double initValue = InterlockedHelper.Read(ref this.runningValue.AsDouble);
                         this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
                         this.deltaLastValue.AsDouble = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                         // Check again if value got updated, if yes reset status.
                         // This ensures no Updates get Lost.
-                        if (initValue != Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity))
+                        if (initValue != InterlockedHelper.Read(ref this.runningValue.AsDouble))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
                         }
                     }
                     else
                     {
-                        // TODO:
-                        // Is this thread-safe way to read double?
-                        // As long as the value is not -ve infinity,
-                        // the exchange (to 0.0) will never occur,
-                        // but we get the original value atomically.
-                        this.snapshotValue.AsDouble = Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity);
+                        this.snapshotValue.AsDouble = InterlockedHelper.Read(ref this.runningValue.AsDouble);
                     }
 
                     break;
@@ -880,17 +853,12 @@ public struct MetricPoint
 
             case AggregationType.DoubleGauge:
                 {
-                    // TODO:
-                    // Is this thread-safe way to read double?
-                    // As long as the value is not -ve infinity,
-                    // the exchange (to 0.0) will never occur,
-                    // but we get the original value atomically.
-                    this.snapshotValue.AsDouble = Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity);
+                    this.snapshotValue.AsDouble = InterlockedHelper.Read(ref this.runningValue.AsDouble);
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     // Check again if value got updated, if yes reset status.
                     // This ensures no Updates get Lost.
-                    if (this.snapshotValue.AsDouble != Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity))
+                    if (this.snapshotValue.AsDouble != InterlockedHelper.Read(ref this.runningValue.AsDouble))
                     {
                         this.MetricPointStatus = MetricPointStatus.CollectPending;
                     }
