@@ -40,7 +40,10 @@ internal static class ProviderBuilderServiceCollectionExtensions
         Debug.Assert(services != null, "services was null");
 
         services!.TryAddSingleton<MeterProviderBuilderSdk>();
-        services!.RegisterOptionsFactory(configuration => new MetricReaderOptions(configuration));
+        services!.RegisterOptionsFactory(configuration => new PeriodicExportingMetricReaderOptions(configuration));
+        services!.RegisterOptionsFactory(
+            (sp, configuration, name) => new MetricReaderOptions(
+                sp.GetRequiredService<IOptionsMonitor<PeriodicExportingMetricReaderOptions>>().Get(name)));
 
         return services!;
     }
@@ -51,6 +54,9 @@ internal static class ProviderBuilderServiceCollectionExtensions
 
         services!.TryAddSingleton<TracerProviderBuilderSdk>();
         services!.RegisterOptionsFactory(configuration => new BatchExportActivityProcessorOptions(configuration));
+        services!.RegisterOptionsFactory(
+            (sp, configuration, name) => new ActivityExportProcessorOptions(
+                sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
 
         return services!;
     }

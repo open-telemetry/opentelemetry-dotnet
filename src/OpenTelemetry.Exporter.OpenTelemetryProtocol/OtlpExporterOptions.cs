@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Reflection;
 #if NETFRAMEWORK
@@ -39,22 +41,27 @@ public class OtlpExporterOptions
     private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
     private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
 
-    private Uri endpoint;
+    private Uri? endpoint;
+    private OtlpExportProtocol? protocol;
+    private int? timeoutMilliseconds;
+    private ExportProcessorType? exportProcessorType;
+    private ActivityExportProcessorOptions? defaultProcessorOptions;
+    private BatchExportProcessorOptions<Activity>? batchExportProcessorOptions;
+    private Func<HttpClient>? httpClientFactory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
     /// </summary>
     public OtlpExporterOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), new())
+        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), defaultExportProcessorOptions: null)
     {
     }
 
     internal OtlpExporterOptions(
         IConfiguration configuration,
-        BatchExportActivityProcessorOptions defaultBatchOptions)
+        ActivityExportProcessorOptions? defaultExportProcessorOptions)
     {
         Debug.Assert(configuration != null, "configuration was null");
-        Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
 
         if (configuration.TryGetUriValue(EndpointEnvVarName, out var endpoint))
         {
@@ -79,7 +86,7 @@ public class OtlpExporterOptions
             this.Protocol = protocol;
         }
 
-        this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
+        this.DefaultHttpClientFactory = () =>
         {
             return new HttpClient
             {
@@ -87,7 +94,7 @@ public class OtlpExporterOptions
             };
         };
 
-        this.BatchExportProcessorOptions = defaultBatchOptions;
+        this.defaultProcessorOptions = defaultExportProcessorOptions;
     }
 
     /// <summary>
@@ -122,29 +129,54 @@ public class OtlpExporterOptions
     /// Gets or sets optional headers for the connection. Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">
     /// specification</a> for information on the expected format for Headers.
     /// </summary>
-    public string Headers { get; set; }
+    public string? Headers { get; set; }
 
     /// <summary>
     /// Gets or sets the max waiting time (in milliseconds) for the backend to process each batch. The default value is 10000.
     /// </summary>
-    public int TimeoutMilliseconds { get; set; } = 10000;
+    public int TimeoutMilliseconds
+    {
+        get => this.timeoutMilliseconds ?? 10000;
+        set => this.timeoutMilliseconds = value;
+    }
 
     /// <summary>
     /// Gets or sets the the OTLP transport protocol. Supported values: Grpc and HttpProtobuf.
     /// </summary>
-    public OtlpExportProtocol Protocol { get; set; } = DefaultOtlpExportProtocol;
+    public OtlpExportProtocol Protocol
+    {
+        get => this.protocol ?? DefaultOtlpExportProtocol;
+        set => this.protocol = value;
+    }
 
     /// <summary>
     /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
     /// </summary>
     /// <remarks>Note: This only applies when exporting traces.</remarks>
-    public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
+    public ExportProcessorType ExportProcessorType
+    {
+        get => this.defaultProcessorOptions?.ExportProcessorType ?? ExportProcessorType.Batch;
+        set => (this.defaultProcessorOptions ??= new()).ExportProcessorType = value;
+    }
 
     /// <summary>
     /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
     /// </summary>
     /// <remarks>Note: This only applies when exporting traces.</remarks>
-    public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
+    public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions
+    {
+        get
+        {
+            if (this.batchExportProcessorOptions != null)
+            {
+                return this.batchExportProcessorOptions;
+            }
+
+            return (this.defaultProcessorOptions ??= new()).BatchExportProcessorOptions;
+        }
+
+        set => this.batchExportProcessorOptions = value;
+    }
 
     /// <summary>
     /// Gets or sets the factory function called to create the <see
@@ -177,7 +209,19 @@ public class OtlpExporterOptions
     /// directly.</item>
     /// </list>
     /// </remarks>
-    public Func<HttpClient> HttpClientFactory { get; set; }
+    public Func<HttpClient> HttpClientFactory
+    {
+        get => this.httpClientFactory ??= this.DefaultHttpClientFactory;
+        set
+        {
+            this.httpClientFactory = value ?? NullHttpClientFactory;
+
+            static HttpClient NullHttpClientFactory()
+            {
+                return null!;
+            }
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.
@@ -195,14 +239,57 @@ public class OtlpExporterOptions
         string name)
         => new(
             configuration,
-            serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name));
+            serviceProvider.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>().Get(name));
+
+    internal static OtlpExporterOptions Merge(OtlpExporterOptions defaultInstance, OtlpExporterOptions signalInstance)
+    {
+        if (signalInstance.protocol == null)
+        {
+            signalInstance.protocol = defaultInstance.protocol;
+        }
+
+        if (signalInstance.endpoint == null)
+        {
+            signalInstance.endpoint = defaultInstance.endpoint;
+
+            // Note: We don't set ProgrammaticallyModifiedEndpoint because we
+            // want to append the signal to the default endpoint.
+        }
+
+        if (signalInstance.Headers == null)
+        {
+            signalInstance.Headers = defaultInstance.Headers;
+        }
+
+        if (!signalInstance.timeoutMilliseconds.HasValue)
+        {
+            signalInstance.timeoutMilliseconds = defaultInstance.timeoutMilliseconds;
+        }
+
+        if (!signalInstance.exportProcessorType.HasValue)
+        {
+            signalInstance.exportProcessorType = defaultInstance.exportProcessorType;
+        }
+
+        if (signalInstance.defaultProcessorOptions == null)
+        {
+            signalInstance.defaultProcessorOptions = defaultInstance.defaultProcessorOptions;
+        }
+
+        if (signalInstance.httpClientFactory == null)
+        {
+            signalInstance.httpClientFactory = defaultInstance.httpClientFactory;
+        }
+
+        return signalInstance;
+    }
 
     private static string GetUserAgentString()
     {
         try
         {
             var assemblyVersion = typeof(OtlpExporterOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-            var informationalVersion = assemblyVersion.InformationalVersion;
+            var informationalVersion = assemblyVersion?.InformationalVersion;
             return string.IsNullOrEmpty(informationalVersion) ? UserAgentProduct : $"{UserAgentProduct}/{informationalVersion}";
         }
         catch (Exception)
