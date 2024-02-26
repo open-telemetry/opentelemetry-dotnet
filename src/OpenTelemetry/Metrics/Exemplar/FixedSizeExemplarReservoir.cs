@@ -27,11 +27,13 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     /// <returns><see cref="ReadOnlyExemplarCollection"/>.</returns>
     public sealed override ReadOnlyExemplarCollection Collect()
     {
+        var runningExemplars = this.runningExemplars;
+
         if (this.ResetOnCollect)
         {
-            for (int i = 0; i < this.runningExemplars.Length; i++)
+            for (int i = 0; i < runningExemplars.Length; i++)
             {
-                ref var running = ref this.runningExemplars[i];
+                ref var running = ref runningExemplars[i];
                 if (running.IsUpdated())
                 {
                     running.Copy(ref this.snapshotExemplars[i]);
@@ -45,9 +47,9 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
         }
         else
         {
-            for (int i = 0; i < this.runningExemplars.Length; i++)
+            for (int i = 0; i < runningExemplars.Length; i++)
             {
-                ref var running = ref this.runningExemplars[i];
+                ref var running = ref runningExemplars[i];
                 if (running.IsUpdated())
                 {
                     running.Copy(ref this.snapshotExemplars[i]);
