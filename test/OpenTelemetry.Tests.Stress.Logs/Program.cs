@@ -1,39 +1,55 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Tests.Stress;
 
-public partial class Program
+public static class Program
 {
-    private static ILogger logger;
-    private static Payload payload = new Payload();
-
-    public static void Main()
+    public static int Main(string[] args)
     {
-        using var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddProcessor(new DummyProcessor());
-            });
-        });
-
-        logger = loggerFactory.CreateLogger<Program>();
-
-        Stress(prometheusPort: 9464);
+        return StressTestFactory.RunSynchronously<LogsStressTest>(args);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static void Run()
+    private sealed class LogsStressTest : StressTest<StressTestOptions>
     {
-        logger.Log(
-            logLevel: LogLevel.Information,
-            eventId: 2,
-            state: payload,
-            exception: null,
-            formatter: (state, ex) => string.Empty);
+        private static readonly Payload Payload = new();
+        private readonly ILoggerFactory loggerFactory;
+        private readonly ILogger logger;
+
+        public LogsStressTest(StressTestOptions options)
+            : base(options)
+        {
+            this.loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddProcessor(new DummyProcessor());
+                });
+            });
+
+            this.logger = this.loggerFactory.CreateLogger<LogsStressTest>();
+        }
+
+        protected override void RunWorkItemInParallel()
+        {
+            this.logger.Log(
+                logLevel: LogLevel.Information,
+                eventId: 2,
+                state: Payload,
+                exception: null,
+                formatter: (state, ex) => string.Empty);
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            if (isDisposing)
+            {
+                this.loggerFactory.Dispose();
+            }
+
+            base.Dispose(isDisposing);
+        }
     }
 }
