@@ -44,7 +44,7 @@
 
 * **Experimental (pre-release builds only):** `Exemplar` and `ExemplarReservoir`
   APIs have been updated to match the OpenTelemetry Specification.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5386](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5386))
 
 ## 1.7.0
 
