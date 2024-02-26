@@ -49,7 +49,7 @@ internal
     /// Note: Enumerating the collection may return fewer results depending on
     /// the filter.
     /// </remarks>
-    public int MaximumCount => this.count;
+    internal int MaximumCount => this.count;
 
     /// <summary>
     /// Returns an enumerator that iterates through the tags.

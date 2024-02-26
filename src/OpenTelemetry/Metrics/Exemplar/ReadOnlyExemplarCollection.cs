@@ -39,7 +39,7 @@ internal
     /// Note: Enumerating the collection may return fewer results depending on
     /// which <see cref="Exemplar"/>s in the collection received updates.
     /// </remarks>
-    public int MaximumCount => this.exemplars.Length;
+    internal int MaximumCount => this.exemplars.Length;
 
     /// <summary>
     /// Returns an enumerator that iterates through the <see cref="Exemplar" />s.

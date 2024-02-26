@@ -32,7 +32,6 @@ OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator.Current.get -> OpenT
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator.Enumerator() -> void
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator.MoveNext() -> bool
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.GetEnumerator() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator
-OpenTelemetry.Metrics.ReadOnlyExemplarCollection.MaximumCount.get -> int
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.ReadOnlyExemplarCollection() -> void
 OpenTelemetry.Metrics.TraceBasedExemplarFilter
 OpenTelemetry.Metrics.TraceBasedExemplarFilter.TraceBasedExemplarFilter() -> void
@@ -42,7 +41,6 @@ OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator.Current.get -> System.Col
 OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator.Enumerator() -> void
 OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator.MoveNext() -> bool
 OpenTelemetry.ReadOnlyFilteredTagCollection.GetEnumerator() -> OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator
-OpenTelemetry.ReadOnlyFilteredTagCollection.MaximumCount.get -> int
 OpenTelemetry.ReadOnlyFilteredTagCollection.ReadOnlyFilteredTagCollection() -> void
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>! processor) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>!>! implementationFactory) -> OpenTelemetry.Logs.LoggerProviderBuilder!
