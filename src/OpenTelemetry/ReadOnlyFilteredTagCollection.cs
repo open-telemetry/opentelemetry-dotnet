@@ -105,7 +105,7 @@ internal
                 int index = ++this.index;
                 if (index < this.source.MaximumCount)
                 {
-                    if (this.source.excludedKeys?.Contains(this.source.tags[index].Key) == true)
+                    if (this.source.excludedKeys?.Contains(this.source.tags[index].Key) ?? false)
                     {
                         continue;
                     }
