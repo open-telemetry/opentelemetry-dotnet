@@ -13,16 +13,22 @@ internal abstract class ExemplarReservoir
     /// cref="ExemplarReservoir"/> should reset its state when performing
     /// collection.
     /// </summary>
+    /// <remarks>
+    /// Note: <see cref="ResetOnCollect"/> is set to <see langword="true"/> for
+    /// <see cref="MetricPoint"/>s using delta aggregation temporality and <see
+    /// langword="false"/> for <see cref="MetricPoint"/>s using cumulative
+    /// aggregation temporality.
+    /// </remarks>
     public bool ResetOnCollect { get; private set; }
 
     /// <summary>
-    /// Offers measurement to the reservoir.
+    /// Offers a measurement to the reservoir.
     /// </summary>
     /// <param name="measurement"><see cref="ExemplarMeasurement{T}"/>.</param>
     public abstract void Offer(in ExemplarMeasurement<long> measurement);
 
     /// <summary>
-    /// Offers measurement to the reservoir.
+    /// Offers a measurement to the reservoir.
     /// </summary>
     /// <param name="measurement"><see cref="ExemplarMeasurement{T}"/>.</param>
     public abstract void Offer(in ExemplarMeasurement<double> measurement);
