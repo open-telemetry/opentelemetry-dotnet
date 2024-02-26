@@ -165,9 +165,12 @@ public static class Program
 
 Some useful notes:
 
-* You might want to run the stress test under `Release` mode rather than `Debug`
-  mode. `Debug` builds typically are not optimized and contain extra code which
-  will change the performance of the code under test.
+* It is generally best practice to run the stress test for code compiled in
+  `Release` configuration rather than `Debug` configuration. `Debug` builds
+  typically are not optimized and contain extra code which will change the
+  performance characteristics of the logic under test. The stress test will
+  write a warning message to the console when starting if compiled with `Debug`
+  configuration.
 * You can specify the concurrency using `-c` or `--concurrency` command line
   argument, the default value if not specified is the number of CPU cores. Keep
   in mind that concurrency level does not equal to the number of threads.
