@@ -33,7 +33,7 @@ public class SelfDiagnosticsEventListenerTest
         _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
 
         // Emitting a Verbose event. Or any EventSource event with lower severity than Error.
-        OpenTelemetrySdkEventSource.Log.ActivityStart("Activity started", "1");
+        OpenTelemetrySdkEventSource.Log.ActivityStarted("Activity started", "1");
         Assert.False(configRefresher.TryGetLogStreamCalled);
     }
 
@@ -116,7 +116,7 @@ public class SelfDiagnosticsEventListenerTest
         _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
 
         // Act: emit an event with severity lower than configured
-        OpenTelemetrySdkEventSource.Log.ActivityStart("ActivityStart", "123");
+        OpenTelemetrySdkEventSource.Log.ActivityStarted("ActivityStart", "123");
 
         // Assert
         Assert.False(configRefresher.TryGetLogStreamCalled);

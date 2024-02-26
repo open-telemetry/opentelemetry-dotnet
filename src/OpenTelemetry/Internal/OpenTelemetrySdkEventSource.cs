@@ -60,16 +60,17 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
     [NonEvent]
     public void ActivityStarted(Activity activity)
     {
+        string? id = null;
         if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
         {
-            // Accessing activity.Id here will cause the Id to be initialized
-            // before the sampler runs in case where the activity is created using legacy way
-            // i.e. new Activity("Operation name"). This will result in Id not reflecting the
-            // correct sampling flags
-            // https://github.com/dotnet/runtime/issues/61857
-            var activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
-            activityId = string.Concat(activityId, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded) ? "-01" : "-00");
-            this.ActivityStart(activity.DisplayName, activityId);
+            id = CreateActivityIdWithoutInitializing(activity);
+            this.ActivityStarted(activity.DisplayName, id);
+        }
+
+        if (this.IsEnabled(EventLevel.Informational, Keywords.Activities))
+        {
+            id ??= CreateActivityIdWithoutInitializing(activity);
+            this.ActivityStart(activity.DisplayName, id);
         }
     }
 
@@ -77,6 +78,11 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
     public void ActivityStopped(Activity activity)
     {
         if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+        {
+            this.ActivityStopped(activity.DisplayName, activity.Id);
+        }
+
+        if (this.IsEnabled(EventLevel.Informational, Keywords.Activities))
         {
             this.ActivityStop(activity.DisplayName, activity.Id);
         }
@@ -175,14 +181,14 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
         this.WriteEvent(16, exception);
     }
 
-    [Event(24, Message = "Activity started. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose, Opcode = EventOpcode.Start)]
-    public void ActivityStart(string name, string id)
+    [Event(24, Message = "Activity started. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
+    public void ActivityStarted(string name, string id)
     {
         this.WriteEvent(24, name, id);
     }
 
-    [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose, Opcode = EventOpcode.Stop)]
-    public void ActivityStop(string name, string? id)
+    [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
+    public void ActivityStopped(string name, string? id)
     {
         this.WriteEvent(25, name, id);
     }
@@ -344,6 +350,42 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
     public void MetricInstrumentRemoved(string instrumentName, string meterName)
     {
         this.WriteEvent(53, instrumentName, meterName);
+    }
+
+    [NonEvent]
+    private static string CreateActivityIdWithoutInitializing(Activity activity)
+    {
+        // Accessing activity.Id here will cause the Id to be initialized
+        // before the sampler runs in case where the activity is created using legacy way
+        // i.e. new Activity("Operation name"). This will result in Id not reflecting the
+        // correct sampling flags
+        // https://github.com/dotnet/runtime/issues/61857
+        string activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
+        activityId = string.Concat(activityId, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded) ? "-01" : "-00");
+        return activityId;
+    }
+
+    [Event(54, Message = "Activity started. Name = '{0}', Id = '{1}'.", Keywords = Keywords.Activities, Level = EventLevel.Informational, Opcode = EventOpcode.Start)]
+    private void ActivityStart(string name, string id)
+    {
+        this.WriteEvent(54, name, id);
+    }
+
+    [Event(55, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Keywords = Keywords.Activities, Level = EventLevel.Informational, Opcode = EventOpcode.Stop)]
+    private void ActivityStop(string name, string? id)
+    {
+        this.WriteEvent(55, name, id);
+    }
+
+    /// <summary>
+    /// Keywords defined by this EventSource.
+    /// </summary>
+    public static class Keywords
+    {
+        /// <summary>
+        /// ActivityStart/Stop events will be emitted at Informational level.
+        /// </summary>
+        public const EventKeywords Activities = (EventKeywords)1;
     }
 
 #if DEBUG

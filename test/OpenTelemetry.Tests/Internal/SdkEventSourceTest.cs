@@ -4,11 +4,10 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Internal;
+namespace OpenTelemetry.Internal.Tests;
 
 [Collection("Uses-OpenTelemetrySdkEventSource")] // Prevent parallel execution with other tests that exercise the SdkEventSource
 public class SdkEventSourceTest : IDisposable
@@ -22,7 +21,7 @@ public class SdkEventSourceTest : IDisposable
     }
 
     [Fact]
-    public void ActivityStartUsesOpCodeStart()
+    public void ActivityTrackingWorks()
     {
         using TracerProvider tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("TestSource")
@@ -48,8 +47,8 @@ public class SdkEventSourceTest : IDisposable
             EventWrittenEventArgs startEvent = this.listener.Events[i * 2];
             EventWrittenEventArgs stopEvent = this.listener.Events[(i * 2) + 1];
 
-            Assert.Equal(nameof(OpenTelemetrySdkEventSource.ActivityStart), startEvent.EventName);
-            Assert.Equal(nameof(OpenTelemetrySdkEventSource.ActivityStop), stopEvent.EventName);
+            Assert.Equal("ActivityStart", startEvent.EventName);
+            Assert.Equal("ActivityStop", stopEvent.EventName);
 
             // Start and Stop should be matched on ActivityId.
             Assert.Equal(startEvent.ActivityId, stopEvent.ActivityId);
@@ -86,7 +85,7 @@ public class SdkEventSourceTest : IDisposable
             if (eventSource.Name == SdkEventSourceName)
             {
                 this.eventSourcesEnabled.Add(eventSource);
-                this.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
+                this.EnableEvents(eventSource, EventLevel.Informational, OpenTelemetrySdkEventSource.Keywords.Activities);
             }
             else if (eventSource.Name == "System.Threading.Tasks.TplEventSource")
             {
