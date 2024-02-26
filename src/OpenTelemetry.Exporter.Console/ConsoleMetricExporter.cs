@@ -205,12 +205,12 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                             exemplarString.Append(exemplar.LongValue);
                         }
 
-                        if (exemplar.TraceId.HasValue)
+                        if (exemplar.TraceId != default)
                         {
                             exemplarString.Append(" TraceId: ");
-                            exemplarString.Append(exemplar.TraceId.Value.ToHexString());
+                            exemplarString.Append(exemplar.TraceId.ToHexString());
                             exemplarString.Append(" SpanId: ");
-                            exemplarString.Append(exemplar.SpanId.Value.ToHexString());
+                            exemplarString.Append(exemplar.SpanId.ToHexString());
                         }
 
                         bool appendedTagString = false;

@@ -14,9 +14,9 @@ OpenTelemetry.Metrics.Exemplar.DoubleValue.get -> double
 OpenTelemetry.Metrics.Exemplar.Exemplar() -> void
 OpenTelemetry.Metrics.Exemplar.FilteredTags.get -> OpenTelemetry.ReadOnlyFilteredTagCollection
 OpenTelemetry.Metrics.Exemplar.LongValue.get -> long
-OpenTelemetry.Metrics.Exemplar.SpanId.get -> System.Diagnostics.ActivitySpanId?
+OpenTelemetry.Metrics.Exemplar.SpanId.get -> System.Diagnostics.ActivitySpanId
 OpenTelemetry.Metrics.Exemplar.Timestamp.get -> System.DateTimeOffset
-OpenTelemetry.Metrics.Exemplar.TraceId.get -> System.Diagnostics.ActivityTraceId?
+OpenTelemetry.Metrics.Exemplar.TraceId.get -> System.Diagnostics.ActivityTraceId
 OpenTelemetry.Metrics.ExemplarFilter
 OpenTelemetry.Metrics.ExemplarFilter.ExemplarFilter() -> void
 OpenTelemetry.Metrics.ExemplarMeasurement<T>

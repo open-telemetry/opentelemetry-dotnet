@@ -363,13 +363,13 @@ internal static class MetricItemExtensions
             TimeUnixNano = (ulong)exemplar.Timestamp.ToUnixTimeNanoseconds(),
         };
 
-        if (exemplar.TraceId.HasValue)
+        if (exemplar.TraceId != default)
         {
             byte[] traceIdBytes = new byte[16];
-            exemplar.TraceId.Value.CopyTo(traceIdBytes);
+            exemplar.TraceId.CopyTo(traceIdBytes);
 
             byte[] spanIdBytes = new byte[8];
-            exemplar.SpanId.Value.CopyTo(spanIdBytes);
+            exemplar.SpanId.CopyTo(spanIdBytes);
 
             otlpExemplar.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
             otlpExemplar.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
