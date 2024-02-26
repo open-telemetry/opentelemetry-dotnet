@@ -56,7 +56,7 @@ Example output while a test is running:
 Options: {"Concurrency":20,"PrometheusInternalMetricsPort":9464,"DurationSeconds":0}
 Run OpenTelemetry.Tests.Stress.exe --help to see available options.
 Running (concurrency = 20, internalPrometheusEndpoint = http://localhost:9464/metrics/), press <Esc> to stop, press <Spacebar> to toggle statistics in the console...
-Loops: 17,384,826,748, Loops/Second: 2,375,222,037, CPU Cycles/Loop: 24, RunningTime (Seconds): 7```
+Loops: 17,384,826,748, Loops/Second: 2,375,222,037, CPU Cycles/Loop: 24, RunningTime (Seconds): 7
 ```
 
 The stress test metrics are exposed via
