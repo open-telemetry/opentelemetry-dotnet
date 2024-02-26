@@ -176,7 +176,7 @@ public static class OtlpMetricExporterExtensions
     }
 
     internal static MetricReader BuildOtlpExporterMetricReader(
-        OtlpExporterOptions exporterOptions,
+        OtlpExporterOptionsBase exporterOptions,
         MetricReaderOptions metricReaderOptions,
         IServiceProvider serviceProvider,
         Func<BaseExporter<Metric>, BaseExporter<Metric>>? configureExporterInstance = null)

@@ -20,9 +20,9 @@ namespace OpenTelemetry.Exporter;
 internal static class OtlpExporterOptionsExtensions
 {
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
-    public static GrpcChannel CreateChannel(this OtlpExporterOptions options)
+    public static GrpcChannel CreateChannel(this OtlpExporterOptionsBase options)
 #else
-    public static Channel CreateChannel(this OtlpExporterOptions options)
+    public static Channel CreateChannel(this OtlpExporterOptionsBase options)
 #endif
     {
         if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
@@ -47,12 +47,12 @@ internal static class OtlpExporterOptionsExtensions
 #endif
     }
 
-    public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options)
+    public static Metadata GetMetadataFromHeaders(this OtlpExporterOptionsBase options)
     {
         return options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
     }
 
-    public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
+    public static THeaders GetHeaders<THeaders>(this OtlpExporterOptionsBase options, Action<THeaders, string, string> addHeader)
         where THeaders : new()
     {
         var optionHeaders = options.Headers;
@@ -88,16 +88,16 @@ internal static class OtlpExporterOptionsExtensions
         return headers;
     }
 
-    public static OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportTransmissionHandler(this OtlpExporterOptions options)
+    public static OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportTransmissionHandler(this OtlpExporterOptionsBase options)
         => new(GetTraceExportClient(options));
 
-    public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options)
+    public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptionsBase options)
        => new(GetMetricsExportClient(options));
 
-    public static OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest> GetLogsExportTransmissionHandler(this OtlpExporterOptions options)
+    public static OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest> GetLogsExportTransmissionHandler(this OtlpExporterOptionsBase options)
        => new(GetLogExportClient(options));
 
-    public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
+    public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptionsBase options) =>
         options.Protocol switch
         {
             OtlpExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options),
@@ -107,7 +107,7 @@ internal static class OtlpExporterOptionsExtensions
             _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
         };
 
-    public static IExportClient<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportClient(this OtlpExporterOptions options) =>
+    public static IExportClient<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportClient(this OtlpExporterOptionsBase options) =>
         options.Protocol switch
         {
             OtlpExportProtocol.Grpc => new OtlpGrpcMetricsExportClient(options),
@@ -117,7 +117,7 @@ internal static class OtlpExporterOptionsExtensions
             _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
         };
 
-    public static IExportClient<LogOtlpCollector.ExportLogsServiceRequest> GetLogExportClient(this OtlpExporterOptions options) =>
+    public static IExportClient<LogOtlpCollector.ExportLogsServiceRequest> GetLogExportClient(this OtlpExporterOptionsBase options) =>
         options.Protocol switch
         {
             OtlpExportProtocol.Grpc => new OtlpGrpcLogExportClient(options),
@@ -127,7 +127,7 @@ internal static class OtlpExporterOptionsExtensions
             _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
         };
 
-    public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
+    public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptionsBase options, IServiceProvider serviceProvider, string httpClientName)
     {
         if (serviceProvider != null
             && options.Protocol == OtlpExportProtocol.HttpProtobuf

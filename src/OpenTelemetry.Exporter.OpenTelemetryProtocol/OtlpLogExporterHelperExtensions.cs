@@ -343,7 +343,7 @@ public static class OtlpLogExporterHelperExtensions
 
     internal static BaseProcessor<LogRecord> BuildOtlpLogExporter(
         IServiceProvider sp,
-        OtlpExporterOptions exporterOptions,
+        OtlpExporterOptionsBase exporterOptions,
         LogRecordExportProcessorOptions processorOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,

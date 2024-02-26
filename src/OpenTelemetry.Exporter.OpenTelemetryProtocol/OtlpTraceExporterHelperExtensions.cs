@@ -101,6 +101,21 @@ public static class OtlpTraceExporterHelperExtensions
         SdkLimitOptions sdkLimitOptions,
         IServiceProvider serviceProvider,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
+        => BuildOtlpExporterProcessor(
+            exporterOptions,
+            sdkLimitOptions,
+            exporterOptions.ExportProcessorType,
+            exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions(),
+            serviceProvider,
+            configureExporterInstance);
+
+    internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
+        OtlpExporterOptionsBase exporterOptions,
+        SdkLimitOptions sdkLimitOptions,
+        ExportProcessorType exportProcessorType,
+        BatchExportProcessorOptions<Activity> batchExportProcessorOptions,
+        IServiceProvider serviceProvider,
+        Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
     {
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
@@ -111,13 +126,13 @@ public static class OtlpTraceExporterHelperExtensions
             otlpExporter = configureExporterInstance(otlpExporter);
         }
 
-        if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
+        if (exportProcessorType == ExportProcessorType.Simple)
         {
             return new SimpleActivityExportProcessor(otlpExporter);
         }
         else
         {
-            var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions();
+            var batchOptions = batchExportProcessorOptions;
 
             return new BatchActivityExportProcessor(
                 otlpExporter,
