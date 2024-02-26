@@ -103,12 +103,14 @@ internal
         /// collection.</returns>
         public bool MoveNext()
         {
+            var exemplars = this.exemplars;
+
             while (true)
             {
                 var index = ++this.index;
-                if (index < this.exemplars.Length)
+                if (index < exemplars.Length)
                 {
-                    if (!this.exemplars[index].IsUpdated())
+                    if (!exemplars[index].IsUpdated())
                     {
                         continue;
                     }
@@ -116,10 +118,8 @@ internal
                     return true;
                 }
 
-                break;
+                return false;
             }
-
-            return false;
         }
     }
 }

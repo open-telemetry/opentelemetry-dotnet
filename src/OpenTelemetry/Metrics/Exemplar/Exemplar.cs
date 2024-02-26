@@ -33,17 +33,17 @@ internal
     /// <summary>
     /// Gets the timestamp.
     /// </summary>
-    public DateTimeOffset Timestamp { get; private set; }
+    public DateTimeOffset Timestamp { readonly get; private set; }
 
     /// <summary>
     /// Gets the TraceId.
     /// </summary>
-    public ActivityTraceId? TraceId { get; private set; }
+    public ActivityTraceId? TraceId { readonly get; private set; }
 
     /// <summary>
     /// Gets the SpanId.
     /// </summary>
-    public ActivitySpanId? SpanId { get; private set; }
+    public ActivitySpanId? SpanId { readonly get; private set; }
 
     /// <summary>
     /// Gets the long value.

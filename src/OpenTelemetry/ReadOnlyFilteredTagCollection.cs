@@ -82,13 +82,13 @@ internal
         {
             this.source = source;
             this.index = -1;
-            this.Current = default;
         }
 
         /// <summary>
         /// Gets the tag at the current position of the enumerator.
         /// </summary>
-        public KeyValuePair<string, object?> Current { readonly get; private set; }
+        public readonly KeyValuePair<string, object?> Current
+            => this.source.tags[this.index];
 
         /// <summary>
         /// Advances the enumerator to the next element of the <see
@@ -105,21 +105,16 @@ internal
                 int index = ++this.index;
                 if (index < this.source.MaximumCount)
                 {
-                    var item = this.source.tags[index];
-
-                    if (this.source.excludedKeys?.Contains(item.Key) == true)
+                    if (this.source.excludedKeys?.Contains(this.source.tags[index].Key) == true)
                     {
                         continue;
                     }
 
-                    this.Current = item;
                     return true;
                 }
 
-                break;
+                return false;
             }
-
-            return false;
         }
     }
 }
