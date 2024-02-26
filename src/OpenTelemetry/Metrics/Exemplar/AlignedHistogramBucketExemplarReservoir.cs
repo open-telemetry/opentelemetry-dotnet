@@ -17,11 +17,7 @@ internal sealed class AlignedHistogramBucketExemplarReservoir : FixedSizeExempla
 
     public override void Offer(in ExemplarMeasurement<long> measurement)
     {
-        Debug.Assert(
-            measurement.ExplicitBucketHistogramBucketIndex != -1,
-            "ExplicitBucketHistogramBucketIndex was -1");
-
-        this.UpdateExemplar(measurement.ExplicitBucketHistogramBucketIndex, in measurement);
+        Debug.Fail("AlignedHistogramBucketExemplarReservoir shouldn't be used with long values");
     }
 
     public override void Offer(in ExemplarMeasurement<double> measurement)
