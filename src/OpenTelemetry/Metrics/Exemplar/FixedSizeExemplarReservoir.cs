@@ -42,8 +42,6 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
                     this.snapshotExemplars[i].Reset();
                 }
             }
-
-            this.OnReset();
         }
         else
         {
@@ -80,10 +78,6 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     }
 
     protected virtual void OnCollected()
-    {
-    }
-
-    protected virtual void OnReset()
     {
     }
 
