@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-* Modified OpenTelemetrySdkEventSource with the following changes to support activity tracking:
-  * ActivityStarted and ActivityStopped events have been renamed to ActivityStart and ActivityStop respectively. This is to comply with the naming convention for activity tracking.
-  * ActivityStart and ActivityStop use the Start and Stop operation codes (EventOpCode) respectively.
+* Added ActivityTracking to OpenTelemetrySdkEventSource.
+  * Added Activities keyword.
+  * Added ActivityStart and ActivityStop events at Informational level using Activites keyword.
 
 * Fixed an issue where `LogRecord.Attributes` (or `LogRecord.StateValues` alias)
   could become out of sync with `LogRecord.State` if either is set directly via
