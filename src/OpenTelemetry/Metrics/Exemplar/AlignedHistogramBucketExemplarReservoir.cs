@@ -6,8 +6,12 @@ using System.Diagnostics;
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// The AlignedHistogramBucketExemplarReservoir implementation.
+/// AlignedHistogramBucketExemplarReservoir implementation.
 /// </summary>
+/// <remarks>
+/// Specification: <see
+/// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#alignedhistogrambucketexemplarreservoir"/>.
+/// </remarks>
 internal sealed class AlignedHistogramBucketExemplarReservoir : FixedSizeExemplarReservoir
 {
     public AlignedHistogramBucketExemplarReservoir(int numberOfBuckets)

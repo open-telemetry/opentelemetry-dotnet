@@ -10,17 +10,18 @@ namespace OpenTelemetry.Metrics;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
-/// The base class for defining Exemplar Filter.
+/// ExemplarFilter base implementation and contract.
 /// </summary>
-/// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+/// <remarks>
+/// <inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/>
+/// Specification: <see
+/// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplarfilter"/>.
+/// </remarks>
 #if NET8_0_OR_GREATER
 [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
 public
 #else
-/// <summary>
-/// The base class for defining Exemplar Filter.
-/// </summary>
 internal
 #endif
     abstract class ExemplarFilter

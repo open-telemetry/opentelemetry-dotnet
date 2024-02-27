@@ -322,7 +322,7 @@ public static class MeterProviderBuilderExtensions
     /// Sets the <see cref="ExemplarFilter"/> to be used for this provider.
     /// This is applied to all the metrics from this provider.
     /// </summary>
-    /// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+    /// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
