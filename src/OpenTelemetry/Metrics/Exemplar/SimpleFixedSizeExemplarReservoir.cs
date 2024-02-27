@@ -32,13 +32,13 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
         // Reset internal state irrespective of temporality.
         // This ensures incoming measurements have fair chance
         // of making it to the reservoir.
-        Interlocked.Exchange(ref this.measurementsSeen, 0);
+        this.measurementsSeen = 0;
     }
 
     private void Offer<T>(in ExemplarMeasurement<T> measurement)
         where T : struct
     {
-        var measurementNumber = Interlocked.Increment(ref this.measurementsSeen) - 1;
+        var measurementNumber = this.measurementsSeen++;
 
         if (measurementNumber < this.Capacity)
         {
