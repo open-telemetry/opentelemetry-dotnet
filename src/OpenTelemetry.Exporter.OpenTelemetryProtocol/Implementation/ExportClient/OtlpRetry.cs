@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
@@ -52,7 +54,7 @@ internal static class OtlpRetry
     private static readonly Random Random = new Random();
 #endif
 
-    public static bool TryGetHttpRetryResult(HttpStatusCode statusCode, DateTime? deadline, HttpResponseHeaders responseHeaders, int retryDelayMilliseconds, out RetryResult retryResult)
+    public static bool TryGetHttpRetryResult(HttpStatusCode? statusCode, DateTime? deadline, HttpResponseHeaders? responseHeaders, int retryDelayMilliseconds, out RetryResult retryResult)
     {
         return TryGetRetryResult(statusCode, IsHttpStatusCodeRetryable, deadline, responseHeaders, TryGetHttpRetryDelay, retryDelayMilliseconds, out retryResult);
     }
@@ -140,7 +142,7 @@ internal static class OtlpRetry
             return null;
         }
 
-        var statusDetails = trailers.Get(GrpcStatusDetailsHeader);
+        var statusDetails = trailers?.Get(GrpcStatusDetailsHeader);
         if (statusDetails != null && statusDetails.IsBinary)
         {
             var status = Status.Parser.ParseFrom(statusDetails.ValueBytes);
@@ -157,16 +159,19 @@ internal static class OtlpRetry
         return null;
     }
 
-    private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode statusCode, HttpResponseHeaders headers)
+    private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode? statusCode, HttpResponseHeaders? headers)
     {
-        Debug.Assert(headers != null, "headers was null");
+        if (!statusCode.HasValue)
+        {
+            return null;
+        }
 
 #if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
         return statusCode == HttpStatusCode.TooManyRequests || statusCode == HttpStatusCode.ServiceUnavailable
 #else
         return statusCode == (HttpStatusCode)429 || statusCode == HttpStatusCode.ServiceUnavailable
 #endif
-            ? headers.RetryAfter?.Delta
+            ? headers?.RetryAfter?.Delta
             : null;
     }
 
@@ -189,9 +194,14 @@ internal static class OtlpRetry
     }
 
 #pragma warning disable SA1313 // Parameter should begin with lower-case letter
-    private static bool IsHttpStatusCodeRetryable(HttpStatusCode statusCode, bool _)
+    private static bool IsHttpStatusCodeRetryable(HttpStatusCode? statusCode, bool _)
 #pragma warning restore SA1313 // Parameter should begin with lower-case letter
     {
+        if (!statusCode.HasValue)
+        {
+            return true;
+        }
+
         switch (statusCode)
         {
 #if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER

@@ -1,6 +1,12 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
+using System.Net;
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
@@ -10,7 +16,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
 public class OtlpRetryTests
 {
-    public static IEnumerable<object[]> GrpcRetryTestData => GrpcRetryTestCase.GetTestCases();
+    public static IEnumerable<object[]> GrpcRetryTestData => GrpcRetryTestCase.GetGrpcTestCases();
+
+    public static IEnumerable<object[]> HttpRetryTestData => HttpRetryTestCase.GetHttpTestCases();
 
     [Theory]
     [MemberData(nameof(GrpcRetryTestData))]
@@ -53,6 +61,47 @@ public class OtlpRetryTests
         Assert.Equal(testCase.ExpectedRetryAttempts, attempts);
     }
 
+    [Theory]
+    [MemberData(nameof(HttpRetryTestData))]
+    public void TryGetHttpRetryResultTest(HttpRetryTestCase testCase)
+    {
+        var attempts = 0;
+        var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
+
+        foreach (var retryAttempt in testCase.RetryAttempts)
+        {
+            ++attempts;
+            var statusCode = retryAttempt.Status;
+            var deadline = retryAttempt.Deadline;
+            var headers = retryAttempt.ResponseMessage?.Headers;
+            var success = OtlpRetry.TryGetHttpRetryResult(statusCode, deadline, headers, nextRetryDelayMilliseconds, out var retryResult);
+
+            Assert.Equal(retryAttempt.ExpectedSuccess, success);
+
+            if (!success)
+            {
+                Assert.Equal(testCase.ExpectedRetryAttempts, attempts);
+                break;
+            }
+
+            if (retryResult.Throttled)
+            {
+                Assert.Equal(retryAttempt.ThrottleDelay, retryResult.RetryDelay);
+            }
+            else
+            {
+                Assert.True(retryResult.RetryDelay >= TimeSpan.Zero);
+                Assert.True(retryResult.RetryDelay < TimeSpan.FromMilliseconds(nextRetryDelayMilliseconds));
+            }
+
+            Assert.Equal(retryAttempt.ExpectedNextRetryDelayMilliseconds, retryResult.NextRetryDelayMilliseconds);
+
+            nextRetryDelayMilliseconds = retryResult.NextRetryDelayMilliseconds;
+        }
+
+        Assert.Equal(testCase.ExpectedRetryAttempts, attempts);
+    }
+
     public class GrpcRetryTestCase
     {
         public int ExpectedRetryAttempts;
@@ -67,7 +116,7 @@ public class OtlpRetryTests
             this.testRunnerName = testRunnerName;
         }
 
-        public static IEnumerable<object[]> GetTestCases()
+        public static IEnumerable<object[]> GetGrpcTestCases()
         {
             yield return new[] { new GrpcRetryTestCase("Cancelled", new GrpcRetryAttempt[] { new(StatusCode.Cancelled) }) };
             yield return new[] { new GrpcRetryTestCase("DeadlineExceeded", new GrpcRetryAttempt[] { new(StatusCode.DeadlineExceeded) }) };
@@ -181,7 +230,7 @@ public class OtlpRetryTests
             public GrpcRetryAttempt(
                 StatusCode statusCode,
                 bool deadlineExceeded = false,
-                Duration throttleDelay = null,
+                Duration? throttleDelay = null,
                 int expectedNextRetryDelayMilliseconds = 1500,
                 bool expectedSuccess = true)
             {
@@ -196,6 +245,103 @@ public class OtlpRetryTests
 
                 this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
 
+                this.ExpectedSuccess = expectedSuccess;
+            }
+        }
+    }
+
+    public class HttpRetryTestCase
+    {
+        public int ExpectedRetryAttempts;
+        public HttpRetryAttempt[] RetryAttempts;
+
+        private string testRunnerName;
+
+        private HttpRetryTestCase(string testRunnerName, HttpRetryAttempt[] retryAttempts, int expectedRetryAttempts = 1)
+        {
+            this.ExpectedRetryAttempts = expectedRetryAttempts;
+            this.RetryAttempts = retryAttempts;
+            this.testRunnerName = testRunnerName;
+        }
+
+        public static IEnumerable<object[]> GetHttpTestCases()
+        {
+            yield return new[] { new HttpRetryTestCase("NetworkError", [new(statusCode: null)]) };
+            yield return new[] { new HttpRetryTestCase("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout)]) };
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+            yield return new[] { new HttpRetryTestCase("ServiceUnavailable", [new(statusCode: HttpStatusCode.TooManyRequests)]) };
+#endif
+
+            yield return new[]
+            {
+                new HttpRetryTestCase(
+                    "Exponential Backoff",
+                    new HttpRetryAttempt[]
+                    {
+                        new(statusCode: null, expectedNextRetryDelayMilliseconds: 1500),
+                        new(statusCode: null, expectedNextRetryDelayMilliseconds: 2250),
+                        new(statusCode: null, expectedNextRetryDelayMilliseconds: 3375),
+                        new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000),
+                        new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000),
+                    },
+                    expectedRetryAttempts: 5),
+            };
+
+            yield return new[]
+            {
+                new HttpRetryTestCase(
+                    "Retry until non-retryable status code encountered",
+                    new HttpRetryAttempt[]
+                    {
+                        new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 1500),
+                        new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 2250),
+                        new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 3375),
+                        new(statusCode: HttpStatusCode.BadRequest, expectedSuccess: false),
+                        new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000),
+                    },
+                    expectedRetryAttempts: 4),
+            };
+
+            yield return new[] { new HttpRetryTestCase("Expired deadline", new HttpRetryAttempt[] { new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false) }) };
+
+            // TODO: Add more cases.
+        }
+
+        public override string ToString()
+        {
+            return this.testRunnerName;
+        }
+
+        public class HttpRetryAttempt
+        {
+            public HttpStatusCode? Status;
+            public HttpResponseMessage? ResponseMessage;
+            public DateTime? Deadline;
+            public TimeSpan? ThrottleDelay;
+            public int? ExpectedNextRetryDelayMilliseconds;
+            public bool ExpectedSuccess;
+
+            public HttpRetryAttempt(
+                HttpStatusCode? statusCode,
+                TimeSpan? throttleDelay = null,
+                bool isDeadlineExceeded = false,
+                int expectedNextRetryDelayMilliseconds = 1500,
+                bool expectedSuccess = true)
+            {
+                this.Status = statusCode;
+                this.ThrottleDelay = throttleDelay;
+                if (throttleDelay != null)
+                {
+                    this.ResponseMessage = new HttpResponseMessage();
+                    this.ResponseMessage.Headers.Add("Retry-After", throttleDelay.ToString());
+                    if (statusCode != null)
+                    {
+                        this.ResponseMessage.StatusCode = (HttpStatusCode)statusCode;
+                    }
+                }
+
+                this.Deadline = isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : null;
+                this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
                 this.ExpectedSuccess = expectedSuccess;
             }
         }
