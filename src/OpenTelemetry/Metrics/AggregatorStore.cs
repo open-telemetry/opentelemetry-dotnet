@@ -11,6 +11,7 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class AggregatorStore
 {
+    internal readonly HashSet<string>? TagKeysInteresting;
     internal readonly bool OutputDelta;
     internal readonly bool OutputDeltaWithUnusedMetricPointReclaimEnabled;
     internal readonly int CardinalityLimit;
@@ -24,7 +25,6 @@ internal sealed class AggregatorStore
 
     private readonly object lockZeroTags = new();
     private readonly object lockOverflowTag = new();
-    private readonly HashSet<string>? tagKeysInteresting;
     private readonly int tagsKeysInterestingCount;
 
     // This holds the reclaimed MetricPoints that are available for reuse.
@@ -84,7 +84,7 @@ internal sealed class AggregatorStore
             this.updateLongCallback = this.UpdateLongCustomTags;
             this.updateDoubleCallback = this.UpdateDoubleCustomTags;
             var hs = new HashSet<string>(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
-            this.tagKeysInteresting = hs;
+            this.TagKeysInteresting = hs;
             this.tagsKeysInterestingCount = hs.Count;
         }
 
@@ -1122,9 +1122,9 @@ internal sealed class AggregatorStore
 
         var storage = ThreadStaticStorage.GetStorage();
 
-        Debug.Assert(this.tagKeysInteresting != null, "this.tagKeysInteresting was null");
+        Debug.Assert(this.TagKeysInteresting != null, "this.tagKeysInteresting was null");
 
-        storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting!, out var tagKeysAndValues, out var actualLength);
+        storage.SplitToKeysAndValues(tags, tagLength, this.TagKeysInteresting!, out var tagKeysAndValues, out var actualLength);
 
         // Actual number of tags depend on how many
         // of the incoming tags has user opted to

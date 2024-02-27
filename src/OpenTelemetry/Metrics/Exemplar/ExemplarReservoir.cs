@@ -9,32 +9,38 @@ namespace OpenTelemetry.Metrics;
 internal abstract class ExemplarReservoir
 {
     /// <summary>
-    /// Offers measurement to the reservoir.
+    /// Gets a value indicating whether or not the <see
+    /// cref="ExemplarReservoir"/> should reset its state when performing
+    /// collection.
     /// </summary>
-    /// <param name="value">The value of the measurement.</param>
-    /// <param name="tags">The complete set of tags provided with the measurement.</param>
-    /// <param name="index">The histogram bucket index where this measurement is going to be stored.
-    /// This is optional and is only relevant for Histogram with buckets.</param>
-    public abstract void Offer(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default);
+    /// <remarks>
+    /// Note: <see cref="ResetOnCollect"/> is set to <see langword="true"/> for
+    /// <see cref="MetricPoint"/>s using delta aggregation temporality and <see
+    /// langword="false"/> for <see cref="MetricPoint"/>s using cumulative
+    /// aggregation temporality.
+    /// </remarks>
+    public bool ResetOnCollect { get; private set; }
 
     /// <summary>
-    /// Offers measurement to the reservoir.
+    /// Offers a measurement to the reservoir.
     /// </summary>
-    /// <param name="value">The value of the measurement.</param>
-    /// <param name="tags">The complete set of tags provided with the measurement.</param>
-    /// <param name="index">The histogram bucket index where this measurement is going to be stored.
-    /// This is optional and is only relevant for Histogram with buckets.</param>
-    public abstract void Offer(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default);
+    /// <param name="measurement"><see cref="ExemplarMeasurement{T}"/>.</param>
+    public abstract void Offer(in ExemplarMeasurement<long> measurement);
+
+    /// <summary>
+    /// Offers a measurement to the reservoir.
+    /// </summary>
+    /// <param name="measurement"><see cref="ExemplarMeasurement{T}"/>.</param>
+    public abstract void Offer(in ExemplarMeasurement<double> measurement);
 
     /// <summary>
     /// Collects all the exemplars accumulated by the Reservoir.
     /// </summary>
-    /// <param name="actualTags">The actual tags that are part of the metric. Exemplars are
-    /// only expected to contain any filtered tags, so this will allow the reservoir
-    /// to prepare the filtered tags from all the tags it is given by doing the
-    /// equivalent of filtered tags = all tags - actual tags.
-    /// </param>
-    /// <param name="reset">Flag to indicate if the reservoir should be reset after this call.</param>
-    /// <returns>Array of Exemplars.</returns>
-    public abstract Exemplar[] Collect(ReadOnlyTagCollection actualTags, bool reset);
+    /// <returns><see cref="ReadOnlyExemplarCollection"/>.</returns>
+    public abstract ReadOnlyExemplarCollection Collect();
+
+    internal virtual void Initialize(AggregatorStore aggregatorStore)
+    {
+        this.ResetOnCollect = aggregatorStore.OutputDelta;
+    }
 }
