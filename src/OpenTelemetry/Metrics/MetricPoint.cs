@@ -97,6 +97,10 @@ public struct MetricPoint
         {
             this.mpComponents = new MetricPointOptionalComponents();
             this.mpComponents.Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize, exponentialHistogramMaxScale);
+            if (isExemplarEnabled && reservoir == null)
+            {
+                reservoir = new SimpleFixedSizeExemplarReservoir(Math.Min(20, exponentialHistogramMaxSize));
+            }
         }
         else
         {
@@ -558,13 +562,13 @@ public struct MetricPoint
 
             case AggregationType.Base2ExponentialHistogram:
                 {
-                    this.UpdateBase2ExponentialHistogram((double)number, tags, true);
+                    this.UpdateBase2ExponentialHistogram((double)number, tags, reportExemplar: true, isSampled);
                     break;
                 }
 
             case AggregationType.Base2ExponentialHistogramWithMinMax:
                 {
-                    this.UpdateBase2ExponentialHistogramWithMinMax((double)number, tags, true);
+                    this.UpdateBase2ExponentialHistogramWithMinMax((double)number, tags, reportExemplar: true, isSampled);
                     break;
                 }
         }
@@ -770,13 +774,13 @@ public struct MetricPoint
 
             case AggregationType.Base2ExponentialHistogram:
                 {
-                    this.UpdateBase2ExponentialHistogram(number, tags, true);
+                    this.UpdateBase2ExponentialHistogram(number, tags, reportExemplar: true, isSampled);
                     break;
                 }
 
             case AggregationType.Base2ExponentialHistogramWithMinMax:
                 {
-                    this.UpdateBase2ExponentialHistogramWithMinMax(number, tags, true);
+                    this.UpdateBase2ExponentialHistogramWithMinMax(number, tags, reportExemplar: true, isSampled);
                     break;
                 }
         }
@@ -1262,6 +1266,7 @@ public struct MetricPoint
                         histogram.Reset();
                     }
 
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect();
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     this.mpComponents.ReleaseLock();
@@ -1292,6 +1297,7 @@ public struct MetricPoint
                         histogram.RunningMax = double.NegativeInfinity;
                     }
 
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect();
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     this.mpComponents.ReleaseLock();
@@ -1372,16 +1378,16 @@ public struct MetricPoint
             this.runningValue.AsLong++;
             histogramBuckets.RunningSum += number;
             histogramBuckets.BucketCounts[i].RunningValue++;
+        }
 
-            if (reportExemplar && isSampled)
-            {
-                Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
+        if (reportExemplar && isSampled)
+        {
+            Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
 
-                // TODO: Need to ensure that the lock is always released.
-                // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                this.mpComponents.ExemplarReservoir!.Offer(
-                    new ExemplarMeasurement<double>(number, tags, i));
-            }
+            // TODO: Need to ensure that the lock is always released.
+            // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+            this.mpComponents.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<double>(number, tags, i));
         }
 
         this.mpComponents.ReleaseLock();
@@ -1403,26 +1409,24 @@ public struct MetricPoint
             histogramBuckets.RunningSum += number;
             histogramBuckets.BucketCounts[i].RunningValue++;
 
-            if (reportExemplar && isSampled)
-            {
-                Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-                // TODO: Need to ensure that the lock is always released.
-                // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                this.mpComponents.ExemplarReservoir!.Offer(
-                    new ExemplarMeasurement<double>(number, tags, i));
-            }
-
             histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
             histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
+        }
+
+        if (reportExemplar && isSampled)
+        {
+            Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
+
+            // TODO: Need to ensure that the lock is always released.
+            // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+            this.mpComponents.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<double>(number, tags, i));
         }
 
         this.mpComponents.ReleaseLock();
     }
 
-#pragma warning disable IDE0060 // Remove unused parameter: Exemplars for exponential histograms will be a follow up PR
-    private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
-#pragma warning restore IDE0060 // Remove unused parameter
+    private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false, bool isSampled = false)
     {
         if (number < 0)
         {
@@ -1442,12 +1446,20 @@ public struct MetricPoint
             histogram.Record(number);
         }
 
+        if (reportExemplar && isSampled)
+        {
+            Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
+
+            // TODO: Need to ensure that the lock is always released.
+            // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+            this.mpComponents.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<double>(number, tags));
+        }
+
         this.mpComponents.ReleaseLock();
     }
 
-#pragma warning disable IDE0060 // Remove unused parameter: Exemplars for exponential histograms will be a follow up PR
-    private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
-#pragma warning restore IDE0060 // Remove unused parameter
+    private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false, bool isSampled = false)
     {
         if (number < 0)
         {
@@ -1468,6 +1480,16 @@ public struct MetricPoint
 
             histogram.RunningMin = Math.Min(histogram.RunningMin, number);
             histogram.RunningMax = Math.Max(histogram.RunningMax, number);
+        }
+
+        if (reportExemplar && isSampled)
+        {
+            Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
+
+            // TODO: Need to ensure that the lock is always released.
+            // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+            this.mpComponents.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<double>(number, tags));
         }
 
         this.mpComponents.ReleaseLock();
