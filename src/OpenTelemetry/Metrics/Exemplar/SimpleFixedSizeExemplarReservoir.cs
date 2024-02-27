@@ -4,8 +4,12 @@
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// The SimpleFixedSizeExemplarReservoir implementation.
+/// SimpleFixedSizeExemplarReservoir implementation.
 /// </summary>
+/// <remarks>
+/// Specification: <see
+/// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#simplefixedsizeexemplarreservoir"/>.
+/// </remarks>
 internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReservoir
 {
     private readonly Random random = new();

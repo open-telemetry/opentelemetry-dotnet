@@ -11,9 +11,13 @@ namespace OpenTelemetry.Metrics;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
-/// Represents an Exemplar data.
+/// Exemplar implementation.
 /// </summary>
-/// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
+/// <remarks>
+/// <para experimental-warning="true"><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</para>
+/// Specification: <see
+/// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar"/>.
+/// </remarks>
 #if NET8_0_OR_GREATER
 [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif

@@ -12,19 +12,20 @@ namespace OpenTelemetry.Metrics;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
-/// An ExemplarFilter which makes those measurements eligible for being an Exemplar,
-/// which are recorded in the context of a sampled parent activity (span).
+/// An <see cref="ExemplarFilter"/> implementation which makes measurements
+/// recorded in the context of a sampled <see cref="Activity"/> (span) eligible
+/// for becoming an <see cref="Exemplar"/>.
 /// </summary>
-/// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+/// <remarks>
+/// <inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/>
+/// Specification: <see
+/// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#tracebased"/>.
+/// </remarks>
 #if NET8_0_OR_GREATER
 [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
 public
 #else
-/// <summary>
-/// An ExemplarFilter which makes those measurements eligible for being an Exemplar,
-/// which are recorded in the context of a sampled parent activity (span).
-/// </summary>
 internal
 #endif
     sealed class TraceBasedExemplarFilter : ExemplarFilter
