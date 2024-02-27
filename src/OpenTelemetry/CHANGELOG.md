@@ -42,13 +42,12 @@
   [IMetricsListener](https://learn.microsoft.com/dotNet/api/microsoft.extensions.diagnostics.metrics.imetricslistener).
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
 
-* **Experimental (pre-release builds only):** `Exemplar` and `ExemplarReservoir`
-  APIs have been updated to match the OpenTelemetry Specification \> Metrics SDK
-  \>
-  [Exemplar](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar)
-  and
-  [ExemplarReservoir](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplarreservoir)
-  definitions.
+* **Experimental (pre-release builds only):** The `Exemplar.FilteredTags`
+  property now returns a `ReadOnlyFilteredTagCollection` instance and the
+  `Exemplar.LongValue` property has been added. The `MetricPoint.GetExemplars`
+  method has been replaced by `MetricPoint.TryGetExemplars` which outputs a
+  `ReadOnlyExemplarCollection` instance. These are **breaking changes** for
+  metrics exporters which support exemplars.
   ([#5386](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5386))
 
 ## 1.7.0
