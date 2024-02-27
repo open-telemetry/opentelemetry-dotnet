@@ -4,6 +4,7 @@
 #nullable enable
 
 using System.Net;
+using System.Net.Http.Headers;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -267,9 +268,9 @@ public class OtlpRetryTests
         public static IEnumerable<object[]> GetHttpTestCases()
         {
             yield return new[] { new HttpRetryTestCase("NetworkError", [new(statusCode: null)]) };
-            yield return new[] { new HttpRetryTestCase("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout)]) };
+            yield return new[] { new HttpRetryTestCase("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]) };
 #if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
-            yield return new[] { new HttpRetryTestCase("ServiceUnavailable", [new(statusCode: HttpStatusCode.TooManyRequests)]) };
+            yield return new[] { new HttpRetryTestCase("ServiceUnavailable", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1))]) };
 #endif
 
             yield return new[]
@@ -333,7 +334,7 @@ public class OtlpRetryTests
                 if (throttleDelay != null)
                 {
                     this.ResponseMessage = new HttpResponseMessage();
-                    this.ResponseMessage.Headers.Add("Retry-After", throttleDelay.ToString());
+                    this.ResponseMessage.Headers.RetryAfter = new RetryConditionHeaderValue(throttleDelay.Value);
                     if (statusCode != null)
                     {
                         this.ResponseMessage.StatusCode = (HttpStatusCode)statusCode;
