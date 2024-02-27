@@ -13,7 +13,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// A read-only collection of <see cref="Exemplar" />s.
 /// </summary>
-/// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+/// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
 #if NET8_0_OR_GREATER
 [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif

@@ -10,19 +10,19 @@ namespace OpenTelemetry.Metrics;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
-/// An ExemplarFilter which makes no measurements eligible for being an Exemplar.
-/// Using this ExemplarFilter is as good as disabling Exemplar feature.
+/// An <see cref="ExemplarFilter"/> implementation which makes no measurements
+/// eligible for becoming an <see cref="Exemplar"/>.
 /// </summary>
-/// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+/// <remarks>
+/// <inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/>
+/// Specification: <see
+/// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#alwaysoff"/>.
+/// </remarks>
 #if NET8_0_OR_GREATER
 [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
 public
 #else
-/// <summary>
-/// An ExemplarFilter which makes no measurements eligible for being an Exemplar.
-/// Using this ExemplarFilter is as good as disabling Exemplar feature.
-/// </summary>
 internal
 #endif
 sealed class AlwaysOffExemplarFilter : ExemplarFilter

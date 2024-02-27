@@ -4,8 +4,12 @@
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// The base class for defining Exemplar Reservoir.
+/// ExemplarReservoir base implementation and contract.
 /// </summary>
+/// <remarks>
+/// Specification: <see
+/// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplarreservoir"/>.
+/// </remarks>
 internal abstract class ExemplarReservoir
 {
     /// <summary>

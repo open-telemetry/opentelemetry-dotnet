@@ -360,7 +360,7 @@ public struct MetricPoint
     /// <summary>
     /// Gets the exemplars associated with the metric point.
     /// </summary>
-    /// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+    /// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
     /// <param name="exemplars"><see cref="ReadOnlyExemplarCollection"/>.</param>
     /// <returns><see langword="true" /> if exemplars exist; <see langword="false" /> otherwise.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
