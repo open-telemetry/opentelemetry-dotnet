@@ -72,7 +72,7 @@ public struct MetricPoint
         }
         catch
         {
-            // todo: Log that the factory on view threw an exception
+            // TODO : Log that the factory on view threw an exception, once view exposes that capability
             reservoir = null;
         }
 
@@ -81,9 +81,9 @@ public struct MetricPoint
         {
             this.mpComponents = new MetricPointOptionalComponents();
             this.mpComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
-            if (isExemplarEnabled)
+            if (isExemplarEnabled && reservoir == null)
             {
-                reservoir ??= new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds!.Length);
+                reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds!.Length);
             }
         }
         else if (this.aggType == AggregationType.Histogram ||
