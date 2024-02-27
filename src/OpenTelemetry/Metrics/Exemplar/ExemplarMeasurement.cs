@@ -53,7 +53,7 @@ internal
     /// </summary>
     /// <remarks>
     /// Note: <see cref="Tags"/> represents the full set of tags supplied at
-    /// measurement regardless of any  filtering configured by a view (<see
+    /// measurement regardless of any filtering configured by a view (<see
     /// cref="MetricStreamConfiguration.TagKeys"/>).
     /// </remarks>
     public ReadOnlySpan<KeyValuePair<string, object?>> Tags { get; }
