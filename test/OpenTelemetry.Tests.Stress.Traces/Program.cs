@@ -2,31 +2,45 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests.Stress;
 
-public partial class Program
+public static class Program
 {
-    private static readonly ActivitySource ActivitySource = new ActivitySource("OpenTelemetry.Tests.Stress");
-
-    public static void Main()
+    public static int Main(string[] args)
     {
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource(ActivitySource.Name)
-            .Build();
-
-        Stress(prometheusPort: 9464);
+        return StressTestFactory.RunSynchronously<TracesStressTest>(args);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static void Run()
+    private sealed class TracesStressTest : StressTest<StressTestOptions>
     {
-        using (var activity = ActivitySource.StartActivity("test"))
+        private static readonly ActivitySource ActivitySource = new("OpenTelemetry.Tests.Stress");
+        private readonly TracerProvider tracerProvider;
+
+        public TracesStressTest(StressTestOptions options)
+            : base(options)
         {
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySource.Name)
+                .Build();
+        }
+
+        protected override void RunWorkItemInParallel()
+        {
+            using var activity = ActivitySource.StartActivity("test");
+
             activity?.SetTag("foo", "value");
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            if (isDisposing)
+            {
+                this.tracerProvider.Dispose();
+            }
+
+            base.Dispose(isDisposing);
         }
     }
 }
