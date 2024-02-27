@@ -17,6 +17,7 @@ internal sealed class AggregatorStore
     internal readonly int CardinalityLimit;
     internal readonly bool EmitOverflowAttribute;
     internal readonly ConcurrentDictionary<Tags, LookupData>? TagsToMetricPointIndexDictionaryDelta;
+    internal readonly Func<ExemplarReservoir?>? ExemplarReservoirFactory;
     internal long DroppedMeasurements = 0;
 
     private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute by setting env variable OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE = true. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
@@ -59,7 +60,8 @@ internal sealed class AggregatorStore
         int cardinalityLimit,
         bool emitOverflowAttribute,
         bool shouldReclaimUnusedMetricPoints,
-        ExemplarFilter? exemplarFilter = null)
+        ExemplarFilter? exemplarFilter = null,
+        Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
     {
         this.name = metricStreamIdentity.InstrumentName;
         this.CardinalityLimit = cardinalityLimit;
@@ -74,6 +76,7 @@ internal sealed class AggregatorStore
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;
         this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
+        this.ExemplarReservoirFactory = exemplarReservoirFactory;
         if (metricStreamIdentity.TagKeys == null)
         {
             this.updateLongCallback = this.UpdateLong;
