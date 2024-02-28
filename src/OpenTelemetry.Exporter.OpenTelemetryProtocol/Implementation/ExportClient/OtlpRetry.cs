@@ -142,7 +142,7 @@ internal static class OtlpRetry
             return null;
         }
 
-        var statusDetails = trailers?.Get(GrpcStatusDetailsHeader);
+        var statusDetails = trailers!.Get(GrpcStatusDetailsHeader);
         if (statusDetails != null && statusDetails.IsBinary)
         {
             var status = Status.Parser.ParseFrom(statusDetails.ValueBytes);
