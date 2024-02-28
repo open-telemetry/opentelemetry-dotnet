@@ -133,6 +133,10 @@ public class MetricStreamConfiguration
         }
     }
 
+    // TODO: Expose this to be complaint with the spec:
+    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#stream-configuration
+    internal Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
+
     internal string[]? CopiedTagKeys { get; private set; }
 
     internal int? ViewId { get; set; }

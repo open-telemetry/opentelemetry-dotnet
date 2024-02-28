@@ -63,13 +63,25 @@ public struct MetricPoint
         this.ReferenceCount = 1;
         this.LookupData = lookupData;
 
-        ExemplarReservoir? reservoir = null;
+        var isExemplarEnabled = aggregatorStore!.IsExemplarEnabled();
+
+        ExemplarReservoir? reservoir;
+        try
+        {
+            reservoir = aggregatorStore.ExemplarReservoirFactory?.Invoke();
+        }
+        catch
+        {
+            // TODO : Log that the factory on view threw an exception, once view exposes that capability
+            reservoir = null;
+        }
+
         if (this.aggType == AggregationType.HistogramWithBuckets ||
             this.aggType == AggregationType.HistogramWithMinMaxBuckets)
         {
             this.mpComponents = new MetricPointOptionalComponents();
             this.mpComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
-            if (aggregatorStore!.IsExemplarEnabled())
+            if (isExemplarEnabled && reservoir == null)
             {
                 reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds!.Length);
             }
@@ -91,7 +103,7 @@ public struct MetricPoint
             this.mpComponents = null;
         }
 
-        if (aggregatorStore!.IsExemplarEnabled() && reservoir == null)
+        if (isExemplarEnabled && reservoir == null)
         {
             reservoir = new SimpleFixedSizeExemplarReservoir(DefaultSimpleReservoirPoolSize);
         }
