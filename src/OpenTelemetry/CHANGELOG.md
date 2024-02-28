@@ -42,6 +42,14 @@
   [IMetricsListener](https://learn.microsoft.com/dotNet/api/microsoft.extensions.diagnostics.metrics.imetricslistener).
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
 
+* **Experimental (pre-release builds only):** The `Exemplar.FilteredTags`
+  property now returns a `ReadOnlyFilteredTagCollection` instance and the
+  `Exemplar.LongValue` property has been added. The `MetricPoint.GetExemplars`
+  method has been replaced by `MetricPoint.TryGetExemplars` which outputs a
+  `ReadOnlyExemplarCollection` instance. These are **breaking changes** for
+  metrics exporters which support exemplars.
+  ([#5386](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5386))
+
 ## 1.7.0
 
 Released 2023-Dec-08
