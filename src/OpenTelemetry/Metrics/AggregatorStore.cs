@@ -994,7 +994,7 @@ internal sealed class AggregatorStore
             // TODO: can special case built-in filters to be bit faster.
             if (this.IsExemplarEnabled() && this.exemplarFilter.ShouldSample(value, tags))
             {
-                this.metricPoints[index].UpdateWithExemplar(value, tags: tags);
+                this.metricPoints[index].UpdateWithExemplar(value, tags);
             }
             else
             {
@@ -1080,7 +1080,7 @@ internal sealed class AggregatorStore
             // TODO: can special case built-in filters to be bit faster.
             if (this.IsExemplarEnabled() && this.exemplarFilter.ShouldSample(value, tags))
             {
-                this.metricPoints[index].UpdateWithExemplar(value, tags: tags);
+                this.metricPoints[index].UpdateWithExemplar(value, tags);
             }
             else
             {
