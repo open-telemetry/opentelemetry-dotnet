@@ -50,6 +50,11 @@
   metrics exporters which support exemplars.
   ([#5386](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5386))
 
+* **Experimental (pre-release builds only):** Added support for exemplars when
+  using Base2 Exponential Bucket Histogram Aggregation configured via the View
+  API.
+  ([#5396](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5396))
+
 ## 1.7.0
 
 Released 2023-Dec-08
