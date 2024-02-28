@@ -28,6 +28,22 @@ public abstract class BaseProcessor<T> : IDisposable
     public BaseProvider? ParentProvider { get; private set; }
 
     /// <summary>
+    /// Gets the weight of the processor. Default value: 0.
+    /// </summary>
+    /// <remarks>
+    /// Note: Weight is used to order processors when building a provider
+    /// pipeline. Lower weighted processors come before higher weighted
+    /// processors. Changing the weight after a pipeline has been constructed
+    /// has no effect.
+    /// </remarks>
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    public
+#else
+    internal
+#endif
+        int Weight { get; set; }
+
+    /// <summary>
     /// Called synchronously when a telemetry object is started.
     /// </summary>
     /// <param name="data">

@@ -34,7 +34,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
         return AddOtlpExporter(builder, name: null, configure: otlpBuilder =>
         {
-            otlpBuilder.ConfigureDefaultOtlpExporterOptions(o =>
+            otlpBuilder.ConfigureDefaultExporterOptions(o =>
             {
                 o.Protocol = protocol;
                 if (endpoint != null)
@@ -67,7 +67,8 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
         this IOpenTelemetryBuilder builder,
         string? name = null,
         IConfiguration? configuration = null,
-        Action<OtlpExporterBuilder>? configure = null)
+        Action<OtlpExporterBuilder>? configure = null,
+        bool addToEndOfPipeline = true)
     {
         Guard.ThrowIfNull(builder);
 
@@ -80,12 +81,12 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
         configure?.Invoke(otlpBuilder);
 
-        AddOtlpExporterInternal(builder, name);
+        AddOtlpExporterInternal(builder, name, addToEndOfPipeline);
 
         return builder;
     }
 
-    private static void AddOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name)
+    private static void AddOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name, bool addToEndOfPipeline)
     {
         builder.Services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
         builder.Services.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
@@ -109,13 +110,16 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                     return;
                 }
 
-                logging.AddProcessor(
-                    OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
-                        sp,
-                        builderOptions.LoggingOptions.ApplyDefaults(builderOptions.DefaultOptions),
-                        builderOptions.LogRecordExportProcessorOptions ?? throw new NotSupportedException(),
-                        builderOptions.SdkLimitOptions,
-                        builderOptions.ExperimentalOptions));
+                var processor = OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
+                    sp,
+                    builderOptions.LoggingOptions.ApplyDefaults(builderOptions.DefaultOptions),
+                    builderOptions.LogRecordExportProcessorOptions ?? throw new NotSupportedException(),
+                    builderOptions.SdkLimitOptions,
+                    builderOptions.ExperimentalOptions);
+
+                processor.Weight = addToEndOfPipeline ? int.MaxValue : 0;
+
+                logging.AddProcessor(processor);
             });
 
         builder.Services.ConfigureOpenTelemetryMeterProvider(
@@ -147,13 +151,16 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
                 var processorOptions = builderOptions.ActivityExportProcessorOptions ?? throw new NotSupportedException();
 
-                tracing.AddProcessor(
-                    OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
-                        builderOptions.TracingOptions.ApplyDefaults(builderOptions.DefaultOptions),
-                        builderOptions.SdkLimitOptions,
-                        processorOptions.ExportProcessorType,
-                        processorOptions.BatchExportProcessorOptions,
-                        sp));
+                var processor = OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
+                    builderOptions.TracingOptions.ApplyDefaults(builderOptions.DefaultOptions),
+                    builderOptions.SdkLimitOptions,
+                    processorOptions.ExportProcessorType,
+                    processorOptions.BatchExportProcessorOptions,
+                    sp);
+
+                processor.Weight = addToEndOfPipeline ? int.MaxValue : 0;
+
+                tracing.AddProcessor(processor);
             });
 
         static OtlpExporterBuilderOptions GetBuilderOptions(IServiceProvider sp, string name)

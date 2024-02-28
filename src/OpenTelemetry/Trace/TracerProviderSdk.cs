@@ -53,8 +53,6 @@ internal sealed class TracerProviderSdk : TracerProvider
         StringBuilder processorsAdded = new StringBuilder();
         StringBuilder instrumentationFactoriesAdded = new StringBuilder();
 
-        state.AddExceptionProcessorIfEnabled();
-
         var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
         resourceBuilder.ServiceProvider = serviceProvider;
         this.Resource = resourceBuilder.Build();
@@ -74,7 +72,11 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
         }
 
-        foreach (var processor in state.Processors)
+        var processors = (IEnumerable<BaseProcessor<Activity>>)state.Processors.OrderBy(p => p.Weight);
+
+        state.AddExceptionProcessorIfEnabled(ref processors);
+
+        foreach (var processor in processors)
         {
             this.AddProcessor(processor);
             processorsAdded.Append(processor.GetType());
