@@ -445,23 +445,7 @@ public struct MetricPoint
                 }
         }
 
-        // There is a race with Snapshot:
-        // Update() updates the value
-        // Snapshot snapshots the value
-        // Snapshot sets status to NoCollectPending
-        // Update sets status to CollectPending -- this is not right as the Snapshot
-        // already included the updated value.
-        // In the absence of any new Update call until next Snapshot,
-        // this results in exporting an Update even though
-        // it had no update.
-        // TODO: For Delta, this can be mitigated
-        // by ignoring Zero points
-        this.MetricPointStatus = MetricPointStatus.CollectPending;
-
-        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
-        {
-            Interlocked.Decrement(ref this.ReferenceCount);
-        }
+        this.CompleteUpdate();
     }
 
     internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool isSampled)
@@ -573,23 +557,7 @@ public struct MetricPoint
                 }
         }
 
-        // There is a race with Snapshot:
-        // Update() updates the value
-        // Snapshot snapshots the value
-        // Snapshot sets status to NoCollectPending
-        // Update sets status to CollectPending -- this is not right as the Snapshot
-        // already included the updated value.
-        // In the absence of any new Update call until next Snapshot,
-        // this results in exporting an Update even though
-        // it had no update.
-        // TODO: For Delta, this can be mitigated
-        // by ignoring Zero points
-        this.MetricPointStatus = MetricPointStatus.CollectPending;
-
-        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
-        {
-            Interlocked.Decrement(ref this.ReferenceCount);
-        }
+        this.CompleteUpdate();
     }
 
     internal void Update(double number)
@@ -651,23 +619,7 @@ public struct MetricPoint
                 }
         }
 
-        // There is a race with Snapshot:
-        // Update() updates the value
-        // Snapshot snapshots the value
-        // Snapshot sets status to NoCollectPending
-        // Update sets status to CollectPending -- this is not right as the Snapshot
-        // already included the updated value.
-        // In the absence of any new Update call until next Snapshot,
-        // this results in exporting an Update even though
-        // it had no update.
-        // TODO: For Delta, this can be mitigated
-        // by ignoring Zero points
-        this.MetricPointStatus = MetricPointStatus.CollectPending;
-
-        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
-        {
-            Interlocked.Decrement(ref this.ReferenceCount);
-        }
+        this.CompleteUpdate();
     }
 
     internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool isSampled)
@@ -785,23 +737,7 @@ public struct MetricPoint
                 }
         }
 
-        // There is a race with Snapshot:
-        // Update() updates the value
-        // Snapshot snapshots the value
-        // Snapshot sets status to NoCollectPending
-        // Update sets status to CollectPending -- this is not right as the Snapshot
-        // already included the updated value.
-        // In the absence of any new Update call until next Snapshot,
-        // this results in exporting an Update even though
-        // it had no update.
-        // TODO: For Delta, this can be mitigated
-        // by ignoring Zero points
-        this.MetricPointStatus = MetricPointStatus.CollectPending;
-
-        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
-        {
-            Interlocked.Decrement(ref this.ReferenceCount);
-        }
+        this.CompleteUpdate();
     }
 
     internal void TakeSnapshot(bool outputDelta)
@@ -1493,6 +1429,28 @@ public struct MetricPoint
         }
 
         this.mpComponents.ReleaseLock();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void CompleteUpdate()
+    {
+        // There is a race with Snapshot:
+        // Update() updates the value
+        // Snapshot snapshots the value
+        // Snapshot sets status to NoCollectPending
+        // Update sets status to CollectPending -- this is not right as the Snapshot
+        // already included the updated value.
+        // In the absence of any new Update call until next Snapshot,
+        // this results in exporting an Update even though
+        // it had no update.
+        // TODO: For Delta, this can be mitigated
+        // by ignoring Zero points
+        this.MetricPointStatus = MetricPointStatus.CollectPending;
+
+        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
+        {
+            Interlocked.Decrement(ref this.ReferenceCount);
+        }
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
