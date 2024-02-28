@@ -949,10 +949,9 @@ internal sealed class AggregatorStore
             }
 
             // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
+            if (this.IsExemplarEnabled() && this.exemplarFilter.ShouldSample(value, tags))
             {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
+                this.metricPoints[index].UpdateWithExemplar(value, tags: default);
             }
             else
             {
@@ -993,10 +992,9 @@ internal sealed class AggregatorStore
             }
 
             // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
+            if (this.IsExemplarEnabled() && this.exemplarFilter.ShouldSample(value, tags))
             {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
+                this.metricPoints[index].UpdateWithExemplar(value, tags: tags);
             }
             else
             {
@@ -1037,10 +1035,9 @@ internal sealed class AggregatorStore
             }
 
             // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
+            if (this.IsExemplarEnabled() && this.exemplarFilter.ShouldSample(value, tags))
             {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
+                this.metricPoints[index].UpdateWithExemplar(value, tags: default);
             }
             else
             {
@@ -1081,10 +1078,9 @@ internal sealed class AggregatorStore
             }
 
             // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
+            if (this.IsExemplarEnabled() && this.exemplarFilter.ShouldSample(value, tags))
             {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
+                this.metricPoints[index].UpdateWithExemplar(value, tags: tags);
             }
             else
             {
