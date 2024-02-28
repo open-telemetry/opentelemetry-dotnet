@@ -45,7 +45,7 @@ public sealed class OtlpExporterBuilder
         return this;
     }
 
-    public OtlpExporterBuilder ConfigureDefaultOtlpExporterOptions(
+    public OtlpExporterBuilder ConfigureDefaultExporterOptions(
         Action<OtlpExporterOptionsBase> configure)
     {
         Guard.ThrowIfNull(configure);
@@ -56,7 +56,7 @@ public sealed class OtlpExporterBuilder
         return this;
     }
 
-    public OtlpExporterBuilder ConfigureLoggingOtlpExporterOptions(
+    public OtlpExporterBuilder ConfigureLoggingExporterOptions(
         Action<OtlpExporterOptionsBase> configure)
     {
         Guard.ThrowIfNull(configure);
@@ -76,7 +76,7 @@ public sealed class OtlpExporterBuilder
         return this;
     }
 
-    public OtlpExporterBuilder ConfigureMetricsOtlpExporterOptions(
+    public OtlpExporterBuilder ConfigureMetricsExporterOptions(
         Action<OtlpExporterOptionsBase> configure)
     {
         Guard.ThrowIfNull(configure);
@@ -96,7 +96,7 @@ public sealed class OtlpExporterBuilder
         return this;
     }
 
-    public OtlpExporterBuilder ConfigureTracingOtlpExporterOptions(
+    public OtlpExporterBuilder ConfigureTracingExporterOptions(
         Action<OtlpExporterOptionsBase> configure)
     {
         Guard.ThrowIfNull(configure);
@@ -122,23 +122,26 @@ public sealed class OtlpExporterBuilder
         Debug.Assert(!string.IsNullOrEmpty(name), "name was null or empty");
         Debug.Assert(configuration != null, "configuration was null");
 
-var json = """
-{
-    "Signals": "Logs, Metrics",
-    "DefaultOptions": {
-    },
-    "LoggingOptions": {
-        "ExportProcessorType": Batch,
-        "BatchExportProcessorOptions": {
-            "ScheduledDelayMilliseconds": 1000
-        }
-    },
-    "MetricsOptions": {
-    },
-    "TracingOptions": {
-    }
-}
-""";
+        /* Config JSON structure is expected to be something like this:
+            {
+                "Signals": "Logs, Metrics",
+                "DefaultOptions": {
+                    "Endpoint": "http://default_endpoint/"
+                },
+                "LoggingOptions": {
+                    "Endpoint": "http://logs_endpoint/logs/"
+                    "ExportProcessorType": Batch,
+                    "BatchExportProcessorOptions": {
+                        "ScheduledDelayMilliseconds": 1000
+                    }
+                },
+                "MetricsOptions": {
+                    "Endpoint": "http://metrics_endpoint/metrics/"
+                },
+                "TracingOptions": {
+                }
+            }
+        */
 
         services.Configure<OtlpExporterBuilderOptions>(name, configuration);
 
