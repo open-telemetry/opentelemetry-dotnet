@@ -448,7 +448,7 @@ public struct MetricPoint
         this.CompleteUpdate();
     }
 
-    internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool isSampled)
+    internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         Debug.Assert(this.mpComponents != null, "this.mpComponents was null");
 
@@ -463,7 +463,7 @@ public struct MetricPoint
                         this.runningValue.AsLong += number;
                     }
 
-                    this.OfferExemplarIfSampled(number, tags, isSampled);
+                    this.OfferExemplar(number, tags);
 
                     this.mpComponents.ReleaseLock();
 
@@ -476,7 +476,7 @@ public struct MetricPoint
 
                     this.runningValue.AsLong = number;
 
-                    this.OfferExemplarIfSampled(number, tags, isSampled);
+                    this.OfferExemplar(number, tags);
 
                     this.mpComponents.ReleaseLock();
 
@@ -489,7 +489,7 @@ public struct MetricPoint
 
                     this.runningValue.AsLong = number;
 
-                    this.OfferExemplarIfSampled(number, tags, isSampled);
+                    this.OfferExemplar(number, tags);
 
                     this.mpComponents.ReleaseLock();
 
@@ -498,37 +498,37 @@ public struct MetricPoint
 
             case AggregationType.Histogram:
                 {
-                    this.UpdateHistogram((double)number, tags, isSampled);
+                    this.UpdateHistogram((double)number, tags);
                     break;
                 }
 
             case AggregationType.HistogramWithMinMax:
                 {
-                    this.UpdateHistogramWithMinMax((double)number, tags, isSampled);
+                    this.UpdateHistogramWithMinMax((double)number, tags);
                     break;
                 }
 
             case AggregationType.HistogramWithBuckets:
                 {
-                    this.UpdateHistogramWithBuckets((double)number, tags, isSampled);
+                    this.UpdateHistogramWithBuckets((double)number, tags);
                     break;
                 }
 
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
-                    this.UpdateHistogramWithBucketsAndMinMax((double)number, tags, isSampled);
+                    this.UpdateHistogramWithBucketsAndMinMax((double)number, tags);
                     break;
                 }
 
             case AggregationType.Base2ExponentialHistogram:
                 {
-                    this.UpdateBase2ExponentialHistogram((double)number, tags, isSampled);
+                    this.UpdateBase2ExponentialHistogram((double)number, tags);
                     break;
                 }
 
             case AggregationType.Base2ExponentialHistogramWithMinMax:
                 {
-                    this.UpdateBase2ExponentialHistogramWithMinMax((double)number, tags, isSampled);
+                    this.UpdateBase2ExponentialHistogramWithMinMax((double)number, tags);
                     break;
                 }
         }
@@ -598,7 +598,7 @@ public struct MetricPoint
         this.CompleteUpdate();
     }
 
-    internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool isSampled)
+    internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         Debug.Assert(this.mpComponents != null, "this.mpComponents was null");
 
@@ -613,7 +613,7 @@ public struct MetricPoint
                         this.runningValue.AsDouble += number;
                     }
 
-                    this.OfferExemplarIfSampled(number, tags, isSampled);
+                    this.OfferExemplar(number, tags);
 
                     this.mpComponents.ReleaseLock();
 
@@ -629,7 +629,7 @@ public struct MetricPoint
                         this.runningValue.AsDouble = number;
                     }
 
-                    this.OfferExemplarIfSampled(number, tags, isSampled);
+                    this.OfferExemplar(number, tags);
 
                     this.mpComponents.ReleaseLock();
 
@@ -645,7 +645,7 @@ public struct MetricPoint
                         this.runningValue.AsDouble = number;
                     }
 
-                    this.OfferExemplarIfSampled(number, tags, isSampled);
+                    this.OfferExemplar(number, tags);
 
                     this.mpComponents.ReleaseLock();
 
@@ -654,37 +654,37 @@ public struct MetricPoint
 
             case AggregationType.Histogram:
                 {
-                    this.UpdateHistogram(number, tags, isSampled);
+                    this.UpdateHistogram(number, tags);
                     break;
                 }
 
             case AggregationType.HistogramWithMinMax:
                 {
-                    this.UpdateHistogramWithMinMax(number, tags, isSampled);
+                    this.UpdateHistogramWithMinMax(number, tags);
                     break;
                 }
 
             case AggregationType.HistogramWithBuckets:
                 {
-                    this.UpdateHistogramWithBuckets(number, tags, isSampled);
+                    this.UpdateHistogramWithBuckets(number, tags);
                     break;
                 }
 
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
-                    this.UpdateHistogramWithBucketsAndMinMax(number, tags, isSampled);
+                    this.UpdateHistogramWithBucketsAndMinMax(number, tags);
                     break;
                 }
 
             case AggregationType.Base2ExponentialHistogram:
                 {
-                    this.UpdateBase2ExponentialHistogram(number, tags, isSampled);
+                    this.UpdateBase2ExponentialHistogram(number, tags);
                     break;
                 }
 
             case AggregationType.Base2ExponentialHistogramWithMinMax:
                 {
-                    this.UpdateBase2ExponentialHistogramWithMinMax(number, tags, isSampled);
+                    this.UpdateBase2ExponentialHistogramWithMinMax(number, tags);
                     break;
                 }
         }
@@ -1195,7 +1195,7 @@ public struct MetricPoint
         }
     }
 
-    private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool isSampled = false)
+    private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default)
     {
         Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
@@ -1209,12 +1209,12 @@ public struct MetricPoint
             histogramBuckets.RunningSum += number;
         }
 
-        this.OfferExemplarIfSampled(number, tags, isSampled);
+        this.OfferExemplar(number, tags);
 
         this.mpComponents.ReleaseLock();
     }
 
-    private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool isSampled = false)
+    private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default)
     {
         Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
@@ -1230,12 +1230,12 @@ public struct MetricPoint
             histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
         }
 
-        this.OfferExemplarIfSampled(number, tags, isSampled);
+        this.OfferExemplar(number, tags);
 
         this.mpComponents.ReleaseLock();
     }
 
-    private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool isSampled = false)
+    private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default)
     {
         Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
@@ -1252,12 +1252,12 @@ public struct MetricPoint
             histogramBuckets.BucketCounts[bucketIndex].RunningValue++;
         }
 
-        this.OfferExplicitBucketHistogramExemplarIfSampled(number, tags, bucketIndex, isSampled);
+        this.OfferExplicitBucketHistogramExemplar(number, tags, bucketIndex);
 
         this.mpComponents.ReleaseLock();
     }
 
-    private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool isSampled = false)
+    private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default)
     {
         Debug.Assert(this.mpComponents?.HistogramBuckets != null, "histogramBuckets was null");
 
@@ -1277,12 +1277,12 @@ public struct MetricPoint
             histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
         }
 
-        this.OfferExplicitBucketHistogramExemplarIfSampled(number, tags, bucketIndex, isSampled);
+        this.OfferExplicitBucketHistogramExemplar(number, tags, bucketIndex);
 
         this.mpComponents.ReleaseLock();
     }
 
-    private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool isSampled = false)
+    private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default)
     {
         if (number < 0)
         {
@@ -1302,12 +1302,12 @@ public struct MetricPoint
             histogram.Record(number);
         }
 
-        this.OfferExemplarIfSampled(number, tags, isSampled);
+        this.OfferExemplar(number, tags);
 
         this.mpComponents.ReleaseLock();
     }
 
-    private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool isSampled = false)
+    private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default)
     {
         if (number < 0)
         {
@@ -1330,56 +1330,49 @@ public struct MetricPoint
             histogram.RunningMax = Math.Max(histogram.RunningMax, number);
         }
 
-        this.OfferExemplarIfSampled(number, tags, isSampled);
+        this.OfferExemplar(number, tags);
 
         this.mpComponents.ReleaseLock();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly void OfferExemplarIfSampled<T>(T number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool isSampled)
+    private readonly void OfferExemplar<T>(T number, ReadOnlySpan<KeyValuePair<string, object?>> tags)
         where T : struct
     {
-        if (isSampled)
-        {
-            Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
+        Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
 
-            // TODO: Need to ensure that the lock is always released.
-            // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-            if (typeof(T) == typeof(long))
-            {
-                this.mpComponents!.ExemplarReservoir!.Offer(
-                    new ExemplarMeasurement<long>((long)(object)number, tags));
-            }
-            else if (typeof(T) == typeof(double))
-            {
-                this.mpComponents!.ExemplarReservoir!.Offer(
-                    new ExemplarMeasurement<double>((double)(object)number, tags));
-            }
-            else
-            {
-                Debug.Fail("Unexpected type");
-                this.mpComponents!.ExemplarReservoir!.Offer(
-                    new ExemplarMeasurement<double>(Convert.ToDouble(number), tags));
-            }
+        // TODO: Need to ensure that the lock is always released.
+        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+        if (typeof(T) == typeof(long))
+        {
+            this.mpComponents!.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<long>((long)(object)number, tags));
+        }
+        else if (typeof(T) == typeof(double))
+        {
+            this.mpComponents!.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<double>((double)(object)number, tags));
+        }
+        else
+        {
+            Debug.Fail("Unexpected type");
+            this.mpComponents!.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<double>(Convert.ToDouble(number), tags));
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly void OfferExplicitBucketHistogramExemplarIfSampled(
+    private readonly void OfferExplicitBucketHistogramExemplar(
         double number,
         ReadOnlySpan<KeyValuePair<string, object?>> tags,
-        int bucketIndex,
-        bool isSampled)
+        int bucketIndex)
     {
-        if (isSampled)
-        {
-            Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
+        Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
 
-            // TODO: Need to ensure that the lock is always released.
-            // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-            this.mpComponents!.ExemplarReservoir!.Offer(
-                new ExemplarMeasurement<double>(number, tags, bucketIndex));
-        }
+        // TODO: Need to ensure that the lock is always released.
+        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+        this.mpComponents!.ExemplarReservoir!.Offer(
+            new ExemplarMeasurement<double>(number, tags, bucketIndex));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
