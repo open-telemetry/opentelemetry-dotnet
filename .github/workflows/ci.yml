@@ -1,6 +1,11 @@
 name: Build
 
 on:
+  workflow_dispatch:
+  # The push trigger would run the CI workflow when any changes get merged to main branch.
+  # The build badge on the main README uses the CI results on the main branch to report the build status.
+  push:
+    branches: [ 'main*' ]
   pull_request:
     branches: [ 'main*' ]
 
@@ -13,6 +18,7 @@ jobs:
     outputs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
+    - uses: actions/checkout@v4
     - uses: AurorNZ/paths-filter@v4
       id: changes
       with:

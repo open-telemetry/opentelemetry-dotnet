@@ -30,6 +30,11 @@
   as it is mandated by the specification.
   ([#5316](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5268))
 
+* **Experimental (pre-release builds only):** Add support in
+  `OtlpMetricExporter` for emitting exemplars supplied on Counters, Gauges, and
+  ExponentialHistograms.
+  ([#5397](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5397))
+
 ## 1.7.0
 
 Released 2023-Dec-08
