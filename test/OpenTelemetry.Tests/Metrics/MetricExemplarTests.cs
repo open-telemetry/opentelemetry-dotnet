@@ -154,18 +154,6 @@ public class MetricExemplarTests : MetricTestsBase
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(new AlwaysOnExemplarFilter())
-            .AddView(i =>
-            {
-                if (i.Name.StartsWith("testGauge"))
-                {
-                    return new MetricStreamConfiguration
-                    {
-                        ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
-                    };
-                }
-
-                return null;
-            })
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = temporality;
