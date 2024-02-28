@@ -11,7 +11,7 @@ internal sealed class OtlpGrpcMetricsExportClient : BaseOtlpGrpcExportClient<Otl
 {
     private readonly OtlpCollector.MetricsService.MetricsServiceClient metricsClient;
 
-    public OtlpGrpcMetricsExportClient(OtlpExporterOptions options, OtlpCollector.MetricsService.MetricsServiceClient metricsServiceClient = null)
+    public OtlpGrpcMetricsExportClient(OtlpExporterOptionsBase options, OtlpCollector.MetricsService.MetricsServiceClient metricsServiceClient = null)
         : base(options)
     {
         if (metricsServiceClient != null)

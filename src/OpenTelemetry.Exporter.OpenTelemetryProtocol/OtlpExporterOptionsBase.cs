@@ -4,6 +4,9 @@
 #nullable enable
 
 using System.Diagnostics;
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;

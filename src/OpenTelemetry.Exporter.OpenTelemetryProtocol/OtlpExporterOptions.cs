@@ -5,9 +5,6 @@
 
 using System.Diagnostics;
 using System.Reflection;
-#if NETFRAMEWORK
-using System.Net.Http;
-#endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

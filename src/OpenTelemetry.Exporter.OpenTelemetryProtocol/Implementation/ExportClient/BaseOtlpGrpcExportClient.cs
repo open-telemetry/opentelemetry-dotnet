@@ -15,7 +15,7 @@ internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequ
 {
     protected static readonly ExportClientGrpcResponse SuccessExportResponse = new ExportClientGrpcResponse(success: true, deadlineUtc: null, exception: null);
 
-    protected BaseOtlpGrpcExportClient(OtlpExporterOptions options)
+    protected BaseOtlpGrpcExportClient(OtlpExporterOptionsBase options)
     {
         Guard.ThrowIfNull(options);
         Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);

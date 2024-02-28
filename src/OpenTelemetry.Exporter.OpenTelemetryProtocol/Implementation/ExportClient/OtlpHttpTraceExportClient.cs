@@ -18,7 +18,7 @@ internal sealed class OtlpHttpTraceExportClient : BaseOtlpHttpExportClient<OtlpC
     internal const string MediaContentType = "application/x-protobuf";
     private const string TracesExportPath = "v1/traces";
 
-    public OtlpHttpTraceExportClient(OtlpExporterOptions options, HttpClient httpClient)
+    public OtlpHttpTraceExportClient(OtlpExporterOptionsBase options, HttpClient httpClient)
         : base(options, httpClient, TracesExportPath)
     {
     }

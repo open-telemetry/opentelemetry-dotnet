@@ -5,7 +5,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
 internal static class ExporterClientValidation
 {
-    internal static void EnsureUnencryptedSupportIsEnabled(OtlpExporterOptions options)
+    internal static void EnsureUnencryptedSupportIsEnabled(OtlpExporterOptionsBase options)
     {
         var version = Environment.Version;
 
