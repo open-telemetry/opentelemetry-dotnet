@@ -1,8 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Reflection;
+using Google.Protobuf;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -18,6 +20,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
 {
+    private static readonly KeyValuePair<string, object>[] KeyValues = new KeyValuePair<string, object>[]
+    {
+        new KeyValuePair<string, object>("key1", "value1"),
+        new KeyValuePair<string, object>("key2", 123),
+    };
+
     [Fact]
     public void TestAddOtlpExporter_SetsCorrectMetricReaderDefaults()
     {
@@ -216,14 +224,17 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
     [Theory]
     [InlineData("test_gauge", null, null, 123L, null)]
     [InlineData("test_gauge", null, null, null, 123.45)]
+    [InlineData("test_gauge", null, null, 123L, null, true)]
+    [InlineData("test_gauge", null, null, null, 123.45, true)]
     [InlineData("test_gauge", "description", "unit", 123L, null)]
-    public void TestGaugeToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue)
+    public void TestGaugeToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, bool enableExemplars = false)
     {
         var metrics = new List<Metric>();
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
+            .SetExemplarFilter(enableExemplars ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
             .AddInMemoryExporter(metrics)
             .Build();
 
@@ -277,29 +288,35 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
 
         Assert.Empty(dataPoint.Attributes);
 
-        Assert.Empty(dataPoint.Exemplars);
+        VerifyExemplars(longValue, doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
     }
 
     [Theory]
     [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
     [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
-    public void TestCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, params object[] keysValues)
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
+    public void TestCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
     {
         var metrics = new List<Metric>();
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
+            .SetExemplarFilter(enableExemplars ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
             .AddInMemoryExporter(metrics, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = aggregationTemporality;
             })
             .Build();
 
-        var attributes = ToAttributes(keysValues).ToArray();
+        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object>>();
         if (longValue.HasValue)
         {
             var counter = meter.CreateCounter<long>(name, unit, description);
@@ -366,31 +383,37 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
             Assert.Empty(dataPoint.Attributes);
         }
 
-        Assert.Empty(dataPoint.Exemplars);
+        VerifyExemplars(longValue, doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
     }
 
     [Theory]
     [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
     [InlineData("test_counter", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
-    public void TestUpDownCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, params object[] keysValues)
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
+    public void TestUpDownCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
     {
         var metrics = new List<Metric>();
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
+            .SetExemplarFilter(enableExemplars ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
             .AddInMemoryExporter(metrics, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = aggregationTemporality;
             })
             .Build();
 
-        var attributes = ToAttributes(keysValues).ToArray();
+        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object>>();
         if (longValue.HasValue)
         {
             var counter = meter.CreateUpDownCounter<long>(name, unit, description);
@@ -457,24 +480,30 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
             Assert.Empty(dataPoint.Attributes);
         }
 
-        Assert.Empty(dataPoint.Exemplars);
+        VerifyExemplars(longValue, doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
     }
 
     [Theory]
     [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
     [InlineData("test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
-    public void TestExponentialHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, params object[] keysValues)
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
+    public void TestExponentialHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
     {
         var metrics = new List<Metric>();
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
+            .SetExemplarFilter(enableExemplars ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
             .AddInMemoryExporter(metrics, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = aggregationTemporality;
@@ -485,7 +514,7 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
             })
             .Build();
 
-        var attributes = ToAttributes(keysValues).ToArray();
+        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object>>();
         if (longValue.HasValue)
         {
             var histogram = meter.CreateHistogram<long>(name, unit, description);
@@ -587,31 +616,41 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
             Assert.Empty(dataPoint.Attributes);
         }
 
-        Assert.Empty(dataPoint.Exemplars);
+        VerifyExemplars(null, longValue ?? doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
+        if (enableExemplars)
+        {
+            VerifyExemplars(null, 0, enableExemplars, d => d.Exemplars.Skip(1).FirstOrDefault(), dataPoint);
+        }
     }
 
     [Theory]
     [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
     [InlineData("test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
-    public void TestHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, params object[] keysValues)
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
+    public void TestHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
     {
         var metrics = new List<Metric>();
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
+            .SetExemplarFilter(enableExemplars ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
             .AddInMemoryExporter(metrics, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = aggregationTemporality;
             })
             .Build();
 
-        var attributes = ToAttributes(keysValues).ToArray();
+        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object>>();
         if (longValue.HasValue)
         {
             var histogram = meter.CreateHistogram<long>(name, unit, description);
@@ -690,7 +729,7 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
             Assert.Empty(dataPoint.Attributes);
         }
 
-        Assert.Empty(dataPoint.Exemplars);
+        VerifyExemplars(null, longValue ?? doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
     }
 
     [Theory]
@@ -737,14 +776,155 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
         Assert.Equal(expectedTemporality, temporality);
     }
 
-    private static IEnumerable<KeyValuePair<string, object>> ToAttributes(object[] keysValues)
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void ToOtlpExemplarTests(bool enableTagFiltering, bool enableTracing)
     {
-        var keys = keysValues?.Where((_, index) => index % 2 == 0).ToArray();
-        var values = keysValues?.Where((_, index) => index % 2 != 0).ToArray();
+        ActivitySource activitySource = null;
+        Activity activity = null;
+        TracerProvider tracerProvider = null;
 
-        for (var i = 0; keys != null && i < keys.Length; ++i)
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        var exportedItems = new List<Metric>();
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .AddView(i =>
+            {
+                return !enableTagFiltering
+                    ? null
+                    : new MetricStreamConfiguration
+                    {
+                        TagKeys = Array.Empty<string>(),
+                    };
+            })
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        if (enableTracing)
         {
-            yield return new KeyValuePair<string, object>(keys[i].ToString(), values[i]);
+            activitySource = new ActivitySource(Utils.GetCurrentMethodName());
+            tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(activitySource.Name)
+                .SetSampler(new AlwaysOnSampler())
+                .Build();
+
+            activity = activitySource.StartActivity("testActivity");
+        }
+
+        var counterDouble = meter.CreateCounter<double>("testCounterDouble");
+        var counterLong = meter.CreateCounter<long>("testCounterLong");
+
+        counterDouble.Add(1.18D, new KeyValuePair<string, object>("key1", "value1"));
+        counterLong.Add(18L, new KeyValuePair<string, object>("key1", "value1"));
+
+        meterProvider.ForceFlush();
+
+        var counterDoubleMetric = exportedItems.FirstOrDefault(m => m.Name == counterDouble.Name);
+        var counterLongMetric = exportedItems.FirstOrDefault(m => m.Name == counterLong.Name);
+
+        Assert.NotNull(counterDoubleMetric);
+        Assert.NotNull(counterLongMetric);
+
+        AssertExemplars(1.18D, counterDoubleMetric);
+        AssertExemplars(18L, counterLongMetric);
+
+        activity?.Dispose();
+        tracerProvider?.Dispose();
+        activitySource?.Dispose();
+
+        void AssertExemplars<T>(T value, Metric metric)
+            where T : struct
+        {
+            var metricPointEnumerator = metric.GetMetricPoints().GetEnumerator();
+            Assert.True(metricPointEnumerator.MoveNext());
+
+            ref readonly var metricPoint = ref metricPointEnumerator.Current;
+
+            var result = metricPoint.TryGetExemplars(out var exemplars);
+            Assert.True(result);
+
+            var exemplarEnumerator = exemplars.Value.GetEnumerator();
+            Assert.True(exemplarEnumerator.MoveNext());
+
+            ref readonly var exemplar = ref exemplarEnumerator.Current;
+
+            var otlpExemplar = MetricItemExtensions.ToOtlpExemplar<T>(value, in exemplar);
+            Assert.NotNull(otlpExemplar);
+
+            Assert.NotEqual(default, otlpExemplar.TimeUnixNano);
+            if (!enableTracing)
+            {
+                Assert.Equal(ByteString.Empty, otlpExemplar.TraceId);
+                Assert.Equal(ByteString.Empty, otlpExemplar.SpanId);
+            }
+            else
+            {
+                byte[] traceIdBytes = new byte[16];
+                activity.TraceId.CopyTo(traceIdBytes);
+
+                byte[] spanIdBytes = new byte[8];
+                activity.SpanId.CopyTo(spanIdBytes);
+
+                Assert.Equal(ByteString.CopyFrom(traceIdBytes), otlpExemplar.TraceId);
+                Assert.Equal(ByteString.CopyFrom(spanIdBytes), otlpExemplar.SpanId);
+            }
+
+            if (typeof(T) == typeof(long))
+            {
+                Assert.Equal((long)(object)value, exemplar.LongValue);
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                Assert.Equal((double)(object)value, exemplar.DoubleValue);
+            }
+            else
+            {
+                Debug.Fail("Unexpected type");
+            }
+
+            if (!enableTagFiltering)
+            {
+                var tagEnumerator = exemplar.FilteredTags.GetEnumerator();
+                Assert.False(tagEnumerator.MoveNext());
+            }
+            else
+            {
+                var tagEnumerator = exemplar.FilteredTags.GetEnumerator();
+                Assert.True(tagEnumerator.MoveNext());
+
+                var tag = tagEnumerator.Current;
+                Assert.Equal("key1", tag.Key);
+                Assert.Equal("value1", tag.Value);
+            }
+        }
+    }
+
+    private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar> getExemplarFunc, T state)
+    {
+        var exemplar = getExemplarFunc(state);
+
+        if (enableExemplars)
+        {
+            Assert.NotNull(exemplar);
+            Assert.NotEqual(default, exemplar.TimeUnixNano);
+            if (longValue.HasValue)
+            {
+                Assert.Equal(longValue.Value, exemplar.AsInt);
+            }
+            else
+            {
+                Assert.Equal(doubleValue.Value, exemplar.AsDouble);
+            }
+        }
+        else
+        {
+            Assert.Null(exemplar);
         }
     }
 }

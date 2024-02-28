@@ -158,6 +158,16 @@ internal static class MetricItemExtensions
                         AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                         dataPoint.AsInt = metricPoint.GetSumLong();
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.LongValue, in exemplar));
+                            }
+                        }
+
                         sum.DataPoints.Add(dataPoint);
                     }
 
@@ -185,6 +195,16 @@ internal static class MetricItemExtensions
                         AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                         dataPoint.AsDouble = metricPoint.GetSumDouble();
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.DoubleValue, in exemplar));
+                            }
+                        }
+
                         sum.DataPoints.Add(dataPoint);
                     }
 
@@ -206,6 +226,16 @@ internal static class MetricItemExtensions
                         AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                         dataPoint.AsInt = metricPoint.GetGaugeLastValueLong();
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.LongValue, in exemplar));
+                            }
+                        }
+
                         gauge.DataPoints.Add(dataPoint);
                     }
 
@@ -227,6 +257,16 @@ internal static class MetricItemExtensions
                         AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                         dataPoint.AsDouble = metricPoint.GetGaugeLastValueDouble();
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.DoubleValue, in exemplar));
+                            }
+                        }
+
                         gauge.DataPoints.Add(dataPoint);
                     }
 
@@ -320,7 +360,14 @@ internal static class MetricItemExtensions
                             dataPoint.Positive.BucketCounts.Add((ulong)bucketCount);
                         }
 
-                        // TODO: exemplars.
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.DoubleValue, in exemplar));
+                            }
+                        }
 
                         histogram.DataPoints.Add(dataPoint);
                     }
@@ -333,29 +380,7 @@ internal static class MetricItemExtensions
         return otlpMetric;
     }
 
-    private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<OtlpCommon.KeyValue> attributes)
-    {
-        foreach (var tag in tags)
-        {
-            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
-            {
-                attributes.Add(result);
-            }
-        }
-    }
-
-    private static void AddScopeAttributes(IEnumerable<KeyValuePair<string, object>> meterTags, RepeatedField<OtlpCommon.KeyValue> attributes)
-    {
-        foreach (var tag in meterTags)
-        {
-            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
-            {
-                attributes.Add(result);
-            }
-        }
-    }
-
-    private static OtlpMetrics.Exemplar ToOtlpExemplar<T>(T value, in Metrics.Exemplar exemplar)
+    internal static OtlpMetrics.Exemplar ToOtlpExemplar<T>(T value, in Metrics.Exemplar exemplar)
         where T : struct
     {
         var otlpExemplar = new OtlpMetrics.Exemplar
@@ -398,5 +423,27 @@ internal static class MetricItemExtensions
         }
 
         return otlpExemplar;
+    }
+
+    private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<OtlpCommon.KeyValue> attributes)
+    {
+        foreach (var tag in tags)
+        {
+            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+            {
+                attributes.Add(result);
+            }
+        }
+    }
+
+    private static void AddScopeAttributes(IEnumerable<KeyValuePair<string, object>> meterTags, RepeatedField<OtlpCommon.KeyValue> attributes)
+    {
+        foreach (var tag in meterTags)
+        {
+            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+            {
+                attributes.Add(result);
+            }
+        }
     }
 }
