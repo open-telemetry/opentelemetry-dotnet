@@ -11,11 +11,13 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class AggregatorStore
 {
+    internal readonly HashSet<string>? TagKeysInteresting;
     internal readonly bool OutputDelta;
     internal readonly bool OutputDeltaWithUnusedMetricPointReclaimEnabled;
     internal readonly int CardinalityLimit;
     internal readonly bool EmitOverflowAttribute;
     internal readonly ConcurrentDictionary<Tags, LookupData>? TagsToMetricPointIndexDictionaryDelta;
+    internal readonly Func<ExemplarReservoir?>? ExemplarReservoirFactory;
     internal long DroppedMeasurements = 0;
 
     private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute by setting env variable OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE = true. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
@@ -24,7 +26,6 @@ internal sealed class AggregatorStore
 
     private readonly object lockZeroTags = new();
     private readonly object lockOverflowTag = new();
-    private readonly HashSet<string>? tagKeysInteresting;
     private readonly int tagsKeysInterestingCount;
 
     // This holds the reclaimed MetricPoints that are available for reuse.
@@ -59,7 +60,8 @@ internal sealed class AggregatorStore
         int cardinalityLimit,
         bool emitOverflowAttribute,
         bool shouldReclaimUnusedMetricPoints,
-        ExemplarFilter? exemplarFilter = null)
+        ExemplarFilter? exemplarFilter = null,
+        Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
     {
         this.name = metricStreamIdentity.InstrumentName;
         this.CardinalityLimit = cardinalityLimit;
@@ -74,6 +76,7 @@ internal sealed class AggregatorStore
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;
         this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
+        this.ExemplarReservoirFactory = exemplarReservoirFactory;
         if (metricStreamIdentity.TagKeys == null)
         {
             this.updateLongCallback = this.UpdateLong;
@@ -84,7 +87,7 @@ internal sealed class AggregatorStore
             this.updateLongCallback = this.UpdateLongCustomTags;
             this.updateDoubleCallback = this.UpdateDoubleCustomTags;
             var hs = new HashSet<string>(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
-            this.tagKeysInteresting = hs;
+            this.TagKeysInteresting = hs;
             this.tagsKeysInterestingCount = hs.Count;
         }
 
@@ -1122,9 +1125,9 @@ internal sealed class AggregatorStore
 
         var storage = ThreadStaticStorage.GetStorage();
 
-        Debug.Assert(this.tagKeysInteresting != null, "this.tagKeysInteresting was null");
+        Debug.Assert(this.TagKeysInteresting != null, "this.tagKeysInteresting was null");
 
-        storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting!, out var tagKeysAndValues, out var actualLength);
+        storage.SplitToKeysAndValues(tags, tagLength, this.TagKeysInteresting!, out var tagKeysAndValues, out var actualLength);
 
         // Actual number of tags depend on how many
         // of the incoming tags has user opted to
