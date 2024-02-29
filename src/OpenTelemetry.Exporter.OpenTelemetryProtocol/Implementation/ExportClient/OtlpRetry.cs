@@ -159,7 +159,7 @@ internal static class OtlpRetry
         return null;
     }
 
-    private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode? statusCode, HttpResponseHeaders? headers)
+    private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode? statusCode, HttpResponseHeaders? responseHeaders)
     {
         if (!statusCode.HasValue)
         {
@@ -171,7 +171,7 @@ internal static class OtlpRetry
 #else
         return statusCode == (HttpStatusCode)429 || statusCode == HttpStatusCode.ServiceUnavailable
 #endif
-            ? headers?.RetryAfter?.Delta
+            ? responseHeaders?.RetryAfter?.Delta
             : null;
     }
 
