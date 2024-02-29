@@ -23,7 +23,7 @@ OpenTelemetry.Metrics.ExemplarMeasurement<T>
 OpenTelemetry.Metrics.ExemplarMeasurement<T>.ExemplarMeasurement() -> void
 OpenTelemetry.Metrics.ExemplarMeasurement<T>.Tags.get -> System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string!, object?>>
 OpenTelemetry.Metrics.ExemplarMeasurement<T>.Value.get -> T
-OpenTelemetry.Metrics.MetricPoint.TryGetExemplars(out OpenTelemetry.Metrics.ReadOnlyExemplarCollection? exemplars) -> bool
+OpenTelemetry.Metrics.MetricPoint.TryGetExemplars(out OpenTelemetry.Metrics.ReadOnlyExemplarCollection exemplars) -> bool
 OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.get -> int?
 OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection

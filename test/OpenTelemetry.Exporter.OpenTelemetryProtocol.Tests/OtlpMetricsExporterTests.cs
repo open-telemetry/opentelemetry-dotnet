@@ -849,7 +849,7 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
             var result = metricPoint.TryGetExemplars(out var exemplars);
             Assert.True(result);
 
-            var exemplarEnumerator = exemplars.Value.GetEnumerator();
+            var exemplarEnumerator = exemplars.GetEnumerator();
             Assert.True(exemplarEnumerator.MoveNext());
 
             ref readonly var exemplar = ref exemplarEnumerator.Current;
