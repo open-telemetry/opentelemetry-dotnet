@@ -78,12 +78,10 @@ internal
 
         foreach (var exemplar in this)
         {
-            if (exemplar.IsUpdated())
-            {
-                var newExemplar = default(Exemplar);
-                exemplar.Copy(ref newExemplar);
-                list.Add(newExemplar);
-            }
+            // Note: If ToReadOnlyList is ever made public it should make sure
+            // to take copies of exemplars or make sure the instance was first
+            // copied using the Copy method above.
+            list.Add(exemplar);
         }
 
         return list;
