@@ -25,7 +25,7 @@ public static class TracerProviderBuilderExtensions
     /// <param name="enabled">Enabled or not. Default value is <c>true</c>.</param>
     /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
 #if NET7_0_OR_GREATER
-    [RequiresDynamicCode("Calling this method will invoke Marshal.GetExceptionPointers(), which is neither supported in MonoRuntime nor in nativeAOT environment.")]
+    [RequiresDynamicCode("SetErrorStatusOnException is neither supported in MonoRuntime nor in nativeAOT environment.")]
 #endif
     public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
     {

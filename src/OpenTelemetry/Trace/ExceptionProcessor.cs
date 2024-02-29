@@ -25,14 +25,14 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
         {
             Marshal.GetExceptionPointers();
         }
-        catch
+        catch (PlatformNotSupportedException)
         {
             getExceptionPointersSupported = false;
         }
 
         if (!getExceptionPointersSupported)
         {
-            throw new PlatformNotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported.");
+            throw new PlatformNotSupportedException("The SetErrorStatusOnException extension method is not supported on this platform.");
         }
 
         this.fnGetExceptionPointers = Marshal.GetExceptionPointers;
