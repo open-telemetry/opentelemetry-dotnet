@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Throw NotSupportedException when using `ExceptionProcessor` for Tracing in
-  Mono Runtime and Native AOT enviornment because the the dependent
+  Mono Runtime and Native AOT environment because the the dependent
   `Marshal.GetExceptionPointers()` API is not supported in these platforms.
   ([#5347](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5347))
 
