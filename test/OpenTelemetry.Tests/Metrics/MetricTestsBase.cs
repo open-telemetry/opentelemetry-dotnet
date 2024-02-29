@@ -237,7 +237,7 @@ public class MetricTestsBase
     {
         if (mp.TryGetExemplars(out var exemplars))
         {
-            return exemplars.Value.ToReadOnlyList();
+            return exemplars.ToReadOnlyList();
         }
 
         return Array.Empty<Exemplar>();

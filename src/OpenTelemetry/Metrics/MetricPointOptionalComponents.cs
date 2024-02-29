@@ -20,7 +20,7 @@ internal sealed class MetricPointOptionalComponents
 
     public ExemplarReservoir? ExemplarReservoir;
 
-    public ReadOnlyExemplarCollection? Exemplars;
+    public ReadOnlyExemplarCollection Exemplars = ReadOnlyExemplarCollection.Empty;
 
     private int isCriticalSectionOccupied = 0;
 
@@ -30,7 +30,7 @@ internal sealed class MetricPointOptionalComponents
         {
             HistogramBuckets = this.HistogramBuckets?.Copy(),
             Base2ExponentialBucketHistogram = this.Base2ExponentialBucketHistogram?.Copy(),
-            Exemplars = this.Exemplars?.Copy(),
+            Exemplars = this.Exemplars.Copy(),
         };
 
         return copy;

@@ -23,6 +23,7 @@ internal
 #endif
     readonly struct ReadOnlyExemplarCollection
 {
+    internal static readonly ReadOnlyExemplarCollection Empty = new(Array.Empty<Exemplar>());
     private readonly Exemplar[] exemplars;
 
     internal ReadOnlyExemplarCollection(Exemplar[] exemplars)
@@ -50,24 +51,39 @@ internal
 
     internal ReadOnlyExemplarCollection Copy()
     {
-        var exemplarCopies = new Exemplar[this.exemplars.Length];
+        var maximumCount = this.MaximumCount;
 
-        int i = 0;
-        foreach (ref readonly var exemplar in this)
+        if (maximumCount > 0)
         {
-            exemplar.Copy(ref exemplarCopies[i++]);
+            var exemplarCopies = new Exemplar[maximumCount];
+
+            int i = 0;
+            foreach (ref readonly var exemplar in this)
+            {
+                if (exemplar.IsUpdated())
+                {
+                    exemplar.Copy(ref exemplarCopies[i++]);
+                }
+            }
+
+            return new ReadOnlyExemplarCollection(exemplarCopies);
         }
 
-        return new ReadOnlyExemplarCollection(exemplarCopies);
+        return Empty;
     }
 
     internal IReadOnlyList<Exemplar> ToReadOnlyList()
     {
         var list = new List<Exemplar>(this.MaximumCount);
 
-        foreach (var item in this)
+        foreach (var exemplar in this)
         {
-            list.Add(item);
+            if (exemplar.IsUpdated())
+            {
+                var newExemplar = default(Exemplar);
+                exemplar.Copy(ref newExemplar);
+                list.Add(newExemplar);
+            }
         }
 
         return list;
