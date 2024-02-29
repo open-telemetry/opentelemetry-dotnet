@@ -58,6 +58,8 @@ public static class RoutingTestCases
 
         public string? ExpectedHttpRoute { get; set; }
 
+        public string? ExpectedDisplayName { get; set; }
+
         public string? CurrentHttpRoute { get; set; }
 
         public override string ToString()

@@ -241,7 +241,13 @@ internal class HttpInListener : ListenerHandler
                     context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
             if (!string.IsNullOrEmpty(routePattern))
             {
-                activity.DisplayName = GetDisplayName(context.Request.Method, routePattern);
+                // only override the display name if it was not set by the user
+                var previousDisplayName = GetDisplayName(context.Request.Method);
+                if (activity.DisplayName == previousDisplayName)
+                {
+                    activity.DisplayName = GetDisplayName(context.Request.Method, routePattern);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
             }
 #endif

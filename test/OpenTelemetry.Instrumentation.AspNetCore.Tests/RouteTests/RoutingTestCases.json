@@ -207,5 +207,15 @@
     "expectedStatusCode": 500,
     "currentHttpRoute": null,
     "expectedHttpRoute": "/Exception"
+  },
+  {
+    "name": "Overridden display name",
+    "testApplicationScenario": "ConventionalRouting",
+    "httpMethod": "GET",
+    "path": "/ConventionalRoute/OverwriteRootSpan?num=3",
+    "expectedStatusCode": 200,
+    "currentHttpRoute": "{controller=ConventionalRoute}/{action=Default}/{id?}",
+    "expectedHttpRoute": null,
+    "expectedDisplayName": "Overwritten"
   }
 ]

@@ -85,9 +85,12 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
 
         // Activity.DisplayName should be a combination of http.method + http.route attributes, see:
         // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md#name
-        var expectedActivityDisplayName = string.IsNullOrEmpty(expectedHttpRoute)
-            ? testCase.HttpMethod
-            : $"{testCase.HttpMethod} {expectedHttpRoute}";
+        // unless the user has overriden the route name
+        var expectedActivityDisplayName = string.IsNullOrEmpty(testCase.ExpectedDisplayName)
+            ? string.IsNullOrEmpty(expectedHttpRoute)
+                ? testCase.HttpMethod
+                : $"{testCase.HttpMethod} {expectedHttpRoute}"
+            : testCase.ExpectedDisplayName;
 
         Assert.Equal(expectedActivityDisplayName, activity.DisplayName);
 

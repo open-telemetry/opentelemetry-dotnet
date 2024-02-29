@@ -23,6 +23,7 @@
 | :green_heart: | MinimalApi | [Action without parameter](#minimalapi-action-without-parameter) |
 | :green_heart: | MinimalApi | [Action with parameter](#minimalapi-action-with-parameter) |
 | :green_heart: | ExceptionMiddleware | [Exception Handled by Exception Handler Middleware](#exceptionmiddleware-exception-handled-by-exception-handler-middleware) |
+| :broken_heart: | ConventionalRouting | [Overridden display name](#conventionalrouting-overridden-display-name) |
 
 ## ConventionalRouting: Root path
 
@@ -607,6 +608,39 @@
     "IRouteDiagnosticsMetadata.Route": null,
     "HttpContext.GetRouteData()": {},
     "ActionDescriptor": null
+  }
+}
+```
+
+## ConventionalRouting: Overridden display name
+
+```json
+{
+  "IdealHttpRoute": null,
+  "ActivityDisplayName": "Overwritten",
+  "ActivityHttpRoute": "{controller=ConventionalRoute}/{action=Default}/{id?}",
+  "MetricHttpRoute": "{controller=ConventionalRoute}/{action=Default}/{id?}",
+  "RouteInfo": {
+    "HttpMethod": "GET",
+    "Path": "/ConventionalRoute/OverwriteRootSpan?num=3",
+    "RoutePattern.RawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
+      "controller": "ConventionalRoute",
+      "action": "OverwriteRootSpan"
+    },
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": null,
+      "Parameters": [
+        "id",
+        "num"
+      ],
+      "ControllerActionDescriptor": {
+        "ControllerName": "ConventionalRoute",
+        "ActionName": "OverwriteRootSpan"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
