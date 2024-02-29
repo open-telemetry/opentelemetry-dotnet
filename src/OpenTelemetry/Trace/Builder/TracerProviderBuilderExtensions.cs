@@ -24,6 +24,9 @@ public static class TracerProviderBuilderExtensions
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="enabled">Enabled or not. Default value is <c>true</c>.</param>
     /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+#if NET7_0_OR_GREATER
+    [RequiresDynamicCode("Calling this method will invoke Marshal.GetExceptionPointers(), which is neither supported in MonoRuntime nor in nativeAOT enviornment.")]
+#endif
     public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
     {
         tracerProviderBuilder.ConfigureBuilder((sp, builder) =>

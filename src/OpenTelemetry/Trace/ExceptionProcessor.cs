@@ -3,9 +3,7 @@
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-#if NET6_0_OR_GREATER || NETFRAMEWORK
-using System.Runtime.CompilerServices;
-#else
+#if !NET6_0_OR_GREATER && !NETFRAMEWORK
 using System.Linq.Expressions;
 using System.Reflection;
 #endif
@@ -21,14 +19,23 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
     public ExceptionProcessor()
     {
 #if NET6_0_OR_GREATER || NETFRAMEWORK
-        if (RuntimeFeature.IsDynamicCodeSupported)
+        bool getExceptionPointersSupported = true;
+
+        try
         {
-            throw new NotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported when running native AOT.");
+            Marshal.GetExceptionPointers();
         }
-        else
+        catch
         {
-            this.fnGetExceptionPointers = Marshal.GetExceptionPointers;
+            getExceptionPointersSupported = false;
         }
+
+        if (!getExceptionPointersSupported)
+        {
+            throw new PlatformNotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported.");
+        }
+
+        this.fnGetExceptionPointers = Marshal.GetExceptionPointers;
 #else
         // When running on netstandard or similar the Marshal class is not a part of the netstandard API
         // but it would still most likely be available in the underlying framework, so use reflection to retrieve it.
