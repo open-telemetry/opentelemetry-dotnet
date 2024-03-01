@@ -85,7 +85,7 @@ appBuilder.Services.AddOpenTelemetry()
         builder
             .AddMeter(Instrumentation.MeterName)
 #if EXPOSE_EXPERIMENTAL_FEATURES
-            .SetExemplarFilter(new TraceBasedExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.TraceBased)
 #endif
             .AddRuntimeInstrumentation()
             .AddHttpClientInstrumentation()

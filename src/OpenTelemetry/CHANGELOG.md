@@ -60,6 +60,16 @@
   API.
   ([#5396](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5396))
 
+* **Experimental (pre-release builds only):** Removed the `ExemplarFilter`,
+  `AlwaysOffExemplarFilter`, `AlwaysOnExemplarFilter`, and
+  `TraceBasedExemplarFilter` APIs. The `MeterProviderBuilder.SetExemplarFilter`
+  extension method now accepts an `ExemplarFilterType` enumeration (which
+  contains definitions for the supported filter types `AlwaysOff`, `AlwaysOn`,
+  and `TraceBased`) instead of an `ExemplarFilter` instance. This was done in
+  response to changes made to the [OpenTelemetry Metrics SDK
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/pull/3820).
+  ([#5404](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5404))
+
 ## 1.7.0
 
 Released 2023-Dec-08
