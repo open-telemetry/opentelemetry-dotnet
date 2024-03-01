@@ -963,17 +963,16 @@ public class MetricViewTests : MetricTestsBase
 
         Assert.Equal(3, exportedItems.Count);
 
-        // CardinalityLimit + 2 (reserved for zero tags and overflow)
-        Assert.Equal(10002, exportedItems[1].AggregatorStore.CardinalityLimit);
+        Assert.Equal(10002, exportedItems[1].AggregatorStore.NumberOfReservedMetricPoints);
         if (setDefault)
         {
-            Assert.Equal(5, exportedItems[0].AggregatorStore.CardinalityLimit);
-            Assert.Equal(5, exportedItems[2].AggregatorStore.CardinalityLimit);
+            Assert.Equal(5, exportedItems[0].AggregatorStore.NumberOfReservedMetricPoints);
+            Assert.Equal(5, exportedItems[2].AggregatorStore.NumberOfReservedMetricPoints);
         }
         else
         {
-            Assert.Equal(2002, exportedItems[0].AggregatorStore.CardinalityLimit);
-            Assert.Equal(2002, exportedItems[2].AggregatorStore.CardinalityLimit);
+            Assert.Equal(2002, exportedItems[0].AggregatorStore.NumberOfReservedMetricPoints);
+            Assert.Equal(2002, exportedItems[2].AggregatorStore.NumberOfReservedMetricPoints);
         }
     }
 
@@ -1016,16 +1015,15 @@ public class MetricViewTests : MetricTestsBase
         var metricB = exportedItems[1];
         var metricC = exportedItems[2];
 
-        // CardinalityLimit + 2 (reserved for zero tags and overflow)
-        Assert.Equal(258, metricA.AggregatorStore.CardinalityLimit);
+        Assert.Equal(258, metricA.AggregatorStore.NumberOfReservedMetricPoints);
         Assert.Equal("MetricStreamA", metricA.Name);
         Assert.Equal(20, GetAggregatedValue(metricA));
 
-        Assert.Equal(5, metricB.AggregatorStore.CardinalityLimit);
+        Assert.Equal(5, metricB.AggregatorStore.NumberOfReservedMetricPoints);
         Assert.Equal("MetricStreamB", metricB.Name);
         Assert.Equal(10, GetAggregatedValue(metricB));
 
-        Assert.Equal(200002, metricC.AggregatorStore.CardinalityLimit);
+        Assert.Equal(200002, metricC.AggregatorStore.NumberOfReservedMetricPoints);
         Assert.Equal("MetricStreamC", metricC.Name);
         Assert.Equal(10, GetAggregatedValue(metricC));
 
