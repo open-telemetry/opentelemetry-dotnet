@@ -26,9 +26,6 @@ public static class TracerProviderBuilderExtensions
     /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
     /// <remarks>
     /// This method is not supported in native AOT or Mono Runtime as of .NET8.
-    /// TODO: Remove this limitation when there is a new .NET API added to
-    /// track exceptions in flight
-    /// (https://github.com/dotnet/runtime/issues/98878).
     /// </remarks>
     public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
     {
