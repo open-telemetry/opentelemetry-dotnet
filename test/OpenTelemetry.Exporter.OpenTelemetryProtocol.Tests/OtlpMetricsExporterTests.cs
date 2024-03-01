@@ -234,7 +234,7 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
-            .SetExemplarFilter(enableExemplars ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
+            .SetExemplarFilter(enableExemplars ? ExemplarFilterType.AlwaysOn : ExemplarFilterType.AlwaysOff)
             .AddInMemoryExporter(metrics)
             .Build();
 
@@ -309,7 +309,7 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
-            .SetExemplarFilter(enableExemplars ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
+            .SetExemplarFilter(enableExemplars ? ExemplarFilterType.AlwaysOn : ExemplarFilterType.AlwaysOff)
             .AddInMemoryExporter(metrics, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = aggregationTemporality;
@@ -406,7 +406,7 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
-            .SetExemplarFilter(enableExemplars ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
+            .SetExemplarFilter(enableExemplars ? ExemplarFilterType.AlwaysOn : ExemplarFilterType.AlwaysOff)
             .AddInMemoryExporter(metrics, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = aggregationTemporality;
@@ -503,7 +503,7 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
-            .SetExemplarFilter(enableExemplars ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
+            .SetExemplarFilter(enableExemplars ? ExemplarFilterType.AlwaysOn : ExemplarFilterType.AlwaysOff)
             .AddInMemoryExporter(metrics, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = aggregationTemporality;
@@ -643,7 +643,7 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
-            .SetExemplarFilter(enableExemplars ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
+            .SetExemplarFilter(enableExemplars ? ExemplarFilterType.AlwaysOn : ExemplarFilterType.AlwaysOff)
             .AddInMemoryExporter(metrics, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = aggregationTemporality;
@@ -793,7 +793,7 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 return !enableTagFiltering
