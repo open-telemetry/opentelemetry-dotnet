@@ -28,7 +28,7 @@ public static class TracerProviderBuilderExtensions
     /// This method is not supported in native AOT or Mono Runtime as of .NET 8.
     /// </remarks>
 #if NET7_0_OR_GREATER
-    [RequiresDynamicCode("This method is not supported as of .NET 8.")]
+    [RequiresDynamicCode("The code for detecting exception and setting error status might not be available.")]
 #endif
     public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
     {
