@@ -49,7 +49,8 @@ public sealed class Metric
         int cardinalityLimit,
         bool emitOverflowAttribute,
         bool shouldReclaimUnusedMetricPoints,
-        ExemplarFilter? exemplarFilter = null)
+        ExemplarFilter? exemplarFilter = null,
+        Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
     {
         this.InstrumentIdentity = instrumentIdentity;
 
@@ -155,7 +156,15 @@ public sealed class Metric
             throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
         }
 
-        this.AggregatorStore = new AggregatorStore(instrumentIdentity, aggType, temporality, cardinalityLimit, emitOverflowAttribute, shouldReclaimUnusedMetricPoints, exemplarFilter);
+        this.AggregatorStore = new AggregatorStore(
+            instrumentIdentity,
+            aggType,
+            temporality,
+            cardinalityLimit,
+            emitOverflowAttribute,
+            shouldReclaimUnusedMetricPoints,
+            exemplarFilter,
+            exemplarReservoirFactory);
         this.Temporality = temporality;
     }
 
