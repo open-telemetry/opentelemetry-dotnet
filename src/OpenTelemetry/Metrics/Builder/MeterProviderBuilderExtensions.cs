@@ -319,36 +319,54 @@ public static class MeterProviderBuilderExtensions
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
-    /// Sets the <see cref="ExemplarFilter"/> to be used for this provider.
-    /// This is applied to all the metrics from this provider.
+    /// Sets the <see cref="ExemplarFilterType"/> to be used for this provider
+    /// which controls how measurements will be offered to exemplar reservoirs.
+    /// Default provider configuration: <see
+    /// cref="ExemplarFilterType.AlwaysOff"/>.
     /// </summary>
-    /// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-    /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+    /// <remarks>
+    /// <inheritdoc cref="Exemplar"
+    /// path="/remarks/para[@experimental-warning='true']"/>
+    /// <para>Note: Use <see cref="ExemplarFilterType.TraceBased"/> or <see
+    /// cref="ExemplarFilterType.AlwaysOn"/> to enable exemplars.</para>
+    /// <para>Specification: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplarfilter"/>.</para>
+    /// </remarks>
+    /// <param name="meterProviderBuilder"><see
+    /// cref="MeterProviderBuilder"/>.</param>
+    /// <param name="exemplarFilter"><see cref="ExemplarFilterType"/> to
+    /// use.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for
+    /// chaining.</returns>
 #if NET8_0_OR_GREATER
     [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     public
 #else
-    /// <summary>
-    /// Sets the <see cref="ExemplarFilter"/> to be used for this provider.
-    /// This is applied to all the metrics from this provider.
-    /// </summary>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-    /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     internal
 #endif
-            static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
+            static MeterProviderBuilder SetExemplarFilter(
+        this MeterProviderBuilder meterProviderBuilder,
+        ExemplarFilterType exemplarFilter = ExemplarFilterType.TraceBased)
     {
-        Guard.ThrowIfNull(exemplarFilter);
-
         meterProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
             if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                meterProviderBuilderSdk.SetExemplarFilter(exemplarFilter);
+                switch (exemplarFilter)
+                {
+                    case ExemplarFilterType.AlwaysOn:
+                        meterProviderBuilderSdk.SetExemplarFilter(new AlwaysOnExemplarFilter());
+                        break;
+                    case ExemplarFilterType.AlwaysOff:
+                        meterProviderBuilderSdk.SetExemplarFilter(new AlwaysOffExemplarFilter());
+                        break;
+                    case ExemplarFilterType.TraceBased:
+                        meterProviderBuilderSdk.SetExemplarFilter(new TraceBasedExemplarFilter());
+                        break;
+                    default:
+                        throw new NotSupportedException($"SdkExemplarFilter '{exemplarFilter}' is not supported.");
+                }
             }
         });
 
