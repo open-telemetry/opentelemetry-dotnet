@@ -11,8 +11,7 @@ namespace OpenTelemetry.Metrics;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
-/// Defines the exemplar filters supported by the OpenTelemetry .NET Metrics
-/// SDK.
+/// Defines the supported exemplar filters.
 /// </summary>
 /// <remarks>
 /// <inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/>
@@ -33,8 +32,10 @@ internal
     /// <see cref="Exemplar"/>.
     /// </summary>
     /// <remarks>
-    /// Specification: <see
-    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#alwaysoff"/>.
+    /// <para>Note: Setting <see cref="AlwaysOff"/> on a meter provider
+    /// effectively disables exemplars.</para>
+    /// <para>Specification: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#alwaysoff"/>.</para>
     /// </remarks>
     AlwaysOff,
 
