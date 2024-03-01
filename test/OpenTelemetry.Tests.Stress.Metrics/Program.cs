@@ -56,7 +56,7 @@ public static class Program
 
             if (options.EnableExemplars)
             {
-                builder.SetExemplarFilter(new AlwaysOnExemplarFilter());
+                builder.SetExemplarFilter(ExemplarFilterType.AlwaysOn);
             }
 
             if (options.AddViewToFilterTags)

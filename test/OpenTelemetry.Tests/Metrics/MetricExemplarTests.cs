@@ -28,7 +28,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("testCounter"))
@@ -153,7 +153,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = temporality;
@@ -237,7 +237,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("histogramWithBucketsAndMinMax"))
@@ -367,7 +367,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("histogramWithoutBucketsAndMinMax"))
@@ -495,7 +495,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("exponentialHistogramWithMinMax"))
@@ -612,7 +612,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(histogram.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "key1" } })
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {

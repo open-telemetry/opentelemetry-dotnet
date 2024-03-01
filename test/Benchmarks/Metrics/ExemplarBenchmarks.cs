@@ -33,22 +33,20 @@ public class ExemplarBenchmarks
     private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
     private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
     private Histogram<long> histogramWithoutTagReduction;
-
     private Histogram<long> histogramWithTagReduction;
-
     private MeterProvider meterProvider;
     private Meter meter;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1602:Enumeration items should be documented", Justification = "Test only.")]
-    public enum ExemplarFilterToUse
+    public enum ExemplarConfigurationType
     {
         AlwaysOff,
         AlwaysOn,
-        HighValueOnly,
+        AlwaysOnWithHighValueSampling,
     }
 
-    [Params(ExemplarFilterToUse.AlwaysOn, ExemplarFilterToUse.AlwaysOff, ExemplarFilterToUse.HighValueOnly)]
-    public ExemplarFilterToUse ExemplarFilter { get; set; }
+    [Params(ExemplarConfigurationType.AlwaysOn, ExemplarConfigurationType.AlwaysOff, ExemplarConfigurationType.AlwaysOnWithHighValueSampling)]
+    public ExemplarConfigurationType ExemplarConfiguration { get; set; }
 
     [GlobalSetup]
     public void Setup()
@@ -58,25 +56,38 @@ public class ExemplarBenchmarks
         this.histogramWithTagReduction = this.meter.CreateHistogram<long>("HistogramWithTagReduction");
         var exportedItems = new List<Metric>();
 
-        ExemplarFilter exemplarFilter = new AlwaysOffExemplarFilter();
-        if (this.ExemplarFilter == ExemplarFilterToUse.AlwaysOn)
-        {
-            exemplarFilter = new AlwaysOnExemplarFilter();
-        }
-        else if (this.ExemplarFilter == ExemplarFilterToUse.HighValueOnly)
-        {
-            exemplarFilter = new HighValueExemplarFilter();
-        }
+        var exemplarFilter = this.ExemplarConfiguration != ExemplarConfigurationType.AlwaysOff
+            ? ExemplarFilterType.AlwaysOn
+            : ExemplarFilterType.AlwaysOff;
 
         this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name)
             .SetExemplarFilter(exemplarFilter)
-            .AddView("HistogramWithTagReduction", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
+            .AddView(
+                "HistogramWithoutTagReduction",
+                new MetricStreamConfiguration()
+                {
+                    ExemplarReservoirFactory = CreateExemplarReservoir,
+                })
+            .AddView(
+                "HistogramWithTagReduction",
+                new MetricStreamConfiguration()
+                {
+                    TagKeys = new string[] { "DimName1", "DimName2", "DimName3" },
+                    ExemplarReservoirFactory = CreateExemplarReservoir,
+                })
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
                 metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
             })
             .Build();
+
+        ExemplarReservoir CreateExemplarReservoir()
+        {
+            return this.ExemplarConfiguration == ExemplarConfigurationType.AlwaysOnWithHighValueSampling
+                ? new HighValueExemplarReservoir(800D)
+                : null;
+        }
     }
 
     [GlobalCleanup]
@@ -118,16 +129,36 @@ public class ExemplarBenchmarks
         this.histogramWithTagReduction.Record(random.Next(1000), tags);
     }
 
-    internal class HighValueExemplarFilter : ExemplarFilter
+    private sealed class HighValueExemplarReservoir : FixedSizeExemplarReservoir
     {
-        public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        private readonly double threshold;
+        private int measurementCount;
+
+        public HighValueExemplarReservoir(double threshold)
+            : base(10)
         {
-            return value > 800;
+            this.threshold = threshold;
         }
 
-        public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        public override void Offer(in ExemplarMeasurement<long> measurement)
         {
-            return value > 800;
+            if (measurement.Value >= this.threshold)
+            {
+                this.UpdateExemplar(this.measurementCount++ % this.Capacity, in measurement);
+            }
+        }
+
+        public override void Offer(in ExemplarMeasurement<double> measurement)
+        {
+            if (measurement.Value >= this.threshold)
+            {
+                this.UpdateExemplar(this.measurementCount++ % this.Capacity, in measurement);
+            }
+        }
+
+        protected override void OnCollected()
+        {
+            this.measurementCount = 0;
         }
     }
 }
