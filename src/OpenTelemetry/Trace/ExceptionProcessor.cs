@@ -19,7 +19,6 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
     public ExceptionProcessor()
     {
 #if NET6_0_OR_GREATER || NETFRAMEWORK
-        Marshal.GetExceptionPointers(); // attempt to access pointers to test for platform support
         this.fnGetExceptionPointers = Marshal.GetExceptionPointers;
 #else
         // When running on netstandard or similar the Marshal class is not a part of the netstandard API
@@ -30,6 +29,7 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
         var lambda = Expression.Lambda<Func<IntPtr>>(Expression.Call(method));
         this.fnGetExceptionPointers = lambda.Compile();
 #endif
+        this.fnGetExceptionPointers(); // attempt to access pointers to test for platform support
     }
 
     /// <inheritdoc />
