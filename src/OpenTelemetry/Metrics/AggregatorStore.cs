@@ -11,12 +11,10 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class AggregatorStore
 {
-    // Constant to account for additional space for overflow attribute and a case with no dimensions.
-    internal const int AdditionalReserve = 2;
     internal readonly HashSet<string>? TagKeysInteresting;
     internal readonly bool OutputDelta;
     internal readonly bool OutputDeltaWithUnusedMetricPointReclaimEnabled;
-    internal readonly int CardinalityLimit;
+    internal readonly int NumberOfReservedMetricPoints;
     internal readonly bool EmitOverflowAttribute;
     internal readonly ConcurrentDictionary<Tags, LookupData>? TagsToMetricPointIndexDictionaryDelta;
     internal long DroppedMeasurements = 0;
@@ -65,14 +63,14 @@ internal sealed class AggregatorStore
     {
         this.name = metricStreamIdentity.InstrumentName;
 
-        // Increase the CardinalityLimit by 2 (AdditionalReserve) to reserve additional space.
-        // This adjustment accounts for overflow attribute and a case where no dimensions are provided.
+        // Increase the CardinalityLimit by 2 to reserve additional space.
+        // This adjustment accounts for overflow attribute and a case where zero tags are provided.
         // Previously, these were included within the original cardinalityLimit, but now they are explicitly added to enhance clarity.
-        this.CardinalityLimit = cardinalityLimit + AdditionalReserve;
+        this.NumberOfReservedMetricPoints = cardinalityLimit + 2;
 
-        this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.CardinalityLimit}";
-        this.metricPoints = new MetricPoint[this.CardinalityLimit];
-        this.currentMetricPointBatch = new int[this.CardinalityLimit];
+        this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.NumberOfReservedMetricPoints}";
+        this.metricPoints = new MetricPoint[this.NumberOfReservedMetricPoints];
+        this.currentMetricPointBatch = new int[this.NumberOfReservedMetricPoints];
         this.aggType = aggType;
         this.OutputDelta = temporality == AggregationTemporality.Delta;
         this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity);
@@ -110,17 +108,17 @@ internal sealed class AggregatorStore
 
         if (this.OutputDeltaWithUnusedMetricPointReclaimEnabled)
         {
-            this.availableMetricPoints = new Queue<int>(this.CardinalityLimit - reservedMetricPointsCount);
+            this.availableMetricPoints = new Queue<int>(this.NumberOfReservedMetricPoints - reservedMetricPointsCount);
 
             // There is no overload which only takes capacity as the parameter
             // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v7.0.5/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2020
             // We expect at the most (maxMetricPoints - reservedMetricPointsCount) * 2 entries- one for sorted and one for unsorted input
             this.TagsToMetricPointIndexDictionaryDelta =
-                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: (this.CardinalityLimit - reservedMetricPointsCount) * 2);
+                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: (this.NumberOfReservedMetricPoints - reservedMetricPointsCount) * 2);
 
             // Add all the indices except for the reserved ones to the queue so that threads have
             // readily available access to these MetricPoints for their use.
-            for (int i = reservedMetricPointsCount; i < this.CardinalityLimit; i++)
+            for (int i = reservedMetricPointsCount; i < this.NumberOfReservedMetricPoints; i++)
             {
                 this.availableMetricPoints.Enqueue(i);
             }
@@ -169,12 +167,12 @@ internal sealed class AggregatorStore
         }
         else if (this.OutputDelta)
         {
-            var indexSnapshot = Math.Min(this.metricPointIndex, this.CardinalityLimit - 1);
+            var indexSnapshot = Math.Min(this.metricPointIndex, this.NumberOfReservedMetricPoints - 1);
             this.SnapshotDelta(indexSnapshot);
         }
         else
         {
-            var indexSnapshot = Math.Min(this.metricPointIndex, this.CardinalityLimit - 1);
+            var indexSnapshot = Math.Min(this.metricPointIndex, this.NumberOfReservedMetricPoints - 1);
             this.SnapshotCumulative(indexSnapshot);
         }
 
@@ -254,7 +252,7 @@ internal sealed class AggregatorStore
             }
         }
 
-        for (int i = startIndexForReclaimableMetricPoints; i < this.CardinalityLimit; i++)
+        for (int i = startIndexForReclaimableMetricPoints; i < this.NumberOfReservedMetricPoints; i++)
         {
             ref var metricPoint = ref this.metricPoints[i];
 
@@ -445,7 +443,7 @@ internal sealed class AggregatorStore
                 if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                 {
                     aggregatorIndex = this.metricPointIndex;
-                    if (aggregatorIndex >= this.CardinalityLimit)
+                    if (aggregatorIndex >= this.NumberOfReservedMetricPoints)
                     {
                         // sorry! out of data points.
                         // TODO: Once we support cleanup of
@@ -474,7 +472,7 @@ internal sealed class AggregatorStore
                         if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                         {
                             aggregatorIndex = ++this.metricPointIndex;
-                            if (aggregatorIndex >= this.CardinalityLimit)
+                            if (aggregatorIndex >= this.NumberOfReservedMetricPoints)
                             {
                                 // sorry! out of data points.
                                 // TODO: Once we support cleanup of
@@ -501,7 +499,7 @@ internal sealed class AggregatorStore
             {
                 // This else block is for tag length = 1
                 aggregatorIndex = this.metricPointIndex;
-                if (aggregatorIndex >= this.CardinalityLimit)
+                if (aggregatorIndex >= this.NumberOfReservedMetricPoints)
                 {
                     // sorry! out of data points.
                     // TODO: Once we support cleanup of
@@ -523,7 +521,7 @@ internal sealed class AggregatorStore
                     if (!this.tagsToMetricPointIndexDictionary.TryGetValue(givenTags, out aggregatorIndex))
                     {
                         aggregatorIndex = ++this.metricPointIndex;
-                        if (aggregatorIndex >= this.CardinalityLimit)
+                        if (aggregatorIndex >= this.NumberOfReservedMetricPoints)
                         {
                             // sorry! out of data points.
                             // TODO: Once we support cleanup of
