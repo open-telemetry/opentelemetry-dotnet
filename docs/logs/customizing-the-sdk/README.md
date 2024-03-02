@@ -43,9 +43,9 @@ It is not supported to add Processors after building the `LoggerFactory`.
 ```csharp
 var loggerFactory = LoggerFactory.Create(builder =>
 {
-    builder.AddOpenTelemetry(options =>
+    builder.AddOpenTelemetry(logging =>
     {
-        options.AddProcessor(...)
+        logging.AddProcessor(...);
     });
 });
 ```
