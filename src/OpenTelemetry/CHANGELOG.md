@@ -5,7 +5,7 @@
 * Throw NotSupportedException when using `SetErrorStatusOnException` method for
   Tracing in Mono Runtime and Native AOT environment because the dependent
   `Marshal.GetExceptionPointers()` API is not supported on these platforms.
-  ([#5347](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5347))
+  ([#5374](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5374))
 
 * Fixed an issue where `LogRecord.Attributes` (or `LogRecord.StateValues` alias)
   could become out of sync with `LogRecord.State` if either is set directly via
