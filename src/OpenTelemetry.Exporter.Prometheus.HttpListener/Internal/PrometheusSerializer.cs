@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter.Prometheus;
 
@@ -366,11 +367,17 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
+    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, PrometheusResourceTagCollection resourceTags = default, bool writeEnclosingBraces = true)
     {
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
+        }
+
+        foreach (var resourceAttribute in resourceTags.Attributes)
+        {
+            cursor = WriteLabel(buffer, cursor, resourceAttribute.Key, resourceAttribute.Value);
+            buffer[cursor++] = unchecked((byte)',');
         }
 
         cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
@@ -392,6 +399,40 @@ internal static partial class PrometheusSerializer
         {
             buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
         }
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteTargetInfo(byte[] buffer, int cursor, Resource resource)
+    {
+        if (!resource.Attributes.Any())
+        {
+            return cursor;
+        }
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE target info");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP target Target metadata");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "target_info");
+        buffer[cursor++] = unchecked((byte)'{');
+
+        foreach (var attribute in resource.Attributes)
+        {
+            cursor = WriteLabel(buffer, cursor, attribute.Key, attribute.Value);
+
+            buffer[cursor++] = unchecked((byte)',');
+        }
+
+        cursor--; // Write over the last written comma
+
+        buffer[cursor++] = unchecked((byte)'}');
+        buffer[cursor++] = unchecked((byte)' ');
+        buffer[cursor++] = unchecked((byte)'1');
+        buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
     }

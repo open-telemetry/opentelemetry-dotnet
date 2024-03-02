@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -150,6 +151,7 @@ public sealed class PrometheusExporterMiddlewareTests
     {
         using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(MeterName)
+            .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
             .AddPrometheusExporter()
             .Build();
 
@@ -213,6 +215,7 @@ public sealed class PrometheusExporterMiddlewareTests
     {
         using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(MeterName)
+            .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
             .AddPrometheusExporter()
             .Build();
 
@@ -245,6 +248,16 @@ public sealed class PrometheusExporterMiddlewareTests
             acceptHeader: "application/openmetrics-text; version=1.0.0");
     }
 
+    [Fact]
+    public Task PrometheusExporterMiddlewareIntegration_AddResourceAttributesAsTags()
+    {
+        return RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o => o.AllowedResourceAttributesFilter = s => s == "service.name",
+            addServiceNameResourceTag: true);
+    }
+
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
         string path,
         Action<IApplicationBuilder> configure,
@@ -253,7 +266,8 @@ public sealed class PrometheusExporterMiddlewareTests
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions> configureOptions = null,
         bool skipMetrics = false,
-        string acceptHeader = "application/openmetrics-text")
+        string acceptHeader = "application/openmetrics-text",
+        bool addServiceNameResourceTag = false)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
 
@@ -265,11 +279,12 @@ public sealed class PrometheusExporterMiddlewareTests
                    if (registerMeterProvider)
                    {
                        services.AddOpenTelemetry().WithMetrics(builder => builder
-                            .AddMeter(MeterName)
-                            .AddPrometheusExporter(o =>
-                            {
-                                configureOptions?.Invoke(o);
-                            }));
+                           .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
+                           .AddMeter(MeterName)
+                           .AddPrometheusExporter(o =>
+                           {
+                               configureOptions?.Invoke(o);
+                           }));
                    }
 
                    configureServices?.Invoke(services);
@@ -321,15 +336,22 @@ public sealed class PrometheusExporterMiddlewareTests
 
             string content = await response.Content.ReadAsStringAsync();
 
+            var resourceTagAttributes = addServiceNameResourceTag
+                ? "service_name='my_service',"
+                : string.Empty;
+
             string expected = requestOpenMetrics
-                ? "# TYPE otel_scope_info info\n"
+                ? "# TYPE target info\n"
+                  + "# HELP target Target metadata\n"
+                  + "target_info{service_name='my_service',service_instance_id='id1'} 1\n"
+                  + "# TYPE otel_scope_info info\n"
                   + "# HELP otel_scope_info Scope metadata\n"
                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
                   + "# TYPE counter_double_total counter\n"
-                  + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
+                  + $"counter_double_total{{{resourceTagAttributes}otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
                   + "# EOF\n"
                 : "# TYPE counter_double_total counter\n"
-                  + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
+                  + $"counter_double_total{{{resourceTagAttributes}otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
                   + "# EOF\n";
 
             var matches = Regex.Matches(content, ("^" + expected + "$").Replace('\'', '"'));

@@ -2,10 +2,13 @@
 
 ## Unreleased
 
+* Added `target_info` and resource attributes to Prometheus exporters ([#3087](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3087))
+
 * Added option to disable _total suffix addition to counter metrics
   ([#5305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5305))
 
 * Export OpenMetrics format from Prometheus exporters ([#5107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5107))
+
 * For requests with OpenMetrics format, scope info is automatically added
   ([#5086](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5086)
   [#5182](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5182))
