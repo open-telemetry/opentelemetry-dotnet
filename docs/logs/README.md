@@ -107,6 +107,21 @@ Here is the rule of thumb:
   Minutes - Console Application](./getting-started-console/README.md) tutorial
   to learn more.
 
+:heavy_check_mark: You should use dot-separated
+[UpperCamelCase](https://en.wikipedia.org/wiki/Camel_case) as the log category
+name, which makes it convenient to [filter logs](#log-filtering). A common
+practice is to use fully qualified class name, and if further categorization is
+desired, append a subcategory name. Refer to the [.NET official
+document](https://learn.microsoft.com/dotnet/core/extensions/logging#log-category)
+to learn more.
+
+```csharp
+loggerFactory.CreateLogger<MyClass>(); // this is equivalent to CreateLogger("MyProduct.MyLibrary.MyClass")
+loggerFactory.CreateLogger("MyProduct.MyLibrary.MyClass"); // use the fully qualified class name
+loggerFactory.CreateLogger("MyProduct.MyLibrary.MyClass.DatabaseOperations"); // append a subcategory name
+loggerFactory.CreateLogger("MyProduct.MyLibrary.MyClass.FileOperations"); // append another subcategory name
+```
+
 :stop_sign: You should avoid creating loggers too frequently. Although loggers
 are not super expensive, they still come with CPU and memory cost, and are meant
 to be reused throughout the application. Refer to the [logging performance
@@ -185,11 +200,6 @@ instances if they are created by you.
 * If you dispose the `LoggerFactory` instance too early, any subsequent logging
   API invocation associated with the logger factory could become no-op (i.e. no
   logs will be emitted).
-
-:heavy_check_mark: You should use the fully qualified class name as the log
-category name. Refer to the [.NET official
-document](https://learn.microsoft.com/dotnet/core/extensions/logging#log-category)
-to learn more.
 
 ## Log Correlation
 
