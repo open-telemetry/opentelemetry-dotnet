@@ -43,7 +43,7 @@ public class PrometheusHttpListenerOptions
     }
 
     /// <summary>
-    /// Gets or sets the allowed resource attributes filter. Default value: No resource attributes allowed.
+    /// Gets or sets the allowed resource attributes filter. Default value: null (no attributes allowed).
     /// </summary>
-    public Predicate<string> AllowedResourceAttributesFilter { get; set; }
+    public Predicate<string> AllowedResourceAttributesFilter { get; set; } = null;
 }
