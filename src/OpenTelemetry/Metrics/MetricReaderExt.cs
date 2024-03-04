@@ -179,15 +179,7 @@ public abstract partial class MetricReader
         this.metricsCurrentBatch = new Metric[metricLimit];
         this.cardinalityLimit = cardinalityLimit;
         this.exemplarFilter = exemplarFilter;
-
-        if (isEmitOverflowAttributeKeySet)
-        {
-            // We need at least two metric points. One is reserved for zero tags and the other one for overflow attribute
-            if (cardinalityLimit > 1)
-            {
-                this.emitOverflowAttribute = true;
-            }
-        }
+        this.emitOverflowAttribute = isEmitOverflowAttributeKeySet;
     }
 
     private bool TryGetExistingMetric(in MetricStreamIdentity metricStreamIdentity, [NotNullWhen(true)] out Metric? existingMetric)

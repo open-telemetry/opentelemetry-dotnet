@@ -104,7 +104,7 @@ public abstract class MetricOverflowAttributeTestsBase
     }
 
     [Theory]
-    [InlineData(1, false)]
+    [InlineData(1, true)]
     [InlineData(2, true)]
     [InlineData(10, true)]
     public void EmitOverflowAttributeIsOnlySetWhenMaxMetricPointsIsGreaterThanOne(int maxMetricPoints, bool isEmitOverflowAttributeKeySet)
