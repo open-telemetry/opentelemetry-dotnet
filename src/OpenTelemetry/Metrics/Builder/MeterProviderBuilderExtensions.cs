@@ -356,11 +356,7 @@ public static class MeterProviderBuilderExtensions
                 switch (exemplarFilter)
                 {
                     case ExemplarFilterType.AlwaysOn:
-                        meterProviderBuilderSdk.SetExemplarFilter(exemplarFilter);
-                        break;
                     case ExemplarFilterType.AlwaysOff:
-                        meterProviderBuilderSdk.SetExemplarFilter(exemplarFilter);
-                        break;
                     case ExemplarFilterType.TraceBased:
                         meterProviderBuilderSdk.SetExemplarFilter(exemplarFilter);
                         break;
