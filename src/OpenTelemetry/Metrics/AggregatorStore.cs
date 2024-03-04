@@ -75,7 +75,6 @@ internal sealed class AggregatorStore
         this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;
-        this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
         this.ExemplarReservoirFactory = exemplarReservoirFactory;
         if (metricStreamIdentity.TagKeys == null)
         {
@@ -92,6 +91,13 @@ internal sealed class AggregatorStore
         }
 
         this.EmitOverflowAttribute = emitOverflowAttribute;
+
+        this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
+        Debug.Assert(
+            this.exemplarFilter == ExemplarFilterType.AlwaysOff
+            || this.exemplarFilter == ExemplarFilterType.AlwaysOn
+            || this.exemplarFilter == ExemplarFilterType.TraceBased,
+            "this.exemplarFilter had an unexpected value");
 
         var reservedMetricPointsCount = 1;
 
@@ -972,29 +978,24 @@ internal sealed class AggregatorStore
             return;
         }
 
-        switch (this.exemplarFilter)
+        var exemplarFilterType = this.exemplarFilter;
+        if (exemplarFilterType == ExemplarFilterType.AlwaysOff)
         {
-            case ExemplarFilterType.AlwaysOn:
-                this.metricPoints[metricPointIndex].UpdateWithExemplar(
-                    value,
-                    tags,
-                    isSampled: true);
-                break;
-            case ExemplarFilterType.TraceBased:
-                this.metricPoints[metricPointIndex].UpdateWithExemplar(
-                    value,
-                    tags,
-                    isSampled: Activity.Current?.Recorded ?? false);
-                break;
-            default:
-#if DEBUG
-                if (this.exemplarFilter != ExemplarFilterType.AlwaysOff)
-                {
-                    Debug.Fail("Unexpected ExemplarFilterType");
-                }
-#endif
-                this.metricPoints[metricPointIndex].Update(value);
-                break;
+            this.metricPoints[metricPointIndex].Update(value);
+        }
+        else if (exemplarFilterType == ExemplarFilterType.AlwaysOn)
+        {
+            this.metricPoints[metricPointIndex].UpdateWithExemplar(
+                value,
+                tags,
+                isSampled: true);
+        }
+        else
+        {
+            this.metricPoints[metricPointIndex].UpdateWithExemplar(
+                value,
+                tags,
+                isSampled: Activity.Current?.Recorded ?? false);
         }
     }
 
@@ -1032,29 +1033,24 @@ internal sealed class AggregatorStore
             return;
         }
 
-        switch (this.exemplarFilter)
+        var exemplarFilterType = this.exemplarFilter;
+        if (exemplarFilterType == ExemplarFilterType.AlwaysOff)
         {
-            case ExemplarFilterType.AlwaysOn:
-                this.metricPoints[metricPointIndex].UpdateWithExemplar(
-                    value,
-                    tags,
-                    isSampled: true);
-                break;
-            case ExemplarFilterType.TraceBased:
-                this.metricPoints[metricPointIndex].UpdateWithExemplar(
-                    value,
-                    tags,
-                    isSampled: Activity.Current?.Recorded ?? false);
-                break;
-            default:
-#if DEBUG
-                if (this.exemplarFilter != ExemplarFilterType.AlwaysOff)
-                {
-                    Debug.Fail("Unexpected ExemplarFilterType");
-                }
-#endif
-                this.metricPoints[metricPointIndex].Update(value);
-                break;
+            this.metricPoints[metricPointIndex].Update(value);
+        }
+        else if (exemplarFilterType == ExemplarFilterType.AlwaysOn)
+        {
+            this.metricPoints[metricPointIndex].UpdateWithExemplar(
+                value,
+                tags,
+                isSampled: true);
+        }
+        else
+        {
+            this.metricPoints[metricPointIndex].UpdateWithExemplar(
+                value,
+                tags,
+                isSampled: Activity.Current?.Recorded ?? false);
         }
     }
 
