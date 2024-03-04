@@ -60,7 +60,7 @@ internal sealed class AggregatorStore
         int cardinalityLimit,
         bool emitOverflowAttribute,
         bool shouldReclaimUnusedMetricPoints,
-        ExemplarFilterType? exemplarFilter = ExemplarFilterType.AlwaysOff,
+        ExemplarFilterType? exemplarFilter = null,
         Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
     {
         this.name = metricStreamIdentity.InstrumentName;
