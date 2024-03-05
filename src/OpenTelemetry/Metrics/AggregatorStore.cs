@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -11,7 +14,11 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class AggregatorStore
 {
+#if NET8_0_OR_GREATER
+    internal readonly FrozenSet<string>? TagKeysInteresting;
+#else
     internal readonly HashSet<string>? TagKeysInteresting;
+#endif
     internal readonly bool OutputDelta;
     internal readonly bool OutputDeltaWithUnusedMetricPointReclaimEnabled;
     internal readonly int CardinalityLimit;
@@ -85,7 +92,11 @@ internal sealed class AggregatorStore
         {
             this.updateLongCallback = this.UpdateLongCustomTags;
             this.updateDoubleCallback = this.UpdateDoubleCustomTags;
+#if NET8_0_OR_GREATER
+            var hs = FrozenSet.ToFrozenSet(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
+#else
             var hs = new HashSet<string>(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
+#endif
             this.TagKeysInteresting = hs;
             this.tagsKeysInterestingCount = hs.Count;
         }
