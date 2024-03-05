@@ -15,7 +15,6 @@ var loggerFactory = LoggerFactory.Create(builder =>
             serviceVersion: "1.0.0"));
         logging.AddConsoleExporter();
     });
-    builder.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Information);
 });
 
 var logger = loggerFactory.CreateLogger<Program>();
