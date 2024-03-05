@@ -2,12 +2,17 @@
 
 ## Unreleased
 
+* Throw NotSupportedException when using `SetErrorStatusOnException` method for
+  Tracing in Mono Runtime and Native AOT environment because the dependent
+  `Marshal.GetExceptionPointers()` API is not supported on these platforms.
+  ([#5374](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5374))
+
 * Fixed an issue where `LogRecord.Attributes` (or `LogRecord.StateValues` alias)
   could become out of sync with `LogRecord.State` if either is set directly via
   the public setters. This was done to further mitigate issues introduced in
   1.5.0 causing attributes added using custom processor(s) to be missing after
   upgrading. For details see:
-  [#5169](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5169)
+  ([#5169](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5169))
 
 * Fixed an issue where `SimpleExemplarReservoir` was not resetting internal
   state for cumulative temporality.

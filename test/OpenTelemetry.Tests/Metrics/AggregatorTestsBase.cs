@@ -335,7 +335,7 @@ public abstract class AggregatorTestsBase
             cardinalityLimit: 1024,
             this.emitOverflowAttribute,
             this.shouldReclaimUnusedMetricPoints,
-            exemplarsEnabled ? new AlwaysOnExemplarFilter() : null);
+            exemplarsEnabled ? ExemplarFilterType.AlwaysOn : null);
 
         var expectedHistogram = new Base2ExponentialBucketHistogram();
 
