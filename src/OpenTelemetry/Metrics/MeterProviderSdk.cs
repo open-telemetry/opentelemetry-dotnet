@@ -13,15 +13,18 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class MeterProviderSdk : MeterProvider
 {
+    internal const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
+    internal const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
+    internal const string ExemplarFilterConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER";
+
     internal readonly IServiceProvider ServiceProvider;
     internal readonly IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
     internal bool Disposed;
-    internal bool ShouldReclaimUnusedMetricPoints;
+    internal bool EmitOverflowAttribute;
+    internal bool ReclaimUnusedMetricPoints;
+    internal ExemplarFilterType? ExemplarFilter;
     internal Action? OnCollectObservableInstruments;
-
-    private const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
-    private const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
 
     private readonly List<object> instrumentations = new();
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
@@ -40,10 +43,6 @@ internal sealed class MeterProviderSdk : MeterProvider
         var state = serviceProvider!.GetRequiredService<MeterProviderBuilderSdk>();
         state.RegisterProvider(this);
 
-        var config = serviceProvider!.GetRequiredService<IConfiguration>();
-        _ = config.TryGetBoolValue(EmitOverFlowAttributeConfigKey, out bool isEmitOverflowAttributeKeySet);
-        _ = config.TryGetBoolValue(ReclaimUnusedMetricPointsConfigKey, out this.ShouldReclaimUnusedMetricPoints);
-
         this.ServiceProvider = serviceProvider!;
 
         if (ownsServiceProvider)
@@ -54,13 +53,15 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
-        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Metric overflow attribute key set to: {isEmitOverflowAttributeKeySet}");
-
         var configureProviderBuilders = serviceProvider!.GetServices<IConfigureMeterProviderBuilder>();
         foreach (var configureProviderBuilder in configureProviderBuilders)
         {
             configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
         }
+
+        this.ExemplarFilter = state.ExemplarFilter;
+
+        this.ApplySpecificationConfigurationKeys(serviceProvider!.GetRequiredService<IConfiguration>());
 
         StringBuilder exportersAdded = new StringBuilder();
         StringBuilder instrumentationFactoriesAdded = new StringBuilder();
@@ -80,8 +81,9 @@ internal sealed class MeterProviderSdk : MeterProvider
             reader.ApplyParentProviderSettings(
                 state.MetricLimit,
                 state.CardinalityLimit,
-                state.ExemplarFilter,
-                isEmitOverflowAttributeKeySet);
+                this.EmitOverflowAttribute,
+                this.ReclaimUnusedMetricPoints,
+                this.ExemplarFilter);
 
             if (this.reader == null)
             {
@@ -474,5 +476,51 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
 
         base.Dispose(disposing);
+    }
+
+    private void ApplySpecificationConfigurationKeys(IConfiguration configuration)
+    {
+        if (configuration.TryGetBoolValue(EmitOverFlowAttributeConfigKey, out this.EmitOverflowAttribute))
+        {
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Overflow attribute feature enabled via configuration.");
+        }
+
+        if (configuration.TryGetBoolValue(ReclaimUnusedMetricPointsConfigKey, out this.ReclaimUnusedMetricPoints))
+        {
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Reclaim unused metric point feature enabled via configuration.");
+        }
+
+        if (configuration.TryGetStringValue(ExemplarFilterConfigKey, out var configValue))
+        {
+            if (this.ExemplarFilter.HasValue)
+            {
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
+                    $"Exemplar filter configuration value '{configValue}' has been ignored because a value '{this.ExemplarFilter}' was set programmatically.");
+                return;
+            }
+
+            ExemplarFilterType? exemplarFilter;
+            if (string.Equals("always_off", configValue, StringComparison.OrdinalIgnoreCase))
+            {
+                exemplarFilter = ExemplarFilterType.AlwaysOff;
+            }
+            else if (string.Equals("always_on", configValue, StringComparison.OrdinalIgnoreCase))
+            {
+                exemplarFilter = ExemplarFilterType.AlwaysOn;
+            }
+            else if (string.Equals("trace_based", configValue, StringComparison.OrdinalIgnoreCase))
+            {
+                exemplarFilter = ExemplarFilterType.TraceBased;
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exemplar filter configuration was found but the value '{configValue}' is invalid and will be ignored.");
+                return;
+            }
+
+            this.ExemplarFilter = exemplarFilter;
+
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exemplar filter set to '{exemplarFilter}' from configuration.");
+        }
     }
 }

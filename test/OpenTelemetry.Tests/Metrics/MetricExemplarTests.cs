@@ -5,6 +5,8 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -13,6 +15,44 @@ namespace OpenTelemetry.Metrics.Tests;
 public class MetricExemplarTests : MetricTestsBase
 {
     private const int MaxTimeToAllowForFlush = 10000;
+
+    [Theory]
+    [InlineData(null, null, null)]
+    [InlineData(null, "always_off", ExemplarFilterType.AlwaysOff)]
+    [InlineData(null, "ALWays_ON", ExemplarFilterType.AlwaysOn)]
+    [InlineData(null, "trace_based", ExemplarFilterType.TraceBased)]
+    [InlineData(null, "invalid", null)]
+    [InlineData(ExemplarFilterType.AlwaysOn, "trace_based", ExemplarFilterType.AlwaysOn)]
+    public void TestExemplarFilterSetFromConfiguration(
+        ExemplarFilterType? programmaticValue,
+        string? configValue,
+        ExemplarFilterType? expectedValue)
+    {
+        var configBuilder = new ConfigurationBuilder();
+        if (!string.IsNullOrEmpty(configValue))
+        {
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [MeterProviderSdk.ExemplarFilterConfigKey] = configValue,
+            });
+        }
+
+        using var container = this.BuildMeterProvider(out var meterProvider, b =>
+        {
+            b.ConfigureServices(
+                s => s.AddSingleton<IConfiguration>(configBuilder.Build()));
+
+            if (programmaticValue.HasValue)
+            {
+                b.SetExemplarFilter(programmaticValue.Value);
+            }
+        });
+
+        var meterProviderSdk = meterProvider as MeterProviderSdk;
+
+        Assert.NotNull(meterProviderSdk);
+        Assert.Equal(expectedValue, meterProviderSdk.ExemplarFilter);
+    }
 
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
