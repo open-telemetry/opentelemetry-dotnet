@@ -24,7 +24,7 @@ public abstract partial class MetricReader
     private int metricIndex = -1;
     private bool emitOverflowAttribute;
 
-    private ExemplarFilter? exemplarFilter;
+    private ExemplarFilterType? exemplarFilter;
 
     internal static void DeactivateMetric(Metric metric)
     {
@@ -171,7 +171,7 @@ public abstract partial class MetricReader
     internal void ApplyParentProviderSettings(
         int metricLimit,
         int cardinalityLimit,
-        ExemplarFilter? exemplarFilter,
+        ExemplarFilterType? exemplarFilter,
         bool isEmitOverflowAttributeKeySet)
     {
         this.metricLimit = metricLimit;

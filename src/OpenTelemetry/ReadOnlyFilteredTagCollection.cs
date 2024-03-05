@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 using System.Diagnostics;
 #if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
@@ -25,12 +28,20 @@ internal
 #endif
     readonly struct ReadOnlyFilteredTagCollection
 {
+#if NET8_0_OR_GREATER
+    private readonly FrozenSet<string>? excludedKeys;
+#else
     private readonly HashSet<string>? excludedKeys;
+#endif
     private readonly KeyValuePair<string, object?>[] tags;
     private readonly int count;
 
     internal ReadOnlyFilteredTagCollection(
+#if NET8_0_OR_GREATER
+        FrozenSet<string>? excludedKeys,
+#else
         HashSet<string>? excludedKeys,
+#endif
         KeyValuePair<string, object?>[] tags,
         int count)
     {
