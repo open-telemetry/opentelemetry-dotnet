@@ -70,6 +70,13 @@
   Specification](https://github.com/open-telemetry/opentelemetry-specification/pull/3820).
   ([#5404](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5404))
 
+* **Experimental (pre-release builds only):** The `ExemplarFilter` used by SDK
+  `MeterProvider`s can now be controlled via the `OTEL_METRICS_EXEMPLAR_FILTER`
+  environment variable. The supported values are: `always_off`, `always_on`, and
+  `trace_based`. For details see: [OpenTelemetry Environment Variable
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#exemplar).
+  ([#5412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5412))
+
 ## 1.7.0
 
 Released 2023-Dec-08
