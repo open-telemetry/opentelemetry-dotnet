@@ -5,6 +5,8 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -13,6 +15,45 @@ namespace OpenTelemetry.Metrics.Tests;
 public class MetricExemplarTests : MetricTestsBase
 {
     private const int MaxTimeToAllowForFlush = 10000;
+    private static readonly Func<bool> IsExemplarApiExposed = () => typeof(ExemplarFilterType).IsVisible;
+
+    [SkipUnlessTrueTheory(typeof(MetricExemplarTests), nameof(IsExemplarApiExposed), "ExemplarFilter config tests skipped for stable builds")]
+    [InlineData(null, null, null)]
+    [InlineData(null, "always_off", (int)ExemplarFilterType.AlwaysOff)]
+    [InlineData(null, "ALWays_ON", (int)ExemplarFilterType.AlwaysOn)]
+    [InlineData(null, "trace_based", (int)ExemplarFilterType.TraceBased)]
+    [InlineData(null, "invalid", null)]
+    [InlineData((int)ExemplarFilterType.AlwaysOn, "trace_based", (int)ExemplarFilterType.AlwaysOn)]
+    public void TestExemplarFilterSetFromConfiguration(
+        int? programmaticValue,
+        string? configValue,
+        int? expectedValue)
+    {
+        var configBuilder = new ConfigurationBuilder();
+        if (!string.IsNullOrEmpty(configValue))
+        {
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [MeterProviderSdk.ExemplarFilterConfigKey] = configValue,
+            });
+        }
+
+        using var container = this.BuildMeterProvider(out var meterProvider, b =>
+        {
+            b.ConfigureServices(
+                s => s.AddSingleton<IConfiguration>(configBuilder.Build()));
+
+            if (programmaticValue.HasValue)
+            {
+                b.SetExemplarFilter(((ExemplarFilterType?)programmaticValue).Value);
+            }
+        });
+
+        var meterProviderSdk = meterProvider as MeterProviderSdk;
+
+        Assert.NotNull(meterProviderSdk);
+        Assert.Equal((ExemplarFilterType?)expectedValue, meterProviderSdk.ExemplarFilter);
+    }
 
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
