@@ -49,7 +49,7 @@ public sealed class Metric
         int cardinalityLimit,
         bool emitOverflowAttribute,
         bool shouldReclaimUnusedMetricPoints,
-        ExemplarFilter? exemplarFilter = null,
+        ExemplarFilterType? exemplarFilter = null,
         Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
     {
         this.InstrumentIdentity = instrumentIdentity;
