@@ -23,8 +23,8 @@ public abstract partial class MetricReader
     private Metric[]? metricsCurrentBatch;
     private int metricIndex = -1;
     private bool emitOverflowAttribute;
-
-    private ExemplarFilter? exemplarFilter;
+    private bool reclaimUnusedMetricPoints;
+    private ExemplarFilterType? exemplarFilter;
 
     internal static void DeactivateMetric(Metric metric)
     {
@@ -72,8 +72,7 @@ public abstract partial class MetricReader
                 Metric? metric = null;
                 try
                 {
-                    bool shouldReclaimUnusedMetricPoints = this.parentProvider is MeterProviderSdk meterProviderSdk && meterProviderSdk.ShouldReclaimUnusedMetricPoints;
-                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.cardinalityLimit, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
+                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.cardinalityLimit, this.emitOverflowAttribute, this.reclaimUnusedMetricPoints, this.exemplarFilter);
                 }
                 catch (NotSupportedException nse)
                 {
@@ -145,14 +144,12 @@ public abstract partial class MetricReader
                 }
                 else
                 {
-                    bool shouldReclaimUnusedMetricPoints = this.parentProvider is MeterProviderSdk meterProviderSdk && meterProviderSdk.ShouldReclaimUnusedMetricPoints;
-
                     Metric metric = new(
                         metricStreamIdentity,
                         this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
                         metricStreamConfig?.CardinalityLimit ?? this.cardinalityLimit,
                         this.emitOverflowAttribute,
-                        shouldReclaimUnusedMetricPoints,
+                        this.reclaimUnusedMetricPoints,
                         this.exemplarFilter,
                         metricStreamConfig?.ExemplarReservoirFactory);
 
@@ -171,15 +168,17 @@ public abstract partial class MetricReader
     internal void ApplyParentProviderSettings(
         int metricLimit,
         int cardinalityLimit,
-        ExemplarFilter? exemplarFilter,
-        bool isEmitOverflowAttributeKeySet)
+        bool emitOverflowAttribute,
+        bool reclaimUnusedMetricPoints,
+        ExemplarFilterType? exemplarFilter)
     {
         this.metricLimit = metricLimit;
         this.metrics = new Metric[metricLimit];
         this.metricsCurrentBatch = new Metric[metricLimit];
         this.cardinalityLimit = cardinalityLimit;
+        this.emitOverflowAttribute = emitOverflowAttribute;
+        this.reclaimUnusedMetricPoints = reclaimUnusedMetricPoints;
         this.exemplarFilter = exemplarFilter;
-        this.emitOverflowAttribute = isEmitOverflowAttributeKeySet;
     }
 
     private bool TryGetExistingMetric(in MetricStreamIdentity metricStreamIdentity, [NotNullWhen(true)] out Metric? existingMetric)
