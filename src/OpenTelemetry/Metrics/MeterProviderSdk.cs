@@ -15,7 +15,7 @@ internal sealed class MeterProviderSdk : MeterProvider
 {
     internal const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
     internal const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
-    internal const string ExemplarFilterConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER";
+    internal const string ExemplarFilterConfigKey = "OTEL_METRICS_EXEMPLAR_FILTER";
 
     internal readonly IServiceProvider ServiceProvider;
     internal readonly IDisposable? OwnedServiceProvider;
@@ -490,6 +490,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Reclaim unused metric point feature enabled via configuration.");
         }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
         if (configuration.TryGetStringValue(ExemplarFilterConfigKey, out var configValue))
         {
             if (this.ExemplarFilter.HasValue)
@@ -522,5 +523,6 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exemplar filter set to '{exemplarFilter}' from configuration.");
         }
+#endif
     }
 }

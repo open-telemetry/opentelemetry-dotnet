@@ -15,8 +15,9 @@ namespace OpenTelemetry.Metrics.Tests;
 public class MetricExemplarTests : MetricTestsBase
 {
     private const int MaxTimeToAllowForFlush = 10000;
+    private static readonly Func<bool> IsExemplarApiExposed = () => typeof(ExemplarFilterType).IsVisible;
 
-    [Theory]
+    [SkipUnlessTrueTheory(typeof(MetricExemplarTests), nameof(IsExemplarApiExposed), "ExemplarFilter config tests skipped for stable builds")]
     [InlineData(null, null, null)]
     [InlineData(null, "always_off", (int)ExemplarFilterType.AlwaysOff)]
     [InlineData(null, "ALWays_ON", (int)ExemplarFilterType.AlwaysOn)]
