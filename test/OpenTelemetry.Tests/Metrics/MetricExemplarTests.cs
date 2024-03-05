@@ -18,15 +18,15 @@ public class MetricExemplarTests : MetricTestsBase
 
     [Theory]
     [InlineData(null, null, null)]
-    [InlineData(null, "always_off", ExemplarFilterType.AlwaysOff)]
-    [InlineData(null, "ALWays_ON", ExemplarFilterType.AlwaysOn)]
-    [InlineData(null, "trace_based", ExemplarFilterType.TraceBased)]
+    [InlineData(null, "always_off", (int)ExemplarFilterType.AlwaysOff)]
+    [InlineData(null, "ALWays_ON", (int)ExemplarFilterType.AlwaysOn)]
+    [InlineData(null, "trace_based", (int)ExemplarFilterType.TraceBased)]
     [InlineData(null, "invalid", null)]
-    [InlineData(ExemplarFilterType.AlwaysOn, "trace_based", ExemplarFilterType.AlwaysOn)]
+    [InlineData((int)ExemplarFilterType.AlwaysOn, "trace_based", (int)ExemplarFilterType.AlwaysOn)]
     public void TestExemplarFilterSetFromConfiguration(
-        ExemplarFilterType? programmaticValue,
+        int? programmaticValue,
         string? configValue,
-        ExemplarFilterType? expectedValue)
+        int? expectedValue)
     {
         var configBuilder = new ConfigurationBuilder();
         if (!string.IsNullOrEmpty(configValue))
@@ -44,14 +44,14 @@ public class MetricExemplarTests : MetricTestsBase
 
             if (programmaticValue.HasValue)
             {
-                b.SetExemplarFilter(programmaticValue.Value);
+                b.SetExemplarFilter(((ExemplarFilterType?)programmaticValue).Value);
             }
         });
 
         var meterProviderSdk = meterProvider as MeterProviderSdk;
 
         Assert.NotNull(meterProviderSdk);
-        Assert.Equal(expectedValue, meterProviderSdk.ExemplarFilter);
+        Assert.Equal((ExemplarFilterType?)expectedValue, meterProviderSdk.ExemplarFilter);
     }
 
     [Theory]
