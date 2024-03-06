@@ -174,7 +174,17 @@ internal sealed class PrometheusCollectionManager
         {
             if (this.exporter.OpenMetricsRequested)
             {
-                cursor = PrometheusSerializer.WriteTargetInfo(this.buffer, cursor, this.exporter.Resource);
+                try
+                {
+                    cursor = PrometheusSerializer.WriteTargetInfo(this.buffer, cursor, this.exporter.Resource);
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    if (!this.IncreaseBufferSize())
+                    {
+                        throw;
+                    }
+                }
 
                 this.scopes.Clear();
 
