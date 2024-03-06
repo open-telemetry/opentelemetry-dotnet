@@ -131,7 +131,10 @@ internal
             this.SpanId = default;
         }
 
-        this.StoreRawTags(measurement.Tags);
+        if (this.ViewDefinedTagKeys != null)
+        {
+            this.StoreRawTags(measurement.Tags);
+        }
     }
 
     internal void Reset()

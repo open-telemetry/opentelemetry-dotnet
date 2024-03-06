@@ -959,7 +959,7 @@ internal sealed class AggregatorStore
     {
         var index = this.FindMetricAggregatorsDefault(tags);
 
-        this.UpdateLongMetricPoint(index, value, tags: default);
+        this.UpdateLongMetricPoint(index, value, tags);
     }
 
     private void UpdateLongCustomTags(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
@@ -1014,7 +1014,7 @@ internal sealed class AggregatorStore
     {
         var index = this.FindMetricAggregatorsDefault(tags);
 
-        this.UpdateDoubleMetricPoint(index, value, tags: default);
+        this.UpdateDoubleMetricPoint(index, value, tags);
     }
 
     private void UpdateDoubleCustomTags(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
