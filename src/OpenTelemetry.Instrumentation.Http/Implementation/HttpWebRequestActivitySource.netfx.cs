@@ -103,10 +103,7 @@ internal static class HttpWebRequestActivitySource
             RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
-            if (!request.RequestUri.IsDefaultPort)
-            {
-                activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
-            }
+            activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
 
             activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
 
@@ -429,15 +426,12 @@ internal static class HttpWebRequestActivitySource
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
 
             tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
+            tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
+
             tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
             if (protocolVersion != null)
             {
                 tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(protocolVersion));
-            }
-
-            if (!request.RequestUri.IsDefaultPort)
-            {
-                tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
             }
 
             if (httpStatusCode.HasValue)
