@@ -28,7 +28,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("testCounter"))
@@ -153,7 +153,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = temporality;
@@ -237,7 +237,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("histogramWithBucketsAndMinMax"))
@@ -367,7 +367,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("histogramWithoutBucketsAndMinMax"))
@@ -495,7 +495,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("exponentialHistogramWithMinMax"))
@@ -601,6 +601,53 @@ public class MetricExemplarTests : MetricTestsBase
         }
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TestTraceBasedExemplarFilter(bool enableTracing)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+
+        var counter = meter.CreateCounter<long>("testCounter");
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.TraceBased)
+            .AddInMemoryExporter(exportedItems));
+
+        if (enableTracing)
+        {
+            using var act = new Activity("test").Start();
+            act.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            counter.Add(18);
+        }
+        else
+        {
+            counter.Add(18);
+        }
+
+        meterProvider.ForceFlush();
+
+        Assert.Single(exportedItems);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+
+        Assert.NotNull(metricPoint);
+
+        var exemplars = GetExemplars(metricPoint.Value);
+
+        if (enableTracing)
+        {
+            Assert.Single(exemplars);
+        }
+        else
+        {
+            Assert.Empty(exemplars);
+        }
+    }
+
     [Fact]
     public void TestExemplarsFilterTags()
     {
@@ -612,7 +659,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(histogram.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "key1" } })
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {

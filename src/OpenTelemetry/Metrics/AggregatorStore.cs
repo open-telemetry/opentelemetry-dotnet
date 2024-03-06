@@ -996,7 +996,7 @@ internal sealed class AggregatorStore
             if (this.IsExemplarEnabled())
             {
                 var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
+                this.metricPoints[index].UpdateWithExemplar(value, tags, shouldSample);
             }
             else
             {
@@ -1084,7 +1084,7 @@ internal sealed class AggregatorStore
             if (this.IsExemplarEnabled())
             {
                 var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
+                this.metricPoints[index].UpdateWithExemplar(value, tags, shouldSample);
             }
             else
             {

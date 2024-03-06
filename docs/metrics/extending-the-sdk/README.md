@@ -74,44 +74,7 @@ Not supported.
 
 ## ExemplarFilter
 
-OpenTelemetry .NET SDK has provided the following built-in `ExemplarFilter`s:
-
-* [AlwaysOnExemplarFilter](../../../src/OpenTelemetry/Metrics/Exemplar/AlwaysOnExemplarFilter.cs)
-* [AlwaysOffExemplarFilter](../../../src/OpenTelemetry/Metrics/Exemplar/AlwaysOffExemplarFilter.cs)
-* [TraceBasedExemplarFilter](../../../src/OpenTelemetry/Metrics/Exemplar/TraceBasedExemplarFilter.cs)
-
-Custom exemplar filters can be implemented to achieve filtering based on other criterion:
-
-* `ExemplarFilter` should derive from `OpenTelemetry.ExemplarFilter` (which
-  belongs to the [OpenTelemetry](../../../src/OpenTelemetry/README.md) package)
-  and implement the `ShouldSample` method.
-
-One example is a filter, which filters all measurements of value lower
-than given threshold is given below. Such a filter prevents any measurements
-below the given threshold from ever becoming a `Exemplar`. Such filters could
-also incorporate the `TraceBasedExemplarFilter` condition as well, as storing
-exemplars for non-sampled traces may be undesired.
-
-```csharp
-public sealed class HighValueFilter : ExemplarFilter
-{
-    private readonly double maxValue;
-
-    public HighValueFilter(double maxValue)
-    {
-        this.maxValue = maxValue;
-    }
-    public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-    {
-        return Activity.Current?.Recorded && value > this.maxValue;
-    }
-
-    public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-    {
-        return Activity.Current?.Recorded && value > this.maxValue;
-    }
-}
-```
+Not supported.
 
 ## ExemplarReservoir
 
