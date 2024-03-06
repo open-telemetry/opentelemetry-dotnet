@@ -28,7 +28,7 @@ public abstract class BaseProcessor<T> : IDisposable
     public BaseProvider? ParentProvider { get; private set; }
 
     /// <summary>
-    /// Gets the weight of the processor. Default value: 0.
+    /// Gets or sets the weight of the processor. Default value: 0.
     /// </summary>
     /// <remarks>
     /// Note: Weight is used to order processors when building a provider

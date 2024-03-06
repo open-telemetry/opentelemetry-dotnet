@@ -181,6 +181,8 @@ public static class OtlpMetricExporterExtensions
         IServiceProvider serviceProvider,
         Func<BaseExporter<Metric>, BaseExporter<Metric>>? configureExporterInstance = null)
     {
+        serviceProvider.EnsureNoUseOtlpExporterRegistrations();
+
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
         BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions);

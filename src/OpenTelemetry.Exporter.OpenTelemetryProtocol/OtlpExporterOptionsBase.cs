@@ -14,6 +14,10 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter;
 
+/// <summary>
+/// Base class for OpenTelemetry Protocol (OTLP) exporter options shared by all
+/// signals.
+/// </summary>
 public class OtlpExporterOptionsBase
 {
     internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
@@ -42,7 +46,7 @@ public class OtlpExporterOptionsBase
         if (signal == OtlpExporterSignals.None)
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration,
+                configuration!,
                 EndpointEnvVarName,
                 ProtocolEnvVarName,
                 HeadersEnvVarName,
@@ -52,7 +56,7 @@ public class OtlpExporterOptionsBase
         if (signal.HasFlag(OtlpExporterSignals.Logs))
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration,
+                configuration!,
                 "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT",
                 "OTEL_EXPORTER_OTLP_LOGS_PROTOCOL",
                 "OTEL_EXPORTER_OTLP_LOGS_HEADERS",
@@ -62,7 +66,7 @@ public class OtlpExporterOptionsBase
         if (signal.HasFlag(OtlpExporterSignals.Metrics))
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration,
+                configuration!,
                 "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT",
                 "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL",
                 "OTEL_EXPORTER_OTLP_METRICS_HEADERS",
@@ -72,7 +76,7 @@ public class OtlpExporterOptionsBase
         if (signal.HasFlag(OtlpExporterSignals.Traces))
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration,
+                configuration!,
                 "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
                 "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL",
                 "OTEL_EXPORTER_OTLP_TRACES_HEADERS",

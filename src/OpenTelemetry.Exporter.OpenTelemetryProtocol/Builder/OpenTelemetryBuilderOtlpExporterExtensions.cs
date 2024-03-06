@@ -14,56 +14,94 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter;
 
+/// <summary>
+/// Contains extension methods to facilitate registration of the OpenTelemetry
+/// Protocol (OTLP) exporter into an <see cref="IOpenTelemetryBuilder"/>
+/// instance.
+/// </summary>
 public static class OpenTelemetryBuilderOtlpExporterExtensions
 {
-    public static IOpenTelemetryBuilder AddOtlpExporter(
+    /// <summary>
+    /// Uses OpenTelemetry Protocol (OTLP) exporter for all signals.
+    /// </summary>
+    /// <remarks>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>Calling this method automatically enables logging, metrics, and
+    /// tracing.</item>
+    /// <item>The exporter registered by this method will be added as the last
+    /// processor in the pipeline established for logging and tracing.</item>
+    /// <item>This method can only be called once. Subsequent calls will results
+    /// in a <see cref="NotSupportedException"/> being thrown.</item>
+    /// <item>This method cannot be called in addition to signal-specific
+    /// <c>AddOtlpExporter</c> methods. If this method is called signal-specific
+    /// <c>AddOtlpExporter</c> calls will result in a <see
+    /// cref="NotSupportedException"/> being thrown.</item>
+    /// </list>
+    /// </remarks>
+    /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
+    /// <returns>Supplied <see cref="IOpenTelemetryBuilder"/> for chaining calls.</returns>
+    public static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder)
-        => AddOtlpExporter(builder, name: null);
+        => UseOtlpExporter(builder, name: null);
 
-    public static IOpenTelemetryBuilder AddOtlpExporter(
+    /// <summary><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)"/></summary>
+    /// <remarks><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/remarks"/></remarks>
+    /// <returns><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/returns"/></returns>
+    /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
+    /// <param name="baseEndpoint">The base endpoint to use. A signal-specific
+    /// path will be appended to the base endpoint for each signal
+    /// automatically.</param>
+    public static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
-        Uri endpoint)
-        => AddOtlpExporter(builder, OtlpExportProtocol.Grpc, endpoint);
+        Uri baseEndpoint)
+        => UseOtlpExporter(builder, OtlpExportProtocol.Grpc, baseEndpoint);
 
-    public static IOpenTelemetryBuilder AddOtlpExporter(
+    /// <summary><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)"/></summary>
+    /// <remarks><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/remarks"/></remarks>
+    /// <returns><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/returns"/></returns>
+    /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
+    /// <param name="protocol"><see cref="OtlpExportProtocol"/>.</param>
+    /// <param name="baseEndpoint"><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder, Uri)" path="/param[@name='baseEndpoint']"/></param>
+    public static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         OtlpExportProtocol protocol,
-        Uri endpoint)
+        Uri baseEndpoint)
     {
-        Guard.ThrowIfNull(endpoint);
+        Guard.ThrowIfNull(baseEndpoint);
 
-        return AddOtlpExporter(builder, name: null, configure: otlpBuilder =>
+        return UseOtlpExporter(builder, name: null, configure: otlpBuilder =>
         {
             otlpBuilder.ConfigureDefaultExporterOptions(o =>
             {
                 o.Protocol = protocol;
-                if (endpoint != null)
+                if (baseEndpoint != null)
                 {
-                    o.Endpoint = endpoint;
+                    o.Endpoint = baseEndpoint;
                 }
             });
         });
     }
 
-    public static IOpenTelemetryBuilder AddOtlpExporter(
+    internal static IOpenTelemetryBuilder AddOtlpExporter(
         this IOpenTelemetryBuilder builder,
         Action<OtlpExporterBuilder> configure)
     {
         Guard.ThrowIfNull(configure);
 
-        return AddOtlpExporter(builder, name: null, configure: configure);
+        return UseOtlpExporter(builder, name: null, configure: configure);
     }
 
-    public static IOpenTelemetryBuilder AddOtlpExporter(
+    internal static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         IConfiguration configuration)
     {
         Guard.ThrowIfNull(configuration);
 
-        return AddOtlpExporter(builder, name: null, configuration: configuration);
+        return UseOtlpExporter(builder, name: null, configuration: configuration);
     }
 
-    public static IOpenTelemetryBuilder AddOtlpExporter(
+    internal static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         string? name = null,
         IConfiguration? configuration = null,
@@ -81,16 +119,25 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
         configure?.Invoke(otlpBuilder);
 
-        AddOtlpExporterInternal(builder, name, addToEndOfPipeline);
+        UseOtlpExporterInternal(builder, name, addToEndOfPipeline);
 
         return builder;
     }
 
-    private static void AddOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name, bool addToEndOfPipeline)
+    private static void UseOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name, bool addToEndOfPipeline)
     {
-        builder.Services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
-        builder.Services.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
-        builder.Services.RegisterOptionsFactory((sp, configuration, name) => new OtlpExporterBuilderOptions(
+        builder
+            .WithLogging()
+            .WithMetrics()
+            .WithTracing();
+
+        var services = builder.Services;
+
+        services.AddSingleton<UseOtlpExporterRegistration>();
+
+        services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+        services.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
+        services.RegisterOptionsFactory((sp, configuration, name) => new OtlpExporterBuilderOptions(
             configuration,
             sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue,
             sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().CurrentValue,
@@ -100,10 +147,10 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
         name ??= Options.DefaultName;
 
-        builder.Services.ConfigureOpenTelemetryLoggerProvider(
+        services.ConfigureOpenTelemetryLoggerProvider(
             (sp, logging) =>
             {
-                var builderOptions = GetBuilderOptions(sp, name);
+                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
 
                 if (!builderOptions.Signals.HasFlag(OtlpExporterSignals.Logs))
                 {
@@ -122,10 +169,10 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                 logging.AddProcessor(processor);
             });
 
-        builder.Services.ConfigureOpenTelemetryMeterProvider(
+        services.ConfigureOpenTelemetryMeterProvider(
             (sp, metrics) =>
             {
-                var builderOptions = GetBuilderOptions(sp, name);
+                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
 
                 if (!builderOptions.Signals.HasFlag(OtlpExporterSignals.Metrics))
                 {
@@ -139,10 +186,10 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                         sp));
             });
 
-        builder.Services.ConfigureOpenTelemetryTracerProvider(
+        services.ConfigureOpenTelemetryTracerProvider(
             (sp, tracing) =>
             {
-                var builderOptions = GetBuilderOptions(sp, name);
+                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
 
                 if (!builderOptions.Signals.HasFlag(OtlpExporterSignals.Traces))
                 {
@@ -163,8 +210,10 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                 tracing.AddProcessor(processor);
             });
 
-        static OtlpExporterBuilderOptions GetBuilderOptions(IServiceProvider sp, string name)
+        static OtlpExporterBuilderOptions GetBuilderOptionsAndValidateRegistrations(IServiceProvider sp, string name)
         {
+            sp.EnsureSingleUseOtlpExporterRegistration();
+
             return sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().Get(name);
         }
     }

@@ -13,7 +13,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter;
 
-public sealed class OtlpExporterBuilder
+internal sealed class OtlpExporterBuilder
 {
     private readonly string? name;
 
@@ -25,13 +25,13 @@ public sealed class OtlpExporterBuilder
         Debug.Assert(services != null, "services was null");
 
         this.name = name;
-        this.Services = services;
+        this.Services = services!;
 
         if (configuration != null)
         {
             Debug.Assert(!string.IsNullOrEmpty(name), "name was null or empty");
 
-            BindConfigurationToOptions(services, name!, configuration);
+            BindConfigurationToOptions(services!, name!, configuration);
         }
     }
 
@@ -143,15 +143,15 @@ public sealed class OtlpExporterBuilder
             }
         */
 
-        services.Configure<OtlpExporterBuilderOptions>(name, configuration);
+        services!.Configure<OtlpExporterBuilderOptions>(name, configuration!);
 
-        services.Configure<LogRecordExportProcessorOptions>(
-            name, configuration.GetSection(nameof(OtlpExporterBuilderOptions.LoggingOptions)));
+        services!.Configure<LogRecordExportProcessorOptions>(
+            name, configuration!.GetSection(nameof(OtlpExporterBuilderOptions.LoggingOptions)));
 
-        services.Configure<MetricReaderOptions>(
+        services!.Configure<MetricReaderOptions>(
             name, configuration.GetSection(nameof(OtlpExporterBuilderOptions.MetricsOptions)));
 
-        services.Configure<ActivityExportProcessorOptions>(
+        services!.Configure<ActivityExportProcessorOptions>(
             name, configuration.GetSection(nameof(OtlpExporterBuilderOptions.TracingOptions)));
     }
 }

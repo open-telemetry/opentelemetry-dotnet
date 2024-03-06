@@ -15,9 +15,12 @@ namespace OpenTelemetry.Exporter;
 
 /// <summary>
 /// OpenTelemetry Protocol (OTLP) exporter options.
-/// OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS, OTEL_EXPORTER_OTLP_TIMEOUT, OTEL_EXPORTER_OTLP_PROTOCOL
-/// environment variables are parsed during object construction.
 /// </summary>
+/// <remarks>
+/// Note: OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS,
+/// OTEL_EXPORTER_OTLP_TIMEOUT, and OTEL_EXPORTER_OTLP_PROTOCOL environment
+/// variables are parsed during object construction.
+/// </remarks>
 public class OtlpExporterOptions : OtlpExporterOptionsBase
 {
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
@@ -42,7 +45,7 @@ public class OtlpExporterOptions : OtlpExporterOptionsBase
     {
         Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
 
-        this.BatchExportProcessorOptions = defaultBatchOptions;
+        this.BatchExportProcessorOptions = defaultBatchOptions!;
     }
 
     /// <summary>

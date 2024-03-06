@@ -349,13 +349,13 @@ public static class OtlpLogExporterHelperExtensions
         ExperimentalOptions experimentalOptions,
         Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
     {
-        // Note: sp is not currently used by this method but it should be used
-        // at some point for IHttpClientFactory integration.
         Debug.Assert(sp != null, "sp was null");
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(processorOptions != null, "processorOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
+
+        sp.EnsureNoUseOtlpExporterRegistrations();
 
         /*
          * Note:
