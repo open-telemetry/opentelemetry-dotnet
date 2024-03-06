@@ -1,8 +1,6 @@
 Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions
 Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions
-OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.AllowedResourceAttributesFilter.get -> System.Predicate<string>
-OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.AllowedResourceAttributesFilter.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTotalNameSuffixForCounters.get -> bool
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTotalNameSuffixForCounters.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.PrometheusAspNetCoreOptions() -> void

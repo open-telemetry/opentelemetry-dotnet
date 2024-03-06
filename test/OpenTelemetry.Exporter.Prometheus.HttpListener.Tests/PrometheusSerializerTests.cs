@@ -4,7 +4,6 @@
 using System.Diagnostics.Metrics;
 using System.Text;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -528,36 +527,6 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void SumWithResourceAttributes()
-    {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
-
-        var resource = ResourceBuilder.CreateEmpty().AddService("my_service");
-
-        using var meter = new Meter(Utils.GetCurrentMethodName());
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(metrics)
-            .SetResourceBuilder(resource)
-            .Build();
-
-        var counter = meter.CreateUpDownCounter<double>("test_updown_counter");
-        counter.Add(10);
-        counter.Add(-11);
-
-        provider.ForceFlush();
-
-        var cursor = WriteMetric(buffer, 0, metrics[0], true, new PrometheusResourceTagCollection(resource.Build(), s => s == "service.name"));
-        Assert.Matches(
-            ("^"
-             + "# TYPE test_updown_counter gauge\n"
-             + $"test_updown_counter{{service_name='my_service',otel_scope_name='{Utils.GetCurrentMethodName()}'}} -1 \\d+\\.\\d{{3}}\n"
-             + "$").Replace('\'', '"'),
-            Encoding.UTF8.GetString(buffer, 0, cursor));
-    }
-
-    [Fact]
     public void HistogramOneDimensionWithOpenMetricsFormat()
     {
         var buffer = new byte[85000];
@@ -684,8 +653,8 @@ public sealed class PrometheusSerializerTests
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false, PrometheusResourceTagCollection resourceTags = default)
+    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false)
     {
-        return PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false), resourceTags, useOpenMetrics);
+        return PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false), useOpenMetrics);
     }
 }

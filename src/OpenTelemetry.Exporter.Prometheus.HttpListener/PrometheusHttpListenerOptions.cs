@@ -41,9 +41,4 @@ public class PrometheusHttpListenerOptions
             this.uriPrefixes = value;
         }
     }
-
-    /// <summary>
-    /// Gets or sets the allowed resource attributes filter. Default value: null (no attributes allowed).
-    /// </summary>
-    public Predicate<string> AllowedResourceAttributesFilter { get; set; } = null;
 }

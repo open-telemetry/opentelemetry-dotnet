@@ -30,11 +30,6 @@ internal sealed class PrometheusExporterOptions
     }
 
     /// <summary>
-    /// Gets or sets the allowed resource attributes filter. Default value: null (no attributes allowed).
-    /// </summary>
-    public Predicate<string> AllowedResourceAttributesFilter { get; set; } = null;
-
-    /// <summary>
     /// Gets or sets a value indicating whether addition of _total suffix for counter metric names is disabled. Default value: <see langword="false"/>.
     /// </summary>
     public bool DisableTotalNameSuffixForCounters { get; set; }

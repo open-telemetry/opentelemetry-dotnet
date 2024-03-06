@@ -172,8 +172,6 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
-            var resourceTags = new PrometheusResourceTagCollection(this.exporter.Resource, this.exporter.AllowedResourceAttributesFilter);
-
             if (this.exporter.OpenMetricsRequested)
             {
                 cursor = PrometheusSerializer.WriteTargetInfo(this.buffer, cursor, this.exporter.Resource);
@@ -226,7 +224,6 @@ internal sealed class PrometheusCollectionManager
                             cursor,
                             metric,
                             this.GetPrometheusMetric(metric),
-                            resourceTags,
                             this.exporter.OpenMetricsRequested);
 
                         break;
