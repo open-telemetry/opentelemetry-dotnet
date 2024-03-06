@@ -23,19 +23,13 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
 #else
         // When running on netstandard or similar the Marshal class is not a part of the netstandard API
         // but it would still most likely be available in the underlying framework, so use reflection to retrieve it.
-        try
-        {
-            var flags = BindingFlags.Static | BindingFlags.Public;
-            var method = typeof(Marshal).GetMethod("GetExceptionPointers", flags, null, Type.EmptyTypes, null)
-                ?? throw new InvalidOperationException("Marshal.GetExceptionPointers method could not be resolved reflectively.");
-            var lambda = Expression.Lambda<Func<IntPtr>>(Expression.Call(method));
-            this.fnGetExceptionPointers = lambda.Compile();
-        }
-        catch (Exception ex)
-        {
-            throw new NotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported", ex);
-        }
+        var flags = BindingFlags.Static | BindingFlags.Public;
+        var method = typeof(Marshal).GetMethod("GetExceptionPointers", flags, null, Type.EmptyTypes, null)
+            ?? throw new InvalidOperationException("Marshal.GetExceptionPointers method could not be resolved reflectively.");
+        var lambda = Expression.Lambda<Func<IntPtr>>(Expression.Call(method));
+        this.fnGetExceptionPointers = lambda.Compile();
 #endif
+        this.fnGetExceptionPointers(); // attempt to access pointers to test for platform support
     }
 
     /// <inheritdoc />
