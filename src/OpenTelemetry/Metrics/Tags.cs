@@ -1,8 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET6_0_OR_GREATER
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+#if NET6_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
 
@@ -16,31 +17,8 @@ internal readonly struct Tags : IEquatable<Tags>
 
     public Tags(KeyValuePair<string, object?>[] keyValuePairs)
     {
-#if NET6_0_OR_GREATER
-        HashCode hashCode = default;
-        for (int i = 0; i < keyValuePairs.Length; i++)
-        {
-            ref var item = ref keyValuePairs[i];
-            hashCode.Add(item.Key, StringComparer.OrdinalIgnoreCase);
-            hashCode.Add(item.Value);
-        }
-
-        var hash = hashCode.ToHashCode();
-#else
-        var hash = 17;
-        for (int i = 0; i < keyValuePairs.Length; i++)
-        {
-            ref var item = ref keyValuePairs[i];
-            unchecked
-            {
-                hash = (hash * 31) + StringComparer.OrdinalIgnoreCase.GetHashCode(item.Key);
-                hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
-            }
-        }
-#endif
-
-        this.hashCode = hash;
         this.KeyValuePairs = keyValuePairs;
+        this.hashCode = ComputeHashCode(keyValuePairs);
     }
 
     public readonly KeyValuePair<string, object?>[] KeyValuePairs { get; }
@@ -68,26 +46,33 @@ internal readonly struct Tags : IEquatable<Tags>
         // Note: This loop uses unsafe code (pointers) to elide bounds checks on
         // two arrays we know to be of equal length.
         var cursor = ourKvps.Length;
-        ref var ours = ref MemoryMarshal.GetArrayDataReference(ourKvps);
-        ref var theirs = ref MemoryMarshal.GetArrayDataReference(theirKvps);
-        do
+        if (cursor > 0)
         {
-            // Equality check for Keys
-            if (!StringComparer.OrdinalIgnoreCase.Equals(ours.Key, theirs.Key))
+            ref var ours = ref MemoryMarshal.GetArrayDataReference(ourKvps);
+            ref var theirs = ref MemoryMarshal.GetArrayDataReference(theirKvps);
+            while (true)
             {
-                return false;
-            }
+                // Equality check for Keys
+                if (!StringComparer.OrdinalIgnoreCase.Equals(ours.Key, theirs.Key))
+                {
+                    return false;
+                }
 
-            // Equality check for Values
-            if (!ours.Value?.Equals(theirs.Value) ?? theirs.Value != null)
-            {
-                return false;
-            }
+                // Equality check for Values
+                if (!ours.Value?.Equals(theirs.Value) ?? theirs.Value != null)
+                {
+                    return false;
+                }
 
-            ours = ref Unsafe.Add(ref ours, 1);
-            theirs = ref Unsafe.Add(ref theirs, 1);
+                if (--cursor == 0)
+                {
+                    break;
+                }
+
+                ours = ref Unsafe.Add(ref ours, 1);
+                theirs = ref Unsafe.Add(ref theirs, 1);
+            }
         }
-        while (--cursor > 0);
 #else
         for (int i = 0; i < ourKvps.Length; i++)
         {
@@ -114,4 +99,37 @@ internal readonly struct Tags : IEquatable<Tags>
     }
 
     public override readonly int GetHashCode() => this.hashCode;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int ComputeHashCode(KeyValuePair<string, object?>[] keyValuePairs)
+    {
+        Debug.Assert(keyValuePairs != null, "keyValuePairs was null");
+
+#if NET6_0_OR_GREATER
+        HashCode hashCode = default;
+
+        for (int i = 0; i < keyValuePairs.Length; i++)
+        {
+            ref var item = ref keyValuePairs[i];
+            hashCode.Add(StringComparer.OrdinalIgnoreCase.GetHashCode(item.Key));
+            hashCode.Add(item.Value);
+        }
+
+        return hashCode.ToHashCode();
+#else
+        var hash = 17;
+
+        for (int i = 0; i < keyValuePairs!.Length; i++)
+        {
+            ref var item = ref keyValuePairs[i];
+            unchecked
+            {
+                hash = (hash * 31) + StringComparer.OrdinalIgnoreCase.GetHashCode(item.Key);
+                hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
+            }
+        }
+
+        return hash;
+#endif
+    }
 }
