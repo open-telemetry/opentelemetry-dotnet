@@ -155,9 +155,7 @@ public class PrometheusHttpListenerTests
             });
     }
 
-    private async Task RunPrometheusExporterHttpServerIntegrationTest(
-        bool skipMetrics = false,
-        string acceptHeader = "application/openmetrics-text")
+    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text")
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
 
