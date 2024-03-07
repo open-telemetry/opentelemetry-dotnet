@@ -27,9 +27,9 @@ namespace OpenTelemetry.Exporter;
 public class OtlpExporterOptions : IOtlpExporterOptions
 {
     internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
-    internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
     internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
     internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
+    internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
 
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
@@ -39,10 +39,10 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
     internal bool ProgrammaticallyModifiedEndpoint;
 
-    private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
     private const string DefaultGrpcEndpoint = "http://localhost:4317";
     private const string DefaultHttpEndpoint = "http://localhost:4318";
     private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
+    private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
 
     private OtlpExportProtocol? protocol;
     private Uri? endpoint;
