@@ -74,7 +74,7 @@ public class OtlpExporterOptionsTests : IDisposable
             .AddInMemoryCollection(values)
             .Build();
 
-        var options = new OtlpExporterOptions(configuration, new());
+        var options = new OtlpExporterOptions(configuration, OtlpExporterSignals.None, new());
 
         Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
         Assert.Equal("A=2,B=3", options.Headers);

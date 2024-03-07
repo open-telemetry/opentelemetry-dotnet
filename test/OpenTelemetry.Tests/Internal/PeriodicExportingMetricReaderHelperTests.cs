@@ -109,10 +109,10 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
             .AddInMemoryCollection(values)
             .Build();
 
-        var options = new MetricReaderOptions(configuration);
+        var options = new PeriodicExportingMetricReaderOptions(configuration);
 
-        Assert.Equal(18, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
-        Assert.Equal(19, options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds);
+        Assert.Equal(18, options.ExportIntervalMilliseconds);
+        Assert.Equal(19, options.ExportTimeoutMilliseconds);
     }
 
     [Fact]

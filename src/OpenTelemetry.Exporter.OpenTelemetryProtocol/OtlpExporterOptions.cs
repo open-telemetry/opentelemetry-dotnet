@@ -26,10 +26,11 @@ namespace OpenTelemetry.Exporter;
 /// </remarks>
 public class OtlpExporterOptions : IOtlpExporterOptions
 {
-    internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
-    internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
-    internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
-    internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
+    // TODO: Remove these and use OtlpExporterSpecEnvVarKeyDefinitions directly from tests in a follow-up PR
+    internal const string EndpointEnvVarName = OtlpExporterSpecEnvVarKeyDefinitions.DefaultEndpointEnvVarName;
+    internal const string HeadersEnvVarName = OtlpExporterSpecEnvVarKeyDefinitions.DefaultHeadersEnvVarName;
+    internal const string TimeoutEnvVarName = OtlpExporterSpecEnvVarKeyDefinitions.DefaultTimeoutEnvVarName;
+    internal const string ProtocolEnvVarName = OtlpExporterSpecEnvVarKeyDefinitions.DefaultProtocolEnvVarName;
 
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
@@ -37,7 +38,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     };
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
-    internal bool ProgrammaticallyModifiedEndpoint;
+    internal bool AppendSignalPathToEndpoint = true;
 
     private const string DefaultGrpcEndpoint = "http://localhost:4317";
     private const string DefaultHttpEndpoint = "http://localhost:4318";
@@ -72,40 +73,44 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
                 configuration!,
-                EndpointEnvVarName,
-                ProtocolEnvVarName,
-                HeadersEnvVarName,
-                TimeoutEnvVarName);
+                OtlpExporterSpecEnvVarKeyDefinitions.DefaultEndpointEnvVarName,
+                appendSignalPathToEndpoint: true,
+                OtlpExporterSpecEnvVarKeyDefinitions.DefaultProtocolEnvVarName,
+                OtlpExporterSpecEnvVarKeyDefinitions.DefaultHeadersEnvVarName,
+                OtlpExporterSpecEnvVarKeyDefinitions.DefaultTimeoutEnvVarName);
         }
 
         if (signal.HasFlag(OtlpExporterSignals.Logs))
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
                 configuration!,
-                "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT",
-                "OTEL_EXPORTER_OTLP_LOGS_PROTOCOL",
-                "OTEL_EXPORTER_OTLP_LOGS_HEADERS",
-                "OTEL_EXPORTER_OTLP_LOGS_TIMEOUT");
+                OtlpExporterSpecEnvVarKeyDefinitions.LogsEndpointEnvVarName,
+                appendSignalPathToEndpoint: false,
+                OtlpExporterSpecEnvVarKeyDefinitions.LogsProtocolEnvVarName,
+                OtlpExporterSpecEnvVarKeyDefinitions.LogsHeadersEnvVarName,
+                OtlpExporterSpecEnvVarKeyDefinitions.LogsTimeoutEnvVarName);
         }
 
         if (signal.HasFlag(OtlpExporterSignals.Metrics))
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
                 configuration!,
-                "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT",
-                "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL",
-                "OTEL_EXPORTER_OTLP_METRICS_HEADERS",
-                "OTEL_EXPORTER_OTLP_METRICS_TIMEOUT");
+                OtlpExporterSpecEnvVarKeyDefinitions.MetricsEndpointEnvVarName,
+                appendSignalPathToEndpoint: false,
+                OtlpExporterSpecEnvVarKeyDefinitions.MetricsProtocolEnvVarName,
+                OtlpExporterSpecEnvVarKeyDefinitions.MetricsHeadersEnvVarName,
+                OtlpExporterSpecEnvVarKeyDefinitions.MetricsTimeoutEnvVarName);
         }
 
         if (signal.HasFlag(OtlpExporterSignals.Traces))
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
                 configuration!,
-                "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
-                "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL",
-                "OTEL_EXPORTER_OTLP_TRACES_HEADERS",
-                "OTEL_EXPORTER_OTLP_TRACES_TIMEOUT");
+                OtlpExporterSpecEnvVarKeyDefinitions.TracesEndpointEnvVarName,
+                appendSignalPathToEndpoint: false,
+                OtlpExporterSpecEnvVarKeyDefinitions.TracesProtocolEnvVarName,
+                OtlpExporterSpecEnvVarKeyDefinitions.TracesHeadersEnvVarName,
+                OtlpExporterSpecEnvVarKeyDefinitions.TracesTimeoutEnvVarName);
         }
 
         this.DefaultHttpClientFactory = () =>
@@ -144,7 +149,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         set
         {
             this.endpoint = value;
-            this.ProgrammaticallyModifiedEndpoint = true;
+            this.AppendSignalPathToEndpoint = false;
         }
     }
 
@@ -205,7 +210,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.endpoint ??= defaultExporterOptions.endpoint;
 
-        // Note: We don't set ProgrammaticallyModifiedEndpoint because we
+        // Note: We leave AppendSignalPathToEndpoint set to true here because we
         // want to append the signal if the endpoint came from the default
         // endpoint.
 
@@ -235,6 +240,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     private void ApplyConfigurationUsingSpecificationEnvVars(
         IConfiguration configuration,
         string endpointEnvVarKey,
+        bool appendSignalPathToEndpoint,
         string protocolEnvVarKey,
         string headersEnvVarKey,
         string timeoutEnvVarKey)
@@ -242,6 +248,10 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         if (configuration.TryGetUriValue(endpointEnvVarKey, out var endpoint))
         {
             this.endpoint = endpoint;
+            if (!appendSignalPathToEndpoint)
+            {
+                this.AppendSignalPathToEndpoint = false;
+            }
         }
 
         if (configuration.TryGetValue<OtlpExportProtocol>(
