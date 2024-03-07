@@ -129,6 +129,7 @@ public abstract class MetricOverflowAttributeTestsBase
         meterProvider.ForceFlush();
 
         Assert.Single(exportedItems);
+        Assert.True(exportedItems[0].AggregatorStore.EmitOverflowAttribute);
     }
 
     [Theory]
@@ -365,7 +366,7 @@ public abstract class MetricOverflowAttributeTestsBase
         histogram.Record(15); // Record another measurement for zero tags
 
         // Emit 2500 more newer MetricPoints with distinct dimension combinations
-        for (int i = 2002; i < 4502; i++)
+        for (int i = 2001; i < 4501; i++)
         {
             histogram.Record(5, new KeyValuePair<string, object>("Key", i));
         }

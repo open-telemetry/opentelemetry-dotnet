@@ -126,7 +126,7 @@ internal sealed class AggregatorStore
 
             // There is no overload which only takes capacity as the parameter
             // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v7.0.5/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2020
-            // We expect at the most (maxMetricPoints - 2) * 2 entries- one for sorted and one for unsorted input
+            // We expect at the most (user provided cardinality limit) * 2 entries- one for sorted and one for unsorted input
             this.TagsToMetricPointIndexDictionaryDelta =
                 new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: cardinalityLimit * 2);
 
