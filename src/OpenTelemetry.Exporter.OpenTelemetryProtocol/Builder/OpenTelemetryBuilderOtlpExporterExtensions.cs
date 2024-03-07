@@ -106,7 +106,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
         string? name = null,
         IConfiguration? configuration = null,
         Action<OtlpExporterBuilder>? configure = null,
-        bool addToEndOfPipeline = true)
+        ProcessorPipelineWeight processorPipelineWeight = ProcessorPipelineWeight.PipelineExporter)
     {
         Guard.ThrowIfNull(builder);
 
@@ -119,12 +119,12 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
         configure?.Invoke(otlpBuilder);
 
-        UseOtlpExporterInternal(builder, name, addToEndOfPipeline);
+        UseOtlpExporterInternal(builder, name, processorPipelineWeight);
 
         return builder;
     }
 
-    private static void UseOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name, bool addToEndOfPipeline)
+    private static void UseOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name, ProcessorPipelineWeight processorPipelineWeight)
     {
         builder
             .WithLogging()
@@ -164,7 +164,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                     builderOptions.SdkLimitOptions,
                     builderOptions.ExperimentalOptions);
 
-                processor.Weight = addToEndOfPipeline ? int.MaxValue : 0;
+                processor.PipelineWeight = processorPipelineWeight;
 
                 logging.AddProcessor(processor);
             });
@@ -205,7 +205,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                     processorOptions.BatchExportProcessorOptions,
                     sp);
 
-                processor.Weight = addToEndOfPipeline ? int.MaxValue : 0;
+                processor.PipelineWeight = addToEndOfPipeline ? int.MaxValue : 0;
 
                 tracing.AddProcessor(processor);
             });

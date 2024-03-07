@@ -72,7 +72,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
         }
 
-        var processors = (IEnumerable<BaseProcessor<Activity>>)state.Processors.OrderBy(p => p.Weight);
+        var processors = (IEnumerable<BaseProcessor<Activity>>)state.Processors.OrderBy(p => (int)p.PipelineWeight);
 
         state.AddExceptionProcessorIfEnabled(ref processors);
 
