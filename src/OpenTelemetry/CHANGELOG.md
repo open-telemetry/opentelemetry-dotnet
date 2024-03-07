@@ -2,12 +2,17 @@
 
 ## Unreleased
 
+* Throw NotSupportedException when using `SetErrorStatusOnException` method for
+  Tracing in Mono Runtime and Native AOT environment because the dependent
+  `Marshal.GetExceptionPointers()` API is not supported on these platforms.
+  ([#5374](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5374))
+
 * Fixed an issue where `LogRecord.Attributes` (or `LogRecord.StateValues` alias)
   could become out of sync with `LogRecord.State` if either is set directly via
   the public setters. This was done to further mitigate issues introduced in
   1.5.0 causing attributes added using custom processor(s) to be missing after
   upgrading. For details see:
-  [#5169](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5169)
+  ([#5169](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5169))
 
 * Fixed an issue where `SimpleExemplarReservoir` was not resetting internal
   state for cumulative temporality.
@@ -54,6 +59,23 @@
   using Base2 Exponential Bucket Histogram Aggregation configured via the View
   API.
   ([#5396](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5396))
+
+* **Experimental (pre-release builds only):** Removed the `ExemplarFilter`,
+  `AlwaysOffExemplarFilter`, `AlwaysOnExemplarFilter`, and
+  `TraceBasedExemplarFilter` APIs. The `MeterProviderBuilder.SetExemplarFilter`
+  extension method now accepts an `ExemplarFilterType` enumeration (which
+  contains definitions for the supported filter types `AlwaysOff`, `AlwaysOn`,
+  and `TraceBased`) instead of an `ExemplarFilter` instance. This was done in
+  response to changes made to the [OpenTelemetry Metrics SDK
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/pull/3820).
+  ([#5404](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5404))
+
+* **Experimental (pre-release builds only):** The `ExemplarFilter` used by SDK
+  `MeterProvider`s can now be controlled via the `OTEL_METRICS_EXEMPLAR_FILTER`
+  environment variable. The supported values are: `always_off`, `always_on`, and
+  `trace_based`. For details see: [OpenTelemetry Environment Variable
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#exemplar).
+  ([#5412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5412))
 
 ## 1.7.0
 

@@ -43,9 +43,9 @@ It is not supported to add Processors after building the `LoggerFactory`.
 ```csharp
 var loggerFactory = LoggerFactory.Create(builder =>
 {
-    builder.AddOpenTelemetry(options =>
+    builder.AddOpenTelemetry(logging =>
     {
-        options.AddProcessor(...)
+        logging.AddProcessor(...);
     });
 });
 ```
@@ -72,9 +72,9 @@ The snippet below shows configuring a custom `ResourceBuilder` to the provider.
 ```csharp
 var loggerFactory = LoggerFactory.Create(builder =>
 {
-    builder.AddOpenTelemetry(options =>
+    builder.AddOpenTelemetry(logging =>
     {
-        options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+        logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
             serviceName: "MyService",
             serviceVersion: "1.0.0"));
     });
@@ -107,8 +107,8 @@ and also defines "Warning" as the minimum `LogLevel` for a user defined category
 These rules as defined only apply to the `OpenTelemetryLoggerProvider`.
 
 ```csharp
-ILoggingBuilder.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error);
-ILoggingBuilder.AddFilter<OpenTelemetryLoggerProvider>("category name", LogLevel.Warning);
+builder.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error);
+builder.AddFilter<OpenTelemetryLoggerProvider>("MyProduct.MyLibrary.MyClass", LogLevel.Warning);
 ```
 
 ## Learn more

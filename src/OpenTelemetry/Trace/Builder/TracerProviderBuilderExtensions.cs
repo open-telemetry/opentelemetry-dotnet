@@ -24,6 +24,12 @@ public static class TracerProviderBuilderExtensions
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="enabled">Enabled or not. Default value is <c>true</c>.</param>
     /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    /// <remarks>
+    /// This method is not supported in native AOT or Mono Runtime as of .NET 8.
+    /// </remarks>
+#if NET7_0_OR_GREATER
+    [RequiresDynamicCode("The code for detecting exception and setting error status might not be available.")]
+#endif
     public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
     {
         tracerProviderBuilder.ConfigureBuilder((sp, builder) =>

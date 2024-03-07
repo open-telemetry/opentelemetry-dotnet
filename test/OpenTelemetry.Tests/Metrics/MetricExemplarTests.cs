@@ -5,6 +5,8 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -13,6 +15,45 @@ namespace OpenTelemetry.Metrics.Tests;
 public class MetricExemplarTests : MetricTestsBase
 {
     private const int MaxTimeToAllowForFlush = 10000;
+    private static readonly Func<bool> IsExemplarApiExposed = () => typeof(ExemplarFilterType).IsVisible;
+
+    [SkipUnlessTrueTheory(typeof(MetricExemplarTests), nameof(IsExemplarApiExposed), "ExemplarFilter config tests skipped for stable builds")]
+    [InlineData(null, null, null)]
+    [InlineData(null, "always_off", (int)ExemplarFilterType.AlwaysOff)]
+    [InlineData(null, "ALWays_ON", (int)ExemplarFilterType.AlwaysOn)]
+    [InlineData(null, "trace_based", (int)ExemplarFilterType.TraceBased)]
+    [InlineData(null, "invalid", null)]
+    [InlineData((int)ExemplarFilterType.AlwaysOn, "trace_based", (int)ExemplarFilterType.AlwaysOn)]
+    public void TestExemplarFilterSetFromConfiguration(
+        int? programmaticValue,
+        string? configValue,
+        int? expectedValue)
+    {
+        var configBuilder = new ConfigurationBuilder();
+        if (!string.IsNullOrEmpty(configValue))
+        {
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [MeterProviderSdk.ExemplarFilterConfigKey] = configValue,
+            });
+        }
+
+        using var container = this.BuildMeterProvider(out var meterProvider, b =>
+        {
+            b.ConfigureServices(
+                s => s.AddSingleton<IConfiguration>(configBuilder.Build()));
+
+            if (programmaticValue.HasValue)
+            {
+                b.SetExemplarFilter(((ExemplarFilterType?)programmaticValue).Value);
+            }
+        });
+
+        var meterProviderSdk = meterProvider as MeterProviderSdk;
+
+        Assert.NotNull(meterProviderSdk);
+        Assert.Equal((ExemplarFilterType?)expectedValue, meterProviderSdk.ExemplarFilter);
+    }
 
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
@@ -28,7 +69,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("testCounter"))
@@ -153,7 +194,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = temporality;
@@ -237,7 +278,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("histogramWithBucketsAndMinMax"))
@@ -367,7 +408,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("histogramWithoutBucketsAndMinMax"))
@@ -495,7 +536,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
                 if (i.Name.StartsWith("exponentialHistogramWithMinMax"))
@@ -601,49 +642,126 @@ public class MetricExemplarTests : MetricTestsBase
         }
     }
 
-    [Fact]
-    public void TestExemplarsFilterTags()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TestTraceBasedExemplarFilter(bool enableTracing)
     {
-        DateTime testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
-        var histogram = meter.CreateHistogram<double>("testHistogram");
+
+        var counter = meter.CreateCounter<long>("testCounter");
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
-            .AddView(histogram.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "key1" } })
-            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
-            {
-                metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
-            }));
+            .SetExemplarFilter(ExemplarFilterType.TraceBased)
+            .AddInMemoryExporter(exportedItems));
 
-        var measurementValues = GenerateRandomValues(10, false, null);
-        foreach (var value in measurementValues)
+        if (enableTracing)
         {
-            histogram.Record(
-                value.Value,
-                new("key1", "value1"),
-                new("key2", "value1"),
-                new("key3", "value1"));
+            using var act = new Activity("test").Start();
+            act.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            counter.Add(18);
+        }
+        else
+        {
+            counter.Add(18);
         }
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        meterProvider.ForceFlush();
+
+        Assert.Single(exportedItems);
+
         var metricPoint = GetFirstMetricPoint(exportedItems);
+
         Assert.NotNull(metricPoint);
-        Assert.True(metricPoint.Value.StartTime >= testStartTime);
-        Assert.True(metricPoint.Value.EndTime != default);
+
         var exemplars = GetExemplars(metricPoint.Value);
+
+        if (enableTracing)
+        {
+            Assert.Single(exemplars);
+        }
+        else
+        {
+            Assert.Empty(exemplars);
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TestExemplarsFilterTags(bool enableTagFiltering)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+
+        var histogram = meter.CreateHistogram<double>("testHistogram");
+
+        TestExemplarReservoir? testExemplarReservoir = null;
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                histogram.Name,
+                new MetricStreamConfiguration()
+                {
+                    TagKeys = enableTagFiltering ? new string[] { "key1" } : null,
+                    ExemplarReservoirFactory = () =>
+                    {
+                        if (testExemplarReservoir != null)
+                        {
+                            throw new InvalidOperationException();
+                        }
+
+                        return testExemplarReservoir = new TestExemplarReservoir();
+                    },
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        histogram.Record(
+            0,
+            new("key1", "value1"),
+            new("key2", "value2"),
+            new("key3", "value3"));
+
+        meterProvider.ForceFlush();
+
+        Assert.NotNull(testExemplarReservoir);
+        Assert.NotNull(testExemplarReservoir.MeasurementTags);
+        Assert.Equal(3, testExemplarReservoir.MeasurementTags.Length);
+        Assert.Contains(testExemplarReservoir.MeasurementTags, t => t.Key == "key1" && (string?)t.Value == "value1");
+        Assert.Contains(testExemplarReservoir.MeasurementTags, t => t.Key == "key2" && (string?)t.Value == "value2");
+        Assert.Contains(testExemplarReservoir.MeasurementTags, t => t.Key == "key3" && (string?)t.Value == "value3");
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+
+        Assert.NotNull(metricPoint);
+
+        var exemplars = GetExemplars(metricPoint.Value);
+
         Assert.NotNull(exemplars);
+
         foreach (var exemplar in exemplars)
         {
-            Assert.NotEqual(0, exemplar.FilteredTags.MaximumCount);
+            if (!enableTagFiltering)
+            {
+                Assert.Equal(0, exemplar.FilteredTags.MaximumCount);
+            }
+            else
+            {
+                Assert.Equal(3, exemplar.FilteredTags.MaximumCount);
 
-            var filteredTags = exemplar.FilteredTags.ToReadOnlyList();
+                var filteredTags = exemplar.FilteredTags.ToReadOnlyList();
 
-            Assert.Contains(new("key2", "value1"), filteredTags);
-            Assert.Contains(new("key3", "value1"), filteredTags);
+                Assert.Equal(2, filteredTags.Count);
+
+                Assert.Contains(new("key2", "value2"), filteredTags);
+                Assert.Contains(new("key3", "value3"), filteredTags);
+            }
         }
     }
 
@@ -702,5 +820,27 @@ public class MetricExemplarTests : MetricTestsBase
         }
 
         Assert.Equal(measurementValues.Count(), count);
+    }
+
+    private sealed class TestExemplarReservoir : FixedSizeExemplarReservoir
+    {
+        public TestExemplarReservoir()
+            : base(1)
+        {
+        }
+
+        public KeyValuePair<string, object?>[]? MeasurementTags { get; private set; }
+
+        public override void Offer(in ExemplarMeasurement<double> measurement)
+        {
+            this.MeasurementTags = measurement.Tags.ToArray();
+
+            this.UpdateExemplar(0, in measurement);
+        }
+
+        public override void Offer(in ExemplarMeasurement<long> measurement)
+        {
+            throw new NotSupportedException();
+        }
     }
 }
