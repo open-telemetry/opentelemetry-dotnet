@@ -301,9 +301,7 @@ internal sealed class AggregatorStore
                 {
                     var lookupData = metricPoint.LookupData;
 
-                    // Setting `LookupData` to `null` to denote that this MetricPoint is reclaimed.
-                    // Snapshot method can use this to skip trying to reclaim indices which have already been reclaimed and added to the queue.
-                    metricPoint.LookupData = null;
+                    metricPoint.Reclaim();
 
                     Debug.Assert(this.TagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
 
@@ -963,7 +961,7 @@ internal sealed class AggregatorStore
     {
         var index = this.FindMetricAggregatorsDefault(tags);
 
-        this.UpdateLongMetricPoint(index, value, tags: default);
+        this.UpdateLongMetricPoint(index, value, tags);
     }
 
     private void UpdateLongCustomTags(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
@@ -1018,7 +1016,7 @@ internal sealed class AggregatorStore
     {
         var index = this.FindMetricAggregatorsDefault(tags);
 
-        this.UpdateDoubleMetricPoint(index, value, tags: default);
+        this.UpdateDoubleMetricPoint(index, value, tags);
     }
 
     private void UpdateDoubleCustomTags(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
