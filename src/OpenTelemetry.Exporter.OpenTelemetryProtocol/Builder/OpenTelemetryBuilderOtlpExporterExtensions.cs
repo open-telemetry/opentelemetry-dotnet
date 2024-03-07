@@ -159,7 +159,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
                 var processor = OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
                     sp,
-                    builderOptions.LoggingOptions.ApplyDefaults(builderOptions.DefaultOptions),
+                    builderOptions.LoggingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
                     builderOptions.LogRecordExportProcessorOptions ?? throw new NotSupportedException(),
                     builderOptions.SdkLimitOptions,
                     builderOptions.ExperimentalOptions);
@@ -181,7 +181,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
                 metrics.AddReader(
                     OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
-                        builderOptions.MetricsOptions.ApplyDefaults(builderOptions.DefaultOptions),
+                        builderOptions.MetricsOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
                         builderOptions.MetricReaderOptions ?? throw new NotSupportedException(),
                         sp));
             });
@@ -199,13 +199,13 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                 var processorOptions = builderOptions.ActivityExportProcessorOptions ?? throw new NotSupportedException();
 
                 var processor = OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
-                    builderOptions.TracingOptions.ApplyDefaults(builderOptions.DefaultOptions),
+                    builderOptions.TracingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
                     builderOptions.SdkLimitOptions,
                     processorOptions.ExportProcessorType,
                     processorOptions.BatchExportProcessorOptions,
                     sp);
 
-                processor.PipelineWeight = addToEndOfPipeline ? int.MaxValue : 0;
+                processor.PipelineWeight = processorPipelineWeight;
 
                 tracing.AddProcessor(processor);
             });

@@ -25,7 +25,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
-    public OtlpTraceExporter(OtlpExporterOptionsBase options)
+    public OtlpTraceExporter(OtlpExporterOptions options)
         : this(options, sdkLimitOptions: new(), transmissionHandler: null)
     {
     }
@@ -37,7 +37,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
     /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
     internal OtlpTraceExporter(
-        OtlpExporterOptionsBase exporterOptions,
+        OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler = null)
     {

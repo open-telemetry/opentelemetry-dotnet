@@ -4,6 +4,9 @@
 #nullable enable
 
 using System.Diagnostics;
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,31 +24,153 @@ namespace OpenTelemetry.Exporter;
 /// OTEL_EXPORTER_OTLP_TIMEOUT, and OTEL_EXPORTER_OTLP_PROTOCOL environment
 /// variables are parsed during object construction.
 /// </remarks>
-public class OtlpExporterOptions : OtlpExporterOptionsBase
+public class OtlpExporterOptions : IOtlpExporterOptions
 {
+    internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
+    internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
+    internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
+    internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
+
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
         new KeyValuePair<string, string>("User-Agent", GetUserAgentString()),
     };
 
+    internal readonly Func<HttpClient> DefaultHttpClientFactory;
+    internal bool ProgrammaticallyModifiedEndpoint;
+
     private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
+    private const string DefaultGrpcEndpoint = "http://localhost:4317";
+    private const string DefaultHttpEndpoint = "http://localhost:4318";
+    private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
+
+    private OtlpExportProtocol? protocol;
+    private Uri? endpoint;
+    private int? timeoutMilliseconds;
+    private Func<HttpClient>? httpClientFactory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
     /// </summary>
     public OtlpExporterOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), new())
+        : this(
+              configuration: new ConfigurationBuilder().AddEnvironmentVariables().Build(),
+              signal: OtlpExporterSignals.None,
+              defaultBatchOptions: new())
     {
     }
 
     internal OtlpExporterOptions(
         IConfiguration configuration,
+        OtlpExporterSignals signal,
         BatchExportActivityProcessorOptions defaultBatchOptions)
-        : base(configuration, OtlpExporterSignals.None)
     {
+        Debug.Assert(configuration != null, "configuration was null");
         Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
 
+        if (signal == OtlpExporterSignals.None)
+        {
+            this.ApplyConfigurationUsingSpecificationEnvVars(
+                configuration!,
+                EndpointEnvVarName,
+                ProtocolEnvVarName,
+                HeadersEnvVarName,
+                TimeoutEnvVarName);
+        }
+
+        if (signal.HasFlag(OtlpExporterSignals.Logs))
+        {
+            this.ApplyConfigurationUsingSpecificationEnvVars(
+                configuration!,
+                "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT",
+                "OTEL_EXPORTER_OTLP_LOGS_PROTOCOL",
+                "OTEL_EXPORTER_OTLP_LOGS_HEADERS",
+                "OTEL_EXPORTER_OTLP_LOGS_TIMEOUT");
+        }
+
+        if (signal.HasFlag(OtlpExporterSignals.Metrics))
+        {
+            this.ApplyConfigurationUsingSpecificationEnvVars(
+                configuration!,
+                "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT",
+                "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL",
+                "OTEL_EXPORTER_OTLP_METRICS_HEADERS",
+                "OTEL_EXPORTER_OTLP_METRICS_TIMEOUT");
+        }
+
+        if (signal.HasFlag(OtlpExporterSignals.Traces))
+        {
+            this.ApplyConfigurationUsingSpecificationEnvVars(
+                configuration!,
+                "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+                "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL",
+                "OTEL_EXPORTER_OTLP_TRACES_HEADERS",
+                "OTEL_EXPORTER_OTLP_TRACES_TIMEOUT");
+        }
+
+        this.DefaultHttpClientFactory = () =>
+        {
+            return new HttpClient
+            {
+                Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
+            };
+        };
+
         this.BatchExportProcessorOptions = defaultBatchOptions!;
+    }
+
+    /// <inheritdoc/>
+    public OtlpExportProtocol Protocol
+    {
+        get => this.protocol ?? DefaultOtlpExportProtocol;
+        set => this.protocol = value;
+    }
+
+    /// <inheritdoc/>
+    public Uri Endpoint
+    {
+        get
+        {
+            if (this.endpoint == null)
+            {
+                this.endpoint = this.Protocol == OtlpExportProtocol.Grpc
+                    ? new Uri(DefaultGrpcEndpoint)
+                    : new Uri(DefaultHttpEndpoint);
+            }
+
+            return this.endpoint;
+        }
+
+        set
+        {
+            this.endpoint = value;
+            this.ProgrammaticallyModifiedEndpoint = true;
+        }
+    }
+
+    /// <inheritdoc/>
+    public string? Headers { get; set; }
+
+    /// <inheritdoc/>
+    public int TimeoutMilliseconds
+    {
+        get => this.timeoutMilliseconds ?? 10000;
+        set => this.timeoutMilliseconds = value;
+    }
+
+    /// <inheritdoc/>
+    public Func<HttpClient> HttpClientFactory
+    {
+        get => this.httpClientFactory ??= this.DefaultHttpClientFactory;
+        set
+        {
+            this.httpClientFactory = value ?? NullHttpClientFactory;
+
+            static HttpClient NullHttpClientFactory()
+            {
+                return null!;
+            }
+        }
     }
 
     /// <summary>
@@ -71,7 +196,27 @@ public class OtlpExporterOptions : OtlpExporterOptionsBase
         string name)
         => new(
             configuration,
+            OtlpExporterSignals.None,
             serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name));
+
+    internal OtlpExporterOptions ApplyDefaults(OtlpExporterOptions defaultExporterOptions)
+    {
+        this.protocol ??= defaultExporterOptions.protocol;
+
+        this.endpoint ??= defaultExporterOptions.endpoint;
+
+        // Note: We don't set ProgrammaticallyModifiedEndpoint because we
+        // want to append the signal if the endpoint came from the default
+        // endpoint.
+
+        this.Headers ??= defaultExporterOptions.Headers;
+
+        this.timeoutMilliseconds ??= defaultExporterOptions.timeoutMilliseconds;
+
+        this.httpClientFactory ??= defaultExporterOptions.httpClientFactory;
+
+        return this;
+    }
 
     private static string GetUserAgentString()
     {
@@ -84,6 +229,37 @@ public class OtlpExporterOptions : OtlpExporterOptionsBase
         catch (Exception)
         {
             return UserAgentProduct;
+        }
+    }
+
+    private void ApplyConfigurationUsingSpecificationEnvVars(
+        IConfiguration configuration,
+        string endpointEnvVarKey,
+        string protocolEnvVarKey,
+        string headersEnvVarKey,
+        string timeoutEnvVarKey)
+    {
+        if (configuration.TryGetUriValue(endpointEnvVarKey, out var endpoint))
+        {
+            this.endpoint = endpoint;
+        }
+
+        if (configuration.TryGetValue<OtlpExportProtocol>(
+            protocolEnvVarKey,
+            OtlpExportProtocolParser.TryParse,
+            out var protocol))
+        {
+            this.Protocol = protocol;
+        }
+
+        if (configuration.TryGetStringValue(headersEnvVarKey, out var headers))
+        {
+            this.Headers = headers;
+        }
+
+        if (configuration.TryGetIntValue(timeoutEnvVarKey, out var timeout))
+        {
+            this.TimeoutMilliseconds = timeout;
         }
     }
 }

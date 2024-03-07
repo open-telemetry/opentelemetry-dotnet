@@ -11,7 +11,7 @@ internal sealed class OtlpGrpcTraceExportClient : BaseOtlpGrpcExportClient<OtlpC
 {
     private readonly OtlpCollector.TraceService.TraceServiceClient traceClient;
 
-    public OtlpGrpcTraceExportClient(OtlpExporterOptionsBase options, OtlpCollector.TraceService.TraceServiceClient traceServiceClient = null)
+    public OtlpGrpcTraceExportClient(OtlpExporterOptions options, OtlpCollector.TraceService.TraceServiceClient traceServiceClient = null)
         : base(options)
     {
         if (traceServiceClient != null)

@@ -24,7 +24,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
     /// </summary>
     /// <param name="options">Configuration options for the exporter.</param>
-    public OtlpMetricExporter(OtlpExporterOptionsBase options)
+    public OtlpMetricExporter(OtlpExporterOptions options)
         : this(options, transmissionHandler: null)
     {
     }
@@ -35,7 +35,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// <param name="options">Configuration options for the export.</param>
     /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
     internal OtlpMetricExporter(
-        OtlpExporterOptionsBase options,
+        OtlpExporterOptions options,
         OtlpExporterTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest> transmissionHandler = null)
     {
         // Each of the Otlp exporters: Traces, Metrics, and Logs set the same value for `OtlpKeyValueTransformer.LogUnsupportedAttributeType`

@@ -18,7 +18,7 @@ internal sealed class OtlpHttpLogExportClient : BaseOtlpHttpExportClient<OtlpCol
     internal const string MediaContentType = "application/x-protobuf";
     private const string LogsExportPath = "v1/logs";
 
-    public OtlpHttpLogExportClient(OtlpExporterOptionsBase options, HttpClient httpClient)
+    public OtlpHttpLogExportClient(OtlpExporterOptions options, HttpClient httpClient)
         : base(options, httpClient, LogsExportPath)
     {
     }

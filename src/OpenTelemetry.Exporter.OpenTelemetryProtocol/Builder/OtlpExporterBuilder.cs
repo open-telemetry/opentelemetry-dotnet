@@ -46,7 +46,7 @@ internal sealed class OtlpExporterBuilder
     }
 
     public OtlpExporterBuilder ConfigureDefaultExporterOptions(
-        Action<OtlpExporterOptionsBase> configure)
+        Action<IOtlpExporterOptions> configure)
     {
         Guard.ThrowIfNull(configure);
 
@@ -57,7 +57,7 @@ internal sealed class OtlpExporterBuilder
     }
 
     public OtlpExporterBuilder ConfigureLoggingExporterOptions(
-        Action<OtlpExporterOptionsBase> configure)
+        Action<IOtlpExporterOptions> configure)
     {
         Guard.ThrowIfNull(configure);
 
@@ -77,7 +77,7 @@ internal sealed class OtlpExporterBuilder
     }
 
     public OtlpExporterBuilder ConfigureMetricsExporterOptions(
-        Action<OtlpExporterOptionsBase> configure)
+        Action<IOtlpExporterOptions> configure)
     {
         Guard.ThrowIfNull(configure);
 
@@ -97,7 +97,7 @@ internal sealed class OtlpExporterBuilder
     }
 
     public OtlpExporterBuilder ConfigureTracingExporterOptions(
-        Action<OtlpExporterOptionsBase> configure)
+        Action<IOtlpExporterOptions> configure)
     {
         Guard.ThrowIfNull(configure);
 

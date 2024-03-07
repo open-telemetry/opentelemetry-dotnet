@@ -18,7 +18,7 @@ internal sealed class OtlpHttpMetricsExportClient : BaseOtlpHttpExportClient<Otl
     internal const string MediaContentType = "application/x-protobuf";
     private const string MetricsExportPath = "v1/metrics";
 
-    public OtlpHttpMetricsExportClient(OtlpExporterOptionsBase options, HttpClient httpClient)
+    public OtlpHttpMetricsExportClient(OtlpExporterOptions options, HttpClient httpClient)
         : base(options, httpClient, MetricsExportPath)
     {
     }

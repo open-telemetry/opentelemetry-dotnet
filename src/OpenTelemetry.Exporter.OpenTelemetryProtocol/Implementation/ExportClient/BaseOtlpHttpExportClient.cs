@@ -14,7 +14,7 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
 {
     private static readonly ExportClientHttpResponse SuccessExportResponse = new ExportClientHttpResponse(success: true, deadlineUtc: null, response: null, exception: null);
 
-    protected BaseOtlpHttpExportClient(OtlpExporterOptionsBase options, HttpClient httpClient, string signalPath)
+    protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
         Guard.ThrowIfNull(options);
         Guard.ThrowIfNull(httpClient);

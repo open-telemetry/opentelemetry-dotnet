@@ -110,7 +110,7 @@ public static class OtlpTraceExporterHelperExtensions
             configureExporterInstance);
 
     internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
-        OtlpExporterOptionsBase exporterOptions,
+        OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExportProcessorType exportProcessorType,
         BatchExportProcessorOptions<Activity> batchExportProcessorOptions,

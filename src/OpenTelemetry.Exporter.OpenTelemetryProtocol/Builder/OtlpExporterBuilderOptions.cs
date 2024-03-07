@@ -20,6 +20,11 @@ internal sealed class OtlpExporterBuilderOptions
     internal readonly MetricReaderOptions? MetricReaderOptions;
     internal readonly ActivityExportProcessorOptions? ActivityExportProcessorOptions;
 
+    internal readonly OtlpExporterOptions DefaultOptionsInstance;
+    internal readonly OtlpExporterOptions LoggingOptionsInstance;
+    internal readonly OtlpExporterOptions MetricsOptionsInstance;
+    internal readonly OtlpExporterOptions TracingOptionsInstance;
+
     public OtlpExporterBuilderOptions(
         IConfiguration configuration,
         SdkLimitOptions sdkLimitOptions,
@@ -38,22 +43,24 @@ internal sealed class OtlpExporterBuilderOptions
         this.MetricReaderOptions = metricReaderOptions;
         this.ActivityExportProcessorOptions = activityExportProcessorOptions;
 
-        this.DefaultOptions = new OtlpExporterOptionsBase(configuration!, OtlpExporterSignals.None);
+        var defaultBatchOptions = this.ActivityExportProcessorOptions!.BatchExportProcessorOptions;
 
-        this.LoggingOptions = new OtlpExporterOptionsBase(configuration!, OtlpExporterSignals.Logs);
+        this.DefaultOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterSignals.None, defaultBatchOptions);
 
-        this.MetricsOptions = new OtlpExporterOptionsBase(configuration!, OtlpExporterSignals.Metrics);
+        this.LoggingOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterSignals.Logs, defaultBatchOptions);
 
-        this.TracingOptions = new OtlpExporterOptionsBase(configuration!, OtlpExporterSignals.Traces);
+        this.MetricsOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterSignals.Metrics, defaultBatchOptions);
+
+        this.TracingOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterSignals.Traces, defaultBatchOptions);
     }
 
     public OtlpExporterSignals Signals { get; set; } = OtlpExporterSignals.All;
 
-    public OtlpExporterOptionsBase DefaultOptions { get; }
+    public IOtlpExporterOptions DefaultOptions => this.DefaultOptionsInstance;
 
-    public OtlpExporterOptionsBase LoggingOptions { get; }
+    public IOtlpExporterOptions LoggingOptions => this.LoggingOptionsInstance;
 
-    public OtlpExporterOptionsBase MetricsOptions { get; }
+    public IOtlpExporterOptions MetricsOptions => this.MetricsOptionsInstance;
 
-    public OtlpExporterOptionsBase TracingOptions { get; }
+    public IOtlpExporterOptions TracingOptions => this.TracingOptionsInstance;
 }

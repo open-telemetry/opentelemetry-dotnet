@@ -28,7 +28,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
     /// </summary>
     /// <param name="options">Configuration options for the exporter.</param>
-    public OtlpLogExporter(OtlpExporterOptionsBase options)
+    public OtlpLogExporter(OtlpExporterOptions options)
         : this(options, sdkLimitOptions: new(), experimentalOptions: new(), transmissionHandler: null)
     {
     }
@@ -41,7 +41,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
     /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
     internal OtlpLogExporter(
-        OtlpExporterOptionsBase exporterOptions,
+        OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>? transmissionHandler = null)
