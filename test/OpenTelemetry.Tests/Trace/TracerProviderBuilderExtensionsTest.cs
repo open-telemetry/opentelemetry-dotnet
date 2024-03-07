@@ -134,6 +134,75 @@ public class TracerProviderBuilderExtensionsTest
     }
 
     [Fact]
+    public void AddProcessorTest()
+    {
+        List<MyProcessor> processors = new();
+
+        using (var provider = Sdk.CreateTracerProviderBuilder()
+            .AddProcessor<MyProcessor>()
+            .AddProcessor(new MyProcessor()
+            {
+                PipelineWeight = ProcessorPipelineWeight.PipelineExporter,
+            })
+            .AddProcessor(new MyProcessor()
+            {
+                PipelineWeight = ProcessorPipelineWeight.PipelineEnrichment,
+            })
+            .AddProcessor(sp => new MyProcessor()
+            {
+                PipelineWeight = ProcessorPipelineWeight.PipelineEnd,
+            })
+            .AddProcessor(new MyProcessor()
+            {
+                PipelineWeight = ProcessorPipelineWeight.PipelineStart,
+            })
+            .SetErrorStatusOnException() // Forced to be first processor
+            .Build() as TracerProviderSdk)
+        {
+            Assert.NotNull(provider);
+            Assert.NotNull(provider.Processor);
+
+            var compositeProcessor = provider.Processor as CompositeProcessor<Activity>;
+
+            Assert.NotNull(compositeProcessor);
+
+            bool isFirstProcessor = true;
+            var lastWeight = int.MinValue;
+            var current = compositeProcessor.Head;
+            while (current != null)
+            {
+                if (isFirstProcessor)
+                {
+                    Assert.True(current.Value is ExceptionProcessor);
+                    Assert.Equal(ProcessorPipelineWeight.PipelineMiddle, current.Value.PipelineWeight);
+                    isFirstProcessor = false;
+                }
+                else
+                {
+                    var processor = current.Value as MyProcessor;
+                    Assert.NotNull(processor);
+
+                    processors.Add(processor);
+                    Assert.False(processor.Disposed);
+
+                    Assert.True((int)processor.PipelineWeight >= lastWeight);
+
+                    lastWeight = (int)processor.PipelineWeight;
+                }
+
+                current = current.Next;
+            }
+        }
+
+        Assert.Equal(5, processors.Count);
+
+        foreach (var processor in processors)
+        {
+            Assert.True(processor.Disposed);
+        }
+    }
+
+    [Fact]
     public void AddProcessorUsingDependencyInjectionTest()
     {
         var builder = Sdk.CreateTracerProviderBuilder();
@@ -497,6 +566,14 @@ public class TracerProviderBuilderExtensionsTest
 
     private sealed class MyProcessor : BaseProcessor<Activity>
     {
+        public bool Disposed;
+
+        protected override void Dispose(bool disposing)
+        {
+            this.Disposed = true;
+
+            base.Dispose(disposing);
+        }
     }
 
     private sealed class MyExporter : BaseExporter<Activity>

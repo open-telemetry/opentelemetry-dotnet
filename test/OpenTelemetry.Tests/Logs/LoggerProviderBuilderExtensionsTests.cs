@@ -134,8 +134,22 @@ public sealed class LoggerProviderBuilderExtensionsTests
 
         using (var provider = Sdk.CreateLoggerProviderBuilder()
             .AddProcessor<CustomProcessor>()
-            .AddProcessor(sp => new CustomProcessor())
-            .AddProcessor(new CustomProcessor())
+            .AddProcessor(new CustomProcessor()
+            {
+                PipelineWeight = ProcessorPipelineWeight.PipelineExporter,
+            })
+            .AddProcessor(new CustomProcessor()
+            {
+                PipelineWeight = ProcessorPipelineWeight.PipelineEnrichment,
+            })
+            .AddProcessor(sp => new CustomProcessor()
+            {
+                PipelineWeight = ProcessorPipelineWeight.PipelineEnd,
+            })
+            .AddProcessor(new CustomProcessor()
+            {
+                PipelineWeight = ProcessorPipelineWeight.PipelineStart,
+            })
             .Build() as LoggerProviderSdk)
         {
             Assert.NotNull(provider);
@@ -145,6 +159,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
 
             Assert.NotNull(compositeProcessor);
 
+            var lastWeight = int.MinValue;
             var current = compositeProcessor.Head;
             while (current != null)
             {
@@ -154,11 +169,15 @@ public sealed class LoggerProviderBuilderExtensionsTests
                 processors.Add(processor);
                 Assert.False(processor.Disposed);
 
+                Assert.True((int)processor.PipelineWeight >= lastWeight);
+
+                lastWeight = (int)processor.PipelineWeight;
+
                 current = current.Next;
             }
         }
 
-        Assert.Equal(3, processors.Count);
+        Assert.Equal(5, processors.Count);
 
         foreach (var processor in processors)
         {

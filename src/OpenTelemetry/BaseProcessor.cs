@@ -28,6 +28,19 @@ public abstract class BaseProcessor<T> : IDisposable
     public BaseProvider? ParentProvider { get; private set; }
 
     /// <summary>
+    /// Gets or sets the weight of the processor when added to the provider
+    /// pipeline. Default value: <see
+    /// cref="ProcessorPipelineWeight.PipelineMiddle"/>.
+    /// </summary>
+    /// <remarks>
+    /// Note: Weight is used to order processors when building a provider
+    /// pipeline. Lower weighted processors come before higher weighted
+    /// processors. Changing the weight after a pipeline has been constructed
+    /// has no effect.
+    /// </remarks>
+    internal ProcessorPipelineWeight PipelineWeight { get; set; } = ProcessorPipelineWeight.PipelineMiddle;
+
+    /// <summary>
     /// Called synchronously when a telemetry object is started.
     /// </summary>
     /// <param name="data">
