@@ -1391,8 +1391,6 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     public void TestMetricPointCap(MetricReaderTemporalityPreference temporality)
     {
-        // Constant to account for additional space for overflow attribute and a case with zero Tags.
-        var additionalReserve = 2;
         var exportedItems = new List<Metric>();
 
         int MetricPointCount()
@@ -1401,7 +1399,22 @@ public abstract class MetricApiTestsBase : MetricTestsBase
 
             foreach (var metric in exportedItems)
             {
-                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                var enumerator = metric.GetMetricPoints().GetEnumerator();
+
+                // A case with zero tags and overflow attribute and are not a part of cardinality limit. Avoid counting them.
+                enumerator.MoveNext(); // First element reserved for zero tags.
+                enumerator.MoveNext(); // Second element reserved for overflow attribute.
+
+                // Validate second element is overflow attribute.
+                // Overflow attribute is behind experimental flag. So, it is not guaranteed to be present.
+                var tagEnumerator = enumerator.Current.Tags.GetEnumerator();
+                tagEnumerator.MoveNext();
+                if (!tagEnumerator.Current.Key.Contains("otel.metric.overflow"))
+                {
+                    count++;
+                }
+
+                while (enumerator.MoveNext())
                 {
                     count++;
                 }
@@ -1431,7 +1444,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit + additionalReserve, MetricPointCount());
+        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit, MetricPointCount());
 
         exportedItems.Clear();
         counterLong.Add(10);
@@ -1441,7 +1454,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit + additionalReserve, MetricPointCount());
+        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit, MetricPointCount());
 
         counterLong.Add(10);
         for (int i = 0; i < MeterProviderBuilderSdk.DefaultCardinalityLimit + 1; i++)
@@ -1455,7 +1468,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit + additionalReserve, MetricPointCount());
+        Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit, MetricPointCount());
     }
 
     [Fact]

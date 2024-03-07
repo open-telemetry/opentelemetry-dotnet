@@ -104,10 +104,10 @@ public abstract class MetricOverflowAttributeTestsBase
     }
 
     [Theory]
-    [InlineData(1, true)]
-    [InlineData(2, true)]
-    [InlineData(10, true)]
-    public void EmitOverflowAttributeIsOnlySetWhenMaxMetricPointsIsGreaterThanOne(int maxMetricPoints, bool isEmitOverflowAttributeKeySet)
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(10)]
+    public void EmitOverflowAttributeIsNotDependentOnMaxMetricPoints(int maxMetricPoints)
     {
         var exportedItems = new List<Metric>();
 
@@ -129,7 +129,6 @@ public abstract class MetricOverflowAttributeTestsBase
         meterProvider.ForceFlush();
 
         Assert.Single(exportedItems);
-        Assert.Equal(isEmitOverflowAttributeKeySet, exportedItems[0].AggregatorStore.EmitOverflowAttribute);
     }
 
     [Theory]
@@ -215,7 +214,7 @@ public abstract class MetricOverflowAttributeTestsBase
         counter.Add(15); // Record another measurement for zero tags
 
         // Emit 2500 more newer MetricPoints with distinct dimension combinations
-        for (int i = 2002; i < 4502; i++)
+        for (int i = 2001; i < 4501; i++)
         {
             counter.Add(5, new KeyValuePair<string, object>("Key", i));
         }

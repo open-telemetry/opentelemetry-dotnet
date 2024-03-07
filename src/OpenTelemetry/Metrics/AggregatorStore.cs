@@ -21,7 +21,7 @@ internal sealed class AggregatorStore
 #endif
     internal readonly bool OutputDelta;
     internal readonly bool OutputDeltaWithUnusedMetricPointReclaimEnabled;
-    internal readonly int NumberOfReservedMetricPoints;
+    internal readonly int NumberOfMetricPoints;
     internal readonly bool EmitOverflowAttribute;
     internal readonly ConcurrentDictionary<Tags, LookupData>? TagsToMetricPointIndexDictionaryDelta;
     internal readonly Func<ExemplarReservoir?>? ExemplarReservoirFactory;
@@ -75,11 +75,11 @@ internal sealed class AggregatorStore
         // Increase the CardinalityLimit by 2 to reserve additional space.
         // This adjustment accounts for overflow attribute and a case where zero tags are provided.
         // Previously, these were included within the original cardinalityLimit, but now they are explicitly added to enhance clarity.
-        this.NumberOfReservedMetricPoints = cardinalityLimit + 2;
+        this.NumberOfMetricPoints = cardinalityLimit + 2;
 
-        this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.NumberOfReservedMetricPoints}";
-        this.metricPoints = new MetricPoint[this.NumberOfReservedMetricPoints];
-        this.currentMetricPointBatch = new int[this.NumberOfReservedMetricPoints];
+        this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {cardinalityLimit}";
+        this.metricPoints = new MetricPoint[this.NumberOfMetricPoints];
+        this.currentMetricPointBatch = new int[this.NumberOfMetricPoints];
         this.aggType = aggType;
         this.OutputDelta = temporality == AggregationTemporality.Delta;
         this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity);
@@ -114,31 +114,26 @@ internal sealed class AggregatorStore
             || this.exemplarFilter == ExemplarFilterType.TraceBased,
             "this.exemplarFilter had an unexpected value");
 
-        var reservedMetricPointsCount = 1;
-
-        if (emitOverflowAttribute)
-        {
-            // Setting metricPointIndex to 1 as we would reserve the metricPoints[1] for overflow attribute.
-            // Newer attributes should be added starting at the index: 2
-            this.metricPointIndex = 1;
-            reservedMetricPointsCount++;
-        }
+        // Setting metricPointIndex to 1 as we would reserve the metricPoints[1] for overflow attribute.
+        // Newer attributes should be added starting at the index: 2
+        this.metricPointIndex = 1;
 
         this.OutputDeltaWithUnusedMetricPointReclaimEnabled = shouldReclaimUnusedMetricPoints && this.OutputDelta;
 
         if (this.OutputDeltaWithUnusedMetricPointReclaimEnabled)
         {
-            this.availableMetricPoints = new Queue<int>(this.NumberOfReservedMetricPoints - reservedMetricPointsCount);
+            this.availableMetricPoints = new Queue<int>(cardinalityLimit);
 
             // There is no overload which only takes capacity as the parameter
             // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v7.0.5/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2020
-            // We expect at the most (maxMetricPoints - reservedMetricPointsCount) * 2 entries- one for sorted and one for unsorted input
+            // We expect at the most (maxMetricPoints - 2) * 2 entries- one for sorted and one for unsorted input
             this.TagsToMetricPointIndexDictionaryDelta =
-                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: (this.NumberOfReservedMetricPoints - reservedMetricPointsCount) * 2);
+                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: cardinalityLimit * 2);
 
             // Add all the indices except for the reserved ones to the queue so that threads have
             // readily available access to these MetricPoints for their use.
-            for (int i = reservedMetricPointsCount; i < this.NumberOfReservedMetricPoints; i++)
+            // Index 0 and 1 are reserved for no tags and overflow
+            for (int i = 2; i < this.NumberOfMetricPoints; i++)
             {
                 this.availableMetricPoints.Enqueue(i);
             }
@@ -203,12 +198,12 @@ internal sealed class AggregatorStore
         }
         else if (this.OutputDelta)
         {
-            var indexSnapshot = Math.Min(this.metricPointIndex, this.NumberOfReservedMetricPoints - 1);
+            var indexSnapshot = Math.Min(this.metricPointIndex, this.NumberOfMetricPoints - 1);
             this.SnapshotDelta(indexSnapshot);
         }
         else
         {
-            var indexSnapshot = Math.Min(this.metricPointIndex, this.NumberOfReservedMetricPoints - 1);
+            var indexSnapshot = Math.Min(this.metricPointIndex, this.NumberOfMetricPoints - 1);
             this.SnapshotCumulative(indexSnapshot);
         }
 
@@ -264,12 +259,8 @@ internal sealed class AggregatorStore
             this.batchSize++;
         }
 
-        int startIndexForReclaimableMetricPoints = 1;
-
         if (this.EmitOverflowAttribute)
         {
-            startIndexForReclaimableMetricPoints = 2; // Index 0 and 1 are reserved for no tags and overflow
-
             // TakeSnapshot for the MetricPoint for overflow
             ref var metricPointForOverflow = ref this.metricPoints[1];
             if (metricPointForOverflow.MetricPointStatus != MetricPointStatus.NoCollectPending)
@@ -288,7 +279,8 @@ internal sealed class AggregatorStore
             }
         }
 
-        for (int i = startIndexForReclaimableMetricPoints; i < this.NumberOfReservedMetricPoints; i++)
+        // Index 0 and 1 are reserved for no tags and overflow
+        for (int i = 2; i < this.NumberOfMetricPoints; i++)
         {
             ref var metricPoint = ref this.metricPoints[i];
 
@@ -477,7 +469,7 @@ internal sealed class AggregatorStore
                 if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                 {
                     aggregatorIndex = this.metricPointIndex;
-                    if (aggregatorIndex >= this.NumberOfReservedMetricPoints)
+                    if (aggregatorIndex >= this.NumberOfMetricPoints)
                     {
                         // sorry! out of data points.
                         // TODO: Once we support cleanup of
@@ -506,7 +498,7 @@ internal sealed class AggregatorStore
                         if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                         {
                             aggregatorIndex = ++this.metricPointIndex;
-                            if (aggregatorIndex >= this.NumberOfReservedMetricPoints)
+                            if (aggregatorIndex >= this.NumberOfMetricPoints)
                             {
                                 // sorry! out of data points.
                                 // TODO: Once we support cleanup of
@@ -533,7 +525,7 @@ internal sealed class AggregatorStore
             {
                 // This else block is for tag length = 1
                 aggregatorIndex = this.metricPointIndex;
-                if (aggregatorIndex >= this.NumberOfReservedMetricPoints)
+                if (aggregatorIndex >= this.NumberOfMetricPoints)
                 {
                     // sorry! out of data points.
                     // TODO: Once we support cleanup of
@@ -555,7 +547,7 @@ internal sealed class AggregatorStore
                     if (!this.tagsToMetricPointIndexDictionary.TryGetValue(givenTags, out aggregatorIndex))
                     {
                         aggregatorIndex = ++this.metricPointIndex;
-                        if (aggregatorIndex >= this.NumberOfReservedMetricPoints)
+                        if (aggregatorIndex >= this.NumberOfMetricPoints)
                         {
                             // sorry! out of data points.
                             // TODO: Once we support cleanup of
