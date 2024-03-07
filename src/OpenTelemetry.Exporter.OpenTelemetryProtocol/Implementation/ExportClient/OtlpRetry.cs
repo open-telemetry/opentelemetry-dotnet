@@ -54,14 +54,42 @@ internal static class OtlpRetry
     private static readonly Random Random = new Random();
 #endif
 
-    public static bool TryGetHttpRetryResult(HttpStatusCode? statusCode, DateTime? deadline, HttpResponseHeaders? responseHeaders, int retryDelayMilliseconds, out RetryResult retryResult)
+    public static bool TryGetHttpRetryResult(ExportClientHttpResponse response, int retryDelayInMilliSeconds, out RetryResult retryResult)
     {
-        return TryGetRetryResult(statusCode, IsHttpStatusCodeRetryable, deadline, responseHeaders, TryGetHttpRetryDelay, retryDelayMilliseconds, out retryResult);
+        retryResult = default;
+        if (response.StatusCode.HasValue)
+        {
+            return TryGetHttpRetryResult(response.StatusCode.Value, response.DeadlineUtc, response.Headers, retryDelayInMilliSeconds, out retryResult);
+        }
+        else
+        {
+            if (ShouldHandleHttpRequestException(response.Exception))
+            {
+                var delay = TimeSpan.FromMilliseconds(GetRandomNumber(0, retryDelayInMilliSeconds));
+                if (!IsDeadlineExceeded(response.DeadlineUtc + delay))
+                {
+                    retryResult = new RetryResult(false, delay, CalculateNextRetryDelay(retryDelayInMilliSeconds));
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    public static bool ShouldHandleHttpRequestException(Exception? exception)
+    {
+        return true;
     }
 
     public static bool TryGetGrpcRetryResult(StatusCode statusCode, DateTime? deadline, Metadata trailers, int retryDelayMilliseconds, out RetryResult retryResult)
     {
         return TryGetRetryResult(statusCode, IsGrpcStatusCodeRetryable, deadline, trailers, TryGetGrpcRetryDelay, retryDelayMilliseconds, out retryResult);
+    }
+
+    private static bool TryGetHttpRetryResult(HttpStatusCode statusCode, DateTime? deadline, HttpResponseHeaders? responseHeaders, int retryDelayMilliseconds, out RetryResult retryResult)
+    {
+        return TryGetRetryResult(statusCode, IsHttpStatusCodeRetryable, deadline, responseHeaders, TryGetHttpRetryDelay, retryDelayMilliseconds, out retryResult);
     }
 
     private static bool TryGetRetryResult<TStatusCode, TCarrier>(TStatusCode statusCode, Func<TStatusCode, bool, bool> isRetryable, DateTime? deadline, TCarrier carrier, Func<TStatusCode, TCarrier, TimeSpan?> throttleGetter, int nextRetryDelayMilliseconds, out RetryResult retryResult)
@@ -159,13 +187,8 @@ internal static class OtlpRetry
         return null;
     }
 
-    private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode? statusCode, HttpResponseHeaders? responseHeaders)
+    private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode statusCode, HttpResponseHeaders? responseHeaders)
     {
-        if (!statusCode.HasValue)
-        {
-            return null;
-        }
-
 #if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
         return statusCode == HttpStatusCode.TooManyRequests || statusCode == HttpStatusCode.ServiceUnavailable
 #else
@@ -193,15 +216,8 @@ internal static class OtlpRetry
         }
     }
 
-#pragma warning disable SA1313 // Parameter should begin with lower-case letter
-    private static bool IsHttpStatusCodeRetryable(HttpStatusCode? statusCode, bool _)
-#pragma warning restore SA1313 // Parameter should begin with lower-case letter
+    private static bool IsHttpStatusCodeRetryable(HttpStatusCode statusCode, bool hasRetryDelay)
     {
-        if (!statusCode.HasValue)
-        {
-            return true;
-        }
-
         switch (statusCode)
         {
 #if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER

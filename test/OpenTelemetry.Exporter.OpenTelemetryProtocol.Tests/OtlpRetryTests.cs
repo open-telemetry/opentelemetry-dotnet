@@ -72,10 +72,10 @@ public class OtlpRetryTests
         foreach (var retryAttempt in testCase.RetryAttempts)
         {
             ++attempts;
-            var statusCode = retryAttempt.Status;
-            var deadline = retryAttempt.Deadline;
-            var headers = retryAttempt.ResponseMessage?.Headers;
-            var success = OtlpRetry.TryGetHttpRetryResult(statusCode, deadline, headers, nextRetryDelayMilliseconds, out var retryResult);
+            var statusCode = retryAttempt.Response.StatusCode;
+            var deadline = retryAttempt.Response.DeadlineUtc;
+            var headers = retryAttempt.Response.Headers;
+            var success = OtlpRetry.TryGetHttpRetryResult(retryAttempt.Response, nextRetryDelayMilliseconds, out var retryResult);
 
             Assert.Equal(retryAttempt.ExpectedSuccess, success);
 
@@ -254,7 +254,7 @@ public class OtlpRetryTests
     public class HttpRetryTestCase
     {
         public int ExpectedRetryAttempts;
-        public HttpRetryAttempt[] RetryAttempts;
+        internal HttpRetryAttempt[] RetryAttempts;
 
         private string testRunnerName;
 
@@ -313,33 +313,37 @@ public class OtlpRetryTests
             return this.testRunnerName;
         }
 
-        public class HttpRetryAttempt
+        internal class HttpRetryAttempt
         {
-            public HttpStatusCode? Status;
-            public HttpResponseMessage? ResponseMessage;
+            public ExportClientHttpResponse Response;
             public DateTime? Deadline;
             public TimeSpan? ThrottleDelay;
             public int? ExpectedNextRetryDelayMilliseconds;
             public bool ExpectedSuccess;
 
-            public HttpRetryAttempt(
+            internal HttpRetryAttempt(
                 HttpStatusCode? statusCode,
                 TimeSpan? throttleDelay = null,
                 bool isDeadlineExceeded = false,
                 int expectedNextRetryDelayMilliseconds = 1500,
                 bool expectedSuccess = true)
             {
-                this.Status = statusCode;
                 this.ThrottleDelay = throttleDelay;
-                if (throttleDelay != null)
+
+                HttpResponseMessage? responseMessage = null;
+                if (statusCode != null)
                 {
-                    this.ResponseMessage = new HttpResponseMessage();
-                    this.ResponseMessage.Headers.RetryAfter = new RetryConditionHeaderValue(throttleDelay.Value);
-                    if (statusCode != null)
+                    responseMessage = new HttpResponseMessage();
+
+                    if (throttleDelay != null)
                     {
-                        this.ResponseMessage.StatusCode = (HttpStatusCode)statusCode;
+                        responseMessage.Headers.RetryAfter = new RetryConditionHeaderValue(throttleDelay.Value);
                     }
+
+                    responseMessage.StatusCode = (HttpStatusCode)statusCode;
                 }
+
+                this.Response = new ExportClientHttpResponse(expectedSuccess, isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : null, responseMessage, new HttpRequestException());
 
                 this.Deadline = isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : null;
                 this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
