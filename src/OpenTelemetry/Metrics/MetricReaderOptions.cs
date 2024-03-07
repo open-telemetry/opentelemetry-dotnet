@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using Microsoft.Extensions.Configuration;
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -17,13 +17,16 @@ public class MetricReaderOptions
     /// Initializes a new instance of the <see cref="MetricReaderOptions"/> class.
     /// </summary>
     public MetricReaderOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+        : this(new())
     {
     }
 
-    internal MetricReaderOptions(IConfiguration configuration)
+    internal MetricReaderOptions(
+        PeriodicExportingMetricReaderOptions defaultPeriodicExportingMetricReaderOptions)
     {
-        this.periodicExportingMetricReaderOptions = new PeriodicExportingMetricReaderOptions(configuration);
+        Debug.Assert(defaultPeriodicExportingMetricReaderOptions != null, "defaultPeriodicExportingMetricReaderOptions was null");
+
+        this.periodicExportingMetricReaderOptions = defaultPeriodicExportingMetricReaderOptions ?? new();
     }
 
     /// <summary>
