@@ -38,12 +38,7 @@ public abstract class BaseProcessor<T> : IDisposable
     /// processors. Changing the weight after a pipeline has been constructed
     /// has no effect.
     /// </remarks>
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    public
-#else
-    internal
-#endif
-        ProcessorPipelineWeight PipelineWeight { get; set; } = ProcessorPipelineWeight.PipelineMiddle;
+    internal ProcessorPipelineWeight PipelineWeight { get; set; } = ProcessorPipelineWeight.PipelineMiddle;
 
     /// <summary>
     /// Called synchronously when a telemetry object is started.

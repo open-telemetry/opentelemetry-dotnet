@@ -3,15 +3,10 @@
 
 namespace OpenTelemetry;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Contains definitions for common processor pipeline weights.
 /// </summary>
-public
-#else
-internal
-#endif
-        enum ProcessorPipelineWeight
+internal enum ProcessorPipelineWeight
 {
     /// <summary>
     /// Pipeline start. Value: <see cref="int.MinValue"/>.
