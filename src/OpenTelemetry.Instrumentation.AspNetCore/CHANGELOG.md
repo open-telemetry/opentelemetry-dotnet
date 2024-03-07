@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* `server.port` attribute is set even if it has default values (`80` for `HTTP`
-  and `443` for `HTTPS` protocol).
+* Fixed an issue when `server.port` attribute was not set with `server.address`
+  when it has default values (`80` for `HTTP` and `443` for `HTTPS` protocol).
   ([#5419](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5419))
 
 ## 1.7.1
