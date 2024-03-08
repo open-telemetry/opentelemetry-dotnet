@@ -72,6 +72,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
         }
 
+        // Note: Linq OrderBy performs a stable sort, which is a requirement here
         IEnumerable<BaseProcessor<Activity>> processors = state.Processors.OrderBy(p => p.PipelineWeight);
 
         state.AddExceptionProcessorIfEnabled(ref processors);

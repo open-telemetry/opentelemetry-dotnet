@@ -154,20 +154,36 @@ public sealed class LoggerProviderBuilderExtensionsTests
     [Fact]
     public void LoggerProviderBuilderAddProcessorTest()
     {
-        List<CustomProcessor> expectedProcessors = new()
+        List<CustomProcessor> processorsToAdd = new()
         {
-            new CustomProcessor(),
-            new CustomProcessor(),
-            new CustomProcessor(),
+            new CustomProcessor()
+            {
+                Name = "A",
+            },
+            new CustomProcessor()
+            {
+                Name = "B",
+            },
+            new CustomProcessor()
+            {
+                Name = "C",
+            },
         };
 
-        List<CustomProcessor> actualProcessors = new();
-
         var builder = Sdk.CreateLoggerProviderBuilder();
-        foreach (var processor in expectedProcessors)
+        foreach (var processor in processorsToAdd)
         {
             builder.AddProcessor(processor);
         }
+
+        List<CustomProcessor> expectedProcessors = new()
+        {
+            processorsToAdd.First(p => p.Name == "A"),
+            processorsToAdd.First(p => p.Name == "B"),
+            processorsToAdd.First(p => p.Name == "C"),
+        };
+
+        List<CustomProcessor> actualProcessors = new();
 
         using (var provider = builder.Build() as LoggerProviderSdk)
         {
@@ -206,26 +222,32 @@ public sealed class LoggerProviderBuilderExtensionsTests
         {
             new CustomProcessor()
             {
+                Name = "C",
                 PipelineWeight = 0,
             },
             new CustomProcessor()
             {
+                Name = "E",
                 PipelineWeight = 10_000,
             },
             new CustomProcessor()
             {
+                Name = "B",
                 PipelineWeight = -10_000,
             },
             new CustomProcessor()
             {
+                Name = "F",
                 PipelineWeight = int.MaxValue,
             },
             new CustomProcessor()
             {
+                Name = "A",
                 PipelineWeight = int.MinValue,
             },
             new CustomProcessor()
             {
+                Name = "D",
                 PipelineWeight = 0,
             },
         };
@@ -236,7 +258,15 @@ public sealed class LoggerProviderBuilderExtensionsTests
             builder.AddProcessor(processor);
         }
 
-        IEnumerable<CustomProcessor> expectedProcessors = processorsToAdd.OrderBy(p => p.PipelineWeight);
+        List<CustomProcessor> expectedProcessors = new()
+        {
+            processorsToAdd.First(p => p.Name == "A"),
+            processorsToAdd.First(p => p.Name == "B"),
+            processorsToAdd.First(p => p.Name == "C"),
+            processorsToAdd.First(p => p.Name == "D"),
+            processorsToAdd.First(p => p.Name == "E"),
+            processorsToAdd.First(p => p.Name == "F"),
+        };
 
         List<CustomProcessor> actualProcessors = new();
 
@@ -296,6 +326,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
 
     private sealed class CustomProcessor : BaseProcessor<LogRecord>
     {
+        public string? Name;
         public bool Disposed;
 
         protected override void Dispose(bool disposing)

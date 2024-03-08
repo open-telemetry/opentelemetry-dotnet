@@ -136,20 +136,36 @@ public class TracerProviderBuilderExtensionsTest
     [Fact]
     public void AddProcessorTest()
     {
-        List<MyProcessor> expectedProcessors = new()
+        List<MyProcessor> processorsToAdd = new()
         {
-            new MyProcessor(),
-            new MyProcessor(),
-            new MyProcessor(),
+            new MyProcessor()
+            {
+                Name = "A",
+            },
+            new MyProcessor()
+            {
+                Name = "B",
+            },
+            new MyProcessor()
+            {
+                Name = "C",
+            },
         };
 
-        List<MyProcessor> actualProcessors = new();
-
         var builder = Sdk.CreateTracerProviderBuilder();
-        foreach (var processor in expectedProcessors)
+        foreach (var processor in processorsToAdd)
         {
             builder.AddProcessor(processor);
         }
+
+        List<MyProcessor> expectedProcessors = new()
+        {
+            processorsToAdd.First(p => p.Name == "A"),
+            processorsToAdd.First(p => p.Name == "B"),
+            processorsToAdd.First(p => p.Name == "C"),
+        };
+
+        List<MyProcessor> actualProcessors = new();
 
         using (var provider = builder.Build() as TracerProviderSdk)
         {
@@ -188,26 +204,32 @@ public class TracerProviderBuilderExtensionsTest
         {
             new MyProcessor()
             {
+                Name = "C",
                 PipelineWeight = 0,
             },
             new MyProcessor()
             {
+                Name = "E",
                 PipelineWeight = 10_000,
             },
             new MyProcessor()
             {
+                Name = "B",
                 PipelineWeight = -10_000,
             },
             new MyProcessor()
             {
+                Name = "F",
                 PipelineWeight = int.MaxValue,
             },
             new MyProcessor()
             {
+                Name = "A",
                 PipelineWeight = int.MinValue,
             },
             new MyProcessor()
             {
+                Name = "D",
                 PipelineWeight = 0,
             },
         };
@@ -218,7 +240,16 @@ public class TracerProviderBuilderExtensionsTest
             builder.AddProcessor(processor);
         }
 
-        IEnumerable<MyProcessor> expectedProcessors = processorsToAdd.OrderBy(p => p.PipelineWeight);
+
+        List<MyProcessor> expectedProcessors = new()
+        {
+            processorsToAdd.First(p => p.Name == "A"),
+            processorsToAdd.First(p => p.Name == "B"),
+            processorsToAdd.First(p => p.Name == "C"),
+            processorsToAdd.First(p => p.Name == "D"),
+            processorsToAdd.First(p => p.Name == "E"),
+            processorsToAdd.First(p => p.Name == "F"),
+        };
 
         List<MyProcessor> actualProcessors = new();
 
@@ -633,6 +664,7 @@ public class TracerProviderBuilderExtensionsTest
 
     private sealed class MyProcessor : BaseProcessor<Activity>
     {
+        public string? Name;
         public bool Disposed;
 
         protected override void Dispose(bool disposing)
