@@ -181,9 +181,12 @@ public class OtlpExporterOptions
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
-    /// be appended to <see cref="Endpoint"/> when creating http-based export
-    /// clients.
+    /// be appended to <see cref="Endpoint"/>.
     /// </summary>
+    /// <remarks>
+    /// Note: Only applicable when <see cref="OtlpExportProtocol.HttpProtobuf"/>
+    /// is used.
+    /// </remarks>
     internal bool AppendSignalPathToEndpoint { get; private set; } = true;
 
     internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
