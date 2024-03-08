@@ -963,16 +963,16 @@ public class MetricViewTests : MetricTestsBase
 
         Assert.Equal(3, exportedItems.Count);
 
-        Assert.Equal(10000, exportedItems[1].AggregatorStore.CardinalityLimit);
+        Assert.Equal(10002, exportedItems[1].AggregatorStore.NumberOfMetricPoints);
         if (setDefault)
         {
-            Assert.Equal(3, exportedItems[0].AggregatorStore.CardinalityLimit);
-            Assert.Equal(3, exportedItems[2].AggregatorStore.CardinalityLimit);
+            Assert.Equal(5, exportedItems[0].AggregatorStore.NumberOfMetricPoints);
+            Assert.Equal(5, exportedItems[2].AggregatorStore.NumberOfMetricPoints);
         }
         else
         {
-            Assert.Equal(2000, exportedItems[0].AggregatorStore.CardinalityLimit);
-            Assert.Equal(2000, exportedItems[2].AggregatorStore.CardinalityLimit);
+            Assert.Equal(2002, exportedItems[0].AggregatorStore.NumberOfMetricPoints);
+            Assert.Equal(2002, exportedItems[2].AggregatorStore.NumberOfMetricPoints);
         }
     }
 
@@ -1015,15 +1015,15 @@ public class MetricViewTests : MetricTestsBase
         var metricB = exportedItems[1];
         var metricC = exportedItems[2];
 
-        Assert.Equal(256, metricA.AggregatorStore.CardinalityLimit);
+        Assert.Equal(258, metricA.AggregatorStore.NumberOfMetricPoints);
         Assert.Equal("MetricStreamA", metricA.Name);
         Assert.Equal(20, GetAggregatedValue(metricA));
 
-        Assert.Equal(3, metricB.AggregatorStore.CardinalityLimit);
+        Assert.Equal(5, metricB.AggregatorStore.NumberOfMetricPoints);
         Assert.Equal("MetricStreamB", metricB.Name);
         Assert.Equal(10, GetAggregatedValue(metricB));
 
-        Assert.Equal(200000, metricC.AggregatorStore.CardinalityLimit);
+        Assert.Equal(200002, metricC.AggregatorStore.NumberOfMetricPoints);
         Assert.Equal("MetricStreamC", metricC.Name);
         Assert.Equal(10, GetAggregatedValue(metricC));
 
