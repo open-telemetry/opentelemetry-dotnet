@@ -33,7 +33,7 @@ public class OtlpExporterOptions
     };
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
-    internal bool AppendSignalPathToEndpoint;
+    internal bool AppendSignalPathToEndpoint = true;
 
     private const string DefaultGrpcEndpoint = "http://localhost:4317";
     private const string DefaultHttpEndpoint = "http://localhost:4318";
