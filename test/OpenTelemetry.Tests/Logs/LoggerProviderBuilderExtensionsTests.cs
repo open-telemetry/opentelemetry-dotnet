@@ -128,15 +128,64 @@ public sealed class LoggerProviderBuilderExtensionsTests
     }
 
     [Fact]
+    public void LoggerProviderBuilderUsingDependencyInjectionTest()
+    {
+        using var provider = Sdk.CreateLoggerProviderBuilder()
+            .AddProcessor<CustomProcessor>()
+            .AddProcessor<CustomProcessor>()
+            .Build() as LoggerProviderSdk;
+
+        Assert.NotNull(provider);
+
+        var processors = ((IServiceProvider)provider.OwnedServiceProvider!).GetServices<CustomProcessor>();
+
+        // Note: Two "Add" calls but it is a singleton so only a single registration is produced
+        Assert.Single(processors);
+
+        var processor = provider.Processor as CompositeProcessor<LogRecord>;
+
+        Assert.NotNull(processor);
+
+        // Note: Two "Add" calls due yield two processors added to provider, even though they are the same
+        Assert.True(processor.Head.Value is CustomProcessor);
+        Assert.True(processor.Head.Next?.Value is CustomProcessor);
+    }
+
+    [Fact]
     public void LoggerProviderBuilderAddProcessorTest()
     {
-        List<CustomProcessor> processors = new();
+        List<CustomProcessor> processorsToAdd = new()
+        {
+            new CustomProcessor()
+            {
+                Name = "A",
+            },
+            new CustomProcessor()
+            {
+                Name = "B",
+            },
+            new CustomProcessor()
+            {
+                Name = "C",
+            },
+        };
 
-        using (var provider = Sdk.CreateLoggerProviderBuilder()
-            .AddProcessor<CustomProcessor>()
-            .AddProcessor(sp => new CustomProcessor())
-            .AddProcessor(new CustomProcessor())
-            .Build() as LoggerProviderSdk)
+        var builder = Sdk.CreateLoggerProviderBuilder();
+        foreach (var processor in processorsToAdd)
+        {
+            builder.AddProcessor(processor);
+        }
+
+        List<CustomProcessor> expectedProcessors = new()
+        {
+            processorsToAdd.First(p => p.Name == "A"),
+            processorsToAdd.First(p => p.Name == "B"),
+            processorsToAdd.First(p => p.Name == "C"),
+        };
+
+        List<CustomProcessor> actualProcessors = new();
+
+        using (var provider = builder.Build() as LoggerProviderSdk)
         {
             Assert.NotNull(provider);
             Assert.NotNull(provider.Processor);
@@ -151,16 +200,106 @@ public sealed class LoggerProviderBuilderExtensionsTests
                 var processor = current.Value as CustomProcessor;
                 Assert.NotNull(processor);
 
-                processors.Add(processor);
+                actualProcessors.Add(processor);
                 Assert.False(processor.Disposed);
 
                 current = current.Next;
             }
+
+            Assert.Equal(expectedProcessors, actualProcessors);
         }
 
-        Assert.Equal(3, processors.Count);
+        foreach (var processor in actualProcessors)
+        {
+            Assert.True(processor.Disposed);
+        }
+    }
 
-        foreach (var processor in processors)
+    [Fact]
+    public void LoggerProviderBuilderAddProcessorWithWeightTest()
+    {
+        List<CustomProcessor> processorsToAdd = new()
+        {
+            new CustomProcessor()
+            {
+                Name = "C",
+                PipelineWeight = 0,
+            },
+            new CustomProcessor()
+            {
+                Name = "E",
+                PipelineWeight = 10_000,
+            },
+            new CustomProcessor()
+            {
+                Name = "B",
+                PipelineWeight = -10_000,
+            },
+            new CustomProcessor()
+            {
+                Name = "F",
+                PipelineWeight = int.MaxValue,
+            },
+            new CustomProcessor()
+            {
+                Name = "A",
+                PipelineWeight = int.MinValue,
+            },
+            new CustomProcessor()
+            {
+                Name = "D",
+                PipelineWeight = 0,
+            },
+        };
+
+        var builder = Sdk.CreateLoggerProviderBuilder();
+        foreach (var processor in processorsToAdd)
+        {
+            builder.AddProcessor(processor);
+        }
+
+        List<CustomProcessor> expectedProcessors = new()
+        {
+            processorsToAdd.First(p => p.Name == "A"),
+            processorsToAdd.First(p => p.Name == "B"),
+            processorsToAdd.First(p => p.Name == "C"),
+            processorsToAdd.First(p => p.Name == "D"),
+            processorsToAdd.First(p => p.Name == "E"),
+            processorsToAdd.First(p => p.Name == "F"),
+        };
+
+        List<CustomProcessor> actualProcessors = new();
+
+        using (var provider = builder.Build() as LoggerProviderSdk)
+        {
+            Assert.NotNull(provider);
+            Assert.NotNull(provider.Processor);
+
+            var compositeProcessor = provider.Processor as CompositeProcessor<LogRecord>;
+
+            Assert.NotNull(compositeProcessor);
+
+            var lastWeight = int.MinValue;
+            var current = compositeProcessor.Head;
+            while (current != null)
+            {
+                var processor = current.Value as CustomProcessor;
+                Assert.NotNull(processor);
+
+                actualProcessors.Add(processor);
+                Assert.False(processor.Disposed);
+
+                Assert.True(processor.PipelineWeight >= lastWeight);
+
+                lastWeight = processor.PipelineWeight;
+
+                current = current.Next;
+            }
+
+            Assert.Equal(expectedProcessors, actualProcessors);
+        }
+
+        foreach (var processor in actualProcessors)
         {
             Assert.True(processor.Disposed);
         }
@@ -187,6 +326,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
 
     private sealed class CustomProcessor : BaseProcessor<LogRecord>
     {
+        public string? Name;
         public bool Disposed;
 
         protected override void Dispose(bool disposing)
