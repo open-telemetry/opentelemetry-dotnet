@@ -114,7 +114,7 @@ public class OtlpExporterOptions
         set
         {
             this.endpoint = value;
-            this.ProgrammaticallyModifiedEndpoint = true;
+            this.AppendSignalPathToEndpoint = false;
         }
     }
 
@@ -180,9 +180,14 @@ public class OtlpExporterOptions
     public Func<HttpClient> HttpClientFactory { get; set; }
 
     /// <summary>
-    /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.
+    /// Gets a value indicating whether or not the signal-specific path should
+    /// be appended to <see cref="Endpoint"/>.
     /// </summary>
-    internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
+    /// <remarks>
+    /// Note: Only applicable when <see cref="OtlpExportProtocol.HttpProtobuf"/>
+    /// is used.
+    /// </remarks>
+    internal bool AppendSignalPathToEndpoint { get; private set; } = true;
 
     internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
     {
