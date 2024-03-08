@@ -181,7 +181,8 @@ public class OtlpExporterOptions
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
-    /// be appended to <see cref="Endpoint"/> when creating export clients.
+    /// be appended to <see cref="Endpoint"/> when creating http-based export
+    /// clients.
     /// </summary>
     internal bool AppendSignalPathToEndpoint { get; private set; } = true;
 
