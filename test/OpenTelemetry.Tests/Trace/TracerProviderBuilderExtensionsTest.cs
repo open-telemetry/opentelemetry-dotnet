@@ -136,26 +136,93 @@ public class TracerProviderBuilderExtensionsTest
     [Fact]
     public void AddProcessorTest()
     {
-        List<MyProcessor> processors = new();
+        List<MyProcessor> expectedProcessors = new()
+        {
+            new MyProcessor(),
+            new MyProcessor(),
+            new MyProcessor(),
+        };
 
-        using (var provider = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor<MyProcessor>()
-            .AddProcessor(new MyProcessor()
+        List<MyProcessor> actualProcessors = new();
+
+        var builder = Sdk.CreateTracerProviderBuilder();
+        foreach (var processor in expectedProcessors)
+        {
+            builder.AddProcessor(processor);
+        }
+
+        using (var provider = builder.Build() as TracerProviderSdk)
+        {
+            Assert.NotNull(provider);
+            Assert.NotNull(provider.Processor);
+
+            var compositeProcessor = provider.Processor as CompositeProcessor<Activity>;
+
+            Assert.NotNull(compositeProcessor);
+
+            var current = compositeProcessor.Head;
+            while (current != null)
+            {
+                var processor = current.Value as MyProcessor;
+                Assert.NotNull(processor);
+
+                actualProcessors.Add(processor);
+                Assert.False(processor.Disposed);
+
+                current = current.Next;
+            }
+
+            Assert.Equal(expectedProcessors, actualProcessors);
+        }
+
+        foreach (var processor in actualProcessors)
+        {
+            Assert.True(processor.Disposed);
+        }
+    }
+
+    [Fact]
+    public void AddProcessorWithWeightTest()
+    {
+        List<MyProcessor> processorsToAdd = new()
+        {
+            new MyProcessor()
+            {
+                PipelineWeight = 0,
+            },
+            new MyProcessor()
             {
                 PipelineWeight = 10_000,
-            })
-            .AddProcessor(new MyProcessor()
+            },
+            new MyProcessor()
             {
                 PipelineWeight = -10_000,
-            })
-            .AddProcessor(sp => new MyProcessor()
+            },
+            new MyProcessor()
             {
                 PipelineWeight = int.MaxValue,
-            })
-            .AddProcessor(new MyProcessor()
+            },
+            new MyProcessor()
             {
                 PipelineWeight = int.MinValue,
-            })
+            },
+            new MyProcessor()
+            {
+                PipelineWeight = 0,
+            },
+        };
+
+        var builder = Sdk.CreateTracerProviderBuilder();
+        foreach (var processor in processorsToAdd)
+        {
+            builder.AddProcessor(processor);
+        }
+
+        IEnumerable<MyProcessor> expectedProcessors = processorsToAdd.OrderBy(p => p.PipelineWeight);
+
+        List<MyProcessor> actualProcessors = new();
+
+        using (var provider = builder
             .SetErrorStatusOnException() // Forced to be first processor
             .Build() as TracerProviderSdk)
         {
@@ -182,21 +249,21 @@ public class TracerProviderBuilderExtensionsTest
                     var processor = current.Value as MyProcessor;
                     Assert.NotNull(processor);
 
-                    processors.Add(processor);
+                    actualProcessors.Add(processor);
                     Assert.False(processor.Disposed);
 
-                    Assert.True((int)processor.PipelineWeight >= lastWeight);
+                    Assert.True(processor.PipelineWeight >= lastWeight);
 
-                    lastWeight = (int)processor.PipelineWeight;
+                    lastWeight = processor.PipelineWeight;
                 }
 
                 current = current.Next;
             }
+
+            Assert.Equal(expectedProcessors, actualProcessors);
         }
 
-        Assert.Equal(5, processors.Count);
-
-        foreach (var processor in processors)
+        foreach (var processor in actualProcessors)
         {
             Assert.True(processor.Disposed);
         }
