@@ -240,7 +240,6 @@ public class TracerProviderBuilderExtensionsTest
             builder.AddProcessor(processor);
         }
 
-
         List<MyProcessor> expectedProcessors = new()
         {
             processorsToAdd.First(p => p.Name == "A"),
