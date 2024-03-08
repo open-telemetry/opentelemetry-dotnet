@@ -190,7 +190,6 @@ public class OtlpExporterOptions
             OtlpExporterOptionsConfigurationType.Default,
             serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name));
 
-
     internal void ApplyConfigurationUsingSpecificationEnvVars(
         IConfiguration configuration,
         string endpointEnvVarKey,
