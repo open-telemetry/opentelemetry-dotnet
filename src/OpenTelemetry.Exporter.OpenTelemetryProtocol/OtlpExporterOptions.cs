@@ -26,12 +26,6 @@ namespace OpenTelemetry.Exporter;
 /// </remarks>
 public class OtlpExporterOptions : IOtlpExporterOptions
 {
-    // TODO: Remove these and use OtlpExporterSpecEnvVarKeyDefinitions directly from tests in a follow-up PR
-    internal const string EndpointEnvVarName = OtlpExporterSpecEnvVarKeyDefinitions.DefaultEndpointEnvVarName;
-    internal const string HeadersEnvVarName = OtlpExporterSpecEnvVarKeyDefinitions.DefaultHeadersEnvVarName;
-    internal const string TimeoutEnvVarName = OtlpExporterSpecEnvVarKeyDefinitions.DefaultTimeoutEnvVarName;
-    internal const string ProtocolEnvVarName = OtlpExporterSpecEnvVarKeyDefinitions.DefaultProtocolEnvVarName;
-
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
         new KeyValuePair<string, string>("User-Agent", GetUserAgentString()),
