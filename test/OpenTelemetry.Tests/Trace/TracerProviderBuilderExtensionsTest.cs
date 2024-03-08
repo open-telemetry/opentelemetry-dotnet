@@ -664,7 +664,7 @@ public class TracerProviderBuilderExtensionsTest
 
     private sealed class MyProcessor : BaseProcessor<Activity>
     {
-        public string? Name;
+        public string Name;
         public bool Disposed;
 
         protected override void Dispose(bool disposing)
