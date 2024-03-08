@@ -54,7 +54,8 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         resourceBuilder.ServiceProvider = serviceProvider;
         this.Resource = resourceBuilder.Build();
 
-        foreach (var processor in state.Processors.OrderBy(p => (int)p.PipelineWeight))
+        // Note: Linq OrderBy performs a stable sort, which is a requirement here
+        foreach (var processor in state.Processors.OrderBy(p => p.PipelineWeight))
         {
             this.AddProcessor(processor);
         }

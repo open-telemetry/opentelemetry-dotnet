@@ -106,7 +106,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
         string? name = null,
         IConfiguration? configuration = null,
         Action<OtlpExporterBuilder>? configure = null,
-        ProcessorPipelineWeight processorPipelineWeight = ProcessorPipelineWeight.PipelineExporter)
+        int processorPipelineWeight = 10_000)
     {
         Guard.ThrowIfNull(builder);
 
@@ -124,7 +124,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
         return builder;
     }
 
-    private static void UseOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name, ProcessorPipelineWeight processorPipelineWeight)
+    private static void UseOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name, int processorPipelineWeight)
     {
         builder
             .WithLogging()
