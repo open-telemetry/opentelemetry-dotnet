@@ -3,6 +3,12 @@
 
 namespace OpenTelemetry.Exporter;
 
+/// <summary>
+/// Contains spec environment variable key definitions for OpenTelemetry Protocol (OTLP) exporter.
+/// </summary>
+/// <remarks>
+/// Specification: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md"/>.
+/// </remarks>
 internal static class OtlpExporterSpecEnvVarKeyDefinitions
 {
     public const string DefaultEndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
