@@ -142,19 +142,19 @@ public class TracerProviderBuilderExtensionsTest
             .AddProcessor<MyProcessor>()
             .AddProcessor(new MyProcessor()
             {
-                PipelineWeight = ProcessorPipelineWeight.PipelineExporter,
+                PipelineWeight = 10_000,
             })
             .AddProcessor(new MyProcessor()
             {
-                PipelineWeight = ProcessorPipelineWeight.PipelineEnrichment,
+                PipelineWeight = -10_000,
             })
             .AddProcessor(sp => new MyProcessor()
             {
-                PipelineWeight = ProcessorPipelineWeight.PipelineEnd,
+                PipelineWeight = int.MaxValue,
             })
             .AddProcessor(new MyProcessor()
             {
-                PipelineWeight = ProcessorPipelineWeight.PipelineStart,
+                PipelineWeight = int.MinValue,
             })
             .SetErrorStatusOnException() // Forced to be first processor
             .Build() as TracerProviderSdk)
@@ -174,7 +174,7 @@ public class TracerProviderBuilderExtensionsTest
                 if (isFirstProcessor)
                 {
                     Assert.True(current.Value is ExceptionProcessor);
-                    Assert.Equal(ProcessorPipelineWeight.PipelineMiddle, current.Value.PipelineWeight);
+                    Assert.Equal(0, current.Value.PipelineWeight);
                     isFirstProcessor = false;
                 }
                 else

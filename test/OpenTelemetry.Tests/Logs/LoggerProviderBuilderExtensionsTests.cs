@@ -136,19 +136,19 @@ public sealed class LoggerProviderBuilderExtensionsTests
             .AddProcessor<CustomProcessor>()
             .AddProcessor(new CustomProcessor()
             {
-                PipelineWeight = ProcessorPipelineWeight.PipelineExporter,
+                PipelineWeight = 10_000,
             })
             .AddProcessor(new CustomProcessor()
             {
-                PipelineWeight = ProcessorPipelineWeight.PipelineEnrichment,
+                PipelineWeight = -10_000,
             })
             .AddProcessor(sp => new CustomProcessor()
             {
-                PipelineWeight = ProcessorPipelineWeight.PipelineEnd,
+                PipelineWeight = int.MaxValue,
             })
             .AddProcessor(new CustomProcessor()
             {
-                PipelineWeight = ProcessorPipelineWeight.PipelineStart,
+                PipelineWeight = int.MinValue,
             })
             .Build() as LoggerProviderSdk)
         {
