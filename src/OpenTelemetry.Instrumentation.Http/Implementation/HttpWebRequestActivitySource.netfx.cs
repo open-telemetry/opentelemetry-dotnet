@@ -426,12 +426,15 @@ internal static class HttpWebRequestActivitySource
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
 
             tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
-            tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
-
             tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
             if (protocolVersion != null)
             {
                 tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(protocolVersion));
+            }
+
+            if (!request.RequestUri.IsDefaultPort)
+            {
+                tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
             }
 
             if (httpStatusCode.HasValue)
