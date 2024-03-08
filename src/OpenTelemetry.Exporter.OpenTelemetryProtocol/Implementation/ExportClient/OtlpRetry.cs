@@ -59,7 +59,7 @@ internal static class OtlpRetry
         retryResult = default;
         if (response.StatusCode.HasValue)
         {
-            return TryGetHttpRetryResult(response.StatusCode.Value, response.DeadlineUtc, response.Headers, retryDelayInMilliSeconds, out retryResult);
+            return TryGetRetryResult(response.StatusCode.Value, IsHttpStatusCodeRetryable, response.DeadlineUtc, response.Headers, TryGetHttpRetryDelay, retryDelayInMilliSeconds, out retryResult);
         }
         else
         {
@@ -79,17 +79,13 @@ internal static class OtlpRetry
 
     public static bool ShouldHandleHttpRequestException(Exception? exception)
     {
+        // TODO: Handle specific exceptions.
         return true;
     }
 
     public static bool TryGetGrpcRetryResult(StatusCode statusCode, DateTime? deadline, Metadata trailers, int retryDelayMilliseconds, out RetryResult retryResult)
     {
         return TryGetRetryResult(statusCode, IsGrpcStatusCodeRetryable, deadline, trailers, TryGetGrpcRetryDelay, retryDelayMilliseconds, out retryResult);
-    }
-
-    private static bool TryGetHttpRetryResult(HttpStatusCode statusCode, DateTime? deadline, HttpResponseHeaders? responseHeaders, int retryDelayMilliseconds, out RetryResult retryResult)
-    {
-        return TryGetRetryResult(statusCode, IsHttpStatusCodeRetryable, deadline, responseHeaders, TryGetHttpRetryDelay, retryDelayMilliseconds, out retryResult);
     }
 
     private static bool TryGetRetryResult<TStatusCode, TCarrier>(TStatusCode statusCode, Func<TStatusCode, bool, bool> isRetryable, DateTime? deadline, TCarrier carrier, Func<TStatusCode, TCarrier, TimeSpan?> throttleGetter, int nextRetryDelayMilliseconds, out RetryResult retryResult)
