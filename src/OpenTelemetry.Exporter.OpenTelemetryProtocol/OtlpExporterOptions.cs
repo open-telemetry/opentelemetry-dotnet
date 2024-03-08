@@ -33,6 +33,7 @@ public class OtlpExporterOptions
     };
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
+    internal bool AppendSignalPathToEndpoint;
 
     private const string DefaultGrpcEndpoint = "http://localhost:4317";
     private const string DefaultHttpEndpoint = "http://localhost:4318";
@@ -114,7 +115,7 @@ public class OtlpExporterOptions
         set
         {
             this.endpoint = value;
-            this.ProgrammaticallyModifiedEndpoint = true;
+            this.AppendSignalPathToEndpoint = false;
         }
     }
 
@@ -178,11 +179,6 @@ public class OtlpExporterOptions
     /// </list>
     /// </remarks>
     public Func<HttpClient> HttpClientFactory { get; set; }
-
-    /// <summary>
-    /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.
-    /// </summary>
-    internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
 
     internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
     {
