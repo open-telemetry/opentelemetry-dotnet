@@ -281,7 +281,7 @@ internal sealed class PrometheusCollectionManager
                     var cursor = PrometheusSerializer.WriteTargetInfo(this.buffer, 0, this.exporter.Resource);
 
                     this.targetInfoBuffer = new byte[cursor];
-                    this.buffer.CopyTo(this.targetInfoBuffer, 0);
+                    Array.Copy(this.buffer, 0, this.targetInfoBuffer, 0, cursor);
 
                     break;
                 }
