@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Added `target_info` to Prometheus exporters ([#5407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5407))
+* Added `target_info` to Prometheus exporters when using OpenMetrics format ([#5407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5407))
 
 * Added option to disable _total suffix addition to counter metrics
   ([#5305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5305))
