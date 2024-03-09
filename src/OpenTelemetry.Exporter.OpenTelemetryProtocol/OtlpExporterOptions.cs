@@ -201,10 +201,7 @@ public class OtlpExporterOptions
         if (configuration.TryGetUriValue(endpointEnvVarKey, out var endpoint))
         {
             this.endpoint = endpoint;
-            if (!appendSignalPathToEndpoint)
-            {
-                this.AppendSignalPathToEndpoint = false;
-            }
+            this.AppendSignalPathToEndpoint = appendSignalPathToEndpoint;
         }
 
         if (configuration.TryGetValue<OtlpExportProtocol>(
