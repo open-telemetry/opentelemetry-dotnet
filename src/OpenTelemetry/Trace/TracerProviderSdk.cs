@@ -53,8 +53,6 @@ internal sealed class TracerProviderSdk : TracerProvider
         StringBuilder processorsAdded = new StringBuilder();
         StringBuilder instrumentationFactoriesAdded = new StringBuilder();
 
-        state.AddExceptionProcessorIfEnabled();
-
         var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
         resourceBuilder.ServiceProvider = serviceProvider;
         this.Resource = resourceBuilder.Build();
@@ -74,7 +72,12 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
         }
 
-        foreach (var processor in state.Processors)
+        // Note: Linq OrderBy performs a stable sort, which is a requirement here
+        IEnumerable<BaseProcessor<Activity>> processors = state.Processors.OrderBy(p => p.PipelineWeight);
+
+        state.AddExceptionProcessorIfEnabled(ref processors);
+
+        foreach (var processor in processors)
         {
             this.AddProcessor(processor);
             processorsAdded.Append(processor.GetType());

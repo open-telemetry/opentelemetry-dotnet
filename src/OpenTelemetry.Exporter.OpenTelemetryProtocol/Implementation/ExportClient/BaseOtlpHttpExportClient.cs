@@ -21,7 +21,7 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
         Guard.ThrowIfNull(signalPath);
         Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
 
-        Uri exporterEndpoint = !options.ProgrammaticallyModifiedEndpoint
+        Uri exporterEndpoint = options.AppendSignalPathToEndpoint
             ? options.Endpoint.AppendPathIfNotPresent(signalPath)
             : options.Endpoint;
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;

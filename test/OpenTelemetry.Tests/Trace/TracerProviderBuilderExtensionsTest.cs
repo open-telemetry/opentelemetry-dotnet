@@ -134,6 +134,172 @@ public class TracerProviderBuilderExtensionsTest
     }
 
     [Fact]
+    public void AddProcessorTest()
+    {
+        List<MyProcessor> processorsToAdd = new()
+        {
+            new MyProcessor()
+            {
+                Name = "A",
+            },
+            new MyProcessor()
+            {
+                Name = "B",
+            },
+            new MyProcessor()
+            {
+                Name = "C",
+            },
+        };
+
+        var builder = Sdk.CreateTracerProviderBuilder();
+        foreach (var processor in processorsToAdd)
+        {
+            builder.AddProcessor(processor);
+        }
+
+        List<MyProcessor> expectedProcessors = new()
+        {
+            processorsToAdd.First(p => p.Name == "A"),
+            processorsToAdd.First(p => p.Name == "B"),
+            processorsToAdd.First(p => p.Name == "C"),
+        };
+
+        List<MyProcessor> actualProcessors = new();
+
+        using (var provider = builder.Build() as TracerProviderSdk)
+        {
+            Assert.NotNull(provider);
+            Assert.NotNull(provider.Processor);
+
+            var compositeProcessor = provider.Processor as CompositeProcessor<Activity>;
+
+            Assert.NotNull(compositeProcessor);
+
+            var current = compositeProcessor.Head;
+            while (current != null)
+            {
+                var processor = current.Value as MyProcessor;
+                Assert.NotNull(processor);
+
+                actualProcessors.Add(processor);
+                Assert.False(processor.Disposed);
+
+                current = current.Next;
+            }
+
+            Assert.Equal(expectedProcessors, actualProcessors);
+        }
+
+        foreach (var processor in actualProcessors)
+        {
+            Assert.True(processor.Disposed);
+        }
+    }
+
+    [Fact]
+    public void AddProcessorWithWeightTest()
+    {
+        List<MyProcessor> processorsToAdd = new()
+        {
+            new MyProcessor()
+            {
+                Name = "C",
+                PipelineWeight = 0,
+            },
+            new MyProcessor()
+            {
+                Name = "E",
+                PipelineWeight = 10_000,
+            },
+            new MyProcessor()
+            {
+                Name = "B",
+                PipelineWeight = -10_000,
+            },
+            new MyProcessor()
+            {
+                Name = "F",
+                PipelineWeight = int.MaxValue,
+            },
+            new MyProcessor()
+            {
+                Name = "A",
+                PipelineWeight = int.MinValue,
+            },
+            new MyProcessor()
+            {
+                Name = "D",
+                PipelineWeight = 0,
+            },
+        };
+
+        var builder = Sdk.CreateTracerProviderBuilder();
+        foreach (var processor in processorsToAdd)
+        {
+            builder.AddProcessor(processor);
+        }
+
+        List<MyProcessor> expectedProcessors = new()
+        {
+            processorsToAdd.First(p => p.Name == "A"),
+            processorsToAdd.First(p => p.Name == "B"),
+            processorsToAdd.First(p => p.Name == "C"),
+            processorsToAdd.First(p => p.Name == "D"),
+            processorsToAdd.First(p => p.Name == "E"),
+            processorsToAdd.First(p => p.Name == "F"),
+        };
+
+        List<MyProcessor> actualProcessors = new();
+
+        using (var provider = builder
+            .SetErrorStatusOnException() // Forced to be first processor
+            .Build() as TracerProviderSdk)
+        {
+            Assert.NotNull(provider);
+            Assert.NotNull(provider.Processor);
+
+            var compositeProcessor = provider.Processor as CompositeProcessor<Activity>;
+
+            Assert.NotNull(compositeProcessor);
+
+            bool isFirstProcessor = true;
+            var lastWeight = int.MinValue;
+            var current = compositeProcessor.Head;
+            while (current != null)
+            {
+                if (isFirstProcessor)
+                {
+                    Assert.True(current.Value is ExceptionProcessor);
+                    Assert.Equal(0, current.Value.PipelineWeight);
+                    isFirstProcessor = false;
+                }
+                else
+                {
+                    var processor = current.Value as MyProcessor;
+                    Assert.NotNull(processor);
+
+                    actualProcessors.Add(processor);
+                    Assert.False(processor.Disposed);
+
+                    Assert.True(processor.PipelineWeight >= lastWeight);
+
+                    lastWeight = processor.PipelineWeight;
+                }
+
+                current = current.Next;
+            }
+
+            Assert.Equal(expectedProcessors, actualProcessors);
+        }
+
+        foreach (var processor in actualProcessors)
+        {
+            Assert.True(processor.Disposed);
+        }
+    }
+
+    [Fact]
     public void AddProcessorUsingDependencyInjectionTest()
     {
         var builder = Sdk.CreateTracerProviderBuilder();
@@ -497,6 +663,15 @@ public class TracerProviderBuilderExtensionsTest
 
     private sealed class MyProcessor : BaseProcessor<Activity>
     {
+        public string Name;
+        public bool Disposed;
+
+        protected override void Dispose(bool disposing)
+        {
+            this.Disposed = true;
+
+            base.Dispose(disposing);
+        }
     }
 
     private sealed class MyExporter : BaseExporter<Activity>
