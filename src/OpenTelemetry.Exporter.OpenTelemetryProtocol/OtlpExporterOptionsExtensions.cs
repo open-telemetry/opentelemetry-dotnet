@@ -92,15 +92,12 @@ internal static class OtlpExporterOptionsExtensions
     {
         var exportClient = GetTraceExportClient(options);
 
-        double timeoutMilliseconds = options.TimeoutMilliseconds;
-
-        if (exportClient is OtlpHttpTraceExportClient httpTraceExportClient)
-        {
-            // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
-            // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
-            // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
-            timeoutMilliseconds = httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds;
-        }
+        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
+        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
+        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
+        double timeoutMilliseconds = exportClient is OtlpHttpTraceExportClient httpTraceExportClient
+            ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
+            : options.TimeoutMilliseconds;
 
         return new OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(exportClient, timeoutMilliseconds);
     }
@@ -109,15 +106,12 @@ internal static class OtlpExporterOptionsExtensions
     {
         var exportClient = GetMetricsExportClient(options);
 
-        double timeoutMilliseconds = options.TimeoutMilliseconds;
-
-        if (exportClient is OtlpHttpMetricsExportClient httpMetricExportClient)
-        {
-            // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
-            // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
-            // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
-            timeoutMilliseconds = httpMetricExportClient.HttpClient.Timeout.TotalMilliseconds;
-        }
+        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
+        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
+        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
+        double timeoutMilliseconds = exportClient is OtlpHttpMetricsExportClient httpMetricsExportClient
+            ? httpMetricsExportClient.HttpClient.Timeout.TotalMilliseconds
+            : options.TimeoutMilliseconds;
 
         return new OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds);
     }
@@ -126,15 +120,12 @@ internal static class OtlpExporterOptionsExtensions
     {
         var exportClient = GetLogExportClient(options);
 
-        double timeoutMilliseconds = options.TimeoutMilliseconds;
-
-        if (exportClient is OtlpHttpLogExportClient httpLogExportClient)
-        {
-            // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
-            // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
-            // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
-            timeoutMilliseconds = httpLogExportClient.HttpClient.Timeout.TotalMilliseconds;
-        }
+        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
+        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
+        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
+        double timeoutMilliseconds = exportClient is OtlpHttpLogExportClient httpLogExportClient
+            ? httpLogExportClient.HttpClient.Timeout.TotalMilliseconds
+            : options.TimeoutMilliseconds;
 
         return new OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
     }

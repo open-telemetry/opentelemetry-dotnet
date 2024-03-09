@@ -5,6 +5,7 @@
 using System.Net.Http;
 #endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using Xunit;
 using Xunit.Sdk;
 
@@ -162,86 +163,50 @@ public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
     }
 
     [Theory]
-    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcTraceExportClient), false)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), false)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), true)]
-    public void GetTraceTransmissionHandler_InitializesCorrectExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient)
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcTraceExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), true, 8000)]
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcMetricsExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), true, 8000)]
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), true, 8000)]
+    public void GetTransmissionHandler_InitializesCorrectExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient, int expectedTimeoutMilliseconds)
     {
-        var exporterOptions = new OtlpExporterOptions() { TimeoutMilliseconds = 5000, Protocol = protocol };
+        var exporterOptions = new OtlpExporterOptions() { Protocol = protocol };
         if (customHttpClient)
         {
             exporterOptions.HttpClientFactory = () =>
             {
-                return new HttpClient() { Timeout = TimeSpan.FromMilliseconds(8000) };
+                return new HttpClient() { Timeout = TimeSpan.FromMilliseconds(expectedTimeoutMilliseconds) };
             };
         }
 
-        var transmissionHandler = exporterOptions.GetTraceExportTransmissionHandler();
-
-        Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
-        if (customHttpClient)
+        if (exportClientType == typeof(OtlpGrpcTraceExportClient) || exportClientType == typeof(OtlpHttpTraceExportClient))
         {
-            Assert.Equal(8000, transmissionHandler.TimeoutMilliseconds);
+            var transmissionHandler = exporterOptions.GetTraceExportTransmissionHandler();
+
+            AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
+        }
+        else if (exportClientType == typeof(OtlpGrpcMetricsExportClient) || exportClientType == typeof(OtlpHttpMetricsExportClient))
+        {
+            var transmissionHandler = exporterOptions.GetMetricsExportTransmissionHandler();
+
+            AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
         }
         else
         {
-            Assert.Equal(5000, transmissionHandler.TimeoutMilliseconds);
+            var transmissionHandler = exporterOptions.GetLogsExportTransmissionHandler();
+
+            AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
         }
     }
 
-    [Theory]
-    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcMetricsExportClient), false)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), false)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), true)]
-    public void GetMetricTransmissionHandler_InitializesCorrectExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient)
+    private static void AssertTransmissionHandlerProperties<T>(OtlpExporterTransmissionHandler<T> transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds)
     {
-        var exporterOptions = new OtlpExporterOptions() { TimeoutMilliseconds = 5000, Protocol = protocol };
-        if (customHttpClient)
-        {
-            exporterOptions.HttpClientFactory = () =>
-            {
-                return new HttpClient() { Timeout = TimeSpan.FromMilliseconds(8000) };
-            };
-        }
-
-        var transmissionHandler = exporterOptions.GetMetricsExportTransmissionHandler();
-
         Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
-        if (customHttpClient)
-        {
-            Assert.Equal(8000, transmissionHandler.TimeoutMilliseconds);
-        }
-        else
-        {
-            Assert.Equal(5000, transmissionHandler.TimeoutMilliseconds);
-        }
-    }
 
-    [Theory]
-    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogExportClient), false)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), false)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), true)]
-    public void GetLogsTransmissionHandler_InitializesCorrectExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient)
-    {
-        var exporterOptions = new OtlpExporterOptions() { TimeoutMilliseconds = 5000, Protocol = protocol };
-        if (customHttpClient)
-        {
-            exporterOptions.HttpClientFactory = () =>
-            {
-                return new HttpClient() { Timeout = TimeSpan.FromMilliseconds(8000) };
-            };
-        }
-
-        var transmissionHandler = exporterOptions.GetLogsExportTransmissionHandler();
-
-        Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
-        if (customHttpClient)
-        {
-            Assert.Equal(8000, transmissionHandler.TimeoutMilliseconds);
-        }
-        else
-        {
-            Assert.Equal(5000, transmissionHandler.TimeoutMilliseconds);
-        }
+        Assert.Equal(expectedTimeoutMilliseconds, transmissionHandler.TimeoutMilliseconds);
     }
 }
