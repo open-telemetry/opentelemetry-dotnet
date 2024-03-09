@@ -12,7 +12,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 /// <typeparam name="TRequest">Type of export request.</typeparam>
 internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
 {
-    private static readonly ExportClientHttpResponse SuccessExportResponse = new ExportClientHttpResponse(success: true, deadlineUtc: null, response: null, exception: null);
+    private static readonly ExportClientHttpResponse SuccessExportResponse = new ExportClientHttpResponse(success: true, deadlineUtc: default, response: null, exception: null);
 
     protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
@@ -36,12 +36,12 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
     internal IReadOnlyDictionary<string, string> Headers { get; }
 
     /// <inheritdoc/>
-    public ExportClientResponse SendExportRequest(TRequest request, CancellationToken cancellationToken = default)
+    public ExportClientResponse SendExportRequest(TRequest request, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
         // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
         // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
         // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
-        DateTime deadline = DateTime.UtcNow.AddMilliseconds(this.HttpClient.Timeout.TotalMilliseconds);
+        // DateTime deadline = DateTime.UtcNow.AddMilliseconds(this.HttpClient.Timeout.TotalMilliseconds);
         try
         {
             using var httpRequest = this.CreateHttpRequest(request);
@@ -54,7 +54,7 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
             }
             catch (HttpRequestException ex)
             {
-                return new ExportClientHttpResponse(success: false, deadlineUtc: deadline, response: httpResponse, ex);
+                return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: httpResponse, ex);
             }
 
             // We do not need to return back response and deadline for successful response so using cached value.
@@ -64,7 +64,7 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return new ExportClientHttpResponse(success: false, deadlineUtc: deadline, response: null, exception: ex);
+            return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: null, exception: ex);
         }
     }
 

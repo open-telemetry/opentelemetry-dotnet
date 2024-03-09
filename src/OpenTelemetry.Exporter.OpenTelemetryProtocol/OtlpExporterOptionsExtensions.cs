@@ -89,13 +89,46 @@ internal static class OtlpExporterOptionsExtensions
     }
 
     public static OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportTransmissionHandler(this OtlpExporterOptions options)
-        => new(GetTraceExportClient(options));
+    {
+        var exportClient = GetTraceExportClient(options);
+
+        double timeoutMilliseconds = options.TimeoutMilliseconds;
+
+        if (exportClient is OtlpHttpTraceExportClient httpTraceExportClient)
+        {
+            timeoutMilliseconds = httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds;
+        }
+
+        return new OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(exportClient, timeoutMilliseconds);
+    }
 
     public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options)
-       => new(GetMetricsExportClient(options));
+    {
+        var exportClient = GetMetricsExportClient(options);
+
+        double timeoutMilliseconds = options.TimeoutMilliseconds;
+
+        if (exportClient is OtlpHttpMetricsExportClient httpMetricExportClient)
+        {
+            timeoutMilliseconds = httpMetricExportClient.HttpClient.Timeout.TotalMilliseconds;
+        }
+
+        return new OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds);
+    }
 
     public static OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest> GetLogsExportTransmissionHandler(this OtlpExporterOptions options)
-       => new(GetLogExportClient(options));
+    {
+        var exportClient = GetLogExportClient(options);
+
+        double timeoutMilliseconds = options.TimeoutMilliseconds;
+
+        if (exportClient is OtlpHttpLogExportClient httpLogExportClient)
+        {
+            timeoutMilliseconds = httpLogExportClient.HttpClient.Timeout.TotalMilliseconds;
+        }
+
+        return new OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
+    }
 
     public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
         options.Protocol switch

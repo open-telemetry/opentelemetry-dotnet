@@ -125,12 +125,13 @@ public class OtlpHttpTraceExportClientTests
 
         void RunTest(Batch<Activity> batch)
         {
+            var deadlineUtc = DateTime.UtcNow.AddMilliseconds(options.TimeoutMilliseconds);
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
             request.AddBatch(DefaultSdkLimitOptions, resourceBuilder.Build().ToOtlpResource(), batch);
 
             // Act
-            var result = exportClient.SendExportRequest(request);
+            var result = exportClient.SendExportRequest(request, deadlineUtc);
 
             var httpRequest = testHttpHandler.HttpRequestMessage;
 

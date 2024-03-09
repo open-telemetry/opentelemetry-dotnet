@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using Xunit;
 using Xunit.Sdk;
@@ -156,5 +159,89 @@ public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
         var resultUri = uri.AppendPathIfNotPresent("v1/traces");
 
         Assert.Equal(expectedUri, resultUri.AbsoluteUri);
+    }
+
+    [Theory]
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcTraceExportClient), false)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), false)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), true)]
+    public void GetTraceTransmissionHandler_InitializesCorrectExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient)
+    {
+        var exporterOptions = new OtlpExporterOptions() { TimeoutMilliseconds = 5000, Protocol = protocol };
+        if (customHttpClient)
+        {
+            exporterOptions.HttpClientFactory = () =>
+            {
+                return new HttpClient() { Timeout = TimeSpan.FromMilliseconds(8000) };
+            };
+        }
+
+        var transmissionHandler = exporterOptions.GetTraceExportTransmissionHandler();
+
+        Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
+        if (customHttpClient)
+        {
+            Assert.Equal(8000, transmissionHandler.TimeoutMilliseconds);
+        }
+        else
+        {
+            Assert.Equal(5000, transmissionHandler.TimeoutMilliseconds);
+        }
+    }
+
+    [Theory]
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcMetricsExportClient), false)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), false)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), true)]
+    public void GetMetricTransmissionHandler_InitializesCorrectExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient)
+    {
+        var exporterOptions = new OtlpExporterOptions() { TimeoutMilliseconds = 5000, Protocol = protocol };
+        if (customHttpClient)
+        {
+            exporterOptions.HttpClientFactory = () =>
+            {
+                return new HttpClient() { Timeout = TimeSpan.FromMilliseconds(8000) };
+            };
+        }
+
+        var transmissionHandler = exporterOptions.GetMetricsExportTransmissionHandler();
+
+        Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
+        if (customHttpClient)
+        {
+            Assert.Equal(8000, transmissionHandler.TimeoutMilliseconds);
+        }
+        else
+        {
+            Assert.Equal(5000, transmissionHandler.TimeoutMilliseconds);
+        }
+    }
+
+    [Theory]
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogExportClient), false)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), false)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), true)]
+    public void GetLogsTransmissionHandler_InitializesCorrectExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient)
+    {
+        var exporterOptions = new OtlpExporterOptions() { TimeoutMilliseconds = 5000, Protocol = protocol };
+        if (customHttpClient)
+        {
+            exporterOptions.HttpClientFactory = () =>
+            {
+                return new HttpClient() { Timeout = TimeSpan.FromMilliseconds(8000) };
+            };
+        }
+
+        var transmissionHandler = exporterOptions.GetLogsExportTransmissionHandler();
+
+        Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
+        if (customHttpClient)
+        {
+            Assert.Equal(8000, transmissionHandler.TimeoutMilliseconds);
+        }
+        else
+        {
+            Assert.Equal(5000, transmissionHandler.TimeoutMilliseconds);
+        }
     }
 }
