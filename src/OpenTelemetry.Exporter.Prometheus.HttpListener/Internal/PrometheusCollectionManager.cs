@@ -17,6 +17,7 @@ internal sealed class PrometheusCollectionManager
     private readonly HashSet<string> scopes;
     private int metricsCacheCount;
     private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
+    private byte[] targetInfoBuffer;
     private int globalLockState;
     private ArraySegment<byte> previousDataView;
     private DateTime? previousDataViewGeneratedAtUtc;
@@ -174,25 +175,20 @@ internal sealed class PrometheusCollectionManager
         {
             if (this.exporter.OpenMetricsRequested)
             {
-                try
-                {
-                    cursor = PrometheusSerializer.WriteTargetInfo(this.buffer, cursor, this.exporter.Resource);
-                }
-                catch (IndexOutOfRangeException)
-                {
-                    if (!this.IncreaseBufferSize())
-                    {
-                        throw;
-                    }
-                }
+                cursor = this.WriteTargetInfo();
 
                 this.scopes.Clear();
 
                 foreach (var metric in metrics)
                 {
-                    if (PrometheusSerializer.CanWriteMetric(metric))
+                    if (!PrometheusSerializer.CanWriteMetric(metric))
                     {
-                        if (this.scopes.Add(metric.MeterName))
+                        continue;
+                    }
+
+                    if (this.scopes.Add(metric.MeterName))
+                    {
+                        while (true)
                         {
                             try
                             {
@@ -272,6 +268,40 @@ internal sealed class PrometheusCollectionManager
             this.previousDataView = new ArraySegment<byte>(Array.Empty<byte>(), 0, 0);
             return ExportResult.Failure;
         }
+    }
+
+    private int WriteTargetInfo()
+    {
+        if (this.targetInfoBuffer == null)
+        {
+            while (true)
+            {
+                try
+                {
+                    var cursor = PrometheusSerializer.WriteTargetInfo(this.buffer, 0, this.exporter.Resource);
+
+                    this.targetInfoBuffer = new byte[cursor];
+                    this.buffer.CopyTo(this.targetInfoBuffer, 0);
+
+                    break;
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    if (!this.IncreaseBufferSize())
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Buffer will always be large enough for the target_info at this point because we've already
+            // previously written to the buffer (increasing it as needed) and copied out the target_info buffer.
+            this.targetInfoBuffer.CopyTo(this.buffer, 0);
+        }
+
+        return this.targetInfoBuffer.Length;
     }
 
     private bool IncreaseBufferSize()
