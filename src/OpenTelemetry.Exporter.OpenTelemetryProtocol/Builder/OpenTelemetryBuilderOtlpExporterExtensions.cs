@@ -126,6 +126,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
     private static void UseOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name, int processorPipelineWeight)
     {
+        // Note: We automatically turn on signals for "UseOtlpExporter"
         builder
             .WithLogging()
             .WithMetrics()
@@ -133,6 +134,9 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
         var services = builder.Services;
 
+        // Note: UseOtlpExporterRegistration is added to the service collection
+        // to detect repeated calls to "UseOtlpExporter" and to throw if
+        // "AddOtlpExporter" extensions are called
         services.AddSingleton<UseOtlpExporterRegistration>();
 
         services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
