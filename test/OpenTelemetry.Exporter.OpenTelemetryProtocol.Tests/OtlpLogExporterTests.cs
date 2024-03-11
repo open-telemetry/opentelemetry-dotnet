@@ -732,11 +732,12 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         // Arrange.
         var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
-        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient);
+        var exporterOptions = new OtlpExporterOptions();
+        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
-            new OtlpExporterOptions(),
+            exporterOptions,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
             transmissionHandler);
@@ -753,11 +754,12 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         // Arrange.
         var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>(throwException: true);
-        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient);
+        var exporterOptions = new OtlpExporterOptions();
+        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
-            new OtlpExporterOptions(),
+            exporterOptions,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
             transmissionHandler);
@@ -774,11 +776,12 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         // Arrange.
         var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
-        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient);
+        var exporterOptions = new OtlpExporterOptions();
+        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
-            new OtlpExporterOptions(),
+            exporterOptions,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
             transmissionHandler);
@@ -1517,7 +1520,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         var values = new Dictionary<string, string>()
         {
-            [OtlpExporterSpecEnvVarKeyDefinitions.DefaultEndpointEnvVarName] = "http://test:8888",
+            [OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName] = "http://test:8888",
         };
 
         var configuration = new ConfigurationBuilder()

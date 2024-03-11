@@ -21,7 +21,7 @@ public class BaseOtlpHttpExportClientTests
     {
         try
         {
-            Environment.SetEnvironmentVariable(OtlpExporterSpecEnvVarKeyDefinitions.DefaultEndpointEnvVarName, endpointEnvVar);
+            Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName, endpointEnvVar);
 
             OtlpExporterOptions options = new() { Protocol = OtlpExportProtocol.HttpProtobuf };
 
@@ -35,7 +35,7 @@ public class BaseOtlpHttpExportClientTests
         }
         finally
         {
-            Environment.SetEnvironmentVariable(OtlpExporterSpecEnvVarKeyDefinitions.DefaultEndpointEnvVarName, null);
+            Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName, null);
         }
     }
 
