@@ -35,6 +35,7 @@ public class OtlpGrpcExporterBenchmarks
         this.exporter = new OtlpTraceExporter(
             options,
             new SdkLimitOptions(),
+            new ExperimentalOptions(),
             new OtlpExporterTransmissionHandler<ExportTraceServiceRequest>(new OtlpGrpcTraceExportClient(options, new TestTraceServiceClient())));
 
         this.activity = ActivityHelper.CreateTestActivity();

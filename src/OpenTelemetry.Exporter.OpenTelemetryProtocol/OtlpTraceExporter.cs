@@ -26,7 +26,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
     public OtlpTraceExporter(OtlpExporterOptions options)
-        : this(options, sdkLimitOptions: new(), transmissionHandler: null)
+        : this(options, sdkLimitOptions: new(), experimentalOptions: new(), transmissionHandler: null)
     {
     }
 
@@ -35,10 +35,12 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// </summary>
     /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
+    /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
     /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
     internal OtlpTraceExporter(
     OtlpExporterOptions exporterOptions,
     SdkLimitOptions sdkLimitOptions,
+    ExperimentalOptions experimentalOptions,
     OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");

@@ -16,6 +16,8 @@ internal sealed class ExperimentalOptions
 
     public const string EmitLogEventEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES";
 
+    public const string EnableInMemoryRetryEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_RETRIES";
+
     public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
     {
@@ -27,10 +29,20 @@ internal sealed class ExperimentalOptions
         {
             this.EmitLogEventAttributes = emitLogEventAttributes;
         }
+
+        if (configuration.TryGetBoolValue(EnableInMemoryRetryEnvVar, out var enableInMemoryRetry))
+        {
+            this.EnableInMemoryRetry = enableInMemoryRetry;
+        }
     }
 
     /// <summary>
     /// Gets or sets a value indicating whether log event attributes should be exported.
     /// </summary>
     public bool EmitLogEventAttributes { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether retries should be enabled in case of transient errors.
+    /// </summary>
+    public bool EnableInMemoryRetry { get; set; } = false;
 }

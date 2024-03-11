@@ -72,6 +72,7 @@ public sealed class IntegrationTests : IDisposable
         builder.AddProcessor(OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
             exporterOptions,
             DefaultSdkLimitOptions,
+            experimentalOptions: new(),
             serviceProvider: null,
             configureExporterInstance: otlpExporter =>
             {
@@ -153,6 +154,7 @@ public sealed class IntegrationTests : IDisposable
         builder.AddReader(OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
             exporterOptions,
             readerOptions,
+            experimentalOptions: new(),
             serviceProvider: null,
             configureExporterInstance: otlpExporter =>
             {
