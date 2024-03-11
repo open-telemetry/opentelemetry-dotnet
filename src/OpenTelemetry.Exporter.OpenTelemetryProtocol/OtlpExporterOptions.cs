@@ -137,7 +137,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// <inheritdoc/>
     public Func<HttpClient> HttpClientFactory
     {
-        get => this.httpClientFactory ??= this.DefaultHttpClientFactory;
+        get => this.httpClientFactory ?? this.DefaultHttpClientFactory;
         set
         {
             Guard.ThrowIfNull(value);
