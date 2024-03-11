@@ -68,7 +68,7 @@ public class OtlpExporterOptions
 
         this.ApplyConfiguration(configuration, configurationType);
 
-        this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
+        this.DefaultHttpClientFactory = () =>
         {
             return new HttpClient
             {
