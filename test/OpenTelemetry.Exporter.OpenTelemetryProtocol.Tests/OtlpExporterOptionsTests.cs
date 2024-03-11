@@ -226,7 +226,7 @@ public class OtlpExporterOptionsTests : IDisposable
     }
 
     [Fact]
-    public void OtlpExporterOptions_EndpointGetterIgnoredProtocolWhenNotNull()
+    public void OtlpExporterOptions_EndpointGetterIgnoresProtocolWhenNotNull()
     {
         var options = new OtlpExporterOptions { Endpoint = new Uri("http://test:8888"), Protocol = OtlpExportProtocol.Grpc };
 
