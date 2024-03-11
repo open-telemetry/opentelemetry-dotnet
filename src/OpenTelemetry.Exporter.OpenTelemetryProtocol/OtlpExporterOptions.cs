@@ -98,10 +98,10 @@ public class OtlpExporterOptions
     /// cref="OtlpExportProtocol.HttpProtobuf"/></item>.
     /// </list>
     /// <item>When <see cref="Protocol"/> is set to <see
-    /// cref="OtlpExportProtocol.HttpProtobuf"/>, if <see cref="Endpoint"/> has
-    /// not been set, the default value <c>http://localhost:4318</c> will have a
-    /// signal-specific path appended. The final default endpoint values will be
-    /// constructed as:
+    /// cref="OtlpExportProtocol.HttpProtobuf"/> and <see cref="Endpoint"/> has
+    /// not been set the default value (<c>http://localhost:4318</c>) will have
+    /// a signal-specific path appended. The final default endpoint values will
+    /// be constructed as:
     /// <list type="bullet">
     /// <item>Logging: <c>http://localhost:4318/v1/logs</c></item>
     /// <item>Metrics: <c>http://localhost:4318/v1/metrics</c></item>
