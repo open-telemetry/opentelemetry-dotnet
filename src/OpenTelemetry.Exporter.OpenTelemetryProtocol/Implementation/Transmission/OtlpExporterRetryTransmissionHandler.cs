@@ -20,7 +20,7 @@ internal class OtlpExporterRetryTransmissionHandler<TRequest> : OtlpExporterTran
         while (RetryHelper.ShouldRetryRequest(request, response, nextRetryDelayMilliseconds, out var retryResult))
         {
             // Note: This delay cannot exceed the configured timeout period for otlp exporter.
-            // In case if the backend responds with delay(via RetryAfter) that would result in exceeding the configured timeout period
+            // If the backend responds with `RetryAfter` duration that would result in exceeding the configured timeout period
             // we would fail fast and drop the data.
             Thread.Sleep(retryResult.RetryDelay);
 
