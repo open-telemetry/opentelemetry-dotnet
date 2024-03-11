@@ -343,7 +343,7 @@ public class OtlpRetryTests
                     responseMessage.StatusCode = (HttpStatusCode)statusCode;
                 }
 
-                this.Response = new ExportClientHttpResponse(expectedSuccess, isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : null, responseMessage, new HttpRequestException());
+                this.Response = new ExportClientHttpResponse(expectedSuccess, isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : default, responseMessage, new HttpRequestException());
 
                 this.Deadline = isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : null;
                 this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
