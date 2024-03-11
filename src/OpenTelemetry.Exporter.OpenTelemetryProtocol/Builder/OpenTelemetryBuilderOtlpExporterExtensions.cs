@@ -83,7 +83,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
         });
     }
 
-    internal static IOpenTelemetryBuilder AddOtlpExporter(
+    internal static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         Action<OtlpExporterBuilder> configure)
     {
