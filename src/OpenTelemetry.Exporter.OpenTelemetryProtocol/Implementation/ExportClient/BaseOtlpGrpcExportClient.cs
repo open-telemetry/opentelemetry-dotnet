@@ -13,7 +13,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 /// <typeparam name="TRequest">Type of export request.</typeparam>
 internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequest>
 {
-    protected static readonly ExportClientGrpcResponse SuccessExportResponse = new ExportClientGrpcResponse(success: true, deadlineUtc: null, exception: null);
+    protected static readonly ExportClientGrpcResponse SuccessExportResponse = new ExportClientGrpcResponse(success: true, deadlineUtc: default, exception: null);
 
     protected BaseOtlpGrpcExportClient(OtlpExporterOptions options)
     {
@@ -40,7 +40,7 @@ internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequ
     internal int TimeoutMilliseconds { get; }
 
     /// <inheritdoc/>
-    public abstract ExportClientResponse SendExportRequest(TRequest request, CancellationToken cancellationToken = default);
+    public abstract ExportClientResponse SendExportRequest(TRequest request, DateTime deadlineUtc, CancellationToken cancellationToken = default);
 
     /// <inheritdoc/>
     public virtual bool Shutdown(int timeoutMilliseconds)

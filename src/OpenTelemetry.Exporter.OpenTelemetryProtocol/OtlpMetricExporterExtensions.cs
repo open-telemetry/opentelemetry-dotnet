@@ -64,7 +64,7 @@ public static class OtlpMetricExporterExtensions
             services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
                 (readerOptions, config) =>
                 {
-                    var otlpTemporalityPreference = config[OtlpExporterSpecEnvVarKeyDefinitions.MetricsTemporalityPreferenceEnvVarName];
+                    var otlpTemporalityPreference = config[OtlpSpecConfigDefinitions.MetricsTemporalityPreferenceEnvVarName];
                     if (!string.IsNullOrWhiteSpace(otlpTemporalityPreference)
                         && Enum.TryParse<MetricReaderTemporalityPreference>(otlpTemporalityPreference, ignoreCase: true, out var enumValue))
                     {
@@ -142,7 +142,7 @@ public static class OtlpMetricExporterExtensions
             services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
                 (readerOptions, config) =>
                 {
-                    var otlpTemporalityPreference = config[OtlpExporterSpecEnvVarKeyDefinitions.MetricsTemporalityPreferenceEnvVarName];
+                    var otlpTemporalityPreference = config[OtlpSpecConfigDefinitions.MetricsTemporalityPreferenceEnvVarName];
                     if (!string.IsNullOrWhiteSpace(otlpTemporalityPreference)
                         && Enum.TryParse<MetricReaderTemporalityPreference>(otlpTemporalityPreference, ignoreCase: true, out var enumValue))
                     {
