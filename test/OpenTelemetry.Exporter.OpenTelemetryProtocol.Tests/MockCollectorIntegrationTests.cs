@@ -122,7 +122,6 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.FailedPrecondition)]
     public async Task GrpcRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialStatusCode)
     {
-        
         var testGrpcPort = Interlocked.Increment(ref gRPCPort);
         var testHttpPort = Interlocked.Increment(ref httpPort);
 
