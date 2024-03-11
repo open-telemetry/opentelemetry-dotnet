@@ -98,6 +98,8 @@ public sealed class MockCollectorIntegrationTests
         await host.StopAsync();
     }
 
+    // `Grpc.Core.StatusCode.DeadlineExceeded is not covered by the tests
+    // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5436.
     [Theory]
     [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.Unavailable)]
     [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.Cancelled)]
@@ -120,6 +122,7 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.FailedPrecondition)]
     public async Task GrpcRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialStatusCode)
     {
+        
         var testGrpcPort = Interlocked.Increment(ref gRPCPort);
         var testHttpPort = Interlocked.Increment(ref httpPort);
 
