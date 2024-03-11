@@ -146,9 +146,9 @@ public class OtlpExporterOptionsTests : IDisposable
     {
         var values = new Dictionary<string, string>()
         {
-            ["InvalidEndpoint"] = "invalid",
-            ["InvalidTimeout"] = "invalid",
-            ["InvalidProtocol"] = "invalid",
+            ["EndpointWithInvalidValue"] = "invalid",
+            ["TimeoutWithInvalidValue"] = "invalid",
+            ["ProtocolWithInvalidValue"] = "invalid",
         };
 
         var configuration = new ConfigurationBuilder()
@@ -159,11 +159,11 @@ public class OtlpExporterOptionsTests : IDisposable
 
         options.ApplyConfigurationUsingSpecificationEnvVars(
             configuration,
-            "InvalidEndpoint",
+            "EndpointWithInvalidValue",
             appendSignalPathToEndpoint: true,
-            "InvalidProtocol",
+            "ProtocolWithInvalidValue",
             "NoopHeaders",
-            "InvalidTimeout");
+            "TimeoutWithInvalidValue");
 
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), options.Endpoint);
         Assert.Equal(10000, options.TimeoutMilliseconds);
