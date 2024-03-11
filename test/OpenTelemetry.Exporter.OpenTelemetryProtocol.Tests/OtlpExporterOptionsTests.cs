@@ -243,6 +243,38 @@ public class OtlpExporterOptionsTests : IDisposable
         Assert.Equal("OTEL_EXPORTER_OTLP_PROTOCOL", OtlpSpecConfigDefinitions.DefaultProtocolEnvVarName);
     }
 
+    [Fact]
+    public void OtlpExporterOptions_SettingEndpointToNullResetsAppendSignalPathToEndpoint()
+    {
+        var options = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default);
+
+        Assert.True(options.AppendSignalPathToEndpoint);
+
+        options.Endpoint = new Uri("http://some_endpoint");
+
+        Assert.False(options.AppendSignalPathToEndpoint);
+
+        options.Endpoint = null;
+
+        Assert.True(options.AppendSignalPathToEndpoint);
+    }
+
+    [Fact]
+    public void OtlpExporterOptions_SettingHttpClientFactoryToNullResetsToDefaultFactory()
+    {
+        var options = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default);
+
+        Assert.Equal(options.DefaultHttpClientFactory, options.HttpClientFactory);
+
+        options.HttpClientFactory = () => null!;
+
+        Assert.NotEqual(options.DefaultHttpClientFactory, options.HttpClientFactory);
+
+        options.HttpClientFactory = null;
+
+        Assert.Equal(options.DefaultHttpClientFactory, options.HttpClientFactory);
+    }
+
     private static void ClearEnvVars()
     {
         foreach (var item in GetOtlpExporterOptionsTestCases())
