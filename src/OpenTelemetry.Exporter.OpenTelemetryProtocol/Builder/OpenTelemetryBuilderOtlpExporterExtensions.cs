@@ -110,7 +110,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     {
         Guard.ThrowIfNull(builder);
 
-        if (configuration == null && string.IsNullOrEmpty(name))
+        if (configuration != null && string.IsNullOrEmpty(name))
         {
             name = "otlp";
         }
