@@ -219,6 +219,10 @@ public class OtlpExporterOptionsTests : IDisposable
         options.Protocol = OtlpExportProtocol.HttpProtobuf;
 
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), options.Endpoint);
+
+        options.Protocol = OtlpExportProtocol.Grpc;
+
+        Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), options.Endpoint);
     }
 
     [Fact]
