@@ -21,6 +21,8 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 public static class OpenTelemetryBuilderOtlpExporterExtensions
 {
+    private const int DefaultProcessorPipelineWeight = 10_000;
+
     /// <summary>
     /// Uses OpenTelemetry Protocol (OTLP) exporter for all signals.
     /// </summary>
@@ -105,8 +107,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
         this IOpenTelemetryBuilder builder,
         string? name = null,
         IConfiguration? configuration = null,
-        Action<OtlpExporterBuilder>? configure = null,
-        int processorPipelineWeight = 10_000)
+        Action<OtlpExporterBuilder>? configure = null)
     {
         Guard.ThrowIfNull(builder);
 
@@ -119,12 +120,12 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
         configure?.Invoke(otlpBuilder);
 
-        UseOtlpExporterInternal(builder, name, processorPipelineWeight);
+        UseOtlpExporterInternal(builder, name);
 
         return builder;
     }
 
-    private static void UseOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name, int processorPipelineWeight)
+    private static void UseOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name)
     {
         // Note: We automatically turn on signals for "UseOtlpExporter"
         builder
@@ -163,7 +164,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                     builderOptions.SdkLimitOptions,
                     builderOptions.ExperimentalOptions);
 
-                processor.PipelineWeight = processorPipelineWeight;
+                processor.PipelineWeight = DefaultProcessorPipelineWeight;
 
                 logging.AddProcessor(processor);
             });
@@ -194,7 +195,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                     processorOptions.BatchExportProcessorOptions,
                     sp);
 
-                processor.PipelineWeight = processorPipelineWeight;
+                processor.PipelineWeight = DefaultProcessorPipelineWeight;
 
                 tracing.AddProcessor(processor);
             });
