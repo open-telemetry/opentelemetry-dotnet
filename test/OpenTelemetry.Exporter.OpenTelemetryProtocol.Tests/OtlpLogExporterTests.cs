@@ -1520,7 +1520,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         var values = new Dictionary<string, string>()
         {
-            [OtlpExporterSpecEnvVarKeyDefinitions.DefaultEndpointEnvVarName] = "http://test:8888",
+            [OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName] = "http://test:8888",
         };
 
         var configuration = new ConfigurationBuilder()
