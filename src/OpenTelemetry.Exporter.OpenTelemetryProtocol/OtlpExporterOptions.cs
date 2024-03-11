@@ -22,11 +22,6 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 public class OtlpExporterOptions
 {
-    internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
-    internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
-    internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
-    internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
-
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
         new KeyValuePair<string, string>("User-Agent", GetUserAgentString()),
@@ -56,23 +51,23 @@ public class OtlpExporterOptions
         Debug.Assert(configuration != null, "configuration was null");
         Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
 
-        if (configuration.TryGetUriValue(EndpointEnvVarName, out var endpoint))
+        if (configuration.TryGetUriValue(OtlpExporterSpecEnvVarKeyDefinitions.DefaultEndpointEnvVarName, out var endpoint))
         {
             this.endpoint = endpoint;
         }
 
-        if (configuration.TryGetStringValue(HeadersEnvVarName, out var headers))
+        if (configuration.TryGetStringValue(OtlpExporterSpecEnvVarKeyDefinitions.DefaultHeadersEnvVarName, out var headers))
         {
             this.Headers = headers;
         }
 
-        if (configuration.TryGetIntValue(TimeoutEnvVarName, out var timeout))
+        if (configuration.TryGetIntValue(OtlpExporterSpecEnvVarKeyDefinitions.DefaultTimeoutEnvVarName, out var timeout))
         {
             this.TimeoutMilliseconds = timeout;
         }
 
         if (configuration.TryGetValue<OtlpExportProtocol>(
-            ProtocolEnvVarName,
+            OtlpExporterSpecEnvVarKeyDefinitions.DefaultProtocolEnvVarName,
             OtlpExportProtocolParser.TryParse,
             out var protocol))
         {
@@ -114,7 +109,7 @@ public class OtlpExporterOptions
         set
         {
             this.endpoint = value;
-            this.ProgrammaticallyModifiedEndpoint = true;
+            this.AppendSignalPathToEndpoint = false;
         }
     }
 
@@ -180,9 +175,14 @@ public class OtlpExporterOptions
     public Func<HttpClient> HttpClientFactory { get; set; }
 
     /// <summary>
-    /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.
+    /// Gets a value indicating whether or not the signal-specific path should
+    /// be appended to <see cref="Endpoint"/>.
     /// </summary>
-    internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
+    /// <remarks>
+    /// Note: Only applicable when <see cref="OtlpExportProtocol.HttpProtobuf"/>
+    /// is used.
+    /// </remarks>
+    internal bool AppendSignalPathToEndpoint { get; private set; } = true;
 
     internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
     {
