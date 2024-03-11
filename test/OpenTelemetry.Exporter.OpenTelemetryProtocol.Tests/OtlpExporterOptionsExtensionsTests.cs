@@ -1,7 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using Xunit;
 using Xunit.Sdk;
 
@@ -156,5 +160,53 @@ public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
         var resultUri = uri.AppendPathIfNotPresent("v1/traces");
 
         Assert.Equal(expectedUri, resultUri.AbsoluteUri);
+    }
+
+    [Theory]
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcTraceExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), true, 8000)]
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcMetricsExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), true, 8000)]
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), true, 8000)]
+    public void GetTransmissionHandler_InitializesCorrectExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient, int expectedTimeoutMilliseconds)
+    {
+        var exporterOptions = new OtlpExporterOptions() { Protocol = protocol };
+        if (customHttpClient)
+        {
+            exporterOptions.HttpClientFactory = () =>
+            {
+                return new HttpClient() { Timeout = TimeSpan.FromMilliseconds(expectedTimeoutMilliseconds) };
+            };
+        }
+
+        if (exportClientType == typeof(OtlpGrpcTraceExportClient) || exportClientType == typeof(OtlpHttpTraceExportClient))
+        {
+            var transmissionHandler = exporterOptions.GetTraceExportTransmissionHandler();
+
+            AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
+        }
+        else if (exportClientType == typeof(OtlpGrpcMetricsExportClient) || exportClientType == typeof(OtlpHttpMetricsExportClient))
+        {
+            var transmissionHandler = exporterOptions.GetMetricsExportTransmissionHandler();
+
+            AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
+        }
+        else
+        {
+            var transmissionHandler = exporterOptions.GetLogsExportTransmissionHandler();
+
+            AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
+        }
+    }
+
+    private static void AssertTransmissionHandlerProperties<T>(OtlpExporterTransmissionHandler<T> transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds)
+    {
+        Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
+
+        Assert.Equal(expectedTimeoutMilliseconds, transmissionHandler.TimeoutMilliseconds);
     }
 }

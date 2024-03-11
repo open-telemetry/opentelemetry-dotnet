@@ -9,7 +9,7 @@ internal sealed class ExportClientGrpcResponse : ExportClientResponse
 {
     public ExportClientGrpcResponse(
         bool success,
-        DateTime? deadlineUtc,
+        DateTime deadlineUtc,
         Exception? exception)
         : base(success, deadlineUtc, exception)
     {
