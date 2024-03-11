@@ -343,8 +343,8 @@ public class OtlpRetryTests
                     responseMessage.StatusCode = (HttpStatusCode)statusCode;
                 }
 
-                // Using arbitrary +1 day for deadline for test purposes.
-                var deadlineUtc = isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : DateTime.UtcNow.AddDays(1);
+                // Using arbitrary +1 hr for deadline for test purposes.
+                var deadlineUtc = isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : DateTime.UtcNow.AddHours(1);
                 this.Response = new ExportClientHttpResponse(expectedSuccess, deadlineUtc, responseMessage, new HttpRequestException());
 
                 this.Deadline = isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : null;
