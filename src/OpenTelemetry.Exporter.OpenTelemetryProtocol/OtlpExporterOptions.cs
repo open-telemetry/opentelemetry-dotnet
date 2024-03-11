@@ -82,13 +82,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     }
 
     /// <inheritdoc/>
-    public OtlpExportProtocol Protocol
-    {
-        get => this.protocol ?? DefaultOtlpExportProtocol;
-        set => this.protocol = value;
-    }
-
-    /// <inheritdoc/>
     public Uri Endpoint
     {
         get
@@ -123,15 +116,10 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     }
 
     /// <inheritdoc/>
-    public Func<HttpClient> HttpClientFactory
+    public OtlpExportProtocol Protocol
     {
-        get => this.httpClientFactory ??= this.DefaultHttpClientFactory;
-        set
-        {
-            Guard.ThrowIfNull(value);
-
-            this.httpClientFactory = value;
-        }
+        get => this.protocol ?? DefaultOtlpExportProtocol;
+        set => this.protocol = value;
     }
 
     /// <summary>
@@ -145,6 +133,18 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// </summary>
     /// <remarks>Note: This only applies when exporting traces.</remarks>
     public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
+
+    /// <inheritdoc/>
+    public Func<HttpClient> HttpClientFactory
+    {
+        get => this.httpClientFactory ??= this.DefaultHttpClientFactory;
+        set
+        {
+            Guard.ThrowIfNull(value);
+
+            this.httpClientFactory = value;
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
