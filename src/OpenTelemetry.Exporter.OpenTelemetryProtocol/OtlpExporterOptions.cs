@@ -86,15 +86,28 @@ public class OtlpExporterOptions
     /// <remarks>
     /// Notes:
     /// <list type="bullet">
-    /// <item><see cref="Endpoint"/> must be a valid <see cref="Uri"/> with
-    /// scheme (http or https) and host, and may contain a port and path.</item>
-    /// <item>The default value is based on the <see cref="Protocol"/> property:
+    /// <item>When setting <see cref="Endpoint"/> the value must be a valid <see
+    /// cref="Uri"/> with scheme (http or https) and host, and may contain a
+    /// port and path.</item>
+    /// <item>The default value when not set is based on the <see
+    /// cref="Protocol"/> property:
     /// <list type="bullet">
     /// <item><c>http://localhost:4317</c> for <see
     /// cref="OtlpExportProtocol.Grpc"/>.</item>
     /// <item><c>http://localhost:4318</c> for <see
     /// cref="OtlpExportProtocol.HttpProtobuf"/></item>.
     /// </list>
+    /// <item>When <see cref="Protocol"/> is set to <see
+    /// cref="OtlpExportProtocol.HttpProtobuf"/>, if <see cref="Endpoint"/> has
+    /// not been set, the default value <c>http://localhost:4318</c> will have a
+    /// signal-specific path appended. The final default endpoint values will be
+    /// constructed as:
+    /// <list type="bullet">
+    /// <item>Logging: <c>http://localhost:4318/v1/logs</c></item>
+    /// <item>Metrics: <c>http://localhost:4318/v1/metrics</c></item>
+    /// <item>Tracing: <c>http://localhost:4318/v1/traces</c></item>
+    /// </list>
+    /// </item>
     /// </item>
     /// </list>
     /// </remarks>
