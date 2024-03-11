@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Reflection;
 #if NETFRAMEWORK
@@ -10,7 +12,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter;
@@ -38,7 +39,8 @@ public class OtlpExporterOptions
 
     private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
 
-    private Uri endpoint;
+    private Uri? endpoint;
+    private Func<HttpClient>? httpClientFactory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
@@ -66,7 +68,7 @@ public class OtlpExporterOptions
 
         this.ApplyConfiguration(configuration, configurationType);
 
-        this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
+        this.DefaultHttpClientFactory = () =>
         {
             return new HttpClient
             {
@@ -74,16 +76,41 @@ public class OtlpExporterOptions
             };
         };
 
-        this.BatchExportProcessorOptions = defaultBatchOptions;
+        this.BatchExportProcessorOptions = defaultBatchOptions!;
     }
 
     /// <summary>
-    /// Gets or sets the target to which the exporter is going to send telemetry.
-    /// Must be a valid Uri with scheme (http or https) and host, and
-    /// may contain a port and path. The default value is
-    /// * http://localhost:4317 for <see cref="OtlpExportProtocol.Grpc"/>
-    /// * http://localhost:4318 for <see cref="OtlpExportProtocol.HttpProtobuf"/>.
+    /// Gets or sets the target to which the exporter is going to send
+    /// telemetry.
     /// </summary>
+    /// <remarks>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>When setting <see cref="Endpoint"/> the value must be a valid <see
+    /// cref="Uri"/> with scheme (http or https) and host, and may contain a
+    /// port and path.</item>
+    /// <item>The default value when not set is based on the <see
+    /// cref="Protocol"/> property:
+    /// <list type="bullet">
+    /// <item><c>http://localhost:4317</c> for <see
+    /// cref="OtlpExportProtocol.Grpc"/>.</item>
+    /// <item><c>http://localhost:4318</c> for <see
+    /// cref="OtlpExportProtocol.HttpProtobuf"/></item>.
+    /// </list>
+    /// <item>When <see cref="Protocol"/> is set to <see
+    /// cref="OtlpExportProtocol.HttpProtobuf"/> and <see cref="Endpoint"/> has
+    /// not been set the default value (<c>http://localhost:4318</c>) will have
+    /// a signal-specific path appended. The final default endpoint values will
+    /// be constructed as:
+    /// <list type="bullet">
+    /// <item>Logging: <c>http://localhost:4318/v1/logs</c></item>
+    /// <item>Metrics: <c>http://localhost:4318/v1/metrics</c></item>
+    /// <item>Tracing: <c>http://localhost:4318/v1/traces</c></item>
+    /// </list>
+    /// </item>
+    /// </item>
+    /// </list>
+    /// </remarks>
     public Uri Endpoint
     {
         get
@@ -100,24 +127,32 @@ public class OtlpExporterOptions
 
         set
         {
+            Guard.ThrowIfNull(value);
+
             this.endpoint = value;
             this.AppendSignalPathToEndpoint = false;
         }
     }
 
     /// <summary>
-    /// Gets or sets optional headers for the connection. Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">
-    /// specification</a> for information on the expected format for Headers.
+    /// Gets or sets optional headers for the connection.
     /// </summary>
-    public string Headers { get; set; }
+    /// <remarks>
+    /// Note: Refer to the  <see
+    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">
+    /// OpenTelemetry Specification</see> for details on the format of <see
+    /// cref="Headers"/>.
+    /// </remarks>
+    public string? Headers { get; set; }
 
     /// <summary>
-    /// Gets or sets the max waiting time (in milliseconds) for the backend to process each batch. The default value is 10000.
+    /// Gets or sets the max waiting time (in milliseconds) for the backend to
+    /// process each batch. Default value: <c>10000</c>.
     /// </summary>
     public int TimeoutMilliseconds { get; set; } = 10000;
 
     /// <summary>
-    /// Gets or sets the the OTLP transport protocol. Supported values: Grpc and HttpProtobuf.
+    /// Gets or sets the the OTLP transport protocol.
     /// </summary>
     public OtlpExportProtocol Protocol { get; set; } = DefaultOtlpExportProtocol;
 
@@ -144,27 +179,38 @@ public class OtlpExporterOptions
     /// <list type="bullet">
     /// <item>This is only invoked for the <see
     /// cref="OtlpExportProtocol.HttpProtobuf"/> protocol.</item>
-    /// <item>The default behavior when using the <see
-    /// cref="OtlpTraceExporterHelperExtensions.AddOtlpExporter(TracerProviderBuilder,
-    /// Action{OtlpExporterOptions})"/> extension is if an <a
+    /// <item>The default behavior when using tracing registration extensions is
+    /// if an <a
     /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
     /// instance can be resolved through the application <see
     /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
-    /// created through the factory with the name "OtlpTraceExporter"
-    /// otherwise an <see cref="HttpClient"/> will be instantiated
-    /// directly.</item>
-    /// <item>The default behavior when using the <see
-    /// cref="OtlpMetricExporterExtensions.AddOtlpExporter(MeterProviderBuilder,
-    /// Action{OtlpExporterOptions})"/> extension is if an <a
+    /// created through the factory with the name "OtlpTraceExporter" otherwise
+    /// an <see cref="HttpClient"/> will be instantiated directly.</item>
+    /// <item>The default behavior when using metrics registration extensions is
+    /// if an <a
     /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
     /// instance can be resolved through the application <see
     /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
-    /// created through the factory with the name "OtlpMetricExporter"
-    /// otherwise an <see cref="HttpClient"/> will be instantiated
-    /// directly.</item>
+    /// created through the factory with the name "OtlpMetricExporter" otherwise
+    /// an <see cref="HttpClient"/> will be instantiated directly.</item>
+    /// <item>
+    /// The default behavior when using logging registration extensions is an
+    /// <see cref="HttpClient"/> will be instantiated directly. <a
+    /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
+    /// is not currently supported for logging.
+    /// </item>
     /// </list>
     /// </remarks>
-    public Func<HttpClient> HttpClientFactory { get; set; }
+    public Func<HttpClient> HttpClientFactory
+    {
+        get => this.httpClientFactory ?? this.DefaultHttpClientFactory;
+        set
+        {
+            Guard.ThrowIfNull(value);
+
+            this.httpClientFactory = value;
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
@@ -228,7 +274,7 @@ public class OtlpExporterOptions
         try
         {
             var assemblyVersion = typeof(OtlpExporterOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-            var informationalVersion = assemblyVersion.InformationalVersion;
+            var informationalVersion = assemblyVersion?.InformationalVersion;
             return string.IsNullOrEmpty(informationalVersion) ? UserAgentProduct : $"{UserAgentProduct}/{informationalVersion}";
         }
         catch (Exception)

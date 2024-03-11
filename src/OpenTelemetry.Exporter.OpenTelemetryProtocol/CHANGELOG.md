@@ -35,6 +35,10 @@
   ExponentialHistograms.
   ([#5397](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5397))
 
+* Setting `Endpoint` or `HttpClientFactory` properties on `OtlpExporterOptions`
+  to `null` will now result in an `ArgumentNullException` being thrown.
+  ([#5434](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5434))
+
 ## 1.7.0
 
 Released 2023-Dec-08
