@@ -101,7 +101,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
             Assert.Equal(2, invocations);
         }
 
-        options.HttpClientFactory = null;
+        options.HttpClientFactory = () => null;
         Assert.Throws<InvalidOperationException>(() =>
         {
             using var exporter = new OtlpLogExporter(options);

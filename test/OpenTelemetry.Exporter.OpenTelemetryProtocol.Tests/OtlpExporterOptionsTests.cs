@@ -226,7 +226,7 @@ public class OtlpExporterOptionsTests : IDisposable
     }
 
     [Fact]
-    public void OtlpExporterOptions_EndpointGetterIgnoresProtocolWhenNotNull()
+    public void OtlpExporterOptions_EndpointThrowsWhenSetToNull()
     {
         var options = new OtlpExporterOptions { Endpoint = new Uri("http://test:8888"), Protocol = OtlpExportProtocol.Grpc };
 
@@ -248,31 +248,15 @@ public class OtlpExporterOptionsTests : IDisposable
     {
         var options = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default);
 
-        Assert.True(options.AppendSignalPathToEndpoint);
-
-        options.Endpoint = new Uri("http://some_endpoint");
-
-        Assert.False(options.AppendSignalPathToEndpoint);
-
-        options.Endpoint = null;
-
-        Assert.True(options.AppendSignalPathToEndpoint);
+        Assert.Throws<ArgumentNullException>(() => options.Endpoint = null);
     }
 
     [Fact]
-    public void OtlpExporterOptions_SettingHttpClientFactoryToNullResetsToDefaultFactory()
+    public void OtlpExporterOptions_HttpClientFactoryThrowsWhenSetToNull()
     {
         var options = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default);
 
-        Assert.Equal(options.DefaultHttpClientFactory, options.HttpClientFactory);
-
-        options.HttpClientFactory = () => null!;
-
-        Assert.NotEqual(options.DefaultHttpClientFactory, options.HttpClientFactory);
-
-        options.HttpClientFactory = null;
-
-        Assert.Equal(options.DefaultHttpClientFactory, options.HttpClientFactory);
+        Assert.Throws<ArgumentNullException>(() => options.HttpClientFactory = null);
     }
 
     private static void ClearEnvVars()
