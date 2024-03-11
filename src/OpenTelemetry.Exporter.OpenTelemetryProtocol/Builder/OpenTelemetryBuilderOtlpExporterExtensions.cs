@@ -53,7 +53,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
     /// <param name="baseEndpoint">The base endpoint to use. A signal-specific
     /// path will be appended to the base endpoint for each signal
-    /// automatically.</param>
+    /// automatically if the protocol is set to <see cref="OtlpExportProtocol.HttpProtobuf"/>.</param>
     public static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         Uri baseEndpoint)
