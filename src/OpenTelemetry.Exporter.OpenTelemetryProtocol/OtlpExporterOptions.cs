@@ -26,6 +26,10 @@ namespace OpenTelemetry.Exporter;
 /// </remarks>
 public class OtlpExporterOptions : IOtlpExporterOptions
 {
+    internal const string DefaultGrpcEndpoint = "http://localhost:4317";
+    internal const string DefaultHttpEndpoint = "http://localhost:4318";
+    internal const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
+
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
         new KeyValuePair<string, string>("User-Agent", GetUserAgentString()),
@@ -33,9 +37,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
-    private const string DefaultGrpcEndpoint = "http://localhost:4317";
-    private const string DefaultHttpEndpoint = "http://localhost:4318";
-    private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
     private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
 
     private OtlpExportProtocol? protocol;
@@ -47,64 +48,27 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
     /// </summary>
     public OtlpExporterOptions()
+        : this(OtlpExporterOptionsConfigurationType.Default)
+    {
+    }
+
+    internal OtlpExporterOptions(
+        OtlpExporterOptionsConfigurationType configurationType)
         : this(
               configuration: new ConfigurationBuilder().AddEnvironmentVariables().Build(),
-              signal: OtlpExporterSignals.None,
+              configurationType,
               defaultBatchOptions: new())
     {
     }
 
     internal OtlpExporterOptions(
         IConfiguration configuration,
-        OtlpExporterSignals signal,
+        OtlpExporterOptionsConfigurationType configurationType,
         BatchExportActivityProcessorOptions defaultBatchOptions)
     {
-        Debug.Assert(configuration != null, "configuration was null");
         Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
 
-        if (signal == OtlpExporterSignals.None)
-        {
-            this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration!,
-                OtlpExporterSpecEnvVarKeyDefinitions.DefaultEndpointEnvVarName,
-                appendSignalPathToEndpoint: true,
-                OtlpExporterSpecEnvVarKeyDefinitions.DefaultProtocolEnvVarName,
-                OtlpExporterSpecEnvVarKeyDefinitions.DefaultHeadersEnvVarName,
-                OtlpExporterSpecEnvVarKeyDefinitions.DefaultTimeoutEnvVarName);
-        }
-
-        if (signal.HasFlag(OtlpExporterSignals.Logs))
-        {
-            this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration!,
-                OtlpExporterSpecEnvVarKeyDefinitions.LogsEndpointEnvVarName,
-                appendSignalPathToEndpoint: false,
-                OtlpExporterSpecEnvVarKeyDefinitions.LogsProtocolEnvVarName,
-                OtlpExporterSpecEnvVarKeyDefinitions.LogsHeadersEnvVarName,
-                OtlpExporterSpecEnvVarKeyDefinitions.LogsTimeoutEnvVarName);
-        }
-
-        if (signal.HasFlag(OtlpExporterSignals.Metrics))
-        {
-            this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration!,
-                OtlpExporterSpecEnvVarKeyDefinitions.MetricsEndpointEnvVarName,
-                appendSignalPathToEndpoint: false,
-                OtlpExporterSpecEnvVarKeyDefinitions.MetricsProtocolEnvVarName,
-                OtlpExporterSpecEnvVarKeyDefinitions.MetricsHeadersEnvVarName,
-                OtlpExporterSpecEnvVarKeyDefinitions.MetricsTimeoutEnvVarName);
-        }
-
-        if (signal.HasFlag(OtlpExporterSignals.Traces))
-        {
-            this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration!,
-                OtlpExporterSpecEnvVarKeyDefinitions.TracesEndpointEnvVarName,
-                appendSignalPathToEndpoint: false,
-                OtlpExporterSpecEnvVarKeyDefinitions.TracesProtocolEnvVarName,
-                OtlpExporterSpecEnvVarKeyDefinitions.TracesHeadersEnvVarName,
-                OtlpExporterSpecEnvVarKeyDefinitions.TracesTimeoutEnvVarName);
-        }
+        this.ApplyConfiguration(configuration, configurationType);
 
         this.DefaultHttpClientFactory = () =>
         {
@@ -131,7 +95,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         {
             if (this.endpoint == null)
             {
-                this.endpoint = this.Protocol == OtlpExportProtocol.Grpc
+                return this.Protocol == OtlpExportProtocol.Grpc
                     ? new Uri(DefaultGrpcEndpoint)
                     : new Uri(DefaultHttpEndpoint);
             }
@@ -204,8 +168,41 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         string name)
         => new(
             configuration,
-            OtlpExporterSignals.None,
+            OtlpExporterOptionsConfigurationType.Default,
             serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name));
+
+    internal void ApplyConfigurationUsingSpecificationEnvVars(
+        IConfiguration configuration,
+        string endpointEnvVarKey,
+        bool appendSignalPathToEndpoint,
+        string protocolEnvVarKey,
+        string headersEnvVarKey,
+        string timeoutEnvVarKey)
+    {
+        if (configuration.TryGetUriValue(endpointEnvVarKey, out var endpoint))
+        {
+            this.endpoint = endpoint;
+            this.AppendSignalPathToEndpoint = appendSignalPathToEndpoint;
+        }
+
+        if (configuration.TryGetValue<OtlpExportProtocol>(
+            protocolEnvVarKey,
+            OtlpExportProtocolParser.TryParse,
+            out var protocol))
+        {
+            this.Protocol = protocol;
+        }
+
+        if (configuration.TryGetStringValue(headersEnvVarKey, out var headers))
+        {
+            this.Headers = headers;
+        }
+
+        if (configuration.TryGetIntValue(timeoutEnvVarKey, out var timeout))
+        {
+            this.TimeoutMilliseconds = timeout;
+        }
+    }
 
     internal OtlpExporterOptions ApplyDefaults(OtlpExporterOptions defaultExporterOptions)
     {
@@ -240,39 +237,59 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         }
     }
 
-    private void ApplyConfigurationUsingSpecificationEnvVars(
+    private void ApplyConfiguration(
         IConfiguration configuration,
-        string endpointEnvVarKey,
-        bool appendSignalPathToEndpoint,
-        string protocolEnvVarKey,
-        string headersEnvVarKey,
-        string timeoutEnvVarKey)
+        OtlpExporterOptionsConfigurationType configurationType)
     {
-        if (configuration.TryGetUriValue(endpointEnvVarKey, out var endpoint))
-        {
-            this.endpoint = endpoint;
-            if (!appendSignalPathToEndpoint)
-            {
-                this.AppendSignalPathToEndpoint = false;
-            }
-        }
+        Debug.Assert(configuration != null, "configuration was null");
 
-        if (configuration.TryGetValue<OtlpExportProtocol>(
-            protocolEnvVarKey,
-            OtlpExportProtocolParser.TryParse,
-            out var protocol))
+        // Note: When using the "AddOtlpExporter" extensions configurationType
+        // never has a value other than "Default" because OtlpExporterOptions is
+        // shared by all signals and there is no way to differentiate which
+        // signal is being constructed.
+        if (configurationType == OtlpExporterOptionsConfigurationType.Default)
         {
-            this.Protocol = protocol;
+            this.ApplyConfigurationUsingSpecificationEnvVars(
+                configuration!,
+                OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName,
+                appendSignalPathToEndpoint: true,
+                OtlpSpecConfigDefinitions.DefaultProtocolEnvVarName,
+                OtlpSpecConfigDefinitions.DefaultHeadersEnvVarName,
+                OtlpSpecConfigDefinitions.DefaultTimeoutEnvVarName);
         }
-
-        if (configuration.TryGetStringValue(headersEnvVarKey, out var headers))
+        else if (configurationType == OtlpExporterOptionsConfigurationType.Logs)
         {
-            this.Headers = headers;
+            this.ApplyConfigurationUsingSpecificationEnvVars(
+                configuration!,
+                OtlpSpecConfigDefinitions.LogsEndpointEnvVarName,
+                appendSignalPathToEndpoint: false,
+                OtlpSpecConfigDefinitions.LogsProtocolEnvVarName,
+                OtlpSpecConfigDefinitions.LogsHeadersEnvVarName,
+                OtlpSpecConfigDefinitions.LogsTimeoutEnvVarName);
         }
-
-        if (configuration.TryGetIntValue(timeoutEnvVarKey, out var timeout))
+        else if (configurationType == OtlpExporterOptionsConfigurationType.Metrics)
         {
-            this.TimeoutMilliseconds = timeout;
+            this.ApplyConfigurationUsingSpecificationEnvVars(
+                configuration!,
+                OtlpSpecConfigDefinitions.MetricsEndpointEnvVarName,
+                appendSignalPathToEndpoint: false,
+                OtlpSpecConfigDefinitions.MetricsProtocolEnvVarName,
+                OtlpSpecConfigDefinitions.MetricsHeadersEnvVarName,
+                OtlpSpecConfigDefinitions.MetricsTimeoutEnvVarName);
+        }
+        else if (configurationType == OtlpExporterOptionsConfigurationType.Traces)
+        {
+            this.ApplyConfigurationUsingSpecificationEnvVars(
+                configuration!,
+                OtlpSpecConfigDefinitions.TracesEndpointEnvVarName,
+                appendSignalPathToEndpoint: false,
+                OtlpSpecConfigDefinitions.TracesProtocolEnvVarName,
+                OtlpSpecConfigDefinitions.TracesHeadersEnvVarName,
+                OtlpSpecConfigDefinitions.TracesTimeoutEnvVarName);
+        }
+        else
+        {
+            throw new NotSupportedException($"OtlpExporterOptionsConfigurationType '{configurationType}' is not supported.");
         }
     }
 }

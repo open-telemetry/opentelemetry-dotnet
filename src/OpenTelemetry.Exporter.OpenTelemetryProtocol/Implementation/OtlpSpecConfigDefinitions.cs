@@ -9,7 +9,7 @@ namespace OpenTelemetry.Exporter;
 /// <remarks>
 /// Specification: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md"/>.
 /// </remarks>
-internal static class OtlpExporterSpecEnvVarKeyDefinitions
+internal static class OtlpSpecConfigDefinitions
 {
     public const string DefaultEndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
     public const string DefaultHeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
