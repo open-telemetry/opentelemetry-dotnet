@@ -60,7 +60,7 @@ public static class OtlpLogExporterHelperExtensions
 
         return loggerOptions.AddProcessor(sp =>
         {
-            var exporterOptions = GetOptions<OtlpExporterOptions>(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
+            var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
@@ -104,7 +104,7 @@ public static class OtlpLogExporterHelperExtensions
 
         return loggerOptions.AddProcessor(sp =>
         {
-            var exporterOptions = GetOptions<OtlpExporterOptions>(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
+            var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
