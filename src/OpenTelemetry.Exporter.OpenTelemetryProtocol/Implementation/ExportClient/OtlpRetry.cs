@@ -56,7 +56,6 @@ internal static class OtlpRetry
 
     public static bool TryGetHttpRetryResult(ExportClientHttpResponse response, int retryDelayInMilliSeconds, out RetryResult retryResult)
     {
-        retryResult = default;
         if (response.StatusCode.HasValue)
         {
             return TryGetRetryResult(response.StatusCode.Value, IsHttpStatusCodeRetryable, response.DeadlineUtc, response.Headers, TryGetHttpRetryDelay, retryDelayInMilliSeconds, out retryResult);
@@ -73,6 +72,7 @@ internal static class OtlpRetry
                 }
             }
 
+            retryResult = default;
             return false;
         }
     }
@@ -85,12 +85,12 @@ internal static class OtlpRetry
 
     public static bool TryGetGrpcRetryResult(ExportClientGrpcResponse response, int retryDelayMilliseconds, out RetryResult retryResult)
     {
-        retryResult = default;
-
         if (response.Exception is RpcException rpcException)
         {
             return TryGetRetryResult(rpcException.StatusCode, IsGrpcStatusCodeRetryable, response.DeadlineUtc, rpcException.Trailers, TryGetGrpcRetryDelay, retryDelayMilliseconds, out retryResult);
         }
+
+        retryResult = default;
 
         return false;
     }
