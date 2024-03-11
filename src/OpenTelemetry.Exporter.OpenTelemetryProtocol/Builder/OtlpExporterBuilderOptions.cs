@@ -45,16 +45,14 @@ internal sealed class OtlpExporterBuilderOptions
 
         var defaultBatchOptions = this.ActivityExportProcessorOptions!.BatchExportProcessorOptions;
 
-        this.DefaultOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterSignals.None, defaultBatchOptions);
+        this.DefaultOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterOptionsConfigurationType.Default, defaultBatchOptions);
 
-        this.LoggingOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterSignals.Logs, defaultBatchOptions);
+        this.LoggingOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterOptionsConfigurationType.Logs, defaultBatchOptions);
 
-        this.MetricsOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterSignals.Metrics, defaultBatchOptions);
+        this.MetricsOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterOptionsConfigurationType.Metrics, defaultBatchOptions);
 
-        this.TracingOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterSignals.Traces, defaultBatchOptions);
+        this.TracingOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterOptionsConfigurationType.Traces, defaultBatchOptions);
     }
-
-    public OtlpExporterSignals Signals { get; set; } = OtlpExporterSignals.All;
 
     public IOtlpExporterOptions DefaultOptions => this.DefaultOptionsInstance;
 

@@ -37,14 +37,6 @@ internal sealed class OtlpExporterBuilder
 
     public IServiceCollection Services { get; }
 
-    public OtlpExporterBuilder SetSignalsToConfigure(OtlpExporterSignals signalsToConfigure)
-    {
-        this.Services.Configure<OtlpExporterBuilderOptions>(
-            this.name,
-            o => o.Signals = signalsToConfigure);
-        return this;
-    }
-
     public OtlpExporterBuilder ConfigureDefaultExporterOptions(
         Action<IOtlpExporterOptions> configure)
     {
@@ -124,7 +116,6 @@ internal sealed class OtlpExporterBuilder
 
         /* Config JSON structure is expected to be something like this:
             {
-                "Signals": "Logs, Metrics",
                 "DefaultOptions": {
                     "Endpoint": "http://default_endpoint/"
                 },

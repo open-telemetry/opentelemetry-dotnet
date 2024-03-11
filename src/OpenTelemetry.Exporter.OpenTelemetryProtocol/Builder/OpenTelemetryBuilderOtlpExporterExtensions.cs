@@ -152,11 +152,6 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
             {
                 var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
 
-                if (!builderOptions.Signals.HasFlag(OtlpExporterSignals.Logs))
-                {
-                    return;
-                }
-
                 var processor = OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
                     sp,
                     builderOptions.LoggingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
@@ -174,11 +169,6 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
             {
                 var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
 
-                if (!builderOptions.Signals.HasFlag(OtlpExporterSignals.Metrics))
-                {
-                    return;
-                }
-
                 metrics.AddReader(
                     OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
                         builderOptions.MetricsOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
@@ -190,11 +180,6 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
             (sp, tracing) =>
             {
                 var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
-
-                if (!builderOptions.Signals.HasFlag(OtlpExporterSignals.Traces))
-                {
-                    return;
-                }
 
                 var processorOptions = builderOptions.ActivityExportProcessorOptions ?? throw new NotSupportedException();
 
