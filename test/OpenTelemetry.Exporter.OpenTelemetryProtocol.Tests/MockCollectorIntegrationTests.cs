@@ -118,7 +118,7 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.Internal)]
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.InvalidArgument)]
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.FailedPrecondition)]
-    public async Task GrpcRetryTests(bool shouldRetry, ExportResult expectedResult, Grpc.Core.StatusCode initialStatusCode)
+    public async Task GrpcRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialStatusCode)
     {
         var testGrpcPort = Interlocked.Increment(ref gRPCPort);
         var testHttpPort = Interlocked.Increment(ref httpPort);
@@ -169,7 +169,7 @@ public sealed class MockCollectorIntegrationTests
         OtlpExporterTransmissionHandler<ExportTraceServiceRequest> transmissionHandler;
 
         // TODO: update this to configure via experimental environment variable.
-        if (shouldRetry)
+        if (useRetryTransmissionHandler)
         {
             transmissionHandler = new OtlpExporterRetryTransmissionHandler<ExportTraceServiceRequest>(exportClient, exporterOptions.TimeoutMilliseconds);
         }
@@ -209,7 +209,7 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(true, ExportResult.Success, HttpStatusCode.TooManyRequests)]
     [InlineData(false, ExportResult.Failure, HttpStatusCode.TooManyRequests)]
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
-    public async Task HttpRetryTests(bool shouldRetry, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
+    public async Task HttpRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
         var testHttpPort = Interlocked.Increment(ref httpPort);
 
@@ -262,7 +262,7 @@ public sealed class MockCollectorIntegrationTests
         OtlpExporterTransmissionHandler<ExportTraceServiceRequest> transmissionHandler;
 
         // TODO: update this to configure via experimental environment variable.
-        if (shouldRetry)
+        if (useRetryTransmissionHandler)
         {
             transmissionHandler = new OtlpExporterRetryTransmissionHandler<ExportTraceServiceRequest>(exportClient, exporterOptions.TimeoutMilliseconds);
         }
