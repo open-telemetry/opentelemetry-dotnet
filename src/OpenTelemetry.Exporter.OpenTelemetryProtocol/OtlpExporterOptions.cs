@@ -105,6 +105,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         set
         {
+            Guard.ThrowIfNull(value);
+
             this.endpoint = value;
             this.AppendSignalPathToEndpoint = false;
         }
@@ -126,12 +128,9 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         get => this.httpClientFactory ??= this.DefaultHttpClientFactory;
         set
         {
-            this.httpClientFactory = value ?? NullHttpClientFactory;
+            Guard.ThrowIfNull(value);
 
-            static HttpClient NullHttpClientFactory()
-            {
-                return null!;
-            }
+            this.httpClientFactory = value;
         }
     }
 

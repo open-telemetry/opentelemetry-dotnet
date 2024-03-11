@@ -13,9 +13,10 @@ internal interface IExportClient<in TRequest>
     /// Method for sending export request to the server.
     /// </summary>
     /// <param name="request">The request to send to the server.</param>
+    /// <param name="deadlineUtc">The deadline time in utc for export request to finish.</param>
     /// <param name="cancellationToken">An optional token for canceling the call.</param>
     /// <returns><see cref="ExportClientResponse"/>.</returns>
-    ExportClientResponse SendExportRequest(TRequest request, CancellationToken cancellationToken = default);
+    ExportClientResponse SendExportRequest(TRequest request, DateTime deadlineUtc, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Method for shutting down the export client.
