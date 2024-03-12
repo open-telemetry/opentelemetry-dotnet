@@ -124,6 +124,8 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
     private static void UseOtlpExporterInternal(IOpenTelemetryBuilder builder, string? name)
     {
+        name ??= Options.DefaultName;
+
         // Note: We automatically turn on signals for "UseOtlpExporter"
         builder
             .WithLogging()
@@ -146,8 +148,6 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
             sp.GetService<IOptionsMonitor<LogRecordExportProcessorOptions>>()?.Get(name),
             sp.GetService<IOptionsMonitor<MetricReaderOptions>>()?.Get(name),
             sp.GetService<IOptionsMonitor<ActivityExportProcessorOptions>>()?.Get(name)));
-
-        name ??= Options.DefaultName;
 
         services.ConfigureOpenTelemetryLoggerProvider(
             (sp, logging) =>
