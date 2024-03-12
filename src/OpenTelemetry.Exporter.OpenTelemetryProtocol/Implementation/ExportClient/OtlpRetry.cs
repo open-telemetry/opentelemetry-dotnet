@@ -56,7 +56,6 @@ internal static class OtlpRetry
 
     public static bool TryGetHttpRetryResult(ExportClientHttpResponse response, int retryDelayInMilliSeconds, out RetryResult retryResult)
     {
-        retryResult = default;
         if (response.StatusCode.HasValue)
         {
             return TryGetRetryResult(response.StatusCode.Value, IsHttpStatusCodeRetryable, response.DeadlineUtc, response.Headers, TryGetHttpRetryDelay, retryDelayInMilliSeconds, out retryResult);
@@ -73,6 +72,7 @@ internal static class OtlpRetry
                 }
             }
 
+            retryResult = default;
             return false;
         }
     }
@@ -83,9 +83,15 @@ internal static class OtlpRetry
         return true;
     }
 
-    public static bool TryGetGrpcRetryResult(StatusCode statusCode, DateTime? deadline, Metadata trailers, int retryDelayMilliseconds, out RetryResult retryResult)
+    public static bool TryGetGrpcRetryResult(ExportClientGrpcResponse response, int retryDelayMilliseconds, out RetryResult retryResult)
     {
-        return TryGetRetryResult(statusCode, IsGrpcStatusCodeRetryable, deadline, trailers, TryGetGrpcRetryDelay, retryDelayMilliseconds, out retryResult);
+        if (response.Exception is RpcException rpcException)
+        {
+            return TryGetRetryResult(rpcException.StatusCode, IsGrpcStatusCodeRetryable, response.DeadlineUtc, rpcException.Trailers, TryGetGrpcRetryDelay, retryDelayMilliseconds, out retryResult);
+        }
+
+        retryResult = default;
+        return false;
     }
 
     private static bool TryGetRetryResult<TStatusCode, TCarrier>(TStatusCode statusCode, Func<TStatusCode, bool, bool> isRetryable, DateTime? deadline, TCarrier carrier, Func<TStatusCode, TCarrier, TimeSpan?> throttleGetter, int nextRetryDelayMilliseconds, out RetryResult retryResult)
