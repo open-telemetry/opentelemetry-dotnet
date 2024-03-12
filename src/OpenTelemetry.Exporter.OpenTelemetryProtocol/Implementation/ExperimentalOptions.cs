@@ -37,12 +37,12 @@ internal sealed class ExperimentalOptions
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether log event attributes should be exported.
+    /// Gets a value indicating whether log event attributes should be exported.
     /// </summary>
-    public bool EmitLogEventAttributes { get; set; } = false;
+    public bool EmitLogEventAttributes { get; private set; } = false;
 
     /// <summary>
-    /// Gets or sets a value indicating whether retries should be enabled in case of transient errors.
+    /// Gets a value indicating whether retries should be enabled in case of transient errors.
     /// </summary>
-    public bool EnableInMemoryRetry { get; set; } = false;
+    public bool EnableInMemoryRetry { get; private set; } = false;
 }
