@@ -39,6 +39,29 @@
   to `null` will now result in an `ArgumentNullException` being thrown.
   ([#5434](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5434))
 
+* Added `IOpenTelemetryBuilder.UseOtlpExporter` extension to simplify setup of
+  the OTLP Exporter when all three signals are used (logs, metrics, and traces).
+  The new extension has the following behaviors:
+
+  * Calling `UseOtlpExporter` will automatically enable logging, tracing, and
+    metrics. Additional calls to `WithLogging`, `WithMetrics`, and `WithTracing`
+    are NOT required.
+
+  * `UseOtlpExporter` can only be called once and cannot be used with the
+    existing `AddOtlpExporter` extensions. Extra calls will result in
+    `NotSupportedException`s being thrown.
+
+  * `UseOtlpExporter` will register the OTLP Exporter at the end of the
+    processor pipeline for logging and tracing.
+
+  * The OTLP Exporters added for logging, tracing, and metrics can be configured
+    using environment variables or `IConfiguration`. 
+
+  For details see: [README > UseOtlpExporter
+  Extension](./README.md#useotlpexporter-extension).
+
+  PR: [#5400](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5400)
+
 ## 1.7.0
 
 Released 2023-Dec-08
