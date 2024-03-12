@@ -145,6 +145,12 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
             configuration,
             sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue,
             sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().CurrentValue,
+            /* Note: We allow LogRecordExportProcessorOptions,
+            MetricReaderOptions, & ActivityExportProcessorOptions to be null
+            because those only exist if the corresponding signal is turned on.
+            Currently this extension turns on all signals so they will always be
+            there but that may change in the future so it is handled
+            defensively. */
             sp.GetService<IOptionsMonitor<LogRecordExportProcessorOptions>>()?.Get(name),
             sp.GetService<IOptionsMonitor<MetricReaderOptions>>()?.Get(name),
             sp.GetService<IOptionsMonitor<ActivityExportProcessorOptions>>()?.Get(name)));
@@ -157,7 +163,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                 var processor = OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
                     sp,
                     builderOptions.LoggingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
-                    builderOptions.LogRecordExportProcessorOptions ?? throw new NotSupportedException(),
+                    builderOptions.LogRecordExportProcessorOptions ?? throw new InvalidOperationException("LogRecordExportProcessorOptions were missing with logging enabled"),
                     builderOptions.SdkLimitOptions,
                     builderOptions.ExperimentalOptions,
                     skipUseOtlpExporterRegistrationCheck: true);
@@ -176,7 +182,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                     OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
                         sp,
                         builderOptions.MetricsOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
-                        builderOptions.MetricReaderOptions ?? throw new NotSupportedException(),
+                        builderOptions.MetricReaderOptions ?? throw new InvalidOperationException("MetricReaderOptions were missing with metrics enabled"),
                         skipUseOtlpExporterRegistrationCheck: true));
             });
 
@@ -185,7 +191,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
             {
                 var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
 
-                var processorOptions = builderOptions.ActivityExportProcessorOptions ?? throw new NotSupportedException();
+                var processorOptions = builderOptions.ActivityExportProcessorOptions ?? throw new InvalidOperationException("ActivityExportProcessorOptions were missing with tracing enabled");
 
                 var processor = OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
                     sp,
