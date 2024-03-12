@@ -175,36 +175,6 @@ internal sealed class MeterProviderSdk : MeterProvider
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("MeterProvider built successfully.");
     }
 
-    private Func<Instrument, bool> GetPredicate(MeterProviderBuilderSdk state)
-    {
-        List<Predicate<Meter>> predicates = new List<Predicate<Meter>>();
-
-        if (state.MeterSources.Any())
-        {
-            predicates.Add(this.GetNamePredicate(state));
-        }
-
-        predicates.AddRange(state.MeterSelectionPredicates);
-
-        return (instrument) =>
-        {
-            bool shouldListen = false;
-            for (int i = 0; i < predicates.Count && !shouldListen; i++)
-            {
-                try
-                {
-                    shouldListen |= predicates[i](instrument.Meter);
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.MeterPredicateException(instrument.Meter.Name, ex);
-                }
-            }
-
-            return shouldListen;
-        };
-    }
-
     internal Resource Resource { get; }
 
     internal List<object> Instrumentations => this.instrumentations;
@@ -548,6 +518,36 @@ internal sealed class MeterProviderSdk : MeterProvider
                 $"Exemplar filter configuration value '{configValue}' has been ignored because exemplars are an experimental feature not available in stable builds.");
         }
 #endif
+    }
+
+    private Func<Instrument, bool> GetPredicate(MeterProviderBuilderSdk state)
+    {
+        List<Predicate<Meter>> predicates = new List<Predicate<Meter>>();
+
+        if (state.MeterSources.Any())
+        {
+            predicates.Add(this.GetNamePredicate(state));
+        }
+
+        predicates.AddRange(state.MeterSelectionPredicates);
+
+        return (instrument) =>
+        {
+            bool shouldListen = false;
+            for (int i = 0; i < predicates.Count && !shouldListen; i++)
+            {
+                try
+                {
+                    shouldListen |= predicates[i](instrument.Meter);
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.MeterPredicateException(instrument.Meter.Name, ex);
+                }
+            }
+
+            return shouldListen;
+        };
     }
 
     private Predicate<Meter> GetNamePredicate(MeterProviderBuilderSdk state)
