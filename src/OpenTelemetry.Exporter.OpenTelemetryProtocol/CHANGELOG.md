@@ -55,7 +55,7 @@
     processor pipeline for logging and tracing.
 
   * The OTLP Exporters added for logging, tracing, and metrics can be configured
-    using environment variables or `IConfiguration`. 
+    using environment variables or `IConfiguration`.
 
   For details see: [README > UseOtlpExporter
   Extension](./README.md#useotlpexporter-extension).
