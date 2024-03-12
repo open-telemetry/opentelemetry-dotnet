@@ -77,10 +77,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
             otlpBuilder.ConfigureDefaultExporterOptions(o =>
             {
                 o.Protocol = protocol;
-                if (baseEndpoint != null)
-                {
-                    o.Endpoint = baseEndpoint;
-                }
+                o.Endpoint = baseEndpoint;
             });
         });
     }
