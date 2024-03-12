@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Google.Protobuf.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -94,12 +95,6 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
         {
             Assert.Equal(2, invocations);
         }
-
-        options.HttpClientFactory = null;
-        Assert.Throws<InvalidOperationException>(() =>
-        {
-            using var exporter = new OtlpTraceExporter(options);
-        });
 
         options.HttpClientFactory = () => null;
         Assert.Throws<InvalidOperationException>(() =>
@@ -629,7 +624,10 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
     {
         var exportClientMock = new TestExportClient<OtlpCollector.ExportTraceServiceRequest>();
 
-        var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, exportClientMock);
+        var exporterOptions = new OtlpExporterOptions();
+        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>(exportClientMock, exporterOptions.TimeoutMilliseconds);
+
+        var exporter = new OtlpTraceExporter(exporterOptions, DefaultSdkLimitOptions, transmissionHandler);
 
         exporter.Shutdown();
 

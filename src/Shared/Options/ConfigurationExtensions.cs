@@ -129,7 +129,7 @@ internal static class ConfigurationExtensions
     public static IServiceCollection RegisterOptionsFactory<T>(
         this IServiceCollection services,
         Func<IConfiguration, T> optionsFactoryFunc)
-        where T : class, new()
+        where T : class
     {
         Debug.Assert(services != null, "services was null");
         Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
@@ -150,7 +150,7 @@ internal static class ConfigurationExtensions
     public static IServiceCollection RegisterOptionsFactory<T>(
         this IServiceCollection services,
         Func<IServiceProvider, IConfiguration, string, T> optionsFactoryFunc)
-        where T : class, new()
+        where T : class
     {
         Debug.Assert(services != null, "services was null");
         Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");

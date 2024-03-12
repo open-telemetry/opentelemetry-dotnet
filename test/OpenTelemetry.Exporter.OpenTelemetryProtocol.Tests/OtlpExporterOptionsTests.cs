@@ -13,6 +13,49 @@ public class OtlpExporterOptionsTests : IDisposable
         ClearEnvVars();
     }
 
+    public static IEnumerable<object[]> GetOtlpExporterOptionsTestCases()
+    {
+        yield return new object[]
+        {
+            OtlpExporterOptionsConfigurationType.Default,
+            OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName,
+            OtlpSpecConfigDefinitions.DefaultHeadersEnvVarName,
+            OtlpSpecConfigDefinitions.DefaultTimeoutEnvVarName,
+            OtlpSpecConfigDefinitions.DefaultProtocolEnvVarName,
+            true,
+        };
+
+        yield return new object[]
+        {
+            OtlpExporterOptionsConfigurationType.Logs,
+            OtlpSpecConfigDefinitions.LogsEndpointEnvVarName,
+            OtlpSpecConfigDefinitions.LogsHeadersEnvVarName,
+            OtlpSpecConfigDefinitions.LogsTimeoutEnvVarName,
+            OtlpSpecConfigDefinitions.LogsProtocolEnvVarName,
+            false,
+        };
+
+        yield return new object[]
+        {
+            OtlpExporterOptionsConfigurationType.Metrics,
+            OtlpSpecConfigDefinitions.MetricsEndpointEnvVarName,
+            OtlpSpecConfigDefinitions.MetricsHeadersEnvVarName,
+            OtlpSpecConfigDefinitions.MetricsTimeoutEnvVarName,
+            OtlpSpecConfigDefinitions.MetricsProtocolEnvVarName,
+            false,
+        };
+
+        yield return new object[]
+        {
+            OtlpExporterOptionsConfigurationType.Traces,
+            OtlpSpecConfigDefinitions.TracesEndpointEnvVarName,
+            OtlpSpecConfigDefinitions.TracesHeadersEnvVarName,
+            OtlpSpecConfigDefinitions.TracesTimeoutEnvVarName,
+            OtlpSpecConfigDefinitions.TracesProtocolEnvVarName,
+            false,
+        };
+    }
+
     public void Dispose()
     {
         ClearEnvVars();
@@ -24,10 +67,10 @@ public class OtlpExporterOptionsTests : IDisposable
     {
         var options = new OtlpExporterOptions();
 
-        Assert.Equal(new Uri("http://localhost:4317"), options.Endpoint);
+        Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), options.Endpoint);
         Assert.Null(options.Headers);
         Assert.Equal(10000, options.TimeoutMilliseconds);
-        Assert.Equal(OtlpExportProtocol.Grpc, options.Protocol);
+        Assert.Equal(OtlpExporterOptions.DefaultOtlpExportProtocol, options.Protocol);
     }
 
     [Fact]
@@ -37,100 +80,153 @@ public class OtlpExporterOptionsTests : IDisposable
         {
             Protocol = OtlpExportProtocol.HttpProtobuf,
         };
-        Assert.Equal(new Uri("http://localhost:4318"), options.Endpoint);
+        Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), options.Endpoint);
         Assert.Null(options.Headers);
         Assert.Equal(10000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
     }
 
-    [Fact]
-    public void OtlpExporterOptions_EnvironmentVariableOverride()
+    [Theory]
+    [MemberData(nameof(GetOtlpExporterOptionsTestCases))]
+    public void OtlpExporterOptions_EnvironmentVariableOverride(
+        int configurationType,
+        string endpointEnvVarKeyName,
+        string headersEnvVarKeyName,
+        string timeoutEnvVarKeyName,
+        string protocolEnvVarKeyName,
+        bool appendSignalPathToEndpoint)
     {
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, "A=2,B=3");
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, "2000");
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, "http/protobuf");
+        Environment.SetEnvironmentVariable(endpointEnvVarKeyName, "http://test:8888");
+        Environment.SetEnvironmentVariable(headersEnvVarKeyName, "A=2,B=3");
+        Environment.SetEnvironmentVariable(timeoutEnvVarKeyName, "2000");
+        Environment.SetEnvironmentVariable(protocolEnvVarKeyName, "http/protobuf");
 
-        var options = new OtlpExporterOptions();
+        var options = new OtlpExporterOptions((OtlpExporterOptionsConfigurationType)configurationType);
 
         Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
         Assert.Equal("A=2,B=3", options.Headers);
         Assert.Equal(2000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
+        Assert.Equal(appendSignalPathToEndpoint, options.AppendSignalPathToEndpoint);
     }
 
-    [Fact]
-    public void OtlpExporterOptions_UsingIConfiguration()
+    [Theory]
+    [MemberData(nameof(GetOtlpExporterOptionsTestCases))]
+    public void OtlpExporterOptions_UsingIConfiguration(
+        int configurationType,
+        string endpointEnvVarKeyName,
+        string headersEnvVarKeyName,
+        string timeoutEnvVarKeyName,
+        string protocolEnvVarKeyName,
+        bool appendSignalPathToEndpoint)
     {
         var values = new Dictionary<string, string>()
         {
-            [OtlpExporterOptions.EndpointEnvVarName] = "http://test:8888",
-            [OtlpExporterOptions.HeadersEnvVarName] = "A=2,B=3",
-            [OtlpExporterOptions.TimeoutEnvVarName] = "2000",
-            [OtlpExporterOptions.ProtocolEnvVarName] = "http/protobuf",
+            [endpointEnvVarKeyName] = "http://test:8888",
+            [headersEnvVarKeyName] = "A=2,B=3",
+            [timeoutEnvVarKeyName] = "2000",
+            [protocolEnvVarKeyName] = "http/protobuf",
         };
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(values)
             .Build();
 
-        var options = new OtlpExporterOptions(configuration, new());
+        var options = new OtlpExporterOptions(configuration, (OtlpExporterOptionsConfigurationType)configurationType, new());
 
         Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
         Assert.Equal("A=2,B=3", options.Headers);
         Assert.Equal(2000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
+        Assert.Equal(appendSignalPathToEndpoint, options.AppendSignalPathToEndpoint);
     }
 
     [Fact]
     public void OtlpExporterOptions_InvalidEnvironmentVariableOverride()
     {
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "invalid");
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, "invalid");
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, "invalid");
+        var values = new Dictionary<string, string>()
+        {
+            ["EndpointWithInvalidValue"] = "invalid",
+            ["TimeoutWithInvalidValue"] = "invalid",
+            ["ProtocolWithInvalidValue"] = "invalid",
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
 
         var options = new OtlpExporterOptions();
 
-        Assert.Equal(new Uri("http://localhost:4317"), options.Endpoint);
+        options.ApplyConfigurationUsingSpecificationEnvVars(
+            configuration,
+            "EndpointWithInvalidValue",
+            appendSignalPathToEndpoint: true,
+            "ProtocolWithInvalidValue",
+            "NoopHeaders",
+            "TimeoutWithInvalidValue");
+
+        Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), options.Endpoint);
         Assert.Equal(10000, options.TimeoutMilliseconds);
-        Assert.Equal(default, options.Protocol);
+        Assert.Equal(OtlpExporterOptions.DefaultOtlpExportProtocol, options.Protocol);
+        Assert.Null(options.Headers);
     }
 
     [Fact]
     public void OtlpExporterOptions_SetterOverridesEnvironmentVariable()
     {
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, "A=2,B=3");
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, "2000");
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, "grpc");
-
-        var options = new OtlpExporterOptions
+        var values = new Dictionary<string, string>()
         {
-            Endpoint = new Uri("http://localhost:200"),
-            Headers = "C=3",
-            TimeoutMilliseconds = 40000,
-            Protocol = OtlpExportProtocol.HttpProtobuf,
+            ["Endpoint"] = "http://test:8888",
+            ["Timeout"] = "2000",
+            ["Protocol"] = "grpc",
+            ["Headers"] = "A=2,B=3",
         };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
+
+        var options = new OtlpExporterOptions();
+
+        options.ApplyConfigurationUsingSpecificationEnvVars(
+            configuration,
+            "Endpoint",
+            appendSignalPathToEndpoint: true,
+            "Protocol",
+            "Headers",
+            "Timeout");
+
+        options.Endpoint = new Uri("http://localhost:200");
+        options.Headers = "C=3";
+        options.TimeoutMilliseconds = 40000;
+        options.Protocol = OtlpExportProtocol.HttpProtobuf;
 
         Assert.Equal(new Uri("http://localhost:200"), options.Endpoint);
         Assert.Equal("C=3", options.Headers);
         Assert.Equal(40000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
+        Assert.False(options.AppendSignalPathToEndpoint);
     }
 
     [Fact]
-    public void OtlpExporterOptions_ProtocolSetterDoesNotOverrideCustomEndpointFromEnvVariables()
+    public void OtlpExporterOptions_EndpointGetterUsesProtocolWhenNull()
     {
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
+        var options = new OtlpExporterOptions();
 
-        var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.Grpc };
+        Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), options.Endpoint);
+        Assert.Equal(OtlpExporterOptions.DefaultOtlpExportProtocol, options.Protocol);
 
-        Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
-        Assert.Equal(OtlpExportProtocol.Grpc, options.Protocol);
+        options.Protocol = OtlpExportProtocol.HttpProtobuf;
+
+        Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), options.Endpoint);
+
+        options.Protocol = OtlpExportProtocol.Grpc;
+
+        Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), options.Endpoint);
     }
 
     [Fact]
-    public void OtlpExporterOptions_ProtocolSetterDoesNotOverrideCustomEndpointFromSetter()
+    public void OtlpExporterOptions_EndpointThrowsWhenSetToNull()
     {
         var options = new OtlpExporterOptions { Endpoint = new Uri("http://test:8888"), Protocol = OtlpExportProtocol.Grpc };
 
@@ -141,17 +237,36 @@ public class OtlpExporterOptionsTests : IDisposable
     [Fact]
     public void OtlpExporterOptions_EnvironmentVariableNames()
     {
-        Assert.Equal("OTEL_EXPORTER_OTLP_ENDPOINT", OtlpExporterOptions.EndpointEnvVarName);
-        Assert.Equal("OTEL_EXPORTER_OTLP_HEADERS", OtlpExporterOptions.HeadersEnvVarName);
-        Assert.Equal("OTEL_EXPORTER_OTLP_TIMEOUT", OtlpExporterOptions.TimeoutEnvVarName);
-        Assert.Equal("OTEL_EXPORTER_OTLP_PROTOCOL", OtlpExporterOptions.ProtocolEnvVarName);
+        Assert.Equal("OTEL_EXPORTER_OTLP_ENDPOINT", OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName);
+        Assert.Equal("OTEL_EXPORTER_OTLP_HEADERS", OtlpSpecConfigDefinitions.DefaultHeadersEnvVarName);
+        Assert.Equal("OTEL_EXPORTER_OTLP_TIMEOUT", OtlpSpecConfigDefinitions.DefaultTimeoutEnvVarName);
+        Assert.Equal("OTEL_EXPORTER_OTLP_PROTOCOL", OtlpSpecConfigDefinitions.DefaultProtocolEnvVarName);
+    }
+
+    [Fact]
+    public void OtlpExporterOptions_SettingEndpointToNullResetsAppendSignalPathToEndpoint()
+    {
+        var options = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default);
+
+        Assert.Throws<ArgumentNullException>(() => options.Endpoint = null);
+    }
+
+    [Fact]
+    public void OtlpExporterOptions_HttpClientFactoryThrowsWhenSetToNull()
+    {
+        var options = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default);
+
+        Assert.Throws<ArgumentNullException>(() => options.HttpClientFactory = null);
     }
 
     private static void ClearEnvVars()
     {
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, null);
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, null);
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, null);
-        Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, null);
+        foreach (var item in GetOtlpExporterOptionsTestCases())
+        {
+            Environment.SetEnvironmentVariable((string)item[1], null);
+            Environment.SetEnvironmentVariable((string)item[2], null);
+            Environment.SetEnvironmentVariable((string)item[3], null);
+            Environment.SetEnvironmentVariable((string)item[4], null);
+        }
     }
 }
