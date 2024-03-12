@@ -6,6 +6,7 @@ using System.Net.Http;
 #endif
 using System.Reflection;
 using Grpc.Core;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
 using Grpc.Net.Client;
@@ -88,7 +89,7 @@ internal static class OtlpExporterOptionsExtensions
         return headers;
     }
 
-    public static OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportTransmissionHandler(this OtlpExporterOptions options, bool enableRetry = false)
+    public static OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
     {
         var exportClient = GetTraceExportClient(options);
 
@@ -99,12 +100,12 @@ internal static class OtlpExporterOptionsExtensions
             ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
-        return enableRetry
+        return experimentalOptions.EnableInMemoryRetry
             ? new OtlpExporterRetryTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(exportClient, timeoutMilliseconds)
             : new OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(exportClient, timeoutMilliseconds);
     }
 
-    public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options, bool enableRetry = false)
+    public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
     {
         var exportClient = GetMetricsExportClient(options);
 
@@ -115,19 +116,19 @@ internal static class OtlpExporterOptionsExtensions
             ? httpMetricsExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
-        return enableRetry
+        return experimentalOptions.EnableInMemoryRetry
             ? new OtlpExporterRetryTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds)
             : new OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds);
     }
 
-    public static OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest> GetLogsExportTransmissionHandler(this OtlpExporterOptions options, bool enableRetry = false)
+    public static OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest> GetLogsExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
     {
         var exportClient = GetLogExportClient(options);
         double timeoutMilliseconds = exportClient is OtlpHttpLogExportClient httpLogExportClient
             ? httpLogExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
-        return enableRetry
+        return experimentalOptions.EnableInMemoryRetry
             ? new OtlpExporterRetryTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds)
             : new OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
     }

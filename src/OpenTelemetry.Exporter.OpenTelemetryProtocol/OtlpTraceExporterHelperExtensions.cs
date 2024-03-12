@@ -61,7 +61,6 @@ public static class OtlpTraceExporterHelperExtensions
 
             OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
             services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
-            services.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
         });
 
         return builder.AddProcessor(sp =>

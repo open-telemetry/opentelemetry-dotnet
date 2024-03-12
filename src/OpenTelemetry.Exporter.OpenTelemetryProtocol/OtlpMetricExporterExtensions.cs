@@ -61,8 +61,6 @@ public static class OtlpMetricExporterExtensions
 
             OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
 
-            services.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
-
             services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
                 (readerOptions, config) =>
                 {
@@ -140,8 +138,6 @@ public static class OtlpMetricExporterExtensions
         builder.ConfigureServices(services =>
         {
             OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-
-            services.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
 
             services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
                 (readerOptions, config) =>
