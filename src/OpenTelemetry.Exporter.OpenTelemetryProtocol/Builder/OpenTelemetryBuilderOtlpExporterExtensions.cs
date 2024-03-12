@@ -162,7 +162,8 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                     builderOptions.LoggingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
                     builderOptions.LogRecordExportProcessorOptions ?? throw new NotSupportedException(),
                     builderOptions.SdkLimitOptions,
-                    builderOptions.ExperimentalOptions);
+                    builderOptions.ExperimentalOptions,
+                    skipUseOtlpExporterRegistrationCheck: true);
 
                 processor.PipelineWeight = DefaultProcessorPipelineWeight;
 
@@ -176,9 +177,10 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
 
                 metrics.AddReader(
                     OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
+                        sp,
                         builderOptions.MetricsOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
                         builderOptions.MetricReaderOptions ?? throw new NotSupportedException(),
-                        sp));
+                        skipUseOtlpExporterRegistrationCheck: true));
             });
 
         services.ConfigureOpenTelemetryTracerProvider(
@@ -189,11 +191,12 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
                 var processorOptions = builderOptions.ActivityExportProcessorOptions ?? throw new NotSupportedException();
 
                 var processor = OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
+                    sp,
                     builderOptions.TracingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
                     builderOptions.SdkLimitOptions,
                     processorOptions.ExportProcessorType,
                     processorOptions.BatchExportProcessorOptions,
-                    sp);
+                    skipUseOtlpExporterRegistrationCheck: true);
 
                 processor.PipelineWeight = DefaultProcessorPipelineWeight;
 

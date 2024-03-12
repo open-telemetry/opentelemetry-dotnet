@@ -3,10 +3,12 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -96,9 +98,9 @@ public static class OtlpMetricExporterExtensions
             }
 
             return BuildOtlpExporterMetricReader(
+                sp,
                 exporterOptions,
-                sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName),
-                sp);
+                sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName));
         });
     }
 
@@ -169,17 +171,25 @@ public static class OtlpMetricExporterExtensions
 
             configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
 
-            return BuildOtlpExporterMetricReader(exporterOptions, metricReaderOptions, sp);
+            return BuildOtlpExporterMetricReader(sp, exporterOptions, metricReaderOptions);
         });
     }
 
     internal static MetricReader BuildOtlpExporterMetricReader(
+        IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
         MetricReaderOptions metricReaderOptions,
-        IServiceProvider serviceProvider,
+        bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<Metric>, BaseExporter<Metric>>? configureExporterInstance = null)
     {
-        serviceProvider.EnsureNoUseOtlpExporterRegistrations();
+        Debug.Assert(serviceProvider != null, "serviceProvider was null");
+        Debug.Assert(exporterOptions != null, "exporterOptions was null");
+        Debug.Assert(metricReaderOptions != null, "metricReaderOptions was null");
+
+        if (!skipUseOtlpExporterRegistrationCheck)
+        {
+            serviceProvider.EnsureNoUseOtlpExporterRegistrations();
+        }
 
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 

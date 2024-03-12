@@ -156,6 +156,12 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// </remarks>
     internal bool AppendSignalPathToEndpoint { get; private set; } = true;
 
+    internal bool HasData
+        => this.protocol.HasValue
+        || this.endpoint != null
+        || this.timeoutMilliseconds.HasValue
+        || this.httpClientFactory != null;
+
     internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
     {
         services.RegisterOptionsFactory(CreateOtlpExporterOptions);

@@ -70,9 +70,9 @@ public sealed class IntegrationTests : IDisposable
             .AddSource(activitySourceName);
 
         builder.AddProcessor(OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
-            exporterOptions,
-            DefaultSdkLimitOptions,
             serviceProvider: null,
+            exporterOptions: exporterOptions,
+            sdkLimitOptions: DefaultSdkLimitOptions,
             configureExporterInstance: otlpExporter =>
             {
                 delegatingExporter = new DelegatingExporter<Activity>
@@ -151,9 +151,9 @@ public sealed class IntegrationTests : IDisposable
         readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = useManualExport ? Timeout.Infinite : ExportIntervalMilliseconds;
 
         builder.AddReader(OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
-            exporterOptions,
-            readerOptions,
             serviceProvider: null,
+            exporterOptions: exporterOptions,
+            metricReaderOptions: readerOptions,
             configureExporterInstance: otlpExporter =>
             {
                 delegatingExporter = new DelegatingExporter<Metric>

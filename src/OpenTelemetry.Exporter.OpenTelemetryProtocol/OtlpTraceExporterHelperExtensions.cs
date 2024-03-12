@@ -92,32 +92,42 @@ public static class OtlpTraceExporterHelperExtensions
             // instance.
             var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-            return BuildOtlpExporterProcessor(exporterOptions, sdkOptionsManager, sp);
+            return BuildOtlpExporterProcessor(sp, exporterOptions, sdkOptionsManager);
         });
     }
 
     internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
+        IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
-        IServiceProvider serviceProvider,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
         => BuildOtlpExporterProcessor(
+            serviceProvider,
             exporterOptions,
             sdkLimitOptions,
             exporterOptions.ExportProcessorType,
             exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions(),
-            serviceProvider,
-            configureExporterInstance);
+            skipUseOtlpExporterRegistrationCheck: false,
+            configureExporterInstance: configureExporterInstance);
 
     internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
+        IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExportProcessorType exportProcessorType,
         BatchExportProcessorOptions<Activity> batchExportProcessorOptions,
-        IServiceProvider serviceProvider,
+        bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
     {
-        serviceProvider.EnsureNoUseOtlpExporterRegistrations();
+        Debug.Assert(serviceProvider != null, "serviceProvider was null");
+        Debug.Assert(exporterOptions != null, "exporterOptions was null");
+        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
+        Debug.Assert(batchExportProcessorOptions != null, "batchExportProcessorOptions was null");
+
+        if (!skipUseOtlpExporterRegistrationCheck)
+        {
+            serviceProvider.EnsureNoUseOtlpExporterRegistrations();
+        }
 
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
