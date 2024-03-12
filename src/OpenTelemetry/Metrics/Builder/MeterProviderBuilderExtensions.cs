@@ -196,6 +196,35 @@ public static class MeterProviderBuilderExtensions
         return meterProviderBuilder;
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Adds a predicate for <see cref="Meter"/> that is used to determine
+    /// if <see cref="MeterProvider"/> should subscribe to the meter.
+    ///
+    /// <remarks>
+    /// When multiple predicates are added using this method or via <see cref="MeterProviderBuilder.AddMeter(string[])"/>,
+    /// the <see cref="MeterProvider"/> will enable a meter if at least one of the predicates returns true for it, or
+    /// if the meter name matches one provided in the <see cref="MeterProviderBuilder.AddMeter(string[])"/> overload.
+    /// </remarks>
+    /// </summary>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="meterPredicate">Meter predicate - if it returns true, OpenTelemetry subscribes to the corresponding meter.</param>
+    /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+    public static MeterProviderBuilder AddMeter(this MeterProviderBuilder meterProviderBuilder, Predicate<Meter> meterPredicate)
+    {
+        Guard.ThrowIfNull(meterProviderBuilder);
+        meterProviderBuilder.ConfigureBuilder((_, builder) =>
+        {
+            if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            {
+                meterProviderBuilderSdk.AddMeter(meterPredicate);
+            }
+        });
+
+        return meterProviderBuilder;
+    }
+#endif
+
     /// <summary>
     /// Sets the maximum number of Metric streams supported by the MeterProvider.
     /// When no Views are configured, every instrument will result in one metric stream,

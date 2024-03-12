@@ -104,4 +104,107 @@ public class MeterProviderSdkTest
             }
         }
     }
+
+    [Fact]
+    public void MeterProviderSdkAddMeterWithPredicate()
+    {
+        using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.A", "1.0.0");
+        using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.A", "2.0.0");
+        using var meter3 = new Meter($"{Utils.GetCurrentMethodName()}.B");
+        using var meter4 = new Meter($"B.{Utils.GetCurrentMethodName()}");
+
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter => meter.Version == "2.0.0" || meter.Name.EndsWith(".B"))
+            .AddInMemoryExporter(new List<Metric>())
+            .Build())
+        {
+            Assert.False(IsMeterEnabled(meter1));
+            Assert.True(IsMeterEnabled(meter2));
+            Assert.True(IsMeterEnabled(meter3));
+            Assert.False(IsMeterEnabled(meter4));
+        }
+    }
+
+    [Fact]
+    public void MeterProviderSdkAddMeterWithPredicateException()
+    {
+        using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.A", "1.0.0");
+        using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.B");
+
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter => meter.Version.StartsWith("1.0.0")) // throws!
+            .AddInMemoryExporter(new List<Metric>())
+            .Build())
+        {
+            Assert.True(IsMeterEnabled(meter1));
+            Assert.False(IsMeterEnabled(meter2));
+        }
+    }
+
+    [Fact]
+    public void MeterProviderSdkAddMeterWithMultiplePredicates()
+    {
+        using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.A", "1.0.0");
+        using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.A", "2.0.0");
+        using var meter3 = new Meter($"{Utils.GetCurrentMethodName()}.B");
+        using var meter4 = new Meter($"B.{Utils.GetCurrentMethodName()}");
+
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter => meter.Version == "2.0.0")
+            .AddMeter(meter => meter.Name.StartsWith("B."))
+            .AddInMemoryExporter(new List<Metric>())
+            .Build())
+        {
+            Assert.False(IsMeterEnabled(meter1));
+            Assert.True(IsMeterEnabled(meter2));
+            Assert.False(IsMeterEnabled(meter3));
+            Assert.True(IsMeterEnabled(meter4));
+        }
+    }
+
+    [Fact]
+    public void MeterProviderSdkAddMeterWithWildCardAndPredicate()
+    {
+        using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.A", "1.0.0");
+        using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.A", "2.0.0");
+        using var meter3 = new Meter($"{Utils.GetCurrentMethodName()}.B");
+        using var meter4 = new Meter($"B.{Utils.GetCurrentMethodName()}");
+
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter => meter.Version == "2.0.0")
+            .AddMeter("B.*")
+            .AddInMemoryExporter(new List<Metric>())
+            .Build())
+        {
+            Assert.False(IsMeterEnabled(meter1));
+            Assert.True(IsMeterEnabled(meter2));
+            Assert.False(IsMeterEnabled(meter3));
+            Assert.True(IsMeterEnabled(meter4));
+        }
+    }
+
+    [Fact]
+    public void MeterProviderSdkAddMeterWithConflictingWildCardAndPredicate()
+    {
+        using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.A", "1.0.0");
+        using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.B");
+        using var meter3 = new Meter($"B.{Utils.GetCurrentMethodName()}");
+
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter => !meter.Name.StartsWith("B.*"))
+            .AddMeter("B.*")
+            .AddInMemoryExporter(new List<Metric>())
+            .Build())
+        {
+            Assert.True(IsMeterEnabled(meter1));
+            Assert.True(IsMeterEnabled(meter2));
+            Assert.True(IsMeterEnabled(meter3));
+        }
+    }
+
+    private static bool IsMeterEnabled(Meter meter)
+    {
+        var counter = meter.CreateCounter<int>("test");
+        return counter.Enabled;
+    }
 }

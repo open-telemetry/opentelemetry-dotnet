@@ -450,7 +450,14 @@ internal sealed class TracerProviderSdk : TracerProvider
             bool shouldListen = false;
             for (int i = 0; i < predicates.Count && !shouldListen; i++)
             {
-                shouldListen |= predicates[i](activitySource);
+                try
+                {
+                    shouldListen |= predicates[i](activitySource);
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.ActivitySourcePredicateException(activitySource.Name, ex);
+                }
             }
 
             return shouldListen;

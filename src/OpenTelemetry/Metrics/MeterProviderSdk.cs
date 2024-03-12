@@ -143,19 +143,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
 
         // Setup Listener
-        if (state.MeterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
-        {
-            var regex = WildcardHelper.GetWildcardRegex(state.MeterSources);
-            this.shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
-        }
-        else if (state.MeterSources.Any())
-        {
-            var meterSourcesToSubscribe = new HashSet<string>(state.MeterSources, StringComparer.OrdinalIgnoreCase);
-            this.shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
-        }
-
-        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", state.MeterSources)}\".");
-
+        this.shouldListenTo = this.GetPredicate(state);
         this.listener = new MeterListener();
         var viewConfigCount = this.viewConfigs.Count;
 
@@ -185,6 +173,36 @@ internal sealed class MeterProviderSdk : MeterProvider
         this.listener.Start();
 
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("MeterProvider built successfully.");
+    }
+
+    private Func<Instrument, bool> GetPredicate(MeterProviderBuilderSdk state)
+    {
+        List<Predicate<Meter>> predicates = new List<Predicate<Meter>>();
+
+        if (state.MeterSources.Any())
+        {
+            predicates.Add(this.GetNamePredicate(state));
+        }
+
+        predicates.AddRange(state.MeterSelectionPredicates);
+
+        return (instrument) =>
+        {
+            bool shouldListen = false;
+            for (int i = 0; i < predicates.Count && !shouldListen; i++)
+            {
+                try
+                {
+                    shouldListen |= predicates[i](instrument.Meter);
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.MeterPredicateException(instrument.Meter.Name, ex);
+                }
+            }
+
+            return shouldListen;
+        };
     }
 
     internal Resource Resource { get; }
@@ -530,5 +548,19 @@ internal sealed class MeterProviderSdk : MeterProvider
                 $"Exemplar filter configuration value '{configValue}' has been ignored because exemplars are an experimental feature not available in stable builds.");
         }
 #endif
+    }
+
+    private Predicate<Meter> GetNamePredicate(MeterProviderBuilderSdk state)
+    {
+        Debug.Assert(state.MeterSources.Any(), "Should only be called when there are name-based source predicates.");
+
+        if (state.MeterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
+        {
+            var regex = WildcardHelper.GetWildcardRegex(state.MeterSources);
+            return meter => regex.IsMatch(meter.Name);
+        }
+
+        var meterSourcesToSubscribe = new HashSet<string>(state.MeterSources, StringComparer.OrdinalIgnoreCase);
+        return meter => meterSourcesToSubscribe.Contains(meter.Name);
     }
 }

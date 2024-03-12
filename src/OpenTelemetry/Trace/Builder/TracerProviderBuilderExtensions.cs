@@ -237,9 +237,16 @@ public static class TracerProviderBuilderExtensions
         return tracerProviderBuilder;
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
-    /// Adds predicate for <see cref="ActivitySource"/> that will be used to determine
+    /// Adds a predicate for <see cref="ActivitySource"/> that is used to determine
     /// if <see cref="TracerProvider"/> should subscribe to the source.
+    ///
+    /// <remarks>
+    /// When multiple predicates are added using this method or via <see cref="TracerProviderBuilder.AddSource(string[])"/>,
+    /// the <see cref="TracerProvider"/> will enable an ActivitySource if at least one of the predicates returns true for it, or
+    /// if the ActivitySource name matches one provided in the <see cref="TracerProviderBuilder.AddSource(string[])"/> overload.
+    /// </remarks>
     /// </summary>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="sourcePredicate">Activity Source predicate - if it returns true, OpenTelemetry subscribes to the corresponding source.</param>
@@ -257,6 +264,7 @@ public static class TracerProviderBuilderExtensions
 
         return tracerProviderBuilder;
     }
+#endif
 
     /// <summary>
     /// Run the given actions to initialize the <see cref="TracerProvider"/>.

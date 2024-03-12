@@ -80,6 +80,21 @@ public class TracerProviderSdkTest : IDisposable
     }
 
     [Fact]
+    public void TracerProviderSdkAddSourceWithPredicateException()
+    {
+        using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A", "1.0.0");
+        using var source2 = new ActivitySource($"{Utils.GetCurrentMethodName()}.B");
+
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(source => source.Version.StartsWith("1.0.0")) // throws!
+            .Build())
+        {
+            Assert.True(IsSourceEnabled(source1));
+            Assert.False(IsSourceEnabled(source2));
+        }
+    }
+
+    [Fact]
     public void TracerProviderSdkAddSourceWithMultiplePredicates()
     {
         using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A", "1.0.0");
