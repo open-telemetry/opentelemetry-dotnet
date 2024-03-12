@@ -86,6 +86,18 @@ public class CompositeProcessor<T> : BaseProcessor<T>
         }
     }
 
+    internal IReadOnlyList<BaseProcessor<T>> ToReadOnlyList()
+    {
+        var list = new List<BaseProcessor<T>>();
+
+        for (var cur = this.Head; cur != null; cur = cur.Next)
+        {
+            list.Add(cur.Value);
+        }
+
+        return list;
+    }
+
     /// <inheritdoc/>
     protected override bool OnForceFlush(int timeoutMilliseconds)
     {
