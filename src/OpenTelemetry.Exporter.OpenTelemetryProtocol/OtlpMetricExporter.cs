@@ -52,7 +52,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
             OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
         };
 
-        this.transmissionHandler = transmissionHandler ?? options.GetMetricsExportTransmissionHandler();
+        this.transmissionHandler = transmissionHandler ?? options.GetMetricsExportTransmissionHandler(experimentalOptions.EnableInMemoryRetry);
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();

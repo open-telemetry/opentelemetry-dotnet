@@ -88,7 +88,7 @@ internal static class OtlpExporterOptionsExtensions
         return headers;
     }
 
-    public static OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportTransmissionHandler(this OtlpExporterOptions options)
+    public static OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportTransmissionHandler(this OtlpExporterOptions options, bool enableRetry = false)
     {
         var exportClient = GetTraceExportClient(options);
 
@@ -99,10 +99,12 @@ internal static class OtlpExporterOptionsExtensions
             ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
-        return new OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(exportClient, timeoutMilliseconds);
+        return enableRetry
+            ? new OtlpExporterRetryTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(exportClient, timeoutMilliseconds)
+            : new OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(exportClient, timeoutMilliseconds);
     }
 
-    public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options)
+    public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options, bool enableRetry = false)
     {
         var exportClient = GetMetricsExportClient(options);
 
@@ -113,21 +115,21 @@ internal static class OtlpExporterOptionsExtensions
             ? httpMetricsExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
-        return new OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds);
+        return enableRetry
+            ? new OtlpExporterRetryTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds)
+            : new OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds);
     }
 
-    public static OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest> GetLogsExportTransmissionHandler(this OtlpExporterOptions options)
+    public static OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest> GetLogsExportTransmissionHandler(this OtlpExporterOptions options, bool enableRetry = false)
     {
         var exportClient = GetLogExportClient(options);
-
-        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
-        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
-        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
         double timeoutMilliseconds = exportClient is OtlpHttpLogExportClient httpLogExportClient
             ? httpLogExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
-        return new OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
+        return enableRetry
+            ? new OtlpExporterRetryTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds)
+            : new OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
     }
 
     public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
