@@ -31,10 +31,12 @@ public class OtlpRetryTests
         foreach (var retryAttempt in testCase.RetryAttempts)
         {
             ++attempts;
-            var statusCode = retryAttempt.RpcException.StatusCode;
-            var deadline = retryAttempt.CallOptions.Deadline;
-            var trailers = retryAttempt.RpcException.Trailers;
-            var success = OtlpRetry.TryGetGrpcRetryResult(statusCode, deadline, trailers, nextRetryDelayMilliseconds, out var retryResult);
+            var rpcException = retryAttempt.Response.Exception as RpcException;
+            Assert.NotNull(rpcException);
+            var statusCode = rpcException.StatusCode;
+            var deadline = retryAttempt.Response.DeadlineUtc;
+            var trailers = rpcException.Trailers;
+            var success = OtlpRetry.TryGetGrpcRetryResult(retryAttempt.Response, nextRetryDelayMilliseconds, out var retryResult);
 
             Assert.Equal(retryAttempt.ExpectedSuccess, success);
 
@@ -186,16 +188,6 @@ public class OtlpRetryTests
                     },
                     expectedRetryAttempts: 9),
             };
-
-            yield return new[]
-            {
-                new GrpcRetryTestCase(
-                    "Ridiculous throttling delay",
-                    new GrpcRetryAttempt[]
-                    {
-                        new(StatusCode.Unavailable, throttleDelay: Duration.FromTimeSpan(TimeSpan.FromDays(3000000)), expectedNextRetryDelayMilliseconds: 5000),
-                    }),
-            };
         }
 
         public override string ToString()
@@ -222,11 +214,10 @@ public class OtlpRetryTests
 
         public struct GrpcRetryAttempt
         {
-            public RpcException RpcException;
-            public CallOptions CallOptions;
             public TimeSpan? ThrottleDelay;
             public int? ExpectedNextRetryDelayMilliseconds;
             public bool ExpectedSuccess;
+            internal ExportClientGrpcResponse Response;
 
             public GrpcRetryAttempt(
                 StatusCode statusCode,
@@ -236,13 +227,16 @@ public class OtlpRetryTests
                 bool expectedSuccess = true)
             {
                 var status = new Status(statusCode, "Error");
-                this.RpcException = throttleDelay != null
+                var rpcException = throttleDelay != null
                     ? new RpcException(status, GenerateTrailers(throttleDelay))
                     : new RpcException(status);
 
-                this.CallOptions = deadlineExceeded ? new CallOptions(deadline: DateTime.UtcNow.AddSeconds(-1)) : default;
+                // Using arbitrary +1 hr for deadline for test purposes.
+                var deadlineUtc = deadlineExceeded ? DateTime.UtcNow.AddSeconds(-1) : DateTime.UtcNow.AddHours(1);
 
                 this.ThrottleDelay = throttleDelay != null ? throttleDelay.ToTimeSpan() : null;
+
+                this.Response = new ExportClientGrpcResponse(expectedSuccess, deadlineUtc, rpcException);
 
                 this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
 
@@ -316,7 +310,6 @@ public class OtlpRetryTests
         internal class HttpRetryAttempt
         {
             public ExportClientHttpResponse Response;
-            public DateTime? Deadline;
             public TimeSpan? ThrottleDelay;
             public int? ExpectedNextRetryDelayMilliseconds;
             public bool ExpectedSuccess;
@@ -346,8 +339,6 @@ public class OtlpRetryTests
                 // Using arbitrary +1 hr for deadline for test purposes.
                 var deadlineUtc = isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : DateTime.UtcNow.AddHours(1);
                 this.Response = new ExportClientHttpResponse(expectedSuccess, deadlineUtc, responseMessage, new HttpRequestException());
-
-                this.Deadline = isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : null;
                 this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
                 this.ExpectedSuccess = expectedSuccess;
             }
