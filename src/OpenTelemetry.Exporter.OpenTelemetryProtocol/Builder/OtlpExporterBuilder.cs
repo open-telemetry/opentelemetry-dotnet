@@ -120,16 +120,25 @@ internal sealed class OtlpExporterBuilder
                     "Endpoint": "http://default_endpoint/"
                 },
                 "LoggingOptions": {
-                    "Endpoint": "http://logs_endpoint/logs/"
+                    "Endpoint": "http://logs_endpoint/"
                     "ExportProcessorType": Batch,
                     "BatchExportProcessorOptions": {
-                        "ScheduledDelayMilliseconds": 1000
+                        "ScheduledDelayMilliseconds": 5000
                     }
                 },
                 "MetricsOptions": {
-                    "Endpoint": "http://metrics_endpoint/metrics/"
+                    "Endpoint": "http://metrics_endpoint/",
+                    "TemporalityPreference": "Delta",
+                    "PeriodicExportingMetricReaderOptions": {
+                        "ExportIntervalMilliseconds": 5000
+                    }
                 },
                 "TracingOptions": {
+                    "Endpoint": "http://trcing_endpoint/"
+                    "ExportProcessorType": Batch,
+                    "BatchExportProcessorOptions": {
+                        "ScheduledDelayMilliseconds": 5000
+                    }
                 }
             }
         */
