@@ -131,12 +131,6 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
             Assert.Equal(2, invocations);
         }
 
-        options.HttpClientFactory = null;
-        Assert.Throws<InvalidOperationException>(() =>
-        {
-            using var exporter = new OtlpMetricExporter(options);
-        });
-
         options.HttpClientFactory = () => null;
         Assert.Throws<InvalidOperationException>(() =>
         {

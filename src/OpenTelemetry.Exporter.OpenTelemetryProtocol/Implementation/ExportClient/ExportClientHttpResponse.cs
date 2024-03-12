@@ -15,7 +15,7 @@ internal sealed class ExportClientHttpResponse : ExportClientResponse
 {
     public ExportClientHttpResponse(
         bool success,
-        DateTime? deadlineUtc,
+        DateTime deadlineUtc,
         HttpResponseMessage? response,
         Exception? exception)
         : base(success, deadlineUtc, exception)

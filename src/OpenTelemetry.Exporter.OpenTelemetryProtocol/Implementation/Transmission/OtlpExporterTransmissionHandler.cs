@@ -11,14 +11,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmissi
 
 internal class OtlpExporterTransmissionHandler<TRequest>
 {
-    public OtlpExporterTransmissionHandler(IExportClient<TRequest> exportClient)
+    public OtlpExporterTransmissionHandler(IExportClient<TRequest> exportClient, double timeoutMilliseconds)
     {
         Guard.ThrowIfNull(exportClient);
 
         this.ExportClient = exportClient;
+        this.TimeoutMilliseconds = timeoutMilliseconds;
     }
 
-    protected IExportClient<TRequest> ExportClient { get; }
+    internal IExportClient<TRequest> ExportClient { get; }
+
+    internal double TimeoutMilliseconds { get; }
 
     /// <summary>
     /// Attempts to send an export request to the server.
@@ -31,7 +34,8 @@ internal class OtlpExporterTransmissionHandler<TRequest>
     {
         try
         {
-            var response = this.ExportClient.SendExportRequest(request);
+            var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
+            var response = this.ExportClient.SendExportRequest(request, deadlineUtc);
             if (response.Success)
             {
                 return true;
@@ -103,12 +107,13 @@ internal class OtlpExporterTransmissionHandler<TRequest>
     /// Fired when resending a request to the server.
     /// </summary>
     /// <param name="request">The request to be resent to the server.</param>
+    /// <param name="deadlineUtc">The deadline time in utc for export request to finish.</param>
     /// <param name="response"><see cref="ExportClientResponse" />.</param>
     /// <returns><see langword="true" /> If the retry succeeds; otherwise, <see
     /// langword="false" />.</returns>
-    protected bool TryRetryRequest(TRequest request, out ExportClientResponse response)
+    protected bool TryRetryRequest(TRequest request, DateTime deadlineUtc, out ExportClientResponse response)
     {
-        response = this.ExportClient.SendExportRequest(request);
+        response = this.ExportClient.SendExportRequest(request, deadlineUtc);
         if (!response.Success)
         {
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(response.Exception, isRetry: true);
