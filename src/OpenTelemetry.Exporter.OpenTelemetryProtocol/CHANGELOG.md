@@ -45,7 +45,8 @@
 
   * Calling `UseOtlpExporter` will automatically enable logging, tracing, and
     metrics. Additional calls to `WithLogging`, `WithMetrics`, and `WithTracing`
-    are NOT required.
+    are NOT required however for metrics and tracing sources/meters still need
+    to be enabled.
 
   * `UseOtlpExporter` can only be called once and cannot be used with the
     existing `AddOtlpExporter` extensions. Extra calls will result in
