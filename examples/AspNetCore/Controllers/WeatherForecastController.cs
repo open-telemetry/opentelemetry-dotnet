@@ -16,6 +16,9 @@
 
 namespace Examples.AspNetCore.Controllers;
 
+using System;
+using System.Diagnostics.Metrics;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -26,6 +29,9 @@ public class WeatherForecastController : ControllerBase
     {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
     };
+
+    private static readonly Meter MyMeter = new Meter("OtlpTest.OtlpTestMeter", "1.0");
+    private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("HistogramInCorrect");
 
     private static readonly HttpClient HttpClient = new();
 
@@ -39,13 +45,21 @@ public class WeatherForecastController : ControllerBase
     [HttpGet]
     public IEnumerable<WeatherForecast> Get()
     {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         using var scope = this.logger.BeginScope("{Id}", Guid.NewGuid().ToString("N"));
+
 
         // Making an http call here to serve as an example of
         // how dependency calls will be captured and treated
         // automatically as child of incoming request.
-        var res = HttpClient.GetStringAsync("http://google.com").Result;
+        var res = HttpClient.GetStringAsync("http://bing.com").Result;
         var rng = new Random();
+        var metricsValue = rng.Next(1, 1000);
+        this.logger.LogInformation(
+              $"Metrics value {metricsValue}");
+        MyHistogram.Record(metricsValue);
+
         var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
             Date = DateTime.Now.AddDays(index),
