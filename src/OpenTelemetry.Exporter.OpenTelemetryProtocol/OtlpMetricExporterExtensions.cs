@@ -201,6 +201,6 @@ public static class OtlpMetricExporterExtensions
 
         return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
             metricExporter,
-            metricReaderOptions);
+            metricReaderOptions!);
     }
 }

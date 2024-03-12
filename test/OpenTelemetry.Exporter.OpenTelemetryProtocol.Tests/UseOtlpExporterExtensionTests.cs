@@ -104,7 +104,7 @@ public class UseOtlpExporterExtensionTests
 
         using var sp = services.BuildServiceProvider();
 
-        VerifyOptionsApplied(sp, name);
+        VerifyOptionsApplied(sp, name!);
 
         static void Configure(OtlpExporterBuilder builder)
         {
@@ -178,7 +178,7 @@ public class UseOtlpExporterExtensionTests
 
         using var sp = services.BuildServiceProvider();
 
-        VerifyOptionsApplied(sp, name);
+        VerifyOptionsApplied(sp, name!);
     }
 
     [Fact]

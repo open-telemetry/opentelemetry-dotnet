@@ -144,14 +144,12 @@ public static class OtlpTraceExporterHelperExtensions
         }
         else
         {
-            var batchOptions = batchExportProcessorOptions;
-
             return new BatchActivityExportProcessor(
                 otlpExporter,
-                batchOptions.MaxQueueSize,
-                batchOptions.ScheduledDelayMilliseconds,
-                batchOptions.ExporterTimeoutMilliseconds,
-                batchOptions.MaxExportBatchSize);
+                batchExportProcessorOptions!.MaxQueueSize,
+                batchExportProcessorOptions.ScheduledDelayMilliseconds,
+                batchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                batchExportProcessorOptions.MaxExportBatchSize);
         }
     }
 }
