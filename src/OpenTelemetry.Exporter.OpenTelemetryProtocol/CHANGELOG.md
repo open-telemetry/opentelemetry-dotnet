@@ -57,8 +57,8 @@
   * The OTLP Exporters added for logging, tracing, and metrics can be configured
     using environment variables or `IConfiguration`.
 
-  For details see: [README > UseOtlpExporter
-  Extension](./README.md#useotlpexporter-extension).
+  For details see: [README > Enable OTLP Exporter for all
+  signals](./README.md#enable-otlp-exporter-for-all-signals).
 
   PR: [#5400](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5400)
 
