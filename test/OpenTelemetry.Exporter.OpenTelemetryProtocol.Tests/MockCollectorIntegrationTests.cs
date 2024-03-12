@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Metrics;
@@ -43,6 +44,7 @@ public sealed class MockCollectorIntegrationTests
                    services.AddSingleton(new MockCollectorState());
                    services.AddGrpc();
                })
+               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
                .Configure(app =>
                {
                    app.UseRouting();
@@ -142,6 +144,7 @@ public sealed class MockCollectorIntegrationTests
                    services.AddSingleton(new MockCollectorState());
                    services.AddGrpc();
                })
+               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
                .Configure(app =>
                {
                    app.UseRouting();
@@ -210,10 +213,10 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(true, ExportResult.Success, HttpStatusCode.BadGateway)]
     [InlineData(true, ExportResult.Success, HttpStatusCode.GatewayTimeout)]
     [InlineData(true, ExportResult.Failure, HttpStatusCode.BadRequest)]
+    [InlineData(true, ExportResult.Success, HttpStatusCode.TooManyRequests)]
     [InlineData(false, ExportResult.Failure, HttpStatusCode.ServiceUnavailable)]
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadGateway)]
     [InlineData(false, ExportResult.Failure, HttpStatusCode.GatewayTimeout)]
-    [InlineData(true, ExportResult.Success, HttpStatusCode.TooManyRequests)]
     [InlineData(false, ExportResult.Failure, HttpStatusCode.TooManyRequests)]
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
@@ -230,6 +233,7 @@ public sealed class MockCollectorIntegrationTests
                {
                    services.AddSingleton(new MockCollectorHttpState());
                })
+               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
                .Configure(app =>
                {
                    app.UseRouting();
