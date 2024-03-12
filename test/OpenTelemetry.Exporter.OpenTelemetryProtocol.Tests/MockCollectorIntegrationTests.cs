@@ -158,7 +158,7 @@ public sealed class MockCollectorIntegrationTests
                }))
            .StartAsync();
 
-        var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
 
         // First reply with failure and then Ok
         var codes = new[] { initialStatusCode, Grpc.Core.StatusCode.OK };
