@@ -91,7 +91,6 @@ internal static class OtlpRetry
         }
 
         retryResult = default;
-
         return false;
     }
 

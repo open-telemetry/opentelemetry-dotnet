@@ -24,12 +24,12 @@ internal sealed class OtlpExporterRetryTransmissionHandler<TRequest> : OtlpExpor
             // we would fail fast and drop the data.
             Thread.Sleep(retryResult.RetryDelay);
 
-            nextRetryDelayMilliseconds = retryResult.NextRetryDelayMilliseconds;
-
             if (this.TryRetryRequest(request, response.DeadlineUtc, out response))
             {
                 return true;
             }
+
+            nextRetryDelayMilliseconds = retryResult.NextRetryDelayMilliseconds;
         }
 
         return false;
