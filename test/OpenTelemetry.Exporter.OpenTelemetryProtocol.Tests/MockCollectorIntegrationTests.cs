@@ -28,12 +28,15 @@ public sealed class MockCollectorIntegrationTests
     [Fact]
     public async Task TestRecoveryAfterFailedExport()
     {
+        var testGrpcPort = Interlocked.Increment(ref gRPCPort);
+        var testHttpPort = Interlocked.Increment(ref httpPort);
+
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
                 .ConfigureKestrel(options =>
                 {
-                    options.ListenLocalhost(5050, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
-                    options.ListenLocalhost(4317, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                    options.ListenLocalhost(testHttpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    options.ListenLocalhost(testGrpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
                 })
                .ConfigureServices(services =>
                {
@@ -59,13 +62,13 @@ public sealed class MockCollectorIntegrationTests
                }))
            .StartAsync();
 
-        var httpClient = new HttpClient() { BaseAddress = new Uri("http://localhost:5050") };
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
 
         var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
         await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
 
         var exportResults = new List<ExportResult>();
-        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri("http://localhost:4317") });
+        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri($"http://localhost:{testGrpcPort}") });
         var delegatingExporter = new DelegatingExporter<Activity>
         {
             OnExportFunc = (batch) =>
@@ -191,9 +194,9 @@ public sealed class MockCollectorIntegrationTests
             .AddSource(activitySourceName)
             .Build();
 
-        var activity = source.StartActivity("GrpcRetryTest");
+        using var activity = source.StartActivity("GrpcRetryTest");
         activity.Stop();
-        var batch = new Batch<Activity>([activity], 1);
+        using var batch = new Batch<Activity>([activity], 1);
 
         var exportResult = otlpExporter.Export(batch);
 
@@ -252,7 +255,7 @@ public sealed class MockCollectorIntegrationTests
                }))
            .StartAsync();
 
-        var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
 
         var codes = new[] { initialHttpStatusCode, HttpStatusCode.OK };
         await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
@@ -284,9 +287,9 @@ public sealed class MockCollectorIntegrationTests
             .AddSource(activitySourceName)
             .Build();
 
-        var activity = source.StartActivity("HttpRetryTest");
+        using var activity = source.StartActivity("HttpRetryTest");
         activity.Stop();
-        var batch = new Batch<Activity>([activity], 1);
+        using var batch = new Batch<Activity>([activity], 1);
 
         var exportResult = otlpExporter.Export(batch);
 
