@@ -70,6 +70,11 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
         return UseOtlpExporterWithProtocolAndBaseEndpoint(builder, protocol, baseEndpoint);
     }
 
+    /// <summary><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)"/></summary>
+    /// <remarks><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/remarks"/></remarks>
+    /// <returns><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/returns"/></returns>
+    /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
+    /// <param name="configure">Callback action for configuring <see cref="OtlpExporterBuilder"/>.</param>
     internal static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         Action<OtlpExporterBuilder> configure)
@@ -79,6 +84,21 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
         return UseOtlpExporter(builder, name: null, configuration: null, configure);
     }
 
+    /// <summary><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)"/></summary>
+    /// <remarks><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/remarks"/></remarks>
+    /// <returns><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/returns"/></returns>
+    /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
+    /// <param name="configuration">
+    /// <para><see cref="IConfiguration"/> to bind onto <see cref="OtlpExporterBuilderOptions"/>.</para>
+    /// <para>Notes:
+    /// <list type="bullet">
+    /// <item docLink="true">See [TODO:Add doc link] for details on the configuration
+    /// schema.</item>
+    /// <item>The <see cref="OtlpExporterBuilderOptions"/> instance will be
+    /// named "otlp" by default when calling this method.</item>
+    /// </list>
+    /// </para>
+    /// </param>
     internal static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         IConfiguration configuration)
@@ -88,6 +108,26 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
         return UseOtlpExporter(builder, name: null, configuration, configure: null);
     }
 
+    /// <summary><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)"/></summary>
+    /// <remarks><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/remarks"/></remarks>
+    /// <returns><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/returns"/></returns>
+    /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="configuration">
+    /// <para>Optional <see cref="IConfiguration"/> to bind onto <see
+    /// cref="OtlpExporterBuilderOptions"/>.</para>
+    /// <para>Notes:
+    /// <list type="bullet">
+    /// <item><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder,
+    /// IConfiguration)"
+    /// path="/param[@name='configuration']/para/list/item[@docLink='true']"/></item>
+    /// <item>If <paramref name="name"/> is not set the <see
+    /// cref="OtlpExporterBuilderOptions"/> instance will be named "otlp" by
+    /// default when <paramref name="configuration"/> is used.</item>
+    /// </list>
+    /// </para>
+    /// </param>
+    /// <param name="configure">Optional callback action for configuring <see cref="OtlpExporterBuilder"/>.</param>
     internal static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         string? name,
