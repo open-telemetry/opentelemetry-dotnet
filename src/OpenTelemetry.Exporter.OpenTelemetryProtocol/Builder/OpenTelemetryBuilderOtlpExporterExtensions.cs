@@ -4,9 +4,10 @@
 #nullable enable
 
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter;
+namespace OpenTelemetry;
 
 /// <summary>
 /// Contains extension methods to facilitate registration of the OpenTelemetry

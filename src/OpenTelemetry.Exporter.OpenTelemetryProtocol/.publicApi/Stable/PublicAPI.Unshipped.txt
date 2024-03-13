@@ -1,4 +1,4 @@
-OpenTelemetry.Exporter.OpenTelemetryBuilderOtlpExporterExtensions
-static OpenTelemetry.Exporter.OpenTelemetryBuilderOtlpExporterExtensions.UseOtlpExporter(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
-static OpenTelemetry.Exporter.OpenTelemetryBuilderOtlpExporterExtensions.UseOtlpExporter(this OpenTelemetry.IOpenTelemetryBuilder! builder, OpenTelemetry.Exporter.OtlpExportProtocol protocol, System.Uri! baseEndpoint) -> OpenTelemetry.IOpenTelemetryBuilder!
-static OpenTelemetry.Exporter.OpenTelemetryBuilderOtlpExporterExtensions.UseOtlpExporter(this OpenTelemetry.IOpenTelemetryBuilder! builder, OpenTelemetry.Exporter.OtlpExportProtocol protocol) -> OpenTelemetry.IOpenTelemetryBuilder!
+OpenTelemetry.OpenTelemetryBuilderOtlpExporterExtensions
+static OpenTelemetry.OpenTelemetryBuilderOtlpExporterExtensions.UseOtlpExporter(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
+static OpenTelemetry.OpenTelemetryBuilderOtlpExporterExtensions.UseOtlpExporter(this OpenTelemetry.IOpenTelemetryBuilder! builder, OpenTelemetry.Exporter.OtlpExportProtocol protocol, System.Uri! baseEndpoint) -> OpenTelemetry.IOpenTelemetryBuilder!
+static OpenTelemetry.OpenTelemetryBuilderOtlpExporterExtensions.UseOtlpExporter(this OpenTelemetry.IOpenTelemetryBuilder! builder, OpenTelemetry.Exporter.OtlpExportProtocol protocol) -> OpenTelemetry.IOpenTelemetryBuilder!
