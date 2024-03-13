@@ -195,7 +195,7 @@ internal sealed class OtlpExporterBuilder
         services!.ConfigureOpenTelemetryLoggerProvider(
             (sp, logging) =>
             {
-                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
+                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name!);
 
                 var processor = OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
                     sp,
@@ -213,7 +213,7 @@ internal sealed class OtlpExporterBuilder
         services!.ConfigureOpenTelemetryMeterProvider(
             (sp, metrics) =>
             {
-                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
+                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name!);
 
                 metrics.AddReader(
                     OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
@@ -226,7 +226,7 @@ internal sealed class OtlpExporterBuilder
         services!.ConfigureOpenTelemetryTracerProvider(
             (sp, tracing) =>
             {
-                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
+                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name!);
 
                 var processorOptions = builderOptions.ActivityExportProcessorOptions ?? throw new InvalidOperationException("ActivityExportProcessorOptions were missing with tracing enabled");
 
