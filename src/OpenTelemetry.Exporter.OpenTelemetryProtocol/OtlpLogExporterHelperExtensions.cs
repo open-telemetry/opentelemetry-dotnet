@@ -224,7 +224,7 @@ public static class OtlpLogExporterHelperExtensions
                 services.Configure(finalOptionsName, configureExporter);
             }
 
-            RegisterOptions(services);
+            services.AddOtlpExporterSharedServices();
         });
 
         return builder.AddProcessor(sp =>
@@ -299,7 +299,7 @@ public static class OtlpLogExporterHelperExtensions
     {
         var finalOptionsName = name ?? Options.DefaultName;
 
-        builder.ConfigureServices(RegisterOptions);
+        builder.ConfigureServices(services => services.AddOtlpExporterSharedServices());
 
         return builder.AddProcessor(sp =>
         {
@@ -402,12 +402,6 @@ public static class OtlpLogExporterHelperExtensions
                 batchOptions.ExporterTimeoutMilliseconds,
                 batchOptions.MaxExportBatchSize);
         }
-    }
-
-    private static void RegisterOptions(IServiceCollection services)
-    {
-        OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-        services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
     }
 
     private static T GetOptions<T>(

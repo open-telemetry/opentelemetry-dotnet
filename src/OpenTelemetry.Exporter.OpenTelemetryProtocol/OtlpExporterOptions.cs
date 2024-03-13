@@ -11,7 +11,6 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -162,12 +161,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         || this.endpoint != null
         || this.timeoutMilliseconds.HasValue
         || this.httpClientFactory != null;
-
-    internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
-    {
-        services.RegisterOptionsFactory(CreateOtlpExporterOptions);
-        services.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
-    }
 
     internal static OtlpExporterOptions CreateOtlpExporterOptions(
         IServiceProvider serviceProvider,

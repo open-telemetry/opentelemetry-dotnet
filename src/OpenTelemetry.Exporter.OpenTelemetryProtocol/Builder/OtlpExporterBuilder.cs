@@ -171,13 +171,13 @@ internal sealed class OtlpExporterBuilder
         Debug.Assert(services != null, "services was null");
         Debug.Assert(name != null, "name was null");
 
+        services.AddOtlpExporterSharedServices();
+
         // Note: UseOtlpExporterRegistration is added to the service collection
         // to detect repeated calls to "UseOtlpExporter" and to throw if
         // "AddOtlpExporter" extensions are called
         services!.AddSingleton<UseOtlpExporterRegistration>();
 
-        services!.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
-        services!.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
         services!.RegisterOptionsFactory((sp, configuration, name) => new OtlpExporterBuilderOptions(
             configuration,
             sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue,

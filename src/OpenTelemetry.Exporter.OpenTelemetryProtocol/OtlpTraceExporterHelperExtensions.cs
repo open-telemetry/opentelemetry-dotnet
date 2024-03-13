@@ -59,8 +59,7 @@ public static class OtlpTraceExporterHelperExtensions
                 services.Configure(finalOptionsName, configure);
             }
 
-            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-            services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+            services.AddOtlpExporterSharedServices();
         });
 
         return builder.AddProcessor(sp =>
@@ -129,6 +128,7 @@ public static class OtlpTraceExporterHelperExtensions
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
+        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
         Debug.Assert(batchExportProcessorOptions != null, "batchExportProcessorOptions was null");
 
         if (!skipUseOtlpExporterRegistrationCheck)

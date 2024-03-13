@@ -60,7 +60,7 @@ public static class OtlpMetricExporterExtensions
                 services.Configure(finalOptionsName, configure);
             }
 
-            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
+            services.AddOtlpExporterSharedServices();
 
             services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
                 (readerOptions, config) =>
@@ -138,7 +138,7 @@ public static class OtlpMetricExporterExtensions
 
         builder.ConfigureServices(services =>
         {
-            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
+            services.AddOtlpExporterSharedServices();
 
             services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
                 (readerOptions, config) =>
@@ -191,6 +191,7 @@ public static class OtlpMetricExporterExtensions
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(metricReaderOptions != null, "metricReaderOptions was null");
+        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
         if (!skipUseOtlpExporterRegistrationCheck)
         {
