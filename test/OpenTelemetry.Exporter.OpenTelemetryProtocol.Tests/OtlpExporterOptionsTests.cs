@@ -262,41 +262,49 @@ public class OtlpExporterOptionsTests : IDisposable
     [Fact]
     public void OtlpExporterOptions_ApplyDefaultsTest()
     {
-        var defaultOptions = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default);
+        var defaultOptionsWithData = new OtlpExporterOptions
+        {
+            Endpoint = new Uri("http://default_endpoint/"),
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            Headers = "key1=value1",
+            TimeoutMilliseconds = 18,
+            HttpClientFactory = () => null!,
+        };
 
-        defaultOptions.Endpoint = new Uri("http://default_endpoint/");
-        defaultOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
-        defaultOptions.Headers = "key1=value1";
-        defaultOptions.TimeoutMilliseconds = 18;
-        defaultOptions.HttpClientFactory = () => null!;
+        Assert.True(defaultOptionsWithData.HasData);
 
-        var signalOptionsWithoutData = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Traces);
+        var targetOptionsWithoutData = new OtlpExporterOptions();
 
-        signalOptionsWithoutData.ApplyDefaults(defaultOptions);
+        Assert.False(targetOptionsWithoutData.HasData);
 
-        Assert.Equal(defaultOptions.Endpoint, signalOptionsWithoutData.Endpoint);
-        Assert.True(signalOptionsWithoutData.AppendSignalPathToEndpoint);
-        Assert.Equal(defaultOptions.Protocol, signalOptionsWithoutData.Protocol);
-        Assert.Equal(defaultOptions.Headers, signalOptionsWithoutData.Headers);
-        Assert.Equal(defaultOptions.TimeoutMilliseconds, signalOptionsWithoutData.TimeoutMilliseconds);
-        Assert.Equal(defaultOptions.HttpClientFactory, signalOptionsWithoutData.HttpClientFactory);
+        targetOptionsWithoutData.ApplyDefaults(defaultOptionsWithData);
 
-        var signalOptionsWithData = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Metrics);
+        Assert.Equal(defaultOptionsWithData.Endpoint, targetOptionsWithoutData.Endpoint);
+        Assert.True(targetOptionsWithoutData.AppendSignalPathToEndpoint);
+        Assert.Equal(defaultOptionsWithData.Protocol, targetOptionsWithoutData.Protocol);
+        Assert.Equal(defaultOptionsWithData.Headers, targetOptionsWithoutData.Headers);
+        Assert.Equal(defaultOptionsWithData.TimeoutMilliseconds, targetOptionsWithoutData.TimeoutMilliseconds);
+        Assert.Equal(defaultOptionsWithData.HttpClientFactory, targetOptionsWithoutData.HttpClientFactory);
 
-        signalOptionsWithData.Endpoint = new Uri("http://metrics_endpoint/");
-        signalOptionsWithData.Protocol = OtlpExportProtocol.Grpc;
-        signalOptionsWithData.Headers = "key2=value2";
-        signalOptionsWithData.TimeoutMilliseconds = 1800;
-        signalOptionsWithData.HttpClientFactory = () => throw new NotImplementedException();
+        var targetOptionsWithData = new OtlpExporterOptions
+        {
+            Endpoint = new Uri("http://metrics_endpoint/"),
+            Protocol = OtlpExportProtocol.Grpc,
+            Headers = "key2=value2",
+            TimeoutMilliseconds = 1800,
+            HttpClientFactory = () => throw new NotImplementedException(),
+        };
 
-        signalOptionsWithData.ApplyDefaults(defaultOptions);
+        Assert.True(targetOptionsWithData.HasData);
 
-        Assert.NotEqual(defaultOptions.Endpoint, signalOptionsWithData.Endpoint);
-        Assert.False(signalOptionsWithData.AppendSignalPathToEndpoint);
-        Assert.NotEqual(defaultOptions.Protocol, signalOptionsWithData.Protocol);
-        Assert.NotEqual(defaultOptions.Headers, signalOptionsWithData.Headers);
-        Assert.NotEqual(defaultOptions.TimeoutMilliseconds, signalOptionsWithData.TimeoutMilliseconds);
-        Assert.NotEqual(defaultOptions.HttpClientFactory, signalOptionsWithData.HttpClientFactory);
+        targetOptionsWithData.ApplyDefaults(defaultOptionsWithData);
+
+        Assert.NotEqual(defaultOptionsWithData.Endpoint, targetOptionsWithData.Endpoint);
+        Assert.False(targetOptionsWithData.AppendSignalPathToEndpoint);
+        Assert.NotEqual(defaultOptionsWithData.Protocol, targetOptionsWithData.Protocol);
+        Assert.NotEqual(defaultOptionsWithData.Headers, targetOptionsWithData.Headers);
+        Assert.NotEqual(defaultOptionsWithData.TimeoutMilliseconds, targetOptionsWithData.TimeoutMilliseconds);
+        Assert.NotEqual(defaultOptionsWithData.HttpClientFactory, targetOptionsWithData.HttpClientFactory);
     }
 
     private static void ClearEnvVars()
