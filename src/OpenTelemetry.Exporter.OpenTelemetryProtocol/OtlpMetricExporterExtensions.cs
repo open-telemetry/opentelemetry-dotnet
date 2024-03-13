@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -98,6 +99,7 @@ public static class OtlpMetricExporterExtensions
             return BuildOtlpExporterMetricReader(
                 exporterOptions,
                 sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName),
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
                 sp);
         });
     }
@@ -169,19 +171,24 @@ public static class OtlpMetricExporterExtensions
 
             configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
 
-            return BuildOtlpExporterMetricReader(exporterOptions, metricReaderOptions, sp);
+            return BuildOtlpExporterMetricReader(
+                exporterOptions,
+                metricReaderOptions,
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                sp);
         });
     }
 
     internal static MetricReader BuildOtlpExporterMetricReader(
         OtlpExporterOptions exporterOptions,
         MetricReaderOptions metricReaderOptions,
+        ExperimentalOptions experimentalOptions,
         IServiceProvider serviceProvider,
         Func<BaseExporter<Metric>, BaseExporter<Metric>>? configureExporterInstance = null)
     {
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
-        BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions);
+        BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions, experimentalOptions);
 
         if (configureExporterInstance != null)
         {

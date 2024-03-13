@@ -92,19 +92,24 @@ public static class OtlpTraceExporterHelperExtensions
             // instance.
             var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-            return BuildOtlpExporterProcessor(exporterOptions, sdkOptionsManager, sp);
+            return BuildOtlpExporterProcessor(
+                exporterOptions,
+                sdkOptionsManager,
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                sp);
         });
     }
 
     internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
+        ExperimentalOptions experimentalOptions,
         IServiceProvider serviceProvider,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
     {
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions);
+        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions);
 
         if (configureExporterInstance != null)
         {
