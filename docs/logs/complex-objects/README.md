@@ -49,7 +49,7 @@ that the following code is added which uses the `LogPropertiesAttribute` to log
 the `FoodRecallNotice` object:
 
 ```csharp
-public static partial class ApplicationLogs
+internal static partial class LoggerExtensions
 {
     [LoggerMessage(LogLevel.Critical)]
     public static partial void FoodRecallNotice(
@@ -89,6 +89,8 @@ LogRecord.Attributes (Key:Value):
     ProductType: Food & Beverages
     ProductDescription: Salads
     BrandName: Contoso
+LogRecord.EventId:                 252550133
+LogRecord.EventName:               FoodRecallNotice
 ```
 
 > [!NOTE]

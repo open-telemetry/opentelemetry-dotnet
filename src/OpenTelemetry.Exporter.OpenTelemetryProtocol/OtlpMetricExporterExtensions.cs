@@ -16,8 +16,6 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public static class OtlpMetricExporterExtensions
 {
-    internal const string OtlpMetricExporterTemporalityPreferenceEnvVarKey = "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE";
-
     /// <summary>
     /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/> using default options.
     /// </summary>
@@ -65,7 +63,7 @@ public static class OtlpMetricExporterExtensions
             services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
                 (readerOptions, config) =>
                 {
-                    var otlpTemporalityPreference = config[OtlpMetricExporterTemporalityPreferenceEnvVarKey];
+                    var otlpTemporalityPreference = config[OtlpSpecConfigDefinitions.MetricsTemporalityPreferenceEnvVarName];
                     if (!string.IsNullOrWhiteSpace(otlpTemporalityPreference)
                         && Enum.TryParse<MetricReaderTemporalityPreference>(otlpTemporalityPreference, ignoreCase: true, out var enumValue))
                     {
@@ -142,7 +140,7 @@ public static class OtlpMetricExporterExtensions
             services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
                 (readerOptions, config) =>
                 {
-                    var otlpTemporalityPreference = config[OtlpMetricExporterTemporalityPreferenceEnvVarKey];
+                    var otlpTemporalityPreference = config[OtlpSpecConfigDefinitions.MetricsTemporalityPreferenceEnvVarName];
                     if (!string.IsNullOrWhiteSpace(otlpTemporalityPreference)
                         && Enum.TryParse<MetricReaderTemporalityPreference>(otlpTemporalityPreference, ignoreCase: true, out var enumValue))
                     {

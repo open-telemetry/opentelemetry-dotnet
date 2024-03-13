@@ -109,8 +109,12 @@ public class MetricStreamConfiguration
     /// <para>Spec reference: <see
     /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#cardinality-limits">Cardinality
     /// limits</see>.</para>
-    /// Note: If not set the default MeterProvider cardinality limit of 2000
-    /// will apply.
+    /// Note: The cardinality limit determines the maximum number of unique
+    /// dimension combinations for metrics.
+    /// Metrics with zero dimensions and overflow metrics are treated specially
+    /// and do not count against this limit.
+    /// If not set the default
+    /// MeterProvider cardinality limit of 2000 will apply.
     /// </remarks>
 #if NET8_0_OR_GREATER
     [Experimental(DiagnosticDefinitions.CardinalityLimitExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
@@ -132,6 +136,10 @@ public class MetricStreamConfiguration
             this.cardinalityLimit = value;
         }
     }
+
+    // TODO: Expose this to be complaint with the spec:
+    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#stream-configuration
+    internal Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
 
     internal string[]? CopiedTagKeys { get; private set; }
 

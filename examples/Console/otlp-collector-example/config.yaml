@@ -12,7 +12,7 @@ receivers:
 
 exporters:
   logging:
-    loglevel: debug
+    verbosity: detailed
 
 service:
   pipelines:

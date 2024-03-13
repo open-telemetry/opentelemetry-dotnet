@@ -12,6 +12,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 /// <typeparam name="TRequest">Type of export request.</typeparam>
 internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
 {
+    private static readonly ExportClientHttpResponse SuccessExportResponse = new ExportClientHttpResponse(success: true, deadlineUtc: default, response: null, exception: null);
+
     protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
         Guard.ThrowIfNull(options);
@@ -19,7 +21,7 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
         Guard.ThrowIfNull(signalPath);
         Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
 
-        Uri exporterEndpoint = !options.ProgrammaticallyModifiedEndpoint
+        Uri exporterEndpoint = options.AppendSignalPathToEndpoint
             ? options.Endpoint.AppendPathIfNotPresent(signalPath)
             : options.Endpoint;
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
@@ -34,7 +36,7 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
     internal IReadOnlyDictionary<string, string> Headers { get; }
 
     /// <inheritdoc/>
-    public bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default)
+    public ExportClientResponse SendExportRequest(TRequest request, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -42,16 +44,24 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
 
             using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
-            httpResponse?.EnsureSuccessStatusCode();
+            try
+            {
+                httpResponse.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException ex)
+            {
+                return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: httpResponse, ex);
+            }
+
+            // We do not need to return back response and deadline for successful response so using cached value.
+            return SuccessExportResponse;
         }
         catch (HttpRequestException ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return false;
+            return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: null, exception: ex);
         }
-
-        return true;
     }
 
     /// <inheritdoc/>

@@ -5,6 +5,12 @@ OpenTelemetry.OpenTelemetrySdk.MeterProvider.get -> OpenTelemetry.Metrics.MeterP
 OpenTelemetry.OpenTelemetrySdk.Services.get -> System.IServiceProvider!
 OpenTelemetry.OpenTelemetrySdk.TracerProvider.get -> OpenTelemetry.Trace.TracerProvider!
 OpenTelemetry.OpenTelemetrySdkExtensions
+OpenTelemetry.Trace.ActivityExportProcessorOptions
+OpenTelemetry.Trace.ActivityExportProcessorOptions.ActivityExportProcessorOptions() -> void
+OpenTelemetry.Trace.ActivityExportProcessorOptions.BatchExportProcessorOptions.get -> OpenTelemetry.Trace.BatchExportActivityProcessorOptions!
+OpenTelemetry.Trace.ActivityExportProcessorOptions.BatchExportProcessorOptions.set -> void
+OpenTelemetry.Trace.ActivityExportProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.Trace.ActivityExportProcessorOptions.ExportProcessorType.set -> void
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.ConfigureResource(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithMetrics(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithMetrics(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.IOpenTelemetryBuilder!

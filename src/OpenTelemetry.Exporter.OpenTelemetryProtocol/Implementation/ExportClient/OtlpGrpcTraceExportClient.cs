@@ -26,21 +26,20 @@ internal sealed class OtlpGrpcTraceExportClient : BaseOtlpGrpcExportClient<OtlpC
     }
 
     /// <inheritdoc/>
-    public override bool SendExportRequest(OtlpCollector.ExportTraceServiceRequest request, CancellationToken cancellationToken = default)
+    public override ExportClientResponse SendExportRequest(OtlpCollector.ExportTraceServiceRequest request, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
-        var deadline = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
-
         try
         {
-            this.traceClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
+            this.traceClient.Export(request, headers: this.Headers, deadline: deadlineUtc, cancellationToken: cancellationToken);
+
+            // We do not need to return back response and deadline for successful response so using cached value.
+            return SuccessExportResponse;
         }
         catch (RpcException ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return false;
+            return new ExportClientGrpcResponse(success: false, deadlineUtc: deadlineUtc, exception: ex);
         }
-
-        return true;
     }
 }

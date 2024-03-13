@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Runtime.CompilerServices;
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -18,24 +20,47 @@ internal sealed class MetricPointOptionalComponents
 
     public ExemplarReservoir? ExemplarReservoir;
 
-    public Exemplar[]? Exemplars;
+    public ReadOnlyExemplarCollection Exemplars = ReadOnlyExemplarCollection.Empty;
 
-    public int IsCriticalSectionOccupied = 0;
+    private int isCriticalSectionOccupied = 0;
 
-    internal MetricPointOptionalComponents Copy()
+    public MetricPointOptionalComponents Copy()
     {
         MetricPointOptionalComponents copy = new MetricPointOptionalComponents
         {
             HistogramBuckets = this.HistogramBuckets?.Copy(),
             Base2ExponentialBucketHistogram = this.Base2ExponentialBucketHistogram?.Copy(),
+            Exemplars = this.Exemplars.Copy(),
         };
 
-        if (this.Exemplars != null)
-        {
-            copy.Exemplars = new Exemplar[this.Exemplars.Length];
-            Array.Copy(this.Exemplars, copy.Exemplars, this.Exemplars.Length);
-        }
-
         return copy;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void AcquireLock()
+    {
+        if (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0)
+        {
+            this.AcquireLockRare();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ReleaseLock()
+    {
+        Interlocked.Exchange(ref this.isCriticalSectionOccupied, 0);
+    }
+
+    // Note: This method is marked as NoInlining because the whole point of it
+    // is to avoid the initialization of SpinWait unless it is needed.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void AcquireLockRare()
+    {
+        var sw = default(SpinWait);
+        do
+        {
+            sw.SpinOnce();
+        }
+        while (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0);
     }
 }
