@@ -39,27 +39,6 @@ public class UseOtlpExporterExtensionTests
     }
 
     [Fact]
-    public void UseOtlpExporterSetProtocolTest()
-    {
-        var services = new ServiceCollection();
-
-        services.AddOpenTelemetry()
-            .UseOtlpExporter(OtlpExportProtocol.HttpProtobuf);
-
-        using var sp = services.BuildServiceProvider();
-
-        var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().CurrentValue;
-
-        Assert.Equal(OtlpExportProtocol.HttpProtobuf, exporterOptions.DefaultOptions.Protocol);
-        Assert.Equal(new(OtlpExporterOptions.DefaultHttpEndpoint), exporterOptions.DefaultOptions.Endpoint);
-        Assert.True(((OtlpExporterOptions)exporterOptions.DefaultOptions).HasData);
-
-        Assert.False(((OtlpExporterOptions)exporterOptions.LoggingOptions).HasData);
-        Assert.False(((OtlpExporterOptions)exporterOptions.MetricsOptions).HasData);
-        Assert.False(((OtlpExporterOptions)exporterOptions.TracingOptions).HasData);
-    }
-
-    [Fact]
     public void UseOtlpExporterSetEndpointAndProtocolTest()
     {
         var services = new ServiceCollection();

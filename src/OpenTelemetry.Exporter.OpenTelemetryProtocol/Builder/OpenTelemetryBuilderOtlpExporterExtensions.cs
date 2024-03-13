@@ -45,16 +45,6 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     /// <returns><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/returns"/></returns>
     /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
     /// <param name="protocol"><see cref="OtlpExportProtocol"/>.</param>
-    public static IOpenTelemetryBuilder UseOtlpExporter(
-        this IOpenTelemetryBuilder builder,
-        OtlpExportProtocol protocol)
-        => UseOtlpExporterWithProtocolAndBaseEndpoint(builder, protocol, baseEndpoint: null);
-
-    /// <summary><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)"/></summary>
-    /// <remarks><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/remarks"/></remarks>
-    /// <returns><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/returns"/></returns>
-    /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
-    /// <param name="protocol"><see cref="OtlpExportProtocol"/>.</param>
     /// <param name="baseEndpoint">
     /// <para>Base endpoint to use.</para>
     /// Note: A signal-specific path will be appended to the base endpoint for
@@ -68,7 +58,14 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     {
         Guard.ThrowIfNull(baseEndpoint);
 
-        return UseOtlpExporterWithProtocolAndBaseEndpoint(builder, protocol, baseEndpoint);
+        return UseOtlpExporter(builder, name: null, configuration: null, configure: otlpBuilder =>
+        {
+            otlpBuilder.ConfigureDefaultExporterOptions(o =>
+            {
+                o.Protocol = protocol;
+                o.Endpoint = baseEndpoint;
+            });
+        });
     }
 
     /// <summary><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)"/></summary>
@@ -148,23 +145,5 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
         configure?.Invoke(otlpBuilder);
 
         return builder;
-    }
-
-    private static IOpenTelemetryBuilder UseOtlpExporterWithProtocolAndBaseEndpoint(
-        this IOpenTelemetryBuilder builder,
-        OtlpExportProtocol protocol,
-        Uri? baseEndpoint)
-    {
-        return UseOtlpExporter(builder, name: null, configuration: null, configure: otlpBuilder =>
-        {
-            otlpBuilder.ConfigureDefaultExporterOptions(o =>
-            {
-                o.Protocol = protocol;
-                if (baseEndpoint != null)
-                {
-                    o.Endpoint = baseEndpoint;
-                }
-            });
-        });
     }
 }
