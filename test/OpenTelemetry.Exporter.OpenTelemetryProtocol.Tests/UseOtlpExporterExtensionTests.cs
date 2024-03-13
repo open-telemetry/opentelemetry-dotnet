@@ -39,19 +39,19 @@ public class UseOtlpExporterExtensionTests
     }
 
     [Fact]
-    public void UseOtlpExporterSetEndpointTest()
+    public void UseOtlpExporterSetProtocolTest()
     {
         var services = new ServiceCollection();
 
         services.AddOpenTelemetry()
-            .UseOtlpExporter(new Uri("http://test_base_endpoint/"));
+            .UseOtlpExporter(OtlpExportProtocol.HttpProtobuf);
 
         using var sp = services.BuildServiceProvider();
 
         var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().CurrentValue;
 
-        Assert.Equal(new Uri("http://test_base_endpoint/"), exporterOptions.DefaultOptions.Endpoint);
-        Assert.Equal(OtlpExporterOptions.DefaultOtlpExportProtocol, exporterOptions.DefaultOptions.Protocol);
+        Assert.Equal(OtlpExportProtocol.HttpProtobuf, exporterOptions.DefaultOptions.Protocol);
+        Assert.Equal(new(OtlpExporterOptions.DefaultHttpEndpoint), exporterOptions.DefaultOptions.Endpoint);
         Assert.True(((OtlpExporterOptions)exporterOptions.DefaultOptions).HasData);
 
         Assert.False(((OtlpExporterOptions)exporterOptions.LoggingOptions).HasData);
@@ -73,13 +73,16 @@ public class UseOtlpExporterExtensionTests
 
         var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().CurrentValue;
 
-        Assert.Equal(new Uri("http://test_base_endpoint/"), exporterOptions.DefaultOptions.Endpoint);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, exporterOptions.DefaultOptions.Protocol);
+        Assert.Equal(new Uri("http://test_base_endpoint/"), exporterOptions.DefaultOptions.Endpoint);
         Assert.True(((OtlpExporterOptions)exporterOptions.DefaultOptions).HasData);
 
         Assert.False(((OtlpExporterOptions)exporterOptions.LoggingOptions).HasData);
         Assert.False(((OtlpExporterOptions)exporterOptions.MetricsOptions).HasData);
         Assert.False(((OtlpExporterOptions)exporterOptions.TracingOptions).HasData);
+
+        Assert.Throws<ArgumentNullException>(
+            () => services.AddOpenTelemetry().UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, baseEndpoint: null!));
     }
 
     [Theory]
@@ -92,19 +95,17 @@ public class UseOtlpExporterExtensionTests
         if (!string.IsNullOrEmpty(name))
         {
             services.AddOpenTelemetry()
-                .UseOtlpExporter(name: name, configure: Configure);
+                .UseOtlpExporter(name, configuration: null, configure: Configure);
         }
         else
         {
             services.AddOpenTelemetry()
                 .UseOtlpExporter(Configure);
-
-            name = "otlp";
         }
 
         using var sp = services.BuildServiceProvider();
 
-        VerifyOptionsApplied(sp, name!);
+        VerifyOptionsApplied(sp, name);
 
         static void Configure(OtlpExporterBuilder builder)
         {
@@ -166,7 +167,7 @@ public class UseOtlpExporterExtensionTests
         if (!string.IsNullOrEmpty(name))
         {
             services.AddOpenTelemetry()
-                .UseOtlpExporter(name: name, configuration: config);
+                .UseOtlpExporter(name: name, configuration: config, configure: null);
         }
         else
         {
@@ -178,7 +179,7 @@ public class UseOtlpExporterExtensionTests
 
         using var sp = services.BuildServiceProvider();
 
-        VerifyOptionsApplied(sp, name!);
+        VerifyOptionsApplied(sp, name);
     }
 
     [Fact]
@@ -304,7 +305,7 @@ public class UseOtlpExporterExtensionTests
         Assert.True(processors[1] is BatchLogRecordExportProcessor);
     }
 
-    private static void VerifyOptionsApplied(ServiceProvider serviceProvider, string name)
+    private static void VerifyOptionsApplied(ServiceProvider serviceProvider, string? name)
     {
         var exporterOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().Get(name);
 
