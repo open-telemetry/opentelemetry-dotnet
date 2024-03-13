@@ -25,7 +25,7 @@ internal sealed class OtlpExporterBuilderOptions
     internal readonly OtlpExporterOptions MetricsOptionsInstance;
     internal readonly OtlpExporterOptions TracingOptionsInstance;
 
-    public OtlpExporterBuilderOptions(
+    internal OtlpExporterBuilderOptions(
         IConfiguration configuration,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
