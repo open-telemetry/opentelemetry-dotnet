@@ -63,6 +63,7 @@ public class OtlpHttpExporterBenchmarks
         this.exporter = new OtlpTraceExporter(
             options,
             new SdkLimitOptions(),
+            new ExperimentalOptions(),
             new OtlpExporterTransmissionHandler<ExportTraceServiceRequest>(new OtlpHttpTraceExportClient(options, options.HttpClientFactory()), options.TimeoutMilliseconds));
 
         this.activity = ActivityHelper.CreateTestActivity();

@@ -8,11 +8,11 @@ using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Proto.Collector.Trace.V1;
 using OpenTelemetry.Tests;
@@ -172,23 +172,13 @@ public sealed class MockCollectorIntegrationTests
 
         var endpoint = new Uri($"http://localhost:{testGrpcPort}");
 
-        var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
+        var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000, Protocol = OtlpExportProtocol.Grpc };
 
-        var exportClient = new OtlpGrpcTraceExportClient(exporterOptions);
+        var configuration = new ConfigurationBuilder()
+         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EnableInMemoryRetryEnvVar] = useRetryTransmissionHandler.ToString() })
+         .Build();
 
-        OtlpExporterTransmissionHandler<ExportTraceServiceRequest> transmissionHandler;
-
-        // TODO: update this to configure via experimental environment variable.
-        if (useRetryTransmissionHandler)
-        {
-            transmissionHandler = new OtlpExporterRetryTransmissionHandler<ExportTraceServiceRequest>(exportClient, exporterOptions.TimeoutMilliseconds);
-        }
-        else
-        {
-            transmissionHandler = new OtlpExporterTransmissionHandler<ExportTraceServiceRequest>(exportClient, exporterOptions.TimeoutMilliseconds);
-        }
-
-        var otlpExporter = new OtlpTraceExporter(exporterOptions, new(), transmissionHandler);
+        var otlpExporter = new OtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
 
         var activitySourceName = "otel.grpc.retry.test";
         using var source = new ActivitySource(activitySourceName);
@@ -266,23 +256,13 @@ public sealed class MockCollectorIntegrationTests
 
         var endpoint = new Uri($"http://localhost:{testHttpPort}/v1/traces");
 
-        var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
+        var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000, Protocol = OtlpExportProtocol.HttpProtobuf };
 
-        var exportClient = new OtlpHttpTraceExportClient(exporterOptions, new HttpClient());
+        var configuration = new ConfigurationBuilder()
+         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EnableInMemoryRetryEnvVar] = useRetryTransmissionHandler.ToString() })
+         .Build();
 
-        OtlpExporterTransmissionHandler<ExportTraceServiceRequest> transmissionHandler;
-
-        // TODO: update this to configure via experimental environment variable.
-        if (useRetryTransmissionHandler)
-        {
-            transmissionHandler = new OtlpExporterRetryTransmissionHandler<ExportTraceServiceRequest>(exportClient, exporterOptions.TimeoutMilliseconds);
-        }
-        else
-        {
-            transmissionHandler = new OtlpExporterTransmissionHandler<ExportTraceServiceRequest>(exportClient, exporterOptions.TimeoutMilliseconds);
-        }
-
-        var otlpExporter = new OtlpTraceExporter(exporterOptions, new(), transmissionHandler);
+        var otlpExporter = new OtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
 
         var activitySourceName = "otel.http.retry.test";
         using var source = new ActivitySource(activitySourceName);

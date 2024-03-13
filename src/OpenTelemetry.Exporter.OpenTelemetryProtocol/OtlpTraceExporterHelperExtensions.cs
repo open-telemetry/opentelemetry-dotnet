@@ -90,9 +90,13 @@ public static class OtlpTraceExporterHelperExtensions
             // There should only be one provider for a given service
             // collection so SdkLimitOptions is treated as a single default
             // instance.
-            var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+            var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-            return BuildOtlpExporterProcessor(sp, exporterOptions, sdkOptionsManager);
+            return BuildOtlpExporterProcessor(
+                sp,
+                exporterOptions,
+                sdkLimitOptions,
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
         });
     }
 
@@ -100,11 +104,13 @@ public static class OtlpTraceExporterHelperExtensions
         IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
+        ExperimentalOptions experimentalOptions,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
         => BuildOtlpExporterProcessor(
             serviceProvider,
             exporterOptions,
             sdkLimitOptions,
+            experimentalOptions,
             exporterOptions.ExportProcessorType,
             exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions(),
             skipUseOtlpExporterRegistrationCheck: false,
@@ -114,6 +120,7 @@ public static class OtlpTraceExporterHelperExtensions
         IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
+        ExperimentalOptions experimentalOptions,
         ExportProcessorType exportProcessorType,
         BatchExportProcessorOptions<Activity> batchExportProcessorOptions,
         bool skipUseOtlpExporterRegistrationCheck = false,
@@ -131,7 +138,7 @@ public static class OtlpTraceExporterHelperExtensions
 
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions);
+        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions);
 
         if (configureExporterInstance != null)
         {

@@ -408,7 +408,6 @@ public static class OtlpLogExporterHelperExtensions
     {
         OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
         services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
-        services.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
     }
 
     private static T GetOptions<T>(

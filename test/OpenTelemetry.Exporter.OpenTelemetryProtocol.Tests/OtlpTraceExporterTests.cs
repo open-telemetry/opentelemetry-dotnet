@@ -23,6 +23,8 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
 
+    private static readonly ExperimentalOptions DefaultExperimentalOptions = new();
+
     static OtlpTraceExporterTests()
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
@@ -627,8 +629,7 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
         var exporterOptions = new OtlpExporterOptions();
         var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>(exportClientMock, exporterOptions.TimeoutMilliseconds);
 
-        var exporter = new OtlpTraceExporter(exporterOptions, DefaultSdkLimitOptions, transmissionHandler);
-
+        var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
         exporter.Shutdown();
 
         Assert.True(exportClientMock.ShutdownCalled);

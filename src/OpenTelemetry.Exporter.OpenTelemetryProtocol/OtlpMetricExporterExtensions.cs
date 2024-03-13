@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -99,7 +100,8 @@ public static class OtlpMetricExporterExtensions
             return BuildOtlpExporterMetricReader(
                 sp,
                 exporterOptions,
-                sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName));
+                sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName),
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
         });
     }
 
@@ -170,7 +172,11 @@ public static class OtlpMetricExporterExtensions
 
             configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
 
-            return BuildOtlpExporterMetricReader(sp, exporterOptions, metricReaderOptions);
+            return BuildOtlpExporterMetricReader(
+                sp,
+                exporterOptions,
+                metricReaderOptions,
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
         });
     }
 
@@ -178,6 +184,7 @@ public static class OtlpMetricExporterExtensions
         IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
         MetricReaderOptions metricReaderOptions,
+        ExperimentalOptions experimentalOptions,
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<Metric>, BaseExporter<Metric>>? configureExporterInstance = null)
     {
@@ -192,7 +199,7 @@ public static class OtlpMetricExporterExtensions
 
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
-        BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions);
+        BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions, experimentalOptions);
 
         if (configureExporterInstance != null)
         {

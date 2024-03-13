@@ -74,6 +74,7 @@ public sealed class IntegrationTests : IDisposable
             serviceProvider: sp,
             exporterOptions: exporterOptions,
             sdkLimitOptions: DefaultSdkLimitOptions,
+            experimentalOptions: DefaultExperimentalOptions,
             configureExporterInstance: otlpExporter =>
             {
                 delegatingExporter = new DelegatingExporter<Activity>
@@ -155,6 +156,7 @@ public sealed class IntegrationTests : IDisposable
             serviceProvider: sp,
             exporterOptions: exporterOptions,
             metricReaderOptions: readerOptions,
+            experimentalOptions: DefaultExperimentalOptions,
             configureExporterInstance: otlpExporter =>
             {
                 delegatingExporter = new DelegatingExporter<Metric>

@@ -4,6 +4,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using Xunit;
@@ -185,19 +186,19 @@ public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
 
         if (exportClientType == typeof(OtlpGrpcTraceExportClient) || exportClientType == typeof(OtlpHttpTraceExportClient))
         {
-            var transmissionHandler = exporterOptions.GetTraceExportTransmissionHandler();
+            var transmissionHandler = exporterOptions.GetTraceExportTransmissionHandler(new ExperimentalOptions());
 
             AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
         }
         else if (exportClientType == typeof(OtlpGrpcMetricsExportClient) || exportClientType == typeof(OtlpHttpMetricsExportClient))
         {
-            var transmissionHandler = exporterOptions.GetMetricsExportTransmissionHandler();
+            var transmissionHandler = exporterOptions.GetMetricsExportTransmissionHandler(new ExperimentalOptions());
 
             AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
         }
         else
         {
-            var transmissionHandler = exporterOptions.GetLogsExportTransmissionHandler();
+            var transmissionHandler = exporterOptions.GetLogsExportTransmissionHandler(new ExperimentalOptions());
 
             AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
         }

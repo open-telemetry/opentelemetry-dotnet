@@ -39,6 +39,12 @@
   to `null` will now result in an `ArgumentNullException` being thrown.
   ([#5434](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5434))
 
+* Introduced experimental support for automatically retrying export to the otlp
+  endpoint when transient network errors occur. Users can enable this feature by
+  setting `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY` environment
+  variable to true.
+  ([#5435](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5435))
+
 * Added `IOpenTelemetryBuilder.UseOtlpExporter` extension to simplify setup of
   the OTLP Exporter when all three signals are used (logs, metrics, and traces).
   The new extension has the following behaviors:

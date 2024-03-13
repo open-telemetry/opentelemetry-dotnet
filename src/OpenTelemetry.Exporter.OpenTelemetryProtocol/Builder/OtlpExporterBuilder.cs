@@ -181,7 +181,7 @@ internal sealed class OtlpExporterBuilder
         services!.RegisterOptionsFactory((sp, configuration, name) => new OtlpExporterBuilderOptions(
             configuration,
             sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue,
-            sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().CurrentValue,
+            sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(name),
             /* Note: We allow LogRecordExportProcessorOptions,
             MetricReaderOptions, & ActivityExportProcessorOptions to be null
             because those only exist if the corresponding signal is turned on.
@@ -220,6 +220,7 @@ internal sealed class OtlpExporterBuilder
                         sp,
                         builderOptions.MetricsOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
                         builderOptions.MetricReaderOptions ?? throw new InvalidOperationException("MetricReaderOptions were missing with metrics enabled"),
+                        builderOptions.ExperimentalOptions,
                         skipUseOtlpExporterRegistrationCheck: true));
             });
 
@@ -234,6 +235,7 @@ internal sealed class OtlpExporterBuilder
                     sp,
                     builderOptions.TracingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
                     builderOptions.SdkLimitOptions,
+                    builderOptions.ExperimentalOptions,
                     processorOptions.ExportProcessorType,
                     processorOptions.BatchExportProcessorOptions,
                     skipUseOtlpExporterRegistrationCheck: true);
