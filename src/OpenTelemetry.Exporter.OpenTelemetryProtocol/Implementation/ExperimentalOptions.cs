@@ -43,6 +43,7 @@ internal sealed class ExperimentalOptions
 
     /// <summary>
     /// Gets a value indicating whether retries should be enabled in case of transient errors.
+    /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#retry
     /// </summary>
     public bool EnableInMemoryRetry { get; }
 }
