@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Exporter;
 
-namespace System;
+namespace OpenTelemetry.Exporter;
 
 internal static class OpenTelemetryBuilderServiceProviderExtensions
 {
