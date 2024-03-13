@@ -59,7 +59,7 @@ public static class OtlpTraceExporterHelperExtensions
                 services.Configure(finalOptionsName, configure);
             }
 
-            services.AddOtlpExporterSharedServices();
+            services.AddOtlpExporterTracingServices();
         });
 
         return builder.AddProcessor(sp =>

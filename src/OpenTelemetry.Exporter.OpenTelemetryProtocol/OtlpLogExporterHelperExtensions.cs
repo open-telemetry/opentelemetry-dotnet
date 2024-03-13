@@ -224,7 +224,7 @@ public static class OtlpLogExporterHelperExtensions
                 services.Configure(finalOptionsName, configureExporter);
             }
 
-            services.AddOtlpExporterSharedServices();
+            services.AddOtlpExporterLoggingServices();
         });
 
         return builder.AddProcessor(sp =>
@@ -299,7 +299,7 @@ public static class OtlpLogExporterHelperExtensions
     {
         var finalOptionsName = name ?? Options.DefaultName;
 
-        builder.ConfigureServices(services => services.AddOtlpExporterSharedServices());
+        builder.ConfigureServices(services => services.AddOtlpExporterLoggingServices());
 
         return builder.AddProcessor(sp =>
         {

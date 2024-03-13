@@ -4,7 +4,6 @@
 #nullable enable
 
 using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
@@ -60,18 +59,7 @@ public static class OtlpMetricExporterExtensions
                 services.Configure(finalOptionsName, configure);
             }
 
-            services.AddOtlpExporterSharedServices();
-
-            services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
-                (readerOptions, config) =>
-                {
-                    var otlpTemporalityPreference = config[OtlpSpecConfigDefinitions.MetricsTemporalityPreferenceEnvVarName];
-                    if (!string.IsNullOrWhiteSpace(otlpTemporalityPreference)
-                        && Enum.TryParse<MetricReaderTemporalityPreference>(otlpTemporalityPreference, ignoreCase: true, out var enumValue))
-                    {
-                        readerOptions.TemporalityPreference = enumValue;
-                    }
-                });
+            services.AddOtlpExporterMetricsServices(finalOptionsName);
         });
 
         return builder.AddReader(sp =>
@@ -138,18 +126,7 @@ public static class OtlpMetricExporterExtensions
 
         builder.ConfigureServices(services =>
         {
-            services.AddOtlpExporterSharedServices();
-
-            services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
-                (readerOptions, config) =>
-                {
-                    var otlpTemporalityPreference = config[OtlpSpecConfigDefinitions.MetricsTemporalityPreferenceEnvVarName];
-                    if (!string.IsNullOrWhiteSpace(otlpTemporalityPreference)
-                        && Enum.TryParse<MetricReaderTemporalityPreference>(otlpTemporalityPreference, ignoreCase: true, out var enumValue))
-                    {
-                        readerOptions.TemporalityPreference = enumValue;
-                    }
-                });
+            services.AddOtlpExporterMetricsServices(finalOptionsName);
         });
 
         return builder.AddReader(sp =>

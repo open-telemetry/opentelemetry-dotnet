@@ -171,7 +171,9 @@ internal sealed class OtlpExporterBuilder
         Debug.Assert(services != null, "services was null");
         Debug.Assert(name != null, "name was null");
 
-        services.AddOtlpExporterSharedServices();
+        services!.AddOtlpExporterLoggingServices();
+        services!.AddOtlpExporterMetricsServices(name!);
+        services!.AddOtlpExporterTracingServices();
 
         // Note: UseOtlpExporterRegistration is added to the service collection
         // to detect repeated calls to "UseOtlpExporter" and to throw if
@@ -180,6 +182,9 @@ internal sealed class OtlpExporterBuilder
 
         services!.RegisterOptionsFactory((sp, configuration, name) => new OtlpExporterBuilderOptions(
             configuration,
+            /* Note: We don't use name for SdkLimitOptions. There should only be
+            one provider for a given service collection so SdkLimitOptions is
+            treated as a single default instance. */
             sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue,
             sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(name),
             /* Note: We allow LogRecordExportProcessorOptions,
