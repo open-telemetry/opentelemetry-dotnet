@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
@@ -13,6 +14,9 @@ namespace OpenTelemetry.Trace;
 
 internal sealed class TracerProviderSdk : TracerProvider
 {
+    internal const string TracesSamplerConfigKey = "OTEL_TRACES_SAMPLER";
+    internal const string TracesSamplerArgConfigKey = "OTEL_TRACES_SAMPLER_ARG";
+
     internal readonly IServiceProvider ServiceProvider;
     internal readonly IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
@@ -57,7 +61,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         resourceBuilder.ServiceProvider = serviceProvider;
         this.Resource = resourceBuilder.Build();
 
-        this.sampler = state.Sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+        this.sampler = state.Sampler ?? ResolveSamplerFromSpecificationConfigurationKeys(serviceProvider!.GetRequiredService<IConfiguration>());
         OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.sampler.GetType()}\".");
 
         this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
@@ -399,6 +403,62 @@ internal sealed class TracerProviderSdk : TracerProvider
         }
 
         base.Dispose(disposing);
+    }
+
+    private static Sampler ResolveSamplerFromSpecificationConfigurationKeys(IConfiguration configuration)
+    {
+        Sampler? sampler = null;
+
+        if (configuration.TryGetStringValue(TracesSamplerConfigKey, out var tracesSampler))
+        {
+            if (string.Equals(tracesSampler, "always_on", StringComparison.OrdinalIgnoreCase))
+            {
+                sampler = new AlwaysOnSampler();
+            }
+            else if (string.Equals(tracesSampler, "always_off", StringComparison.OrdinalIgnoreCase))
+            {
+                sampler = new AlwaysOffSampler();
+            }
+            else if (string.Equals(tracesSampler, "traceidratio", StringComparison.OrdinalIgnoreCase))
+            {
+                var traceIdRatio = ReadTraceIdRatio(configuration);
+                sampler = new TraceIdRatioBasedSampler(traceIdRatio);
+            }
+            else if (string.Equals(tracesSampler, "parentbased_always_on", StringComparison.OrdinalIgnoreCase))
+            {
+                sampler = new ParentBasedSampler(new AlwaysOnSampler());
+            }
+            else if (string.Equals(tracesSampler, "parentbased_always_off", StringComparison.OrdinalIgnoreCase))
+            {
+                sampler = new ParentBasedSampler(new AlwaysOffSampler());
+            }
+            else if (string.Equals(tracesSampler, "parentbased_traceidratio", StringComparison.OrdinalIgnoreCase))
+            {
+                var traceIdRatio = ReadTraceIdRatio(configuration);
+                sampler = new ParentBasedSampler(new TraceIdRatioBasedSampler(traceIdRatio));
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler configuration was found but the value '{tracesSampler}' is invalid and will be ignored.");
+            }
+        }
+
+        return sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+    }
+
+    private static double ReadTraceIdRatio(IConfiguration configuration)
+    {
+        if (configuration.TryGetStringValue(TracesSamplerArgConfigKey, out var configValue) &&
+                double.TryParse(configValue, out var traceIdRatio))
+        {
+            return traceIdRatio;
+        }
+        else
+        {
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler argument configuration was found but the value '{configValue}' is invalid and will be ignored.");
+        }
+
+        return 1.0;
     }
 
     private static ActivitySamplingResult ComputeActivitySamplingResult(
