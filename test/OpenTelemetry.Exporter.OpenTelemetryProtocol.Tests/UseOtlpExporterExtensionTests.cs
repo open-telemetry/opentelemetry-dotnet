@@ -38,21 +38,23 @@ public class UseOtlpExporterExtensionTests
         Assert.False(((OtlpExporterOptions)exporterOptions.TracingOptions).HasData);
     }
 
-    [Fact]
-    public void UseOtlpExporterSetEndpointAndProtocolTest()
+    [Theory]
+    [InlineData(OtlpExportProtocol.Grpc)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf)]
+    public void UseOtlpExporterSetEndpointAndProtocolTest(OtlpExportProtocol protocol)
     {
         var services = new ServiceCollection();
 
         services.AddOpenTelemetry()
             .UseOtlpExporter(
-                OtlpExportProtocol.HttpProtobuf,
+                protocol,
                 new Uri("http://test_base_endpoint/"));
 
         using var sp = services.BuildServiceProvider();
 
         var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().CurrentValue;
 
-        Assert.Equal(OtlpExportProtocol.HttpProtobuf, exporterOptions.DefaultOptions.Protocol);
+        Assert.Equal(protocol, exporterOptions.DefaultOptions.Protocol);
         Assert.Equal(new Uri("http://test_base_endpoint/"), exporterOptions.DefaultOptions.Endpoint);
         Assert.True(((OtlpExporterOptions)exporterOptions.DefaultOptions).HasData);
 
