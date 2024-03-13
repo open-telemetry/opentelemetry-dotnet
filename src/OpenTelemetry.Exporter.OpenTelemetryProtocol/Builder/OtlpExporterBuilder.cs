@@ -169,7 +169,7 @@ internal sealed class OtlpExporterBuilder
     private static void RegisterOtlpExporterServices(IServiceCollection services, string name)
     {
         Debug.Assert(services != null, "services was null");
-        Debug.Assert(!string.IsNullOrEmpty(name), "name was null or empty");
+        Debug.Assert(name != null, "name was null");
 
         // Note: UseOtlpExporterRegistration is added to the service collection
         // to detect repeated calls to "UseOtlpExporter" and to throw if
