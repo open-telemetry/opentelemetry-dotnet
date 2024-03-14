@@ -443,6 +443,11 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
         }
 
+        if (sampler != null)
+        {
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler set to '{sampler.Description}' from configuration.");
+        }
+
         return sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
     }
 
