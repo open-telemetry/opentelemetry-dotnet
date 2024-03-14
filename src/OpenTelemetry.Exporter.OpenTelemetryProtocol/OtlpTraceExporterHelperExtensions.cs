@@ -59,8 +59,7 @@ public static class OtlpTraceExporterHelperExtensions
                 services.Configure(finalOptionsName, configure);
             }
 
-            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-            services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+            services.AddOtlpExporterTracingServices();
         });
 
         return builder.AddProcessor(sp =>
@@ -90,23 +89,53 @@ public static class OtlpTraceExporterHelperExtensions
             // There should only be one provider for a given service
             // collection so SdkLimitOptions is treated as a single default
             // instance.
-            var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+            var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
             return BuildOtlpExporterProcessor(
+                sp,
                 exporterOptions,
-                sdkOptionsManager,
-                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
-                sp);
+                sdkLimitOptions,
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
         });
     }
 
     internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
+        IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
+        Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
+        => BuildOtlpExporterProcessor(
+            serviceProvider,
+            exporterOptions,
+            sdkLimitOptions,
+            experimentalOptions,
+            exporterOptions.ExportProcessorType,
+            exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions(),
+            skipUseOtlpExporterRegistrationCheck: false,
+            configureExporterInstance: configureExporterInstance);
+
+    internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
         IServiceProvider serviceProvider,
+        OtlpExporterOptions exporterOptions,
+        SdkLimitOptions sdkLimitOptions,
+        ExperimentalOptions experimentalOptions,
+        ExportProcessorType exportProcessorType,
+        BatchExportProcessorOptions<Activity> batchExportProcessorOptions,
+        bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
     {
+        Debug.Assert(serviceProvider != null, "serviceProvider was null");
+        Debug.Assert(exporterOptions != null, "exporterOptions was null");
+        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
+        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
+        Debug.Assert(batchExportProcessorOptions != null, "batchExportProcessorOptions was null");
+
+        if (!skipUseOtlpExporterRegistrationCheck)
+        {
+            serviceProvider.EnsureNoUseOtlpExporterRegistrations();
+        }
+
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
         BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions);
@@ -116,20 +145,18 @@ public static class OtlpTraceExporterHelperExtensions
             otlpExporter = configureExporterInstance(otlpExporter);
         }
 
-        if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
+        if (exportProcessorType == ExportProcessorType.Simple)
         {
             return new SimpleActivityExportProcessor(otlpExporter);
         }
         else
         {
-            var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions();
-
             return new BatchActivityExportProcessor(
                 otlpExporter,
-                batchOptions.MaxQueueSize,
-                batchOptions.ScheduledDelayMilliseconds,
-                batchOptions.ExporterTimeoutMilliseconds,
-                batchOptions.MaxExportBatchSize);
+                batchExportProcessorOptions!.MaxQueueSize,
+                batchExportProcessorOptions.ScheduledDelayMilliseconds,
+                batchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                batchExportProcessorOptions.MaxExportBatchSize);
         }
     }
 }

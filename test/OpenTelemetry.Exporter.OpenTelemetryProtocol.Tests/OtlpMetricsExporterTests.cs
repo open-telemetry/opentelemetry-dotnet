@@ -18,6 +18,7 @@ using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection("EnvVars")]
 public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
 {
     private static readonly KeyValuePair<string, object>[] KeyValues = new KeyValuePair<string, object>[]
@@ -25,6 +26,11 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
         new KeyValuePair<string, object>("key1", "value1"),
         new KeyValuePair<string, object>("key2", 123),
     };
+
+    public OtlpMetricsExporterTests()
+    {
+        OtlpSpecConfigDefinitionTests.ClearEnvVars();
+    }
 
     [Fact]
     public void TestAddOtlpExporter_SetsCorrectMetricReaderDefaults()
@@ -727,47 +733,58 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
     }
 
     [Theory]
-    [InlineData("cumulative", MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData("Cumulative", MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData("CUMULATIVE", MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData("delta", MetricReaderTemporalityPreference.Delta)]
-    [InlineData("Delta", MetricReaderTemporalityPreference.Delta)]
-    [InlineData("DELTA", MetricReaderTemporalityPreference.Delta)]
-    public void TestTemporalityPreferenceConfiguration(string configValue, MetricReaderTemporalityPreference expectedTemporality)
+    [InlineData("cuMulative", MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("DeltA", MetricReaderTemporalityPreference.Delta)]
+    [InlineData("invalid", MetricReaderTemporalityPreference.Cumulative)]
+    public void TestTemporalityPreferenceUsingConfiguration(string configValue, MetricReaderTemporalityPreference expectedTemporality)
     {
-        var configData = new Dictionary<string, string> { ["OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE"] = configValue };
+        var testExecuted = false;
+
+        var configData = new Dictionary<string, string> { [OtlpSpecConfigDefinitionTests.MetricsData.TemporalityKeyName] = configValue };
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(configData)
             .Build();
 
-        // Check for both the code paths:
-        // 1. The final extension method which accepts `Action<OtlpExporterOptions>`.
-        // 2. The final extension method which accepts `Action<OtlpExporterOptions, MetricReaderOptions>`.
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<IConfiguration>(configuration);
 
-        // Test 1st code path
-        using var meterProvider1 = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-            .AddOtlpExporter() // This would in turn call the extension method which accepts `Action<OtlpExporterOptions>`
+                services.PostConfigure<MetricReaderOptions>(o =>
+                {
+                    testExecuted = true;
+                    Assert.Equal(expectedTemporality, o.TemporalityPreference);
+                });
+            })
+            .AddOtlpExporter()
             .Build();
 
-        var assembly = typeof(Sdk).Assembly;
-        var type = assembly.GetType("OpenTelemetry.Metrics.MeterProviderSdk");
-        var fieldInfo = type.GetField("reader", BindingFlags.Instance | BindingFlags.NonPublic);
-        var reader = fieldInfo.GetValue(meterProvider1) as MetricReader;
-        var temporality = reader.TemporalityPreference;
+        Assert.True(testExecuted);
+    }
 
-        Assert.Equal(expectedTemporality, temporality);
+    [Theory]
+    [InlineData("cuMulative", MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("DeltA", MetricReaderTemporalityPreference.Delta)]
+    [InlineData("invalid", MetricReaderTemporalityPreference.Cumulative)]
+    public void TestTemporalityPreferenceUsingEnvVar(string configValue, MetricReaderTemporalityPreference expectedTemporality)
+    {
+        Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitionTests.MetricsData.TemporalityKeyName, configValue);
 
-        // Test 2nd code path
-        using var meterProvider2 = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-            .AddOtlpExporter((_, _) => { }) // This would in turn call the extension method which accepts `Action<OtlpExporterOptions, MetricReaderOptions>`
+        var testExecuted = false;
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.PostConfigure<MetricReaderOptions>(o =>
+                {
+                    testExecuted = true;
+                    Assert.Equal(expectedTemporality, o.TemporalityPreference);
+                });
+            })
+            .AddOtlpExporter()
             .Build();
 
-        reader = fieldInfo.GetValue(meterProvider2) as MetricReader;
-        temporality = reader.TemporalityPreference;
-
-        Assert.Equal(expectedTemporality, temporality);
+        Assert.True(testExecuted);
     }
 
     [Theory]
@@ -897,6 +914,13 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
                 Assert.Equal("value1", tag.Value);
             }
         }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        OtlpSpecConfigDefinitionTests.ClearEnvVars();
+
+        base.Dispose(disposing);
     }
 
     private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar> getExemplarFunc, T state)

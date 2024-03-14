@@ -1,0 +1,3 @@
+OpenTelemetry.OpenTelemetryBuilderOtlpExporterExtensions
+static OpenTelemetry.OpenTelemetryBuilderOtlpExporterExtensions.UseOtlpExporter(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
+static OpenTelemetry.OpenTelemetryBuilderOtlpExporterExtensions.UseOtlpExporter(this OpenTelemetry.IOpenTelemetryBuilder! builder, OpenTelemetry.Exporter.OtlpExportProtocol protocol, System.Uri! baseEndpoint) -> OpenTelemetry.IOpenTelemetryBuilder!
