@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.8.0-beta.1
+
+Released 2024-Mar-14
+
 * **Experimental (pre-release builds only):** Added
   `LoggerProviderBuilder.AddOtlpExporter` registration extensions.
   [#5103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5103)
