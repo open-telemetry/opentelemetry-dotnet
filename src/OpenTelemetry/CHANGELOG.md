@@ -47,16 +47,6 @@
   [IMetricsListener](https://learn.microsoft.com/dotNet/api/microsoft.extensions.diagnostics.metrics.imetricslistener).
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
 
-* `TracerProvider`s can now have a sampler configured via the
-  `OTEL_TRACES_SAMPLER` environment variable. The supported values are:
-  `always_off`, `always_on`, `traceidratio`, `parentbased_always_on`,
-  `parentbased_always_off`, and `parentbased_traceidratio`. The options
-  `traceidratio` and `parentbased_traceidratio` may have the sampler probability
-  configured via the `OTEL_TRACES_SAMPLER_ARG` environment variable.
-  For details see: [OpenTelemetry Environment Variable
-  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#general-sdk-configuration).
-  ([#3601](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3601))
-
 * **Experimental (pre-release builds only):** The `Exemplar.FilteredTags`
   property now returns a `ReadOnlyFilteredTagCollection` instance and the
   `Exemplar.LongValue` property has been added. The `MetricPoint.GetExemplars`
@@ -86,6 +76,16 @@
   `trace_based`. For details see: [OpenTelemetry Environment Variable
   Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#exemplar).
   ([#5412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5412))
+
+* `TracerProvider`s can now have a sampler configured via the
+  `OTEL_TRACES_SAMPLER` environment variable. The supported values are:
+  `always_off`, `always_on`, `traceidratio`, `parentbased_always_on`,
+  `parentbased_always_off`, and `parentbased_traceidratio`. The options
+  `traceidratio` and `parentbased_traceidratio` may have the sampler probability
+  configured via the `OTEL_TRACES_SAMPLER_ARG` environment variable.
+  For details see: [OpenTelemetry Environment Variable
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#general-sdk-configuration).
+  ([#5448](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5448))
 
 ## 1.7.0
 
