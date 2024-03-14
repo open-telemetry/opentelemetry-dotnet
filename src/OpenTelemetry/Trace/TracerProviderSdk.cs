@@ -453,6 +453,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             {
                 OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler configuration was found but the value '{tracesSampler}' is invalid and will be ignored.");
             }
+
             if (sampler != null)
             {
                 OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler set to '{sampler.Description}' from configuration.");
