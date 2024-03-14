@@ -256,6 +256,8 @@ Custom processors can be implemented to cover more scenarios:
   and `OnShutdown`.
 * `OnStart` and `OnEnd` should be thread safe, and should not block or take long
   time, since they will be called on critical code path.
+* Processors should use `Activity.TagObjects` collection instead of
+  `Activity.Tags` to obtain the full set of attributes (tags).
 
 ```csharp
 class MyProcessor : BaseProcessor<Activity>
