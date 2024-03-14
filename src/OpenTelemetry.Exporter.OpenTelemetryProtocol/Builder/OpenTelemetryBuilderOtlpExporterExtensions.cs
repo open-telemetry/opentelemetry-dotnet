@@ -26,7 +26,7 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     /// tracing.</item>
     /// <item>The exporter registered by this method will be added as the last
     /// processor in the pipeline established for logging and tracing.</item>
-    /// <item>This method can only be called once. Subsequent calls will results
+    /// <item>This method can only be called once. Subsequent calls will result
     /// in a <see cref="NotSupportedException"/> being thrown.</item>
     /// <item>This method cannot be called in addition to signal-specific
     /// <c>AddOtlpExporter</c> methods. If this method is called signal-specific
