@@ -2,9 +2,6 @@
 
 ## Unreleased
 
-* Fix `System.FormatException` thrown by `PersistentStorageEventSource`.
-  [#5451](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5451)
-
 * **Experimental (pre-release builds only):** Added
   `LoggerProviderBuilder.AddOtlpExporter` registration extensions.
   [#5103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5103)
