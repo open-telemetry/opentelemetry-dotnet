@@ -61,7 +61,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         resourceBuilder.ServiceProvider = serviceProvider;
         this.Resource = resourceBuilder.Build();
 
-        this.sampler = state.Sampler ?? ResolveSamplerFromSpecificationConfigurationKeys(serviceProvider!.GetRequiredService<IConfiguration>());
+        this.sampler = ResolveSamplerFromSpecificationConfigurationKeys(serviceProvider!.GetRequiredService<IConfiguration>(), state.Sampler);
         OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.sampler.GetType()}\".");
 
         this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
@@ -405,12 +405,24 @@ internal sealed class TracerProviderSdk : TracerProvider
         base.Dispose(disposing);
     }
 
-    private static Sampler ResolveSamplerFromSpecificationConfigurationKeys(IConfiguration configuration)
+    private static Sampler ResolveSamplerFromSpecificationConfigurationKeys(IConfiguration configuration, Sampler stateSampler)
     {
         Sampler? sampler = null;
 
+        if (stateSampler != null)
+        {
+            sampler = stateSampler;
+        }
+
         if (configuration.TryGetStringValue(TracesSamplerConfigKey, out var tracesSampler))
         {
+            if (sampler != null)
+            {
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent(
+                    $"Trace sampler configuration value '{tracesSampler}' has been ignored because a value '{sampler.Description}' was set previously.");
+                return sampler;
+            }
+
             if (string.Equals(tracesSampler, "always_on", StringComparison.OrdinalIgnoreCase))
             {
                 sampler = new AlwaysOnSampler();
