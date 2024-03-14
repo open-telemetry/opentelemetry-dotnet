@@ -405,7 +405,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         base.Dispose(disposing);
     }
 
-    private static Sampler ResolveSamplerFromSpecificationConfigurationKeys(IConfiguration configuration, Sampler stateSampler)
+    private static Sampler ResolveSamplerFromSpecificationConfigurationKeys(IConfiguration configuration, Sampler? stateSampler)
     {
         Sampler? sampler = null;
 
