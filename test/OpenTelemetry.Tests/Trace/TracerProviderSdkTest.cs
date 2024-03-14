@@ -1083,6 +1083,27 @@ public class TracerProviderSdkTest : IDisposable
     }
 
     [Fact]
+    public void TestSamplerConfigurationIgnoredWhenSetProgrammatically()
+    {
+        var configBuilder = new ConfigurationBuilder();
+        configBuilder.AddInMemoryCollection(new Dictionary<string, string>
+        {
+            [TracerProviderSdk.TracesSamplerConfigKey] = "always_off",
+        });
+
+        var builder = Sdk.CreateTracerProviderBuilder();
+        builder.ConfigureServices(s => s.AddSingleton<IConfiguration>(configBuilder.Build()));
+        builder.SetSampler(new AlwaysOnSampler());
+
+        using var tracerProvider = builder.Build();
+        var tracerProviderSdk = tracerProvider as TracerProviderSdk;
+
+        Assert.NotNull(tracerProviderSdk);
+        Assert.NotNull(tracerProviderSdk.Sampler);
+        Assert.Equal("AlwaysOnSampler", tracerProviderSdk.Sampler.Description);
+    }
+
+    [Fact]
     public void TracerProvideSdkCreatesAndDiposesInstrumentation()
     {
         TestInstrumentation testInstrumentation = null;
