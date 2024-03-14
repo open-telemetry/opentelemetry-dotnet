@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.8.0-beta.1
+
+Released 2024-Mar-14
+
 * Throw NotSupportedException when using `SetErrorStatusOnException` method for
   Tracing in Mono Runtime and Native AOT environment because the dependent
   `Marshal.GetExceptionPointers()` API is not supported on these platforms.
