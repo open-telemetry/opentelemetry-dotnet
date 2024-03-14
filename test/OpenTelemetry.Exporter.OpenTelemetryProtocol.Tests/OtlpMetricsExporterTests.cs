@@ -18,6 +18,7 @@ using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection("EnvVars")]
 public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
 {
     private static readonly KeyValuePair<string, object>[] KeyValues = new KeyValuePair<string, object>[]
@@ -25,6 +26,11 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
         new KeyValuePair<string, object>("key1", "value1"),
         new KeyValuePair<string, object>("key2", 123),
     };
+
+    public OtlpMetricsExporterTests()
+    {
+        OtlpSpecConfigDefinitionTests.ClearEnvVars();
+    }
 
     [Fact]
     public void TestAddOtlpExporter_SetsCorrectMetricReaderDefaults()
@@ -762,7 +768,6 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
     [InlineData("invalid", MetricReaderTemporalityPreference.Cumulative)]
     public void TestTemporalityPreferenceUsingEnvVar(string configValue, MetricReaderTemporalityPreference expectedTemporality)
     {
-        Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitionTests.MetricsData.TemporalityKeyName, null);
         Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitionTests.MetricsData.TemporalityKeyName, configValue);
 
         var testExecuted = false;
@@ -780,8 +785,6 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
             .Build();
 
         Assert.True(testExecuted);
-
-        Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitionTests.MetricsData.TemporalityKeyName, null);
     }
 
     [Theory]
@@ -911,6 +914,13 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
                 Assert.Equal("value1", tag.Value);
             }
         }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        OtlpSpecConfigDefinitionTests.ClearEnvVars();
+
+        base.Dispose(disposing);
     }
 
     private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar> getExemplarFunc, T state)

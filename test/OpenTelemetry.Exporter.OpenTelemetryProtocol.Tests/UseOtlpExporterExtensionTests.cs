@@ -15,6 +15,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection("EnvVars")]
 public class UseOtlpExporterExtensionTests : IDisposable
 {
     public UseOtlpExporterExtensionTests()
