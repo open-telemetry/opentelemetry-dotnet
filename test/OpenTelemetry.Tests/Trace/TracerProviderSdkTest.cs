@@ -1052,13 +1052,13 @@ public class TracerProviderSdkTest : IDisposable
     [InlineData("parentbased_always_off", null, "ParentBased{AlwaysOffSampler}")]
     [InlineData("parentbased_traceidratio", "0.111", "ParentBased{TraceIdRatioBasedSampler{0.111000}}")]
     [InlineData("ParentBased_TraceIdRatio", "0.000001", "ParentBased{TraceIdRatioBasedSampler{0.000001}}")]
-    public void TestSamplerSetFromConfiguration(string? configValue, string? argValue, string samplerDescription)
+    public void TestSamplerSetFromConfiguration(string configValue, string argValue, string samplerDescription)
     {
         var configBuilder = new ConfigurationBuilder();
 
         if (!string.IsNullOrEmpty(configValue))
         {
-            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string>
             {
                 [TracerProviderSdk.TracesSamplerConfigKey] = configValue,
             });
@@ -1066,7 +1066,7 @@ public class TracerProviderSdkTest : IDisposable
 
         if (!string.IsNullOrEmpty(argValue))
         {
-            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string>
             {
                 [TracerProviderSdk.TracesSamplerArgConfigKey] = argValue,
             });
