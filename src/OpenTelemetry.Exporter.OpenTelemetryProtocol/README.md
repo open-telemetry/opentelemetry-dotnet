@@ -20,7 +20,9 @@ implementation.
   * [LogRecordExportProcessorOptions](#logrecordexportprocessoroptions)
   * [MetricReaderOptions](#metricreaderoptions)
   * [Environment Variables](#environment-variables)
-  * [Experimental Features](#environment-variables-for-experimental-features)
+    * [Exporter configuration](#exporter-configuration)
+    * [Attribute limits](#attribute-limits)
+    * [Experimental Features](#experimental-features)
   * [Configure HttpClient](#configure-httpclient)
 * [Troubleshooting](#troubleshooting)
 
@@ -349,7 +351,7 @@ or reader
 
   The following environment variables can be used to override the default
   values of the `OtlpExporterOptions`:
-  
+
   | Environment variable          | `OtlpExporterOptions` property        |
   | ------------------------------| --------------------------------------|
   | `OTEL_EXPORTER_OTLP_ENDPOINT` | `Endpoint`                            |
@@ -372,7 +374,7 @@ or reader
   The following environment variables can be used to override the default values
   of the `OtlpExporterOptions` used for logging when using the [UseOtlpExporter
   extension](#enable-otlp-exporter-for-all-signals):
-  
+
   | Environment variable                  | `OtlpExporterOptions` property        | UseOtlpExporter | AddOtlpExporter |
   | --------------------------------------| --------------------------------------|-----------------|-----------------|
   | `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`    | `Endpoint`                            | Supported       | Not supported   |
@@ -385,14 +387,14 @@ or reader
   The following environment variables can be used to override the default value
   of the `TemporalityPreference` setting for the reader configured for metrics
   when using OTLP exporter:
-  
+
   | Environment variable                                | `MetricReaderOptions` property                  |
   | ----------------------------------------------------| ------------------------------------------------|
   | `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` | `TemporalityPreference`                         |
-  
+
   The following environment variables can be used to override the default values
   of the periodic exporting metric reader configured for metrics:
-  
+
   | Environment variable                                | `PeriodicExportingMetricReaderOptions` property |
   | ----------------------------------------------------| ------------------------------------------------|
   | `OTEL_METRIC_EXPORT_INTERVAL`                       | `ExportIntervalMilliseconds`                    |
@@ -413,7 +415,7 @@ or reader
 
   The following environment variables can be used to override the default values
   for the batch processor configured for tracing:
-  
+
   | Environment variable             | `OtlpExporterOptions.BatchExportProcessorOptions` property  |
   | ---------------------------------| ------------------------------------------------------------|
   | `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                                |
