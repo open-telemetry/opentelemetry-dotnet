@@ -10,56 +10,12 @@ public class OtlpExporterOptionsTests : IDisposable
 {
     public OtlpExporterOptionsTests()
     {
-        ClearEnvVars();
-    }
-
-    public static IEnumerable<object[]> GetOtlpExporterOptionsTestCases()
-    {
-        yield return new object[]
-        {
-            OtlpExporterOptionsConfigurationType.Default,
-            OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName,
-            OtlpSpecConfigDefinitions.DefaultHeadersEnvVarName,
-            OtlpSpecConfigDefinitions.DefaultTimeoutEnvVarName,
-            OtlpSpecConfigDefinitions.DefaultProtocolEnvVarName,
-            true,
-        };
-
-        yield return new object[]
-        {
-            OtlpExporterOptionsConfigurationType.Logs,
-            OtlpSpecConfigDefinitions.LogsEndpointEnvVarName,
-            OtlpSpecConfigDefinitions.LogsHeadersEnvVarName,
-            OtlpSpecConfigDefinitions.LogsTimeoutEnvVarName,
-            OtlpSpecConfigDefinitions.LogsProtocolEnvVarName,
-            false,
-        };
-
-        yield return new object[]
-        {
-            OtlpExporterOptionsConfigurationType.Metrics,
-            OtlpSpecConfigDefinitions.MetricsEndpointEnvVarName,
-            OtlpSpecConfigDefinitions.MetricsHeadersEnvVarName,
-            OtlpSpecConfigDefinitions.MetricsTimeoutEnvVarName,
-            OtlpSpecConfigDefinitions.MetricsProtocolEnvVarName,
-            false,
-        };
-
-        yield return new object[]
-        {
-            OtlpExporterOptionsConfigurationType.Traces,
-            OtlpSpecConfigDefinitions.TracesEndpointEnvVarName,
-            OtlpSpecConfigDefinitions.TracesHeadersEnvVarName,
-            OtlpSpecConfigDefinitions.TracesTimeoutEnvVarName,
-            OtlpSpecConfigDefinitions.TracesProtocolEnvVarName,
-            false,
-        };
+        OtlpSpecConfigDefinitionTests.ClearEnvVars();
     }
 
     public void Dispose()
     {
-        ClearEnvVars();
-        GC.SuppressFinalize(this);
+        OtlpSpecConfigDefinitionTests.ClearEnvVars();
     }
 
     [Fact]
@@ -87,58 +43,31 @@ public class OtlpExporterOptionsTests : IDisposable
     }
 
     [Theory]
-    [MemberData(nameof(GetOtlpExporterOptionsTestCases))]
-    public void OtlpExporterOptions_EnvironmentVariableOverride(
-        int configurationType,
-        string endpointEnvVarKeyName,
-        string headersEnvVarKeyName,
-        string timeoutEnvVarKeyName,
-        string protocolEnvVarKeyName,
-        bool appendSignalPathToEndpoint)
+    [ClassData(typeof(OtlpSpecConfigDefinitionTests))]
+    public void OtlpExporterOptions_EnvironmentVariableOverride(object testDataObject)
     {
-        Environment.SetEnvironmentVariable(endpointEnvVarKeyName, "http://test:8888");
-        Environment.SetEnvironmentVariable(headersEnvVarKeyName, "A=2,B=3");
-        Environment.SetEnvironmentVariable(timeoutEnvVarKeyName, "2000");
-        Environment.SetEnvironmentVariable(protocolEnvVarKeyName, "http/protobuf");
+        var testData = testDataObject as OtlpSpecConfigDefinitionTests.TestData;
+        Assert.NotNull(testData);
 
-        var options = new OtlpExporterOptions((OtlpExporterOptionsConfigurationType)configurationType);
+        testData.SetEnvVars();
 
-        Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
-        Assert.Equal("A=2,B=3", options.Headers);
-        Assert.Equal(2000, options.TimeoutMilliseconds);
-        Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
-        Assert.Equal(appendSignalPathToEndpoint, options.AppendSignalPathToEndpoint);
+        var options = new OtlpExporterOptions(testData.ConfigurationType);
+
+        testData.AssertMatches(options);
     }
 
     [Theory]
-    [MemberData(nameof(GetOtlpExporterOptionsTestCases))]
-    public void OtlpExporterOptions_UsingIConfiguration(
-        int configurationType,
-        string endpointEnvVarKeyName,
-        string headersEnvVarKeyName,
-        string timeoutEnvVarKeyName,
-        string protocolEnvVarKeyName,
-        bool appendSignalPathToEndpoint)
+    [ClassData(typeof(OtlpSpecConfigDefinitionTests))]
+    public void OtlpExporterOptions_UsingIConfiguration(object testDataObject)
     {
-        var values = new Dictionary<string, string>()
-        {
-            [endpointEnvVarKeyName] = "http://test:8888",
-            [headersEnvVarKeyName] = "A=2,B=3",
-            [timeoutEnvVarKeyName] = "2000",
-            [protocolEnvVarKeyName] = "http/protobuf",
-        };
+        var testData = testDataObject as OtlpSpecConfigDefinitionTests.TestData;
+        Assert.NotNull(testData);
 
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(values)
-            .Build();
+        var configuration = testData.ToConfiguration();
 
-        var options = new OtlpExporterOptions(configuration, (OtlpExporterOptionsConfigurationType)configurationType, new());
+        var options = new OtlpExporterOptions(configuration, testData.ConfigurationType, new());
 
-        Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
-        Assert.Equal("A=2,B=3", options.Headers);
-        Assert.Equal(2000, options.TimeoutMilliseconds);
-        Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
-        Assert.Equal(appendSignalPathToEndpoint, options.AppendSignalPathToEndpoint);
+        testData.AssertMatches(options);
     }
 
     [Fact]
@@ -235,15 +164,6 @@ public class OtlpExporterOptionsTests : IDisposable
     }
 
     [Fact]
-    public void OtlpExporterOptions_EnvironmentVariableNames()
-    {
-        Assert.Equal("OTEL_EXPORTER_OTLP_ENDPOINT", OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName);
-        Assert.Equal("OTEL_EXPORTER_OTLP_HEADERS", OtlpSpecConfigDefinitions.DefaultHeadersEnvVarName);
-        Assert.Equal("OTEL_EXPORTER_OTLP_TIMEOUT", OtlpSpecConfigDefinitions.DefaultTimeoutEnvVarName);
-        Assert.Equal("OTEL_EXPORTER_OTLP_PROTOCOL", OtlpSpecConfigDefinitions.DefaultProtocolEnvVarName);
-    }
-
-    [Fact]
     public void OtlpExporterOptions_SettingEndpointToNullResetsAppendSignalPathToEndpoint()
     {
         var options = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default);
@@ -305,16 +225,5 @@ public class OtlpExporterOptionsTests : IDisposable
         Assert.NotEqual(defaultOptionsWithData.Headers, targetOptionsWithData.Headers);
         Assert.NotEqual(defaultOptionsWithData.TimeoutMilliseconds, targetOptionsWithData.TimeoutMilliseconds);
         Assert.NotEqual(defaultOptionsWithData.HttpClientFactory, targetOptionsWithData.HttpClientFactory);
-    }
-
-    private static void ClearEnvVars()
-    {
-        foreach (var item in GetOtlpExporterOptionsTestCases())
-        {
-            Environment.SetEnvironmentVariable((string)item[1], null);
-            Environment.SetEnvironmentVariable((string)item[2], null);
-            Environment.SetEnvironmentVariable((string)item[3], null);
-            Environment.SetEnvironmentVariable((string)item[4], null);
-        }
     }
 }

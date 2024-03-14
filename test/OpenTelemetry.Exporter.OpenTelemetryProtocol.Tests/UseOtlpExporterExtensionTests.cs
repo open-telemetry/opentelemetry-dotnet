@@ -15,8 +15,18 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public class UseOtlpExporterExtensionTests
+public class UseOtlpExporterExtensionTests : IDisposable
 {
+    public UseOtlpExporterExtensionTests()
+    {
+        OtlpSpecConfigDefinitionTests.ClearEnvVars();
+    }
+
+    public void Dispose()
+    {
+        OtlpSpecConfigDefinitionTests.ClearEnvVars();
+    }
+
     [Fact]
     public void UseOtlpExporterDefaultTest()
     {
@@ -284,6 +294,54 @@ public class UseOtlpExporterExtensionTests
 
         Assert.True(processors[0] is TestLogRecordProcessor);
         Assert.True(processors[1] is BatchLogRecordExportProcessor);
+    }
+
+    [Fact]
+    public void UseOtlpExporterRespectsSpecEnvVarsTest()
+    {
+        OtlpSpecConfigDefinitionTests.SetEnvVars();
+
+        var services = new ServiceCollection();
+
+        services.AddOpenTelemetry()
+            .UseOtlpExporter();
+
+        using var sp = services.BuildServiceProvider();
+
+        var exporterBuilderOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().Get(Options.DefaultName);
+
+        OtlpSpecConfigDefinitionTests.DefaultData.AssertMatches(exporterBuilderOptions.DefaultOptions);
+        OtlpSpecConfigDefinitionTests.LoggingData.AssertMatches(exporterBuilderOptions.LoggingOptions);
+        OtlpSpecConfigDefinitionTests.MetricsData.AssertMatches(exporterBuilderOptions.MetricsOptions);
+        OtlpSpecConfigDefinitionTests.TracingData.AssertMatches(exporterBuilderOptions.TracingOptions);
+
+        var metricReaderOptions = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(Options.DefaultName);
+
+        OtlpSpecConfigDefinitionTests.MetricsData.AssertMatches(metricReaderOptions);
+    }
+
+    [Fact]
+    public void UseOtlpExporterRespectsSpecEnvVarsSetUsingIConfigurationTest()
+    {
+        var services = new ServiceCollection();
+
+        services.AddSingleton(OtlpSpecConfigDefinitionTests.ToConfiguration());
+
+        services.AddOpenTelemetry()
+            .UseOtlpExporter();
+
+        using var sp = services.BuildServiceProvider();
+
+        var exporterBuilderOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().Get(Options.DefaultName);
+
+        OtlpSpecConfigDefinitionTests.DefaultData.AssertMatches(exporterBuilderOptions.DefaultOptions);
+        OtlpSpecConfigDefinitionTests.LoggingData.AssertMatches(exporterBuilderOptions.LoggingOptions);
+        OtlpSpecConfigDefinitionTests.MetricsData.AssertMatches(exporterBuilderOptions.MetricsOptions);
+        OtlpSpecConfigDefinitionTests.TracingData.AssertMatches(exporterBuilderOptions.TracingOptions);
+
+        var metricReaderOptions = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(Options.DefaultName);
+
+        OtlpSpecConfigDefinitionTests.MetricsData.AssertMatches(metricReaderOptions);
     }
 
     private static void VerifyOptionsApplied(ServiceProvider serviceProvider, string? name)
