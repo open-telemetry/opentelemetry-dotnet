@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Fix `System.FormatException`.
+* Fix `System.FormatException` thrown by `PersistentStorageEventSource`.
   [#5451](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5451)
 
 * **Experimental (pre-release builds only):** Added
