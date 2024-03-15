@@ -140,7 +140,7 @@ The `UseOtlpExporter` has the following behaviors:
 
   * Logging
 
-    `ILogger` telemetry is controled by category filters typically set through
+    `ILogger` telemetry is controlled by category filters typically set through
     configuration. For details see: [Log
     Filtering](../../docs/logs/customizing-the-sdk/README.md#log-filtering) and
     [Logging in
