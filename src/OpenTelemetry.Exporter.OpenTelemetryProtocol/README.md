@@ -177,6 +177,28 @@ The `UseOtlpExporter` has the following behaviors:
 
     For details see: [Meter](../../docs/metrics/customizing-the-sdk/README.md#meter).
 
+    When using `Microsoft.Extensions.Hosting` v8.0.0 or greater (a standard part
+    of ASP.NET Core) `Meter`s and `Instrument`s can also be enabled using
+    configuration.
+
+    `appSettings.json` metrics configuration example:
+
+    ```json
+    {
+      "Metrics": {
+        "EnabledMetrics": {
+          "Microsoft.AspNetCore.*": true,
+          "System.*": true,
+          "MyCompany.*": true,
+        }
+      }
+    }
+    ```
+
+    For details about the built-in metrics exposed by .NET see: [Built-in
+    metrics in
+    .NET](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics).
+
   * Tracing
 
     Trace telemetry is controlled by calling `TracerProviderBuilder.AddSource`
