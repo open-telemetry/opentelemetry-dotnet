@@ -21,6 +21,7 @@ public sealed class LogRecord
     internal IReadOnlyList<KeyValuePair<string, object?>>? AttributeData;
     internal List<KeyValuePair<string, object?>>? AttributeStorage;
     internal List<object?>? ScopeStorage;
+    internal LogRecordEnrichedAttributes? EnrichedAttributeStorage;
     internal LogRecordSource Source = LogRecordSource.CreatedManually;
     internal int PoolReferenceCount = int.MaxValue;
 
@@ -446,6 +447,30 @@ public sealed class LogRecord
     }
 
     /// <summary>
+    /// Add an attribute to the <see cref="LogRecord"/>.
+    /// </summary>
+    /// <param name="attribute">Attribute to add.</param>
+    public void AddAttribute(KeyValuePair<string, object?> attribute)
+    {
+        var enrichedAttributes = this.EnsureEnrichedAttributes();
+
+        enrichedAttributes.Add(attribute);
+    }
+
+    /// <summary>
+    /// Add attributes to the <see cref="LogRecord"/>.
+    /// </summary>
+    /// <param name="attributes">Attributes to add.</param>
+    public void AddAttributes(IEnumerable<KeyValuePair<string, object?>> attributes)
+    {
+        Guard.ThrowIfNull(attributes);
+
+        var enrichedAttributes = this.EnsureEnrichedAttributes();
+
+        enrichedAttributes.Add(attributes);
+    }
+
+    /// <summary>
     /// Gets a reference to the <see cref="LogRecordData"/> for the log message.
     /// </summary>
     /// <returns><see cref="LogRecordData"/>.</returns>
@@ -542,6 +567,20 @@ public sealed class LogRecord
         this.ILoggerData.ScopeProvider = null;
 
         this.ILoggerData.BufferedScopes = scopeStorage;
+    }
+
+    private LogRecordEnrichedAttributes EnsureEnrichedAttributes()
+    {
+        if (this.Attributes is not LogRecordEnrichedAttributes enrichedAttributes)
+        {
+            enrichedAttributes = this.EnrichedAttributeStorage ??= new();
+
+            enrichedAttributes.Reset(this.Attributes);
+
+            this.Attributes = enrichedAttributes;
+        }
+
+        return enrichedAttributes;
     }
 
     internal struct LogRecordILoggerData

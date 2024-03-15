@@ -39,6 +39,11 @@ namespace System.Diagnostics.CodeAnalysis
     internal sealed class NotNullAttribute : Attribute
     {
     }
+
+    [AttributeUsage(AttributeTargets.Method, Inherited = false)]
+    internal sealed class DoesNotReturnAttribute : Attribute
+    {
+    }
 }
 #endif
 
@@ -112,6 +117,16 @@ namespace OpenTelemetry.Internal
             if (value == 0)
             {
                 throw new ArgumentException(message, paramName);
+            }
+        }
+
+        [DebuggerHidden]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ThrowIfNegative(int value, [CallerArgumentExpression("value")] string? paramName = null)
+        {
+            if (value < 0)
+            {
+                ThrowNegative(paramName);
             }
         }
 
@@ -199,5 +214,9 @@ namespace OpenTelemetry.Internal
                 throw new ArgumentOutOfRangeException(paramName, value, exMessage);
             }
         }
+
+        [DoesNotReturn]
+        private static void ThrowNegative(string? paramName) =>
+            throw new ArgumentOutOfRangeException(paramName, "Must be a non-negative value");
     }
 }
