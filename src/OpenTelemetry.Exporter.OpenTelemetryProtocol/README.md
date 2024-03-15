@@ -114,8 +114,9 @@ runnable example.
 
 ## Enable OTLP Exporter for all signals
 
-A cross-cutting extension was added in v1.8.0 to simplify registration of the
-OTLP exporter for all signals (logs, metrics, and tracing).
+Starting with the `1.8.0` version you can use the cross-cutting
+`UseOtlpExporter` extension to simplify registration of the OTLP exporter for
+all signals (logs, metrics, and traces).
 
 > [!NOTE]
 > The cross cutting extension is currently only available when using the
@@ -133,8 +134,79 @@ The `UseOtlpExporter` has the following behaviors:
 * Calling `UseOtlpExporter` automatically enables logging, metrics, and tracing.
   Calls to `WithLogging`, `WithTracing`, and/or `WithLogging` are NOT required
   when using `UseOtlpExporter` however only telemetry which has been enabled
-  (typically via `AddSource` inside of `WithTracing` or `AddMeter` inside of
-  `WithMetrics`) will be exported.
+  will be exported.
+
+  There are different mechanisms available to enable telemetry:
+
+  * Logging
+
+    `ILogger` telemetry is controled by category filters typically set through
+    configuration. For details see: [Log
+    Filtering](../../docs/logs/customizing-the-sdk/README.md#log-filtering) and
+    [Logging in
+    .NET](https://docs.microsoft.com/dotnet/core/extensions/logging).
+
+  * Metrics
+
+    Metrics telemetry is controlled by calling `MeterProviderBuilder.AddMeter`
+    to listen to
+    [Meter](https://learn.microsoft.com/dotnet/api/system.diagnostics.meter)s
+    emitting metrics. Typically instrumentation packages will make this call
+    automatically.
+
+    Examples:
+
+    ```csharp
+        appBuilder.Services.AddOpenTelemetry()
+            .UseOtlpExporter()
+            .WithMetrics(metrics => metrics
+                .AddMeter(MyMeter.Name) // Listen to custom telemetry
+                .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
+            );
+    ```
+
+    ```csharp
+        appBuilder.Services.ConfigureOpenTelemetryMeterProvider(metrics => metrics
+            .AddMeter(MyMeter.Name) // Listen to custom telemetry
+            .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
+        );
+
+        appBuilder.Services.AddOpenTelemetry()
+            .UseOtlpExporter();
+    ```
+
+    For details see: [Meter](../../docs/metrics/customizing-the-sdk/README.md#meter).
+
+  * Tracing
+
+    Trace telemetry is controlled by calling `TracerProviderBuilder.AddSource`
+    to listen to
+    [ActivitySource](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource)s
+    emitting traces. Typically instrumentation packages will make this call
+    automatically.
+
+    Examples:
+
+    ```csharp
+        appBuilder.Services.AddOpenTelemetry()
+            .UseOtlpExporter()
+            .WithTracing(tracing => tracing
+                .AddSource(MyActivitySource.Name) // Listen to custom telemetry
+                .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
+            );
+    ```
+
+    ```csharp
+        appBuilder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
+            .AddSource(MyActivitySource.Name) // Listen to custom telemetry
+            .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
+        );
+
+        appBuilder.Services.AddOpenTelemetry()
+            .UseOtlpExporter();
+    ```
+
+    For details see: [Activity Source](../../docs/trace/customizing-the-sdk/README.md#activity-source).
 
 * The exporter registered by `UseOtlpExporter` will be added as the last
   processor in the pipeline established for logging and tracing.
@@ -469,8 +541,8 @@ used for logging:
 
 * `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY`
 
-  When set to `true`, it enables in-memory retry for transient errors ecountered
-  sending telemetry.
+  When set to `true`, it enables in-memory retry for transient errors
+  encountered sending telemetry.
 
 ### Logs
 
