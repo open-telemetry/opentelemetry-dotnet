@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.8.0-beta.1
+
+Released 2024-Mar-14
+
 * `OpenTelemetryBuilder` has been marked obsolete. Component authors using
   `OpenTelemetryBuilder` for cross-cutting signal configuration extensions
   should switch to targeting `IOpenTelemetryBuilder` instead.

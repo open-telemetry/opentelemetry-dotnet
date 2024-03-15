@@ -25,7 +25,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// </summary>
     /// <param name="options">Configuration options for the exporter.</param>
     public OtlpMetricExporter(OtlpExporterOptions options)
-        : this(options, transmissionHandler: null)
+        : this(options, experimentalOptions: new(), transmissionHandler: null)
     {
     }
 
@@ -33,9 +33,11 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
+    /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
     /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
     internal OtlpMetricExporter(
         OtlpExporterOptions options,
+        ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest> transmissionHandler = null)
     {
         // Each of the Otlp exporters: Traces, Metrics, and Logs set the same value for `OtlpKeyValueTransformer.LogUnsupportedAttributeType`
@@ -50,7 +52,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
             OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
         };
 
-        this.transmissionHandler = transmissionHandler ?? options.GetMetricsExportTransmissionHandler();
+        this.transmissionHandler = transmissionHandler ?? options.GetMetricsExportTransmissionHandler(experimentalOptions);
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();

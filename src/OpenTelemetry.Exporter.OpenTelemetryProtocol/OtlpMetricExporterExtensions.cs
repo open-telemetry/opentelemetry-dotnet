@@ -3,10 +3,11 @@
 
 #nullable enable
 
-using Microsoft.Extensions.Configuration;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -58,18 +59,7 @@ public static class OtlpMetricExporterExtensions
                 services.Configure(finalOptionsName, configure);
             }
 
-            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-
-            services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
-                (readerOptions, config) =>
-                {
-                    var otlpTemporalityPreference = config[OtlpExporterSpecEnvVarKeyDefinitions.MetricsTemporalityPreferenceEnvVarName];
-                    if (!string.IsNullOrWhiteSpace(otlpTemporalityPreference)
-                        && Enum.TryParse<MetricReaderTemporalityPreference>(otlpTemporalityPreference, ignoreCase: true, out var enumValue))
-                    {
-                        readerOptions.TemporalityPreference = enumValue;
-                    }
-                });
+            services.AddOtlpExporterMetricsServices(finalOptionsName);
         });
 
         return builder.AddReader(sp =>
@@ -96,9 +86,10 @@ public static class OtlpMetricExporterExtensions
             }
 
             return BuildOtlpExporterMetricReader(
+                sp,
                 exporterOptions,
                 sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName),
-                sp);
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
         });
     }
 
@@ -135,18 +126,7 @@ public static class OtlpMetricExporterExtensions
 
         builder.ConfigureServices(services =>
         {
-            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-
-            services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
-                (readerOptions, config) =>
-                {
-                    var otlpTemporalityPreference = config[OtlpExporterSpecEnvVarKeyDefinitions.MetricsTemporalityPreferenceEnvVarName];
-                    if (!string.IsNullOrWhiteSpace(otlpTemporalityPreference)
-                        && Enum.TryParse<MetricReaderTemporalityPreference>(otlpTemporalityPreference, ignoreCase: true, out var enumValue))
-                    {
-                        readerOptions.TemporalityPreference = enumValue;
-                    }
-                });
+            services.AddOtlpExporterMetricsServices(finalOptionsName);
         });
 
         return builder.AddReader(sp =>
@@ -169,19 +149,35 @@ public static class OtlpMetricExporterExtensions
 
             configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
 
-            return BuildOtlpExporterMetricReader(exporterOptions, metricReaderOptions, sp);
+            return BuildOtlpExporterMetricReader(
+                sp,
+                exporterOptions,
+                metricReaderOptions,
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
         });
     }
 
     internal static MetricReader BuildOtlpExporterMetricReader(
+        IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
         MetricReaderOptions metricReaderOptions,
-        IServiceProvider serviceProvider,
+        ExperimentalOptions experimentalOptions,
+        bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<Metric>, BaseExporter<Metric>>? configureExporterInstance = null)
     {
+        Debug.Assert(serviceProvider != null, "serviceProvider was null");
+        Debug.Assert(exporterOptions != null, "exporterOptions was null");
+        Debug.Assert(metricReaderOptions != null, "metricReaderOptions was null");
+        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
+
+        if (!skipUseOtlpExporterRegistrationCheck)
+        {
+            serviceProvider.EnsureNoUseOtlpExporterRegistrations();
+        }
+
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
-        BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions);
+        BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions, experimentalOptions);
 
         if (configureExporterInstance != null)
         {
@@ -190,6 +186,6 @@ public static class OtlpMetricExporterExtensions
 
         return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
             metricExporter,
-            metricReaderOptions);
+            metricReaderOptions!);
     }
 }

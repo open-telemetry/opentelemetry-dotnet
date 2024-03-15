@@ -83,7 +83,9 @@ public class OtlpHttpTraceExportClientTests
 
         var httpRequestContent = Array.Empty<byte>();
 
-        var exportClient = new OtlpHttpTraceExportClient(options, new HttpClient(testHttpHandler));
+        var httpClient = new HttpClient(testHttpHandler);
+
+        var exportClient = new OtlpHttpTraceExportClient(options, httpClient);
 
         var resourceBuilder = ResourceBuilder.CreateEmpty();
         if (includeServiceNameInResource)
@@ -125,12 +127,13 @@ public class OtlpHttpTraceExportClientTests
 
         void RunTest(Batch<Activity> batch)
         {
+            var deadlineUtc = DateTime.UtcNow.AddMilliseconds(httpClient.Timeout.TotalMilliseconds);
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
             request.AddBatch(DefaultSdkLimitOptions, resourceBuilder.Build().ToOtlpResource(), batch);
 
             // Act
-            var result = exportClient.SendExportRequest(request);
+            var result = exportClient.SendExportRequest(request, deadlineUtc);
 
             var httpRequest = testHttpHandler.HttpRequestMessage;
 
