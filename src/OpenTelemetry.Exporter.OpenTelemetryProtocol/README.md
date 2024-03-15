@@ -131,10 +131,8 @@ appBuilder.Services.AddOpenTelemetry()
 
 The `UseOtlpExporter` has the following behaviors:
 
-* Calling `UseOtlpExporter` automatically enables logging, metrics, and tracing.
-  Calls to `WithLogging`, `WithMetrics`, and/or `WithTracing` are NOT required
-  when using `UseOtlpExporter` however only telemetry which has been enabled
-  will be exported.
+* Calling `UseOtlpExporter` automatically enables logging, metrics, and tracing
+  however only telemetry which has been enabled will be exported.
 
   There are different mechanisms available to enable telemetry:
 
