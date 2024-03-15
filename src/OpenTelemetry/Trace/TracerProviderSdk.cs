@@ -451,7 +451,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
             else
             {
-                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler configuration was found but the value '{configValue}' is invalid and will be ignored.");
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"OTEL_TRACES_SAMPLER configuration was found but the value '{configValue}' is invalid and will be ignored.");
             }
 
             if (sampler != null)
