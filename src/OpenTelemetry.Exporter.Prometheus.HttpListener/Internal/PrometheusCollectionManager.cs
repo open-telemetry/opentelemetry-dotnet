@@ -17,7 +17,7 @@ internal sealed class PrometheusCollectionManager
     private readonly HashSet<string> scopes;
     private int metricsCacheCount;
     private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
-    private byte[] targetInfoBuffer;
+    private int targetInfoBufferLength = -1; // zero or positive when target_info has been written for the first time
     private int globalLockState;
     private ArraySegment<byte> previousDataView;
     private DateTime? previousDataViewGeneratedAtUtc;
@@ -272,16 +272,13 @@ internal sealed class PrometheusCollectionManager
 
     private int WriteTargetInfo()
     {
-        if (this.targetInfoBuffer == null)
+        if (this.targetInfoBufferLength < 0)
         {
             while (true)
             {
                 try
                 {
-                    var cursor = PrometheusSerializer.WriteTargetInfo(this.buffer, 0, this.exporter.Resource);
-
-                    this.targetInfoBuffer = new byte[cursor];
-                    Array.Copy(this.buffer, 0, this.targetInfoBuffer, 0, cursor);
+                    this.targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(this.buffer, 0, this.exporter.Resource);
 
                     break;
                 }
@@ -294,14 +291,8 @@ internal sealed class PrometheusCollectionManager
                 }
             }
         }
-        else
-        {
-            // Buffer will always be large enough for the target_info at this point because we've already
-            // previously written to the buffer (increasing it as needed) and copied out the target_info buffer.
-            this.targetInfoBuffer.CopyTo(this.buffer, 0);
-        }
 
-        return this.targetInfoBuffer.Length;
+        return this.targetInfoBufferLength;
     }
 
     private bool IncreaseBufferSize()
