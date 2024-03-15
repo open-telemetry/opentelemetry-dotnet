@@ -414,44 +414,44 @@ internal sealed class TracerProviderSdk : TracerProvider
             sampler = stateSampler;
         }
 
-        if (configuration.TryGetStringValue(TracesSamplerConfigKey, out var tracesSampler))
+        if (configuration.TryGetStringValue(TracesSamplerConfigKey, out var configValue))
         {
             if (sampler != null)
             {
                 OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent(
-                    $"Trace sampler configuration value '{tracesSampler}' has been ignored because a value '{sampler.GetType().FullName}' was set previously.");
+                    $"Trace sampler configuration value '{configValue}' has been ignored because a value '{sampler.GetType().FullName}' was set previously.");
                 return sampler;
             }
 
-            if (string.Equals(tracesSampler, "always_on", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(configValue, "always_on", StringComparison.OrdinalIgnoreCase))
             {
                 sampler = new AlwaysOnSampler();
             }
-            else if (string.Equals(tracesSampler, "always_off", StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(configValue, "always_off", StringComparison.OrdinalIgnoreCase))
             {
                 sampler = new AlwaysOffSampler();
             }
-            else if (string.Equals(tracesSampler, "traceidratio", StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(configValue, "traceidratio", StringComparison.OrdinalIgnoreCase))
             {
                 var traceIdRatio = ReadTraceIdRatio(configuration);
                 sampler = new TraceIdRatioBasedSampler(traceIdRatio);
             }
-            else if (string.Equals(tracesSampler, "parentbased_always_on", StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(configValue, "parentbased_always_on", StringComparison.OrdinalIgnoreCase))
             {
                 sampler = new ParentBasedSampler(new AlwaysOnSampler());
             }
-            else if (string.Equals(tracesSampler, "parentbased_always_off", StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(configValue, "parentbased_always_off", StringComparison.OrdinalIgnoreCase))
             {
                 sampler = new ParentBasedSampler(new AlwaysOffSampler());
             }
-            else if (string.Equals(tracesSampler, "parentbased_traceidratio", StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(configValue, "parentbased_traceidratio", StringComparison.OrdinalIgnoreCase))
             {
                 var traceIdRatio = ReadTraceIdRatio(configuration);
                 sampler = new ParentBasedSampler(new TraceIdRatioBasedSampler(traceIdRatio));
             }
             else
             {
-                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler configuration was found but the value '{tracesSampler}' is invalid and will be ignored.");
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler configuration was found but the value '{configValue}' is invalid and will be ignored.");
             }
 
             if (sampler != null)
