@@ -22,7 +22,7 @@ implementation.
   * [Environment Variables](#environment-variables)
     * [Exporter configuration](#exporter-configuration)
     * [Attribute limits](#attribute-limits)
-    * [Experimental Features](#experimental-features)
+    * [Experimental features](#experimental-features)
   * [Configure HttpClient](#configure-httpclient)
 * [Troubleshooting](#troubleshooting)
 
@@ -132,7 +132,7 @@ appBuilder.Services.AddOpenTelemetry()
 The `UseOtlpExporter` has the following behaviors:
 
 * Calling `UseOtlpExporter` automatically enables logging, metrics, and tracing.
-  Calls to `WithLogging`, `WithTracing`, and/or `WithLogging` are NOT required
+  Calls to `WithLogging`, `WithMetrics`, and/or `WithTracing` are NOT required
   when using `UseOtlpExporter` however only telemetry which has been enabled
   will be exported.
 
@@ -157,22 +157,22 @@ The `UseOtlpExporter` has the following behaviors:
     Examples:
 
     ```csharp
-        appBuilder.Services.AddOpenTelemetry()
-            .UseOtlpExporter()
-            .WithMetrics(metrics => metrics
-                .AddMeter(MyMeter.Name) // Listen to custom telemetry
-                .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
-            );
-    ```
-
-    ```csharp
-        appBuilder.Services.ConfigureOpenTelemetryMeterProvider(metrics => metrics
+    appBuilder.Services.AddOpenTelemetry()
+        .UseOtlpExporter()
+        .WithMetrics(metrics => metrics
             .AddMeter(MyMeter.Name) // Listen to custom telemetry
             .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
         );
+    ```
 
-        appBuilder.Services.AddOpenTelemetry()
-            .UseOtlpExporter();
+    ```csharp
+    appBuilder.Services.ConfigureOpenTelemetryMeterProvider(metrics => metrics
+        .AddMeter(MyMeter.Name) // Listen to custom telemetry
+        .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
+    );
+
+    appBuilder.Services.AddOpenTelemetry()
+        .UseOtlpExporter();
     ```
 
     For details see: [Meter](../../docs/metrics/customizing-the-sdk/README.md#meter).
@@ -210,22 +210,22 @@ The `UseOtlpExporter` has the following behaviors:
     Examples:
 
     ```csharp
-        appBuilder.Services.AddOpenTelemetry()
-            .UseOtlpExporter()
-            .WithTracing(tracing => tracing
-                .AddSource(MyActivitySource.Name) // Listen to custom telemetry
-                .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
-            );
-    ```
-
-    ```csharp
-        appBuilder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
+    appBuilder.Services.AddOpenTelemetry()
+        .UseOtlpExporter()
+        .WithTracing(tracing => tracing
             .AddSource(MyActivitySource.Name) // Listen to custom telemetry
             .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
         );
+    ```
 
-        appBuilder.Services.AddOpenTelemetry()
-            .UseOtlpExporter();
+    ```csharp
+    appBuilder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
+        .AddSource(MyActivitySource.Name) // Listen to custom telemetry
+        .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
+    );
+
+    appBuilder.Services.AddOpenTelemetry()
+        .UseOtlpExporter();
     ```
 
     For details see: [Activity Source](../../docs/trace/customizing-the-sdk/README.md#activity-source).
@@ -557,7 +557,7 @@ used for logging:
 * `OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT`
 * `OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT`
 
-### Experimental Features
+### Experimental features
 
 ### All signals
 
