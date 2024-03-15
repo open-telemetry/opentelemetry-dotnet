@@ -103,10 +103,7 @@ internal static class HttpWebRequestActivitySource
             RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
-            if (!request.RequestUri.IsDefaultPort)
-            {
-                activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
-            }
+            activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
 
             activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
 

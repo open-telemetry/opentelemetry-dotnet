@@ -6,6 +6,27 @@
 [The OTLP (OpenTelemetry Protocol) exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)
 implementation.
 
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Table of Contents</summary>
+
+* [Installation](#installation)
+* [Enable Log Exporter](#enable-log-exporter)
+* [Enable Metric Exporter](#enable-metric-exporter)
+* [Enable Trace Exporter](#enable-trace-exporter)
+* [Enable OTLP Exporter for all signals](#enable-otlp-exporter-for-all-signals)
+* [Configuration](#configuration)
+  * [OtlpExporterOptions](#otlpexporteroptions)
+  * [LogRecordExportProcessorOptions](#logrecordexportprocessoroptions)
+  * [MetricReaderOptions](#metricreaderoptions)
+  * [Environment Variables](#environment-variables)
+  * [Experimental Features](#environment-variables-for-experimental-features)
+  * [Configure HttpClient](#configure-httpclient)
+* [Troubleshooting](#troubleshooting)
+
+</details>
+<!-- markdownlint-enable MD033 -->
+
 ## Prerequisite
 
 * An endpoint capable of accepting OTLP, like [OpenTelemetry
@@ -16,45 +37,6 @@ implementation.
 ```shell
 dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 ```
-
-## Enable Trace Exporter
-
-This exporter provides `AddOtlpExporter()` extension method on `TracerProviderBuilder`
-to enable exporting of traces. The following snippet adds the Exporter with default
-[configuration](#configuration).
-
-```csharp
-var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    // rest of config not shown here.
-    .AddOtlpExporter()
-    .Build();
-```
-
-See the [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs) for
-runnable example.
-
-## Enable Metric Exporter
-
-This exporter provides `AddOtlpExporter()` extension method on `MeterProviderBuilder`
-to enable exporting of metrics. The following snippet adds the Exporter with default
-[configuration](#configuration).
-
-```csharp
-var meterProvider = Sdk.CreateMeterProviderBuilder()
-    // rest of config not shown here.
-    .AddOtlpExporter()
-    .Build();
-```
-
-By default, `AddOtlpExporter()` pairs the OTLP MetricExporter with a
-[PeriodicExportingMetricReader](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#periodic-exporting-metricreader)
-with metric export interval of 60 secs and
-[Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
-set as `Cumulative`. See
-[`TestMetrics.cs`](../../examples/Console/TestMetrics.cs) for example on how to
-customize the `MetricReaderOptions` or see the [Environment
-Variables](#environment-variables) section below on how to customize using
-environment variables.
 
 ## Enable Log Exporter
 
@@ -88,6 +70,49 @@ setting on `OpenTelemetryLoggerOptions`.
 > [!NOTE]
 > Scope attributes with key set as empty string or `{OriginalFormat}`
 are ignored by exporter. Duplicate keys are exported as is.
+
+## Enable Metric Exporter
+
+This exporter provides `AddOtlpExporter()` extension method on `MeterProviderBuilder`
+to enable exporting of metrics. The following snippet adds the Exporter with default
+[configuration](#configuration).
+
+```csharp
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    // rest of config not shown here.
+    .AddOtlpExporter()
+    .Build();
+```
+
+By default, `AddOtlpExporter()` pairs the OTLP MetricExporter with a
+[PeriodicExportingMetricReader](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#periodic-exporting-metricreader)
+with metric export interval of 60 secs and
+[Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
+set as `Cumulative`. See
+[`TestMetrics.cs`](../../examples/Console/TestMetrics.cs) for example on how to
+customize the `MetricReaderOptions` or see the [Environment
+Variables](#environment-variables) section below on how to customize using
+environment variables.
+
+## Enable Trace Exporter
+
+This exporter provides `AddOtlpExporter()` extension method on `TracerProviderBuilder`
+to enable exporting of traces. The following snippet adds the Exporter with default
+[configuration](#configuration).
+
+```csharp
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    // rest of config not shown here.
+    .AddOtlpExporter()
+    .Build();
+```
+
+See the [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs) for
+runnable example.
+
+## Enable OTLP Exporter for all signals
+
+Content coming soon.
 
 ## Configuration
 
@@ -168,6 +193,11 @@ appBuilder.Services.AddOptions<OtlpExporterOptions>()
   contain a port and path. The default is "localhost:4317" for
   `OtlpExportProtocol.Grpc` and "localhost:4318" for
   `OtlpExportProtocol.HttpProtobuf`.
+
+> [!NOTE]
+> When using `OtlpExportProtocol.HttpProtobuf`, the full URL MUST be
+> provided, including the signal-specific path v1/{signal}. For example, for
+> traces, the full URL will look like `http://your-custom-endpoint/v1/traces`.
 
 * `Headers`: Optional headers for the connection.
 

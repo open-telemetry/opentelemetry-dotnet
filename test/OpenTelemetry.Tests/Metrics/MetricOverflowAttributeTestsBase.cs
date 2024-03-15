@@ -104,10 +104,10 @@ public abstract class MetricOverflowAttributeTestsBase
     }
 
     [Theory]
-    [InlineData(1, false)]
-    [InlineData(2, true)]
-    [InlineData(10, true)]
-    public void EmitOverflowAttributeIsOnlySetWhenMaxMetricPointsIsGreaterThanOne(int maxMetricPoints, bool isEmitOverflowAttributeKeySet)
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(10)]
+    public void EmitOverflowAttributeIsNotDependentOnMaxMetricPoints(int maxMetricPoints)
     {
         var exportedItems = new List<Metric>();
 
@@ -129,7 +129,7 @@ public abstract class MetricOverflowAttributeTestsBase
         meterProvider.ForceFlush();
 
         Assert.Single(exportedItems);
-        Assert.Equal(isEmitOverflowAttributeKeySet, exportedItems[0].AggregatorStore.EmitOverflowAttribute);
+        Assert.True(exportedItems[0].AggregatorStore.EmitOverflowAttribute);
     }
 
     [Theory]
@@ -158,7 +158,7 @@ public abstract class MetricOverflowAttributeTestsBase
         counter.Add(10); // Record measurement for zero tags
 
         // Max number for MetricPoints available for use when emitted with tags
-        int maxMetricPointsForUse = MeterProviderBuilderSdk.DefaultCardinalityLimit - 2;
+        int maxMetricPointsForUse = MeterProviderBuilderSdk.DefaultCardinalityLimit;
 
         for (int i = 0; i < maxMetricPointsForUse; i++)
         {
@@ -186,7 +186,7 @@ public abstract class MetricOverflowAttributeTestsBase
         exportedItems.Clear();
         metricPoints.Clear();
 
-        counter.Add(5, new KeyValuePair<string, object>("Key", 1998)); // Emit a metric to exceed the max MetricPoint limit
+        counter.Add(5, new KeyValuePair<string, object>("Key", 2000)); // Emit a metric to exceed the max MetricPoint limit
 
         meterProvider.ForceFlush();
         metric = exportedItems[0];
@@ -215,7 +215,7 @@ public abstract class MetricOverflowAttributeTestsBase
         counter.Add(15); // Record another measurement for zero tags
 
         // Emit 2500 more newer MetricPoints with distinct dimension combinations
-        for (int i = 2000; i < 4500; i++)
+        for (int i = 2001; i < 4501; i++)
         {
             counter.Add(5, new KeyValuePair<string, object>("Key", i));
         }
@@ -236,11 +236,11 @@ public abstract class MetricOverflowAttributeTestsBase
 
             int expectedSum;
 
-            // Number of metric points that were available before the 2500 measurements were made = 2000 (max MetricPoints) - 2 (reserved for zero tags and overflow) = 1998
+            // Number of metric points that were available before the 2500 measurements were made = 2000 (max MetricPoints)
             if (this.shouldReclaimUnusedMetricPoints)
             {
-                // If unused metric points are reclaimed, then number of metric points dropped = 2500 - 1998 = 502
-                expectedSum = 2510; // 502 * 5
+                // If unused metric points are reclaimed, then number of metric points dropped = 2500 - 2000 = 500
+                expectedSum = 2500; // 500 * 5
             }
             else
             {
@@ -309,7 +309,7 @@ public abstract class MetricOverflowAttributeTestsBase
         histogram.Record(10); // Record measurement for zero tags
 
         // Max number for MetricPoints available for use when emitted with tags
-        int maxMetricPointsForUse = MeterProviderBuilderSdk.DefaultCardinalityLimit - 2;
+        int maxMetricPointsForUse = MeterProviderBuilderSdk.DefaultCardinalityLimit;
 
         for (int i = 0; i < maxMetricPointsForUse; i++)
         {
@@ -337,7 +337,7 @@ public abstract class MetricOverflowAttributeTestsBase
         exportedItems.Clear();
         metricPoints.Clear();
 
-        histogram.Record(5, new KeyValuePair<string, object>("Key", 1998)); // Emit a metric to exceed the max MetricPoint limit
+        histogram.Record(5, new KeyValuePair<string, object>("Key", 2000)); // Emit a metric to exceed the max MetricPoint limit
 
         meterProvider.ForceFlush();
         metric = exportedItems[0];
@@ -366,7 +366,7 @@ public abstract class MetricOverflowAttributeTestsBase
         histogram.Record(15); // Record another measurement for zero tags
 
         // Emit 2500 more newer MetricPoints with distinct dimension combinations
-        for (int i = 2000; i < 4500; i++)
+        for (int i = 2001; i < 4501; i++)
         {
             histogram.Record(5, new KeyValuePair<string, object>("Key", i));
         }
@@ -388,12 +388,12 @@ public abstract class MetricOverflowAttributeTestsBase
             int expectedCount;
             int expectedSum;
 
-            // Number of metric points that were available before the 2500 measurements were made = 2000 (max MetricPoints) - 2 (reserved for zero tags and overflow) = 1998
+            // Number of metric points that were available before the 2500 measurements were made = 2000 (max MetricPoints)
             if (this.shouldReclaimUnusedMetricPoints)
             {
-                // If unused metric points are reclaimed, then number of metric points dropped = 2500 - 1998 = 502
-                expectedCount = 502;
-                expectedSum = 2510; // 502 * 5
+                // If unused metric points are reclaimed, then number of metric points dropped = 2500 - 2000 = 500
+                expectedCount = 500;
+                expectedSum = 2500; // 500 * 5
             }
             else
             {
@@ -407,7 +407,6 @@ public abstract class MetricOverflowAttributeTestsBase
         else
         {
             Assert.Equal(25, zeroTagsMetricPoint.GetHistogramSum());
-
             Assert.Equal(2501, overflowMetricPoint.GetHistogramCount());
             Assert.Equal(12505, overflowMetricPoint.GetHistogramSum()); // 5 + (2500 * 5)
         }

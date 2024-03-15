@@ -14,8 +14,13 @@ public class Http2UnencryptedSupportTests : IDisposable
 
     public void Dispose()
     {
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", this.initialFlagStatus);
+        this.Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", this.initialFlagStatus);
     }
 
     private static bool DetermineInitialFlagStatus()
