@@ -61,7 +61,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         resourceBuilder.ServiceProvider = serviceProvider;
         this.Resource = resourceBuilder.Build();
 
-        this.sampler = ResolveSamplerFromSpecificationConfigurationKeys(serviceProvider!.GetRequiredService<IConfiguration>(), state.Sampler);
+        this.sampler = GetSampler(serviceProvider!.GetRequiredService<IConfiguration>(), state.Sampler);
         OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.sampler.GetType()}\".");
 
         this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
@@ -405,7 +405,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         base.Dispose(disposing);
     }
 
-    private static Sampler ResolveSamplerFromSpecificationConfigurationKeys(IConfiguration configuration, Sampler? stateSampler)
+    private static Sampler GetSampler(IConfiguration configuration, Sampler? stateSampler)
     {
         Sampler? sampler = null;
 
