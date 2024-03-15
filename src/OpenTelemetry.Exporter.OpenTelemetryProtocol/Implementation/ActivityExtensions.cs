@@ -237,7 +237,7 @@ internal static class ActivityExtensions
         int maxTags = sdkLimitOptions.SpanLinkAttributeCountLimit ?? int.MaxValue;
         foreach (ref readonly var tag in activityLink.EnumerateTagObjects())
         {
-            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, sdkLimitOptions.AttributeValueLengthLimit))
+            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var attribute, sdkLimitOptions.AttributeValueLengthLimit))
             {
                 if (otlpLink.Attributes.Count < maxTags)
                 {
@@ -265,7 +265,7 @@ internal static class ActivityExtensions
         int maxTags = sdkLimitOptions.SpanEventAttributeCountLimit ?? int.MaxValue;
         foreach (ref readonly var tag in activityEvent.EnumerateTagObjects())
         {
-            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, sdkLimitOptions.AttributeValueLengthLimit))
+            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var attribute, sdkLimitOptions.AttributeValueLengthLimit))
             {
                 if (otlpEvent.Attributes.Count < maxTags)
                 {
@@ -322,7 +322,7 @@ internal static class ActivityExtensions
                         continue;
                 }
 
-                if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, this.SdkLimitOptions.AttributeValueLengthLimit))
+                if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var attribute, this.SdkLimitOptions.AttributeValueLengthLimit))
                 {
                     if (this.Span.Attributes.Count < maxTags)
                     {

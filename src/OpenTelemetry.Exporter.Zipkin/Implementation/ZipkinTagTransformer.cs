@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation;
@@ -8,6 +10,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation;
 internal sealed class ZipkinTagTransformer : TagTransformer<string>
 {
     private ZipkinTagTransformer()
+        : base(ZipkinExporterEventSource.Log.UnsupportedAttributeType)
     {
     }
 

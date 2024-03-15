@@ -38,15 +38,7 @@ public class ZipkinExporter : BaseExporter<Activity>
         this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
         this.httpClient = client ?? options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("ZipkinExporter was missing HttpClientFactory or it returned null.");
 
-        ZipkinTagTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
-        {
-            ZipkinExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
-        };
-
-        ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
-        {
-            ZipkinExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
-        };
+        ConfigurationExtensions.LogInvalidEnvironmentVariable = ZipkinExporterEventSource.Log.InvalidEnvironmentVariable;
     }
 
     internal ZipkinEndpoint LocalEndpoint { get; private set; }

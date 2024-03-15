@@ -11,11 +11,11 @@ public abstract class ConsoleExporter<T> : BaseExporter<T>
     protected ConsoleExporter(ConsoleExporterOptions options)
     {
         this.options = options ?? new ConsoleExporterOptions();
-        ConsoleTagTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
-        {
-            this.WriteLine($"Unsupported attribute type {tagValueType} for {tagKey}.");
-        };
+
+        this.TagTransformer = new ConsoleTagTransformer(this.OnLogUnsupportedAttributeType);
     }
+
+    internal ConsoleTagTransformer TagTransformer { get; }
 
     protected void WriteLine(string message)
     {
@@ -28,5 +28,10 @@ public abstract class ConsoleExporter<T> : BaseExporter<T>
         {
             System.Diagnostics.Trace.WriteLine(message);
         }
+    }
+
+    private void OnLogUnsupportedAttributeType(string tagValueType, string tagKey)
+    {
+        this.WriteLine($"Unsupported attribute value type '{tagValueType}' for '{tagKey}'.");
     }
 }

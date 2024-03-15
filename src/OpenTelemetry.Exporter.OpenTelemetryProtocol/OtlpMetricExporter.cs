@@ -40,17 +40,10 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest> transmissionHandler = null)
     {
-        // Each of the Otlp exporters: Traces, Metrics, and Logs set the same value for `OtlpKeyValueTransformer.LogUnsupportedAttributeType`
-        // and `ConfigurationExtensions.LogInvalidEnvironmentVariable` so it should be fine even if these exporters are used together.
-        OtlpKeyValueTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
-        };
-
-        ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
-        };
+        // Each of the Otlp exporters: Traces, Metrics, and Logs set the same
+        // value for `ConfigurationExtensions.LogInvalidEnvironmentVariable` so
+        // it should be fine even if these exporters are used together.
+        ConfigurationExtensions.LogInvalidEnvironmentVariable = OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable;
 
         this.transmissionHandler = transmissionHandler ?? options.GetMetricsExportTransmissionHandler(experimentalOptions);
     }

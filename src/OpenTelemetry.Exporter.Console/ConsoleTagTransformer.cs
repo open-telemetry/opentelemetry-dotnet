@@ -1,17 +1,18 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter;
 
 internal sealed class ConsoleTagTransformer : TagTransformer<string>
 {
-    private ConsoleTagTransformer()
+    public ConsoleTagTransformer(Action<string, string> onLogUnsupportedAttributeType)
+        : base(onLogUnsupportedAttributeType)
     {
     }
-
-    public static ConsoleTagTransformer Instance { get; } = new();
 
     protected override string TransformIntegralTag(string key, long value) => $"{key}: {value}";
 

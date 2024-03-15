@@ -19,6 +19,7 @@
     <Compile Include="$(RepoRoot)\src\Shared\Options\*.cs" Link="Includes\Options\%(Filename).cs" />
     <Compile Include="$(RepoRoot)\src\Shared\PeerServiceResolver.cs" Link="Includes\PeerServiceResolver.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\TagTransformer.cs" Link="Includes\TagTransformer.cs" />

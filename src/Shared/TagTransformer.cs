@@ -1,13 +1,29 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+
 namespace OpenTelemetry.Internal;
 
 internal abstract class TagTransformer<T>
+    where T : notnull
 {
-    public static Action<string, string> LogUnsupportedAttributeType = null;
+    private readonly Action<string, string> logUnsupportedAttributeType;
 
-    public bool TryTransformTag(KeyValuePair<string, object> tag, out T result, int? maxLength = null)
+    protected TagTransformer(Action<string, string> onLogUnsupportedAttributeType)
+    {
+        Guard.ThrowIfNull(onLogUnsupportedAttributeType);
+
+        this.logUnsupportedAttributeType = onLogUnsupportedAttributeType;
+    }
+
+    public bool TryTransformTag(
+        KeyValuePair<string, object> tag,
+        [NotNullWhen(true)] out T? result,
+        int? maxLength = null)
     {
         if (tag.Value == null)
         {
@@ -19,7 +35,7 @@ internal abstract class TagTransformer<T>
         {
             case char:
             case string:
-                result = this.TransformStringTag(tag.Key, TruncateString(Convert.ToString(tag.Value), maxLength));
+                result = this.TransformStringTag(tag.Key, TruncateString(Convert.ToString(tag.Value)!, maxLength));
                 break;
             case bool b:
                 result = this.TransformBooleanTag(tag.Key, b);
@@ -47,9 +63,7 @@ internal abstract class TagTransformer<T>
                     // If an exception is thrown when calling ToString
                     // on any element of the array, then the entire array value
                     // is ignored.
-                    LogUnsupportedAttributeType?.Invoke(tag.Value.GetType().ToString(), tag.Key);
-                    result = default;
-                    return false;
+                    return this.LogUnsupportedAttributeTypeAndReturnDefault(tag.Key, tag.Value, out result);
                 }
 
                 break;
@@ -63,14 +77,18 @@ internal abstract class TagTransformer<T>
             default:
                 try
                 {
-                    result = this.TransformStringTag(tag.Key, TruncateString(tag.Value.ToString(), maxLength));
+                    var stringValue = TruncateString(Convert.ToString(tag.Value), maxLength);
+                    if (stringValue == null)
+                    {
+                        return this.LogUnsupportedAttributeTypeAndReturnDefault(tag.Key, tag.Value, out result);
+                    }
+
+                    result = this.TransformStringTag(tag.Key, stringValue);
                 }
                 catch
                 {
                     // If ToString throws an exception then the tag is ignored.
-                    LogUnsupportedAttributeType?.Invoke(tag.Value.GetType().ToString(), tag.Key);
-                    result = default;
-                    return false;
+                    return this.LogUnsupportedAttributeTypeAndReturnDefault(tag.Key, tag.Value, out result);
                 }
 
                 break;
@@ -89,7 +107,8 @@ internal abstract class TagTransformer<T>
 
     protected abstract T TransformArrayTag(string key, Array array);
 
-    private static string TruncateString(string value, int? maxLength)
+    [return: NotNullIfNotNull(nameof(value))]
+    private static string? TruncateString(string? value, int? maxLength)
     {
         return maxLength.HasValue && value?.Length > maxLength
             ? value.Substring(0, maxLength.Value)
@@ -119,21 +138,33 @@ internal abstract class TagTransformer<T>
 
     private T ConvertToStringArrayThenTransformArrayTag(string key, Array array, int? maxStringValueLength)
     {
-        string[] stringArray;
+        string?[] stringArray;
 
-        if (array is string[] arrayAsStringArray && (!maxStringValueLength.HasValue || !arrayAsStringArray.Any(s => s?.Length > maxStringValueLength)))
+        if (array is string?[] arrayAsStringArray && (!maxStringValueLength.HasValue || !arrayAsStringArray.Any(s => s?.Length > maxStringValueLength)))
         {
             stringArray = arrayAsStringArray;
         }
         else
         {
-            stringArray = new string[array.Length];
+            stringArray = new string?[array.Length];
             for (var i = 0; i < array.Length; ++i)
             {
-                stringArray[i] = TruncateString(array.GetValue(i)?.ToString(), maxStringValueLength);
+                var item = array.GetValue(i);
+                stringArray[i] = item == null
+                    ? null
+                    : TruncateString(Convert.ToString(item), maxStringValueLength);
             }
         }
 
         return this.TransformArrayTag(key, stringArray);
+    }
+
+    private bool LogUnsupportedAttributeTypeAndReturnDefault(string key, object value, out T? result)
+    {
+        Debug.Assert(value != null, "value was null");
+
+        this.logUnsupportedAttributeType(value!.GetType().ToString(), key);
+        result = default;
+        return false;
     }
 }
