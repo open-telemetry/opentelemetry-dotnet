@@ -472,7 +472,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         }
         else
         {
-            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler argument configuration was found but the value '{configValue}' is invalid and will be ignored.");
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler argument configuration was found but the value '{configValue}' is invalid and will be ignored, default of value of '1.0' will be used.");
         }
 
         return 1.0;
