@@ -419,7 +419,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             if (sampler != null)
             {
                 OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent(
-                    $"Trace sampler configuration value '{tracesSampler}' has been ignored because a value '{sampler.Description}' was set previously.");
+                    $"Trace sampler configuration value '{tracesSampler}' has been ignored because a value '{sampler.GetType().FullName}' was set previously.");
                 return sampler;
             }
 
@@ -456,7 +456,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
             if (sampler != null)
             {
-                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler set to '{sampler.Description}' from configuration.");
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler set to '{sampler.GetType().FullName}' from configuration.");
             }
         }
 
