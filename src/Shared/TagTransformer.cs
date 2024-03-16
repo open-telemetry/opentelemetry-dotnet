@@ -11,13 +11,8 @@ namespace OpenTelemetry.Internal;
 internal abstract class TagTransformer<T>
     where T : notnull
 {
-    private readonly Action<string, string> logUnsupportedAttributeType;
-
-    protected TagTransformer(Action<string, string> onLogUnsupportedAttributeType)
+    protected TagTransformer()
     {
-        Guard.ThrowIfNull(onLogUnsupportedAttributeType);
-
-        this.logUnsupportedAttributeType = onLogUnsupportedAttributeType;
     }
 
     public bool TryTransformTag(
@@ -107,6 +102,10 @@ internal abstract class TagTransformer<T>
 
     protected abstract T TransformArrayTag(string key, Array array);
 
+    protected abstract void OnUnsupportedAttributeDropped(
+        string attributeKey,
+        string attributeValueTypeFullName);
+
     [return: NotNullIfNotNull(nameof(value))]
     private static string? TruncateString(string? value, int? maxLength)
     {
@@ -163,7 +162,7 @@ internal abstract class TagTransformer<T>
     {
         Debug.Assert(value != null, "value was null");
 
-        this.logUnsupportedAttributeType(value!.GetType().ToString(), key);
+        this.OnUnsupportedAttributeDropped(key, value!.GetType().ToString());
         result = default;
         return false;
     }

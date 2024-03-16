@@ -11,7 +11,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 internal sealed class OtlpTagTransformer : TagTransformer<OtlpCommon.KeyValue>
 {
     private OtlpTagTransformer()
-        : base(OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType)
     {
     }
 
@@ -47,6 +46,15 @@ internal sealed class OtlpTagTransformer : TagTransformer<OtlpCommon.KeyValue>
         }
 
         return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { ArrayValue = arrayValue } };
+    }
+
+    protected override void OnUnsupportedAttributeDropped(
+        string attributeKey,
+        string attributeValueTypeFullName)
+    {
+        OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(
+            attributeValueTypeFullName,
+            attributeKey);
     }
 
     private static OtlpCommon.AnyValue ToAnyValue(long value)

@@ -10,7 +10,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation;
 internal sealed class ZipkinTagTransformer : TagTransformer<string>
 {
     private ZipkinTagTransformer()
-        : base(ZipkinExporterEventSource.Log.UnsupportedAttributeType)
     {
     }
 
@@ -26,4 +25,13 @@ internal sealed class ZipkinTagTransformer : TagTransformer<string>
 
     protected override string TransformArrayTag(string key, Array array)
         => this.TransformStringTag(key, TagTransformerJsonHelper.JsonSerializeArrayTag(array));
+
+    protected override void OnUnsupportedAttributeDropped(
+        string attributeKey,
+        string attributeValueTypeFullName)
+    {
+        ZipkinExporterEventSource.Log.UnsupportedAttributeType(
+            attributeValueTypeFullName,
+            attributeKey);
+    }
 }

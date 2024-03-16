@@ -3,15 +3,20 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter;
 
 internal sealed class ConsoleTagTransformer : TagTransformer<string>
 {
-    public ConsoleTagTransformer(Action<string, string> onLogUnsupportedAttributeType)
-        : base(onLogUnsupportedAttributeType)
+    private readonly Action<string, string> onUnsupportedAttributeDropped;
+
+    public ConsoleTagTransformer(Action<string, string> onUnsupportedAttributeDropped)
     {
+        Debug.Assert(onUnsupportedAttributeDropped != null, "onUnsupportedAttributeDropped was null");
+
+        this.onUnsupportedAttributeDropped = onUnsupportedAttributeDropped!;
     }
 
     protected override string TransformIntegralTag(string key, long value) => $"{key}: {value}";
@@ -24,4 +29,11 @@ internal sealed class ConsoleTagTransformer : TagTransformer<string>
 
     protected override string TransformArrayTag(string key, Array array)
         => this.TransformStringTag(key, TagTransformerJsonHelper.JsonSerializeArrayTag(array));
+
+    protected override void OnUnsupportedAttributeDropped(
+        string attributeKey,
+        string attributeValueTypeFullName)
+    {
+        this.onUnsupportedAttributeDropped(attributeKey, attributeValueTypeFullName);
+    }
 }

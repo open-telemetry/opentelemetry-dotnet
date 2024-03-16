@@ -30,8 +30,10 @@ public abstract class ConsoleExporter<T> : BaseExporter<T>
         }
     }
 
-    private void OnLogUnsupportedAttributeType(string tagValueType, string tagKey)
+    private void OnLogUnsupportedAttributeType(
+        string attributeKey,
+        string attributeValueTypeFullName)
     {
-        this.WriteLine($"Unsupported attribute value type '{tagValueType}' for '{tagKey}'.");
+        this.WriteLine($"Unsupported attribute value type '{attributeValueTypeFullName}' for '{attributeKey}'.");
     }
 }
