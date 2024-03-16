@@ -12,7 +12,7 @@ public abstract class ConsoleExporter<T> : BaseExporter<T>
     {
         this.options = options ?? new ConsoleExporterOptions();
 
-        this.TagTransformer = new ConsoleTagTransformer(this.OnLogUnsupportedAttributeType);
+        this.TagTransformer = new ConsoleTagTransformer(this.OnUnsupportedAttributeDropped);
     }
 
     internal ConsoleTagTransformer TagTransformer { get; }
@@ -30,7 +30,7 @@ public abstract class ConsoleExporter<T> : BaseExporter<T>
         }
     }
 
-    private void OnLogUnsupportedAttributeType(
+    private void OnUnsupportedAttributeDropped(
         string attributeKey,
         string attributeValueTypeFullName)
     {
