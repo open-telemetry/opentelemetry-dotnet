@@ -18,7 +18,7 @@ internal abstract class TagTransformer<T>
     public bool TryTransformTag(
         KeyValuePair<string, object> tag,
         [NotNullWhen(true)] out T? result,
-        int? maxLength = null)
+        int? tagValueMaxLength = null)
     {
         if (tag.Value == null)
         {
@@ -30,7 +30,7 @@ internal abstract class TagTransformer<T>
         {
             case char:
             case string:
-                result = this.TransformStringTag(tag.Key, TruncateString(Convert.ToString(tag.Value)!, maxLength));
+                result = this.TransformStringTag(tag.Key, TruncateString(Convert.ToString(tag.Value)!, tagValueMaxLength));
                 break;
             case bool b:
                 result = this.TransformBooleanTag(tag.Key, b);
@@ -51,14 +51,14 @@ internal abstract class TagTransformer<T>
             case Array array:
                 try
                 {
-                    result = this.TransformArrayTagInternal(tag.Key, array, maxLength);
+                    result = this.TransformArrayTagInternal(tag.Key, array, tagValueMaxLength);
                 }
                 catch
                 {
                     // If an exception is thrown when calling ToString
                     // on any element of the array, then the entire array value
                     // is ignored.
-                    return this.LogUnsupportedAttributeTypeAndReturnDefault(tag.Key, tag.Value, out result);
+                    return this.LogUnsupportedTagTypeAndReturnDefault(tag.Key, tag.Value, out result);
                 }
 
                 break;
@@ -72,10 +72,10 @@ internal abstract class TagTransformer<T>
             default:
                 try
                 {
-                    var stringValue = TruncateString(Convert.ToString(tag.Value), maxLength);
+                    var stringValue = TruncateString(Convert.ToString(tag.Value), tagValueMaxLength);
                     if (stringValue == null)
                     {
-                        return this.LogUnsupportedAttributeTypeAndReturnDefault(tag.Key, tag.Value, out result);
+                        return this.LogUnsupportedTagTypeAndReturnDefault(tag.Key, tag.Value, out result);
                     }
 
                     result = this.TransformStringTag(tag.Key, stringValue);
@@ -83,7 +83,7 @@ internal abstract class TagTransformer<T>
                 catch
                 {
                     // If ToString throws an exception then the tag is ignored.
-                    return this.LogUnsupportedAttributeTypeAndReturnDefault(tag.Key, tag.Value, out result);
+                    return this.LogUnsupportedTagTypeAndReturnDefault(tag.Key, tag.Value, out result);
                 }
 
                 break;
@@ -102,9 +102,9 @@ internal abstract class TagTransformer<T>
 
     protected abstract T TransformArrayTag(string key, Array array);
 
-    protected abstract void OnUnsupportedAttributeDropped(
-        string attributeKey,
-        string attributeValueTypeFullName);
+    protected abstract void OnUnsupportedTagDropped(
+        string tagKey,
+        string tagValueTypeFullName);
 
     [return: NotNullIfNotNull(nameof(value))]
     private static string? TruncateString(string? value, int? maxLength)
@@ -114,13 +114,13 @@ internal abstract class TagTransformer<T>
             : value;
     }
 
-    private T TransformArrayTagInternal(string key, Array array, int? maxStringValueLength)
+    private T TransformArrayTagInternal(string key, Array array, int? tagValueMaxLength)
     {
         // This switch ensures the values of the resultant array-valued tag are of the same type.
         return array switch
         {
             char[] => this.TransformArrayTag(key, array),
-            string[] => this.ConvertToStringArrayThenTransformArrayTag(key, array, maxStringValueLength),
+            string[] => this.ConvertToStringArrayThenTransformArrayTag(key, array, tagValueMaxLength),
             bool[] => this.TransformArrayTag(key, array),
             byte[] => this.TransformArrayTag(key, array),
             sbyte[] => this.TransformArrayTag(key, array),
@@ -131,15 +131,16 @@ internal abstract class TagTransformer<T>
             long[] => this.TransformArrayTag(key, array),
             float[] => this.TransformArrayTag(key, array),
             double[] => this.TransformArrayTag(key, array),
-            _ => this.ConvertToStringArrayThenTransformArrayTag(key, array, maxStringValueLength),
+            _ => this.ConvertToStringArrayThenTransformArrayTag(key, array, tagValueMaxLength),
         };
     }
 
-    private T ConvertToStringArrayThenTransformArrayTag(string key, Array array, int? maxStringValueLength)
+    private T ConvertToStringArrayThenTransformArrayTag(string key, Array array, int? tagValueMaxLength)
     {
         string?[] stringArray;
 
-        if (array is string?[] arrayAsStringArray && (!maxStringValueLength.HasValue || !arrayAsStringArray.Any(s => s?.Length > maxStringValueLength)))
+        if (array is string?[] arrayAsStringArray
+            && (!tagValueMaxLength.HasValue || !arrayAsStringArray.Any(s => s?.Length > tagValueMaxLength)))
         {
             stringArray = arrayAsStringArray;
         }
@@ -151,18 +152,18 @@ internal abstract class TagTransformer<T>
                 var item = array.GetValue(i);
                 stringArray[i] = item == null
                     ? null
-                    : TruncateString(Convert.ToString(item), maxStringValueLength);
+                    : TruncateString(Convert.ToString(item), tagValueMaxLength);
             }
         }
 
         return this.TransformArrayTag(key, stringArray);
     }
 
-    private bool LogUnsupportedAttributeTypeAndReturnDefault(string key, object value, out T? result)
+    private bool LogUnsupportedTagTypeAndReturnDefault(string key, object value, out T? result)
     {
         Debug.Assert(value != null, "value was null");
 
-        this.OnUnsupportedAttributeDropped(key, value!.GetType().ToString());
+        this.OnUnsupportedTagDropped(key, value!.GetType().ToString());
         result = default;
         return false;
     }

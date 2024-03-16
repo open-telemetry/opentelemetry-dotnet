@@ -10,13 +10,13 @@ namespace OpenTelemetry.Exporter;
 
 internal sealed class ConsoleTagTransformer : TagTransformer<string>
 {
-    private readonly Action<string, string> onUnsupportedAttributeDropped;
+    private readonly Action<string, string> onUnsupportedTagDropped;
 
-    public ConsoleTagTransformer(Action<string, string> onUnsupportedAttributeDropped)
+    public ConsoleTagTransformer(Action<string, string> onUnsupportedTagDropped)
     {
-        Debug.Assert(onUnsupportedAttributeDropped != null, "onUnsupportedAttributeDropped was null");
+        Debug.Assert(onUnsupportedTagDropped != null, "onUnsupportedTagDropped was null");
 
-        this.onUnsupportedAttributeDropped = onUnsupportedAttributeDropped!;
+        this.onUnsupportedTagDropped = onUnsupportedTagDropped!;
     }
 
     protected override string TransformIntegralTag(string key, long value) => $"{key}: {value}";
@@ -30,10 +30,10 @@ internal sealed class ConsoleTagTransformer : TagTransformer<string>
     protected override string TransformArrayTag(string key, Array array)
         => this.TransformStringTag(key, TagTransformerJsonHelper.JsonSerializeArrayTag(array));
 
-    protected override void OnUnsupportedAttributeDropped(
-        string attributeKey,
-        string attributeValueTypeFullName)
+    protected override void OnUnsupportedTagDropped(
+        string tagKey,
+        string tagValueTypeFullName)
     {
-        this.onUnsupportedAttributeDropped(attributeKey, attributeValueTypeFullName);
+        this.onUnsupportedTagDropped(tagKey, tagValueTypeFullName);
     }
 }

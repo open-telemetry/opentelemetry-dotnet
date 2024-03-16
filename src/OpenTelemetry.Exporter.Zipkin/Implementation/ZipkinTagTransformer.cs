@@ -26,12 +26,12 @@ internal sealed class ZipkinTagTransformer : TagTransformer<string>
     protected override string TransformArrayTag(string key, Array array)
         => this.TransformStringTag(key, TagTransformerJsonHelper.JsonSerializeArrayTag(array));
 
-    protected override void OnUnsupportedAttributeDropped(
-        string attributeKey,
-        string attributeValueTypeFullName)
+    protected override void OnUnsupportedTagDropped(
+        string tagKey,
+        string tagValueTypeFullName)
     {
         ZipkinExporterEventSource.Log.UnsupportedAttributeType(
-            attributeValueTypeFullName,
-            attributeKey);
+            tagValueTypeFullName,
+            tagKey);
     }
 }

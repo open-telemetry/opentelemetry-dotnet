@@ -48,13 +48,13 @@ internal sealed class OtlpTagTransformer : TagTransformer<OtlpCommon.KeyValue>
         return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { ArrayValue = arrayValue } };
     }
 
-    protected override void OnUnsupportedAttributeDropped(
-        string attributeKey,
-        string attributeValueTypeFullName)
+    protected override void OnUnsupportedTagDropped(
+        string tagKey,
+        string tagValueTypeFullName)
     {
         OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(
-            attributeValueTypeFullName,
-            attributeKey);
+            tagValueTypeFullName,
+            tagKey);
     }
 
     private static OtlpCommon.AnyValue ToAnyValue(long value)

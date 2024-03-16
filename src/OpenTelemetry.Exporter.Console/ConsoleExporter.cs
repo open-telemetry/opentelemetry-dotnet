@@ -12,7 +12,7 @@ public abstract class ConsoleExporter<T> : BaseExporter<T>
     {
         this.options = options ?? new ConsoleExporterOptions();
 
-        this.TagTransformer = new ConsoleTagTransformer(this.OnUnsupportedAttributeDropped);
+        this.TagTransformer = new ConsoleTagTransformer(this.OnUnsupportedTagDropped);
     }
 
     internal ConsoleTagTransformer TagTransformer { get; }
@@ -30,10 +30,10 @@ public abstract class ConsoleExporter<T> : BaseExporter<T>
         }
     }
 
-    private void OnUnsupportedAttributeDropped(
-        string attributeKey,
-        string attributeValueTypeFullName)
+    private void OnUnsupportedTagDropped(
+        string tagKey,
+        string tagValueTypeFullName)
     {
-        this.WriteLine($"Unsupported attribute value type '{attributeValueTypeFullName}' for '{attributeKey}'.");
+        this.WriteLine($"Unsupported attribute value type '{tagValueTypeFullName}' for '{tagKey}'.");
     }
 }
