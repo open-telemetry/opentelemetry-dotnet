@@ -53,7 +53,7 @@ internal readonly struct Tags : IEquatable<Tags>
             while (true)
             {
                 // Equality check for Keys
-                if (!StringComparer.OrdinalIgnoreCase.Equals(ours.Key, theirs.Key))
+                if (!ours.Key.Equals(theirs.Key))
                 {
                     return false;
                 }
@@ -82,7 +82,7 @@ internal readonly struct Tags : IEquatable<Tags>
             ref var theirs = ref theirKvps[i];
 
             // Equality check for Keys
-            if (!StringComparer.OrdinalIgnoreCase.Equals(ours.Key, theirs.Key))
+            if (!ours.Key.Equals(theirs.Key))
             {
                 return false;
             }
@@ -111,7 +111,7 @@ internal readonly struct Tags : IEquatable<Tags>
         for (int i = 0; i < keyValuePairs.Length; i++)
         {
             ref var item = ref keyValuePairs[i];
-            hashCode.Add(StringComparer.OrdinalIgnoreCase.GetHashCode(item.Key));
+            hashCode.Add(item.Key.GetHashCode());
             hashCode.Add(item.Value);
         }
 
@@ -124,7 +124,7 @@ internal readonly struct Tags : IEquatable<Tags>
             ref var item = ref keyValuePairs[i];
             unchecked
             {
-                hash = (hash * 31) + StringComparer.OrdinalIgnoreCase.GetHashCode(item.Key);
+                hash = (hash * 31) + item.Key.GetHashCode();
                 hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
             }
         }
