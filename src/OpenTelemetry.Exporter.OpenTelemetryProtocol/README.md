@@ -557,14 +557,14 @@ used for logging:
 
 ### Experimental features
 
-### All signals
+#### All signals
 
 * `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY`
 
   When set to `true`, it enables in-memory retry for transient errors
-  encountered sending telemetry.
+  encountered while sending telemetry.
 
-### Logs
+#### Logs
 
 * `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES`
 
