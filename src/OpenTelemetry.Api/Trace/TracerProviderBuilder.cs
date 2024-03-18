@@ -31,6 +31,11 @@ public abstract class TracerProviderBuilder
 
     /// <summary>
     /// Adds the given <see cref="ActivitySource"/> names to the list of subscribed sources.
+    ///
+    /// <remarks>
+    /// When multiple matchers are added for the same source name, the <see cref="TracerProvider"/>
+    /// will enable an ActivitySource if its name matches at least one of the provided names.
+    /// </remarks>
     /// </summary>
     /// <param name="names">Activity source names.</param>
     /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>

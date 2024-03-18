@@ -33,6 +33,8 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public List<string> Sources { get; } = new();
 
+    public List<Predicate<ActivitySource>> SourceSelectionPredicates { get; } = new();
+
     public HashSet<string> LegacyActivityOperationNames { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public Sampler? Sampler { get; private set; }
@@ -120,6 +122,13 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
             this.Sources.Add(name);
         }
 
+        return this;
+    }
+
+    public TracerProviderBuilder AddSource(Predicate<ActivitySource> sourcePredicate)
+    {
+        Guard.ThrowIfNull(sourcePredicate);
+        this.SourceSelectionPredicates.Add(sourcePredicate!);
         return this;
     }
 

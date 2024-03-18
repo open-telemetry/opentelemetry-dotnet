@@ -47,6 +47,8 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
     public List<string> MeterSources { get; } = new();
 
+    public List<Predicate<Meter>> MeterSelectionPredicates { get; } = new();
+
     public List<Func<Instrument, MetricStreamConfiguration?>> ViewConfigs { get; } = new();
 
     public int MetricLimit { get; private set; } = DefaultMetricLimit;
@@ -162,6 +164,14 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
             this.MeterSources.Add(name);
         }
+
+        return this;
+    }
+
+    public MeterProviderBuilder AddMeter(Predicate<Meter> meterPredicate)
+    {
+        Guard.ThrowIfNull(meterPredicate);
+        this.MeterSelectionPredicates.Add(meterPredicate!);
 
         return this;
     }

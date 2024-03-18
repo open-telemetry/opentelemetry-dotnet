@@ -29,6 +29,10 @@ public abstract class MeterProviderBuilder
 
     /// <summary>
     /// Adds given Meter names to the list of subscribed meters.
+    /// <remarks>
+    /// When multiple matchers are added for the same meter name, the <see cref="MeterProvider"/>
+    /// will enable a meter if its name matches at least one of the provided names.
+    /// </remarks>
     /// </summary>
     /// <param name="names">Meter names.</param>
     /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>

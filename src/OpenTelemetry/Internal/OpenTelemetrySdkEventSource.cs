@@ -157,6 +157,24 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
         }
     }
 
+    [NonEvent]
+    public void ActivitySourcePredicateException(string sourceName, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.ActivitySourcePredicateException(sourceName, ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void MeterPredicateException(string meterName, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.MeterPredicateException(meterName, ex.ToInvariantString());
+        }
+    }
+
     [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
     public void SpanProcessorException(string evnt, string ex)
     {
@@ -344,6 +362,18 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
     public void MetricInstrumentRemoved(string instrumentName, string meterName)
     {
         this.WriteEvent(53, instrumentName, meterName);
+    }
+
+    [Event(54, Message = "Exception thrown when invoking ActivitySource predicate for source '{0}', ignoring it. Exception: '{1}'", Level = EventLevel.Warning)]
+    public void ActivitySourcePredicateException(string sourceName, string error)
+    {
+        this.WriteEvent(54, sourceName, error);
+    }
+
+    [Event(55, Message = "Exception thrown when invoking Meter predicate for meter name '{0}', ignoring it. Exception: '{1}'", Level = EventLevel.Warning)]
+    public void MeterPredicateException(string meterName, string error)
+    {
+        this.WriteEvent(55, meterName, error);
     }
 
 #if DEBUG

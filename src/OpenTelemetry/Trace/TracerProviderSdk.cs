@@ -244,45 +244,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
         }
 
-        // Sources can be null. This happens when user
-        // is only interested in InstrumentationLibraries
-        // which do not depend on ActivitySources.
-        if (state.Sources.Any())
-        {
-            // Validation of source name is already done in builder.
-            if (state.Sources.Any(s => WildcardHelper.ContainsWildcard(s)))
-            {
-                var regex = WildcardHelper.GetWildcardRegex(state.Sources);
-
-                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not.
-                listener.ShouldListenTo = (activitySource) =>
-                    this.supportLegacyActivity ?
-                    string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
-                    regex.IsMatch(activitySource.Name);
-            }
-            else
-            {
-                var activitySources = new HashSet<string>(state.Sources, StringComparer.OrdinalIgnoreCase);
-
-                if (this.supportLegacyActivity)
-                {
-                    activitySources.Add(string.Empty);
-                }
-
-                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not.
-                listener.ShouldListenTo = (activitySource) => activitySources.Contains(activitySource.Name);
-            }
-        }
-        else
-        {
-            if (this.supportLegacyActivity)
-            {
-                listener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name);
-            }
-        }
-
+        listener.ShouldListenTo = this.GetPredicate(state);
         ActivitySource.AddActivityListener(listener);
         this.listener = listener;
         OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
@@ -462,6 +424,59 @@ internal sealed class TracerProviderSdk : TracerProvider
         return (isRootSpan || parentContext.IsRemote)
             ? ActivitySamplingResult.PropagationData
             : ActivitySamplingResult.None;
+    }
+
+    private Func<ActivitySource, bool> GetPredicate(TracerProviderBuilderSdk state)
+    {
+        List<Predicate<ActivitySource>> predicates = new List<Predicate<ActivitySource>>();
+
+        // Sources can be empty. This happens when user
+        // is only interested in InstrumentationLibraries
+        // which do not depend on ActivitySources.
+        if (state.Sources.Any())
+        {
+            predicates.Add(this.GetNamePredicate(state));
+        }
+
+        predicates.AddRange(state.SourceSelectionPredicates);
+
+        if (this.supportLegacyActivity)
+        {
+            predicates.Add((activitySource) => string.IsNullOrEmpty(activitySource.Name));
+        }
+
+        return (activitySource) =>
+        {
+            bool shouldListen = false;
+            for (int i = 0; i < predicates.Count && !shouldListen; i++)
+            {
+                try
+                {
+                    shouldListen |= predicates[i](activitySource);
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.ActivitySourcePredicateException(activitySource.Name, ex);
+                }
+            }
+
+            return shouldListen;
+        };
+    }
+
+    private Predicate<ActivitySource> GetNamePredicate(TracerProviderBuilderSdk state)
+    {
+        Debug.Assert(state.Sources.Any(), "Should only be called when there are name-based source predicates.");
+
+        // Validation of source name is already done in builder.
+        if (state.Sources.Any(s => WildcardHelper.ContainsWildcard(s)))
+        {
+            var regex = WildcardHelper.GetWildcardRegex(state.Sources);
+            return (activitySource) => regex.IsMatch(activitySource.Name);
+        }
+
+        var activitySources = new HashSet<string>(state.Sources, StringComparer.OrdinalIgnoreCase);
+        return (activitySource) => activitySources.Contains(activitySource.Name);
     }
 
     private void RunGetRequestedDataAlwaysOnSampler(Activity activity)
