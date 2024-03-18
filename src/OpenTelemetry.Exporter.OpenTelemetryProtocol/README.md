@@ -557,19 +557,19 @@ used for logging:
 
 ### Experimental features
 
-#### All signals
+* All signals
 
-* `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY`
+  * `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY`
+  
+    When set to `true`, it enables in-memory retry for transient errors
+    encountered while sending telemetry.
 
-  When set to `true`, it enables in-memory retry for transient errors
-  encountered while sending telemetry.
+* Logs
 
-#### Logs
-
-* `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES`
-
-  When set to `true`, it enables export of `LogRecord.EventId.Id` as
-  `logrecord.event.id` and `LogRecord.EventId.Name` to `logrecord.event.name`.
+  * `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES`
+  
+    When set to `true`, it enables export of `LogRecord.EventId.Id` as
+    `logrecord.event.id` and `LogRecord.EventId.Name` to `logrecord.event.name`.
 
 ## Configure HttpClient
 
