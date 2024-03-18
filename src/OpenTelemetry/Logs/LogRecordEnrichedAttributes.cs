@@ -11,14 +11,25 @@ namespace OpenTelemetry.Logs;
 internal sealed class LogRecordEnrichedAttributes : IReadOnlyList<KeyValuePair<string, object?>>
 {
     private readonly List<KeyValuePair<string, object?>> enrichedAttributes = new();
-    private IReadOnlyList<KeyValuePair<string, object?>> initialAttributes;
+    private readonly LogRecord logRecord;
+    private IReadOnlyList<KeyValuePair<string, object?>>? initialAttributes;
 
-    public LogRecordEnrichedAttributes()
+    public LogRecordEnrichedAttributes(LogRecord logRecord)
     {
-        this.initialAttributes = Array.Empty<KeyValuePair<string, object?>>();
+        Debug.Assert(logRecord != null, "logRecord was null");
+
+        this.logRecord = logRecord!;
     }
 
-    public int Count => this.initialAttributes.Count + this.enrichedAttributes.Count;
+    public int Count
+    {
+        get
+        {
+            Debug.Assert(this.initialAttributes != null, "this.initialAttributes was null");
+
+            return this.initialAttributes!.Count + this.enrichedAttributes.Count;
+        }
+    }
 
     public KeyValuePair<string, object?> this[int index]
     {
@@ -26,7 +37,9 @@ internal sealed class LogRecordEnrichedAttributes : IReadOnlyList<KeyValuePair<s
         {
             Guard.ThrowIfNegative(index);
 
-            var initialAttributes = this.initialAttributes;
+            Debug.Assert(this.initialAttributes != null, "this.initialAttributes was null");
+
+            var initialAttributes = this.initialAttributes!;
 
             var count = initialAttributes.Count;
             if (index < count)
@@ -38,9 +51,12 @@ internal sealed class LogRecordEnrichedAttributes : IReadOnlyList<KeyValuePair<s
         }
     }
 
-    public void Reset(IReadOnlyList<KeyValuePair<string, object?>>? initialAttributes)
+    public void Reset()
     {
-        this.initialAttributes = initialAttributes ?? Array.Empty<KeyValuePair<string, object?>>();
+        this.initialAttributes = this.logRecord.Attributes ?? Array.Empty<KeyValuePair<string, object?>>();
+
+        // Note: Clear sets the count/size to 0 but it maintains the underlying
+        // array(capacity).
         this.enrichedAttributes.Clear();
     }
 

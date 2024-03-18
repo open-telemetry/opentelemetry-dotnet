@@ -573,9 +573,9 @@ public sealed class LogRecord
     {
         if (this.Attributes is not LogRecordEnrichedAttributes enrichedAttributes)
         {
-            enrichedAttributes = this.EnrichedAttributeStorage ??= new();
+            enrichedAttributes = this.EnrichedAttributeStorage ??= new(this);
 
-            enrichedAttributes.Reset(this.Attributes);
+            enrichedAttributes.Reset();
 
             this.Attributes = enrichedAttributes;
         }
