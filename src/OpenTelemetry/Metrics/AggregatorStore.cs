@@ -118,11 +118,15 @@ internal sealed class AggregatorStore
 
         this.OutputDeltaWithUnusedMetricPointReclaimEnabled = shouldReclaimUnusedMetricPoints && this.OutputDelta;
 
+        // Note: We reserve double the cardinalityLimit set by the user for
+        // storing unsorted & sorted tags for lookup
+        var lookupCapacity = cardinalityLimit * 2;
+
         if (this.OutputDeltaWithUnusedMetricPointReclaimEnabled)
         {
             this.availableMetricPoints = new Queue<int>(cardinalityLimit);
 
-            this.TagsToMetricPointIndexDictionaryDelta = new(concurrencyLevel: Environment.ProcessorCount, capacity: cardinalityLimit * 2);
+            this.TagsToMetricPointIndexDictionaryDelta = new(concurrencyLevel: Environment.ProcessorCount, capacity: lookupCapacity);
 
             // Add all the indices except for the reserved ones to the queue so that threads have
             // readily available access to these MetricPoints for their use.
@@ -136,7 +140,7 @@ internal sealed class AggregatorStore
         }
         else
         {
-            this.tagsToMetricPointIndexDictionary = new(concurrencyLevel: Environment.ProcessorCount, capacity: cardinalityLimit * 2);
+            this.tagsToMetricPointIndexDictionary = new(concurrencyLevel: Environment.ProcessorCount, capacity: lookupCapacity);
             this.lookupAggregatorStore = this.LookupAggregatorStore;
         }
     }
