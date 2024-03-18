@@ -162,13 +162,13 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
         throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
     }
 
-    public void AddExceptionProcessorIfEnabled()
+    public void AddExceptionProcessorIfEnabled(ref IEnumerable<BaseProcessor<Activity>> processors)
     {
         if (this.ExceptionProcessorEnabled)
         {
             try
             {
-                this.Processors.Insert(0, new ExceptionProcessor());
+                processors = new BaseProcessor<Activity>[] { new ExceptionProcessor() }.Concat(processors);
             }
             catch (Exception ex)
             {

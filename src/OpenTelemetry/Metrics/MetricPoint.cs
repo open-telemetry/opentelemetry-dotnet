@@ -19,11 +19,6 @@ public struct MetricPoint
     // ReferenceCount doesn't matter for MetricPoint with no tags and overflow attribute as they are never reclaimed.
     internal int ReferenceCount;
 
-    // When the AggregatorStore is reclaiming MetricPoints, this serves the purpose of validating the a given thread is using the right
-    // MetricPoint for update by checking it against what as added in the Dictionary. Also, when a thread finds out that the MetricPoint
-    // that its using is already reclaimed, this helps avoid sorting of the tags for adding a new Dictionary entry.
-    internal LookupData? LookupData;
-
     private const int DefaultSimpleReservoirPoolSize = 1;
 
     private readonly AggregatorStore aggregatorStore;
@@ -154,6 +149,12 @@ public struct MetricPoint
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private set;
     }
+
+    // When the AggregatorStore is reclaiming MetricPoints, this serves the purpose of validating the a given thread is using the right
+    // MetricPoint for update by checking it against what as added in the Dictionary. Also, when a thread finds out that the MetricPoint
+    // that its using is already reclaimed, this helps avoid sorting of the tags for adding a new Dictionary entry.
+    // Snapshot method can use this to skip trying to reclaim indices which have already been reclaimed and added to the queue.
+    internal LookupData? LookupData { readonly get; private set; }
 
     internal readonly bool IsInitialized => this.aggregatorStore != null;
 
@@ -1193,6 +1194,15 @@ public struct MetricPoint
                     break;
                 }
         }
+    }
+
+    /// <summary>
+    /// Denote that this MetricPoint is reclaimed.
+    /// </summary>
+    internal void Reclaim()
+    {
+        this.LookupData = null;
+        this.mpComponents = null;
     }
 
     private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool isSampled = false)

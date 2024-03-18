@@ -62,7 +62,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
             OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
         };
 
-        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetLogsExportTransmissionHandler();
+        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetLogsExportTransmissionHandler(experimentalOptions!);
 
         this.otlpLogRecordTransformer = new OtlpLogRecordTransformer(sdkLimitOptions!, experimentalOptions!);
     }

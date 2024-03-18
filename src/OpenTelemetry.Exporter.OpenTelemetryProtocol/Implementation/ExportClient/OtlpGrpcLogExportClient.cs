@@ -26,13 +26,11 @@ internal sealed class OtlpGrpcLogExportClient : BaseOtlpGrpcExportClient<OtlpCol
     }
 
     /// <inheritdoc/>
-    public override ExportClientResponse SendExportRequest(OtlpCollector.ExportLogsServiceRequest request, CancellationToken cancellationToken = default)
+    public override ExportClientResponse SendExportRequest(OtlpCollector.ExportLogsServiceRequest request, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
-        var deadline = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
-
         try
         {
-            this.logsClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
+            this.logsClient.Export(request, headers: this.Headers, deadline: deadlineUtc, cancellationToken: cancellationToken);
 
             // We do not need to return back response and deadline for successful response so using cached value.
             return SuccessExportResponse;
@@ -41,7 +39,7 @@ internal sealed class OtlpGrpcLogExportClient : BaseOtlpGrpcExportClient<OtlpCol
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return new ExportClientGrpcResponse(success: false, deadlineUtc: deadline, exception: ex);
+            return new ExportClientGrpcResponse(success: false, deadlineUtc: deadlineUtc, exception: ex);
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Microsoft.Extensions.Options
     /// <typeparam name="TOptions">The type of options being requested.</typeparam>
     internal sealed class DelegatingOptionsFactory<TOptions> :
         IOptionsFactory<TOptions>
-        where TOptions : class, new()
+        where TOptions : class
     {
         private readonly Func<IConfiguration, string, TOptions> optionsFactoryFunc;
         private readonly IConfiguration configuration;

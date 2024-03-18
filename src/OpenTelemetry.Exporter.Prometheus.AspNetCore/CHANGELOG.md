@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.8.0-beta.1
+
+Released 2024-Mar-14
+
 * Added option to disable _total suffix addition to counter metrics
   ([#5305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5305))
 
