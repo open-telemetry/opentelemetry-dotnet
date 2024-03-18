@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 
@@ -80,9 +81,9 @@ internal sealed class OtlpTagTransformer : TagTransformer<OtlpCommon.KeyValue>
         {
             case char:
             case string:
-                // TODO: We don't call TruncateString here so this stringValue
-                // won't obey attribute limits
-
+                // Note: No need to call TruncateString here. That is taken care
+                // of in base class via
+                // ConvertToStringArrayThenTransformArrayTag
                 return ToAnyValue(Convert.ToString(value)!);
             case bool b:
                 return ToAnyValue(b);
@@ -98,17 +99,17 @@ internal sealed class OtlpTagTransformer : TagTransformer<OtlpCommon.KeyValue>
             case double:
                 return ToAnyValue(Convert.ToDouble(value));
             default:
-                // Note: This may throw and we allow that to bubble up so we log
-                // the issue.
+                // Note: This should never be executed. In the base class the
+                // default case in TransformArrayTagInternal converts everything
+                // not explicitly supported to strings
+                Debug.Fail("Default case executed");
+
                 var stringValue = Convert.ToString(value);
 
                 if (stringValue == null)
                 {
                     return new();
                 }
-
-                // TODO: We don't call TruncateString here so this stringValue
-                // won't obey attribute limits
 
                 return ToAnyValue(stringValue);
         }
