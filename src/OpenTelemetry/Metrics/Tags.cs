@@ -52,13 +52,12 @@ internal readonly struct Tags : IEquatable<Tags>
             ref var theirs = ref MemoryMarshal.GetArrayDataReference(theirKvps);
             while (true)
             {
-                // Equality check for Keys
+                // Note: string.Equals performs an ordinal comparison
                 if (!ours.Key.Equals(theirs.Key))
                 {
                     return false;
                 }
 
-                // Equality check for Values
                 if (!ours.Value?.Equals(theirs.Value) ?? theirs.Value != null)
                 {
                     return false;
@@ -81,13 +80,12 @@ internal readonly struct Tags : IEquatable<Tags>
             // Note: Bounds check happens here for theirKvps element access
             ref var theirs = ref theirKvps[i];
 
-            // Equality check for Keys
+            // Note: string.Equals performs an ordinal comparison
             if (!ours.Key.Equals(theirs.Key))
             {
                 return false;
             }
 
-            // Equality check for Values
             if (!ours.Value?.Equals(theirs.Value) ?? theirs.Value != null)
             {
                 return false;
