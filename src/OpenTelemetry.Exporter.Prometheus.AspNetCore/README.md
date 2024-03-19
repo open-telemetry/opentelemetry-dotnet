@@ -8,9 +8,7 @@ for configuring an ASP.NET Core application with an endpoint for Prometheus
 to scrape.
 
 > [!NOTE]
-> This exporter does not support [OpenMetrics
-format](https://github.com/OpenObservability/OpenMetrics), and consequently,
-does not support Exemplars. For using Exemplars, use the [OTLP
+> This exporter does not support Exemplars. For using Exemplars, use the [OTLP
 Exporter](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md) and use a
 component like OTel Collector to expose metrics (with exemplars) to Prometheus.
 This [tutorial](../../docs/metrics/exemplars/README.md) shows one way how to do that.

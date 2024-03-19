@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.8.0-beta.1
+
+Released 2024-Mar-14
+
 * Added `IOpenTelemetryBuilder` interface to support authoring extensions which
   can configure multiple OpenTelemetry signals (tracing, metrics, and/or logs).
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
