@@ -628,7 +628,7 @@ want to solicit feedback from the community.
 * All signals
 
   * `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY`
- 
+
     When set to `true`, it enables in-memory retry for transient errors
     encountered while sending telemetry.
 
