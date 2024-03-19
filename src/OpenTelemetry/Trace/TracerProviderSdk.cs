@@ -423,35 +423,37 @@ internal sealed class TracerProviderSdk : TracerProvider
                 return sampler;
             }
 
-            if (string.Equals(configValue, "always_on", StringComparison.OrdinalIgnoreCase))
+            switch (configValue)
             {
-                sampler = new AlwaysOnSampler();
-            }
-            else if (string.Equals(configValue, "always_off", StringComparison.OrdinalIgnoreCase))
-            {
-                sampler = new AlwaysOffSampler();
-            }
-            else if (string.Equals(configValue, "traceidratio", StringComparison.OrdinalIgnoreCase))
-            {
-                var traceIdRatio = ReadTraceIdRatio(configuration);
-                sampler = new TraceIdRatioBasedSampler(traceIdRatio);
-            }
-            else if (string.Equals(configValue, "parentbased_always_on", StringComparison.OrdinalIgnoreCase))
-            {
-                sampler = new ParentBasedSampler(new AlwaysOnSampler());
-            }
-            else if (string.Equals(configValue, "parentbased_always_off", StringComparison.OrdinalIgnoreCase))
-            {
-                sampler = new ParentBasedSampler(new AlwaysOffSampler());
-            }
-            else if (string.Equals(configValue, "parentbased_traceidratio", StringComparison.OrdinalIgnoreCase))
-            {
-                var traceIdRatio = ReadTraceIdRatio(configuration);
-                sampler = new ParentBasedSampler(new TraceIdRatioBasedSampler(traceIdRatio));
-            }
-            else
-            {
-                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"OTEL_TRACES_SAMPLER configuration was found but the value '{configValue}' is invalid and will be ignored.");
+                case var _ when string.Equals(configValue, "always_on", StringComparison.OrdinalIgnoreCase):
+                    sampler = new AlwaysOnSampler();
+                    break;
+                case var _ when string.Equals(configValue, "always_off", StringComparison.OrdinalIgnoreCase):
+                    sampler = new AlwaysOffSampler();
+                    break;
+                case var _ when string.Equals(configValue, "traceidratio", StringComparison.OrdinalIgnoreCase):
+                    {
+                        var traceIdRatio = ReadTraceIdRatio(configuration);
+                        sampler = new TraceIdRatioBasedSampler(traceIdRatio);
+                        break;
+                    }
+
+                case var _ when string.Equals(configValue, "parentbased_always_on", StringComparison.OrdinalIgnoreCase):
+                    sampler = new ParentBasedSampler(new AlwaysOnSampler());
+                    break;
+                case var _ when string.Equals(configValue, "parentbased_always_off", StringComparison.OrdinalIgnoreCase):
+                    sampler = new ParentBasedSampler(new AlwaysOffSampler());
+                    break;
+                case var _ when string.Equals(configValue, "parentbased_traceidratio", StringComparison.OrdinalIgnoreCase):
+                    {
+                        var traceIdRatio = ReadTraceIdRatio(configuration);
+                        sampler = new ParentBasedSampler(new TraceIdRatioBasedSampler(traceIdRatio));
+                        break;
+                    }
+
+                default:
+                    OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"OTEL_TRACES_SAMPLER configuration was found but the value '{configValue}' is invalid and will be ignored.");
+                    break;
             }
 
             if (sampler != null)
