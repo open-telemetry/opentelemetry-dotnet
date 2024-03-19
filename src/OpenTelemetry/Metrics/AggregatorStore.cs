@@ -37,7 +37,9 @@ internal sealed class AggregatorStore
 
     // This holds the reclaimed MetricPoints that are available for reuse.
     private readonly Queue<int>? availableMetricPoints;
-    private readonly ConcurrentDictionary<Tags, int>? tagsToMetricPointIndexDictionary;
+
+    private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary =
+        new();
 
     private readonly string name;
     private readonly string metricPointCapHitMessage;
@@ -118,15 +120,15 @@ internal sealed class AggregatorStore
 
         this.OutputDeltaWithUnusedMetricPointReclaimEnabled = shouldReclaimUnusedMetricPoints && this.OutputDelta;
 
-        // Note: We reserve double the cardinalityLimit set by the user for
-        // storing unsorted & sorted tags for lookup
-        var lookupCapacity = cardinalityLimit * 2;
-
         if (this.OutputDeltaWithUnusedMetricPointReclaimEnabled)
         {
             this.availableMetricPoints = new Queue<int>(cardinalityLimit);
 
-            this.TagsToMetricPointIndexDictionaryDelta = new(concurrencyLevel: Environment.ProcessorCount, capacity: lookupCapacity);
+            // There is no overload which only takes capacity as the parameter
+            // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v7.0.5/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2020
+            // We expect at the most (user provided cardinality limit) * 2 entries- one for sorted and one for unsorted input
+            this.TagsToMetricPointIndexDictionaryDelta =
+                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: cardinalityLimit * 2);
 
             // Add all the indices except for the reserved ones to the queue so that threads have
             // readily available access to these MetricPoints for their use.
@@ -140,7 +142,6 @@ internal sealed class AggregatorStore
         }
         else
         {
-            this.tagsToMetricPointIndexDictionary = new(concurrencyLevel: Environment.ProcessorCount, capacity: lookupCapacity);
             this.lookupAggregatorStore = this.LookupAggregatorStore;
         }
     }
@@ -450,11 +451,9 @@ internal sealed class AggregatorStore
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int LookupAggregatorStore(KeyValuePair<string, object?>[] tagKeysAndValues, int length)
     {
-        Debug.Assert(this.tagsToMetricPointIndexDictionary != null, "this.tagsToMetricPointIndexDictionary was null");
-
         var givenTags = new Tags(tagKeysAndValues);
 
-        if (!this.tagsToMetricPointIndexDictionary!.TryGetValue(givenTags, out var aggregatorIndex))
+        if (!this.tagsToMetricPointIndexDictionary.TryGetValue(givenTags, out var aggregatorIndex))
         {
             if (length > 1)
             {
