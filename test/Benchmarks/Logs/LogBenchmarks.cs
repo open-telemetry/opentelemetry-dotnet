@@ -97,7 +97,7 @@ public class LogBenchmarks
     [Benchmark]
     public void NoListener()
     {
-        Food.SayHello(this.loggerWithNoListener, FoodName, FoodPrice);
+        this.loggerWithNoListener.SayHello(FoodName, FoodPrice);
     }
 
     [Benchmark]
@@ -105,7 +105,7 @@ public class LogBenchmarks
     {
         if (this.loggerWithNoListener.IsEnabled(LogLevel.Information))
         {
-            Food.SayHello(this.loggerWithNoListener, FoodName, FoodPrice);
+            this.loggerWithNoListener.SayHello(FoodName, FoodPrice);
         }
     }
 
@@ -113,25 +113,25 @@ public class LogBenchmarks
     public void CreateLoggerRepeatedly()
     {
         var logger = this.loggerFactoryWithNoListener.CreateLogger<LogBenchmarks>();
-        Food.SayHello(logger, FoodName, FoodPrice);
+        logger.SayHello(FoodName, FoodPrice);
     }
 
     [Benchmark]
     public void OneProcessor()
     {
-        Food.SayHello(this.loggerWithOneProcessor, FoodName, FoodPrice);
+        this.loggerWithOneProcessor.SayHello(FoodName, FoodPrice);
     }
 
     [Benchmark]
     public void TwoProcessors()
     {
-        Food.SayHello(this.loggerWithTwoProcessors, FoodName, FoodPrice);
+        this.loggerWithTwoProcessors.SayHello(FoodName, FoodPrice);
     }
 
     [Benchmark]
     public void ThreeProcessors()
     {
-        Food.SayHello(this.loggerWithThreeProcessors, FoodName, FoodPrice);
+        this.loggerWithThreeProcessors.SayHello(FoodName, FoodPrice);
     }
 
     internal class DummyLogProcessor : BaseProcessor<LogRecord>
