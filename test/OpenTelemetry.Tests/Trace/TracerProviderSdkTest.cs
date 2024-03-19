@@ -1057,21 +1057,11 @@ public class TracerProviderSdkTest : IDisposable
     {
         var configBuilder = new ConfigurationBuilder();
 
-        if (!string.IsNullOrEmpty(configValue))
+        configBuilder.AddInMemoryCollection(new Dictionary<string, string>
         {
-            configBuilder.AddInMemoryCollection(new Dictionary<string, string>
-            {
-                [TracerProviderSdk.TracesSamplerConfigKey] = configValue,
-            });
-        }
-
-        if (!string.IsNullOrEmpty(argValue))
-        {
-            configBuilder.AddInMemoryCollection(new Dictionary<string, string>
-            {
-                [TracerProviderSdk.TracesSamplerArgConfigKey] = argValue,
-            });
-        }
+            [TracerProviderSdk.TracesSamplerConfigKey] = configValue,
+            [TracerProviderSdk.TracesSamplerArgConfigKey] = argValue,
+        });
 
         var builder = Sdk.CreateTracerProviderBuilder();
         builder.ConfigureServices(s => s.AddSingleton<IConfiguration>(configBuilder.Build()));
