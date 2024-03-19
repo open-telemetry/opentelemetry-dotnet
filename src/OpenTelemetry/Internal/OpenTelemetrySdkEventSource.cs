@@ -355,7 +355,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
     [Event(55, Message = "OTEL_TRACES_SAMPLER_ARG configuration was found but the value '{0}' is invalid and will be ignored, default of value of '1.0' will be used.", Level = EventLevel.Warning)]
     public void TracesSamplerArgConfigInvalid(string configValue)
     {
-        this.WriteEvent(54, configValue);
+        this.WriteEvent(55, configValue);
     }
 
 #if DEBUG
