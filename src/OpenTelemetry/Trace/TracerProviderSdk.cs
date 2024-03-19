@@ -452,7 +452,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                     }
 
                 default:
-                    OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"OTEL_TRACES_SAMPLER configuration was found but the value '{configValue}' is invalid and will be ignored.");
+                    OpenTelemetrySdkEventSource.Log.TracesSamplerConfigInvalid(configValue);
                     break;
             }
 
@@ -474,7 +474,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         }
         else
         {
-            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler argument configuration was found but the value '{configValue}' is invalid and will be ignored, default of value of '1.0' will be used.");
+            OpenTelemetrySdkEventSource.Log.TracesSamplerArgConfigInvalid(configValue ?? string.Empty);
         }
 
         return 1.0;
