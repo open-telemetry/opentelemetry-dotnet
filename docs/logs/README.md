@@ -219,7 +219,7 @@ if (logger.IsEnabled(LogLevel.Information))
 ```
 
 Although `IsEnabled` can give some performance benefits in the above scenario,
-for most users it is causing more problems. For example, the performance of the
+for most users it can cause more problems. For example, the performance of the
 code is now depending on which logger is being enabled, not to mention the
 argument evaluation might have significant side effects that are now depending
 the logging configuration.
