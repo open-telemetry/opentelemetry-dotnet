@@ -363,6 +363,14 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
+It is also possible to configure the sampler by using the following
+environmental variables:
+
+| Environment variable       | Description                                        |
+| -------------------------- | -------------------------------------------------- |
+| `OTEL_TRACES_SAMPLER` | Sampler to be used for traces. See the [General SDK Configuration specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#general-sdk-configuration) for more details. |
+| `OTEL_TRACES_SAMPLER_ARG`        | String value to be used as the sampler argument. |
+
 Follow [this](../extending-the-sdk/README.md#sampler) document
 to learn about writing custom samplers.
 
