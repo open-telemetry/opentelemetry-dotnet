@@ -19,6 +19,7 @@ BenchmarkDotNet v0.13.10, Windows 11 (10.0.22621.3007/22H2/2022Update/SunValley2
 | NoListenerStringInterpolation | 124.458 ns | 2.5188 ns | 2.2329 ns | 0.0114 |      72 B |
 | NoListenerExtensionMethod     |  36.326 ns | 0.2916 ns | 0.2435 ns | 0.0102 |      64 B |
 | NoListener                    |   1.375 ns | 0.0586 ns | 0.0896 ns |      - |         - |
+| UnnecessaryIsEnabledCheck     |   1.332 ns | 0.0225 ns | 0.0188 ns |      - |         - |
 | CreateLoggerRepeatedly        |  48.295 ns | 0.5951 ns | 0.4970 ns | 0.0038 |      24 B |
 | OneProcessor                  |  98.133 ns | 1.8805 ns | 1.5703 ns | 0.0063 |      40 B |
 | TwoProcessors                 | 105.414 ns | 0.4610 ns | 0.3850 ns | 0.0063 |      40 B |
@@ -97,6 +98,15 @@ public class LogBenchmarks
     public void NoListener()
     {
         Food.SayHello(this.loggerWithNoListener, FoodName, FoodPrice);
+    }
+
+    [Benchmark]
+    public void UnnecessaryIsEnabledCheck()
+    {
+        if (this.loggerWithNoListener.IsEnabled(LogLevel.Information))
+        {
+            Food.SayHello(this.loggerWithNoListener, FoodName, FoodPrice);
+        }
     }
 
     [Benchmark]

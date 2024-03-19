@@ -188,7 +188,8 @@ logging will not give you any performance gain.
 
 > [!WARNING]
 > The `logger.IsEnabled(LogLevel.Information)` call in the following code is not
-  going to give any performance gain:
+  going to give any performance gain. Refer to the [logging performance
+  benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
 
 ```csharp
 var food = "tomato";
