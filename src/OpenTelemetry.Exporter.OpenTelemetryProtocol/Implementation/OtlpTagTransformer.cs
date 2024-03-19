@@ -102,16 +102,10 @@ internal sealed class OtlpTagTransformer : TagTransformer<OtlpCommon.KeyValue>
                 // Note: This should never be executed. In the base class the
                 // default case in TransformArrayTagInternal converts everything
                 // not explicitly supported to strings
+
                 Debug.Fail("Default case executed");
 
-                var stringValue = Convert.ToString(value);
-
-                if (stringValue == null)
-                {
-                    return new();
-                }
-
-                return ToAnyValue(stringValue);
+                throw new NotSupportedException($"Type '{value.GetType()}' is not supported");
         }
     }
 }
