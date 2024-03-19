@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.8.0-beta.1
+
+Released 2024-Mar-14
+
 * **Experimental (pre-release builds only):** Added
   `LoggerProviderBuilder.AddOtlpExporter` registration extensions.
   [#5103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5103)
@@ -44,6 +48,30 @@
   setting `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY` environment
   variable to true.
   ([#5435](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5435))
+
+* Added `IOpenTelemetryBuilder.UseOtlpExporter` extension to simplify setup of
+  the OTLP Exporter when all three signals are used (logs, metrics, and traces).
+  The new extension has the following behaviors:
+
+  * Calling `UseOtlpExporter` will automatically enable logging, tracing, and
+    metrics. Additional calls to `WithLogging`, `WithMetrics`, and `WithTracing`
+    are NOT required however for metrics and tracing sources/meters still need
+    to be enabled.
+
+  * `UseOtlpExporter` can only be called once and cannot be used with the
+    existing `AddOtlpExporter` extensions. Extra calls will result in
+    `NotSupportedException`s being thrown.
+
+  * `UseOtlpExporter` will register the OTLP Exporter at the end of the
+    processor pipeline for logging and tracing.
+
+  * The OTLP Exporters added for logging, tracing, and metrics can be configured
+    using environment variables or `IConfiguration`.
+
+  For details see: [README > Enable OTLP Exporter for all
+  signals](./README.md#enable-otlp-exporter-for-all-signals).
+
+  PR: [#5400](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5400)
 
 ## 1.7.0
 

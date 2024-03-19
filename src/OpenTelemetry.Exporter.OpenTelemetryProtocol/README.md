@@ -14,6 +14,7 @@ implementation.
 * [Enable Log Exporter](#enable-log-exporter)
 * [Enable Metric Exporter](#enable-metric-exporter)
 * [Enable Trace Exporter](#enable-trace-exporter)
+* [Enable OTLP Exporter for all signals](#enable-otlp-exporter-for-all-signals)
 * [Configuration](#configuration)
   * [OtlpExporterOptions](#otlpexporteroptions)
   * [LogRecordExportProcessorOptions](#logrecordexportprocessoroptions)
@@ -108,6 +109,10 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 See the [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs) for
 runnable example.
+
+## Enable OTLP Exporter for all signals
+
+Content coming soon.
 
 ## Configuration
 

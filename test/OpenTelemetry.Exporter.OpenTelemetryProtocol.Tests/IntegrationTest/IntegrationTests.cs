@@ -21,6 +21,7 @@ public sealed class IntegrationTests : IDisposable
     private const string CollectorHostnameEnvVarName = "OTEL_COLLECTOR_HOSTNAME";
     private const int ExportIntervalMilliseconds = 10000;
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
+    private static readonly ExperimentalOptions DefaultExperimentalOptions = new();
     private static readonly string CollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorHostnameEnvVarName);
     private readonly OpenTelemetryEventListener openTelemetryEventListener;
 
@@ -69,11 +70,11 @@ public sealed class IntegrationTests : IDisposable
         var builder = Sdk.CreateTracerProviderBuilder()
             .AddSource(activitySourceName);
 
-        builder.AddProcessor(OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
-            exporterOptions,
-            DefaultSdkLimitOptions,
-            experimentalOptions: new(),
-            serviceProvider: null,
+        builder.AddProcessor(sp => OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
+            serviceProvider: sp,
+            exporterOptions: exporterOptions,
+            sdkLimitOptions: DefaultSdkLimitOptions,
+            experimentalOptions: DefaultExperimentalOptions,
             configureExporterInstance: otlpExporter =>
             {
                 delegatingExporter = new DelegatingExporter<Activity>
@@ -151,11 +152,11 @@ public sealed class IntegrationTests : IDisposable
         var readerOptions = new MetricReaderOptions();
         readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = useManualExport ? Timeout.Infinite : ExportIntervalMilliseconds;
 
-        builder.AddReader(OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
-            exporterOptions,
-            readerOptions,
-            experimentalOptions: new(),
-            serviceProvider: null,
+        builder.AddReader(sp => OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
+            serviceProvider: sp,
+            exporterOptions: exporterOptions,
+            metricReaderOptions: readerOptions,
+            experimentalOptions: DefaultExperimentalOptions,
             configureExporterInstance: otlpExporter =>
             {
                 delegatingExporter = new DelegatingExporter<Metric>
@@ -240,8 +241,8 @@ public sealed class IntegrationTests : IDisposable
                             sp,
                             exporterOptions,
                             processorOptions,
-                            new SdkLimitOptions(),
-                            new ExperimentalOptions(),
+                            DefaultSdkLimitOptions,
+                            DefaultExperimentalOptions,
                             configureExporterInstance: otlpExporter =>
                             {
                                 delegatingExporter = new DelegatingExporter<LogRecord>

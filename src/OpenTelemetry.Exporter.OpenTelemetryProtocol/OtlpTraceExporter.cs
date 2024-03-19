@@ -38,10 +38,10 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
     /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
     internal OtlpTraceExporter(
-    OtlpExporterOptions exporterOptions,
-    SdkLimitOptions sdkLimitOptions,
-    ExperimentalOptions experimentalOptions,
-    OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler = null)
+        OtlpExporterOptions exporterOptions,
+        SdkLimitOptions sdkLimitOptions,
+        ExperimentalOptions experimentalOptions,
+        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");

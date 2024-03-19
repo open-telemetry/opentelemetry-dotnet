@@ -224,7 +224,7 @@ public static class OtlpLogExporterHelperExtensions
                 services.Configure(finalOptionsName, configureExporter);
             }
 
-            RegisterOptions(services);
+            services.AddOtlpExporterLoggingServices();
         });
 
         return builder.AddProcessor(sp =>
@@ -299,7 +299,7 @@ public static class OtlpLogExporterHelperExtensions
     {
         var finalOptionsName = name ?? Options.DefaultName;
 
-        builder.ConfigureServices(RegisterOptions);
+        builder.ConfigureServices(services => services.AddOtlpExporterLoggingServices());
 
         return builder.AddProcessor(sp =>
         {
@@ -342,20 +342,24 @@ public static class OtlpLogExporterHelperExtensions
     }
 
     internal static BaseProcessor<LogRecord> BuildOtlpLogExporter(
-        IServiceProvider sp,
+        IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
         LogRecordExportProcessorOptions processorOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
+        bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
     {
-        // Note: sp is not currently used by this method but it should be used
-        // at some point for IHttpClientFactory integration.
-        Debug.Assert(sp != null, "sp was null");
+        Debug.Assert(serviceProvider != null, "serviceProvider was null");
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(processorOptions != null, "processorOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
+
+        if (!skipUseOtlpExporterRegistrationCheck)
+        {
+            serviceProvider.EnsureNoUseOtlpExporterRegistrations();
+        }
 
         /*
          * Note:
@@ -398,12 +402,6 @@ public static class OtlpLogExporterHelperExtensions
                 batchOptions.ExporterTimeoutMilliseconds,
                 batchOptions.MaxExportBatchSize);
         }
-    }
-
-    private static void RegisterOptions(IServiceCollection services)
-    {
-        OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-        services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
     }
 
     private static T GetOptions<T>(
