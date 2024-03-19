@@ -245,19 +245,14 @@ variables](#environment-variables) listed below including the signal-specific
 overrides and users are encouraged to use this mechanism to configure their
 exporters.
 
-> [!NOTE]
-> In OpenTelemetry .NET environment variable keys are retrieved using
-  `IConfiguration` which means they may be set using other mechanisms such as
-  defined in appSettings.json or specified on the command-line.
-
-An `UseOtlpExporter` overload is provided which may be used to set the protocol
-and base endpoint but no other options are currently exposed:
+A `UseOtlpExporter` overload is provided which may be used to set the protocol
+and base endpoint:
 
 ```csharp
 appBuilder.Services.AddOpenTelemetry()
     .UseOtlpExporter(
         OtlpExportProtocol.HttpProtobuf,
-        new Uri("http://otlp_exporter_base_address/"));
+        new Uri("http://localhost:4318/"));
 ```
 
 > [!NOTE]
@@ -645,6 +640,8 @@ want to solicit feedback from the community.
 
     When set to `true`, it enables export of `LogRecord.EventId.Id` as
     `logrecord.event.id` and `LogRecord.EventId.Name` as `logrecord.event.name`.
+
+    Added in `1.7.0-alpha.1`.
 
 ## Troubleshooting
 
