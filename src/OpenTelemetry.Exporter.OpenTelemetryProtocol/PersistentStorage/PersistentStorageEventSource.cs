@@ -145,7 +145,7 @@ internal sealed class PersistentStorageEventSource : EventSource
         this.WriteEvent(8, srcFilePath, destFilePath, ex);
     }
 
-    [Event(9, Message = "{0}: Error Message: {1}. Exception: {3}", Level = EventLevel.Error)]
+    [Event(9, Message = "{0}: Error Message: {1}. Exception: {2}", Level = EventLevel.Error)]
     public void PersistentStorageException(string className, string message, string ex)
     {
         this.WriteEvent(9, className, message, ex);
