@@ -22,8 +22,8 @@ implementation.
   * [Environment Variables](#environment-variables)
     * [Exporter configuration](#exporter-configuration)
     * [Attribute limits](#attribute-limits)
-    * [Experimental features](#experimental-features)
   * [Configure HttpClient](#configure-httpclient)
+* [Experimental features](#experimental-features)
 * [Troubleshooting](#troubleshooting)
 
 </details>
@@ -114,7 +114,7 @@ runnable example.
 
 ## Enable OTLP Exporter for all signals
 
-Starting with the `1.8.0` version you can use the cross-cutting
+Starting with the `1.8.0-beta.1` version you can use the cross-cutting
 `UseOtlpExporter` extension to simplify registration of the OTLP exporter for
 all signals (logs, metrics, and traces).
 
@@ -426,6 +426,14 @@ appBuilder.Services.Configure<MetricReaderOptions>(
 
 ## Environment Variables
 
+The following environment variables can be used to configure the OTLP Exporter
+for logs, traces, and metrics.
+
+> [!NOTE]
+> In OpenTelemetry .NET environment variable keys are retrieved using
+  `IConfiguration` which means they may be set using other mechanisms such as
+  defined in appSettings.json or specified on the command-line.
+
 ### Exporter configuration
 
 The [OpenTelemetry
@@ -456,7 +464,7 @@ or reader
   The following environment variables can be used to override the default values
   for the batch processor configured for logging:
 
-  | Environment variable              | `LogRecordExportProcessorOptions.BatchExportProcessorOptions` property  |
+  | Environment variable              | `BatchExportLogRecordProcessorOptions` property                         |
   | ----------------------------------| ------------------------------------------------------------------------|
   | `OTEL_BLRP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                                            |
   | `OTEL_BLRP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                                           |
@@ -508,7 +516,7 @@ or reader
   The following environment variables can be used to override the default values
   for the batch processor configured for tracing:
 
-  | Environment variable             | `OtlpExporterOptions.BatchExportProcessorOptions` property  |
+  | Environment variable             | `BatchExportActivityProcessorOptions` property              |
   | ---------------------------------| ------------------------------------------------------------|
   | `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                                |
   | `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                               |
@@ -555,29 +563,17 @@ used for logging:
 * `OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT`
 * `OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT`
 
-### Experimental features
-
-* All signals
-
-  * `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY`
-  
-    When set to `true`, it enables in-memory retry for transient errors
-    encountered while sending telemetry.
-
-* Logs
-
-  * `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES`
-  
-    When set to `true`, it enables export of `LogRecord.EventId.Id` as
-    `logrecord.event.id` and `LogRecord.EventId.Name` to `logrecord.event.name`.
-
 ## Configure HttpClient
 
 The `HttpClientFactory` option is provided on `OtlpExporterOptions` for users
-who want to configure the `HttpClient` used by the `OtlpTraceExporter` and/or
-`OtlpMetricExporter` when `HttpProtobuf` protocol is used. Simply replace the
-function with your own implementation if you want to customize the generated
-`HttpClient`:
+who want to configure the `HttpClient` used by the `OtlpTraceExporter`,
+`OtlpMetricExporter`, and/or `OtlpLogExporter` when `HttpProtobuf` protocol is
+used. Simply replace the function with your own implementation if you want to
+customize the generated `HttpClient`:
+
+> [!NOTE]
+> The `HttpClient` instance returned by the `HttpClientFactory` function is used
+  for all export requests.
 
 ```csharp
 services.AddOpenTelemetry()
@@ -596,11 +592,11 @@ services.AddOpenTelemetry()
 
 > [!NOTE]
 > `DefaultRequestHeaders` can be used for [HTTP Basic Access
-Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication). For
-more complex authentication requirements,
-[`System.Net.Http.DelegatingHandler`](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler)
-can be used to handle token refresh, as explained
-[here](https://stackoverflow.com/questions/56204350/how-to-refresh-a-token-using-ihttpclientfactory).
+  Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
+  For more complex authentication requirements,
+  [`System.Net.Http.DelegatingHandler`](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler)
+  can be used to handle token refresh, as explained
+  [here](https://stackoverflow.com/questions/56204350/how-to-refresh-a-token-using-ihttpclientfactory).
 
 For users using
 [IHttpClientFactory](https://docs.microsoft.com/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
@@ -615,8 +611,40 @@ services.AddHttpClient(
 ```
 
 > [!NOTE]
-> The single instance returned by `HttpClientFactory` is reused by all export
-requests.
+> `IHttpClientFactory` is NOT currently supported by `OtlpLogExporter`.
+
+## Experimental features
+
+The following features are exposed experimentally in the OTLP Exporter. Features
+are exposed experimentally when either the [OpenTelemetry
+Specification](https://github.com/open-telemetry/opentelemetry-specification)
+has explicitly marked something
+[experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md)
+or when the SIG members are still working through the design for a feature and
+want to solicit feedback from the community.
+
+### Environment variables
+
+> [!NOTE]
+> In OpenTelemetry .NET environment variable keys are retrieved using
+  `IConfiguration` which means they may be set using other mechanisms such as
+  defined in appSettings.json or specified on the command-line.
+
+* All signals
+
+  * `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY`
+  
+    When set to `true`, it enables in-memory retry for transient errors
+    encountered while sending telemetry.
+
+    Added in `1.8.0-beta.1`.
+
+* Logs
+
+  * `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES`
+  
+    When set to `true`, it enables export of `LogRecord.EventId.Id` as
+    `logrecord.event.id` and `LogRecord.EventId.Name` as `logrecord.event.name`.
 
 ## Troubleshooting
 
