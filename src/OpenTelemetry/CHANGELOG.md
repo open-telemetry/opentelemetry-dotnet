@@ -81,6 +81,16 @@ Released 2024-Mar-14
   Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#exemplar).
   ([#5412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5412))
 
+* `TracerProvider`s can now have a sampler configured via the
+  `OTEL_TRACES_SAMPLER` environment variable. The supported values are:
+  `always_off`, `always_on`, `traceidratio`, `parentbased_always_on`,
+  `parentbased_always_off`, and `parentbased_traceidratio`. The options
+  `traceidratio` and `parentbased_traceidratio` may have the sampler probability
+  configured via the `OTEL_TRACES_SAMPLER_ARG` environment variable.
+  For details see: [OpenTelemetry Environment Variable
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#general-sdk-configuration).
+  ([#5448](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5448))
+
 ## 1.7.0
 
 Released 2023-Dec-08
