@@ -372,6 +372,7 @@ environmental variables:
 | `OTEL_TRACES_SAMPLER_ARG`        | String value to be used as the sampler argument. |
 
 The supported values for `OTEL_TRACES_SAMPLER` are:
+
 * `always_off`
 * `always_on`
 * `traceidratio`
