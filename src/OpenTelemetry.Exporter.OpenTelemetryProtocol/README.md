@@ -246,7 +246,7 @@ overrides and users are encouraged to use this mechanism to configure their
 exporters.
 
 A `UseOtlpExporter` overload is provided which may be used to set the protocol
-and base endpoint:
+and base URL:
 
 ```csharp
 appBuilder.Services.AddOpenTelemetry()
@@ -257,7 +257,7 @@ appBuilder.Services.AddOpenTelemetry()
 
 > [!NOTE]
 > When the protocol is set to `OtlpExportProtocol.HttpProtobuf` a
-  signal-specific path will be appended automatically to the base endpoint when
+  signal-specific path will be appended automatically to the base URL when
   constructing exporters.
 
 ## Configuration

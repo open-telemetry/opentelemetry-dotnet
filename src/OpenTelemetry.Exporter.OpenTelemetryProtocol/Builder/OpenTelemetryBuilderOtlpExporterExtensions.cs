@@ -45,25 +45,25 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     /// <returns><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/returns"/></returns>
     /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
     /// <param name="protocol"><see cref="OtlpExportProtocol"/>.</param>
-    /// <param name="baseEndpoint">
-    /// <para>Base endpoint to use.</para>
-    /// Note: A signal-specific path will be appended to the base endpoint for
-    /// each signal automatically if the protocol is set to <see
+    /// <param name="baseUrl">
+    /// <para>Base URL to use.</para>
+    /// Note: A signal-specific path will be appended to the base URL for each
+    /// signal automatically if the protocol is set to <see
     /// cref="OtlpExportProtocol.HttpProtobuf"/>.
     /// </param>
     public static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         OtlpExportProtocol protocol,
-        Uri baseEndpoint)
+        Uri baseUrl)
     {
-        Guard.ThrowIfNull(baseEndpoint);
+        Guard.ThrowIfNull(baseUrl);
 
         return UseOtlpExporter(builder, name: null, configuration: null, configure: otlpBuilder =>
         {
             otlpBuilder.ConfigureDefaultExporterOptions(o =>
             {
                 o.Protocol = protocol;
-                o.Endpoint = baseEndpoint;
+                o.Endpoint = baseUrl;
             });
         });
     }
