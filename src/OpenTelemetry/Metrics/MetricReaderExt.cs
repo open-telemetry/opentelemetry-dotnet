@@ -201,8 +201,18 @@ public abstract partial class MetricReader
 
     private Batch<Metric> GetMetricsBatch()
     {
-        Debug.Assert(this.metrics != null, "this.metrics was null");
-        Debug.Assert(this.metricsCurrentBatch != null, "this.metricsCurrentBatch was null");
+        // if ApplyParentProviderSettings is not called
+        // the for loop condition is false and metricCountCurrentBatch is 0
+        // so removing the Asserts does not change anything.
+        // but for future changes guard if null and return.
+
+        // Debug.Assert(this.metrics != null, "this.metrics was null");
+        // Debug.Assert(this.metricsCurrentBatch != null, "this.metricsCurrentBatch was null");
+
+        if (this.metrics == null || this.metricsCurrentBatch == null)
+        {
+            return default;
+        }
 
         try
         {
