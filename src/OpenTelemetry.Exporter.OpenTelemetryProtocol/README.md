@@ -250,9 +250,7 @@ and base URL:
 
 ```csharp
 appBuilder.Services.AddOpenTelemetry()
-    .UseOtlpExporter(
-        OtlpExportProtocol.HttpProtobuf,
-        new Uri("http://localhost:4318/"));
+    .UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, new Uri("http://localhost:4318/"));
 ```
 
 > [!NOTE]
@@ -427,7 +425,7 @@ for logs, traces, and metrics.
 > [!NOTE]
 > In OpenTelemetry .NET environment variable keys are retrieved using
   `IConfiguration` which means they may be set using other mechanisms such as
-  defined in appSettings.json or specified on the command-line.
+  defined in `appSettings.json` or specified on the command-line.
 
 ### Exporter configuration
 
