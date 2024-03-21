@@ -346,6 +346,18 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
         this.WriteEvent(53, instrumentName, meterName);
     }
 
+    [Event(54, Message = "OTEL_TRACES_SAMPLER configuration was found but the value '{0}' is invalid and will be ignored.", Level = EventLevel.Warning)]
+    public void TracesSamplerConfigInvalid(string configValue)
+    {
+        this.WriteEvent(54, configValue);
+    }
+
+    [Event(55, Message = "OTEL_TRACES_SAMPLER_ARG configuration was found but the value '{0}' is invalid and will be ignored, default of value of '1.0' will be used.", Level = EventLevel.Warning)]
+    public void TracesSamplerArgConfigInvalid(string configValue)
+    {
+        this.WriteEvent(55, configValue);
+    }
+
 #if DEBUG
     public class OpenTelemetryEventListener : EventListener
     {
