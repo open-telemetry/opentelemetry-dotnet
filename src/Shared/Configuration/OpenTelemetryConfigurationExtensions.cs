@@ -3,19 +3,14 @@
 
 #nullable enable
 
-using System.Diagnostics;
 #if !NETFRAMEWORK && !NETSTANDARD2_0
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Globalization;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
-namespace OpenTelemetry.Internal;
+namespace Microsoft.Extensions.Configuration;
 
-internal static class ConfigurationExtensions
+internal static class OpenTelemetryConfigurationExtensions
 {
     public static Action<string, string>? LogInvalidEnvironmentVariable = null;
 
@@ -124,47 +119,5 @@ internal static class ConfigurationExtensions
         }
 
         return true;
-    }
-
-    public static IServiceCollection RegisterOptionsFactory<T>(
-        this IServiceCollection services,
-        Func<IConfiguration, T> optionsFactoryFunc)
-        where T : class
-    {
-        Debug.Assert(services != null, "services was null");
-        Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
-
-        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
-        {
-            return new DelegatingOptionsFactory<T>(
-                (c, n) => optionsFactoryFunc!(c),
-                sp.GetRequiredService<IConfiguration>(),
-                sp.GetServices<IConfigureOptions<T>>(),
-                sp.GetServices<IPostConfigureOptions<T>>(),
-                sp.GetServices<IValidateOptions<T>>());
-        });
-
-        return services!;
-    }
-
-    public static IServiceCollection RegisterOptionsFactory<T>(
-        this IServiceCollection services,
-        Func<IServiceProvider, IConfiguration, string, T> optionsFactoryFunc)
-        where T : class
-    {
-        Debug.Assert(services != null, "services was null");
-        Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
-
-        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
-        {
-            return new DelegatingOptionsFactory<T>(
-                (c, n) => optionsFactoryFunc!(sp, c, n),
-                sp.GetRequiredService<IConfiguration>(),
-                sp.GetServices<IConfigureOptions<T>>(),
-                sp.GetServices<IPostConfigureOptions<T>>(),
-                sp.GetServices<IValidateOptions<T>>());
-        });
-
-        return services!;
     }
 }
