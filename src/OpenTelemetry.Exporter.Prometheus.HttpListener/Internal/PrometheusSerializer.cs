@@ -400,7 +400,7 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteTargetInfo(byte[] buffer, int cursor, Resource resource)
     {
-        if (resource != Resource.Empty)
+        if (resource == Resource.Empty)
         {
             return cursor;
         }
