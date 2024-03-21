@@ -275,16 +275,7 @@ public sealed class LogRecordTest
         Assert.Equal("{food}", exportedItems[0].Body);
         if (includeFormattedMessage)
         {
-            var prevCulture = CultureInfo.CurrentCulture;
-            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-            try
-            {
-                Assert.Equal("[Name, truffle], [Price, 299.99]", exportedItems[0].FormattedMessage);
-            }
-            finally
-            {
-                CultureInfo.CurrentCulture = prevCulture;
-            }
+            Assert.Equal($"[Name, truffle], [Price, {299.99}]", exportedItems[0].FormattedMessage);
         }
         else
         {
