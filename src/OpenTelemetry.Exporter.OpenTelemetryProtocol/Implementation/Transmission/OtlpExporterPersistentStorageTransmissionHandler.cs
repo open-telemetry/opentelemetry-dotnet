@@ -16,7 +16,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmissi
 internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest> : OtlpExporterTransmissionHandler<TRequest>, IDisposable
 {
     internal int RetryInterval = 60000;
-    private readonly ManualResetEvent stopEvent = new(false);
+    private readonly ManualResetEvent shutdownEvent = new(false);
+    private readonly ManualResetEvent dataExportNotification = new(false);
+    private readonly AutoResetEvent exportEvent = new(false);
     private readonly Thread thread;
     private readonly PersistentBlobProvider persistentBlobProvider;
     private readonly Func<byte[], TRequest>? requestFactory;
@@ -40,6 +42,19 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
         };
 
         this.thread.Start();
+    }
+
+    // Used for test.
+    internal bool Forceflush(int timeOutMilliseconds)
+    {
+        this.exportEvent.Set();
+
+        if (this.dataExportNotification.WaitOne(timeOutMilliseconds))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     protected override bool OnSubmitRequestFailure(TRequest request, ExportClientResponse response)
@@ -73,7 +88,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
 
     protected override void OnShutdown(int timeoutMilliseconds)
     {
-        this.stopEvent.Set();
+        this.shutdownEvent.Set();
         this.thread.Join(timeoutMilliseconds);
         base.OnShutdown(timeoutMilliseconds);
     }
@@ -84,7 +99,9 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
         {
             if (disposing)
             {
-                this.stopEvent.Dispose();
+                this.shutdownEvent.Dispose();
+                this.exportEvent.Dispose();
+                this.dataExportNotification.Dispose();
                 (this.persistentBlobProvider as FileBlobProvider)?.Dispose();
             }
 
@@ -96,20 +113,22 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
     {
         while (true)
         {
-            // Wait 60 seconds before retrying
-            if (this.stopEvent.WaitOne(this.RetryInterval))
+            if (this.shutdownEvent.WaitOne(0))
             {
                 break;
             }
 
+            // Wait 60 seconds before retrying
+            this.exportEvent.WaitOne(this.RetryInterval);
+
             int fileCount = 0;
 
             // Transmit 10 files at a time.
-            while (fileCount < 10 && !this.stopEvent.WaitOne(0))
+            while (fileCount < 10 && !this.shutdownEvent.WaitOne(0))
             {
-                if (this.persistentBlobProvider != null && this.persistentBlobProvider.TryGetBlob(out var blob))
+                if (this.persistentBlobProvider.TryGetBlob(out var blob))
                 {
-                    if (blob != null && blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
+                    if (blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
                     {
                         if (this.requestFactory != null)
                         {
@@ -128,6 +147,17 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
                 }
 
                 fileCount++;
+            }
+
+            try
+            {
+                this.dataExportNotification.Set();
+                this.dataExportNotification.Reset();
+            }
+            catch (ObjectDisposedException)
+            {
+                // the exporter is somehow disposed before the worker thread could finish its job
+                return;
             }
         }
     }

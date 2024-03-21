@@ -395,7 +395,10 @@ public sealed class MockCollectorIntegrationTests
             {
                 Assert.Single(mockProvider.TryGetBlobs());
 
-                WaitForBlobProcessing(mockProvider);
+                // forceflush
+                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>).Forceflush(-1));
+
+                Assert.False(mockProvider.TryGetBlob(out _));
             }
             else
             {
@@ -533,7 +536,10 @@ public sealed class MockCollectorIntegrationTests
             {
                 Assert.Single(mockProvider.TryGetBlobs());
 
-                WaitForBlobProcessing(mockProvider);
+                // forceflush
+                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>).Forceflush(-1));
+
+                Assert.False(mockProvider.TryGetBlob(out _));
             }
             else
             {
@@ -548,17 +554,6 @@ public sealed class MockCollectorIntegrationTests
         transmissionHandler.Shutdown(0);
 
         transmissionHandler.Dispose();
-    }
-
-    private static void WaitForBlobProcessing(MockFileProvider mockFileProvider)
-    {
-        Assert.True(SpinWait.SpinUntil(
-            () =>
-            {
-                Thread.Sleep(10);
-                return mockFileProvider.TryGetBlob(out _) == false;
-            },
-            TimeSpan.FromSeconds(5)));
     }
 
     private class MockCollectorState
@@ -645,9 +640,9 @@ public sealed class MockCollectorIntegrationTests
 
         protected override bool OnTryGetBlob(out PersistentBlob blob)
         {
-            blob = this.GetBlobs().First();
+            blob = this.GetBlobs().FirstOrDefault();
 
-            return true;
+            return blob != null;
         }
     }
 
