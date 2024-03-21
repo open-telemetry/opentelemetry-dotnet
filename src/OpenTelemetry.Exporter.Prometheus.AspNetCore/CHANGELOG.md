@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Added `target_info` to Prometheus exporters when using OpenMetrics format ([#5407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5407))
+* Added `target_info` to Prometheus exporters when using OpenMetrics format and fix serializing scope_info ([#5407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5407))
 
 ## 1.8.0-beta.1
 
