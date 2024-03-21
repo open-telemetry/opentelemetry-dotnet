@@ -37,7 +37,9 @@ internal readonly struct Tags : IEquatable<Tags>
         var ourKvps = this.KeyValuePairs;
         var theirKvps = other.KeyValuePairs;
 
-        if (ourKvps.Length != theirKvps.Length)
+        var length = ourKvps.Length;
+
+        if (length != theirKvps.Length)
         {
             return false;
         }
@@ -45,8 +47,7 @@ internal readonly struct Tags : IEquatable<Tags>
 #if NET6_0_OR_GREATER
         // Note: This loop uses unsafe code (pointers) to elide bounds checks on
         // two arrays we know to be of equal length.
-        var cursor = ourKvps.Length;
-        if (cursor > 0)
+        if (length > 0)
         {
             ref var ours = ref MemoryMarshal.GetArrayDataReference(ourKvps);
             ref var theirs = ref MemoryMarshal.GetArrayDataReference(theirKvps);
@@ -63,7 +64,7 @@ internal readonly struct Tags : IEquatable<Tags>
                     return false;
                 }
 
-                if (--cursor == 0)
+                if (--length == 0)
                 {
                     break;
                 }
@@ -73,7 +74,7 @@ internal readonly struct Tags : IEquatable<Tags>
             }
         }
 #else
-        for (int i = 0; i < ourKvps.Length; i++)
+        for (int i = 0; i < length; i++)
         {
             ref var ours = ref ourKvps[i];
 
