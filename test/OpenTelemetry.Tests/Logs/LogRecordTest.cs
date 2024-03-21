@@ -244,51 +244,51 @@ public sealed class LogRecordTest
     [InlineData(false)]
     public void CheckStateForStructuredLogWithGeneralType(bool includeFormattedMessage)
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
-        var logger = loggerFactory.CreateLogger<LogRecordTest>();
-
-        var food = new Dictionary<string, object>
+        var prevCulture = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+        try
         {
-            ["Name"] = "truffle",
-            ["Price"] = 299.99,
-        };
-        logger.LogInformation("{food}", food);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-        Assert.NotNull(exportedItems[0].State);
+            var food = new Dictionary<string, object>
+            {
+                ["Name"] = "truffle",
+                ["Price"] = 299.99,
+            };
+            logger.LogInformation("{food}", food);
 
-        var attributes = exportedItems[0].Attributes;
-        Assert.NotNull(attributes);
+            Assert.NotNull(exportedItems[0].State);
 
-        // state only has food and {OriginalFormat}
-        Assert.Equal(2, attributes.Count);
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
-        // Check if state has food
-        Assert.Contains(attributes, item => item.Key == "food");
+            // state only has food and {OriginalFormat}
+            Assert.Equal(2, attributes.Count);
 
-        var foodParameter = attributes.First(item => item.Key == "food").Value as Dictionary<string, object>;
-        Assert.True(food.Count == foodParameter.Count && !food.Except(foodParameter).Any());
+            // Check if state has food
+            Assert.Contains(attributes, item => item.Key == "food");
 
-        // Check if state has OriginalFormat
-        Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
-        Assert.Equal("{food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
+            var foodParameter = attributes.First(item => item.Key == "food").Value as Dictionary<string, object>;
+            Assert.True(food.Count == foodParameter.Count && !food.Except(foodParameter).Any());
 
-        Assert.Equal("{food}", exportedItems[0].Body);
-        if (includeFormattedMessage)
-        {
-            var prevCulture = CultureInfo.CurrentCulture;
-            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-            try
+            // Check if state has OriginalFormat
+            Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
+            Assert.Equal("{food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
+
+            Assert.Equal("{food}", exportedItems[0].Body);
+            if (includeFormattedMessage)
             {
                 Assert.Equal("[Name, truffle], [Price, 299.99]", exportedItems[0].FormattedMessage);
             }
-            finally
+            else
             {
-                CultureInfo.CurrentCulture = prevCulture;
+                Assert.Null(exportedItems[0].FormattedMessage);
             }
         }
-        else
+        finally
         {
-            Assert.Null(exportedItems[0].FormattedMessage);
+            CultureInfo.CurrentCulture = prevCulture;
         }
     }
 
