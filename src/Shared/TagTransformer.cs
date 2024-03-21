@@ -128,12 +128,32 @@ internal abstract class TagTransformer<T>
             ushort[] => this.TransformArrayTag(key, array),
             int[] => this.TransformArrayTag(key, array),
             uint[] => this.TransformArrayTag(key, array),
+#if NETFRAMEWORK
+            long[] => this.TransformArrayTagLongNetFramework(key, array, tagValueMaxLength),
+#else
             long[] => this.TransformArrayTag(key, array),
+#endif
             float[] => this.TransformArrayTag(key, array),
             double[] => this.TransformArrayTag(key, array),
             _ => this.ConvertToStringArrayThenTransformArrayTag(key, array, tagValueMaxLength),
         };
     }
+
+#if NETFRAMEWORK
+    private T TransformArrayTagLongNetFramework(string key, Array array, int? tagValueMaxLength)
+    {
+        // Note: On .NET Framework nint[] & nuint[] fall into long[] case
+
+        var arrayType = array.GetType();
+        if (arrayType == typeof(nint[])
+            || arrayType == typeof(nuint[]))
+        {
+            return this.ConvertToStringArrayThenTransformArrayTag(key, array, tagValueMaxLength);
+        }
+
+        return this.TransformArrayTag(key, array);
+    }
+#endif
 
     private T ConvertToStringArrayThenTransformArrayTag(string key, Array array, int? tagValueMaxLength)
     {
