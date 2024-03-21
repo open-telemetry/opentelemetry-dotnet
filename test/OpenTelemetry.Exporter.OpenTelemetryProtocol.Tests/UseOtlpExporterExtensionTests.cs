@@ -74,7 +74,7 @@ public class UseOtlpExporterExtensionTests : IDisposable
         Assert.False(((OtlpExporterOptions)exporterOptions.TracingOptions).HasData);
 
         Assert.Throws<ArgumentNullException>(
-            () => services.AddOpenTelemetry().UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, baseEndpoint: null!));
+            () => services.AddOpenTelemetry().UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, baseUrl: null!));
     }
 
     [Theory]

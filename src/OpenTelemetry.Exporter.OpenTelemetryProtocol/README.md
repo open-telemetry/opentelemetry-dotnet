@@ -20,8 +20,10 @@ implementation.
   * [LogRecordExportProcessorOptions](#logrecordexportprocessoroptions)
   * [MetricReaderOptions](#metricreaderoptions)
   * [Environment Variables](#environment-variables)
-  * [Experimental Features](#environment-variables-for-experimental-features)
+    * [Exporter configuration](#exporter-configuration)
+    * [Attribute limits](#attribute-limits)
   * [Configure HttpClient](#configure-httpclient)
+* [Experimental features](#experimental-features)
 * [Troubleshooting](#troubleshooting)
 
 </details>
@@ -112,7 +114,149 @@ runnable example.
 
 ## Enable OTLP Exporter for all signals
 
-Content coming soon.
+Starting with the `1.8.0-beta.1` version you can use the cross-cutting
+`UseOtlpExporter` extension to simplify registration of the OTLP exporter for
+all signals (logs, metrics, and traces).
+
+> [!NOTE]
+> The cross cutting extension is currently only available when using the
+  `AddOpenTelemetry` extension in the
+  [OpenTelemetry.Extensions.Hosting](../OpenTelemetry.Extensions.Hosting/README.md)
+  package.
+
+```csharp
+appBuilder.Services.AddOpenTelemetry()
+    .UseOtlpExporter();
+```
+
+The `UseOtlpExporter` has the following behaviors:
+
+* Calling `UseOtlpExporter` automatically enables logging, metrics, and tracing
+  however only telemetry which has been enabled will be exported.
+
+  There are different mechanisms available to enable telemetry:
+
+  * Logging
+
+    `ILogger` telemetry is controlled by category filters typically set through
+    configuration. For details see: [Log
+    Filtering](../../docs/logs/customizing-the-sdk/README.md#log-filtering) and
+    [Logging in
+    .NET](https://docs.microsoft.com/dotnet/core/extensions/logging).
+
+  * Metrics
+
+    Metrics telemetry is controlled by calling `MeterProviderBuilder.AddMeter`
+    to listen to
+    [Meter](https://learn.microsoft.com/dotnet/api/system.diagnostics.meter)s
+    emitting metrics. Typically instrumentation packages will make this call
+    automatically.
+
+    Examples:
+
+    ```csharp
+    appBuilder.Services.AddOpenTelemetry()
+        .UseOtlpExporter()
+        .WithMetrics(metrics => metrics
+            .AddMeter(MyMeter.Name) // Listen to custom telemetry
+            .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
+        );
+    ```
+
+    ```csharp
+    appBuilder.Services.ConfigureOpenTelemetryMeterProvider(metrics => metrics
+        .AddMeter(MyMeter.Name) // Listen to custom telemetry
+        .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
+    );
+
+    appBuilder.Services.AddOpenTelemetry()
+        .UseOtlpExporter();
+    ```
+
+    For details see: [Meter](../../docs/metrics/customizing-the-sdk/README.md#meter).
+
+    When using `Microsoft.Extensions.Hosting` v8.0.0 or greater (a standard part
+    of ASP.NET Core) `Meter`s and `Instrument`s can also be enabled using
+    configuration.
+
+    `appSettings.json` metrics configuration example:
+
+    ```json
+    {
+      "Metrics": {
+        "EnabledMetrics": {
+          "Microsoft.AspNetCore.*": true,
+          "System.*": true,
+          "MyCompany.*": true,
+        }
+      }
+    }
+    ```
+
+    For details about the built-in metrics exposed by .NET see: [Built-in
+    metrics in
+    .NET](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics).
+
+  * Tracing
+
+    Trace telemetry is controlled by calling `TracerProviderBuilder.AddSource`
+    to listen to
+    [ActivitySource](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource)s
+    emitting traces. Typically instrumentation packages will make this call
+    automatically.
+
+    Examples:
+
+    ```csharp
+    appBuilder.Services.AddOpenTelemetry()
+        .UseOtlpExporter()
+        .WithTracing(tracing => tracing
+            .AddSource(MyActivitySource.Name) // Listen to custom telemetry
+            .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
+        );
+    ```
+
+    ```csharp
+    appBuilder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
+        .AddSource(MyActivitySource.Name) // Listen to custom telemetry
+        .AddAspNetCoreInstrumentation() // Use instrumentation to listen to telemetry
+    );
+
+    appBuilder.Services.AddOpenTelemetry()
+        .UseOtlpExporter();
+    ```
+
+    For details see: [Activity Source](../../docs/trace/customizing-the-sdk/README.md#activity-source).
+
+* The exporter registered by `UseOtlpExporter` will be added as the last
+  processor in the pipeline established for logging and tracing.
+
+* `UseOtlpExporter` can only be called once. Subsequent calls will result in a
+  `NotSupportedException` being thrown.
+
+* `UseOtlpExporter` cannot be called in addition to signal-specific
+  `AddOtlpExporter` methods. If `UseOtlpExporter` is called signal-specific
+  `AddOtlpExporter` calls will result in a `NotSupportedException` being thrown.
+
+### Configuring signals when using UseOtlpExporter
+
+`UseOtlpExporter` supports the full set of [environment
+variables](#environment-variables) listed below including the signal-specific
+overrides and users are encouraged to use this mechanism to configure their
+exporters.
+
+A `UseOtlpExporter` overload is provided which may be used to set the protocol
+and base URL:
+
+```csharp
+appBuilder.Services.AddOpenTelemetry()
+    .UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, new Uri("http://localhost:4318/"));
+```
+
+> [!NOTE]
+> When the protocol is set to `OtlpExportProtocol.HttpProtobuf` a
+  signal-specific path will be appended automatically to the base URL when
+  constructing exporters.
 
 ## Configuration
 
@@ -275,64 +419,129 @@ appBuilder.Services.Configure<MetricReaderOptions>(
 
 ## Environment Variables
 
-The following environment variables can be used to override the default
-values of the `OtlpExporterOptions`
-(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)).
+The following environment variables can be used to configure the OTLP Exporter
+for logs, traces, and metrics.
 
-| Environment variable          | `OtlpExporterOptions` property        |
-| ------------------------------| --------------------------------------|
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | `Endpoint`                            |
-| `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                             |
-| `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`                 |
-| `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (`grpc` or `http/protobuf`)|
+> [!NOTE]
+> In OpenTelemetry .NET environment variable keys are retrieved using
+  `IConfiguration` which means they may be set using other mechanisms such as
+  defined in `appSettings.json` or specified on the command-line.
 
-The following environment variables can be used to override the default values
-for `BatchExportProcessorOptions` in case of `OtlpTraceExporter` (following the
-[OpenTelemetry
-specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-span-processor))
+### Exporter configuration
 
-| Environment variable             | `OtlpExporterOptions.BatchExportProcessorOptions` property  |
-| ---------------------------------| ------------------------------------------------------------|
-| `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                                |
-| `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                               |
-| `OTEL_BSP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                              |
-| `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                                        |
+The [OpenTelemetry
+Specification](https://github.com/open-telemetry/opentelemetry-specification/)
+defines environment variables which can be used to configure the [OTLP
+exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)
+and its associated processor
+([logs](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-logrecord-processor)
+&
+[traces](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-span-processor))
+or reader
+([metrics](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#periodic-exporting-metricreader)).
 
-The following environment variables can be used to override the default values
-for `BatchExportProcessorOptions` in case of `OtlpLogExporter` (following the
-[OpenTelemetry
-specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-logrecord-processor))
+* All signals
 
-| Environment variable              | `LogRecordExportProcessorOptions.BatchExportProcessorOptions` property  |
-| ----------------------------------| ------------------------------------------------------------------------|
-| `OTEL_BLRP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                                            |
-| `OTEL_BLRP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                                           |
-| `OTEL_BLRP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                                          |
-| `OTEL_BLRP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                                                    |
+  The following environment variables can be used to override the default
+  values of the `OtlpExporterOptions`:
 
-The following environment variables can be used to override the default values
-of the `PeriodicExportingMetricReaderOptions` (following the [OpenTelemetry
-specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.12.0/specification/sdk-environment-variables.md#periodic-exporting-metricreader).
+  | Environment variable          | `OtlpExporterOptions` property        |
+  | ------------------------------| --------------------------------------|
+  | `OTEL_EXPORTER_OTLP_ENDPOINT` | `Endpoint`                            |
+  | `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                             |
+  | `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`                 |
+  | `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (`grpc` or `http/protobuf`)|
 
-| Environment variable                                | `PeriodicExportingMetricReaderOptions` property |
-| ----------------------------------------------------| ------------------------------------------------|
-| `OTEL_METRIC_EXPORT_INTERVAL`                       | `ExportIntervalMilliseconds`                    |
-| `OTEL_METRIC_EXPORT_TIMEOUT`                        | `ExportTimeoutMilliseconds`                     |
+* Logs:
 
-| Environment variable                                | `MetricReaderOptions` property                  |
-| ----------------------------------------------------| ------------------------------------------------|
-| `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` | `PeriodicExportingMetricReaderOptions`          |
+  The following environment variables can be used to override the default values
+  for the batch processor configured for logging:
 
-The following environment variables can be used to override the default
-values of the attribute limits
-(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.25.0/specification/configuration/sdk-environment-variables.md#attribute-limits)).
+  | Environment variable              | `BatchExportLogRecordProcessorOptions` property                         |
+  | ----------------------------------| ------------------------------------------------------------------------|
+  | `OTEL_BLRP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                                            |
+  | `OTEL_BLRP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                                           |
+  | `OTEL_BLRP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                                          |
+  | `OTEL_BLRP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                                                    |
+
+  The following environment variables can be used to override the default values
+  of the `OtlpExporterOptions` used for logging when using the [UseOtlpExporter
+  extension](#enable-otlp-exporter-for-all-signals):
+
+  | Environment variable                  | `OtlpExporterOptions` property        | UseOtlpExporter | AddOtlpExporter |
+  | --------------------------------------| --------------------------------------|-----------------|-----------------|
+  | `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`    | `Endpoint`                            | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_LOGS_HEADERS`     | `Headers`                             | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_LOGS_TIMEOUT`     | `TimeoutMilliseconds`                 | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL`    | `Protocol` (`grpc` or `http/protobuf`)| Supported       | Not supported   |
+
+* Metrics:
+
+  The following environment variables can be used to override the default value
+  of the `TemporalityPreference` setting for the reader configured for metrics
+  when using OTLP exporter:
+
+  | Environment variable                                | `MetricReaderOptions` property                  |
+  | ----------------------------------------------------| ------------------------------------------------|
+  | `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` | `TemporalityPreference`                         |
+
+  The following environment variables can be used to override the default values
+  of the periodic exporting metric reader configured for metrics:
+
+  | Environment variable                                | `PeriodicExportingMetricReaderOptions` property |
+  | ----------------------------------------------------| ------------------------------------------------|
+  | `OTEL_METRIC_EXPORT_INTERVAL`                       | `ExportIntervalMilliseconds`                    |
+  | `OTEL_METRIC_EXPORT_TIMEOUT`                        | `ExportTimeoutMilliseconds`                     |
+
+  The following environment variables can be used to override the default values
+  of the `OtlpExporterOptions` used for metrics when using the [UseOtlpExporter
+  extension](#enable-otlp-exporter-for-all-signals):
+
+  | Environment variable                  | `OtlpExporterOptions` property        | UseOtlpExporter | AddOtlpExporter |
+  | --------------------------------------| --------------------------------------|-----------------|-----------------|
+  | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | `Endpoint`                            | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_METRICS_HEADERS`  | `Headers`                             | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_METRICS_TIMEOUT`  | `TimeoutMilliseconds`                 | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_METRICS_PROTOCOL` | `Protocol` (`grpc` or `http/protobuf`)| Supported       | Not supported   |
+
+* Tracing:
+
+  The following environment variables can be used to override the default values
+  for the batch processor configured for tracing:
+
+  | Environment variable             | `BatchExportActivityProcessorOptions` property              |
+  | ---------------------------------| ------------------------------------------------------------|
+  | `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                                |
+  | `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                               |
+  | `OTEL_BSP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                              |
+  | `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                                        |
+
+  The following environment variables can be used to override the default values
+  of the `OtlpExporterOptions` used for tracing when using the [UseOtlpExporter
+  extension](#enable-otlp-exporter-for-all-signals):
+
+  | Environment variable                  | `OtlpExporterOptions` property        | UseOtlpExporter | AddOtlpExporter |
+  | --------------------------------------| --------------------------------------|-----------------|-----------------|
+  | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`  | `Endpoint`                            | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_TRACES_HEADERS`   | `Headers`                             | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_TRACES_TIMEOUT`   | `TimeoutMilliseconds`                 | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL`  | `Protocol` (`grpc` or `http/protobuf`)| Supported       | Not supported   |
+
+### Attribute limits
+
+The [OpenTelemetry
+Specification](https://github.com/open-telemetry/opentelemetry-specification/)
+defines environment variables which can be used to configure [attribute
+limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#attribute-limits).
+
+The following environment variables can be used to configure default attribute
+limits:
 
 * `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`
 * `OTEL_ATTRIBUTE_COUNT_LIMIT`
 
-The following environment variables can be used to override the default
-values of the span limits
-(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.25.0/specification/configuration/sdk-environment-variables.md#span-limits)).
+The following environment variables can be used to configure span limits used
+for tracing:
 
 * `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`
 * `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`
@@ -341,29 +550,23 @@ values of the span limits
 * `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT`
 * `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT`
 
-The following environment variables can be used to override the default
-values of the log record limits
-(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.25.0/specification/configuration/sdk-environment-variables.md#logrecord-limits)).
+The following environment variables can be used to configure log record limits
+used for logging:
 
 * `OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT`
 * `OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT`
 
-## Environment Variables for Experimental Features
-
-### Otlp Log Exporter
-
-* `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES`
-
-When set to `true`, it enables export of `LogRecord.EventId.Id` as
-`logrecord.event.id` and `LogRecord.EventId.Name` to `logrecord.event.name`.
-
 ## Configure HttpClient
 
 The `HttpClientFactory` option is provided on `OtlpExporterOptions` for users
-who want to configure the `HttpClient` used by the `OtlpTraceExporter` and/or
-`OtlpMetricExporter` when `HttpProtobuf` protocol is used. Simply replace the
-function with your own implementation if you want to customize the generated
-`HttpClient`:
+who want to configure the `HttpClient` used by the `OtlpTraceExporter`,
+`OtlpMetricExporter`, and/or `OtlpLogExporter` when `HttpProtobuf` protocol is
+used. Simply replace the function with your own implementation if you want to
+customize the generated `HttpClient`:
+
+> [!NOTE]
+> The `HttpClient` instance returned by the `HttpClientFactory` function is used
+  for all export requests.
 
 ```csharp
 services.AddOpenTelemetry()
@@ -382,11 +585,11 @@ services.AddOpenTelemetry()
 
 > [!NOTE]
 > `DefaultRequestHeaders` can be used for [HTTP Basic Access
-Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication). For
-more complex authentication requirements,
-[`System.Net.Http.DelegatingHandler`](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler)
-can be used to handle token refresh, as explained
-[here](https://stackoverflow.com/questions/56204350/how-to-refresh-a-token-using-ihttpclientfactory).
+  Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
+  For more complex authentication requirements,
+  [`System.Net.Http.DelegatingHandler`](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler)
+  can be used to handle token refresh, as explained
+  [here](https://stackoverflow.com/questions/56204350/how-to-refresh-a-token-using-ihttpclientfactory).
 
 For users using
 [IHttpClientFactory](https://docs.microsoft.com/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
@@ -401,8 +604,42 @@ services.AddHttpClient(
 ```
 
 > [!NOTE]
-> The single instance returned by `HttpClientFactory` is reused by all export
-requests.
+> `IHttpClientFactory` is NOT currently supported by `OtlpLogExporter`.
+
+## Experimental features
+
+The following features are exposed experimentally in the OTLP Exporter. Features
+are exposed experimentally when either the [OpenTelemetry
+Specification](https://github.com/open-telemetry/opentelemetry-specification)
+has explicitly marked something
+[experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md)
+or when the SIG members are still working through the design for a feature and
+want to solicit feedback from the community.
+
+### Environment variables
+
+> [!NOTE]
+> In OpenTelemetry .NET environment variable keys are retrieved using
+  `IConfiguration` which means they may be set using other mechanisms such as
+  defined in appSettings.json or specified on the command-line.
+
+* All signals
+
+  * `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY`
+
+    When set to `true`, it enables in-memory retry for transient errors
+    encountered while sending telemetry.
+
+    Added in `1.8.0-beta.1`.
+
+* Logs
+
+  * `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES`
+
+    When set to `true`, it enables export of `LogRecord.EventId.Id` as
+    `logrecord.event.id` and `LogRecord.EventId.Name` as `logrecord.event.name`.
+
+    Added in `1.7.0-alpha.1`.
 
 ## Troubleshooting
 
