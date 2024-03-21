@@ -77,35 +77,35 @@ internal sealed class OtlpTagTransformer : TagTransformer<OtlpCommon.KeyValue>
             return new();
         }
 
-        switch (value)
+        return value switch
         {
-            case char:
-            case string:
-                // Note: No need to call TruncateString here. That is taken care
-                // of in base class via
-                // ConvertToStringArrayThenTransformArrayTag
-                return ToAnyValue(Convert.ToString(value)!);
-            case bool b:
-                return ToAnyValue(b);
-            case byte:
-            case sbyte:
-            case short:
-            case ushort:
-            case int:
-            case uint:
-            case long:
-                return ToAnyValue(Convert.ToInt64(value));
-            case float:
-            case double:
-                return ToAnyValue(Convert.ToDouble(value));
-            default:
-                // Note: This should never be executed. In the base class the
-                // default case in TransformArrayTagInternal converts everything
-                // not explicitly supported to strings
+            char => ToAnyValue(Convert.ToString(value)!),
+            string s =>
+                /* Note: No need to call TruncateString here. That is taken care of
+                 in base class via ConvertToStringArrayThenTransformArrayTag */
+                ToAnyValue(s),
+            bool b => ToAnyValue(b),
+            byte b => ToAnyValue(b),
+            sbyte b => ToAnyValue(b),
+            short s => ToAnyValue(s),
+            ushort s => ToAnyValue(s),
+            int i => ToAnyValue(i),
+            uint i => ToAnyValue(i),
+            long l => ToAnyValue(l),
+            float f => ToAnyValue(f),
+            double d => ToAnyValue(d),
+            _ => DefaultCase(value),
+        };
 
-                Debug.Fail("Default case executed");
+        static OtlpCommon.AnyValue DefaultCase(object value)
+        {
+            // Note: This should never be executed. In the base class the
+            // default case in TransformArrayTagInternal converts everything
+            // not explicitly supported to strings
 
-                throw new NotSupportedException($"Type '{value.GetType()}' is not supported");
+            Debug.Fail("Default case executed");
+
+            throw new NotSupportedException($"Type '{value.GetType()}' is not supported");
         }
     }
 }
