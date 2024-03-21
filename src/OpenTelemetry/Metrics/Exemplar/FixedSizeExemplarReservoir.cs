@@ -29,36 +29,13 @@ internal abstract class FixedSizeExemplarReservoir : ExemplarReservoir
     {
         var runningExemplars = this.runningExemplars;
 
-        if (this.ResetOnCollect)
+        for (int i = 0; i < runningExemplars.Length; i++)
         {
-            for (int i = 0; i < runningExemplars.Length; i++)
-            {
-                ref var running = ref runningExemplars[i];
-                if (running.IsUpdated())
-                {
-                    running.Copy(ref this.snapshotExemplars[i]);
-                    running.Reset();
-                }
-                else
-                {
-                    this.snapshotExemplars[i].Reset();
-                }
-            }
-        }
-        else
-        {
-            for (int i = 0; i < runningExemplars.Length; i++)
-            {
-                ref var running = ref runningExemplars[i];
-                if (running.IsUpdated())
-                {
-                    running.Copy(ref this.snapshotExemplars[i]);
-                }
-                else
-                {
-                    this.snapshotExemplars[i].Reset();
-                }
-            }
+            ref var running = ref runningExemplars[i];
+
+            running.Collect(
+                ref this.snapshotExemplars[i],
+                reset: this.ResetOnCollect);
         }
 
         this.OnCollected();
