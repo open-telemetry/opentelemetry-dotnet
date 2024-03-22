@@ -17,6 +17,7 @@ internal sealed class PrometheusCollectionManager
     private readonly HashSet<string> scopes;
     private int metricsCacheCount;
     private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
+    private int targetInfoBufferLength = -1; // zero or positive when target_info has been written for the first time
     private int globalLockState;
     private ArraySegment<byte> previousDataView;
     private DateTime? previousDataViewGeneratedAtUtc;
@@ -174,13 +175,20 @@ internal sealed class PrometheusCollectionManager
         {
             if (this.exporter.OpenMetricsRequested)
             {
+                cursor = this.WriteTargetInfo();
+
                 this.scopes.Clear();
 
                 foreach (var metric in metrics)
                 {
-                    if (PrometheusSerializer.CanWriteMetric(metric))
+                    if (!PrometheusSerializer.CanWriteMetric(metric))
                     {
-                        if (this.scopes.Add(metric.MeterName))
+                        continue;
+                    }
+
+                    if (this.scopes.Add(metric.MeterName))
+                    {
+                        while (true)
                         {
                             try
                             {
@@ -260,6 +268,31 @@ internal sealed class PrometheusCollectionManager
             this.previousDataView = new ArraySegment<byte>(Array.Empty<byte>(), 0, 0);
             return ExportResult.Failure;
         }
+    }
+
+    private int WriteTargetInfo()
+    {
+        if (this.targetInfoBufferLength < 0)
+        {
+            while (true)
+            {
+                try
+                {
+                    this.targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(this.buffer, 0, this.exporter.Resource);
+
+                    break;
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    if (!this.IncreaseBufferSize())
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        return this.targetInfoBufferLength;
     }
 
     private bool IncreaseBufferSize()

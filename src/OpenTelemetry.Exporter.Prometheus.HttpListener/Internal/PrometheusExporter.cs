@@ -3,6 +3,7 @@
 
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter.Prometheus;
 
@@ -14,6 +15,7 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 {
     private Func<int, bool> funcCollect;
     private Func<Batch<Metric>, ExportResult> funcExport;
+    private Resource resource;
     private bool disposed;
 
     /// <summary>
@@ -54,6 +56,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     internal bool DisableTotalNameSuffixForCounters { get; }
 
     internal bool OpenMetricsRequested { get; set; }
+
+    internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
 
     /// <inheritdoc/>
     public override ExportResult Export(in Batch<Metric> metrics)
