@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Net.Http;
 #endif
 using Microsoft.Extensions.Configuration;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter;

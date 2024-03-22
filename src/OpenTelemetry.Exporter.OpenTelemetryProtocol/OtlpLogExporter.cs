@@ -4,9 +4,9 @@
 #nullable enable
 
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using OtlpResource = OpenTelemetry.Proto.Resource.V1;
@@ -57,10 +57,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
             OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
         };
 
-        ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
-        };
+        OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable = OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable;
 
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetLogsExportTransmissionHandler(experimentalOptions!);
 
