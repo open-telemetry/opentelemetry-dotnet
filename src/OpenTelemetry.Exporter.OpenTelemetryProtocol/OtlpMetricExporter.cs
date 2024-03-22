@@ -1,9 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 using OtlpResource = OpenTelemetry.Proto.Resource.V1;
@@ -40,17 +40,11 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest> transmissionHandler = null)
     {
-        // Each of the Otlp exporters: Traces, Metrics, and Logs set the same value for `OtlpKeyValueTransformer.LogUnsupportedAttributeType`
-        // and `ConfigurationExtensions.LogInvalidEnvironmentVariable` so it should be fine even if these exporters are used together.
-        OtlpKeyValueTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
-        };
-
-        ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
-        };
+        // Each of the Otlp exporters: Traces, Metrics, and Logs set the same
+        // value for
+        // `OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable`
+        // so it should be fine even if these exporters are used together.
+        OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable = OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable;
 
         this.transmissionHandler = transmissionHandler ?? options.GetMetricsExportTransmissionHandler(experimentalOptions);
     }

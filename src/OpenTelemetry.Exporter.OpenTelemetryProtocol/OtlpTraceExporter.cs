@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-using OpenTelemetry.Internal;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
@@ -48,9 +48,11 @@ public class OtlpTraceExporter : BaseExporter<Activity>
 
         this.sdkLimitOptions = sdkLimitOptions;
 
-        OtlpKeyValueTransformer.LogUnsupportedAttributeType = OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType;
-
-        ConfigurationExtensions.LogInvalidEnvironmentVariable = OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable;
+        // Each of the Otlp exporters: Traces, Metrics, and Logs set the same
+        // value for
+        // `OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable`
+        // so it should be fine even if these exporters are used together.
+        OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable = OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable;
 
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetTraceExportTransmissionHandler(experimentalOptions);
     }
