@@ -416,7 +416,7 @@ internal static class MetricItemExtensions
 
         foreach (var tag in exemplar.FilteredTags)
         {
-            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var result))
             {
                 otlpExemplar.FilteredAttributes.Add(result);
             }
@@ -429,7 +429,7 @@ internal static class MetricItemExtensions
     {
         foreach (var tag in tags)
         {
-            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var result))
             {
                 attributes.Add(result);
             }
@@ -440,7 +440,7 @@ internal static class MetricItemExtensions
     {
         foreach (var tag in meterTags)
         {
-            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var result))
             {
                 attributes.Add(result);
             }

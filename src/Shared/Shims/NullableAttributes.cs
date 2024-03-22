@@ -34,5 +34,13 @@ namespace System.Diagnostics.CodeAnalysis
         /// <summary>Gets the return value condition.</summary>
         public bool ReturnValue { get; }
     }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter | AttributeTargets.ReturnValue, AllowMultiple = true, Inherited = false)]
+    internal sealed class NotNullIfNotNullAttribute : Attribute
+    {
+        public NotNullIfNotNullAttribute(string parameterName) => ParameterName = parameterName;
+
+        public string ParameterName { get; }
+    }
 }
 #endif

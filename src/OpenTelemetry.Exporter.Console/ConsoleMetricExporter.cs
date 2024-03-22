@@ -27,7 +27,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 this.WriteLine("Resource associated with Metric:");
                 foreach (var resourceAttribute in this.resource.Attributes)
                 {
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(resourceAttribute, out var result))
+                    if (this.TagTransformer.TryTransformTag(resourceAttribute, out var result))
                     {
                         this.WriteLine($"    {result}");
                     }
@@ -67,7 +67,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 foreach (var meterTag in metric.MeterTags)
                 {
                     this.WriteLine("\tMeter Tags:");
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(meterTag, out var result))
+                    if (this.TagTransformer.TryTransformTag(meterTag, out var result))
                     {
                         this.WriteLine($"\t\t{result}");
                     }
@@ -80,7 +80,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 StringBuilder tagsBuilder = new StringBuilder();
                 foreach (var tag in metricPoint.Tags)
                 {
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
+                    if (this.TagTransformer.TryTransformTag(tag, out var result))
                     {
                         tagsBuilder.Append(result);
                         tagsBuilder.Append(' ');
@@ -216,7 +216,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                         bool appendedTagString = false;
                         foreach (var tag in exemplar.FilteredTags)
                         {
-                            if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
+                            if (this.TagTransformer.TryTransformTag(tag, out var result))
                             {
                                 if (!appendedTagString)
                                 {

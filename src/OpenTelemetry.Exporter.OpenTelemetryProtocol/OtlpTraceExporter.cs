@@ -48,8 +48,10 @@ public class OtlpTraceExporter : BaseExporter<Activity>
 
         this.sdkLimitOptions = sdkLimitOptions;
 
-        OtlpKeyValueTransformer.LogUnsupportedAttributeType = OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType;
-
+        // Each of the Otlp exporters: Traces, Metrics, and Logs set the same
+        // value for
+        // `OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable`
+        // so it should be fine even if these exporters are used together.
         OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable = OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable;
 
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetTraceExportTransmissionHandler(experimentalOptions);
