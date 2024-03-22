@@ -113,50 +113,50 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
     {
         while (true)
         {
-            if (this.shutdownEvent.WaitOne(0))
+            try
             {
-                break;
-            }
-
-            // Wait 60 seconds before retrying
-            this.exportEvent.WaitOne(this.RetryInterval);
-
-            int fileCount = 0;
-
-            // Transmit 10 files at a time.
-            while (fileCount < 10 && !this.shutdownEvent.WaitOne(0))
-            {
-                if (this.persistentBlobProvider.TryGetBlob(out var blob))
-                {
-                    if (blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
-                    {
-                        if (this.requestFactory != null)
-                        {
-                            var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
-                            var request = this.requestFactory.Invoke(data);
-                            if (this.TryRetryRequest(request, deadlineUtc, out var response) || !RetryHelper.ShouldRetryRequest(request, response, OtlpRetry.InitialBackoffMilliseconds, out _))
-                            {
-                                blob.TryDelete();
-                            }
-                        }
-                    }
-                }
-                else
+                if (this.shutdownEvent.WaitOne(0))
                 {
                     break;
                 }
 
-                fileCount++;
-            }
+                // Wait 60 seconds before retrying
+                this.exportEvent.WaitOne(this.RetryInterval);
 
-            try
-            {
+                int fileCount = 0;
+
+                // Transmit 10 files at a time.
+                while (fileCount < 10 && !this.shutdownEvent.WaitOne(0))
+                {
+                    if (this.persistentBlobProvider.TryGetBlob(out var blob))
+                    {
+                        if (blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
+                        {
+                            if (this.requestFactory != null)
+                            {
+                                var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
+                                var request = this.requestFactory.Invoke(data);
+                                if (this.TryRetryRequest(request, deadlineUtc, out var response) || !RetryHelper.ShouldRetryRequest(request, response, OtlpRetry.InitialBackoffMilliseconds, out _))
+                                {
+                                    blob.TryDelete();
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    fileCount++;
+                }
+
                 this.dataExportNotification.Set();
                 this.dataExportNotification.Reset();
             }
             catch (ObjectDisposedException)
             {
-                // the exporter is somehow disposed before the worker thread could finish its job
+                // the handler is somehow disposed before the worker thread could finish its job
                 return;
             }
         }

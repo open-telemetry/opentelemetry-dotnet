@@ -365,7 +365,6 @@ public sealed class MockCollectorIntegrationTests
 
             // Overwrite the retryInterval for test
             var persistentStorageTransmissionHandler = transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>;
-            persistentStorageTransmissionHandler.RetryInterval = 0;
         }
         else
         {
@@ -506,7 +505,6 @@ public sealed class MockCollectorIntegrationTests
 
             // Overwrite the retryInterval for test
             var persistentStorageTransmissionHandler = transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>;
-            persistentStorageTransmissionHandler.RetryInterval = 0;
         }
         else
         {
