@@ -38,7 +38,10 @@ not covered by the built-in exporters:
 * Exporters should avoid generating telemetry and causing live-loop, this can be
   done via `OpenTelemetry.SuppressInstrumentationScope`.
 * Exporters should use `Activity.TagObjects` collection instead of
-  `Activity.Tags` to obtain the full set of attributes (tags).
+  `Activity.Tags` to obtain the full set of attributes (tags). `Activity.Tags` only
+   returns tags whose value are of type `string` ([source](https://source.dot.net/#System.Diagnostics.DiagnosticSource/System/Diagnostics/Activity.cs,74de547549e574e0,references)).
+  For improved performance, use [Activity.EnumerateTagObjects](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.activity.enumeratetagobjects?view=net-8.0)
+  if planning to enumerate over all TagObjects.
 * Exporters should use `ParentProvider.GetResource()` to get the `Resource`
   associated with the provider.
 
@@ -256,6 +259,11 @@ Custom processors can be implemented to cover more scenarios:
   and `OnShutdown`.
 * `OnStart` and `OnEnd` should be thread safe, and should not block or take long
   time, since they will be called on critical code path.
+* Processors should use `Activity.TagObjects` collection instead of
+  `Activity.Tags` to obtain the full set of attributes (tags). `Activity.Tags` only
+   returns tags whose value are of type `string` ([source](https://source.dot.net/#System.Diagnostics.DiagnosticSource/System/Diagnostics/Activity.cs,74de547549e574e0,references)).
+  For improved performance, use [Activity.EnumerateTagObjects](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.activity.enumeratetagobjects?view=net-8.0)
+  if planning to enumerate over all TagObjects.
 
 ```csharp
 class MyProcessor : BaseProcessor<Activity>
