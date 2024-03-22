@@ -105,7 +105,14 @@ internal sealed class OtlpTagTransformer : TagTransformer<OtlpCommon.KeyValue>
 
             Debug.Fail("Default case executed");
 
-            throw new NotSupportedException($"Type '{value.GetType()}' is not supported");
+            var stringValue = Convert.ToString(value);
+
+            if (stringValue == null)
+            {
+                return new();
+            }
+
+            return ToAnyValue(stringValue);
         }
     }
 }
