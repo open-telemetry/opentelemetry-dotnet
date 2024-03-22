@@ -4,7 +4,6 @@
 #nullable enable
 
 using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Logs;

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
