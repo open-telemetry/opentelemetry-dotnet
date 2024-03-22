@@ -10,6 +10,7 @@ using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
@@ -43,10 +44,7 @@ public class ZipkinExporter : BaseExporter<Activity>
             ZipkinExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
         };
 
-        ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
-        {
-            ZipkinExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
-        };
+        OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable = ZipkinExporterEventSource.Log.InvalidEnvironmentVariable;
     }
 
     internal ZipkinEndpoint LocalEndpoint { get; private set; }

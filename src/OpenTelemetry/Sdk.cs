@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
@@ -34,10 +35,7 @@ public static class Sdk
         var assemblyInformationalVersion = typeof(Sdk).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         InformationalVersion = ParseAssemblyInformationalVersion(assemblyInformationalVersion);
 
-        ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
-        {
-            OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, value);
-        };
+        OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable = OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable;
     }
 
     /// <summary>

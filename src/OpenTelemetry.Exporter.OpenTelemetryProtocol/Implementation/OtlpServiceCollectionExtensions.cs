@@ -7,7 +7,6 @@ using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter;

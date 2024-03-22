@@ -4,7 +4,6 @@
 #nullable enable
 
 using Microsoft.Extensions.Configuration;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
