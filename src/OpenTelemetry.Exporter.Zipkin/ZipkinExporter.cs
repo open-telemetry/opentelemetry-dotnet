@@ -43,8 +43,6 @@ public class ZipkinExporter : BaseExporter<Activity>
         {
             ZipkinExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
         };
-
-        OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable = ZipkinExporterEventSource.Log.InvalidEnvironmentVariable;
     }
 
     internal ZipkinEndpoint LocalEndpoint { get; private set; }
