@@ -35,7 +35,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
     /// </summary>
-    /// <param name="exporterOptions">Configuration options for the exporter.</param>
+    /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
     /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
     /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>

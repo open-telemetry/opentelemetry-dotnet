@@ -32,7 +32,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
     /// </summary>
-    /// <param name="exporterOptions">Configuration options for the export.</param>
+    /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
     /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
     /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
     internal OtlpMetricExporter(
