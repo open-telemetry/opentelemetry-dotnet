@@ -125,6 +125,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
 
                 int fileCount = 0;
 
+                // TODO: Run maintenance job.
                 // Transmit 10 files at a time.
                 while (fileCount < 10 && !this.shutdownEvent.WaitOne(0))
                 {
@@ -154,9 +155,9 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
                 this.dataExportNotification.Set();
                 this.dataExportNotification.Reset();
             }
-            catch (ObjectDisposedException)
+            catch (Exception ex)
             {
-                // the handler is somehow disposed before the worker thread could finish its job
+                OpenTelemetryProtocolExporterEventSource.Log.RetryStoredRequestException(ex);
                 return;
             }
         }
