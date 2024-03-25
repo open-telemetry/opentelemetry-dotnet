@@ -392,7 +392,7 @@ public sealed class MockCollectorIntegrationTests
                 Assert.Single(mockProvider.TryGetBlobs());
 
                 // Force Retry
-                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>).InitiateAndWaitForRetryProcess (-1));
+                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>).InitiateAndWaitForRetryProcess(-1));
 
                 Assert.False(mockProvider.TryGetBlob(out _));
             }
@@ -529,7 +529,7 @@ public sealed class MockCollectorIntegrationTests
                 Assert.Single(mockProvider.TryGetBlobs());
 
                 // Force Retry
-                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>).InitiateAndWaitForRetryProcess (-1));
+                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>).InitiateAndWaitForRetryProcess(-1));
 
                 Assert.False(mockProvider.TryGetBlob(out _));
             }
