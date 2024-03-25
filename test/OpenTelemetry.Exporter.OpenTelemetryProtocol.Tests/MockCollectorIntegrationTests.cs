@@ -362,9 +362,6 @@ public sealed class MockCollectorIntegrationTests
                     request.MergeFrom(data);
                     return request;
                 });
-
-            // Overwrite the retryInterval for test
-            var persistentStorageTransmissionHandler = transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>;
         }
         else
         {
@@ -502,9 +499,6 @@ public sealed class MockCollectorIntegrationTests
                     request.MergeFrom(data);
                     return request;
                 });
-
-            // Overwrite the retryInterval for test
-            var persistentStorageTransmissionHandler = transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>;
         }
         else
         {
