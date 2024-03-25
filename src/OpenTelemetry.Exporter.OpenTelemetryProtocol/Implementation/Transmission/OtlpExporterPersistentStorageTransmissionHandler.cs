@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.PersistentStorage.Abstractions;
@@ -21,7 +22,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
     private readonly AutoResetEvent exportEvent = new(false);
     private readonly Thread thread;
     private readonly PersistentBlobProvider persistentBlobProvider;
-    private readonly Func<byte[], TRequest>? requestFactory;
+    private readonly Func<byte[], TRequest> requestFactory;
     private bool disposed;
 
     public OtlpExporterPersistentStorageTransmissionHandler(IExportClient<TRequest> exportClient, double timeoutMilliseconds, Func<byte[], TRequest> requestFactory, string storagePath)
@@ -32,8 +33,11 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
     internal OtlpExporterPersistentStorageTransmissionHandler(PersistentBlobProvider persistentBlobProvider, IExportClient<TRequest> exportClient, double timeoutMilliseconds, Func<byte[], TRequest> requestFactory)
         : base(exportClient, timeoutMilliseconds)
     {
-        this.persistentBlobProvider = persistentBlobProvider;
-        this.requestFactory = requestFactory;
+        Debug.Assert(persistentBlobProvider != null, "persistentBlobProvider was null");
+        Debug.Assert(requestFactory != null, "requestFactory was null");
+
+        this.persistentBlobProvider = persistentBlobProvider!;
+        this.requestFactory = requestFactory!;
 
         this.thread = new Thread(this.RetryStoredRequests)
         {
@@ -45,7 +49,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
     }
 
     // Used for test.
-    internal bool Forceflush(int timeOutMilliseconds)
+    internal bool InitiateAndWaitForRetryProcess(int timeOutMilliseconds)
     {
         this.exportEvent.Set();
 
@@ -73,6 +77,11 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
             else if (request is ExportLogsServiceRequest logsRequest)
             {
                 data = logsRequest.ToByteArray();
+            }
+            else
+            {
+                Debug.Fail("Unexpected request type encountered");
+                data = null;
             }
 
             if (data != null)
@@ -119,17 +128,17 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
 
     private void RetryStoredRequests()
     {
+        var handles = new WaitHandle[] { this.shutdownEvent, this.exportEvent };
         while (true)
         {
             try
             {
-                if (this.shutdownEvent.WaitOne(0))
+                var index = WaitHandle.WaitAny(handles, this.RetryIntervalInMilliseconds);
+                if (index == 0)
                 {
+                    // Shutdown signaled
                     break;
                 }
-
-                // Wait 60 seconds before retrying
-                this.exportEvent.WaitOne(this.RetryIntervalInMilliseconds);
 
                 int fileCount = 0;
 
@@ -137,31 +146,26 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
                 // Transmit 10 files at a time.
                 while (fileCount < 10 && !this.shutdownEvent.WaitOne(0))
                 {
-                    if (this.persistentBlobProvider.TryGetBlob(out var blob))
-                    {
-                        if (blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
-                        {
-                            if (this.requestFactory != null)
-                            {
-                                var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
-                                var request = this.requestFactory.Invoke(data);
-                                if (this.TryRetryRequest(request, deadlineUtc, out var response) || !RetryHelper.ShouldRetryRequest(request, response, OtlpRetry.InitialBackoffMilliseconds, out _))
-                                {
-                                    blob.TryDelete();
-                                }
-                            }
-                        }
-                    }
-                    else
+                    if (!this.persistentBlobProvider.TryGetBlob(out var blob))
                     {
                         break;
+                    }
+
+                    if (blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
+                    {
+                        var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
+                        var request = this.requestFactory.Invoke(data);
+                        if (this.TryRetryRequest(request, deadlineUtc, out var response) || !RetryHelper.ShouldRetryRequest(request, response, OtlpRetry.InitialBackoffMilliseconds, out _))
+                        {
+                            blob.TryDelete();
+                        }
                     }
 
                     fileCount++;
                 }
 
                 // Set and reset the handle to notify export and wait for next signal.
-                // This is used for forceflush.
+                // This is used for InitiateAndWaitForRetryProcess.
                 this.dataExportNotification.Set();
                 this.dataExportNotification.Reset();
             }
