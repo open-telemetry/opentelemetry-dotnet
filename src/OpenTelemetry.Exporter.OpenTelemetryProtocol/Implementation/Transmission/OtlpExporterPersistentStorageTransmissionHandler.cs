@@ -88,7 +88,15 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
 
     protected override void OnShutdown(int timeoutMilliseconds)
     {
-        this.shutdownEvent.Set();
+        try
+        {
+            this.shutdownEvent.Set();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Dispose was called before shutdown.
+        }
+
         this.thread.Join(timeoutMilliseconds);
         base.OnShutdown(timeoutMilliseconds);
     }
@@ -152,6 +160,8 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
                     fileCount++;
                 }
 
+                // Set and reset the handle to notify export and wait for next signal.
+                // This is used for forceflush.
                 this.dataExportNotification.Set();
                 this.dataExportNotification.Reset();
             }
