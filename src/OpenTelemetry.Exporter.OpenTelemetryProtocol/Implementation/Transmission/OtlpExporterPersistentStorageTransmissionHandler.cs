@@ -15,7 +15,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmissi
 
 internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest> : OtlpExporterTransmissionHandler<TRequest>, IDisposable
 {
-    internal int RetryInterval = 60000;
+    internal int RetryIntervalInMilliseconds = 60000;
     private readonly ManualResetEvent shutdownEvent = new(false);
     private readonly ManualResetEvent dataExportNotification = new(false);
     private readonly AutoResetEvent exportEvent = new(false);
@@ -129,7 +129,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
                 }
 
                 // Wait 60 seconds before retrying
-                this.exportEvent.WaitOne(this.RetryInterval);
+                this.exportEvent.WaitOne(this.RetryIntervalInMilliseconds);
 
                 int fileCount = 0;
 
