@@ -51,16 +51,14 @@ internal static class RequestMethodHelper
             : OtherHttpMethod;
     }
 
-    public static void SetHttpMethodTag(Activity activity, string method)
+    public static void SetHttpMethodTag(Activity activity, string originalHttpMethod)
     {
-        if (KnownMethods.TryGetValue(method, out var normalizedMethod))
+        var normalizedHttpMethod = GetNormalizedHttpMethod(originalHttpMethod);
+        activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, normalizedHttpMethod);
+
+        if (originalHttpMethod != normalizedHttpMethod)
         {
-            activity?.SetTag(SemanticConventions.AttributeHttpRequestMethod, normalizedMethod);
-        }
-        else
-        {
-            activity?.SetTag(SemanticConventions.AttributeHttpRequestMethod, OtherHttpMethod);
-            activity?.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, method);
+            activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, originalHttpMethod);
         }
     }
 

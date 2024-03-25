@@ -356,18 +356,34 @@ public partial class HttpClientTests : IDisposable
     }
 
     [Theory]
-    [InlineData("CONNECT", "CONNECT")]
-    [InlineData("DELETE", "DELETE")]
-    [InlineData("GET", "GET")]
-    [InlineData("PUT", "PUT")]
-    [InlineData("HEAD", "HEAD")]
-    [InlineData("OPTIONS", "OPTIONS")]
-    [InlineData("PATCH", "PATCH")]
-    [InlineData("Get", "GET")]
-    [InlineData("POST", "POST")]
-    [InlineData("TRACE", "TRACE")]
-    [InlineData("CUSTOM", "_OTHER")]
-    public async Task HttpRequestMethodIsSetOnActivityAsPerSpec(string originalMethod, string expectedMethod)
+    [InlineData("CONNECT", "CONNECT", null)]
+    [InlineData("DELETE", "DELETE", null)]
+    [InlineData("GET", "GET", null)]
+    [InlineData("PUT", "PUT", null)]
+    [InlineData("HEAD", "HEAD", null)]
+    [InlineData("OPTIONS", "OPTIONS", null)]
+    [InlineData("PATCH", "PATCH", null)]
+    [InlineData("POST", "POST", null)]
+    [InlineData("TRACE", "TRACE", null)]
+    [InlineData("Delete", "DELETE", "Delete")]
+#if NETFRAMEWORK
+    [InlineData("Connect", "CONNECT", null)]// HTTP Client converts Connect to its canonical form (Connect). Expected method is null.
+    [InlineData("Get", "GET", null)] // HTTP Client converts Get to its canonical form (GET). Expected method is null.
+    [InlineData("Put", "PUT", null)] // HTTP Client converts Put to its canonical form (PUT). Expected method is null.
+    [InlineData("Head", "HEAD", null)] // HTTP Client converts Head to its canonical form (HEAD). Expected method is null.
+    [InlineData("Post", "POST", null)] // HTTP Client converts Post to its canonical form (POST). Expected method is null.
+#else
+    [InlineData("Connect", "CONNECT", "Connect")]
+    [InlineData("Get", "GET", "Get")]
+    [InlineData("Put", "PUT", "Put")]
+    [InlineData("Head", "HEAD", "Head")]
+    [InlineData("Post", "POST", "Post")]
+#endif
+    [InlineData("Options", "OPTIONS", "Options")]
+    [InlineData("Patch", "PATCH", "Patch")]
+    [InlineData("Trace", "TRACE", "Trace")]
+    [InlineData("CUSTOM", "_OTHER", "CUSTOM")]
+    public async Task HttpRequestMethodIsSetOnActivityAsPerSpec(string originalMethod, string expectedMethod, string expectedOriginalMethod)
     {
         var exportedItems = new List<Activity>();
         using var request = new HttpRequestMessage
@@ -396,20 +412,17 @@ public partial class HttpClientTests : IDisposable
 
         var activity = exportedItems[0];
 
-        Assert.Contains(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethod);
-
         if (originalMethod.Equals(expectedMethod, StringComparison.OrdinalIgnoreCase))
         {
             Assert.Equal(expectedMethod, activity.DisplayName);
-            Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
         }
         else
         {
             Assert.Equal("HTTP", activity.DisplayName);
-            Assert.Equal(originalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
         }
 
-        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod));
+        Assert.Equal(expectedOriginalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal));
     }
 
     [Theory]
@@ -423,6 +436,7 @@ public partial class HttpClientTests : IDisposable
     [InlineData("Get", "GET")]
     [InlineData("POST", "POST")]
     [InlineData("TRACE", "TRACE")]
+    [InlineData("Trace", "TRACE")]
     [InlineData("CUSTOM", "_OTHER")]
     public async Task HttpRequestMethodIsSetonRequestDurationMetricAsPerSpec(string originalMethod, string expectedMethod)
     {

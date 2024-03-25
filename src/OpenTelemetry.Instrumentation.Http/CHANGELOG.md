@@ -6,6 +6,11 @@
   `server.address` when it has default values (`80` for `HTTP` and
   `443` for `HTTPS` protocol).
   ([#5419](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5419))
+* Fixed an issue for spans when `http.request.method_original` attribute was not
+  set for non canonical form of HTTP methods, e.g. for `Options`. The attribute
+  is not set .NET Framework for non canonical form of `Connect`, `GET`, `HEAD`,
+ `PUT`, and `POST`. HTTP Client is converting these values to canonical form.
+  ([#5471](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5471))
 
 ## 1.7.1
 
