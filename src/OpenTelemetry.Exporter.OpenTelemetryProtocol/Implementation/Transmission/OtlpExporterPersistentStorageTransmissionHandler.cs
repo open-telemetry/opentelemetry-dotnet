@@ -119,7 +119,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
                 this.shutdownEvent.Dispose();
                 this.exportEvent.Dispose();
                 this.dataExportNotification.Dispose();
-                (this.persistentBlobProvider as FileBlobProvider)?.Dispose();
+                (this.persistentBlobProvider as IDisposable)?.Dispose();
             }
 
             this.disposed = true;
