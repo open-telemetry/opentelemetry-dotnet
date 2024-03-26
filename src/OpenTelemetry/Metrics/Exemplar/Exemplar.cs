@@ -106,7 +106,12 @@ internal
     {
         if (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0)
         {
-            // Some other thread is already writing, abort.
+            // Note: If we reached here it means some other thread is already
+            // updating the exemplar. Instead of spinning, we abort. The idea is
+            // for two exemplars offered at more or less the same time there
+            // really isn't a difference which one is stored so it is an
+            // optimization to let the losing thread(s) get back to work instead
+            // of spinning.
             return;
         }
 
