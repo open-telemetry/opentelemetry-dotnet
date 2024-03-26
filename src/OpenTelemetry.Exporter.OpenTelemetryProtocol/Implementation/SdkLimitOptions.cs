@@ -163,7 +163,7 @@ internal sealed class SdkLimitOptions
 
     private static void SetIntConfigValue(IConfiguration configuration, string key, Action<int?> setter, int? defaultValue)
     {
-        if (configuration.TryGetIntValue(key, out var result))
+        if (configuration.TryGetIntValue(OpenTelemetryProtocolExporterEventSource.Log, key, out var result))
         {
             setter(result);
         }
