@@ -86,7 +86,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
 
             if (data != null)
             {
-                this.persistentBlobProvider?.TryCreateBlob(data, out _);
+                this.persistentBlobProvider.TryCreateBlob(data, out _);
             }
 
             return true;
