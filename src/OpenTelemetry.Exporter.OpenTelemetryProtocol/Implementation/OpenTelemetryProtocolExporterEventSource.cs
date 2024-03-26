@@ -108,7 +108,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     {
         this.WriteEvent(13, ex);
     }
-    
+
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
     {
         this.InvalidConfigurationValue(key, value);
