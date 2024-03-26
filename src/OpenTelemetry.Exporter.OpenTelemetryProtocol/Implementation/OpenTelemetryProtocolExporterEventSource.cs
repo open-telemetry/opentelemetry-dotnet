@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Tracing;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 [EventSource(Name = "OpenTelemetry-Exporter-OpenTelemetryProtocol")]
-internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
+internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IConfigurationExtensionsLogger
 {
     public static readonly OpenTelemetryProtocolExporterEventSource Log = new();
 
@@ -81,8 +82,8 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
         this.WriteEvent(10, type.ToString(), key);
     }
 
-    [Event(11, Message = "{0} environment variable has an invalid value: '{1}'", Level = EventLevel.Warning)]
-    public void InvalidEnvironmentVariable(string key, string value)
+    [Event(11, Message = "Configuration key '{0}' has an invalid value: '{1}'", Level = EventLevel.Warning)]
+    public void InvalidConfigurationValue(string key, string value)
     {
         this.WriteEvent(11, key, value);
     }
@@ -91,5 +92,10 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
     public void TrySubmitRequestException(string ex)
     {
         this.WriteEvent(12, ex);
+    }
+
+    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
+    {
+        this.InvalidConfigurationValue(key, value);
     }
 }

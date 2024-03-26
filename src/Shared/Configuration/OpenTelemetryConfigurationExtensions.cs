@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System.Diagnostics;
 #if !NETFRAMEWORK && !NETSTANDARD2_0
 using System.Diagnostics.CodeAnalysis;
 #endif
@@ -12,8 +13,6 @@ namespace Microsoft.Extensions.Configuration;
 
 internal static class OpenTelemetryConfigurationExtensions
 {
-    public static Action<string, string>? LogInvalidEnvironmentVariable = null;
-
     public delegate bool TryParseFunc<T>(
         string value,
 #if !NETFRAMEWORK && !NETSTANDARD2_0
@@ -29,19 +28,24 @@ internal static class OpenTelemetryConfigurationExtensions
 #endif
         out string? value)
     {
-        value = configuration[key] is string configValue ? configValue : null;
+        Debug.Assert(configuration != null, "configuration was null");
+
+        value = configuration![key];
 
         return !string.IsNullOrWhiteSpace(value);
     }
 
     public static bool TryGetUriValue(
         this IConfiguration configuration,
+        IConfigurationExtensionsLogger logger,
         string key,
 #if !NETFRAMEWORK && !NETSTANDARD2_0
         [NotNullWhen(true)]
 #endif
         out Uri? value)
     {
+        Debug.Assert(logger != null, "logger was null");
+
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = null;
@@ -50,7 +54,7 @@ internal static class OpenTelemetryConfigurationExtensions
 
         if (!Uri.TryCreate(stringValue, UriKind.Absolute, out value))
         {
-            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
+            logger!.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 
@@ -59,9 +63,12 @@ internal static class OpenTelemetryConfigurationExtensions
 
     public static bool TryGetIntValue(
         this IConfiguration configuration,
+        IConfigurationExtensionsLogger logger,
         string key,
         out int value)
     {
+        Debug.Assert(logger != null, "logger was null");
+
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = default;
@@ -70,7 +77,7 @@ internal static class OpenTelemetryConfigurationExtensions
 
         if (!int.TryParse(stringValue, NumberStyles.None, CultureInfo.InvariantCulture, out value))
         {
-            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
+            logger!.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 
@@ -79,9 +86,12 @@ internal static class OpenTelemetryConfigurationExtensions
 
     public static bool TryGetBoolValue(
         this IConfiguration configuration,
+        IConfigurationExtensionsLogger logger,
         string key,
         out bool value)
     {
+        Debug.Assert(logger != null, "logger was null");
+
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = default;
@@ -90,7 +100,7 @@ internal static class OpenTelemetryConfigurationExtensions
 
         if (!bool.TryParse(stringValue, out value))
         {
-            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
+            logger!.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 
@@ -99,6 +109,7 @@ internal static class OpenTelemetryConfigurationExtensions
 
     public static bool TryGetValue<T>(
         this IConfiguration configuration,
+        IConfigurationExtensionsLogger logger,
         string key,
         TryParseFunc<T> tryParseFunc,
 #if !NETFRAMEWORK && !NETSTANDARD2_0
@@ -106,6 +117,8 @@ internal static class OpenTelemetryConfigurationExtensions
 #endif
         out T? value)
     {
+        Debug.Assert(logger != null, "logger was null");
+
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = default;
@@ -114,10 +127,11 @@ internal static class OpenTelemetryConfigurationExtensions
 
         if (!tryParseFunc(stringValue!, out value))
         {
-            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
+            logger!.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 
         return true;
     }
 }
+

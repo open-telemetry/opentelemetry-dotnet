@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore;
 
@@ -24,7 +25,10 @@ public class AspNetCoreTraceInstrumentationOptions
     {
         Debug.Assert(configuration != null, "configuration was null");
 
-        if (configuration.TryGetBoolValue("OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION", out var enableGrpcInstrumentation))
+        if (configuration.TryGetBoolValue(
+            AspNetCoreInstrumentationEventSource.Log,
+            "OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION",
+            out var enableGrpcInstrumentation))
         {
             this.EnableGrpcAspNetCoreSupport = enableGrpcInstrumentation;
         }
