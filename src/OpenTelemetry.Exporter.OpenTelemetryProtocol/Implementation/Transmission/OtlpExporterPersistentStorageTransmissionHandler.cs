@@ -16,7 +16,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmissi
 
 internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest> : OtlpExporterTransmissionHandler<TRequest>, IDisposable
 {
-    internal int RetryIntervalInMilliseconds = 60000;
+    private const int RetryIntervalInMilliseconds = 60000;
     private readonly ManualResetEvent shutdownEvent = new(false);
     private readonly ManualResetEvent dataExportNotification = new(false);
     private readonly AutoResetEvent exportEvent = new(false);
@@ -90,6 +90,8 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
 
     protected override void OnShutdown(int timeoutMilliseconds)
     {
+        var sw = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.StartNew();
+
         try
         {
             this.shutdownEvent.Set();
@@ -100,7 +102,17 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
         }
 
         this.thread.Join(timeoutMilliseconds);
-        base.OnShutdown(timeoutMilliseconds);
+
+        if (sw != null)
+        {
+            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+
+            base.OnShutdown((int)Math.Max(timeout, 0));
+        }
+        else
+        {
+            base.OnShutdown(timeoutMilliseconds);
+        }
     }
 
     protected override void Dispose(bool disposing)
@@ -126,7 +138,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
         {
             try
             {
-                var index = WaitHandle.WaitAny(handles, this.RetryIntervalInMilliseconds);
+                var index = WaitHandle.WaitAny(handles, RetryIntervalInMilliseconds);
                 if (index == 0)
                 {
                     // Shutdown signaled
