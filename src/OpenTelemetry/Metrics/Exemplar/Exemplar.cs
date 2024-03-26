@@ -40,6 +40,7 @@ internal
     private int tagCount;
     private KeyValuePair<string, object?>[]? tagStorage;
     private MetricPointValueStorage valueStorage;
+    private int isCriticalSectionOccupied;
 
     /// <summary>
     /// Gets the timestamp.
@@ -103,6 +104,17 @@ internal
     internal void Update<T>(in ExemplarMeasurement<T> measurement)
         where T : struct
     {
+        if (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0)
+        {
+            // Note: If we reached here it means some other thread is already
+            // updating the exemplar. Instead of spinning, we abort. The idea is
+            // for two exemplars offered at more or less the same time there
+            // really isn't a difference which one is stored so it is an
+            // optimization to let the losing thread(s) get back to work instead
+            // of spinning.
+            return;
+        }
+
         this.Timestamp = DateTimeOffset.UtcNow;
 
         if (typeof(T) == typeof(long))
@@ -135,6 +147,8 @@ internal
         {
             this.StoreRawTags(measurement.Tags);
         }
+
+        Interlocked.Exchange(ref this.isCriticalSectionOccupied, 0);
     }
 
     internal void Reset()
@@ -145,6 +159,29 @@ internal
     internal readonly bool IsUpdated()
     {
         return this.Timestamp != default;
+    }
+
+    internal void Collect(ref Exemplar destination, bool reset)
+    {
+        if (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0)
+        {
+            this.AcquireLockRare();
+        }
+
+        if (this.IsUpdated())
+        {
+            this.Copy(ref destination);
+            if (reset)
+            {
+                this.Reset();
+            }
+        }
+        else
+        {
+            destination.Reset();
+        }
+
+        Interlocked.Exchange(ref this.isCriticalSectionOccupied, 0);
     }
 
     internal readonly void Copy(ref Exemplar destination)
@@ -178,5 +215,15 @@ internal
         }
 
         tags.CopyTo(this.tagStorage);
+    }
+
+    private void AcquireLockRare()
+    {
+        SpinWait spinWait = default;
+        do
+        {
+            spinWait.SpinOnce();
+        }
+        while (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0);
     }
 }
