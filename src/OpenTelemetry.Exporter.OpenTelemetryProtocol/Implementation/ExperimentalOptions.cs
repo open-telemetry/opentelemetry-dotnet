@@ -4,7 +4,6 @@
 #nullable enable
 
 using Microsoft.Extensions.Configuration;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
@@ -25,12 +24,12 @@ internal sealed class ExperimentalOptions
 
     public ExperimentalOptions(IConfiguration configuration)
     {
-        if (configuration.TryGetBoolValue(EmitLogEventEnvVar, out var emitLogEventAttributes))
+        if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, EmitLogEventEnvVar, out var emitLogEventAttributes))
         {
             this.EmitLogEventAttributes = emitLogEventAttributes;
         }
 
-        if (configuration.TryGetBoolValue(EnableInMemoryRetryEnvVar, out var enableInMemoryRetry))
+        if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, EnableInMemoryRetryEnvVar, out var enableInMemoryRetry))
         {
             this.EnableInMemoryRetry = enableInMemoryRetry;
         }

@@ -5,6 +5,7 @@
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Diagnostics.Tracing;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
@@ -13,7 +14,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 /// EventSource events emitted from the project.
 /// </summary>
 [EventSource(Name = "OpenTelemetry-Instrumentation-AspNetCore")]
-internal sealed class AspNetCoreInstrumentationEventSource : EventSource
+internal sealed class AspNetCoreInstrumentationEventSource : EventSource, IConfigurationExtensionsLogger
 {
     public static AspNetCoreInstrumentationEventSource Log = new();
 
@@ -78,5 +79,16 @@ internal sealed class AspNetCoreInstrumentationEventSource : EventSource
     public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
     {
         this.WriteEvent(5, handlerName, eventName, ex);
+    }
+
+    [Event(6, Message = "Configuration key '{0}' has an invalid value: '{1}'", Level = EventLevel.Warning)]
+    public void InvalidConfigurationValue(string key, string value)
+    {
+        this.WriteEvent(6, key, value);
+    }
+
+    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
+    {
+        this.InvalidConfigurationValue(key, value);
     }
 }

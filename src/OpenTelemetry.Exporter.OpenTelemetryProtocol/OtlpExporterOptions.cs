@@ -11,6 +11,7 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -179,13 +180,14 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         string headersEnvVarKey,
         string timeoutEnvVarKey)
     {
-        if (configuration.TryGetUriValue(endpointEnvVarKey, out var endpoint))
+        if (configuration.TryGetUriValue(OpenTelemetryProtocolExporterEventSource.Log, endpointEnvVarKey, out var endpoint))
         {
             this.endpoint = endpoint;
             this.AppendSignalPathToEndpoint = appendSignalPathToEndpoint;
         }
 
         if (configuration.TryGetValue<OtlpExportProtocol>(
+            OpenTelemetryProtocolExporterEventSource.Log,
             protocolEnvVarKey,
             OtlpExportProtocolParser.TryParse,
             out var protocol))
@@ -198,7 +200,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             this.Headers = headers;
         }
 
-        if (configuration.TryGetIntValue(timeoutEnvVarKey, out var timeout))
+        if (configuration.TryGetIntValue(OpenTelemetryProtocolExporterEventSource.Log, timeoutEnvVarKey, out var timeout))
         {
             this.TimeoutMilliseconds = timeout;
         }

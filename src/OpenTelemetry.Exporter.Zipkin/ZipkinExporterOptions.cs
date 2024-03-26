@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Net.Http;
 #endif
 using Microsoft.Extensions.Configuration;
-using OpenTelemetry.Internal;
+using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter;
@@ -40,7 +40,7 @@ public sealed class ZipkinExporterOptions
         Debug.Assert(configuration != null, "configuration was null");
         Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
 
-        if (configuration.TryGetUriValue(ZipkinEndpointEnvVar, out var endpoint))
+        if (configuration.TryGetUriValue(ZipkinExporterEventSource.Log, ZipkinEndpointEnvVar, out var endpoint))
         {
             this.Endpoint = endpoint;
         }
