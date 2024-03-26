@@ -53,12 +53,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
     {
         this.exportEvent.Set();
 
-        if (this.dataExportNotification.WaitOne(timeOutMilliseconds))
-        {
-            return true;
-        }
-
-        return false;
+        return this.dataExportNotification.WaitOne(timeOutMilliseconds);
     }
 
     protected override bool OnSubmitRequestFailure(TRequest request, ExportClientResponse response)
@@ -86,10 +81,8 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
 
             if (data != null)
             {
-                this.persistentBlobProvider.TryCreateBlob(data, out _);
+                return this.persistentBlobProvider.TryCreateBlob(data, out _);
             }
-
-            return true;
         }
 
         return false;
