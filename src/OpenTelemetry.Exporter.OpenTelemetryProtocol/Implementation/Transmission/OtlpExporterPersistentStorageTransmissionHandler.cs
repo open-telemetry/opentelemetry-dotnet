@@ -165,11 +165,8 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
                         {
                             blob.TryDelete();
                         }
-                        else
-                        {
-                            // Extend the lease period so that it is retried before the intended retry interval.
-                            blob.TryLease(retryInfo.RetryDelay.Milliseconds);
-                        }
+
+                        // TODO: extend the lease period based on the response from server on retryAfter.
                     }
 
                     fileCount++;
