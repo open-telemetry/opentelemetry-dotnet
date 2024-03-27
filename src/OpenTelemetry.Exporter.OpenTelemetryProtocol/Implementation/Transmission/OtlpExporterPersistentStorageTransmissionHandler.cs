@@ -5,6 +5,7 @@
 
 using System.Diagnostics;
 using Google.Protobuf;
+using Google.Rpc;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.PersistentStorage.Abstractions;
 using OpenTelemetry.PersistentStorage.FileSystem;
@@ -160,9 +161,14 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
                     {
                         var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
                         var request = this.requestFactory.Invoke(data);
-                        if (this.TryRetryRequest(request, deadlineUtc, out var response) || !RetryHelper.ShouldRetryRequest(request, response, OtlpRetry.InitialBackoffMilliseconds, out _))
+                        if (this.TryRetryRequest(request, deadlineUtc, out var response) || !RetryHelper.ShouldRetryRequest(request, response, OtlpRetry.InitialBackoffMilliseconds, out var retryInfo))
                         {
                             blob.TryDelete();
+                        }
+                        else
+                        {
+                            // Extend the lease period so that it is retried before the intended retry interval.
+                            blob.TryLease(retryInfo.RetryDelay.Milliseconds);
                         }
                     }
 
