@@ -5,7 +5,6 @@
 
 using System.Diagnostics;
 using Google.Protobuf;
-using Google.Rpc;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.PersistentStorage.Abstractions;
 using OpenTelemetry.PersistentStorage.FileSystem;
