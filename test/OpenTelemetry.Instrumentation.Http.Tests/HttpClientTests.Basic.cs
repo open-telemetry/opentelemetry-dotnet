@@ -367,11 +367,11 @@ public partial class HttpClientTests : IDisposable
     [InlineData("TRACE", "TRACE", null)]
     [InlineData("Delete", "DELETE", "Delete")]
 #if NETFRAMEWORK
-    [InlineData("Connect", "CONNECT", null)]// HTTP Client converts Connect to its canonical form (Connect). Expected method is null.
-    [InlineData("Get", "GET", null)] // HTTP Client converts Get to its canonical form (GET). Expected method is null.
-    [InlineData("Put", "PUT", null)] // HTTP Client converts Put to its canonical form (PUT). Expected method is null.
-    [InlineData("Head", "HEAD", null)] // HTTP Client converts Head to its canonical form (HEAD). Expected method is null.
-    [InlineData("Post", "POST", null)] // HTTP Client converts Post to its canonical form (POST). Expected method is null.
+    [InlineData("Connect", "CONNECT", null)]// HTTP Client converts Connect to its canonical form (Connect). Expected original method is null.
+    [InlineData("Get", "GET", null)] // HTTP Client converts Get to its canonical form (GET). Expected original method is null.
+    [InlineData("Put", "PUT", null)] // HTTP Client converts Put to its canonical form (PUT). Expected original method is null.
+    [InlineData("Head", "HEAD", null)] // HTTP Client converts Head to its canonical form (HEAD). Expected original method is null.
+    [InlineData("Post", "POST", null)] // HTTP Client converts Post to its canonical form (POST). Expected original method is null.
 #else
     [InlineData("Connect", "CONNECT", "Connect")]
     [InlineData("Get", "GET", "Get")]
