@@ -4,7 +4,6 @@
 #nullable enable
 
 using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Logs;
@@ -36,7 +35,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
     /// </summary>
-    /// <param name="exporterOptions">Configuration options for the exporter.</param>
+    /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
     /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
     /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
@@ -49,12 +48,6 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
-
-        // Each of the Otlp exporters: Traces, Metrics, and Logs set the same
-        // value for
-        // `OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable`
-        // so it should be fine even if these exporters are used together.
-        OpenTelemetryConfigurationExtensions.LogInvalidEnvironmentVariable = OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable;
 
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetLogsExportTransmissionHandler(experimentalOptions!);
 

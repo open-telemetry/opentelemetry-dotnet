@@ -9,7 +9,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 
-internal class OtlpExporterTransmissionHandler<TRequest>
+internal class OtlpExporterTransmissionHandler<TRequest> : IDisposable
 {
     public OtlpExporterTransmissionHandler(IExportClient<TRequest> exportClient, double timeoutMilliseconds)
     {
@@ -80,6 +80,13 @@ internal class OtlpExporterTransmissionHandler<TRequest>
         return this.ExportClient.Shutdown(timeoutMilliseconds);
     }
 
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
     /// <summary>
     /// Fired when the transmission handler is shutdown.
     /// </summary>
@@ -121,5 +128,17 @@ internal class OtlpExporterTransmissionHandler<TRequest>
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Releases the unmanaged resources used by this class and optionally
+    /// releases the managed resources.
+    /// </summary>
+    /// <param name="disposing">
+    /// <see langword="true"/> to release both managed and unmanaged resources;
+    /// <see langword="false"/> to release only unmanaged resources.
+    /// </param>
+    protected virtual void Dispose(bool disposing)
+    {
     }
 }
