@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -12,9 +14,8 @@ namespace OpenTelemetry.Metrics;
 /// </remarks>
 internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReservoir
 {
-    private readonly Random random = new();
-
-    private int measurementsSeen;
+    private const int DefaultMeasurementState = -1;
+    private int measurementState = DefaultMeasurementState;
 
     public SimpleFixedSizeExemplarReservoir(int poolSize)
         : base(poolSize)
@@ -36,21 +37,21 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
         // Reset internal state irrespective of temporality.
         // This ensures incoming measurements have fair chance
         // of making it to the reservoir.
-        this.measurementsSeen = 0;
+        this.measurementState = DefaultMeasurementState;
     }
 
     private void Offer<T>(in ExemplarMeasurement<T> measurement)
         where T : struct
     {
-        var measurementNumber = this.measurementsSeen++;
+        var measurementState = Interlocked.Increment(ref this.measurementState);
 
-        if (measurementNumber < this.Capacity)
+        if (measurementState < this.Capacity)
         {
-            this.UpdateExemplar(measurementNumber, in measurement);
+            this.UpdateExemplar(measurementState, in measurement);
         }
         else
         {
-            var index = this.random.Next(0, measurementNumber);
+            int index = ThreadSafeRandom.Next(0, measurementState);
             if (index < this.Capacity)
             {
                 this.UpdateExemplar(index, in measurement);
