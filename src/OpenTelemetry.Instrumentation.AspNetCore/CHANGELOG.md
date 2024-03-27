@@ -6,8 +6,11 @@
   `server.address` when it has default values (`80` for `HTTP` and
   `443` for `HTTPS` protocol).
   ([#5419](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5419))
-* Fixed an issue for spans when `http.request.method_original` attribute was not
-  set for non canonical form of HTTP methods, e.g. for `Options`.
+
+* Fixed an issue where the `http.request.method_original` attribute was not set
+  on activity. Now, when `http.request.method` is set and the original method
+  is converted to its canonical form (e.g., `Get` is converted to `GET`),
+  the original value `Get` will be stored in `http.request.method_original`.
   ([#5471](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5471))
 
 ## 1.7.1
