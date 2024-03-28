@@ -95,7 +95,7 @@ internal static class HttpWebRequestActivitySource
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddRequestTagsAndInstrumentRequest(HttpWebRequest request, Activity activity)
     {
-        RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method);
+        RequestMethodHelper.SetActivityDisplayName(activity, request.Method);
 
         if (activity.IsAllDataRequested)
         {

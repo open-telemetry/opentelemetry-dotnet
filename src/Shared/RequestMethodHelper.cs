@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 #if NET8_0_OR_GREATER
 using System.Collections.Frozen;
 #endif
@@ -62,9 +64,11 @@ internal static class RequestMethodHelper
         }
     }
 
-    public static void SetHttpClientActivityDisplayName(Activity activity, string method)
+    public static void SetActivityDisplayName(Activity activity, string method, string? httpRoute = null)
     {
-        // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#name
-        activity.DisplayName = KnownMethods.TryGetValue(method, out var httpMethod) ? httpMethod : "HTTP";
+        // https://github.com/open-telemetry/semantic-conventions/blob/v1.24.0/docs/http/http-spans.md#name
+
+        var namePrefix = KnownMethods.TryGetValue(method, out var httpMethod) ? httpMethod : "HTTP";
+        activity.DisplayName = string.IsNullOrEmpty(httpRoute) ? namePrefix : $"{namePrefix} {httpRoute}";
     }
 }
