@@ -640,7 +640,7 @@ public sealed class BasicTests
     [InlineData("POST", "POST", null, "POST")]
     [InlineData("TRACE", "TRACE", null, "TRACE")]
     [InlineData("CUSTOM", "_OTHER", "CUSTOM", "HTTP")]
-    public async Task HttpRequestMethodIsSetAsPerSpec(string originalMethod, string expectedMethod, string expectedOriginalMethod, string expectedDisplayName)
+    public async Task HttpRequestMethodAndActivityDisplayIsSetAsPerSpec(string originalMethod, string expectedMethod, string expectedOriginalMethod, string expectedDisplayName)
     {
         var exportedItems = new List<Activity>();
 
