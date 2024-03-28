@@ -13,6 +13,10 @@
   the original value `Get` will be stored in `http.request.method_original`.
   ([#5471](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5471))
 
+* Fixed an issue for span names when `http.request.method` is reporter as `_OTHER`.
+  Now, span names starts with `HTTP`, previously it was started by `_OTHER`.
+  ([#5484](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5484))
+
 ## 1.7.1
 
 Released 2024-Feb-09
