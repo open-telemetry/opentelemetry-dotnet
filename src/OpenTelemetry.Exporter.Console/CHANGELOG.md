@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added support for `ActivitySource.Version` property.
+  ([#5472](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5472))
+
 ## 1.8.0-rc.1
 
 Released 2024-Mar-27
