@@ -468,7 +468,7 @@ internal sealed class TracerProviderSdk : TracerProvider
     private static double ReadTraceIdRatio(IConfiguration configuration)
     {
         if (configuration.TryGetStringValue(TracesSamplerArgConfigKey, out var configValue) &&
-                double.TryParse(configValue, out var traceIdRatio))
+                double.TryParse(configValue, System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowThousands, System.Globalization.CultureInfo.InvariantCulture, out var traceIdRatio))
         {
             return traceIdRatio;
         }
