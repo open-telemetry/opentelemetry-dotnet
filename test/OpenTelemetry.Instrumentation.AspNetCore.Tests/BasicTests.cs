@@ -629,18 +629,18 @@ public sealed class BasicTests
     }
 
     [Theory]
-    [InlineData("CONNECT", "CONNECT", null)]
-    [InlineData("DELETE", "DELETE", null)]
-    [InlineData("GET", "GET", null)]
-    [InlineData("PUT", "PUT", null)]
-    [InlineData("HEAD", "HEAD", null)]
-    [InlineData("OPTIONS", "OPTIONS", null)]
-    [InlineData("PATCH", "PATCH", null)]
-    [InlineData("Get", "GET", "Get")]
-    [InlineData("POST", "POST", null)]
-    [InlineData("TRACE", "TRACE", null)]
-    [InlineData("CUSTOM", "_OTHER", "CUSTOM")]
-    public async Task HttpRequestMethodIsSetAsPerSpec(string originalMethod, string expectedMethod, string expectedOriginalMethod)
+    [InlineData("CONNECT", "CONNECT", null, "CONNECT")]
+    [InlineData("DELETE", "DELETE", null, "DELETE")]
+    [InlineData("GET", "GET", null, "GET")]
+    [InlineData("PUT", "PUT", null, "PUT")]
+    [InlineData("HEAD", "HEAD", null, "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS", null, "OPTIONS")]
+    [InlineData("PATCH", "PATCH", null, "PATCH")]
+    [InlineData("Get", "GET", "Get", "GET")]
+    [InlineData("POST", "POST", null, "POST")]
+    [InlineData("TRACE", "TRACE", null, "TRACE")]
+    [InlineData("CUSTOM", "_OTHER", "CUSTOM", "HTTP")]
+    public async Task HttpRequestMethodIsSetAsPerSpec(string originalMethod, string expectedMethod, string expectedOriginalMethod, string expectedDisplayName)
     {
         var exportedItems = new List<Activity>();
 
@@ -683,6 +683,7 @@ public sealed class BasicTests
 
         Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod));
         Assert.Equal(expectedOriginalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal));
+        Assert.Equal(expectedDisplayName, activity.DisplayName);
     }
 
     [Fact]
