@@ -19,7 +19,7 @@ using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 [Collection("EnvVars")]
-public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
+public class OtlpMetricsExporterTests : IDisposable
 {
     private static readonly KeyValuePair<string, object>[] KeyValues = new KeyValuePair<string, object>[]
     {
@@ -35,14 +35,6 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
     [Fact]
     public void TestAddOtlpExporter_SetsCorrectMetricReaderDefaults()
     {
-        if (Environment.Version.Major == 3)
-        {
-            // Adding the OtlpExporter creates a GrpcChannel.
-            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
-            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-        }
-
         var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddOtlpExporter()
             .Build();
@@ -916,11 +908,10 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
         }
     }
 
-    protected override void Dispose(bool disposing)
+    public void Dispose()
     {
         OtlpSpecConfigDefinitionTests.ClearEnvVars();
-
-        base.Dispose(disposing);
+        GC.SuppressFinalize(this);
     }
 
     private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar> getExemplarFunc, T state)
