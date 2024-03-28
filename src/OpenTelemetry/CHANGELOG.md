@@ -95,6 +95,12 @@ Released 2024-Mar-14
   Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#exemplar).
   ([#5412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5412))
 
+* Added `OpenTelemetrySdk.Create` API for configuring OpenTelemetry .NET signals
+  (logging, tracing, and metrics) via a single builder. This new API simplifies
+  bootstrap and teardown, and supports cross-cutting extensions targeting
+  `IOpenTelemetryBuilder`.
+  ([#5325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5325))
+
 ## 1.7.0
 
 Released 2023-Dec-08
