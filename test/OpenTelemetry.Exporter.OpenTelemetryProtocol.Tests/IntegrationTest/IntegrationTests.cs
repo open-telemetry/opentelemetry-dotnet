@@ -278,33 +278,6 @@ public sealed class IntegrationTests : IDisposable
         }
     }
 
-    [Trait("CategoryName", "CollectorIntegrationTests")]
-    [SkipUnlessEnvVarFoundFact(CollectorHostnameEnvVarName)]
-    public void ConstructingGrpcExporterFailsWhenHttp2UnencryptedSupportIsDisabledForNetcoreapp31()
-    {
-        // Adding the OtlpExporter creates a GrpcChannel.
-        // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
-        // We want to fail fast so we are disabling it
-        // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", false);
-
-        var exporterOptions = new OtlpExporterOptions
-        {
-            Endpoint = new Uri($"http://{CollectorHostname}:4317"),
-        };
-
-        var exception = Record.Exception(() => new OtlpTraceExporter(exporterOptions));
-
-        if (Environment.Version.Major == 3)
-        {
-            Assert.NotNull(exception);
-        }
-        else
-        {
-            Assert.Null(exception);
-        }
-    }
-
     private sealed class OpenTelemetryEventListener : EventListener
     {
         private readonly ITestOutputHelper outputHelper;

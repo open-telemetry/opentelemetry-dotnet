@@ -24,7 +24,7 @@ using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public class OtlpLogExporterTests : Http2UnencryptedSupportTests
+public class OtlpLogExporterTests
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
 
@@ -111,14 +111,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     [Fact]
     public void AddOtlpExporterSetsDefaultBatchExportProcessor()
     {
-        if (Environment.Version.Major == 3)
-        {
-            // Adding the OtlpExporter creates a GrpcChannel.
-            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
-            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-        }
-
         var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .AddOtlpExporter()
             .Build();
@@ -152,7 +144,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         bool optionsValidated = false;
 
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -185,7 +176,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     [InlineData(false)]
     public void AddOtlpLogExporterParseStateValueCanBeTurnedOff(bool parseState)
     {
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -231,7 +221,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         var logRecords = new List<LogRecord>();
 
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         var hostBuilder = new HostBuilder();
         hostBuilder.ConfigureLogging(logging => logging
             .AddOpenTelemetry(options => options
