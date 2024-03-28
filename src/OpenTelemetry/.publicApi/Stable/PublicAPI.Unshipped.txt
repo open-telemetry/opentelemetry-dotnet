@@ -1,3 +1,5 @@
+OpenTelemetry.Logs.LogRecord.AddAttribute(System.Collections.Generic.KeyValuePair<string!, object?> attribute) -> void
+OpenTelemetry.Logs.LogRecord.AddAttributes(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>! attributes) -> void
 OpenTelemetry.OpenTelemetryBuilderSdkExtensions
 OpenTelemetry.Trace.ActivityExportProcessorOptions
 OpenTelemetry.Trace.ActivityExportProcessorOptions.ActivityExportProcessorOptions() -> void
