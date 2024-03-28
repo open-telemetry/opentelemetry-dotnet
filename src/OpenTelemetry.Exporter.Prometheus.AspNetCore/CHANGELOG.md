@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 1.8.0-rc.1
+
+Released 2024-Mar-27
+
+* Fix serializing scope_info when buffer overflows
+  ([#5407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5407))
+
+* Add `target_info` to Prometheus exporters when using OpenMetrics
+  ([#5407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5407))
+
 ## 1.8.0-beta.1
 
 Released 2024-Mar-14
@@ -10,6 +20,7 @@ Released 2024-Mar-14
   ([#5305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5305))
 
 * Export OpenMetrics format from Prometheus exporters ([#5107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5107))
+
 * For requests with OpenMetrics format, scope info is automatically added
   ([#5086](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5086)
   [#5182](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5182))

@@ -480,12 +480,12 @@ internal sealed class MeterProviderSdk : MeterProvider
 
     private void ApplySpecificationConfigurationKeys(IConfiguration configuration)
     {
-        if (configuration.TryGetBoolValue(EmitOverFlowAttributeConfigKey, out this.EmitOverflowAttribute))
+        if (configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, EmitOverFlowAttributeConfigKey, out this.EmitOverflowAttribute))
         {
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Overflow attribute feature enabled via configuration.");
         }
 
-        if (configuration.TryGetBoolValue(ReclaimUnusedMetricPointsConfigKey, out this.ReclaimUnusedMetricPoints))
+        if (configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, ReclaimUnusedMetricPointsConfigKey, out this.ReclaimUnusedMetricPoints))
         {
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Reclaim unused metric point feature enabled via configuration.");
         }

@@ -7,6 +7,15 @@
   `443` for `HTTPS` protocol).
   ([#5419](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5419))
 
+* Fixed an issue where the `http.request.method_original` attribute was not set
+  on activity. Now, when `http.request.method` is set and the original method
+  is converted to its canonical form (e.g., `Get` is converted to `GET`),
+  the original value `Get` will be stored in `http.request.method_original`.
+  The attribute is not set on .NET Framework for non canonical form of `CONNECT`,
+  `GET`, `HEAD`, `PUT`, and `POST`. HTTP Client is converting these values
+  to canonical form.
+  ([#5471](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5471))
+
 ## 1.7.1
 
 Released 2024-Feb-09

@@ -28,12 +28,12 @@ public class PeriodicExportingMetricReaderOptions
 
     internal PeriodicExportingMetricReaderOptions(IConfiguration configuration)
     {
-        if (configuration.TryGetIntValue(OTelMetricExportIntervalEnvVarKey, out var interval))
+        if (configuration.TryGetIntValue(OpenTelemetrySdkEventSource.Log, OTelMetricExportIntervalEnvVarKey, out var interval))
         {
             this.ExportIntervalMilliseconds = interval;
         }
 
-        if (configuration.TryGetIntValue(OTelMetricExportTimeoutEnvVarKey, out var timeout))
+        if (configuration.TryGetIntValue(OpenTelemetrySdkEventSource.Log, OTelMetricExportTimeoutEnvVarKey, out var timeout))
         {
             this.ExportTimeoutMilliseconds = timeout;
         }

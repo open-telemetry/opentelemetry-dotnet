@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 1.8.0-rc.1
+
+Released 2024-Mar-27
+
+* Zipkin tags used for Instrumentation Library changed from `otel.library.name` and
+  `otel.library.version` to `otel.scope.name` and `otel.scope.version` respectively.
+  Old versions of attributes are deprecated, but still exported
+  for [backward compatibility](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.31.0/specification/common/mapping-to-non-otlp.md#instrumentationscope).
+  ([#5473](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5473))
+
 ## 1.8.0-beta.1
 
 Released 2024-Mar-14

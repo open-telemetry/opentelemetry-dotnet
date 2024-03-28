@@ -56,7 +56,7 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
                         continue;
                     }
 
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
+                    if (this.TagTransformer.TryTransformTag(tag, out var result))
                     {
                         this.WriteLine($"    {result}");
                     }
@@ -88,7 +88,7 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
                     this.WriteLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
                     foreach (ref readonly var attribute in activityEvent.EnumerateTagObjects())
                     {
-                        if (ConsoleTagTransformer.Instance.TryTransformTag(attribute, out var result))
+                        if (this.TagTransformer.TryTransformTag(attribute, out var result))
                         {
                             this.WriteLine($"        {result}");
                         }
@@ -104,7 +104,7 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
                     this.WriteLine($"    {activityLink.Context.TraceId} {activityLink.Context.SpanId}");
                     foreach (ref readonly var attribute in activityLink.EnumerateTagObjects())
                     {
-                        if (ConsoleTagTransformer.Instance.TryTransformTag(attribute, out var result))
+                        if (this.TagTransformer.TryTransformTag(attribute, out var result))
                         {
                             this.WriteLine($"        {result}");
                         }
@@ -118,7 +118,7 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
                 this.WriteLine("Resource associated with Activity:");
                 foreach (var resourceAttribute in resource.Attributes)
                 {
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(resourceAttribute, out var result))
+                    if (this.TagTransformer.TryTransformTag(resourceAttribute, out var result))
                     {
                         this.WriteLine($"    {result}");
                     }

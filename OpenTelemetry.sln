@@ -275,9 +275,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 		src\Shared\SpanAttributeConstants.cs = src\Shared\SpanAttributeConstants.cs
 		src\Shared\SpanHelper.cs = src\Shared\SpanHelper.cs
 		src\Shared\StatusHelper.cs = src\Shared\StatusHelper.cs
-		src\Shared\TagAndValueTransformer.cs = src\Shared\TagAndValueTransformer.cs
 		src\Shared\TagTransformer.cs = src\Shared\TagTransformer.cs
 		src\Shared\TagTransformerJsonHelper.cs = src\Shared\TagTransformerJsonHelper.cs
+		src\Shared\ThreadSafeRandom.cs = src\Shared\ThreadSafeRandom.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiagnosticSourceInstrumentation", "DiagnosticSourceInstrumentation", "{28F3EC79-660C-4659-8B73-F90DC1173316}"
@@ -297,8 +297,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EnvironmentVariables", "Env
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Options", "Options", "{494902DD-C63F-48E0-BED3-B58EFB4051C8}"
 	ProjectSection(SolutionItems) = preProject
-		src\Shared\Options\ConfigurationExtensions.cs = src\Shared\Options\ConfigurationExtensions.cs
 		src\Shared\Options\DelegatingOptionsFactory.cs = src\Shared\Options\DelegatingOptionsFactory.cs
+		src\Shared\Options\DelegatingOptionsFactoryServiceCollectionExtensions.cs = src\Shared\Options\DelegatingOptionsFactoryServiceCollectionExtensions.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shims", "Shims", "{A0CB9A10-F22D-4E66-A449-74B3D0361A9C}"
@@ -341,6 +341,12 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\resources\extending-the-sdk\extending-the-sdk.csproj", "{7BE494FC-4B0D-4340-A62A-9C9F3E7389FE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dedicated-pipeline", "docs\logs\dedicated-pipeline\dedicated-pipeline.csproj", "{19545B37-8518-4BDD-AD49-00C031FB3C2A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configuration", "{87A20A76-D524-4AAC-AF92-8725BFED0415}"
+	ProjectSection(SolutionItems) = preProject
+		src\Shared\Configuration\IConfigurationExtensionsLogger.cs = src\Shared\Configuration\IConfigurationExtensionsLogger.cs
+		src\Shared\Configuration\OpenTelemetryConfigurationExtensions.cs = src\Shared\Configuration\OpenTelemetryConfigurationExtensions.cs
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -687,6 +693,7 @@ Global
 		{A115CE4C-71A8-4B95-96A5-C1DF46FD94C2} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{7BE494FC-4B0D-4340-A62A-9C9F3E7389FE} = {A115CE4C-71A8-4B95-96A5-C1DF46FD94C2}
 		{19545B37-8518-4BDD-AD49-00C031FB3C2A} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
+		{87A20A76-D524-4AAC-AF92-8725BFED0415} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Diagnostics.Tracing;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenTelemetry.Internal;
 
@@ -13,7 +14,7 @@ namespace OpenTelemetry.Internal;
 /// EventSource implementation for OpenTelemetry SDK implementation.
 /// </summary>
 [EventSource(Name = "OpenTelemetry-Sdk")]
-internal sealed class OpenTelemetrySdkEventSource : EventSource
+internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationExtensionsLogger
 {
     public static OpenTelemetrySdkEventSource Log = new();
 #if DEBUG
@@ -304,8 +305,8 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
         this.WriteEvent(46, message);
     }
 
-    [Event(47, Message = "{0} environment variable has an invalid value: '{1}'", Level = EventLevel.Warning)]
-    public void InvalidEnvironmentVariable(string key, string? value)
+    [Event(47, Message = "Configuration key '{0}' has an invalid value: '{1}'", Level = EventLevel.Warning)]
+    public void InvalidConfigurationValue(string key, string? value)
     {
         this.WriteEvent(47, key, value);
     }
@@ -344,6 +345,23 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
     public void MetricInstrumentRemoved(string instrumentName, string meterName)
     {
         this.WriteEvent(53, instrumentName, meterName);
+    }
+
+    [Event(54, Message = "OTEL_TRACES_SAMPLER configuration was found but the value '{0}' is invalid and will be ignored.", Level = EventLevel.Warning)]
+    public void TracesSamplerConfigInvalid(string configValue)
+    {
+        this.WriteEvent(54, configValue);
+    }
+
+    [Event(55, Message = "OTEL_TRACES_SAMPLER_ARG configuration was found but the value '{0}' is invalid and will be ignored, default of value of '1.0' will be used.", Level = EventLevel.Warning)]
+    public void TracesSamplerArgConfigInvalid(string configValue)
+    {
+        this.WriteEvent(55, configValue);
+    }
+
+    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
+    {
+        this.InvalidConfigurationValue(key, value);
     }
 
 #if DEBUG
