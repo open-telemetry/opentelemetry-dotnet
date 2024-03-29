@@ -367,11 +367,17 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
+    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, PrometheusResourceTagCollection resourceTags = default, bool writeEnclosingBraces = true)
     {
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
+        }
+
+        foreach (var resourceAttribute in resourceTags.Attributes)
+        {
+            cursor = WriteLabel(buffer, cursor, resourceAttribute.Key, resourceAttribute.Value);
+            buffer[cursor++] = unchecked((byte)',');
         }
 
         cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);

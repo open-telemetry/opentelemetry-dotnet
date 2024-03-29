@@ -38,5 +38,14 @@ public class PrometheusAspNetCoreOptions
         set => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds = value;
     }
 
+    /// <summary>
+    /// Gets or sets the allowed resource attributes filter. Default value: null (no attributes allowed).
+    /// </summary>
+    public Predicate<string> AllowedResourceAttributesFilter
+    {
+        get => this.ExporterOptions.AllowedResourceAttributesFilter;
+        set => this.ExporterOptions.AllowedResourceAttributesFilter = value;
+    }
+
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
 }

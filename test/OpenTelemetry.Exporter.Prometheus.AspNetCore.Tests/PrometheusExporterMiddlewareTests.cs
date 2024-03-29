@@ -248,6 +248,16 @@ public sealed class PrometheusExporterMiddlewareTests
             acceptHeader: "application/openmetrics-text; version=1.0.0");
     }
 
+    [Fact]
+    public Task PrometheusExporterMiddlewareIntegration_AddResourceAttributesAsTags()
+    {
+        return RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o => o.AllowedResourceAttributesFilter = s => s == "service.name",
+            addServiceNameResourceTag: true);
+    }
+
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
         string path,
         Action<IApplicationBuilder> configure,
@@ -256,7 +266,8 @@ public sealed class PrometheusExporterMiddlewareTests
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions> configureOptions = null,
         bool skipMetrics = false,
-        string acceptHeader = "application/openmetrics-text")
+        string acceptHeader = "application/openmetrics-text",
+        bool addServiceNameResourceTag = false)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
 
@@ -325,6 +336,10 @@ public sealed class PrometheusExporterMiddlewareTests
 
             string content = await response.Content.ReadAsStringAsync();
 
+            var resourceTagAttributes = addServiceNameResourceTag
+                ? "service_name='my_service',"
+                : string.Empty;
+
             string expected = requestOpenMetrics
                 ? "# TYPE target info\n"
                   + "# HELP target Target metadata\n"
@@ -333,10 +348,10 @@ public sealed class PrometheusExporterMiddlewareTests
                   + "# HELP otel_scope_info Scope metadata\n"
                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
                   + "# TYPE counter_double_total counter\n"
-                  + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
+                  + $"counter_double_total{{{resourceTagAttributes}otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
                   + "# EOF\n"
                 : "# TYPE counter_double_total counter\n"
-                  + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
+                  + $"counter_double_total{{{resourceTagAttributes}otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
                   + "# EOF\n";
 
             var matches = Regex.Matches(content, ("^" + expected + "$").Replace('\'', '"'));

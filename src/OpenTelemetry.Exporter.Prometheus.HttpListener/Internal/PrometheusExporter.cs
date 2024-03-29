@@ -28,6 +28,7 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 
         this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
         this.DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters;
+        this.AllowedResourceAttributesFilter = options.AllowedResourceAttributesFilter;
 
         this.CollectionManager = new PrometheusCollectionManager(this);
     }
@@ -58,6 +59,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     internal bool OpenMetricsRequested { get; set; }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
+
+    internal Predicate<string> AllowedResourceAttributesFilter { get; set; }
 
     /// <inheritdoc/>
     public override ExportResult Export(in Batch<Metric> metrics)
