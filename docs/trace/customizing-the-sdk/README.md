@@ -363,8 +363,8 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-It is also possible to configure the sampler by using the following
-environmental variables:
+If using `1.8.0-rc.1` or newer it is also possible to configure the sampler by
+using the following environmental variables:
 
 | Environment variable       | Description                                        |
 | -------------------------- | -------------------------------------------------- |
