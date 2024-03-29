@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Add resource attributes as tags for Prometheus exporters with filter
-  ([#3087](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5407))
+  ([#5489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5489))
 
 ## 1.8.0-rc.1
 
