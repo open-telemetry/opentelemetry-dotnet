@@ -135,7 +135,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 return;
             }
 
-            RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method.Method);
+            RequestMethodHelper.SetActivityDisplayName(activity, request.Method.Method);
 
             if (!IsNet7OrGreater)
             {

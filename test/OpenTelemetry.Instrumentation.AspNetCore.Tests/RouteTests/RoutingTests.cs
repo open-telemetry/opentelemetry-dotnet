@@ -14,8 +14,6 @@ namespace RouteTests;
 
 public class RoutingTests : IClassFixture<RoutingTestFixture>
 {
-    private const string OldHttpStatusCode = "http.status_code";
-    private const string OldHttpMethod = "http.method";
     private const string HttpStatusCode = "http.response.status_code";
     private const string HttpMethod = "http.request.method";
     private const string HttpRoute = "http.route";
