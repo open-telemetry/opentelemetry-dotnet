@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* `OtlpExporter` will no longer throw an exception (even on .NET Core 3.1)
+   when the `System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport`
+  `AppContext` switch is NOT set AND using `OtlpExportProtocol.Grpc`
+  to send to an insecure ("http") endpoint.
+  `System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport`
+  is not required to be set [when using .NET 5 or newer](https://learn.microsoft.com/aspnet/core/grpc/troubleshoot?view=aspnetcore-8.0#call-insecure-grpc-services-with-net-core-client).
+  ([#5486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5486))
+
 ## 1.8.0-rc.1
 
 Released 2024-Mar-27

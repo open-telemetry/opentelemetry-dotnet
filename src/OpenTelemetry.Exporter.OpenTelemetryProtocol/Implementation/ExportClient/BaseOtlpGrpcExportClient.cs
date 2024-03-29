@@ -20,8 +20,6 @@ internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequ
         Guard.ThrowIfNull(options);
         Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
 
-        ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
-
         this.Endpoint = new UriBuilder(options.Endpoint).Uri;
         this.Headers = options.GetMetadataFromHeaders();
         this.TimeoutMilliseconds = options.TimeoutMilliseconds;
