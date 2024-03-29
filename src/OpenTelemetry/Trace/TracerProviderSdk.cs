@@ -407,12 +407,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
     private static Sampler GetSampler(IConfiguration configuration, Sampler? stateSampler)
     {
-        Sampler? sampler = null;
-
-        if (stateSampler != null)
-        {
-            sampler = stateSampler;
-        }
+        var sampler = stateSampler;
 
         if (configuration.TryGetStringValue(TracesSamplerConfigKey, out var configValue))
         {
