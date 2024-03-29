@@ -354,7 +354,7 @@ Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
 Counter<long> AnotherFruitCounter = MyMeter.CreateCounter<long>("AnotherFruitCounter");
 
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .AddMeter("MyCompany.MyProduct.MyLibrary") 
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
     .AddConsoleExporter()
     .SetMaxMetricStreams(1) // The default value is 1000
     .Build();
@@ -381,7 +381,7 @@ metrics managed by a given `MeterProvider`, use the
 
 ```csharp
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .AddMeter("MyCompany.MyProduct.MyLibrary") 
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
     .SetMaxMetricPointsPerMetricStream(4000) // Note: The default value is 2000
     .AddConsoleExporter()
     .Build();
