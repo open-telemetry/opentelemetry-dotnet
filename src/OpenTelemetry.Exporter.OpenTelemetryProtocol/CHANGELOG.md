@@ -13,7 +13,7 @@
 * **Removed** `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY` and added
   `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY`. `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY`
   when set to `in_memory` will enable automatic retries in case of transient
-  failures during data export to otlp endpoint.
+  failures during data export to an OTLP endpoint.
   ([#5495](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5495))
 
 ## 1.8.0-rc.1
