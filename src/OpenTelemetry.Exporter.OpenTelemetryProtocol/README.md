@@ -630,7 +630,7 @@ want to solicit feedback from the community.
     When set to `in_memory`, it enables in-memory retry for transient errors
     encountered while sending telemetry.
 
-    Added in `1.8.0-beta.1`.
+    Added in `1.8.0`.
 
 * Logs
 
