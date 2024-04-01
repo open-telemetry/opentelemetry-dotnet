@@ -15,7 +15,7 @@ internal sealed class ExperimentalOptions
 
     public const string EmitLogEventEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES";
 
-    public const string EnableInMemoryRetryEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY";
+    public const string OtlpRetryEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY";
 
     public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
@@ -29,9 +29,9 @@ internal sealed class ExperimentalOptions
             this.EmitLogEventAttributes = emitLogEventAttributes;
         }
 
-        if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, EnableInMemoryRetryEnvVar, out var enableInMemoryRetry))
+        if (configuration.TryGetStringValue(OpenTelemetryProtocolExporterEventSource.Log, OtlpRetryEnvVar, out var retryPolicy) && retryPolicy != null && retryPolicy.Equals("in_memory", StringComparison.OrdinalIgnoreCase))
         {
-            this.EnableInMemoryRetry = enableInMemoryRetry;
+            this.EnableInMemoryRetry = true;
         }
     }
 

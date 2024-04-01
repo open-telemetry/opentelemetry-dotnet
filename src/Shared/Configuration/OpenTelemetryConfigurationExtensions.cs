@@ -107,6 +107,24 @@ internal static class OpenTelemetryConfigurationExtensions
         return true;
     }
 
+    public static bool TryGetStringValue(
+       this IConfiguration configuration,
+       IConfigurationExtensionsLogger logger,
+       string key,
+       out string? value)
+    {
+        Debug.Assert(logger != null, "logger was null");
+
+        if (!configuration.TryGetStringValue(key, out var stringValue))
+        {
+            value = null;
+            return false;
+        }
+
+        value = stringValue;
+        return true;
+    }
+
     public static bool TryGetValue<T>(
         this IConfiguration configuration,
         IConfigurationExtensionsLogger logger,

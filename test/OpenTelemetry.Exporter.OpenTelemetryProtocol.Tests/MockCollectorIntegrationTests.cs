@@ -179,7 +179,7 @@ public sealed class MockCollectorIntegrationTests
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000, Protocol = OtlpExportProtocol.Grpc };
 
         var configuration = new ConfigurationBuilder()
-         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EnableInMemoryRetryEnvVar] = useRetryTransmissionHandler.ToString() })
+         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null })
          .Build();
 
         var otlpExporter = new OtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
@@ -263,7 +263,7 @@ public sealed class MockCollectorIntegrationTests
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000, Protocol = OtlpExportProtocol.HttpProtobuf };
 
         var configuration = new ConfigurationBuilder()
-         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EnableInMemoryRetryEnvVar] = useRetryTransmissionHandler.ToString() })
+         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null })
          .Build();
 
         var otlpExporter = new OtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
