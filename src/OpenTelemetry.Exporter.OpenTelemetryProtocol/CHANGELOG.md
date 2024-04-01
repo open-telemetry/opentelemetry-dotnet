@@ -10,7 +10,8 @@
   is not required to be set [when using .NET 5 or newer](https://learn.microsoft.com/aspnet/core/grpc/troubleshoot?view=aspnetcore-8.0#call-insecure-grpc-services-with-net-core-client).
   ([#5486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5486))
 
-* Replaced environment variable `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY` with
+* Replaced environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY` with
   `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY`. `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY`
   when set to `in_memory` will enable automatic retries in case of transient
   failures during data export to an OTLP endpoint.
