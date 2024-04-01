@@ -29,7 +29,7 @@ internal sealed class ExperimentalOptions
             this.EmitLogEventAttributes = emitLogEventAttributes;
         }
 
-        if (configuration.TryGetStringValue(OtlpRetryEnvVar, out var retryPolicy) && retryPolicy.Equals("in_memory", StringComparison.OrdinalIgnoreCase))
+        if (configuration.TryGetStringValue(OtlpRetryEnvVar, out var retryPolicy) && retryPolicy != null && retryPolicy.Equals("in_memory", StringComparison.OrdinalIgnoreCase))
         {
             this.EnableInMemoryRetry = true;
         }
