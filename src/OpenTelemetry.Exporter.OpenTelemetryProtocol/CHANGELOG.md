@@ -4,7 +4,7 @@
 
 ## 1.8.0
 
-Released 2024-Apr-01
+Released 2024-Apr-02
 
 * `OtlpExporter` will no longer throw an exception (even on .NET Core 3.1)
    when the `System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport`

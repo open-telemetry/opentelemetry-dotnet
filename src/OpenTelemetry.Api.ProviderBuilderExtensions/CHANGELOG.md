@@ -4,7 +4,7 @@
 
 ## 1.8.0
 
-Released 2024-Apr-01
+Released 2024-Apr-02
 
 ## 1.8.0-rc.1
 
