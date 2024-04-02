@@ -14,6 +14,7 @@
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\HttpRequestMessageContextPropagation.cs" Link="Includes\HttpRequestMessageContextPropagation.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\SignalVersionHelper.cs" Link="Includes\SignalVersionHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Options\*.cs" Link="Includes\Options\%(Filename).cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
   </ItemGroup>

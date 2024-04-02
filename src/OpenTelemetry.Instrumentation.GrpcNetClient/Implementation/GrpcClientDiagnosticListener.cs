@@ -16,8 +16,8 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
 {
     internal static readonly AssemblyName AssemblyName = typeof(GrpcClientDiagnosticListener).Assembly.GetName();
     internal static readonly string ActivitySourceName = AssemblyName.Name;
-    internal static readonly Version Version = AssemblyName.Version;
-    internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+    internal static readonly string Version = SignalVersionHelper.GetVersion<GrpcClientDiagnosticListener>();
+    internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version);
 
     private const string OnStartEvent = "Grpc.Net.Client.GrpcOut.Start";
     private const string OnStopEvent = "Grpc.Net.Client.GrpcOut.Stop";
