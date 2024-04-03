@@ -20,8 +20,8 @@ Prometheus, traces to Tempo.
 
 All these components except the test app require additional configuration to
 enable Exemplar feature. To make it easy for users, these components are
-pre-configured to enable Exemplars, and a docker-compose is provided to spun
- them all up, in the required configurations.
+pre-configured to enable Exemplars, and a docker compose file is provided to
+ spun them all up, in the required configurations.
 
 ## Pre-requisite
 
@@ -36,7 +36,7 @@ spins all of them with the correct configurations to support Exemplars.
 Navigate to current directory and run the following:
 
 ```sh
-docker-compose up -d
+docker compose up -d
 ```
 
 If the above step succeeds, all dependencies would be spun up and ready now. To
