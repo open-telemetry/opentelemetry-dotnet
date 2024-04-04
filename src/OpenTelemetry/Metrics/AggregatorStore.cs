@@ -365,7 +365,7 @@ internal sealed class AggregatorStore
         lock (this.TagsToMetricPointIndexDictionaryDelta!)
         {
             LookupData? dictionaryValue;
-            if (lookupData.SortedTags != Tags.EmptyTags)
+            if (lookupData!.SortedTags != Tags.EmptyTags)
             {
                 // Check if no other thread added a new entry for the same Tags.
                 // If no, then remove the existing entries.
