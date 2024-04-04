@@ -45,6 +45,9 @@ package, regardless of the .NET runtime version being used:
 * The .NET runtime team is holding a high bar for backward compatibility on
   `System.Diagnostics.DiagnosticSource` even during major version bumps, so
   compatibility is not a concern here.
+* Refer to the [.NET official
+  document](https://learn.microsoft.com/dotnet/core/diagnostics/compare-metric-apis#systemdiagnosticsmetrics)
+  for more information about `System.Diagnostics.Metrics`.
 
 ## Metrics API
 
