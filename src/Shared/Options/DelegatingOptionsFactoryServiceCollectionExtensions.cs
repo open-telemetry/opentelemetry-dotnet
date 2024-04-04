@@ -53,4 +53,28 @@ internal static class DelegatingOptionsFactoryServiceCollectionExtensions
 
         return services!;
     }
+
+    public static IServiceCollection RegisterSingletonOptionsFactory<T>(
+        this IServiceCollection services,
+        Func<IConfiguration, T> optionsFactoryFunc,
+        Action<T> optionsResetAction)
+        where T : class
+    {
+        Debug.Assert(services != null, "services was null");
+        Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
+        Debug.Assert(optionsResetAction != null, "optionsResetAction was null");
+
+        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
+        {
+            return new SingletonDelegatingOptionsFactory<T>(
+                (c, n) => optionsFactoryFunc!(c),
+                (n, o) => optionsResetAction!(o),
+                sp.GetRequiredService<IConfiguration>(),
+                sp.GetServices<IConfigureOptions<T>>(),
+                sp.GetServices<IPostConfigureOptions<T>>(),
+                sp.GetServices<IValidateOptions<T>>());
+        });
+
+        return services!;
+    }
 }

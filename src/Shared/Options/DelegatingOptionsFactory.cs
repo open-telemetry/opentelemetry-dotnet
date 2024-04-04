@@ -24,7 +24,7 @@ namespace Microsoft.Extensions.Options;
 /// Implementation of <see cref="IOptionsFactory{TOptions}"/>.
 /// </summary>
 /// <typeparam name="TOptions">The type of options being requested.</typeparam>
-internal sealed class DelegatingOptionsFactory<TOptions> :
+internal class DelegatingOptionsFactory<TOptions> :
     IOptionsFactory<TOptions>
     where TOptions : class
 {
@@ -71,9 +71,17 @@ internal sealed class DelegatingOptionsFactory<TOptions> :
     /// <returns>The created <typeparamref name="TOptions"/> instance with the given <paramref name="name"/>.</returns>
     /// <exception cref="OptionsValidationException">One or more <see cref="IValidateOptions{TOptions}"/> return failed <see cref="ValidateOptionsResult"/> when validating the <typeparamref name="TOptions"/> instance been created.</exception>
     /// <exception cref="MissingMethodException">The <typeparamref name="TOptions"/> does not have a public parameterless constructor or <typeparamref name="TOptions"/> is <see langword="abstract"/>.</exception>
-    public TOptions Create(string name)
+    public virtual TOptions Create(string name)
     {
         TOptions options = this.optionsFactoryFunc(this.configuration, name);
+
+        RunConfigurationsAndValidations(name, options);
+
+        return options;
+    }
+
+    protected void RunConfigurationsAndValidations(string name, TOptions options)
+    {
         foreach (IConfigureOptions<TOptions> setup in _setups)
         {
             if (setup is IConfigureNamedOptions<TOptions> namedSetup)
@@ -106,7 +114,5 @@ internal sealed class DelegatingOptionsFactory<TOptions> :
                 throw new OptionsValidationException(name, typeof(TOptions), failures);
             }
         }
-
-        return options;
     }
 }

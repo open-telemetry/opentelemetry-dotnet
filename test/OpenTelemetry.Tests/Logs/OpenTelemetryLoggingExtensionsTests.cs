@@ -297,11 +297,78 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.True(loggerProvider.Processor is TestLogProcessorWithILoggerFactoryDependency);
     }
 
-    private class TestLogProcessor : BaseProcessor<LogRecord>
+    [Fact]
+    public void OptionReloadingTest()
     {
+        var defaultInstance = new OpenTelemetryLoggerOptions();
+
+        OpenTelemetryLoggerOptions? lastOptions = null;
+        var processors = new List<TestLogProcessor>();
+        var delegateInvocationCount = 0;
+
+        var root = new ConfigurationBuilder().Build();
+
+        var services = new ServiceCollection();
+
+        services.AddSingleton<IConfiguration>(root);
+
+        services.AddLogging(logging => logging
+            .AddConfiguration(root.GetSection("logging"))
+            .AddOpenTelemetry(options =>
+            {
+                Assert.Equal(defaultInstance.IncludeFormattedMessage, options.IncludeFormattedMessage);
+                Assert.Equal(defaultInstance.IncludeScopes, options.IncludeScopes);
+                Assert.Equal(defaultInstance.ParseStateValues, options.ParseStateValues);
+                Assert.Equal(defaultInstance.IncludeAttributes, options.IncludeAttributes);
+                Assert.Equal(defaultInstance.IncludeTraceState, options.IncludeTraceState);
+
+                if (lastOptions != null)
+                {
+                    Assert.True(ReferenceEquals(options, lastOptions));
+                }
+
+                lastOptions = options;
+
+                delegateInvocationCount++;
+                var processor = new TestLogProcessor();
+                processors.Add(processor);
+                options.AddProcessor(processor);
+
+                options.IncludeFormattedMessage = !defaultInstance.IncludeFormattedMessage;
+                options.IncludeScopes = !defaultInstance.IncludeScopes;
+                options.ParseStateValues = !defaultInstance.ParseStateValues;
+                options.IncludeAttributes = !defaultInstance.IncludeAttributes;
+                options.IncludeTraceState = !defaultInstance.IncludeTraceState;
+            }));
+
+        using var sp = services.BuildServiceProvider();
+
+        var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+        Assert.Equal(1, delegateInvocationCount);
+        Assert.Single(processors);
+        Assert.DoesNotContain(processors, p => p.Disposed);
+
+        root.Reload();
+
+        Assert.Equal(3, delegateInvocationCount);
+        Assert.Equal(3, processors.Count);
+        Assert.Equal(2, processors.Count(p => p.Disposed));
     }
 
-    private class TestLogProcessorWithILoggerFactoryDependency : BaseProcessor<LogRecord>
+    private sealed class TestLogProcessor : BaseProcessor<LogRecord>
+    {
+        public bool Disposed;
+
+        protected override void Dispose(bool disposing)
+        {
+            this.Disposed = true;
+
+            base.Dispose(disposing);
+        }
+    }
+
+    private sealed class TestLogProcessorWithILoggerFactoryDependency : BaseProcessor<LogRecord>
     {
         private readonly ILogger logger;
 

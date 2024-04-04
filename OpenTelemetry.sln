@@ -299,6 +299,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Options", "Options", "{4949
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\Options\DelegatingOptionsFactory.cs = src\Shared\Options\DelegatingOptionsFactory.cs
 		src\Shared\Options\DelegatingOptionsFactoryServiceCollectionExtensions.cs = src\Shared\Options\DelegatingOptionsFactoryServiceCollectionExtensions.cs
+		src\Shared\Options\SingletonDelegatingOptionsFactory.cs = src\Shared\Options\SingletonDelegatingOptionsFactory.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shims", "Shims", "{A0CB9A10-F22D-4E66-A449-74B3D0361A9C}"

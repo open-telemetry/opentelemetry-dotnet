@@ -173,6 +173,10 @@ public static class OpenTelemetryLoggingExtensions
         // Note: This will bind logger options element (e.g., "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
         RegisterLoggerProviderOptions(services);
 
+        services.RegisterSingletonOptionsFactory(
+            c => new OpenTelemetryLoggerOptions(),
+            o => o.ResetAfterConfigurationReload());
+
         /* Note: This ensures IConfiguration is available when using
          * IServiceCollections NOT attached to a host. For example when
          * performing:

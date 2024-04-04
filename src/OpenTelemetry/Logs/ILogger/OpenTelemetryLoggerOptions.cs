@@ -14,6 +14,7 @@ public class OpenTelemetryLoggerOptions
 {
     internal readonly List<Func<IServiceProvider, BaseProcessor<LogRecord>>> ProcessorFactories = new();
     internal ResourceBuilder? ResourceBuilder;
+    private bool hasReloaded;
 
     /// <summary>
     /// Gets or sets a value indicating whether or not formatted log message
@@ -86,7 +87,19 @@ public class OpenTelemetryLoggerOptions
     {
         Guard.ThrowIfNull(processor);
 
-        this.ProcessorFactories.Add(_ => processor);
+        if (this.hasReloaded)
+        {
+            // Note: Processors may only be added during startup. If we reach
+            // here it means options were reloaded and a processor is being
+            // added via a configuration delegate. We dispose the processor
+            // immediately to prevent leaks of resources (for example the
+            // background thread created by batch processor).
+            processor.Dispose();
+        }
+        else
+        {
+            this.ProcessorFactories.Add(_ => processor);
+        }
 
         return this;
     }
@@ -101,7 +114,10 @@ public class OpenTelemetryLoggerOptions
     {
         Guard.ThrowIfNull(implementationFactory);
 
-        this.ProcessorFactories.Add(implementationFactory);
+        if (!this.hasReloaded)
+        {
+            this.ProcessorFactories.Add(implementationFactory);
+        }
 
         return this;
     }
@@ -116,8 +132,28 @@ public class OpenTelemetryLoggerOptions
     {
         Guard.ThrowIfNull(resourceBuilder);
 
-        this.ResourceBuilder = resourceBuilder;
+        if (!this.hasReloaded)
+        {
+            this.ResourceBuilder = resourceBuilder;
+        }
+
         return this;
+    }
+
+    internal void ResetAfterConfigurationReload()
+    {
+        // Note: This is called when a configuration reload is fired. The goal
+        // here is to put options back into the default state so that when
+        // configurations are re-run everything appears as it did during
+        // startup and the behavior is deterministic.
+
+        this.IncludeFormattedMessage = false;
+        this.IncludeScopes = false;
+        this.ParseStateValues = false;
+        this.IncludeAttributes = true;
+        this.IncludeTraceState = false;
+
+        this.hasReloaded = true;
     }
 
     internal OpenTelemetryLoggerOptions Copy()
