@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.8.0
+
+Released 2024-Apr-04
+
 * Fixed an issue for spans when `server.port` attribute was not set with
   `server.address` when it has default values (`80` for `HTTP` and
   `443` for `HTTPS` protocol).
