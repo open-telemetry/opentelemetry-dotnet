@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace OpenTelemetry.Instrumentation;
 
-internal static class SignalVersionHelper
+internal static class InstrumentationScopeHelper
 {
     public static string GetVersion<T>()
     {
