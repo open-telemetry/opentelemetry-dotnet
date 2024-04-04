@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -23,7 +24,7 @@ using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public class OtlpLogExporterTests : Http2UnencryptedSupportTests
+public class OtlpLogExporterTests
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
 
@@ -100,7 +101,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
             Assert.Equal(2, invocations);
         }
 
-        options.HttpClientFactory = null;
+        options.HttpClientFactory = () => null;
         Assert.Throws<InvalidOperationException>(() =>
         {
             using var exporter = new OtlpLogExporter(options);
@@ -110,14 +111,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     [Fact]
     public void AddOtlpExporterSetsDefaultBatchExportProcessor()
     {
-        if (Environment.Version.Major == 3)
-        {
-            // Adding the OtlpExporter creates a GrpcChannel.
-            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
-            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-        }
-
         var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .AddOtlpExporter()
             .Build();
@@ -151,7 +144,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         bool optionsValidated = false;
 
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -184,7 +176,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     [InlineData(false)]
     public void AddOtlpLogExporterParseStateValueCanBeTurnedOff(bool parseState)
     {
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -230,7 +221,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         var logRecords = new List<LogRecord>();
 
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         var hostBuilder = new HostBuilder();
         hostBuilder.ConfigureLogging(logging => logging
             .AddOpenTelemetry(options => options
@@ -731,13 +721,15 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         // Arrange.
         var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
+        var exporterOptions = new OtlpExporterOptions();
+        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
-            new OtlpExporterOptions(),
+            exporterOptions,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            testExportClient);
+            transmissionHandler);
 
         // Act.
         sut.Export(emptyBatch);
@@ -751,13 +743,15 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         // Arrange.
         var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>(throwException: true);
+        var exporterOptions = new OtlpExporterOptions();
+        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
-            new OtlpExporterOptions(),
+            exporterOptions,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            testExportClient);
+            transmissionHandler);
 
         // Act.
         var result = sut.Export(emptyBatch);
@@ -771,13 +765,15 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         // Arrange.
         var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
+        var exporterOptions = new OtlpExporterOptions();
+        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportLogsServiceRequest>(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
-            new OtlpExporterOptions(),
+            exporterOptions,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            testExportClient);
+            transmissionHandler);
 
         // Act.
         var result = sut.Export(emptyBatch);
@@ -1513,7 +1509,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         var values = new Dictionary<string, string>()
         {
-            [OtlpExporterOptions.EndpointEnvVarName] = "http://test:8888",
+            [OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName] = "http://test:8888",
         };
 
         var configuration = new ConfigurationBuilder()

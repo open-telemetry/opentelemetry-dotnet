@@ -1,16 +1,14 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET6_0_OR_GREATER
-using System.Diagnostics.CodeAnalysis;
-#endif
 using System.Diagnostics.Tracing;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 [EventSource(Name = "OpenTelemetry-Exporter-OpenTelemetryProtocol")]
-internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
+internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IConfigurationExtensionsLogger
 {
     public static readonly OpenTelemetryProtocolExporterEventSource Log = new();
 
@@ -33,6 +31,24 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
         }
     }
 
+    [NonEvent]
+    public void TrySubmitRequestException(Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.TrySubmitRequestException(ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void RetryStoredRequestException(Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.RetryStoredRequestException(ex.ToInvariantString());
+        }
+    }
+
     [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
     public void FailedToReachCollector(string rawCollectorUri, string ex)
     {
@@ -45,9 +61,6 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
         this.WriteEvent(3, className, methodName);
     }
 
-#if NET6_0_OR_GREATER
-    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
-#endif
     [Event(4, Message = "Unknown error in export method. Message: '{0}'. IsRetry: {1}", Level = EventLevel.Error)]
     public void ExportMethodException(string ex, bool isRetry)
     {
@@ -78,9 +91,26 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
         this.WriteEvent(10, type.ToString(), key);
     }
 
-    [Event(11, Message = "{0} environment variable has an invalid value: '{1}'", Level = EventLevel.Warning)]
-    public void InvalidEnvironmentVariable(string key, string value)
+    [Event(11, Message = "Configuration key '{0}' has an invalid value: '{1}'", Level = EventLevel.Warning)]
+    public void InvalidConfigurationValue(string key, string value)
     {
         this.WriteEvent(11, key, value);
+    }
+
+    [Event(12, Message = "Unknown error in TrySubmitRequest method. Message: '{0}'", Level = EventLevel.Error)]
+    public void TrySubmitRequestException(string ex)
+    {
+        this.WriteEvent(12, ex);
+    }
+
+    [Event(13, Message = "Error while attempting to re-transmit data from disk. Message: '{0}'", Level = EventLevel.Error)]
+    public void RetryStoredRequestException(string ex)
+    {
+        this.WriteEvent(13, ex);
+    }
+
+    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
+    {
+        this.InvalidConfigurationValue(key, value);
     }
 }

@@ -27,7 +27,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 this.WriteLine("Resource associated with Metric:");
                 foreach (var resourceAttribute in this.resource.Attributes)
                 {
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(resourceAttribute, out var result))
+                    if (this.TagTransformer.TryTransformTag(resourceAttribute, out var result))
                     {
                         this.WriteLine($"    {result}");
                     }
@@ -67,7 +67,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 foreach (var meterTag in metric.MeterTags)
                 {
                     this.WriteLine("\tMeter Tags:");
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(meterTag, out var result))
+                    if (this.TagTransformer.TryTransformTag(meterTag, out var result))
                     {
                         this.WriteLine($"\t\t{result}");
                     }
@@ -80,7 +80,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 StringBuilder tagsBuilder = new StringBuilder();
                 foreach (var tag in metricPoint.Tags)
                 {
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
+                    if (this.TagTransformer.TryTransformTag(tag, out var result))
                     {
                         tagsBuilder.Append(result);
                         tagsBuilder.Append(' ');
@@ -188,30 +188,44 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 }
 
                 var exemplarString = new StringBuilder();
-                foreach (var exemplar in metricPoint.GetExemplars())
+                if (metricPoint.TryGetExemplars(out var exemplars))
                 {
-                    if (exemplar.Timestamp != default)
+                    foreach (ref readonly var exemplar in exemplars)
                     {
-                        exemplarString.Append("Value: ");
-                        exemplarString.Append(exemplar.DoubleValue);
-                        exemplarString.Append(" Timestamp: ");
+                        exemplarString.Append("Timestamp: ");
                         exemplarString.Append(exemplar.Timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
-                        exemplarString.Append(" TraceId: ");
-                        exemplarString.Append(exemplar.TraceId);
-                        exemplarString.Append(" SpanId: ");
-                        exemplarString.Append(exemplar.SpanId);
-
-                        if (exemplar.FilteredTags != null && exemplar.FilteredTags.Count > 0)
+                        if (metricType.IsDouble())
                         {
-                            exemplarString.Append(" Filtered Tags : ");
+                            exemplarString.Append(" Value: ");
+                            exemplarString.Append(exemplar.DoubleValue);
+                        }
+                        else if (metricType.IsLong())
+                        {
+                            exemplarString.Append(" Value: ");
+                            exemplarString.Append(exemplar.LongValue);
+                        }
 
-                            foreach (var tag in exemplar.FilteredTags)
+                        if (exemplar.TraceId != default)
+                        {
+                            exemplarString.Append(" TraceId: ");
+                            exemplarString.Append(exemplar.TraceId.ToHexString());
+                            exemplarString.Append(" SpanId: ");
+                            exemplarString.Append(exemplar.SpanId.ToHexString());
+                        }
+
+                        bool appendedTagString = false;
+                        foreach (var tag in exemplar.FilteredTags)
+                        {
+                            if (this.TagTransformer.TryTransformTag(tag, out var result))
                             {
-                                if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
+                                if (!appendedTagString)
                                 {
-                                    exemplarString.Append(result);
-                                    exemplarString.Append(' ');
+                                    exemplarString.Append(" Filtered Tags : ");
+                                    appendedTagString = true;
                                 }
+
+                                exemplarString.Append(result);
+                                exemplarString.Append(' ');
                             }
                         }
 

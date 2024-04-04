@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -150,6 +151,7 @@ public sealed class PrometheusExporterMiddlewareTests
     {
         using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(MeterName)
+            .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
             .AddPrometheusExporter()
             .Build();
 
@@ -213,6 +215,7 @@ public sealed class PrometheusExporterMiddlewareTests
     {
         using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(MeterName)
+            .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
             .AddPrometheusExporter()
             .Build();
 
@@ -265,11 +268,12 @@ public sealed class PrometheusExporterMiddlewareTests
                    if (registerMeterProvider)
                    {
                        services.AddOpenTelemetry().WithMetrics(builder => builder
-                            .AddMeter(MeterName)
-                            .AddPrometheusExporter(o =>
-                            {
-                                configureOptions?.Invoke(o);
-                            }));
+                           .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
+                           .AddMeter(MeterName)
+                           .AddPrometheusExporter(o =>
+                           {
+                               configureOptions?.Invoke(o);
+                           }));
                    }
 
                    configureServices?.Invoke(services);
@@ -322,7 +326,10 @@ public sealed class PrometheusExporterMiddlewareTests
             string content = await response.Content.ReadAsStringAsync();
 
             string expected = requestOpenMetrics
-                ? "# TYPE otel_scope_info info\n"
+                ? "# TYPE target info\n"
+                  + "# HELP target Target metadata\n"
+                  + "target_info{service_name='my_service',service_instance_id='id1'} 1\n"
+                  + "# TYPE otel_scope_info info\n"
                   + "# HELP otel_scope_info Scope metadata\n"
                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
                   + "# TYPE counter_double_total counter\n"

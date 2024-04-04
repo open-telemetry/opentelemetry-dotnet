@@ -57,7 +57,7 @@ public abstract class MetricPointReclaimTestsBase
             .Build();
 
         var meterProviderSdk = meterProvider as MeterProviderSdk;
-        Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ShouldReclaimUnusedMetricPoints);
+        Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ReclaimUnusedMetricPoints);
     }
 
     [Theory]
@@ -87,7 +87,7 @@ public abstract class MetricPointReclaimTestsBase
             .Build();
 
         var meterProviderSdk = meterProvider as MeterProviderSdk;
-        Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ShouldReclaimUnusedMetricPoints);
+        Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ReclaimUnusedMetricPoints);
     }
 
     [Theory]

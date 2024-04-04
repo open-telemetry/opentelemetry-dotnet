@@ -30,15 +30,9 @@ repo.
 
 If you are new here, please read the getting started docs:
 
-* [Logs](./docs/logs/README.md): [ASP.NET
-  Core](./docs/logs/getting-started-aspnetcore/README.md) |
-  [Console](./docs/logs/getting-started-console/README.md)
-* [Metrics](./docs/metrics/README.md): [ASP.NET
-  Core](./docs/metrics/getting-started-aspnetcore/README.md) |
-  [Console](./docs/metrics/getting-started-console/README.md)
-* [Traces](./docs/trace/README.md): [ASP.NET
-  Core](./docs/trace/getting-started-aspnetcore/README.md) |
-  [Console](./docs/trace/getting-started-console/README.md)
+* [Logs](./docs/logs/README.md)
+* [Metrics](./docs/metrics/README.md)
+* [Traces](./docs/trace/README.md)
 
 This repository includes multiple installable components, available on
 [NuGet](https://www.nuget.org/profiles/OpenTelemetry). Each component has its

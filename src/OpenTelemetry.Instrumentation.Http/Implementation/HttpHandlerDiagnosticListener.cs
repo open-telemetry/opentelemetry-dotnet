@@ -135,7 +135,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 return;
             }
 
-            RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method.Method);
+            RequestMethodHelper.SetActivityDisplayName(activity, request.Method.Method);
 
             if (!IsNet7OrGreater)
             {
@@ -147,10 +147,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
             RequestMethodHelper.SetHttpMethodTag(activity, request.Method.Method);
 
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
-            if (!request.RequestUri.IsDefaultPort)
-            {
-                activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
-            }
+            activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
 
             activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
 

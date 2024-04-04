@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#pragma warning restore IDE0005
 
 namespace OpenTelemetry.Instrumentation;
 

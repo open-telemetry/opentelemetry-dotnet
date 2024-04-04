@@ -2,12 +2,39 @@
 
 ## Unreleased
 
+## 1.8.0
+
+Released 2024-Apr-02
+
+## 1.8.0-rc.1
+
+Released 2024-Mar-27
+
+* `TracerProvider`s can now have a sampler configured via the
+  `OTEL_TRACES_SAMPLER` environment variable. The supported values are:
+  `always_off`, `always_on`, `traceidratio`, `parentbased_always_on`,
+  `parentbased_always_off`, and `parentbased_traceidratio`. The options
+  `traceidratio` and `parentbased_traceidratio` may have the sampler probability
+  configured via the `OTEL_TRACES_SAMPLER_ARG` environment variable.
+  For details see: [OpenTelemetry Environment Variable
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#general-sdk-configuration).
+  ([#5448](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5448))
+
+## 1.8.0-beta.1
+
+Released 2024-Mar-14
+
+* Throw NotSupportedException when using `SetErrorStatusOnException` method for
+  Tracing in Mono Runtime and Native AOT environment because the dependent
+  `Marshal.GetExceptionPointers()` API is not supported on these platforms.
+  ([#5374](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5374))
+
 * Fixed an issue where `LogRecord.Attributes` (or `LogRecord.StateValues` alias)
   could become out of sync with `LogRecord.State` if either is set directly via
   the public setters. This was done to further mitigate issues introduced in
   1.5.0 causing attributes added using custom processor(s) to be missing after
   upgrading. For details see:
-  [#5169](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5169)
+  ([#5169](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5169))
 
 * Fixed an issue where `SimpleExemplarReservoir` was not resetting internal
   state for cumulative temporality.
@@ -41,6 +68,36 @@
   `IOpenTelemetryBuilder.WithMetrics` extension method can configure
   [IMetricsListener](https://learn.microsoft.com/dotNet/api/microsoft.extensions.diagnostics.metrics.imetricslistener).
   ([#5265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5265))
+
+* **Experimental (pre-release builds only):** The `Exemplar.FilteredTags`
+  property now returns a `ReadOnlyFilteredTagCollection` instance and the
+  `Exemplar.LongValue` property has been added. The `MetricPoint.GetExemplars`
+  method has been replaced by `MetricPoint.TryGetExemplars` which outputs a
+  `ReadOnlyExemplarCollection` instance. These are **breaking changes** for
+  metrics exporters which support exemplars.
+  ([#5386](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5386))
+
+* **Experimental (pre-release builds only):** Added support for exemplars when
+  using Base2 Exponential Bucket Histogram Aggregation configured via the View
+  API.
+  ([#5396](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5396))
+
+* **Experimental (pre-release builds only):** Removed the `ExemplarFilter`,
+  `AlwaysOffExemplarFilter`, `AlwaysOnExemplarFilter`, and
+  `TraceBasedExemplarFilter` APIs. The `MeterProviderBuilder.SetExemplarFilter`
+  extension method now accepts an `ExemplarFilterType` enumeration (which
+  contains definitions for the supported filter types `AlwaysOff`, `AlwaysOn`,
+  and `TraceBased`) instead of an `ExemplarFilter` instance. This was done in
+  response to changes made to the [OpenTelemetry Metrics SDK
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/pull/3820).
+  ([#5404](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5404))
+
+* **Experimental (pre-release builds only):** The `ExemplarFilter` used by SDK
+  `MeterProvider`s can now be controlled via the `OTEL_METRICS_EXEMPLAR_FILTER`
+  environment variable. The supported values are: `always_off`, `always_on`, and
+  `trace_based`. For details see: [OpenTelemetry Environment Variable
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#exemplar).
+  ([#5412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5412))
 
 ## 1.7.0
 

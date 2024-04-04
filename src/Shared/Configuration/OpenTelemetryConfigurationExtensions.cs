@@ -8,17 +8,11 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Globalization;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
-namespace OpenTelemetry.Internal;
+namespace Microsoft.Extensions.Configuration;
 
-internal static class ConfigurationExtensions
+internal static class OpenTelemetryConfigurationExtensions
 {
-    public static Action<string, string>? LogInvalidEnvironmentVariable = null;
-
     public delegate bool TryParseFunc<T>(
         string value,
 #if !NETFRAMEWORK && !NETSTANDARD2_0
@@ -34,19 +28,24 @@ internal static class ConfigurationExtensions
 #endif
         out string? value)
     {
-        value = configuration[key] is string configValue ? configValue : null;
+        Debug.Assert(configuration != null, "configuration was null");
+
+        value = configuration![key];
 
         return !string.IsNullOrWhiteSpace(value);
     }
 
     public static bool TryGetUriValue(
         this IConfiguration configuration,
+        IConfigurationExtensionsLogger logger,
         string key,
 #if !NETFRAMEWORK && !NETSTANDARD2_0
         [NotNullWhen(true)]
 #endif
         out Uri? value)
     {
+        Debug.Assert(logger != null, "logger was null");
+
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = null;
@@ -55,7 +54,7 @@ internal static class ConfigurationExtensions
 
         if (!Uri.TryCreate(stringValue, UriKind.Absolute, out value))
         {
-            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
+            logger!.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 
@@ -64,9 +63,12 @@ internal static class ConfigurationExtensions
 
     public static bool TryGetIntValue(
         this IConfiguration configuration,
+        IConfigurationExtensionsLogger logger,
         string key,
         out int value)
     {
+        Debug.Assert(logger != null, "logger was null");
+
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = default;
@@ -75,7 +77,7 @@ internal static class ConfigurationExtensions
 
         if (!int.TryParse(stringValue, NumberStyles.None, CultureInfo.InvariantCulture, out value))
         {
-            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
+            logger!.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 
@@ -84,9 +86,12 @@ internal static class ConfigurationExtensions
 
     public static bool TryGetBoolValue(
         this IConfiguration configuration,
+        IConfigurationExtensionsLogger logger,
         string key,
         out bool value)
     {
+        Debug.Assert(logger != null, "logger was null");
+
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = default;
@@ -95,7 +100,7 @@ internal static class ConfigurationExtensions
 
         if (!bool.TryParse(stringValue, out value))
         {
-            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
+            logger!.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 
@@ -104,6 +109,7 @@ internal static class ConfigurationExtensions
 
     public static bool TryGetValue<T>(
         this IConfiguration configuration,
+        IConfigurationExtensionsLogger logger,
         string key,
         TryParseFunc<T> tryParseFunc,
 #if !NETFRAMEWORK && !NETSTANDARD2_0
@@ -111,6 +117,8 @@ internal static class ConfigurationExtensions
 #endif
         out T? value)
     {
+        Debug.Assert(logger != null, "logger was null");
+
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = default;
@@ -119,52 +127,11 @@ internal static class ConfigurationExtensions
 
         if (!tryParseFunc(stringValue!, out value))
         {
-            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
+            logger!.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 
         return true;
     }
-
-    public static IServiceCollection RegisterOptionsFactory<T>(
-        this IServiceCollection services,
-        Func<IConfiguration, T> optionsFactoryFunc)
-        where T : class, new()
-    {
-        Debug.Assert(services != null, "services was null");
-        Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
-
-        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
-        {
-            return new DelegatingOptionsFactory<T>(
-                (c, n) => optionsFactoryFunc!(c),
-                sp.GetRequiredService<IConfiguration>(),
-                sp.GetServices<IConfigureOptions<T>>(),
-                sp.GetServices<IPostConfigureOptions<T>>(),
-                sp.GetServices<IValidateOptions<T>>());
-        });
-
-        return services!;
-    }
-
-    public static IServiceCollection RegisterOptionsFactory<T>(
-        this IServiceCollection services,
-        Func<IServiceProvider, IConfiguration, string, T> optionsFactoryFunc)
-        where T : class, new()
-    {
-        Debug.Assert(services != null, "services was null");
-        Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
-
-        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
-        {
-            return new DelegatingOptionsFactory<T>(
-                (c, n) => optionsFactoryFunc!(sp, c, n),
-                sp.GetRequiredService<IConfiguration>(),
-                sp.GetServices<IConfigureOptions<T>>(),
-                sp.GetServices<IPostConfigureOptions<T>>(),
-                sp.GetServices<IValidateOptions<T>>());
-        });
-
-        return services!;
-    }
 }
+

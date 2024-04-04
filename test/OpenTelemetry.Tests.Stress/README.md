@@ -18,26 +18,45 @@
 Open a console, run the following command from the current folder:
 
 ```sh
-dotnet run --framework net6.0 --configuration Release
+dotnet run --framework net8.0 --configuration Release
+```
+
+To see command line options available, run the following command from the
+current folder:
+
+```sh
+dotnet run --framework net8.0 --configuration Release -- --help
+```
+
+The help output includes settings and their explanations:
+
+```text
+  -c, --concurrency      The concurrency (maximum degree of parallelism) for the stress test. Default value: Environment.ProcessorCount.
+
+  -p, --internal_port    The Prometheus http listener port where Prometheus will be exposed for retrieving internal metrics while the stress test is running. Set to '0' to
+                         disable. Default value: 9464.
+
+  -d, --duration         The duration for the stress test to run in seconds. If set to '0' or a negative value the stress test will run until canceled. Default value: 0.
 ```
 
 Once the application started, you will see the performance number updates from
-the console window title.
+the console window title and the console window itself.
 
-Use the `SPACE` key to toggle the console output, which is off by default.
+While a test is running...
 
-Use the `ENTER` key to print the latest performance statistics.
+* Use the `SPACE` key to toggle the console output, which is on by default.
 
-Use the `ESC` key to exit the stress test.
+* Use the `ENTER` key to print the latest performance statistics.
+
+* Use the `ESC` key to exit the stress test.
+
+Example output while a test is running:
 
 ```text
-Running (concurrency = 1), press <Esc> to stop...
-2021-09-28T18:47:17.6807622Z Loops: 17,549,732,467, Loops/Second: 738,682,519, CPU Cycles/Loop: 3
-2021-09-28T18:47:17.8846348Z Loops: 17,699,532,304, Loops/Second: 731,866,438, CPU Cycles/Loop: 3
-2021-09-28T18:47:18.0914577Z Loops: 17,850,498,225, Loops/Second: 730,931,752, CPU Cycles/Loop: 3
-2021-09-28T18:47:18.2992864Z Loops: 18,000,133,808, Loops/Second: 724,029,883, CPU Cycles/Loop: 3
-2021-09-28T18:47:18.5052989Z Loops: 18,150,598,194, Loops/Second: 733,026,161, CPU Cycles/Loop: 3
-2021-09-28T18:47:18.7116733Z Loops: 18,299,461,007, Loops/Second: 724,950,210, CPU Cycles/Loop: 3
+Options: {"Concurrency":20,"PrometheusInternalMetricsPort":9464,"DurationSeconds":0}
+Run OpenTelemetry.Tests.Stress.exe --help to see available options.
+Running (concurrency = 20, internalPrometheusEndpoint = http://localhost:9464/metrics/), press <Esc> to stop, press <Spacebar> to toggle statistics in the console...
+Loops: 17,384,826,748, Loops/Second: 2,375,222,037, CPU Cycles/Loop: 24, RunningTime (Seconds): 7
 ```
 
 The stress test metrics are exposed via
@@ -76,52 +95,88 @@ process_runtime_dotnet_gc_allocations_size_bytes 5485192 1658950184752
 Create a simple console application with the following code:
 
 ```csharp
-using System.Runtime.CompilerServices;
+using OpenTelemetry.Tests.Stress;
 
-public partial class Program
+public static class Program
 {
-    public static void Main()
+    public static int Main(string[] args)
     {
-        Stress(concurrency: 10, prometheusPort: 9464);
+        return StressTestFactory.RunSynchronously<MyStressTest>(args);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static void Run()
+    private sealed class MyStressTest : StressTest<StressTestOptions>
     {
-        // add your logic here
+        public MyStressTest(StressTestOptions options)
+            : base(options)
+        {
+        }
+
+        protected override void RunWorkItemInParallel()
+        {
+        }
     }
 }
 ```
 
-Add the [`Skeleton.cs`](./Skeleton.cs) file to your `*.csproj` file:
+Add the following project reference to the project:
 
 ```xml
-  <ItemGroup>
-    <Compile Include="Skeleton.cs" />
-  </ItemGroup>
+<ProjectReference Include="$(RepoRoot)\test\OpenTelemetry.Tests.Stress\OpenTelemetry.Tests.Stress.csproj" />
 ```
 
-Add the following packages to the project:
+Now you are ready to run your own stress test. Add test logic in the
+`RunWorkItemInParallel` method to measure performance.
 
-```shell
-dotnet add package OpenTelemetry.Exporter.Prometheus --prerelease
-dotnet add package OpenTelemetry.Instrumentation.Runtime --prerelease
+To define custom options create an options class which derives from
+`StressTestOptions`:
+
+```csharp
+using CommandLine;
+using OpenTelemetry.Tests.Stress;
+
+public static class Program
+{
+    public static int Main(string[] args)
+    {
+        return StressTestFactory.RunSynchronously<MyStressTest, MyStressTestOptions>(args);
+    }
+
+    private sealed class MyStressTest : StressTest<MyStressTestOptions>
+    {
+        public MyStressTest(MyStressTestOptions options)
+            : base(options)
+        {
+        }
+
+        protected override void RunWorkItemInParallel()
+        {
+            // Use this.Options here to access options supplied
+            // on the command line.
+        }
+    }
+
+    private sealed class MyStressTestOptions : StressTestOptions
+    {
+        [Option('r', "rate", HelpText = "Add help text here for the rate option. Default value: 0.", Required = false)]
+        public int Rate { get; set; } = 0;
+    }
+}
 ```
-
-Now you are ready to run your own stress test.
 
 Some useful notes:
 
-* You can specify the concurrency using `Stress(concurrency: {concurrency
-  number})`, the default value is the number of CPU cores. Keep in mind that
-  concurrency level does not equal to the number of threads.
-* You can specify a local PrometheusExporter listening port using
-  `Stress(prometheusPort: {port number})`, the default value is `0`, which will
-  turn off the PrometheusExporter.
-* You want to put `[MethodImpl(MethodImplOptions.AggressiveInlining)]` on
-  `Run()`, this helps to reduce extra flushes on the CPU instruction cache.
-* You might want to run the stress test under `Release` mode rather than `Debug`
-  mode.
+* It is generally best practice to run the stress test for code compiled in
+  `Release` configuration rather than `Debug` configuration. `Debug` builds
+  typically are not optimized and contain extra code which will change the
+  performance characteristics of the logic under test. The stress test will
+  write a warning message to the console when starting if compiled with `Debug`
+  configuration.
+* You can specify the concurrency using `-c` or `--concurrency` command line
+  argument, the default value if not specified is the number of CPU cores. Keep
+  in mind that concurrency level does not equal to the number of threads.
+* You can use the duration `-d` or `--duration` command line argument to run the
+  stress test for a specific time period. This is useful when comparing changes
+  across multiple runs.
 
 ## Understanding the results
 
@@ -130,4 +185,6 @@ Some useful notes:
   sliding window of few hundreds of milliseconds.
 * `CPU Cycles/Loop` represents the average CPU cycles for each `Run()`
   invocation, based on a small sliding window of few hundreds of milliseconds.
-* `Runaway Time` represents the runaway time (seconds) since the test started.
+* `Total Running Time` represents the running time (seconds) since the test started.
+* `GC Total Allocated Bytes` (not available on .NET Framework) shows the total
+  amount of memory allocated while the test was running.

@@ -39,7 +39,7 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
     public ResourceBuilder? ResourceBuilder { get; private set; }
 
-    public ExemplarFilter? ExemplarFilter { get; private set; }
+    public ExemplarFilterType? ExemplarFilter { get; private set; }
 
     public MeterProvider? Provider => this.meterProvider;
 
@@ -145,10 +145,8 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
         return this;
     }
 
-    public MeterProviderBuilder SetExemplarFilter(ExemplarFilter exemplarFilter)
+    public MeterProviderBuilder SetExemplarFilter(ExemplarFilterType exemplarFilter)
     {
-        Debug.Assert(exemplarFilter != null, "exemplarFilter was null");
-
         this.ExemplarFilter = exemplarFilter;
 
         return this;

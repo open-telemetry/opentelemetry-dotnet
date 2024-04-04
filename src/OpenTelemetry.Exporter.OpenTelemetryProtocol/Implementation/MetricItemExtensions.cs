@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
@@ -157,6 +158,16 @@ internal static class MetricItemExtensions
                         AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                         dataPoint.AsInt = metricPoint.GetSumLong();
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.LongValue, in exemplar));
+                            }
+                        }
+
                         sum.DataPoints.Add(dataPoint);
                     }
 
@@ -184,6 +195,16 @@ internal static class MetricItemExtensions
                         AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                         dataPoint.AsDouble = metricPoint.GetSumDouble();
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.DoubleValue, in exemplar));
+                            }
+                        }
+
                         sum.DataPoints.Add(dataPoint);
                     }
 
@@ -205,6 +226,16 @@ internal static class MetricItemExtensions
                         AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                         dataPoint.AsInt = metricPoint.GetGaugeLastValueLong();
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.LongValue, in exemplar));
+                            }
+                        }
+
                         gauge.DataPoints.Add(dataPoint);
                     }
 
@@ -226,6 +257,16 @@ internal static class MetricItemExtensions
                         AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                         dataPoint.AsDouble = metricPoint.GetGaugeLastValueDouble();
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.DoubleValue, in exemplar));
+                            }
+                        }
+
                         gauge.DataPoints.Add(dataPoint);
                     }
 
@@ -267,37 +308,12 @@ internal static class MetricItemExtensions
                             }
                         }
 
-                        var exemplars = metricPoint.GetExemplars();
-                        foreach (var examplar in exemplars)
+                        if (metricPoint.TryGetExemplars(out var exemplars))
                         {
-                            if (examplar.Timestamp != default)
+                            foreach (ref readonly var exemplar in exemplars)
                             {
-                                byte[] traceIdBytes = new byte[16];
-                                examplar.TraceId?.CopyTo(traceIdBytes);
-
-                                byte[] spanIdBytes = new byte[8];
-                                examplar.SpanId?.CopyTo(spanIdBytes);
-
-                                var otlpExemplar = new OtlpMetrics.Exemplar
-                                {
-                                    TimeUnixNano = (ulong)examplar.Timestamp.ToUnixTimeNanoseconds(),
-                                    TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
-                                    SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
-                                    AsDouble = examplar.DoubleValue,
-                                };
-
-                                if (examplar.FilteredTags != null)
-                                {
-                                    foreach (var tag in examplar.FilteredTags)
-                                    {
-                                        if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
-                                        {
-                                            otlpExemplar.FilteredAttributes.Add(result);
-                                        }
-                                    }
-                                }
-
-                                dataPoint.Exemplars.Add(otlpExemplar);
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.DoubleValue, in exemplar));
                             }
                         }
 
@@ -344,7 +360,14 @@ internal static class MetricItemExtensions
                             dataPoint.Positive.BucketCounts.Add((ulong)bucketCount);
                         }
 
-                        // TODO: exemplars.
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.DoubleValue, in exemplar));
+                            }
+                        }
 
                         histogram.DataPoints.Add(dataPoint);
                     }
@@ -357,11 +380,56 @@ internal static class MetricItemExtensions
         return otlpMetric;
     }
 
+    internal static OtlpMetrics.Exemplar ToOtlpExemplar<T>(T value, in Metrics.Exemplar exemplar)
+        where T : struct
+    {
+        var otlpExemplar = new OtlpMetrics.Exemplar
+        {
+            TimeUnixNano = (ulong)exemplar.Timestamp.ToUnixTimeNanoseconds(),
+        };
+
+        if (exemplar.TraceId != default)
+        {
+            byte[] traceIdBytes = new byte[16];
+            exemplar.TraceId.CopyTo(traceIdBytes);
+
+            byte[] spanIdBytes = new byte[8];
+            exemplar.SpanId.CopyTo(spanIdBytes);
+
+            otlpExemplar.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
+            otlpExemplar.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
+        }
+
+        if (typeof(T) == typeof(long))
+        {
+            otlpExemplar.AsInt = (long)(object)value;
+        }
+        else if (typeof(T) == typeof(double))
+        {
+            otlpExemplar.AsDouble = (double)(object)value;
+        }
+        else
+        {
+            Debug.Fail("Unexpected type");
+            otlpExemplar.AsDouble = Convert.ToDouble(value);
+        }
+
+        foreach (var tag in exemplar.FilteredTags)
+        {
+            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var result))
+            {
+                otlpExemplar.FilteredAttributes.Add(result);
+            }
+        }
+
+        return otlpExemplar;
+    }
+
     private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<OtlpCommon.KeyValue> attributes)
     {
         foreach (var tag in tags)
         {
-            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var result))
             {
                 attributes.Add(result);
             }
@@ -372,58 +440,10 @@ internal static class MetricItemExtensions
     {
         foreach (var tag in meterTags)
         {
-            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var result))
             {
                 attributes.Add(result);
             }
         }
     }
-
-    /*
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static OtlpMetrics.Exemplar ToOtlpExemplar(this IExemplar exemplar)
-    {
-        var otlpExemplar = new OtlpMetrics.Exemplar();
-
-        if (exemplar.Value is double doubleValue)
-        {
-            otlpExemplar.AsDouble = doubleValue;
-        }
-        else if (exemplar.Value is long longValue)
-        {
-            otlpExemplar.AsInt = longValue;
-        }
-        else
-        {
-            // TODO: Determine how we want to handle exceptions here.
-            // Do we want to just skip this exemplar and move on?
-            // Should we skip recording the whole metric?
-            throw new ArgumentException();
-        }
-
-        otlpExemplar.TimeUnixNano = (ulong)exemplar.Timestamp.ToUnixTimeNanoseconds();
-
-        // TODO: Do the TagEnumerationState thing.
-        foreach (var tag in exemplar.FilteredTags)
-        {
-            otlpExemplar.FilteredAttributes.Add(tag.ToOtlpAttribute());
-        }
-
-        if (exemplar.TraceId != default)
-        {
-            byte[] traceIdBytes = new byte[16];
-            exemplar.TraceId.CopyTo(traceIdBytes);
-            otlpExemplar.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
-        }
-
-        if (exemplar.SpanId != default)
-        {
-            byte[] spanIdBytes = new byte[8];
-            exemplar.SpanId.CopyTo(spanIdBytes);
-            otlpExemplar.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
-        }
-
-        return otlpExemplar;
-    }
-    */
 }

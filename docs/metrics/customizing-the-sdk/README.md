@@ -354,7 +354,7 @@ Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
 Counter<long> AnotherFruitCounter = MyMeter.CreateCounter<long>("AnotherFruitCounter");
 
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .AddMeter("*")
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
     .AddConsoleExporter()
     .SetMaxMetricStreams(1) // The default value is 1000
     .Build();
@@ -367,11 +367,31 @@ MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
 AnotherFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
 ```
 
+### Changing the cardinality limit for a MeterProvider
+
+To set the default [cardinality limit](../README.md#cardinality-limits) for all
+metrics managed by a given `MeterProvider`, use the
+`MeterProviderBuilder.SetMaxMetricPointsPerMetricStream` extension:
+
+> [!CAUTION]
+> `MeterProviderBuilder.SetMaxMetricPointsPerMetricStream` is marked `Obsolete`
+  in pre-release builds and has been replaced by
+  `MetricStreamConfiguration.CardinalityLimit`. For details see:
+  [OTEL1003](../../diagnostics/experimental-apis/OTEL1003.md).
+
+```csharp
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
+    .SetMaxMetricPointsPerMetricStream(4000) // Note: The default value is 2000
+    .AddConsoleExporter()
+    .Build();
+```
+
 ### Changing the cardinality limit for a Metric
 
 To set the [cardinality limit](../README.md#cardinality-limits) for an
-individual metric, use `MetricStreamConfiguration.CardinalityLimit` setting on
-the View API:
+individual metric, use the `MetricStreamConfiguration.CardinalityLimit` property
+on the View API:
 
 > [!NOTE]
 > `MetricStreamConfiguration.CardinalityLimit` is an experimental API only
@@ -412,26 +432,23 @@ exemplars.
 
 #### ExemplarFilter
 
-`ExemplarFilter` determines which measurements are eligible to become an
-Exemplar. i.e. `ExemplarFilter` determines which measurements are offered to
-`ExemplarReservoir`, which makes the final decision about whether the offered
-measurement gets stored as an exemplar. They can be used to control the noise
-and overhead associated with Exemplar collection.
+`ExemplarFilter` determines which measurements are offered to the configured
+`ExemplarReservoir`, which makes the final decision about whether or not the
+offered measurement gets recorded as an `Exemplar`. Generally `ExemplarFilter`
+is a mechanism to control the overhead associated with `Exemplar` offering.
 
-OpenTelemetry SDK comes with the following Filters:
+OpenTelemetry SDK comes with the following `ExemplarFilters` (defined on
+`ExemplarFilterType`):
 
-* `AlwaysOnExemplarFilter` - makes all measurements eligible for being an Exemplar.
-* `AlwaysOffExemplarFilter` - makes no measurements eligible for being an
-  Exemplar. Using this is as good as turning off Exemplar feature, and is the current
+* `AlwaysOff`: Makes no measurements eligible for becoming an `Exemplar`. Using
+  this is as good as turning off the `Exemplar` feature and is the current
   default.
-* `TraceBasedExemplarFilter` - makes those measurements eligible for being an
-Exemplar, which are recorded in the context of a sampled parent `Activity`
-(span).
+* `AlwaysOn`: Makes all measurements eligible for becoming an `Exemplar`.
+* `TraceBased`: Makes those measurements eligible for becoming an `Exemplar`
+  which are recorded in the context of a sampled `Activity` (span).
 
-`SetExemplarFilter` method on `MeterProviderBuilder` can be used to set the
-desired `ExemplarFilter`.
-
-The snippet below shows how to set `ExemplarFilter`.
+The `SetExemplarFilter` extension method on `MeterProviderBuilder` can be used
+to set the desired `ExemplarFilterType` and enable `Exemplar` collection:
 
 ```csharp
 using OpenTelemetry;
@@ -439,31 +456,14 @@ using OpenTelemetry.Metrics;
 
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
     // rest of config not shown
-    .SetExemplarFilter(new TraceBasedExemplarFilter())
+    .SetExemplarFilter(ExemplarFilterType.TraceBased)
     .Build();
 ```
 
-> [!NOTE]
-> As of today, there is no separate toggle for enable/disable Exemplar feature.
-Exemplars can be disabled by setting filter as `AlwaysOffExemplarFilter`, which
-is also the default (i.e Exemplar feature is disabled by default). Users can
-enable the feature by setting filter to anything other than
-`AlwaysOffExemplarFilter`. For example: `.SetExemplarFilter(new TraceBasedExemplarFilter())`.
-
-If the built-in `ExemplarFilter`s are not meeting the needs, one may author
-custom `ExemplarFilter` as shown
-[here](../extending-the-sdk/README.md#exemplarfilter). A custom filter, which
-eliminates all un-interesting measurements from becoming Exemplar is a
-recommended way to control performance overhead associated with collecting
-Exemplars. See
-[benchmark](../../../test/Benchmarks/Metrics/ExemplarBenchmarks.cs) to see how
-much impact can `ExemplarFilter` have on performance.
-
 #### ExemplarReservoir
 
-`ExemplarReservoir` receives the measurements sampled in by the `ExemplarFilter`
-and is responsible for storing Exemplars. `ExemplarReservoir` ultimately decides
-which measurements get stored as exemplars. The following are the default
+`ExemplarReservoir` receives the measurements sampled by the `ExemplarFilter`
+and is responsible for recording `Exemplar`s. The following are the default
 reservoirs:
 
 * `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
@@ -479,7 +479,7 @@ size (currently defaulting to 1) determines the maximum number of exemplars
 stored.
 
 > [!NOTE]
-> Currently there is no ability to change or configure Reservoir.
+> Currently there is no ability to change or configure `ExemplarReservoir`.
 
 ### Instrumentation
 

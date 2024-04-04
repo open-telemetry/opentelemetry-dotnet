@@ -1,6 +1,11 @@
 name: Build
 
 on:
+  workflow_dispatch:
+  # The push trigger would run the CI workflow when any changes get merged to main branch.
+  # The build badge on the main README uses the CI results on the main branch to report the build status.
+  push:
+    branches: [ 'main*' ]
   pull_request:
     branches: [ 'main*' ]
 
@@ -13,6 +18,7 @@ jobs:
     outputs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
+    - uses: actions/checkout@v4
     - uses: AurorNZ/paths-filter@v4
       id: changes
       with:
@@ -109,8 +115,8 @@ jobs:
         version: [ net6.0, net7.0, net8.0 ]
     steps:
       - uses: actions/checkout@v4
-      - name: Run OTLP Exporter docker-compose
-        run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
+      - name: Run OTLP Exporter docker compose
+        run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
   w3c-trace-context-integration-test:
     needs: detect-changes
@@ -127,8 +133,8 @@ jobs:
         version: [ net6.0, net7.0 ]
     steps:
       - uses: actions/checkout@v4
-      - name: Run W3C Trace Context docker-compose
-        run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
+      - name: Run W3C Trace Context docker compose
+        run: docker compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
   validate-packages:
     needs: detect-changes

@@ -107,6 +107,21 @@ Here is the rule of thumb:
   Minutes - Console Application](./getting-started-console/README.md) tutorial
   to learn more.
 
+:heavy_check_mark: You should use dot-separated
+[UpperCamelCase](https://en.wikipedia.org/wiki/Camel_case) as the log category
+name, which makes it convenient to [filter logs](#log-filtering). A common
+practice is to use fully qualified class name, and if further categorization is
+desired, append a subcategory name. Refer to the [.NET official
+document](https://learn.microsoft.com/dotnet/core/extensions/logging#log-category)
+to learn more.
+
+```csharp
+loggerFactory.CreateLogger<MyClass>(); // this is equivalent to CreateLogger("MyProduct.MyLibrary.MyClass")
+loggerFactory.CreateLogger("MyProduct.MyLibrary.MyClass"); // use the fully qualified class name
+loggerFactory.CreateLogger("MyProduct.MyLibrary.MyClass.DatabaseOperations"); // append a subcategory name
+loggerFactory.CreateLogger("MyProduct.MyLibrary.MyClass.FileOperations"); // append another subcategory name
+```
+
 :stop_sign: You should avoid creating loggers too frequently. Although loggers
 are not super expensive, they still come with CPU and memory cost, and are meant
 to be reused throughout the application. Refer to the [logging performance
@@ -164,6 +179,51 @@ logger.LogInformation("Hello from {food} {price}.", food, price);
 Refer to the [logging performance
 benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
 
+:heavy_check_mark: You should hold a high bar while using
+[`ILogger.IsEnabled`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger.isenabled).
+
+The logging API is highly optimized for the scenario where most loggers are
+**disabled** for certain log levels. Making an extra call to `IsEnabled` before
+logging will not give you any performance gain.
+
+> [!WARNING]
+> The `logger.IsEnabled(LogLevel.Information)` call in the following code is not
+  going to give any performance gain. Refer to the [logging performance
+  benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
+
+```csharp
+var food = "tomato";
+var price = 2.99;
+
+if (logger.IsEnabled(LogLevel.Information)) // do not do this, there is no perf gain
+{
+    logger.SayHello(food, price);
+}
+
+internal static partial class LoggerExtensions
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Hello from {food} {price}.")]
+    public static partial void SayHello(this ILogger logger, string food, double price);
+}
+```
+
+`IsEnabled` can give performance benefits when it is expensive to evaluate the
+arguments. For example, in the following code the `Database.GetFoodPrice`
+invocation will be skipped if the logger is not enabled:
+
+```csharp
+if (logger.IsEnabled(LogLevel.Information))
+{
+    logger.SayHello(food, Database.GetFoodPrice(food));
+}
+```
+
+Although `IsEnabled` can give some performance benefits in the above scenario,
+for most users it can cause more problems. For example, the performance of the
+code is now depending on which logger is being enabled, not to mention the
+argument evaluation might have significant side effects that are now depending
+on the logging configuration.
+
 ## LoggerFactory
 
 In many cases, you can use [ILogger](#ilogger) without having to interact with
@@ -185,11 +245,6 @@ instances if they are created by you.
 * If you dispose the `LoggerFactory` instance too early, any subsequent logging
   API invocation associated with the logger factory could become no-op (i.e. no
   logs will be emitted).
-
-:heavy_check_mark: You should use the fully qualified class name as the log
-category name. Refer to the [.NET official
-document](https://learn.microsoft.com/dotnet/core/extensions/logging#log-category)
-to learn more.
 
 ## Log Correlation
 

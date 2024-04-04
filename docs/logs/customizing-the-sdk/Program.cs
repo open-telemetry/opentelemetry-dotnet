@@ -5,37 +5,52 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
-namespace CustomizingTheSdk;
-
-public class Program
+var loggerFactory = LoggerFactory.Create(builder =>
 {
-    public static void Main()
+    builder.AddOpenTelemetry(logging =>
     {
-        using var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
-                    serviceName: "MyService",
-                    serviceVersion: "1.0.0"));
-                options.AddConsoleExporter();
-            });
-        });
+        logging.IncludeScopes = true;
+        logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+            serviceName: "MyService",
+            serviceVersion: "1.0.0"));
+        logging.AddConsoleExporter();
+    });
+});
 
-        var logger = loggerFactory.CreateLogger<Program>();
+var logger = loggerFactory.CreateLogger<Program>();
 
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-        logger.LogWarning("Hello from {name} {price}.", "tomato", 2.99);
-        logger.LogError("Hello from {name} {price}.", "tomato", 2.99);
+logger.FoodPriceChanged("artichoke", 9.99);
 
-        // log with scopes
-        using (logger.BeginScope(new List<KeyValuePair<string, object>>
-        {
-            new KeyValuePair<string, object>("store", "Seattle"),
-        }))
-        {
-            logger.LogInformation("Hello from {food} {price}.", "tomato", 2.99);
-        }
-    }
+using (logger.BeginScope(new List<KeyValuePair<string, object>>
+{
+    new KeyValuePair<string, object>("store", "Seattle"),
+}))
+{
+    logger.FoodPriceChanged("truffle", 999.99);
+}
+
+logger.FoodRecallNotice(
+    brandName: "Contoso",
+    productDescription: "Salads",
+    productType: "Food & Beverages",
+    recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+    companyName: "Contoso Fresh Vegetables, Inc.");
+
+// Dispose logger factory before the application ends.
+// This will flush the remaining logs and shutdown the logging pipeline.
+loggerFactory.Dispose();
+
+internal static partial class LoggerExtensions
+{
+    [LoggerMessage(LogLevel.Information, "Food `{name}` price changed to `{price}`.")]
+    public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
+
+    [LoggerMessage(LogLevel.Critical, "A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).")]
+    public static partial void FoodRecallNotice(
+        this ILogger logger,
+        string brandName,
+        string productDescription,
+        string productType,
+        string recallReasonDescription,
+        string companyName);
 }

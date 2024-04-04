@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Google.Protobuf.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -18,9 +19,11 @@ using Status = OpenTelemetry.Trace.Status;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 [Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
-public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
+public class OtlpTraceExporterTests
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
+
+    private static readonly ExperimentalOptions DefaultExperimentalOptions = new();
 
     static OtlpTraceExporterTests()
     {
@@ -94,12 +97,6 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
         {
             Assert.Equal(2, invocations);
         }
-
-        options.HttpClientFactory = null;
-        Assert.Throws<InvalidOperationException>(() =>
-        {
-            using var exporter = new OtlpTraceExporter(options);
-        });
 
         options.HttpClientFactory = () => null;
         Assert.Throws<InvalidOperationException>(() =>
@@ -584,14 +581,6 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
     [Fact]
     public void UseOpenTelemetryProtocolActivityExporterWithCustomActivityProcessor()
     {
-        if (Environment.Version.Major == 3)
-        {
-            // Adding the OtlpExporter creates a GrpcChannel.
-            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
-            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-        }
-
         const string ActivitySourceName = "otlp.test";
         TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
 
@@ -629,8 +618,10 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
     {
         var exportClientMock = new TestExportClient<OtlpCollector.ExportTraceServiceRequest>();
 
-        var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, exportClientMock);
+        var exporterOptions = new OtlpExporterOptions();
+        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>(exportClientMock, exporterOptions.TimeoutMilliseconds);
 
+        var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
         exporter.Shutdown();
 
         Assert.True(exportClientMock.ShutdownCalled);
