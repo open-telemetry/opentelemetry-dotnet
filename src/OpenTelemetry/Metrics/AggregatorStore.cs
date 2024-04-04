@@ -270,39 +270,7 @@ internal sealed class AggregatorStore
                 // the MetricPoint can be reused for other tags.
                 if (metricPoint.LookupData != null && Interlocked.CompareExchange(ref metricPoint.ReferenceCount, int.MinValue, 0) == 0)
                 {
-                    var lookupData = metricPoint.LookupData;
-
-                    metricPoint.Reclaim();
-
-                    Debug.Assert(this.TagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
-
-                    lock (this.TagsToMetricPointIndexDictionaryDelta!)
-                    {
-                        LookupData? dictionaryValue;
-                        if (lookupData.SortedTags != Tags.EmptyTags)
-                        {
-                            // Check if no other thread added a new entry for the same Tags.
-                            // If no, then remove the existing entries.
-                            if (this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.SortedTags, out dictionaryValue) &&
-                                dictionaryValue == lookupData)
-                            {
-                                this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.SortedTags, out var _);
-                                this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
-                            }
-                        }
-                        else
-                        {
-                            if (this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.GivenTags, out dictionaryValue) &&
-                                dictionaryValue == lookupData)
-                            {
-                                this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
-                            }
-                        }
-
-                        Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
-
-                        this.availableMetricPoints!.Enqueue(i);
-                    }
+                    this.ReclaimMetricPoint(ref metricPoint, i);
                 }
 
                 continue;
@@ -369,6 +337,57 @@ internal sealed class AggregatorStore
         else
         {
             metricPoint.TakeSnapshot(outputDelta);
+        }
+    }
+
+    private void ReclaimMetricPoint(ref MetricPoint metricPoint, int metricPointIndex)
+    {
+        /*
+         This method does three things:
+          1. Set `metricPoint.LookupData` and `metricPoint.mpComponents` to `null` to have them collected faster by GC.
+          2. Tries to remove the entry for this MetricPoint from the lookup dictionary. An update thread which retrieves this
+             MetricPoint would realize that the MetricPoint is not valid for use since its reference count would have been set to a negative number.
+             When that happens, the update thread would also try to remove the entry for this MetricPoint from the lookup dictionary.
+             We only care about the entry getting removed from the lookup dictionary and not about which thread removes it.
+          3. Put the array index of this MetricPoint to the queue of available metric points. This makes it available for update threads
+             to use this MetricPoint to track newer dimension combinations.
+        */
+
+        var lookupData = metricPoint.LookupData;
+
+        // This method is only called after checking that `metricPoint.LookupData` is not `null`.
+        Debug.Assert(lookupData != null, "LookupData for the provided MetricPoint was null");
+
+        metricPoint.NullifyMetricPointState();
+
+        Debug.Assert(this.TagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
+
+        lock (this.TagsToMetricPointIndexDictionaryDelta!)
+        {
+            LookupData? dictionaryValue;
+            if (lookupData.SortedTags != Tags.EmptyTags)
+            {
+                // Check if no other thread added a new entry for the same Tags.
+                // If no, then remove the existing entries.
+                if (this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.SortedTags, out dictionaryValue) &&
+                    dictionaryValue == lookupData)
+                {
+                    this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.SortedTags, out var _);
+                    this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
+                }
+            }
+            else
+            {
+                if (this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.GivenTags, out dictionaryValue) &&
+                    dictionaryValue == lookupData)
+                {
+                    this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
+                }
+            }
+
+            Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
+
+            this.availableMetricPoints!.Enqueue(metricPointIndex);
         }
     }
 
