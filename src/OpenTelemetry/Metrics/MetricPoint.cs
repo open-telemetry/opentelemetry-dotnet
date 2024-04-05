@@ -1197,9 +1197,10 @@ public struct MetricPoint
     }
 
     /// <summary>
-    /// Denote that this MetricPoint is reclaimed.
+    /// This method sets the member object references of MetricPoint to `null`.
+    /// This is done to have them collected faster by GC.
     /// </summary>
-    internal void Reclaim()
+    internal void NullifyMetricPointState()
     {
         this.LookupData = null;
         this.mpComponents = null;
