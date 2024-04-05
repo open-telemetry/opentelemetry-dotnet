@@ -7,16 +7,29 @@ using OpenTracing.Propagation;
 
 namespace OpenTelemetry.Shims.OpenTracing;
 
+/// <summary>
+/// Implements OpenTracing <see cref="global::OpenTracing.ITracer"/> interface
+/// using OpenTelemetry <see cref="Trace.Tracer"/> implementation.
+/// </summary>
 public class TracerShim : global::OpenTracing.ITracer
 {
     private readonly Trace.Tracer tracer;
     private readonly TextMapPropagator definedPropagator;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TracerShim"/> class.
+    /// </summary>
+    /// <param name="tracerProvider"><see cref="Trace.TracerProvider"/>.</param>
     public TracerShim(Trace.TracerProvider tracerProvider)
         : this(tracerProvider, null)
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TracerShim"/> class.
+    /// </summary>
+    /// <param name="tracerProvider"><see cref="Trace.TracerProvider"/>.</param>
+    /// <param name="textFormat"><see cref="TextMapPropagator"/>.</param>
     public TracerShim(Trace.TracerProvider tracerProvider, TextMapPropagator textFormat)
     {
         Guard.ThrowIfNull(tracerProvider);
