@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Trust the self-signed certificated used by the collector
 cp /cfg/otel-collector.crt /usr/local/share/ca-certificates/
