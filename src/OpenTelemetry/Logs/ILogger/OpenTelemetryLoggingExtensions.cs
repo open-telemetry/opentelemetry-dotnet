@@ -173,6 +173,9 @@ public static class OpenTelemetryLoggingExtensions
         // Note: This will bind logger options element (e.g., "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
         RegisterLoggerProviderOptions(services);
 
+        // Note: We force OpenTelemetryLoggerOptions to be a singleton and
+        // handle reloads explicitly. This is done to prevent leaks of batch
+        // processors added by configuration delegates during reload.
         services.RegisterSingletonOptionsFactory(
             c => new OpenTelemetryLoggerOptions(),
             o => o.ResetAfterConfigurationReload());
