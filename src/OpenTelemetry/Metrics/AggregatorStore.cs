@@ -989,14 +989,14 @@ internal sealed class AggregatorStore
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
                 tags,
-                isSampled: true);
+                offerExemplar: true);
         }
         else
         {
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
                 tags,
-                isSampled: Activity.Current?.Recorded ?? false);
+                offerExemplar: Activity.Current?.Recorded ?? false);
         }
     }
 
@@ -1044,14 +1044,14 @@ internal sealed class AggregatorStore
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
                 tags,
-                isSampled: true);
+                offerExemplar: true);
         }
         else
         {
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
                 tags,
-                isSampled: Activity.Current?.Recorded ?? false);
+                offerExemplar: Activity.Current?.Recorded ?? false);
         }
     }
 
