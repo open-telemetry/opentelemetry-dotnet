@@ -12,7 +12,7 @@ jobs:
       fail-fast: false # ensures the entire test matrix is run, even if one permutation fails
       matrix:
         os: [ ubuntu-latest ]
-        version: [ net8.0 ]
+        version: [ net8.0, net9.0 ]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -20,6 +20,10 @@ jobs:
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+          9.0.x
 
     - name: publish AOT testApp, assert static analysis warning count, and run the app
       shell: pwsh
