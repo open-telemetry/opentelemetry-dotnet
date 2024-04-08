@@ -25,7 +25,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
     }
 
     public bool TryWriteTag(
-        TTagState state,
+        ref TTagState state,
         KeyValuePair<string, object?> tag,
         int? tagValueMaxLength = null)
     {
@@ -38,10 +38,10 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             case char:
             case string:
-                this.WriteStringTag(state, tag.Key, TruncateString(Convert.ToString(tag.Value)!, tagValueMaxLength));
+                this.WriteStringTag(ref state, tag.Key, TruncateString(Convert.ToString(tag.Value)!, tagValueMaxLength));
                 break;
             case bool b:
-                this.WriteBooleanTag(state, tag.Key, b);
+                this.WriteBooleanTag(ref state, tag.Key, b);
                 break;
             case byte:
             case sbyte:
@@ -50,16 +50,16 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case int:
             case uint:
             case long:
-                this.WriteIntegralTag(state, tag.Key, Convert.ToInt64(tag.Value));
+                this.WriteIntegralTag(ref state, tag.Key, Convert.ToInt64(tag.Value));
                 break;
             case float:
             case double:
-                this.WriteFloatingPointTag(state, tag.Key, Convert.ToDouble(tag.Value));
+                this.WriteFloatingPointTag(ref state, tag.Key, Convert.ToDouble(tag.Value));
                 break;
             case Array array:
                 try
                 {
-                    this.WriteArrayTagInternal(state, tag.Key, array, tagValueMaxLength);
+                    this.WriteArrayTagInternal(ref state, tag.Key, array, tagValueMaxLength);
                 }
                 catch
                 {
@@ -86,7 +86,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                         return this.LogUnsupportedTagTypeAndReturnFalse(tag.Key, tag.Value);
                     }
 
-                    this.WriteStringTag(state, tag.Key, stringValue);
+                    this.WriteStringTag(ref state, tag.Key, stringValue);
                 }
                 catch
                 {
@@ -100,15 +100,15 @@ internal abstract class TagWriter<TTagState, TArrayState>
         return true;
     }
 
-    protected abstract void WriteIntegralTag(TTagState state, string key, long value);
+    protected abstract void WriteIntegralTag(ref TTagState state, string key, long value);
 
-    protected abstract void WriteFloatingPointTag(TTagState state, string key, double value);
+    protected abstract void WriteFloatingPointTag(ref TTagState state, string key, double value);
 
-    protected abstract void WriteBooleanTag(TTagState state, string key, bool value);
+    protected abstract void WriteBooleanTag(ref TTagState state, string key, bool value);
 
-    protected abstract void WriteStringTag(TTagState state, string key, string value);
+    protected abstract void WriteStringTag(ref TTagState state, string key, string value);
 
-    protected abstract void WriteArrayTag(TTagState state, string key, TArrayState value);
+    protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
 
     protected abstract void OnUnsupportedTagDropped(
         string tagKey,
@@ -122,40 +122,43 @@ internal abstract class TagWriter<TTagState, TArrayState>
             : value;
     }
 
-    private void WriteArrayTagInternal(TTagState state, string key, Array array, int? tagValueMaxLength)
+    private void WriteArrayTagInternal(ref TTagState state, string key, Array array, int? tagValueMaxLength)
     {
         var arrayState = this.arrayWriter.BeginWriteArray();
 
         // This switch ensures the values of the resultant array-valued tag are of the same type.
         switch (array)
         {
-            case char[] charArray: this.WriteToArray(arrayState, charArray); break;
-            case string[]: this.ConvertToStringArrayThenWriteArrayTag(arrayState, array, tagValueMaxLength); break;
-            case bool[] boolArray: this.WriteToArray(arrayState, boolArray); break;
-            case byte[] byteArray: this.WriteToArray(arrayState, byteArray); break;
-            case sbyte[] sbyteArray: this.WriteToArray(arrayState, sbyteArray); break;
-            case short[] shortArray: this.WriteToArray(arrayState, shortArray); break;
-            case ushort[] ushortArray: this.WriteToArray(arrayState, ushortArray); break;
-            case uint[] uintArray: this.WriteToArray(arrayState, uintArray); break;
+            case char[] charArray: this.WriteToArray(ref arrayState, charArray); break;
+            case string[]: this.ConvertToStringArrayThenWriteArrayTag(ref arrayState, array, tagValueMaxLength); break;
+            case bool[] boolArray: this.WriteToArray(ref arrayState, boolArray); break;
+            case byte[] byteArray: this.WriteToArray(ref arrayState, byteArray); break;
+            case sbyte[] sbyteArray: this.WriteToArray(ref arrayState, sbyteArray); break;
+            case short[] shortArray: this.WriteToArray(ref arrayState, shortArray); break;
+            case ushort[] ushortArray: this.WriteToArray(ref arrayState, ushortArray); break;
 #if NETFRAMEWORK
-            case int[]: this.WriteArrayTagIntNetFramework(arrayState, array, tagValueMaxLength); break;
-            case long[]: this.WriteArrayTagLongNetFramework(arrayState, array, tagValueMaxLength); break;
+            case int[]: this.WriteArrayTagIntNetFramework(ref arrayState, array, tagValueMaxLength); break;
 #else
-            case int[] intArray: this.WriteToArray(arrayState, intArray); break;
-            case long[] longArray: this.WriteToArray(arrayState, longArray); break;
+            case int[] intArray: this.WriteToArray(ref arrayState, intArray); break;
 #endif
-            case float[] floatArray: this.WriteToArray(arrayState, floatArray); break;
-            case double[] doubleArray: this.WriteToArray(arrayState, doubleArray); break;
-            default: this.ConvertToStringArrayThenWriteArrayTag(arrayState, array, tagValueMaxLength); break;
+            case uint[] uintArray: this.WriteToArray(ref arrayState, uintArray); break;
+#if NETFRAMEWORK
+            case long[]: this.WriteArrayTagLongNetFramework(ref arrayState, array, tagValueMaxLength); break;
+#else
+            case long[] longArray: this.WriteToArray(ref arrayState, longArray); break;
+#endif
+            case float[] floatArray: this.WriteToArray(ref arrayState, floatArray); break;
+            case double[] doubleArray: this.WriteToArray(ref arrayState, doubleArray); break;
+            default: this.ConvertToStringArrayThenWriteArrayTag(ref arrayState, array, tagValueMaxLength); break;
         }
 
-        this.arrayWriter.EndWriteArray(arrayState);
+        this.arrayWriter.EndWriteArray(ref arrayState);
 
-        this.WriteArrayTag(state, key, arrayState);
+        this.WriteArrayTag(ref state, key, ref arrayState);
     }
 
 #if NETFRAMEWORK
-    private void WriteArrayTagIntNetFramework(TArrayState arrayState, Array array, int? tagValueMaxLength)
+    private void WriteArrayTagIntNetFramework(ref TArrayState arrayState, Array array, int? tagValueMaxLength)
     {
         // Note: On .NET Framework x86 nint[] & nuint[] fall into int[] case
 
@@ -163,14 +166,14 @@ internal abstract class TagWriter<TTagState, TArrayState>
         if (arrayType == typeof(nint[])
             || arrayType == typeof(nuint[]))
         {
-            this.ConvertToStringArrayThenWriteArrayTag(arrayState, array, tagValueMaxLength);
+            this.ConvertToStringArrayThenWriteArrayTag(ref arrayState, array, tagValueMaxLength);
             return;
         }
 
-        this.WriteToArray(arrayState, (int[])array);
+        this.WriteToArray(ref arrayState, (int[])array);
     }
 
-    private void WriteArrayTagLongNetFramework(TArrayState arrayState, Array array, int? tagValueMaxLength)
+    private void WriteArrayTagLongNetFramework(ref TArrayState arrayState, Array array, int? tagValueMaxLength)
     {
         // Note: On .NET Framework x64 nint[] & nuint[] fall into long[] case
 
@@ -178,20 +181,20 @@ internal abstract class TagWriter<TTagState, TArrayState>
         if (arrayType == typeof(nint[])
             || arrayType == typeof(nuint[]))
         {
-            this.ConvertToStringArrayThenWriteArrayTag(arrayState, array, tagValueMaxLength);
+            this.ConvertToStringArrayThenWriteArrayTag(ref arrayState, array, tagValueMaxLength);
             return;
         }
 
-        this.WriteToArray(arrayState, (long[])array);
+        this.WriteToArray(ref arrayState, (long[])array);
     }
 #endif
 
-    private void ConvertToStringArrayThenWriteArrayTag(TArrayState arrayState, Array array, int? tagValueMaxLength)
+    private void ConvertToStringArrayThenWriteArrayTag(ref TArrayState arrayState, Array array, int? tagValueMaxLength)
     {
         if (array is string?[] arrayAsStringArray
             && (!tagValueMaxLength.HasValue || !arrayAsStringArray.Any(s => s?.Length > tagValueMaxLength)))
         {
-            this.WriteStringsToArray(arrayState, arrayAsStringArray);
+            this.WriteStringsToArray(ref arrayState, arrayAsStringArray);
         }
         else
         {
@@ -206,7 +209,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                         : TruncateString(Convert.ToString(item, CultureInfo.InvariantCulture), tagValueMaxLength);
                 }
 
-                this.WriteStringsToArray(arrayState, new(stringArray, 0, array.Length));
+                this.WriteStringsToArray(ref arrayState, new(stringArray, 0, array.Length));
             }
             finally
             {
@@ -215,54 +218,54 @@ internal abstract class TagWriter<TTagState, TArrayState>
         }
     }
 
-    private void WriteToArray<TItem>(TArrayState arrayState, TItem[] array)
+    private void WriteToArray<TItem>(ref TArrayState arrayState, TItem[] array)
         where TItem : struct
     {
         foreach (TItem item in array)
         {
             if (typeof(TItem) == typeof(char))
             {
-                this.arrayWriter.WriteStringTag(arrayState, Convert.ToString((char)(object)item)!);
+                this.arrayWriter.WriteStringTag(ref arrayState, Convert.ToString((char)(object)item)!);
             }
             else if (typeof(TItem) == typeof(bool))
             {
-                this.arrayWriter.WriteBooleanTag(arrayState, (bool)(object)item);
+                this.arrayWriter.WriteBooleanTag(ref arrayState, (bool)(object)item);
             }
             else if (typeof(TItem) == typeof(byte))
             {
-                this.arrayWriter.WriteIntegralTag(arrayState, (byte)(object)item);
+                this.arrayWriter.WriteIntegralTag(ref arrayState, (byte)(object)item);
             }
             else if (typeof(TItem) == typeof(sbyte))
             {
-                this.arrayWriter.WriteIntegralTag(arrayState, (sbyte)(object)item);
+                this.arrayWriter.WriteIntegralTag(ref arrayState, (sbyte)(object)item);
             }
             else if (typeof(TItem) == typeof(short))
             {
-                this.arrayWriter.WriteIntegralTag(arrayState, (short)(object)item);
+                this.arrayWriter.WriteIntegralTag(ref arrayState, (short)(object)item);
             }
             else if (typeof(TItem) == typeof(ushort))
             {
-                this.arrayWriter.WriteIntegralTag(arrayState, (ushort)(object)item);
+                this.arrayWriter.WriteIntegralTag(ref arrayState, (ushort)(object)item);
             }
             else if (typeof(TItem) == typeof(int))
             {
-                this.arrayWriter.WriteIntegralTag(arrayState, (int)(object)item);
+                this.arrayWriter.WriteIntegralTag(ref arrayState, (int)(object)item);
             }
             else if (typeof(TItem) == typeof(uint))
             {
-                this.arrayWriter.WriteIntegralTag(arrayState, (uint)(object)item);
+                this.arrayWriter.WriteIntegralTag(ref arrayState, (uint)(object)item);
             }
             else if (typeof(TItem) == typeof(long))
             {
-                this.arrayWriter.WriteIntegralTag(arrayState, (long)(object)item);
+                this.arrayWriter.WriteIntegralTag(ref arrayState, (long)(object)item);
             }
             else if (typeof(TItem) == typeof(float))
             {
-                this.arrayWriter.WriteFloatingPointTag(arrayState, (float)(object)item);
+                this.arrayWriter.WriteFloatingPointTag(ref arrayState, (float)(object)item);
             }
             else if (typeof(TItem) == typeof(double))
             {
-                this.arrayWriter.WriteFloatingPointTag(arrayState, (double)(object)item);
+                this.arrayWriter.WriteFloatingPointTag(ref arrayState, (double)(object)item);
             }
             else
             {
@@ -273,17 +276,17 @@ internal abstract class TagWriter<TTagState, TArrayState>
         }
     }
 
-    private void WriteStringsToArray(TArrayState arrayState, ReadOnlySpan<string?> data)
+    private void WriteStringsToArray(ref TArrayState arrayState, ReadOnlySpan<string?> data)
     {
         foreach (var item in data)
         {
             if (item == null)
             {
-                this.arrayWriter.WriteNullTag(arrayState);
+                this.arrayWriter.WriteNullTag(ref arrayState);
             }
             else
             {
-                this.arrayWriter.WriteStringTag(arrayState, item);
+                this.arrayWriter.WriteStringTag(ref arrayState, item);
             }
         }
     }

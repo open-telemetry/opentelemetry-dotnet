@@ -16,16 +16,16 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
     {
     }
 
-    protected sealed override void WriteArrayTag(TTagState writer, string key, JsonStringArrayTagWriter<TTagState>.JsonArrayTagWriterState array)
+    protected sealed override void WriteArrayTag(ref TTagState writer, string key, ref JsonArrayTagWriterState array)
     {
         var result = array.Stream.TryGetBuffer(out var buffer);
 
         Debug.Assert(result, "result was false");
 
-        this.WriteArrayTag(writer, key, buffer);
+        this.WriteArrayTag(ref writer, key, buffer);
     }
 
-    protected abstract void WriteArrayTag(TTagState writer, string key, ArraySegment<byte> arrayUtf8JsonBytes);
+    protected abstract void WriteArrayTag(ref TTagState writer, string key, ArraySegment<byte> arrayUtf8JsonBytes);
 
     internal readonly struct JsonArrayTagWriterState(MemoryStream stream, Utf8JsonWriter writer)
     {
@@ -49,33 +49,33 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
             return state;
         }
 
-        public override void EndWriteArray(JsonArrayTagWriterState state)
+        public override void EndWriteArray(ref JsonArrayTagWriterState state)
         {
             state.Writer.WriteEndArray();
             state.Writer.Flush();
         }
 
-        public override void WriteBooleanTag(JsonArrayTagWriterState state, bool value)
+        public override void WriteBooleanValue(ref JsonArrayTagWriterState state, bool value)
         {
             state.Writer.WriteBooleanValue(value);
         }
 
-        public override void WriteFloatingPointTag(JsonArrayTagWriterState state, double value)
+        public override void WriteFloatingPointValue(ref JsonArrayTagWriterState state, double value)
         {
             state.Writer.WriteNumberValue(value);
         }
 
-        public override void WriteIntegralTag(JsonArrayTagWriterState state, long value)
+        public override void WriteIntegralValue(ref JsonArrayTagWriterState state, long value)
         {
             state.Writer.WriteNumberValue(value);
         }
 
-        public override void WriteNullTag(JsonArrayTagWriterState state)
+        public override void WriteNullValue(ref JsonArrayTagWriterState state)
         {
             state.Writer.WriteNullValue();
         }
 
-        public override void WriteStringTag(JsonArrayTagWriterState state, string value)
+        public override void WriteStringValue(ref JsonArrayTagWriterState state, string value)
         {
             state.Writer.WriteStringValue(value);
         }

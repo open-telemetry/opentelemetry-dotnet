@@ -5,20 +5,20 @@
 
 namespace OpenTelemetry.Internal;
 
-internal abstract class ArrayTagWriter<T>
-    where T : notnull
+internal abstract class ArrayTagWriter<TArrayState>
+    where TArrayState : notnull
 {
-    public abstract T BeginWriteArray();
+    public abstract TArrayState BeginWriteArray();
 
-    public abstract void WriteNullTag(T state);
+    public abstract void WriteNullValue(ref TArrayState state);
 
-    public abstract void WriteIntegralTag(T state, long value);
+    public abstract void WriteIntegralValue(ref TArrayState state, long value);
 
-    public abstract void WriteFloatingPointTag(T state, double value);
+    public abstract void WriteFloatingPointValue(ref TArrayState state, double value);
 
-    public abstract void WriteBooleanTag(T state, bool value);
+    public abstract void WriteBooleanValue(ref TArrayState state, bool value);
 
-    public abstract void WriteStringTag(T state, string value);
+    public abstract void WriteStringValue(ref TArrayState state, string value);
 
-    public abstract void EndWriteArray(T state);
+    public abstract void EndWriteArray(ref TArrayState state);
 }
