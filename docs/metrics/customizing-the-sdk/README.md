@@ -354,7 +354,7 @@ Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
 Counter<long> AnotherFruitCounter = MyMeter.CreateCounter<long>("AnotherFruitCounter");
 
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .AddMeter("*")
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
     .AddConsoleExporter()
     .SetMaxMetricStreams(1) // The default value is 1000
     .Build();
@@ -367,11 +367,31 @@ MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
 AnotherFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
 ```
 
+### Changing the cardinality limit for a MeterProvider
+
+To set the default [cardinality limit](../README.md#cardinality-limits) for all
+metrics managed by a given `MeterProvider`, use the
+`MeterProviderBuilder.SetMaxMetricPointsPerMetricStream` extension:
+
+> [!CAUTION]
+> `MeterProviderBuilder.SetMaxMetricPointsPerMetricStream` is marked `Obsolete`
+  in pre-release builds and has been replaced by
+  `MetricStreamConfiguration.CardinalityLimit`. For details see:
+  [OTEL1003](../../diagnostics/experimental-apis/OTEL1003.md).
+
+```csharp
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
+    .SetMaxMetricPointsPerMetricStream(4000) // Note: The default value is 2000
+    .AddConsoleExporter()
+    .Build();
+```
+
 ### Changing the cardinality limit for a Metric
 
 To set the [cardinality limit](../README.md#cardinality-limits) for an
-individual metric, use `MetricStreamConfiguration.CardinalityLimit` setting on
-the View API:
+individual metric, use the `MetricStreamConfiguration.CardinalityLimit` property
+on the View API:
 
 > [!NOTE]
 > `MetricStreamConfiguration.CardinalityLimit` is an experimental API only

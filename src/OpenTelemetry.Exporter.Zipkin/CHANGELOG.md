@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.8.0
+
+Released 2024-Apr-02
+
+## 1.8.0-rc.1
+
+Released 2024-Mar-27
+
 * Zipkin tags used for Instrumentation Library changed from `otel.library.name` and
   `otel.library.version` to `otel.scope.name` and `otel.scope.version` respectively.
   Old versions of attributes are deprecated, but still exported

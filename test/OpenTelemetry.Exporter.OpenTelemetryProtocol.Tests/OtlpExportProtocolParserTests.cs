@@ -5,7 +5,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public class OtlpExportProtocolParserTests : Http2UnencryptedSupportTests
+public class OtlpExportProtocolParserTests
 {
     [Theory]
     [InlineData("grpc", true, OtlpExportProtocol.Grpc)]

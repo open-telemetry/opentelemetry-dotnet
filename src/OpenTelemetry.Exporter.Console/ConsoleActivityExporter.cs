@@ -32,6 +32,11 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
             }
 
             this.WriteLine($"Activity.ActivitySourceName: {activity.Source.Name}");
+            if (!string.IsNullOrEmpty(activity.Source.Version))
+            {
+                this.WriteLine($"Activity.ActivitySourceVersion: {activity.Source.Version}");
+            }
+
             this.WriteLine($"Activity.DisplayName:        {activity.DisplayName}");
             this.WriteLine($"Activity.Kind:               {activity.Kind}");
             this.WriteLine($"Activity.StartTime:          {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");

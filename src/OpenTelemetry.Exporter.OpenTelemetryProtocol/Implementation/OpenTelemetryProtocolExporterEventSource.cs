@@ -40,6 +40,15 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         }
     }
 
+    [NonEvent]
+    public void RetryStoredRequestException(Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.RetryStoredRequestException(ex.ToInvariantString());
+        }
+    }
+
     [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
     public void FailedToReachCollector(string rawCollectorUri, string ex)
     {
@@ -92,6 +101,12 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     public void TrySubmitRequestException(string ex)
     {
         this.WriteEvent(12, ex);
+    }
+
+    [Event(13, Message = "Error while attempting to re-transmit data from disk. Message: '{0}'", Level = EventLevel.Error)]
+    public void RetryStoredRequestException(string ex)
+    {
+        this.WriteEvent(13, ex);
     }
 
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
