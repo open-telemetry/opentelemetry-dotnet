@@ -213,6 +213,10 @@ internal sealed class PrometheusCollectionManager
                     }
                 }
             }
+            else
+            {
+                this.targetInfoBufferLength = -1;
+            }
 
             foreach (var metric in metrics)
             {
