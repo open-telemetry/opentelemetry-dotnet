@@ -3,9 +3,6 @@
 
 #nullable enable
 
-#if NET8_0_OR_GREATER
-using System.Diagnostics.CodeAnalysis;
-#endif
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
@@ -39,10 +36,6 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     /// </remarks>
     /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
     /// <returns>Supplied <see cref="IOpenTelemetryBuilder"/> for chaining calls.</returns>
-#if NET8_0_OR_GREATER
-    [RequiresDynamicCode("Binding strongly typed objects to configuration values may require generating dynamic code at runtime.")]
-    [RequiresUnreferencedCode("TOptions's dependent types may have their members trimmed. Ensure all required members are preserved.")]
-#endif
     public static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder)
         => UseOtlpExporter(builder, name: null, configuration: null, configure: null);
@@ -58,10 +51,6 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     /// signal automatically if the protocol is set to <see
     /// cref="OtlpExportProtocol.HttpProtobuf"/>.
     /// </param>
-#if NET8_0_OR_GREATER
-    [RequiresDynamicCode("Binding strongly typed objects to configuration values may require generating dynamic code at runtime.")]
-    [RequiresUnreferencedCode("TOptions's dependent types may have their members trimmed. Ensure all required members are preserved.")]
-#endif
     public static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         OtlpExportProtocol protocol,
@@ -84,10 +73,6 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     /// <returns><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/returns"/></returns>
     /// <param name="builder"><see cref="IOpenTelemetryBuilder"/>.</param>
     /// <param name="configure">Callback action for configuring <see cref="OtlpExporterBuilder"/>.</param>
-#if NET8_0_OR_GREATER
-    [RequiresDynamicCode("Binding strongly typed objects to configuration values may require generating dynamic code at runtime.")]
-    [RequiresUnreferencedCode("TOptions's dependent types may have their members trimmed. Ensure all required members are preserved.")]
-#endif
     internal static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         Action<OtlpExporterBuilder> configure)
@@ -112,10 +97,6 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     /// </list>
     /// </para>
     /// </param>
-#if NET8_0_OR_GREATER
-    [RequiresDynamicCode("Binding strongly typed objects to configuration values may require generating dynamic code at runtime.")]
-    [RequiresUnreferencedCode("TOptions's dependent types may have their members trimmed. Ensure all required members are preserved.")]
-#endif
     internal static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         IConfiguration configuration)
@@ -145,10 +126,6 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     /// </para>
     /// </param>
     /// <param name="configure">Optional callback action for configuring <see cref="OtlpExporterBuilder"/>.</param>
-#if NET8_0_OR_GREATER
-    [RequiresDynamicCode("Binding strongly typed objects to configuration values may require generating dynamic code at runtime.")]
-    [RequiresUnreferencedCode("TOptions's dependent types may have their members trimmed. Ensure all required members are preserved.")]
-#endif
     internal static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder,
         string? name,
