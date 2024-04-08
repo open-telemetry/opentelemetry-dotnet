@@ -8,6 +8,9 @@
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
     <DefineConstants>BUILDING_INTERNAL_PERSISTENT_STORAGE;$(DefineConstants)</DefineConstants>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+    <!-- SYSLIB1100;SYSLIB1101 - Configuration.Binder: can't create instance and unsupported type -->
+    <NoWarn>$(NoWarn);SYSLIB1100;SYSLIB1101</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +22,7 @@
     <PackageReference Include="Grpc" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'" />
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
   </ItemGroup>
 
   <ItemGroup>
