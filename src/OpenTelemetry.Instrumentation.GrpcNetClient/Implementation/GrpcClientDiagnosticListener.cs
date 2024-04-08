@@ -14,9 +14,10 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 
 internal sealed class GrpcClientDiagnosticListener : ListenerHandler
 {
-    internal static readonly AssemblyName AssemblyName = typeof(GrpcClientDiagnosticListener).Assembly.GetName();
+    internal static readonly Assembly Assembly = typeof(GrpcClientDiagnosticListener).Assembly;
+    internal static readonly AssemblyName AssemblyName = Assembly.GetName();
     internal static readonly string ActivitySourceName = AssemblyName.Name;
-    internal static readonly string Version = InstrumentationScopeHelper.GetPackageVersion<GrpcClientDiagnosticListener>();
+    internal static readonly string Version = Assembly.GetPackageVersion();
     internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version);
 
     private const string OnStartEvent = "Grpc.Net.Client.GrpcOut.Start";
