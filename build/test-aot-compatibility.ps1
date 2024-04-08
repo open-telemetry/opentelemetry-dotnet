@@ -1,24 +1,35 @@
 param([string]$targetNetFramework)
 
 $rootDirectory = Split-Path $PSScriptRoot -Parent
-$publishOutput = dotnet publish $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj -nodeReuse:false /p:UseSharedCompilation=false /p:ExposeExperimentalFeatures=true
+$publishOutput = dotnet publish $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --framework $targetNetFramework -nodeReuse:false /p:UseSharedCompilation=false
 
 $actualWarningCount = 0
 
 foreach ($line in $($publishOutput -split "`r`n"))
 {
-    if ($line -like "*analysis warning IL*")
+    if (($line -like "*analysis warning IL*") -or ($line -like "*analysis error IL*"))
     {
         Write-Host $line
-
         $actualWarningCount += 1
     }
 }
 
-pushd $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/bin/Release/$targetNetFramework/linux-x64
+Write-Host "Actual warning count is:", $actualWarningCount
+$expectedWarningCount = 0
+
+if ($LastExitCode -ne 0)
+{
+    Write-Host "There was an error while publishing AotCompatibility Test App. LastExitCode is:", $LastExitCode
+    Write-Host $publishOutput
+}
+
+$runtime = $IsWindows ? "win-x64" : ($IsMacOS ? "macos-x64" : "linux-x64")
+$app = $IsWindows ? "./OpenTelemetry.AotCompatibility.TestApp.exe" : "./OpenTelemetry.AotCompatibility.TestApp"
+
+Push-Location $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/bin/Release/$targetNetFramework/$runtime
 
 Write-Host "Executing test App..."
-./OpenTelemetry.AotCompatibility.TestApp
+$app
 Write-Host "Finished executing test App"
 
 if ($LastExitCode -ne 0)
@@ -26,10 +37,7 @@ if ($LastExitCode -ne 0)
   Write-Host "There was an error while executing AotCompatibility Test App. LastExitCode is:", $LastExitCode
 }
 
-popd
-
-Write-Host "Actual warning count is:", $actualWarningCount
-$expectedWarningCount = 0
+Pop-Location
 
 $testPassed = 0
 if ($actualWarningCount -ne $expectedWarningCount)
