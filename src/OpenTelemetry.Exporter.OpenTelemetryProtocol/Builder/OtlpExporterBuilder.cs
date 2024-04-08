@@ -4,6 +4,9 @@
 #nullable enable
 
 using System.Diagnostics;
+#if NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -21,6 +24,10 @@ internal sealed class OtlpExporterBuilder
 
     private readonly string name;
 
+#if NET8_0_OR_GREATER
+    [RequiresDynamicCode("Binding strongly typed objects to configuration values may require generating dynamic code at runtime.")]
+    [RequiresUnreferencedCode("TOptions's dependent types may have their members trimmed. Ensure all required members are preserved.")]
+#endif
     internal OtlpExporterBuilder(
         IServiceCollection services,
         string? name,
@@ -119,6 +126,10 @@ internal sealed class OtlpExporterBuilder
         return this;
     }
 
+#if NET8_0_OR_GREATER
+    [RequiresDynamicCode("Binding strongly typed objects to configuration values may require generating dynamic code at runtime.")]
+    [RequiresUnreferencedCode("TOptions's dependent types may have their members trimmed. Ensure all required members are preserved.")]
+#endif
     private static void BindConfigurationToOptions(IServiceCollection services, string name, IConfiguration configuration)
     {
         Debug.Assert(services != null, "services was null");
