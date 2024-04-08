@@ -29,7 +29,7 @@
 
     <!-- non-production TFMs -->
     <TargetFrameworksForAspNetCoreTests>net8.0;net7.0;net6.0</TargetFrameworksForAspNetCoreTests>
-    <TargetFrameworksForAotCompatibilityTests>net8.0</TargetFrameworksForAotCompatibilityTests>
+    <TargetFrameworksForAotCompatibilityTests>net9.0;net8.0</TargetFrameworksForAotCompatibilityTests>
     <TargetFrameworksForDocs>net8.0;net7.0;net6.0</TargetFrameworksForDocs>
     <TargetFrameworksForDocs Condition="$(OS) == 'Windows_NT' And '$(UsingMicrosoftNETSdkWeb)' != 'True'">
       $(TargetFrameworksForDocs);$(NetFrameworkSupportedVersions)
