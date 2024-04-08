@@ -136,15 +136,12 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case sbyte[] sbyteArray: this.WriteToArray(arrayState, sbyteArray); break;
             case short[] shortArray: this.WriteToArray(arrayState, shortArray); break;
             case ushort[] ushortArray: this.WriteToArray(arrayState, ushortArray); break;
-#if NETFRAMEWORK
-            case int[]: this.WriteArrayTagIntNetFramework(arrayState, array, tagValueMaxLength); break;
-#else
-            case int[] intArray: this.WriteToArray(arrayState, intArray); break;
-#endif
             case uint[] uintArray: this.WriteToArray(arrayState, uintArray); break;
 #if NETFRAMEWORK
+            case int[]: this.WriteArrayTagIntNetFramework(arrayState, array, tagValueMaxLength); break;
             case long[]: this.WriteArrayTagLongNetFramework(arrayState, array, tagValueMaxLength); break;
 #else
+            case int[] intArray: this.WriteToArray(arrayState, intArray); break;
             case long[] longArray: this.WriteToArray(arrayState, longArray); break;
 #endif
             case float[] floatArray: this.WriteToArray(arrayState, floatArray); break;
