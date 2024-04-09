@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Fix a race condition in Prometheus exporter where a non-OpenMetrics request following by an OpenMetrics request would cause malformed response
+  ([#5517](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5517))
+
 ## 1.8.0-rc.1
 
 Released 2024-Mar-27
