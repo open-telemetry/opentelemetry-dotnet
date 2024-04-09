@@ -3,14 +3,15 @@
 
 #nullable enable
 
+using System.Reflection;
+using OpenTelemetry.Instrumentation;
 using Xunit;
 
 namespace OpenTelemetry.Tests;
 
-public class SdkTests
+public class AssemblyVersionExtensionsTests
 {
     [Theory]
-    [InlineData(null, "1.0.0")]
     [InlineData("1.5.0", "1.5.0")]
     [InlineData("1.0.0.0", "1.0.0.0")]
     [InlineData("1.0-beta.1", "1.0-beta.1")]
@@ -19,10 +20,19 @@ public class SdkTests
     [InlineData("8.0", "8.0")]
     [InlineData("8", "8")]
     [InlineData("8.0.1.18-alpha1", "8.0.1.18-alpha1")]
-    public void ParseAssemblyInformationalVersionTests(string? informationalVersion, string expectedVersion)
+    public void ParseAssemblyInformationalVersionTests(string informationalVersion, string expectedVersion)
     {
-        var actualVersion = Sdk.ParseAssemblyInformationalVersion(informationalVersion);
+        var assembly = new TestAssembly(informationalVersion);
+        var actualVersion = assembly.GetPackageVersion();
 
         Assert.Equal(expectedVersion, actualVersion);
+    }
+
+    private class TestAssembly(string informationalVersion) : Assembly
+    {
+        public override object[] GetCustomAttributes(Type attributeType, bool inherit)
+        {
+            return new Attribute[] { new AssemblyInformationalVersionAttribute(informationalVersion) };
+        }
     }
 }
