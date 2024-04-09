@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* **Breaking change:** Fix space character encoding from `+` to `%20`
+  for baggage item values when propagating baggage as defined in
+  [W3C Baggage propagation format specification](https://www.w3.org/TR/baggage/).
+  ([#5303](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5303))
+
 ## 1.8.0
 
 Released 2024-Apr-02
