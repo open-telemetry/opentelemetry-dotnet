@@ -72,10 +72,6 @@
       <DefineConstants>$(DefineConstants);EXPOSE_EXPERIMENTAL_FEATURES</DefineConstants>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(ExposeExperimentalFeatures)' != 'true'">
-      <Compile Remove="@(Compile)" Condition="'%(Compile.RequiresExposedExperimentalFeatures)' == 'true'" />
-    </ItemGroup>
-
     <!-- Note: This selects the correct PublicApiAnalyzers files based on $(ExposeExperimentalFeatures) -->
     <ItemGroup>
       <AdditionalFiles Include=".publicApi\Stable\PublicAPI.*.txt" />
