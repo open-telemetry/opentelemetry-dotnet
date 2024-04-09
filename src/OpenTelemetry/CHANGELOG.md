@@ -2,10 +2,10 @@
 
 ## Unreleased
 
-* `LogRecord` processors added to `OpenTelemetryLoggerOptions` during reload of
-  configuration will now be immediately disposed. This was done to prevent the
-  accumulation of extra background threads created by additional
-  `BatchLogRecordExportProcessor`s which are never used.
+* New instances of `OpenTelemetryLoggerOptions` will no longer be created during
+  configuration reload(s). This was done to prevent the accumulation of extra
+  background threads created by additional `BatchLogRecordExportProcessor`s
+  added during reload which are never used.
   ([#5514](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5514))
 
 ## 1.8.0
