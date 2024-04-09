@@ -249,7 +249,8 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
-    public async Task PrometheusExporterMiddlewareIntegration_MultipleRequests()
+    public async Task PrometheusExporterMiddlewareIntegration_MultipleRequestsOfDifferentFormats()
+
     {
         using var host = await StartTestHostAsync(
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
