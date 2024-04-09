@@ -18,7 +18,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 
-public sealed class PrometheusExporterMiddlewareTests()
+public sealed class PrometheusExporterMiddlewareTests
 {
     private const string MeterVersion = "1.0.1";
 
