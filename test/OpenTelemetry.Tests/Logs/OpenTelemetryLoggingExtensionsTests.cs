@@ -7,6 +7,7 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -297,8 +298,10 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.True(loggerProvider.Processor is TestLogProcessorWithILoggerFactoryDependency);
     }
 
-    [Fact]
-    public void OptionReloadingTest()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void OptionReloadingTest(bool useOptionsMonitor)
     {
         var defaultInstance = new OpenTelemetryLoggerOptions();
 
@@ -343,6 +346,14 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         using var sp = services.BuildServiceProvider();
 
+        if (useOptionsMonitor)
+        {
+            var optionsMonitor = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>();
+
+            // Note: Change notification is disabled for OpenTelemetryLoggerOptions.
+            Assert.Null(optionsMonitor.OnChange((o, n) => Assert.Fail()));
+        }
+
         var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
 
         Assert.Equal(1, delegateInvocationCount);
@@ -351,9 +362,35 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         root.Reload();
 
-        Assert.Equal(3, delegateInvocationCount);
-        Assert.Equal(3, processors.Count);
-        Assert.Equal(2, processors.Count(p => p.Disposed));
+        Assert.Equal(1, delegateInvocationCount);
+        Assert.Single(processors);
+        Assert.DoesNotContain(processors, p => p.Disposed);
+    }
+
+    [Fact]
+    public void MixedOptionsUsageTest()
+    {
+        var root = new ConfigurationBuilder().Build();
+
+        var services = new ServiceCollection();
+
+        services.AddSingleton<IConfiguration>(root);
+
+        services.AddLogging(logging => logging
+            .AddConfiguration(root.GetSection("logging"))
+            .AddOpenTelemetry(options =>
+            {
+                options.AddProcessor(new TestLogProcessor());
+            }));
+
+        using var sp = services.BuildServiceProvider();
+
+        var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+        var optionsMonitor = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+        var options = sp.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value;
+
+        Assert.True(ReferenceEquals(options, optionsMonitor));
     }
 
     private sealed class TestLogProcessor : BaseProcessor<LogRecord>

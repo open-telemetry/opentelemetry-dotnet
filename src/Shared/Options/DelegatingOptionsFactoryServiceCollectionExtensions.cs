@@ -66,29 +66,16 @@ internal static class DelegatingOptionsFactoryServiceCollectionExtensions
     }
 
 #if NET6_0_OR_GREATER
-    public static IServiceCollection RegisterSingletonOptionsFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(
+    public static IServiceCollection DisableOptionsMonitor<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(
 #else
-    public static IServiceCollection RegisterSingletonOptionsFactory<T>(
+    public static IServiceCollection DisableOptionsMonitor<T>(
 #endif
-        this IServiceCollection services,
-        Func<IConfiguration, T> optionsFactoryFunc,
-        Action<T> optionsResetAction)
+        this IServiceCollection services)
         where T : class
     {
         Debug.Assert(services != null, "services was null");
-        Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
-        Debug.Assert(optionsResetAction != null, "optionsResetAction was null");
 
-        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
-        {
-            return new SingletonDelegatingOptionsFactory<T>(
-                (c, n) => optionsFactoryFunc!(c),
-                (n, o) => optionsResetAction!(o),
-                sp.GetRequiredService<IConfiguration>(),
-                sp.GetServices<IConfigureOptions<T>>(),
-                sp.GetServices<IPostConfigureOptions<T>>(),
-                sp.GetServices<IValidateOptions<T>>());
-        });
+        services!.TryAddSingleton<IOptionsMonitor<T>, SingletonOptionsMonitor<T>>();
 
         return services!;
     }

@@ -173,12 +173,10 @@ public static class OpenTelemetryLoggingExtensions
         // Note: This will bind logger options element (e.g., "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
         RegisterLoggerProviderOptions(services);
 
-        // Note: We force OpenTelemetryLoggerOptions to be a singleton and
-        // handle reloads explicitly. This is done to prevent leaks of batch
-        // processors added by configuration delegates during reload.
-        services.RegisterSingletonOptionsFactory(
-            c => new OpenTelemetryLoggerOptions(),
-            o => o.ResetAfterConfigurationReload());
+        // Note: We disable built-in IOptionsMonitor features for
+        // OpenTelemetryLoggerOptions to prevent leaks of batch processors added
+        // by configuration delegates during reload of IConfiguration.
+        services.DisableOptionsMonitor<OpenTelemetryLoggerOptions>();
 
         /* Note: This ensures IConfiguration is available when using
          * IServiceCollections NOT attached to a host. For example when
@@ -199,7 +197,7 @@ public static class OpenTelemetryLoggingExtensions
         var loggingBuilder = new LoggerProviderBuilderBase(services).ConfigureBuilder(
             (sp, logging) =>
             {
-                var options = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+                var options = sp.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value;
 
                 if (options.ResourceBuilder != null)
                 {
@@ -256,7 +254,7 @@ public static class OpenTelemetryLoggingExtensions
 
                     return new OpenTelemetryLoggerProvider(
                         provider,
-                        sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
+                        sp.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value,
                         disposeProvider: false);
                 }));
 
