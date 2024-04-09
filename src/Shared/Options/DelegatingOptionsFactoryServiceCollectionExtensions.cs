@@ -65,7 +65,11 @@ internal static class DelegatingOptionsFactoryServiceCollectionExtensions
         return services!;
     }
 
+#if NET6_0_OR_GREATER
+    public static IServiceCollection RegisterSingletonOptionsFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(
+#else
     public static IServiceCollection RegisterSingletonOptionsFactory<T>(
+#endif
         this IServiceCollection services,
         Func<IConfiguration, T> optionsFactoryFunc,
         Action<T> optionsResetAction)

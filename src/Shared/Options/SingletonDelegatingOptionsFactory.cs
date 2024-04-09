@@ -4,11 +4,18 @@
 #nullable enable
 
 using System.Diagnostics;
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using Microsoft.Extensions.Configuration;
 
 namespace Microsoft.Extensions.Options;
 
+#if NET6_0_OR_GREATER
+internal sealed class SingletonDelegatingOptionsFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] TOptions> : DelegatingOptionsFactory<TOptions>
+#else
 internal sealed class SingletonDelegatingOptionsFactory<TOptions> : DelegatingOptionsFactory<TOptions>
+#endif
     where TOptions : class
 {
     private readonly Action<string, TOptions> optionsResetAction;
