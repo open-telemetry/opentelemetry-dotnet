@@ -21,6 +21,7 @@ internal sealed class PrometheusCollectionManager
     private int globalLockState;
     private ArraySegment<byte> previousDataView;
     private DateTime? previousDataViewGeneratedAtUtc;
+    private bool previousIsOpenMetricsRequested;
     private int readerCount;
     private bool collectionRunning;
     private TaskCompletionSource<CollectionResponse> collectionTcs;
@@ -46,7 +47,8 @@ internal sealed class PrometheusCollectionManager
         // last successful collect, return the previous view.
         if (this.previousDataViewGeneratedAtUtc.HasValue
             && this.scrapeResponseCacheDurationMilliseconds > 0
-            && this.previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
+            && this.previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow
+            && openMetricsRequested == this.previousIsOpenMetricsRequested)
         {
             Interlocked.Increment(ref this.readerCount);
             this.ExitGlobalLock();
@@ -58,7 +60,7 @@ internal sealed class PrometheusCollectionManager
         }
 
         // If a collection is already running, return a task to wait on the result.
-        if (this.collectionRunning)
+        if (this.collectionRunning && openMetricsRequested == this.previousIsOpenMetricsRequested)
         {
             if (this.collectionTcs == null)
             {
@@ -79,6 +81,7 @@ internal sealed class PrometheusCollectionManager
         // Start a collection on the current thread.
         this.collectionRunning = true;
         this.previousDataViewGeneratedAtUtc = null;
+        this.previousIsOpenMetricsRequested = openMetricsRequested;
         Interlocked.Increment(ref this.readerCount);
         this.ExitGlobalLock();
 
