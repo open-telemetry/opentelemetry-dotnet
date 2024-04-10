@@ -5,7 +5,7 @@
 
 using System.Reflection;
 
-namespace OpenTelemetry.Instrumentation;
+namespace OpenTelemetry.Internal;
 
 internal static class AssemblyVersionExtensions
 {
