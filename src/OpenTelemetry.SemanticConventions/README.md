@@ -6,7 +6,7 @@ defined by the OpenTelemetry specification.
 ## Installation
 
 ```shell
-dotnet add package OpenTelemetry.SemanticConventions
+dotnet add package --prerelease OpenTelemetry.SemanticConventions
 ```
 
 ## Generating the files

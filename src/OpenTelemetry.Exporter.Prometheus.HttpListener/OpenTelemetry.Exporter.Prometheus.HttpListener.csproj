@@ -4,7 +4,7 @@
     <TargetFrameworks>$(TargetFrameworksForLibraries)</TargetFrameworks>
     <Description>Stand-alone HttpListener for hosting OpenTelemetry .NET Prometheus Exporter</Description>
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
-    <MinVerTagPrefix>core-</MinVerTagPrefix>
+    <MinVerTagPrefix>coreunstable-</MinVerTagPrefix>
 
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
@@ -16,8 +16,12 @@
     <DisablePackageBaselineValidation>true</DisablePackageBaselineValidation>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
+    <PackageReference Include="OpenTelemetry" />
   </ItemGroup>
 
   <ItemGroup>

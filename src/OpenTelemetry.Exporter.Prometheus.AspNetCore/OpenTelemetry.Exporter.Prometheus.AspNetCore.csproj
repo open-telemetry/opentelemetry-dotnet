@@ -5,7 +5,7 @@
     <TargetFrameworks>$(TargetFrameworksForPrometheusAspNetCore)</TargetFrameworks>
     <Description>ASP.NET Core middleware for hosting OpenTelemetry .NET Prometheus Exporter</Description>
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
-    <MinVerTagPrefix>core-</MinVerTagPrefix>
+    <MinVerTagPrefix>coreunstable-</MinVerTagPrefix>
     <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE</DefineConstants>
 
     <!-- this is temporary. will remove in future PR. -->
@@ -17,6 +17,18 @@
   <PropertyGroup>
     <DisablePackageBaselineValidation>true</DisablePackageBaselineValidation>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
+    <PackageReference Include="OpenTelemetry" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
@@ -30,14 +42,6 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusMetric.cs" Link="Includes/PrometheusMetric.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusHeadersParser.cs" Link="Includes/PrometheusHeadersParser.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

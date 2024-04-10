@@ -54,6 +54,10 @@
       <ExposeExperimentalFeatures Condition="'$(MinVerPreRelease)' == ''">false</ExposeExperimentalFeatures>
     </PropertyGroup>
 
+    <Error
+      Condition="'$(MinVerTagPrefix)' == 'coreunstable-' AND ('$(MinVerPreRelease)' == '' OR $(MinVerPreRelease.StartsWith('rc')))"
+      Text="Unstable core packages cannot be released stable or as release candidates." />
+
     <!-- Note: The '$(TargetFramework)' != '' check here is to reduce log spam
     in builds like dotnet pack which fire MinVer but don't resolve the actual
     TargetFramework -->

@@ -36,6 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\docker-compose.net8.0.yml = build\docker-compose.net8.0.yml
 		build\finalize-publicapi.ps1 = build\finalize-publicapi.ps1
 		build\GlobalAttrExclusions.txt = build\GlobalAttrExclusions.txt
+		build\InstrumentationLibraries.proj = build\InstrumentationLibraries.proj
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
 		build\OpenTelemetry.prod.loose.ruleset = build\OpenTelemetry.prod.loose.ruleset
 		build\OpenTelemetry.prod.ruleset = build\OpenTelemetry.prod.ruleset
@@ -46,6 +47,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\test-aot-compatibility.ps1 = build\test-aot-compatibility.ps1
 		build\test-threadSafety.ps1 = build\test-threadSafety.ps1
 		build\xunit.runner.json = build\xunit.runner.json
+		build\UnstableCoreLibraries.proj = build\UnstableCoreLibraries.proj
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Zipkin", "src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj", "{7EDAE7FA-B44E-42CA-80FA-7DF2FAA2C5DD}"
