@@ -37,8 +37,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
-    private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
-
     private OtlpExportProtocol? protocol;
     private Uri? endpoint;
     private int? timeoutMilliseconds;
@@ -226,15 +224,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     private static string GetUserAgentString()
     {
-        try
-        {
-            var assembly = typeof(OtlpExporterOptions).Assembly;
-            return $"{UserAgentProduct}/{assembly.GetPackageVersion()}";
-        }
-        catch (Exception)
-        {
-            return UserAgentProduct;
-        }
+        var assembly = typeof(OtlpExporterOptions).Assembly;
+        return $"OTel-OTLP-Exporter-Dotnet/{assembly.GetPackageVersion()}";
     }
 
     private void ApplyConfiguration(
