@@ -7,7 +7,6 @@ using System.Diagnostics;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -229,9 +228,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     {
         try
         {
-            var assemblyVersion = typeof(OtlpExporterOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-            var informationalVersion = assemblyVersion?.InformationalVersion;
-            return string.IsNullOrEmpty(informationalVersion) ? UserAgentProduct : $"{UserAgentProduct}/{informationalVersion}";
+            var assembly = typeof(OtlpExporterOptions).Assembly;
+            return $"{UserAgentProduct}/{assembly.GetPackageVersion()}";
         }
         catch (Exception)
         {
