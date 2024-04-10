@@ -4,7 +4,7 @@
 #nullable enable
 
 using System.Reflection;
-using OpenTelemetry.Instrumentation;
+using OpenTelemetry.Internal;
 using Xunit;
 
 namespace OpenTelemetry.Tests;
