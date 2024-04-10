@@ -6,8 +6,8 @@
   ([#5520](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5520))
 
 * `User-Agent` header changed from
-  `OTel-OTLP-Exporter-Dotnet-{NuGet Package Version}+{Commit Hash}`
-  to `OTel-OTLP-Exporter-Dotnet-{NuGet Package Version}`.
+  `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}+{Commit Hash}`
+  to `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}`.
   ([#5528](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5528))
 
 ## 1.8.0
