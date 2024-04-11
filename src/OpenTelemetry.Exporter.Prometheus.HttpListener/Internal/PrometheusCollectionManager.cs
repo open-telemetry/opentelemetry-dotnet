@@ -19,13 +19,13 @@ internal sealed class PrometheusCollectionManager
     private byte[] plainTextBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private byte[] openMetricsBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private int targetInfoBufferLength = -1; // zero or positive when target_info has been written for the first time
-    private int globalLockState;
     private ArraySegment<byte> previousPlainTextDataView;
     private ArraySegment<byte> previousOpenMetricsDataView;
     private DateTime? previousDataViewGeneratedAtUtc;
-    private int readerCount;
-    private bool collectionRunning;
-    private TaskCompletionSource<CollectionResponse> collectionTcs;
+    private volatile int globalLockState;
+    private volatile int readerCount;
+    private volatile bool collectionRunning;
+    private volatile TaskCompletionSource<CollectionResponse> collectionTcs;
 
     public PrometheusCollectionManager(PrometheusExporter exporter)
     {

@@ -280,7 +280,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 Method = HttpMethod.Get,
             };
 
-            using var response = await client.SendAsync(request).WaitAsync(TimeSpan.FromSeconds(10));
+            using var response = await client.SendAsync(request);
 
             var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
