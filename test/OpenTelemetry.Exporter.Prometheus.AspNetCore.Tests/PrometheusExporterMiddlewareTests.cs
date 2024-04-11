@@ -269,13 +269,18 @@ public sealed class PrometheusExporterMiddlewareTests
         counter.Add(0.99D, tags);
 
         bool[] requestOpenMetricsTestCases = Enumerable.Repeat<bool[]>([true, false, false, true], 5000000).SelectMany(i => i).ToArray();
+        using var client = host.GetTestClient();
 
         await Parallel.ForEachAsync(requestOpenMetricsTestCases, async (requestOpenMetrics, _) =>
         {
-            using var client = host.GetTestClient();
-            client.DefaultRequestHeaders.Add("Accept", requestOpenMetrics ? "application/openmetrics-text" : "text/plain");
+            using var request = new HttpRequestMessage
+            {
+                Headers = { { "Accept", requestOpenMetrics ? "application/openmetrics-text" : "text/plain" } },
+                RequestUri = new Uri("/metrics", UriKind.Relative),
+                Method = HttpMethod.Get,
+            };
 
-            using var response = await client.GetAsync("/metrics");
+            using var response = await client.SendAsync(request);
 
             var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
