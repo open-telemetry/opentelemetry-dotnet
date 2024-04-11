@@ -2,9 +2,11 @@
 
 ## Unreleased
 
-* Fixed an issue in Logging where unwanted objects (processors, exporters, etc.)
-  could be created inside delegates automatically executed by the Options API
-  during configuration reload.
+* **Breaking Change** Fixed an issue in Logging where unwanted objects
+  (processors, exporters, etc.) could be created inside delegates automatically
+  executed by the Options API during configuration reload. Accessing
+  `OpenTelemetryLoggerOptions` using `IOptionsMonitor` or `IOptionsSnapshot`
+  will now result in a `NotSupportedException` being thrown.
   ([#5514](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5514))
 
 ## 1.8.0
