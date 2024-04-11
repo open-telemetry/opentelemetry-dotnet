@@ -173,12 +173,11 @@ public static class OpenTelemetryLoggingExtensions
         // Note: This will bind logger options element (e.g., "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
         RegisterLoggerProviderOptions(services);
 
-        // Note: We disable built-in IOptionsMonitor and IOptionsSnapshot
-        // features for OpenTelemetryLoggerOptions as a workaround to prevent
-        // unwanted objects (processors, exporters, etc.) being created by
-        // configuration delegates being re-run during reload of IConfiguration
-        // or from options created while under scopes.
-        services.DisableOptionsReloading<OpenTelemetryLoggerOptions>();
+        // Note: We disable built-in IOptionsMonitor features for
+        // OpenTelemetryLoggerOptions as a workaround to prevent unwanted
+        // objects (processors, exporters, etc.) being created by
+        // configuration delegates during reload of IConfiguration.
+        services.DisableOptionsMonitor<OpenTelemetryLoggerOptions>();
 
         /* Note: This ensures IConfiguration is available when using
          * IServiceCollections NOT attached to a host. For example when
