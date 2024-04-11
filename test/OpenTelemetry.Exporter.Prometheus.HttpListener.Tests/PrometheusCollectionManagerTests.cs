@@ -65,7 +65,7 @@ public sealed class PrometheusCollectionManagerTests
                     }
                     finally
                     {
-                        exporter.CollectionManager.ExitCollect(openMetricsRequested);
+                        exporter.CollectionManager.ExitCollect(response.IsOpenMetricsFormat);
                     }
                 });
             }
@@ -107,7 +107,7 @@ public sealed class PrometheusCollectionManagerTests
             }
             finally
             {
-                exporter.CollectionManager.ExitCollect(openMetricsRequested);
+                exporter.CollectionManager.ExitCollect(response.IsOpenMetricsFormat);
             }
 
             Thread.Sleep(exporter.ScrapeResponseCacheDurationMilliseconds);
@@ -129,7 +129,7 @@ public sealed class PrometheusCollectionManagerTests
                     }
                     finally
                     {
-                        exporter.CollectionManager.ExitCollect(openMetricsRequested);
+                        exporter.CollectionManager.ExitCollect(response.IsOpenMetricsFormat);
                     }
                 });
             }

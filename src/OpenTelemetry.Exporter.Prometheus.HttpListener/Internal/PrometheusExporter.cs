@@ -14,7 +14,6 @@ namespace OpenTelemetry.Exporter.Prometheus;
 internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
 {
     private Func<int, bool> funcCollect;
-    private Func<Batch<Metric>, ExportResult> funcExport;
     private Resource resource;
     private bool disposed;
 
@@ -32,6 +31,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         this.CollectionManager = new PrometheusCollectionManager(this);
     }
 
+    internal event Func<Batch<Metric>, ExportResult> OnExport;
+
     /// <summary>
     /// Gets or sets the Collect delegate.
     /// </summary>
@@ -39,12 +40,6 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     {
         get => this.funcCollect;
         set => this.funcCollect = value;
-    }
-
-    internal Func<Batch<Metric>, ExportResult> OnExport
-    {
-        get => this.funcExport;
-        set => this.funcExport = value;
     }
 
     internal Action OnDispose { get; set; }

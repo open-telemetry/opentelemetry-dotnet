@@ -80,7 +80,7 @@ internal sealed class PrometheusExporterMiddleware
             }
             finally
             {
-                this.exporter.CollectionManager.ExitCollect(openMetricsRequested);
+                this.exporter.CollectionManager.ExitCollect(collectionResponse.IsOpenMetricsFormat);
             }
         }
         catch (Exception ex)
