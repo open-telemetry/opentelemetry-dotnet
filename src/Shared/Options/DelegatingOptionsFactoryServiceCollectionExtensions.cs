@@ -66,16 +66,17 @@ internal static class DelegatingOptionsFactoryServiceCollectionExtensions
     }
 
 #if NET6_0_OR_GREATER
-    public static IServiceCollection DisableOptionsMonitor<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(
+    public static IServiceCollection DisableOptionsReloading<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(
 #else
-    public static IServiceCollection DisableOptionsMonitor<T>(
+    public static IServiceCollection DisableOptionsReloading<T>(
 #endif
         this IServiceCollection services)
         where T : class
     {
         Debug.Assert(services != null, "services was null");
 
-        services!.TryAddSingleton<IOptionsMonitor<T>, SingletonOptionsMonitor<T>>();
+        services!.TryAddSingleton<IOptionsMonitor<T>, SingletonOptionsManager<T>>();
+        services!.TryAddScoped<IOptionsSnapshot<T>, SingletonOptionsManager<T>>();
 
         return services!;
     }

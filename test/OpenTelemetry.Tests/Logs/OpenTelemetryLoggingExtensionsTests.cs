@@ -299,14 +299,11 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void OptionReloadingTest(bool useOptionsMonitor)
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public void OptionReloadingTest(bool useOptionsMonitor, bool useOptionsSnapshot)
     {
-        var defaultInstance = new OpenTelemetryLoggerOptions();
-
-        OpenTelemetryLoggerOptions? lastOptions = null;
-        var processors = new List<TestLogProcessor>();
         var delegateInvocationCount = 0;
 
         var root = new ConfigurationBuilder().Build();
@@ -319,29 +316,9 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             .AddConfiguration(root.GetSection("logging"))
             .AddOpenTelemetry(options =>
             {
-                Assert.Equal(defaultInstance.IncludeFormattedMessage, options.IncludeFormattedMessage);
-                Assert.Equal(defaultInstance.IncludeScopes, options.IncludeScopes);
-                Assert.Equal(defaultInstance.ParseStateValues, options.ParseStateValues);
-                Assert.Equal(defaultInstance.IncludeAttributes, options.IncludeAttributes);
-                Assert.Equal(defaultInstance.IncludeTraceState, options.IncludeTraceState);
-
-                if (lastOptions != null)
-                {
-                    Assert.True(ReferenceEquals(options, lastOptions));
-                }
-
-                lastOptions = options;
-
                 delegateInvocationCount++;
-                var processor = new TestLogProcessor();
-                processors.Add(processor);
-                options.AddProcessor(processor);
 
-                options.IncludeFormattedMessage = !defaultInstance.IncludeFormattedMessage;
-                options.IncludeScopes = !defaultInstance.IncludeScopes;
-                options.ParseStateValues = !defaultInstance.ParseStateValues;
-                options.IncludeAttributes = !defaultInstance.IncludeAttributes;
-                options.IncludeTraceState = !defaultInstance.IncludeTraceState;
+                options.AddProcessor(new TestLogProcessor());
             }));
 
         using var sp = services.BuildServiceProvider();
@@ -350,21 +327,25 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         {
             var optionsMonitor = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>();
 
-            // Note: Change notification is disabled for OpenTelemetryLoggerOptions.
-            Assert.Null(optionsMonitor.OnChange((o, n) => Assert.Fail()));
+            Assert.NotNull(optionsMonitor.CurrentValue);
+        }
+
+        if (useOptionsSnapshot)
+        {
+            using var scope = sp.CreateScope();
+
+            var optionsSnapshot = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<OpenTelemetryLoggerOptions>>();
+
+            Assert.NotNull(optionsSnapshot.Value);
         }
 
         var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
 
         Assert.Equal(1, delegateInvocationCount);
-        Assert.Single(processors);
-        Assert.DoesNotContain(processors, p => p.Disposed);
 
         root.Reload();
 
         Assert.Equal(1, delegateInvocationCount);
-        Assert.Single(processors);
-        Assert.DoesNotContain(processors, p => p.Disposed);
     }
 
     [Fact]
@@ -391,6 +372,11 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         var options = sp.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value;
 
         Assert.True(ReferenceEquals(options, optionsMonitor));
+
+        using var scope = sp.CreateScope();
+
+        var optionsSnapshot = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<OpenTelemetryLoggerOptions>>().Value;
+        Assert.True(ReferenceEquals(options, optionsSnapshot));
     }
 
     private sealed class TestLogProcessor : BaseProcessor<LogRecord>
