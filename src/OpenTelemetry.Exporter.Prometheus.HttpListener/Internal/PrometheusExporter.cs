@@ -55,14 +55,23 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 
     internal bool DisableTotalNameSuffixForCounters { get; }
 
-    internal bool OpenMetricsRequested { get; set; }
+    internal TaskCompletionSource<bool> CollectionCts { get; set; }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
 
     /// <inheritdoc/>
     public override ExportResult Export(in Batch<Metric> metrics)
     {
-        return this.OnExport(metrics);
+        var result = ExportResult.Success;
+        foreach (var onExport in this.OnExport.GetInvocationList())
+        {
+            if (((Func<Batch<Metric>, ExportResult>)onExport)(metrics) != ExportResult.Success)
+            {
+                result = ExportResult.Failure;
+            }
+        }
+
+        return result;
     }
 
     /// <inheritdoc/>

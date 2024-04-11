@@ -80,7 +80,7 @@ internal sealed class PrometheusExporterMiddleware
             }
             finally
             {
-                this.exporter.CollectionManager.ExitCollect();
+                this.exporter.CollectionManager.ExitCollect(openMetricsRequested);
             }
         }
         catch (Exception ex)
@@ -91,8 +91,6 @@ internal sealed class PrometheusExporterMiddleware
                 response.StatusCode = 500;
             }
         }
-
-        this.exporter.OnExport = null;
     }
 
     private static bool AcceptsOpenMetrics(HttpRequest request)

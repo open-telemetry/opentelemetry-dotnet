@@ -172,7 +172,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             }
             finally
             {
-                this.exporter.CollectionManager.ExitCollect();
+                this.exporter.CollectionManager.ExitCollect(openMetricsRequested);
             }
         }
         catch (Exception ex)

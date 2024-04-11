@@ -249,8 +249,7 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
-    public async Task PrometheusExporterMiddlewareIntegration_MultipleRequestsOfDifferentFormats()
-
+    public async Task PrometheusExporterMiddlewareIntegration_MultipleRequestsOfDifferentFormatsInParallel()
     {
         using var host = await StartTestHostAsync(
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
@@ -269,9 +268,9 @@ public sealed class PrometheusExporterMiddlewareTests
         counter.Add(100.18D, tags);
         counter.Add(0.99D, tags);
 
-        bool[] requestOpenMetricsTestCases = [true, false, true, false];
+        bool[] requestOpenMetricsTestCases = Enumerable.Repeat<bool[]>([true, false], 100000).SelectMany(i => i).ToArray();
 
-        foreach (var requestOpenMetrics in requestOpenMetricsTestCases)
+        await Parallel.ForEachAsync(requestOpenMetricsTestCases, async (requestOpenMetrics, _) =>
         {
             using var client = host.GetTestClient();
             client.DefaultRequestHeaders.Add("Accept", requestOpenMetrics ? "application/openmetrics-text" : "text/plain");
@@ -280,48 +279,8 @@ public sealed class PrometheusExporterMiddlewareTests
 
             var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.True(response.Content.Headers.Contains("Last-Modified"));
-
-            if (requestOpenMetrics)
-            {
-                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
-            }
-            else
-            {
-                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
-            }
-
-            string content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
-
-            string expected = requestOpenMetrics
-                ? $$"""
-                    # TYPE target info
-                    # HELP target Target metadata
-                    target_info{service_name="my_service",service_instance_id="id1"} 1
-                    # TYPE otel_scope_info info
-                    # HELP otel_scope_info Scope metadata
-                    otel_scope_info{otel_scope_name="{{MeterName}}"} 1
-                    # TYPE counter_double_total counter
-                    counter_double_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101.17 (\d+\.\d{3})
-                    # EOF
-
-                    """.ReplaceLineEndings()
-                : $$"""
-                    # TYPE counter_double_total counter
-                    counter_double_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101.17 (\d+)
-                    # EOF
-
-                    """.ReplaceLineEndings();
-
-            var matches = Regex.Matches(content, "^" + expected + "$");
-
-            Assert.Single(matches);
-
-            var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty));
-
-            Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
-        }
+            await VerifyAsync(beginTimestamp, endTimestamp, response, requestOpenMetrics);
+        });
 
         await host.StopAsync();
     }
@@ -370,22 +329,36 @@ public sealed class PrometheusExporterMiddlewareTests
 
         if (!skipMetrics)
         {
+            await VerifyAsync(beginTimestamp, endTimestamp, response, requestOpenMetrics);
+        }
+        else
+        {
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.True(response.Content.Headers.Contains("Last-Modified"));
+        }
 
-            if (requestOpenMetrics)
-            {
-                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
-            }
-            else
-            {
-                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
-            }
+        validateResponse?.Invoke(response);
 
-            string content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+        await host.StopAsync();
+    }
 
-            string expected = requestOpenMetrics
-                ? $$"""
+    private static async Task VerifyAsync(long beginTimestamp, long endTimestamp, HttpResponseMessage response, bool requestOpenMetrics)
+    {
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Content.Headers.Contains("Last-Modified"));
+
+        if (requestOpenMetrics)
+        {
+            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
+        }
+        else
+        {
+            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+        }
+
+        string content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+
+        string expected = requestOpenMetrics
+            ? $$"""
                     # TYPE target info
                     # HELP target Target metadata
                     target_info{service_name="my_service",service_instance_id="id1"} 1
@@ -397,29 +370,20 @@ public sealed class PrometheusExporterMiddlewareTests
                     # EOF
 
                     """.ReplaceLineEndings()
-                : $$"""
+            : $$"""
                     # TYPE counter_double_total counter
                     counter_double_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101.17 (\d+)
                     # EOF
 
                     """.ReplaceLineEndings();
 
-            var matches = Regex.Matches(content, ("^" + expected + "$").Replace('\'', '"'));
+        var matches = Regex.Matches(content, "^" + expected + "$");
 
-            Assert.Single(matches);
+        Assert.Single(matches);
 
-            var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty));
+        var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty));
 
-            Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
-        }
-        else
-        {
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        }
-
-        validateResponse?.Invoke(response);
-
-        await host.StopAsync();
+        Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
     }
 
     private static Task<IHost> StartTestHostAsync(
