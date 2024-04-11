@@ -5,7 +5,6 @@ using System.Diagnostics;
 #if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
-using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
@@ -31,8 +30,8 @@ public static class Sdk
         Activity.ForceDefaultIdFormat = true;
         SelfDiagnostics.EnsureInitialized();
 
-        var assemblyInformationalVersion = typeof(Sdk).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        InformationalVersion = ParseAssemblyInformationalVersion(assemblyInformationalVersion);
+        var sdkAssembly = typeof(Sdk).Assembly;
+        InformationalVersion = sdkAssembly.GetPackageVersion();
     }
 
     /// <summary>
@@ -109,25 +108,5 @@ public static class Sdk
             static LoggerProviderBuilder CreateLoggerProviderBuilder()
     {
         return new LoggerProviderBuilderBase();
-    }
-
-    internal static string ParseAssemblyInformationalVersion(string? informationalVersion)
-    {
-        if (string.IsNullOrWhiteSpace(informationalVersion))
-        {
-            informationalVersion = "1.0.0";
-        }
-
-        /*
-         * InformationalVersion will be in the following format:
-         *   {majorVersion}.{minorVersion}.{patchVersion}.{pre-release label}.{pre-release version}.{gitHeight}+{Git SHA of current commit}
-         * Ex: 1.5.0-alpha.1.40+807f703e1b4d9874a92bd86d9f2d4ebe5b5d52e4
-         * The following parts are optional: pre-release label, pre-release version, git height, Git SHA of current commit
-         */
-
-        var indexOfPlusSign = informationalVersion!.IndexOf('+');
-        return indexOfPlusSign > 0
-            ? informationalVersion.Substring(0, indexOfPlusSign)
-            : informationalVersion;
     }
 }
