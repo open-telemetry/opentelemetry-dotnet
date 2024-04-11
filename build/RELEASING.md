@@ -113,12 +113,14 @@ Only for Maintainers.
     tags](https://github.com/open-telemetry/opentelemetry-dotnet/tags) and find
     the tag(s) which were pushed. Click the three dots next to the tag and
     choose `Create release`.
-      * Give the release a name based on the tags created
-      (e.g., `1.4.0-beta.1 / 1.0.0-rc9.7`).
-      * Paste the contents of combined changelog from Step 2. Only include projects with changes.
+      * Give the release a name based on the tags created (e.g., `1.4.0-beta.1 /
+      1.0.0-rc9.7`).
+      * Paste the contents of combined changelog from Step 2. Only include
+        projects with changes.
       * Check "This is a pre-release" if applicable.
       * Click "Publish release". This will kick off the [Pack and publish to
-      MyGet workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml).
+      MyGet
+      workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml).
 
  8. Validate using MyGet packages. Basic sanity checks :)
 
