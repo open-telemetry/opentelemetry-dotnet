@@ -150,7 +150,7 @@ internal sealed class PrometheusCollectionManager
         SpinWait readWait = default;
         while (true)
         {
-            if (Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) != 0)
+            if (Interlocked.CompareExchange(ref this.readerCount, 0, 0) != 0)
             {
                 readWait.SpinOnce();
                 continue;
