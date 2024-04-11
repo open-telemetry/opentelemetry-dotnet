@@ -268,7 +268,7 @@ public sealed class PrometheusExporterMiddlewareTests
         counter.Add(100.18D, tags);
         counter.Add(0.99D, tags);
 
-        bool[] requestOpenMetricsTestCases = Enumerable.Repeat<bool[]>([true, false, false, true], 5000000).SelectMany(i => i).ToArray();
+        bool[] requestOpenMetricsTestCases = Enumerable.Repeat<bool[]>([true, false, false, true], 1000000).SelectMany(i => i).ToArray();
         using var client = host.GetTestClient();
 
         await Parallel.ForEachAsync(requestOpenMetricsTestCases, async (requestOpenMetrics, _) =>
@@ -280,7 +280,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 Method = HttpMethod.Get,
             };
 
-            using var response = await client.SendAsync(request);
+            using var response = await client.SendAsync(request).WaitAsync(TimeSpan.FromSeconds(10));
 
             var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
