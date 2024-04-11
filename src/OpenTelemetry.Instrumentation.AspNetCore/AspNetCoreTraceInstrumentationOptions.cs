@@ -32,6 +32,14 @@ public class AspNetCoreTraceInstrumentationOptions
         {
             this.EnableGrpcAspNetCoreSupport = enableGrpcInstrumentation;
         }
+
+        if (configuration.TryGetBoolValue(
+            AspNetCoreInstrumentationEventSource.Log,
+            "OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_DISABLE_URL_QUERY_REDACTION",
+            out var disableUrlQueryRedaction))
+        {
+            this.DisableUrlQueryRedaction = disableUrlQueryRedaction;
+        }
     }
 
     /// <summary>
@@ -94,4 +102,14 @@ public class AspNetCoreTraceInstrumentationOptions
     /// https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md.
     /// </remarks>
     internal bool EnableGrpcAspNetCoreSupport { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the url query value should be redacted or not.
+    /// </summary>
+    /// <remarks>
+    /// The query parameter values are redacted with value set as Redacted.
+    /// e.g. ?key1=value1;key2=value2 is set as ?key1=Redacted;key2=Redacted.
+    /// The redaction can be disabled by setting this property to <see langword="true" />.
+    /// </remarks>
+    internal bool DisableUrlQueryRedaction { get; set; }
 }

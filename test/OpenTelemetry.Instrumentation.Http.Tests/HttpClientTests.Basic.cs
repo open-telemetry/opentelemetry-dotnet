@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
+
 #if NETFRAMEWORK
 using System.Net.Http;
+
 #endif
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Context.Propagation;
@@ -664,6 +667,66 @@ public partial class HttpClientTests : IDisposable
         // Exception is thrown and not collected as event
         Assert.True(exceptionThrown);
         Assert.Empty(exportedItems[0].Events);
+    }
+
+    [Theory]
+    [InlineData("?a", "?a", false)]
+    [InlineData("?a=bdjdjh", "?a=Redacted", false)]
+    [InlineData("?a=b&", "?a=Redacted&", false)]
+    [InlineData("?c=b&", "?c=Redacted&", false)]
+    [InlineData("?c=a", "?c=Redacted", false)]
+    [InlineData("?a=b&c", "?a=Redacted&c", false)]
+    [InlineData("?a=b&c=1123456&", "?a=Redacted&c=Redacted&", false)]
+    [InlineData("?a=b&c=1&a1", "?a=Redacted&c=Redacted&a1", false)]
+    [InlineData("?a=ghgjgj&c=1deedd&a1=", "?a=Redacted&c=Redacted&a1=Redacted", false)]
+    [InlineData("?a=b&c=11&a1=&", "?a=Redacted&c=Redacted&a1=Redacted&", false)]
+    [InlineData("?c&c&c&", "?c&c&c&", false)]
+    [InlineData("?a&a&a&a", "?a&a&a&a", false)]
+    [InlineData("?&&&&&&&", "?&&&&&&&", false)]
+    [InlineData("?c", "?c", false)]
+    [InlineData("?a", "?a", true)]
+    [InlineData("?a=bdfdfdf", "?a=bdfdfdf", true)]
+    [InlineData("?a=b&", "?a=b&", true)]
+    [InlineData("?c=b&", "?c=b&", true)]
+    [InlineData("?c=a", "?c=a", true)]
+    [InlineData("?a=b&c", "?a=b&c", true)]
+    [InlineData("?a=b&c=111111&", "?a=b&c=111111&", true)]
+    [InlineData("?a=b&c=1&a1", "?a=b&c=1&a1", true)]
+    [InlineData("?a=b&c=1&a1=", "?a=b&c=1&a1=", true)]
+    [InlineData("?a=b123&c=11&a1=&", "?a=b123&c=11&a1=&", true)]
+    [InlineData("?c&c&c&", "?c&c&c&", true)]
+    [InlineData("?a&a&a&a", "?a&a&a&a", true)]
+    [InlineData("?&&&&&&&", "?&&&&&&&", true)]
+    [InlineData("?c", "?c", true)]
+    public async Task ValidateUrlQueryRedaction(string urlQuery, string expectedUrlQuery, bool disableQueryRedaction)
+    {
+        var exportedItems = new List<Activity>();
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { ["OTEL_DOTNET_EXPERIMENTAL_HTTPCLIENT_DISABLE_URL_QUERY_REDACTION"] = disableQueryRedaction.ToString() })
+            .Build();
+
+        // Arrange
+        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddHttpClientInstrumentation()
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var c = new HttpClient();
+        try
+        {
+            await c.GetStringAsync($"{this.url}path{urlQuery}");
+        }
+        catch
+        {
+        }
+
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
+
+        var expectedUrl = $"{this.url}path{expectedUrlQuery}";
+        Assert.Equal(expectedUrl, activity.GetTagValue(SemanticConventions.AttributeUrlFull));
     }
 
     [Theory]

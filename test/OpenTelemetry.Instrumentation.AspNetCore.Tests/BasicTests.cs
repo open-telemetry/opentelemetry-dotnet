@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -1051,6 +1052,77 @@ public sealed class BasicTests
         Assert.True(result);
     }
 #endif
+
+    [Theory]
+    [InlineData("?a", "?a", false)]
+    [InlineData("?a=bdjdjh", "?a=Redacted", false)]
+    [InlineData("?a=b&", "?a=Redacted&", false)]
+    [InlineData("?c=b&", "?c=Redacted&", false)]
+    [InlineData("?c=a", "?c=Redacted", false)]
+    [InlineData("?a=b&c", "?a=Redacted&c", false)]
+    [InlineData("?a=b&c=1123456&", "?a=Redacted&c=Redacted&", false)]
+    [InlineData("?a=b&c=1&a1", "?a=Redacted&c=Redacted&a1", false)]
+    [InlineData("?a=ghgjgj&c=1deedd&a1=", "?a=Redacted&c=Redacted&a1=Redacted", false)]
+    [InlineData("?a=b&c=11&a1=&", "?a=Redacted&c=Redacted&a1=Redacted&", false)]
+    [InlineData("?c&c&c&", "?c&c&c&", false)]
+    [InlineData("?a&a&a&a", "?a&a&a&a", false)]
+    [InlineData("?&&&&&&&", "?&&&&&&&", false)]
+    [InlineData("?c", "?c", false)]
+    [InlineData("?a", "?a", true)]
+    [InlineData("?a=bdfdfdf", "?a=bdfdfdf", true)]
+    [InlineData("?a=b&", "?a=b&", true)]
+    [InlineData("?c=b&", "?c=b&", true)]
+    [InlineData("?c=a", "?c=a", true)]
+    [InlineData("?a=b&c", "?a=b&c", true)]
+    [InlineData("?a=b&c=111111&", "?a=b&c=111111&", true)]
+    [InlineData("?a=b&c=1&a1", "?a=b&c=1&a1", true)]
+    [InlineData("?a=b&c=1&a1=", "?a=b&c=1&a1=", true)]
+    [InlineData("?a=b123&c=11&a1=&", "?a=b123&c=11&a1=&", true)]
+    [InlineData("?c&c&c&", "?c&c&c&", true)]
+    [InlineData("?a&a&a&a", "?a&a&a&a", true)]
+    [InlineData("?&&&&&&&", "?&&&&&&&", true)]
+    [InlineData("?c", "?c", true)]
+    public async Task ValidateUrlQueryRedaction(string urlQuery, string expectedUrlQuery, bool disableQueryRedaction)
+    {
+        var exportedItems = new List<Activity>();
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { ["OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_DISABLE_URL_QUERY_REDACTION"] = disableQueryRedaction.ToString() })
+            .Build();
+
+        var path = "/api/values" + urlQuery;
+
+        // Arrange
+        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using (var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient())
+        {
+            try
+            {
+                using var response = await client.GetAsync(path);
+            }
+            catch (Exception)
+            {
+                // ignore errors
+            }
+
+            WaitForActivityExport(exportedItems, 1);
+        }
+
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
+
+        Assert.Equal(expectedUrlQuery, activity.GetTagValue(SemanticConventions.AttributeUrlQuery));
+    }
 
     public void Dispose()
     {
