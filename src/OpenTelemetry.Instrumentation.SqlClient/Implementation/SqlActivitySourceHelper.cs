@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Reflection;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Implementation;

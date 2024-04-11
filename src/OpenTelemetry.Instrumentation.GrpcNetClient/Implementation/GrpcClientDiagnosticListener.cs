@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
