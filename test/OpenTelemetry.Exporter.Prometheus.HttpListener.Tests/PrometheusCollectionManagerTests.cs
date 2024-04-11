@@ -54,18 +54,18 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
-                    var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
+                    var response = await exporter.CollectionManager.EnterCollect();
                     try
                     {
                         return new Response
                         {
                             CollectionResponse = response,
-                            ViewPayload = response.View.ToArray(),
+                            ViewPayload = openMetricsRequested ? response.OpenMetricsView.ToArray() : response.PlainTextView.ToArray(),
                         };
                     }
                     finally
                     {
-                        exporter.CollectionManager.ExitCollect(response.IsOpenMetricsFormat);
+                        exporter.CollectionManager.ExitCollect();
                     }
                 });
             }
@@ -87,7 +87,7 @@ public sealed class PrometheusCollectionManagerTests
             counter.Add(100);
 
             // This should use the cache and ignore the second counter update.
-            var task = exporter.CollectionManager.EnterCollect(openMetricsRequested);
+            var task = exporter.CollectionManager.EnterCollect();
             Assert.True(task.IsCompleted);
             var response = await task;
             try
@@ -107,7 +107,7 @@ public sealed class PrometheusCollectionManagerTests
             }
             finally
             {
-                exporter.CollectionManager.ExitCollect(response.IsOpenMetricsFormat);
+                exporter.CollectionManager.ExitCollect();
             }
 
             Thread.Sleep(exporter.ScrapeResponseCacheDurationMilliseconds);
@@ -118,18 +118,18 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
-                    var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
+                    var response = await exporter.CollectionManager.EnterCollect();
                     try
                     {
                         return new Response
                         {
                             CollectionResponse = response,
-                            ViewPayload = response.View.ToArray(),
+                            ViewPayload = openMetricsRequested ? response.OpenMetricsView.ToArray() : response.PlainTextView.ToArray(),
                         };
                     }
                     finally
                     {
-                        exporter.CollectionManager.ExitCollect(response.IsOpenMetricsFormat);
+                        exporter.CollectionManager.ExitCollect();
                     }
                 });
             }

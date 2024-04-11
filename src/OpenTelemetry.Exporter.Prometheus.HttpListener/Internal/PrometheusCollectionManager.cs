@@ -8,376 +8,258 @@ namespace OpenTelemetry.Exporter.Prometheus;
 
 internal sealed class PrometheusCollectionManager
 {
-    private readonly PrometheusCollector openMetricsCollector;
-    private readonly PrometheusCollector plainTextCollector;
+    private const int MaxCachedMetrics = 1024;
+
     private readonly PrometheusExporter exporter;
+    private readonly int scrapeResponseCacheDurationMilliseconds;
+    private readonly Func<Batch<Metric>, ExportResult> onCollectRef;
+    private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
+    private readonly HashSet<string> scopes;
+    private int metricsCacheCount;
+    private byte[] plainTextBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
+    private byte[] openMetricsBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
+    private int targetInfoBufferLength = -1; // zero or positive when target_info has been written for the first time
+    private int globalLockState;
+    private ArraySegment<byte> previousPlainTextDataView;
+    private ArraySegment<byte> previousOpenMetricsDataView;
+    private DateTime? previousDataViewGeneratedAtUtc;
+    private int readerCount;
+    private bool collectionRunning;
+    private TaskCompletionSource<CollectionResponse> collectionTcs;
 
     public PrometheusCollectionManager(PrometheusExporter exporter)
     {
         this.exporter = exporter;
-        this.openMetricsCollector = new PrometheusCollector(exporter, true);
-        this.plainTextCollector = new PrometheusCollector(exporter, false);
-        this.exporter.OnExport += this.openMetricsCollector.OnCollect;
-        this.exporter.OnExport += this.plainTextCollector.OnCollect;
+        this.scrapeResponseCacheDurationMilliseconds = this.exporter.ScrapeResponseCacheDurationMilliseconds;
+        this.onCollectRef = this.OnCollect;
+        this.metricsCache = new Dictionary<Metric, PrometheusMetric>();
+        this.scopes = new HashSet<string>();
     }
 
-    ~PrometheusCollectionManager()
-    {
-        this.exporter.OnExport -= this.openMetricsCollector.OnCollect;
-        this.exporter.OnExport -= this.plainTextCollector.OnCollect;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NET6_0_OR_GREATER
-    public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested)
+    public ValueTask<CollectionResponse> EnterCollect()
 #else
-    public Task<CollectionResponse> EnterCollect(bool openMetricsRequested)
+    public Task<CollectionResponse> EnterCollect()
 #endif
     {
-        return openMetricsRequested ? this.openMetricsCollector.EnterCollect() : this.plainTextCollector.EnterCollect();
-    }
+        this.EnterGlobalLock();
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitCollect(bool openMetricsRequested)
-    {
-        if (openMetricsRequested)
+        // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
+        // last successful collect, return the previous view.
+        if (this.previousDataViewGeneratedAtUtc.HasValue
+            && this.scrapeResponseCacheDurationMilliseconds > 0
+            && this.previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
         {
-            this.openMetricsCollector.ExitCollect();
+            Interlocked.Increment(ref this.readerCount);
+            this.ExitGlobalLock();
+#if NET6_0_OR_GREATER
+            return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: true));
+#else
+            return Task.FromResult(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: true));
+#endif
+        }
+
+        // If a collection is already running, return a task to wait on the result.
+        if (this.collectionRunning)
+        {
+            var collectionTcs = this.collectionTcs;
+            if (collectionTcs == null)
+            {
+                collectionTcs = new TaskCompletionSource<CollectionResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+                this.collectionTcs = collectionTcs;
+            }
+
+            Interlocked.Increment(ref this.readerCount);
+            this.ExitGlobalLock();
+#if NET6_0_OR_GREATER
+            return new ValueTask<CollectionResponse>(collectionTcs.Task);
+#else
+            return collectionTcs.Task;
+#endif
+        }
+
+        this.WaitForReadersToComplete();
+
+        // Start a collection on the current thread.
+        this.collectionRunning = true;
+        this.previousDataViewGeneratedAtUtc = null;
+        Interlocked.Increment(ref this.readerCount);
+        this.ExitGlobalLock();
+
+        CollectionResponse response;
+        var result = this.ExecuteCollect();
+        if (result)
+        {
+            this.previousDataViewGeneratedAtUtc = DateTime.UtcNow;
+            response = new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: false);
         }
         else
         {
-            this.plainTextCollector.ExitCollect();
+            response = default;
         }
-    }
 
-    public readonly struct CollectionResponse
-    {
-        public CollectionResponse(ArraySegment<byte> view, DateTime generatedAtUtc, bool fromCache, bool isOpenMetricsFormat)
+        this.EnterGlobalLock();
+
+        this.collectionRunning = false;
+
+        if (this.collectionTcs != null)
         {
-            this.View = view;
-            this.GeneratedAtUtc = generatedAtUtc;
-            this.FromCache = fromCache;
-            this.IsOpenMetricsFormat = isOpenMetricsFormat;
+            this.collectionTcs.SetResult(response);
+            this.collectionTcs = null;
         }
 
-        public ArraySegment<byte> View { get; }
-
-        public DateTime GeneratedAtUtc { get; }
-
-        public bool FromCache { get; }
-
-        public bool IsOpenMetricsFormat { get; }
-    }
-
-    internal sealed class PrometheusCollector
-    {
-        private const int MaxCachedMetrics = 1024;
-
-        private readonly PrometheusExporter exporter;
-        private readonly bool isOpenMetricsFormat;
-        private readonly int scrapeResponseCacheDurationMilliseconds;
-        private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
-        private readonly HashSet<string> scopes;
-        private int metricsCacheCount;
-        private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
-        private int targetInfoBufferLength = -1; // zero or positive when target_info has been written for the first time
-        private int globalLockState;
-        private ArraySegment<byte> previousDataView;
-        private DateTime? previousDataViewGeneratedAtUtc;
-        private bool collectionRunning;
-        private int readerCount;
-        private TaskCompletionSource<CollectionResponse> collectionTcs;
-
-        public PrometheusCollector(PrometheusExporter exporter, bool isOpenMetricsFormat)
-        {
-            this.exporter = exporter;
-            this.isOpenMetricsFormat = isOpenMetricsFormat;
-            this.scrapeResponseCacheDurationMilliseconds = this.exporter.ScrapeResponseCacheDurationMilliseconds;
-            this.metricsCache = new Dictionary<Metric, PrometheusMetric>();
-            this.scopes = new HashSet<string>();
-        }
+        this.ExitGlobalLock();
 
 #if NET6_0_OR_GREATER
-        public async ValueTask<CollectionResponse> EnterCollect()
+        return new ValueTask<CollectionResponse>(response);
 #else
-        public async Task<CollectionResponse> EnterCollect()
+        return Task.FromResult(response);
 #endif
-        {
-            this.EnterGlobalLock();
+    }
 
-            // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
-            // last successful collect, return the previous view.
-            if (this.previousDataViewGeneratedAtUtc.HasValue
-                && this.scrapeResponseCacheDurationMilliseconds > 0
-                && this.previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ExitCollect()
+    {
+        Interlocked.Decrement(ref this.readerCount);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void EnterGlobalLock()
+    {
+        SpinWait lockWait = default;
+        while (true)
+        {
+            if (Interlocked.CompareExchange(ref this.globalLockState, 1, this.globalLockState) != 0)
             {
-                Interlocked.Increment(ref this.readerCount);
-                this.ExitGlobalLock();
-                return new CollectionResponse(this.previousDataView, this.previousDataViewGeneratedAtUtc.Value, true, this.isOpenMetricsFormat);
+                lockWait.SpinOnce();
+                continue;
             }
 
-            // If a collection is already running, return a task to wait on the result.
-            if (this.collectionRunning)
+            break;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ExitGlobalLock()
+    {
+        Interlocked.Exchange(ref this.globalLockState, 0);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void WaitForReadersToComplete()
+    {
+        SpinWait readWait = default;
+        while (true)
+        {
+            if (Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) != 0)
             {
-                if (this.collectionTcs == null)
+                readWait.SpinOnce();
+                continue;
+            }
+
+            break;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool ExecuteCollect()
+    {
+        this.exporter.OnExport = this.onCollectRef;
+        var result = this.exporter.Collect(Timeout.Infinite);
+        this.exporter.OnExport = null;
+        return result;
+    }
+
+    private ExportResult OnCollect(Batch<Metric> metrics)
+    {
+        try
+        {
+            var openMetricsCursor = this.WriteTargetInfo();
+            var plainTextCursor = 0;
+
+            this.scopes.Clear();
+
+            foreach (var metric in metrics)
+            {
+                if (!PrometheusSerializer.CanWriteMetric(metric))
                 {
-                    this.collectionTcs = new TaskCompletionSource<CollectionResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    continue;
                 }
 
-                Interlocked.Increment(ref this.readerCount);
-                this.ExitGlobalLock();
-                return await this.collectionTcs.Task;
-            }
-
-            this.WaitForReadersToComplete();
-
-            // Start a collection on the current thread.
-            this.collectionRunning = true;
-            this.previousDataViewGeneratedAtUtc = null;
-            Interlocked.Increment(ref this.readerCount);
-            this.ExitGlobalLock();
-
-            CollectionResponse response;
-            var result = await this.ExecuteCollectAsync();
-            if (result)
-            {
-                this.previousDataViewGeneratedAtUtc = DateTime.UtcNow;
-                response = new CollectionResponse(this.previousDataView, this.previousDataViewGeneratedAtUtc.Value, false, this.isOpenMetricsFormat);
-            }
-            else
-            {
-                response = default;
-            }
-
-            this.EnterGlobalLock();
-
-            this.collectionRunning = false;
-
-            if (this.collectionTcs != null)
-            {
-                this.collectionTcs.SetResult(response);
-                this.collectionTcs = null;
-            }
-
-            this.ExitGlobalLock();
-
-            return response;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ExitCollect()
-        {
-            Interlocked.Decrement(ref this.readerCount);
-        }
-
-        internal ExportResult OnCollect(Batch<Metric> metrics)
-        {
-            var cursor = 0;
-
-            try
-            {
-                if (this.isOpenMetricsFormat)
+                if (this.scopes.Add(metric.MeterName))
                 {
-                    cursor = this.WriteTargetInfo();
-
-                    this.scopes.Clear();
-
-                    foreach (var metric in metrics)
-                    {
-                        if (!PrometheusSerializer.CanWriteMetric(metric))
-                        {
-                            continue;
-                        }
-
-                        if (this.scopes.Add(metric.MeterName))
-                        {
-                            while (true)
-                            {
-                                try
-                                {
-                                    cursor = PrometheusSerializer.WriteScopeInfo(this.buffer, cursor, metric.MeterName);
-
-                                    break;
-                                }
-                                catch (IndexOutOfRangeException)
-                                {
-                                    if (!this.IncreaseBufferSize())
-                                    {
-                                        // there are two cases we might run into the following condition:
-                                        // 1. we have many metrics to be exported - in this case we probably want
-                                        //    to put some upper limit and allow the user to configure it.
-                                        // 2. we got an IndexOutOfRangeException which was triggered by some other
-                                        //    code instead of the buffer[cursor++] - in this case we should give up
-                                        //    at certain point rather than allocating like crazy.
-                                        throw;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                foreach (var metric in metrics)
-                {
-                    if (!PrometheusSerializer.CanWriteMetric(metric))
-                    {
-                        continue;
-                    }
-
                     while (true)
                     {
                         try
                         {
-                            cursor = PrometheusSerializer.WriteMetric(
-                                this.buffer,
-                                cursor,
-                                metric,
-                                this.GetPrometheusMetric(metric),
-                                this.isOpenMetricsFormat);
+                            openMetricsCursor = PrometheusSerializer.WriteScopeInfo(this.openMetricsBuffer, openMetricsCursor, metric.MeterName);
 
                             break;
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            if (!this.IncreaseBufferSize())
+                            if (!this.IncreaseBufferSize(ref this.openMetricsBuffer))
                             {
+                                // there are two cases we might run into the following condition:
+                                // 1. we have many metrics to be exported - in this case we probably want
+                                //    to put some upper limit and allow the user to configure it.
+                                // 2. we got an IndexOutOfRangeException which was triggered by some other
+                                //    code instead of the buffer[cursor++] - in this case we should give up
+                                //    at certain point rather than allocating like crazy.
                                 throw;
                             }
                         }
                     }
                 }
+            }
+
+            foreach (var metric in metrics)
+            {
+                if (!PrometheusSerializer.CanWriteMetric(metric))
+                {
+                    continue;
+                }
+
+                var prometheusMetric = this.GetPrometheusMetric(metric);
 
                 while (true)
                 {
                     try
                     {
-                        cursor = PrometheusSerializer.WriteEof(this.buffer, cursor);
+                        openMetricsCursor = PrometheusSerializer.WriteMetric(
+                            this.openMetricsBuffer,
+                            openMetricsCursor,
+                            metric,
+                            prometheusMetric,
+                            true);
+
                         break;
                     }
                     catch (IndexOutOfRangeException)
                     {
-                        if (!this.IncreaseBufferSize())
+                        if (!this.IncreaseBufferSize(ref this.openMetricsBuffer))
                         {
                             throw;
                         }
                     }
                 }
 
-                this.previousDataView = new ArraySegment<byte>(this.buffer, 0, cursor);
-                return ExportResult.Success;
-            }
-            catch (Exception)
-            {
-                this.previousDataView = new ArraySegment<byte>(Array.Empty<byte>(), 0, 0);
-                return ExportResult.Failure;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void EnterGlobalLock()
-        {
-            SpinWait lockWait = default;
-            while (true)
-            {
-                if (Interlocked.CompareExchange(ref this.globalLockState, 1, this.globalLockState) != 0)
-                {
-                    lockWait.SpinOnce();
-                    continue;
-                }
-
-                break;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ExitGlobalLock()
-        {
-            Interlocked.Exchange(ref this.globalLockState, 0);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void WaitForReadersToComplete()
-        {
-            SpinWait readWait = default;
-            while (true)
-            {
-                if (Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) != 0)
-                {
-                    readWait.SpinOnce();
-                    continue;
-                }
-
-                break;
-            }
-        }
-
-#if NET6_0_OR_GREATER
-        private ValueTask<bool> ExecuteCollectAsync()
-#else
-        private Task<bool> ExecuteCollectAsync()
-#endif
-        {
-            var shouldRunCollect = false;
-            var tcs = this.exporter.CollectionTcs;
-
-            if (tcs == null)
-            {
-                this.exporter.EnterCollectionLock();
-
-                try
-                {
-                    tcs = this.exporter.CollectionTcs;
-
-                    if (tcs == null)
-                    {
-                        shouldRunCollect = true;
-                        tcs = new TaskCompletionSource<bool>();
-                        this.exporter.CollectionTcs = tcs;
-                    }
-                }
-                finally
-                {
-                    this.exporter.ExitCollectionLock();
-                }
-            }
-
-            if (shouldRunCollect)
-            {
-                this.exporter.EnterCollectionLock();
-
-                try
-                {
-                    tcs.TrySetResult(this.exporter.Collect(Timeout.Infinite));
-                    this.exporter.CollectionTcs = null;
-                }
-                finally
-                {
-                    this.exporter.ExitCollectionLock();
-                }
-            }
-
-#if NET6_0_OR_GREATER
-            return new ValueTask<bool>(tcs.Task);
-#else
-            return tcs.Task;
-#endif
-        }
-
-        private int WriteTargetInfo()
-        {
-            if (this.targetInfoBufferLength < 0)
-            {
                 while (true)
                 {
                     try
                     {
-                        this.targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(this.buffer, 0, this.exporter.Resource);
+                        plainTextCursor = PrometheusSerializer.WriteMetric(
+                            this.plainTextBuffer,
+                            plainTextCursor,
+                            metric,
+                            prometheusMetric,
+                            false);
 
                         break;
                     }
                     catch (IndexOutOfRangeException)
                     {
-                        if (!this.IncreaseBufferSize())
+                        if (!this.IncreaseBufferSize(ref this.plainTextBuffer))
                         {
                             throw;
                         }
@@ -385,41 +267,124 @@ internal sealed class PrometheusCollectionManager
                 }
             }
 
-            return this.targetInfoBufferLength;
-        }
-
-        private bool IncreaseBufferSize()
-        {
-            var newBufferSize = this.buffer.Length * 2;
-
-            if (newBufferSize > 100 * 1024 * 1024)
+            while (true)
             {
-                return false;
-            }
-
-            var newBuffer = new byte[newBufferSize];
-            this.buffer.CopyTo(newBuffer, 0);
-            this.buffer = newBuffer;
-
-            return true;
-        }
-
-        private PrometheusMetric GetPrometheusMetric(Metric metric)
-        {
-            // Optimize writing metrics with bounded cache that has pre-calculated Prometheus names.
-            if (!this.metricsCache.TryGetValue(metric, out var prometheusMetric))
-            {
-                prometheusMetric = PrometheusMetric.Create(metric, this.exporter.DisableTotalNameSuffixForCounters);
-
-                // Add to the cache if there is space.
-                if (this.metricsCacheCount < MaxCachedMetrics)
+                try
                 {
-                    this.metricsCache[metric] = prometheusMetric;
-                    this.metricsCacheCount++;
+                    openMetricsCursor = PrometheusSerializer.WriteEof(this.openMetricsBuffer, openMetricsCursor);
+                    break;
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    if (!this.IncreaseBufferSize(ref this.openMetricsBuffer))
+                    {
+                        throw;
+                    }
                 }
             }
 
-            return prometheusMetric;
+            while (true)
+            {
+                try
+                {
+                    plainTextCursor = PrometheusSerializer.WriteEof(this.plainTextBuffer, plainTextCursor);
+                    break;
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    if (!this.IncreaseBufferSize(ref this.plainTextBuffer))
+                    {
+                        throw;
+                    }
+                }
+            }
+
+            this.previousOpenMetricsDataView = new ArraySegment<byte>(this.openMetricsBuffer, 0, openMetricsCursor);
+            this.previousPlainTextDataView = new ArraySegment<byte>(this.plainTextBuffer, 0, plainTextCursor);
+            return ExportResult.Success;
         }
+        catch (Exception)
+        {
+            this.previousOpenMetricsDataView = this.previousPlainTextDataView = new ArraySegment<byte>(Array.Empty<byte>(), 0, 0);
+            return ExportResult.Failure;
+        }
+    }
+
+    private int WriteTargetInfo()
+    {
+        if (this.targetInfoBufferLength < 0)
+        {
+            while (true)
+            {
+                try
+                {
+                    this.targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(this.openMetricsBuffer, 0, this.exporter.Resource);
+
+                    break;
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    if (!this.IncreaseBufferSize(ref this.openMetricsBuffer))
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        return this.targetInfoBufferLength;
+    }
+
+    private bool IncreaseBufferSize(ref byte[] buffer)
+    {
+        var newBufferSize = buffer.Length * 2;
+
+        if (newBufferSize > 100 * 1024 * 1024)
+        {
+            return false;
+        }
+
+        var newBuffer = new byte[newBufferSize];
+        buffer.CopyTo(newBuffer, 0);
+        buffer = newBuffer;
+
+        return true;
+    }
+
+    private PrometheusMetric GetPrometheusMetric(Metric metric)
+    {
+        // Optimize writing metrics with bounded cache that has pre-calculated Prometheus names.
+        if (!this.metricsCache.TryGetValue(metric, out var prometheusMetric))
+        {
+            prometheusMetric = PrometheusMetric.Create(metric, this.exporter.DisableTotalNameSuffixForCounters);
+
+            // Add to the cache if there is space.
+            if (this.metricsCacheCount < MaxCachedMetrics)
+            {
+                this.metricsCache[metric] = prometheusMetric;
+                this.metricsCacheCount++;
+            }
+        }
+
+        return prometheusMetric;
+    }
+
+    public readonly struct CollectionResponse
+    {
+        public CollectionResponse(ArraySegment<byte> openMetricsView, ArraySegment<byte> plainTextView, DateTime generatedAtUtc, bool fromCache)
+        {
+            this.OpenMetricsView = openMetricsView;
+            this.PlainTextView = plainTextView;
+            this.GeneratedAtUtc = generatedAtUtc;
+            this.FromCache = fromCache;
+        }
+
+        public ArraySegment<byte> OpenMetricsView { get; }
+
+        public ArraySegment<byte> PlainTextView { get; }
+
+        public DateTime GeneratedAtUtc { get; }
+
+        public bool FromCache { get; }
     }
 }

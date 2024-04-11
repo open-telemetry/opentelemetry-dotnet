@@ -53,11 +53,13 @@ internal sealed class PrometheusExporterMiddleware
         try
         {
             var openMetricsRequested = AcceptsOpenMetrics(httpContext.Request);
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
 
             try
             {
-                if (collectionResponse.View.Count > 0)
+                var dataView = openMetricsRequested ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
+
+                if (dataView.Count > 0)
                 {
                     response.StatusCode = 200;
 #if NET8_0_OR_GREATER
@@ -69,7 +71,7 @@ internal sealed class PrometheusExporterMiddleware
                         ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
                         : "text/plain; charset=utf-8; version=0.0.4";
 
-                    await response.Body.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
+                    await response.Body.WriteAsync(dataView.Array, 0, dataView.Count).ConfigureAwait(false);
                 }
                 else
                 {
@@ -80,7 +82,7 @@ internal sealed class PrometheusExporterMiddleware
             }
             finally
             {
-                this.exporter.CollectionManager.ExitCollect(collectionResponse.IsOpenMetricsFormat);
+                this.exporter.CollectionManager.ExitCollect();
             }
         }
         catch (Exception ex)

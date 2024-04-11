@@ -35,8 +35,6 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         this.CollectionManager = new PrometheusCollectionManager(this);
     }
 
-    internal event Func<Batch<Metric>, ExportResult> OnExport;
-
     /// <summary>
     /// Gets or sets the Collect delegate.
     /// </summary>
@@ -45,6 +43,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         get => this.funcCollect;
         set => this.funcCollect = value;
     }
+
+    internal Func<Batch<Metric>, ExportResult> OnExport { get; set; }
 
     internal Action OnDispose { get; set; }
 
