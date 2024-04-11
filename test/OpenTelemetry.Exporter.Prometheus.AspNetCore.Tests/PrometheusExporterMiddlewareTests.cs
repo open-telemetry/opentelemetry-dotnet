@@ -268,7 +268,7 @@ public sealed class PrometheusExporterMiddlewareTests
         counter.Add(100.18D, tags);
         counter.Add(0.99D, tags);
 
-        bool[] requestOpenMetricsTestCases = Enumerable.Repeat<bool[]>([true, false], 5000000).SelectMany(i => i).ToArray();
+        bool[] requestOpenMetricsTestCases = Enumerable.Repeat<bool[]>([true, false, false, true], 5000000).SelectMany(i => i).ToArray();
 
         await Parallel.ForEachAsync(requestOpenMetricsTestCases, async (requestOpenMetrics, _) =>
         {
@@ -379,11 +379,11 @@ public sealed class PrometheusExporterMiddlewareTests
 
         var matches = Regex.Matches(content, "^" + expected + "$");
 
-        Assert.Single(matches);
+        Assert.True(matches.Count == 1, content);
 
         var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty));
 
-        Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
+        Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp, $"{beginTimestamp} {timestamp} {endTimestamp}");
     }
 
     private static Task<IHost> StartTestHostAsync(

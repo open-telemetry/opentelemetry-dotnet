@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -13,9 +14,12 @@ namespace OpenTelemetry.Exporter.Prometheus;
 [ExportModes(ExportModes.Pull)]
 internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
 {
+    internal TaskCompletionSource<bool> CollectionTcs;
+
     private Func<int, bool> funcCollect;
     private Resource resource;
     private bool disposed;
+    private int collectionLockState;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
@@ -50,8 +54,6 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 
     internal bool DisableTotalNameSuffixForCounters { get; }
 
-    internal TaskCompletionSource<bool> CollectionCts { get; set; }
-
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
 
     /// <inheritdoc/>
@@ -67,6 +69,28 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         }
 
         return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void EnterCollectionLock()
+    {
+        SpinWait lockWait = default;
+        while (true)
+        {
+            if (Interlocked.CompareExchange(ref this.collectionLockState, 1, this.collectionLockState) != 0)
+            {
+                lockWait.SpinOnce();
+                continue;
+            }
+
+            break;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ExitCollectionLock()
+    {
+        Interlocked.Exchange(ref this.collectionLockState, 0);
     }
 
     /// <inheritdoc/>

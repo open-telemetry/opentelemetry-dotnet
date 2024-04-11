@@ -12,8 +12,6 @@ internal sealed class PrometheusCollectionManager
     private readonly PrometheusCollector plainTextCollector;
     private readonly PrometheusExporter exporter;
 
-    private int collectionCtsLockState;
-
     public PrometheusCollectionManager(PrometheusExporter exporter)
     {
         this.exporter = exporter;
@@ -50,28 +48,6 @@ internal sealed class PrometheusCollectionManager
         {
             this.plainTextCollector.ExitCollect();
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void EnterCollectionLock()
-    {
-        SpinWait lockWait = default;
-        while (true)
-        {
-            if (Interlocked.CompareExchange(ref this.collectionCtsLockState, 1, this.collectionCtsLockState) != 0)
-            {
-                lockWait.SpinOnce();
-                continue;
-            }
-
-            break;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ExitCollectionLock()
-    {
-        Interlocked.Exchange(ref this.collectionCtsLockState, 0);
     }
 
     public readonly struct CollectionResponse
@@ -240,10 +216,6 @@ internal sealed class PrometheusCollectionManager
                         }
                     }
                 }
-                else
-                {
-                    this.targetInfoBufferLength = -1;
-                }
 
                 foreach (var metric in metrics)
                 {
@@ -345,25 +317,49 @@ internal sealed class PrometheusCollectionManager
         private Task<bool> ExecuteCollectAsync()
 #endif
         {
-            this.exporter.CollectionManager.EnterCollectionLock();
+            var shouldRunCollect = false;
+            var tcs = this.exporter.CollectionTcs;
 
-            if (this.exporter.CollectionCts is not TaskCompletionSource<bool> collectionCts)
+            if (tcs == null)
             {
-                this.exporter.CollectionCts = new TaskCompletionSource<bool>();
-                collectionCts = this.exporter.CollectionCts;
-                this.exporter.CollectionManager.ExitCollectionLock();
-                var result = this.exporter.Collect(Timeout.Infinite);
-                this.exporter.CollectionManager.EnterCollectionLock();
-                this.exporter.CollectionCts = null;
-                collectionCts.SetResult(result);
+                this.exporter.EnterCollectionLock();
+
+                try
+                {
+                    tcs = this.exporter.CollectionTcs;
+
+                    if (tcs == null)
+                    {
+                        shouldRunCollect = true;
+                        tcs = new TaskCompletionSource<bool>();
+                        this.exporter.CollectionTcs = tcs;
+                    }
+                }
+                finally
+                {
+                    this.exporter.ExitCollectionLock();
+                }
             }
 
-            this.exporter.CollectionManager.ExitCollectionLock();
+            if (shouldRunCollect)
+            {
+                this.exporter.EnterCollectionLock();
+
+                try
+                {
+                    tcs.TrySetResult(this.exporter.Collect(Timeout.Infinite));
+                    this.exporter.CollectionTcs = null;
+                }
+                finally
+                {
+                    this.exporter.ExitCollectionLock();
+                }
+            }
 
 #if NET6_0_OR_GREATER
-            return new ValueTask<bool>(collectionCts.Task);
+            return new ValueTask<bool>(tcs.Task);
 #else
-            return collectionCts.Task;
+            return tcs.Task;
 #endif
         }
 
