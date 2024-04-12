@@ -6,11 +6,11 @@ Released 2024-Apr-12
 
 * **Breaking Change**: Fixed tracing instrumentation so that by default any
   values detected in the query string component of requests are replaced with
-  the text "Redacted" when building the `url.full` tag. For example,
+  the text `Redacted` when building the `url.full` tag. For example,
   `?key1=value1&key2=value2` becomes `?key1=Redacted&key2=Redacted`. You can
   disable this redaction by setting the environment variable
   `OTEL_DOTNET_EXPERIMENTAL_HTTPCLIENT_DISABLE_URL_QUERY_REDACTION` to `true`.
-  ([]())
+  ([#5532](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5532))
 
 ## 1.8.0
 
