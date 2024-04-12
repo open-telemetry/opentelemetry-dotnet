@@ -1,16 +1,31 @@
 # Release process
 
-Only for Maintainers.
+**Only for Maintainers.**
 
- 1. Decide the tag name (version name) to be released. e.g. 1.4.0-beta.1,
-    1.0.0-rc9.7 etc.
+ 1. Decide the component(s) and tag name (version name) to be released.
 
     Notes:
+
+       * There are different categories of packages. Check the project file for
+         what you want to release and look for `MinVerTagPrefix`.
+
+         * `core-`: Core packages. These packages are defined\goverened by the
+           OpenTelemetry Specification and have released stable versions. They
+           may be released as `alpha`, `beta`, `rc`, or stable.
+
+         * `coreunstable-`: Core unstable packages. These packages are
+           defined\goverened by the OpenTelemetry Specification but have not
+           released stable versions. They may be released as `alpha` or `beta`.
+
+         * Everything else: Instrumentation packages have dedicated tags. Some
+           packages have released stable and some have not. These packages may
+           be released as `alpha`, `beta`, `rc`, or stable depending on the
+           stability of the semantic conventions used by the instrumentation.
 
        * Instrumentation packages are core unstable packages always depend on
        the stable versions of core packages. Before releasing a non-core
        component ensure the `OTelLatestStableVer` property in
-       Directory.Packages.props has been updated to the latest stable core
+       `Directory.Packages.props` has been updated to the latest stable core
        version.
 
        * Core unstable packages may only be released as `alpha` or `beta`.
@@ -113,8 +128,8 @@ Only for Maintainers.
     tags](https://github.com/open-telemetry/opentelemetry-dotnet/tags) and find
     the tag(s) which were pushed. Click the three dots next to the tag and
     choose `Create release`.
-      * Give the release a name based on the tags created (e.g., `1.4.0-beta.1 /
-      1.0.0-rc9.7`).
+      * Give the release a name based on the tags created (e.g., `1.9.0-beta.1 /
+      1.9.0`).
       * Paste the contents of combined changelog from Step 2. Only include
         projects with changes.
       * Check "This is a pre-release" if applicable.
@@ -133,7 +148,9 @@ Only for Maintainers.
 11. Download latest [nuget.exe](https://www.nuget.org/downloads) into the same
     folder from Step 10.
 
-12. Obtain the API key from nuget.org (Only maintainers have access)
+12. Create or regenerate an API key from nuget.org (only maintainers have
+    access). When creating API keys make sure it is set to expire in 1 day or
+    less.
 
 13. Run the following commands from PowerShell from local folder used in Step 10:
 
@@ -143,15 +160,19 @@ Only for Maintainers.
     get-childitem -Recurse | where {$_.extension -eq ".nupkg"} | foreach ($_) {.\nuget.exe push $_.fullname -Source https://api.nuget.org/v3/index.json}
     ```
 
-14. Packages would be available in nuget.org in few minutes. Validate that the
-    package is uploaded.
+14. Validate that the package(s) are uploaded. Packages are available
+    immediately to maintainers on nuget.org but aren't publicly visible until
+    scanning completes. This process usually takes a few minutes.
 
-15. Delete the API key generated in Step 12.
+15. If a new stable version of the core packages was released, open a PR to
+    update the `OTelLatestStableVer` property in `Directory.Packages.props` to
+    the just released stable version.
 
-16. Update the OpenTelemetry.io document
-    [here](https://github.com/open-telemetry/opentelemetry.io/tree/main/content/en/docs/net)
-    by sending a Pull Request.
+16. If a new stable version of the core packages was released, open an issue in
+    the
+    [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
+    repo to notify maintainers to begin upgrading dependencies.
 
-17. If a new stable version of the core packages were released, open a PR to
-    update the `OTelLatestStableVer` property in Directory.Packages.props to the
-    just released stable version.
+17. Once the packages are available on nuget.org post an announcement in the
+    [Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). Note
+    any big or interesting new features as part of the announcement.
