@@ -35,6 +35,8 @@ public class HttpWebRequestActivitySourceTests : IDisposable
                     ValidateBaggage(httpWebRequest);
                 }
             },
+
+            DisableUrlQueryRedaction = true,
         };
 
         HttpWebRequestActivitySource.TracingOptions = options;

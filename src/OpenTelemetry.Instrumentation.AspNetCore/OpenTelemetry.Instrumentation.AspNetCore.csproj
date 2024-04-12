@@ -17,6 +17,7 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\GrpcTagHelper.cs" Link="Includes\GrpcTagHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\StatusCanonicalCode.cs" Link="Includes\StatusCanonicalCode.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\RedactionHelper.cs" Link="Includes\RedactionHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\RequestMethodHelper.cs" Link="Includes\RequestMethodHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Options\*.cs" Link="Includes\Options\%(Filename).cs" />

@@ -64,4 +64,20 @@ internal static class DelegatingOptionsFactoryServiceCollectionExtensions
 
         return services!;
     }
+
+#if NET6_0_OR_GREATER
+    public static IServiceCollection DisableOptionsReloading<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(
+#else
+    public static IServiceCollection DisableOptionsReloading<T>(
+#endif
+        this IServiceCollection services)
+        where T : class
+    {
+        Debug.Assert(services != null, "services was null");
+
+        services!.TryAddSingleton<IOptionsMonitor<T>, SingletonOptionsManager<T>>();
+        services!.TryAddScoped<IOptionsSnapshot<T>, SingletonOptionsManager<T>>();
+
+        return services!;
+    }
 }
