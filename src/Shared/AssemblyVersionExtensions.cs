@@ -3,9 +3,10 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using System.Reflection;
 
-namespace OpenTelemetry.Instrumentation;
+namespace OpenTelemetry.Internal;
 
 internal static class AssemblyVersionExtensions
 {
@@ -19,7 +20,9 @@ internal static class AssemblyVersionExtensions
         // The following parts are optional: pre-release label, pre-release version, git height, Git SHA of current commit
         // For package version, value of AssemblyInformationalVersionAttribute without commit hash is returned.
 
-        var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
+        var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        Debug.Assert(!string.IsNullOrEmpty(informationalVersion), "AssemblyInformationalVersionAttribute was not found in assembly");
+
         var indexOfPlusSign = informationalVersion!.IndexOf('+');
         return indexOfPlusSign > 0
             ? informationalVersion.Substring(0, indexOfPlusSign)

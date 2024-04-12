@@ -81,6 +81,7 @@ internal sealed class DelegatingOptionsFactory<TOptions> :
     public TOptions Create(string name)
     {
         TOptions options = this.optionsFactoryFunc(this.configuration, name);
+
         foreach (IConfigureOptions<TOptions> setup in _setups)
         {
             if (setup is IConfigureNamedOptions<TOptions> namedSetup)

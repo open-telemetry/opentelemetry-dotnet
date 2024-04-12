@@ -13,8 +13,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\Shared\Configuration\*.cs" Link="Includes\Configuration\%(Filename).cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\EnvironmentVariables\*.cs" Link="Includes\EnvironmentVariables\%(Filename).cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Options\*.cs" Link="Includes\Options\%(Filename).cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\RedactionHelper.cs" Link="Includes\RedactionHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\RequestMethodHelper.cs" Link="Includes\RequestMethodHelper.cs" />
   </ItemGroup>
 
@@ -30,6 +34,7 @@
   <ItemGroup>
     <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'" />
     <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
   </ItemGroup>
 
 </Project>

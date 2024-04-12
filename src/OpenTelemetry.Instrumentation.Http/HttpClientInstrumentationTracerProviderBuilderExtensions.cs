@@ -59,6 +59,8 @@ public static class HttpClientInstrumentationTracerProviderBuilderExtensions
             {
                 services.Configure(name, configureHttpClientTraceInstrumentationOptions);
             }
+
+            services.RegisterOptionsFactory(configuration => new HttpClientTraceInstrumentationOptions(configuration));
         });
 
 #if NETFRAMEWORK
