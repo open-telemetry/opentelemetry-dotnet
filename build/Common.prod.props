@@ -67,6 +67,12 @@
       Text="**AssemblyVersionDebug** TargetFramework: $(TargetFramework), MinVerVersion: $(MinVerVersion), BuildNumber: $(BuildNumber), FileVersion: $(FileVersion), ExposeExperimentalFeatures: $(ExposeExperimentalFeatures)" />
   </Target>
 
+  <Target Name="EnsurePackageValidationBaselineVersion"
+          BeforeTargets="RunPackageValidation"
+          Condition="'$(DisablePackageBaselineValidation)' != 'true' AND '$(PackageValidationBaselineVersion)' == '' AND '$(MinVerTagPrefix)' != 'coreunstable-'">
+    <Error Text="Cannot perform package validation without a baseline package version." />
+  </Target>
+
   <Target Name="ResolveExposeExperimentalFeatures" BeforeTargets="CoreCompile" DependsOnTargets="AssemblyVersionTarget">
     <!-- Note: This runs for all builds. The goal here is to set the
     EXPOSE_EXPERIMENTAL_FEATURES compiler constant if
