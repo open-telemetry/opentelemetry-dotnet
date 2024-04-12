@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Fixed an issue in Logging where unwanted objects (processors, exporters, etc.)
+  could be created inside delegates automatically executed by the Options API
+  during configuration reload.
+  ([#5514](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5514))
+
 ## 1.8.0
 
 Released 2024-Apr-02
