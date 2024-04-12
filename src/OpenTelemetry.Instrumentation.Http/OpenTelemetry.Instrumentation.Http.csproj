@@ -6,7 +6,7 @@
     <PackageTags>$(PackageTags);distributed-tracing</PackageTags>
     <MinVerTagPrefix>Instrumentation.Http-</MinVerTagPrefix>
     <IncludeDiagnosticSourceInstrumentationHelpers>true</IncludeDiagnosticSourceInstrumentationHelpers>
-    <PackageValidationBaselineVersion>1.8.0</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>1.8.1</PackageValidationBaselineVersion>
 
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>

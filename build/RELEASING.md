@@ -168,11 +168,16 @@
     update the `OTelLatestStableVer` property in `Directory.Packages.props` to
     the just released stable version.
 
-16. If a new stable version of the core packages was released, open an issue in
+16. If a new stable version of a package with a dedicated `MinVerTagPrefix` was
+    released (typically instrumentation packages) open a PR to update
+    `PackageValidationBaselineVersion` in the project file to reflect the stable
+    version which was just released.
+
+17. If a new stable version of the core packages was released, open an issue in
     the
     [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
     repo to notify maintainers to begin upgrading dependencies.
 
-17. Once the packages are available on nuget.org post an announcement in the
+18. Once the packages are available on nuget.org post an announcement in the
     [Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). Note
     any big or interesting new features as part of the announcement.
