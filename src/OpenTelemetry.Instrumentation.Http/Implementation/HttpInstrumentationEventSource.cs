@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Tracing;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation;
@@ -10,7 +11,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation;
 /// EventSource events emitted from the project.
 /// </summary>
 [EventSource(Name = "OpenTelemetry-Instrumentation-Http")]
-internal sealed class HttpInstrumentationEventSource : EventSource
+internal sealed class HttpInstrumentationEventSource : EventSource, IConfigurationExtensionsLogger
 {
     public static HttpInstrumentationEventSource Log = new();
 
@@ -99,5 +100,16 @@ internal sealed class HttpInstrumentationEventSource : EventSource
     public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
     {
         this.WriteEvent(7, handlerName, eventName, ex);
+    }
+
+    [Event(8, Message = "Configuration key '{0}' has an invalid value: '{1}'", Level = EventLevel.Warning)]
+    public void InvalidConfigurationValue(string key, string value)
+    {
+        this.WriteEvent(8, key, value);
+    }
+
+    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
+    {
+        this.InvalidConfigurationValue(key, value);
     }
 }

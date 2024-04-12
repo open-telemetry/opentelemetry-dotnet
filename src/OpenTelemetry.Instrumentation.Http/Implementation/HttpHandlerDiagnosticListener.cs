@@ -149,7 +149,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
             activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
 
-            activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
+            activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri, this.options.DisableUrlQueryRedaction));
 
             try
             {

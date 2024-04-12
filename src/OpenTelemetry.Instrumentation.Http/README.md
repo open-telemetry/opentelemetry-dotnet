@@ -68,7 +68,11 @@ for more details about each individual attribute:
 * `network.protocol.version`
 * `server.address`
 * `server.port`
-* `url.full`
+* `url.full` - By default, the values in the query component of the url are
+  replaced with the text `Redacted`. For example, `?key1=value1&key2=value2`
+  becomes `?key1=Redacted&key2=Redacted`. You can disable this redaction by
+  setting the environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_HTTPCLIENT_DISABLE_URL_QUERY_REDACTION` to `true`.
 
 [Enrich Api](#enrich-httpclient-api) can be used if any additional attributes are
 required on activity.

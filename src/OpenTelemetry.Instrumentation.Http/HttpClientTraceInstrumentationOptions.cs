@@ -3,10 +3,11 @@
 
 using System.Diagnostics;
 using System.Net;
+using System.Runtime.CompilerServices;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
-using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 
 namespace OpenTelemetry.Instrumentation.Http;
@@ -16,6 +17,27 @@ namespace OpenTelemetry.Instrumentation.Http;
 /// </summary>
 public class HttpClientTraceInstrumentationOptions
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpClientTraceInstrumentationOptions"/> class.
+    /// </summary>
+    public HttpClientTraceInstrumentationOptions()
+        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+    {
+    }
+
+    internal HttpClientTraceInstrumentationOptions(IConfiguration configuration)
+    {
+        Debug.Assert(configuration != null, "configuration was null");
+
+        if (configuration.TryGetBoolValue(
+           HttpInstrumentationEventSource.Log,
+           "OTEL_DOTNET_EXPERIMENTAL_HTTPCLIENT_DISABLE_URL_QUERY_REDACTION",
+           out var disableUrlQueryRedaction))
+        {
+            this.DisableUrlQueryRedaction = disableUrlQueryRedaction;
+        }
+    }
+
     /// <summary>
     /// Gets or sets a filter function that determines whether or not to
     /// collect telemetry on a per request basis.
@@ -124,6 +146,16 @@ public class HttpClientTraceInstrumentationOptions
     /// />.</para>
     /// </remarks>
     public bool RecordException { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the url query value should be redacted or not.
+    /// </summary>
+    /// <remarks>
+    /// The query parameter values are redacted with value set as Redacted.
+    /// e.g. `?key1=value1` is set as `?key1=Redacted`.
+    /// The redaction can be disabled by setting this property to <see langword="true" />.
+    /// </remarks>
+    internal bool DisableUrlQueryRedaction { get; set; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool EventFilterHttpRequestMessage(string activityName, object arg1)

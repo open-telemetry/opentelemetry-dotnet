@@ -117,6 +117,7 @@ public class OpenTelemetryLoggerOptions
         Guard.ThrowIfNull(resourceBuilder);
 
         this.ResourceBuilder = resourceBuilder;
+
         return this;
     }
 

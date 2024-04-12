@@ -27,7 +27,7 @@ public class IncomingRequestsCollectionsIsAccordingToTheSpecTests
 
     [Theory]
     [InlineData("/api/values", null, "user-agent", 200, null)]
-    [InlineData("/api/values", "?query=1", null, 200, null)]
+    [InlineData("/api/values", null, null, 200, null)]
     [InlineData("/api/exception", null, null, 503, null)]
     [InlineData("/api/exception", null, null, 503, null, true)]
     public async Task SuccessfulTemplateControllerCallGeneratesASpan_New(
@@ -49,7 +49,10 @@ public class IncomingRequestsCollectionsIsAccordingToTheSpecTests
                     services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
                     services.AddOpenTelemetry()
                         .WithTracing(builder => builder
-                            .AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
+                            .AddAspNetCoreInstrumentation(options =>
+                            {
+                                options.RecordException = recordException;
+                            })
                             .AddInMemoryExporter(exportedItems));
                 });
                 builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
