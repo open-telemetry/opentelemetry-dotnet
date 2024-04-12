@@ -76,8 +76,8 @@ for more details about each individual attribute:
 * `server.port`
 * `url.path`
 * `url.query` - By default, the values in the query component are replaced with
-  the text `Redacted`. For example, ?key1=value1&key2=value2 becomes
-  ?key1=Redacted&key2=Redacted. You can disable this redaction by setting the
+  the text `Redacted`. For example, `?key1=value1&key2=value2` becomes
+  `?key1=Redacted&key2=Redacted`. You can disable this redaction by setting the
   environment variable
   `OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_DISABLE_URL_QUERY_REDACTION` to `true`.
 * `url.scheme`

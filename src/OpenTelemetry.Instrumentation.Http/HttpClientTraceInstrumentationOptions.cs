@@ -152,7 +152,7 @@ public class HttpClientTraceInstrumentationOptions
     /// </summary>
     /// <remarks>
     /// The query parameter values are redacted with value set as Redacted.
-    /// e.g. ?key1=value1;key2=value2 is set as ?key1=Redacted;key2=Redacted.
+    /// e.g. `?key1=value1` is set as `?key1=Redacted`.
     /// The redaction can be disabled by setting this property to <see langword="true" />.
     /// </remarks>
     internal bool DisableUrlQueryRedaction { get; set; }

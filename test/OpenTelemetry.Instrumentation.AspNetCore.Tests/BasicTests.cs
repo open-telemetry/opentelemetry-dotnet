@@ -1082,6 +1082,7 @@ public sealed class BasicTests
     [InlineData("?a&a&a&a", "?a&a&a&a", true)]
     [InlineData("?&&&&&&&", "?&&&&&&&", true)]
     [InlineData("?c", "?c", true)]
+    [InlineData("?c=%26&", "?c=Redacted&", false)]
     public async Task ValidateUrlQueryRedaction(string urlQuery, string expectedUrlQuery, bool disableQueryRedaction)
     {
         var exportedItems = new List<Activity>();

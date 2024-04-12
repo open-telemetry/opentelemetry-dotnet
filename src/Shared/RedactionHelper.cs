@@ -18,6 +18,7 @@ internal class RedactionHelper
 
         // Preallocate some size to avoid re-sizing multiple times.
         // Since the size will increase, allocating twice as much.
+        // TODO: Check to see if perf can be improved here.
         StringBuilder queryBuilder = new(2 * length);
         while (index < query.Length)
         {
