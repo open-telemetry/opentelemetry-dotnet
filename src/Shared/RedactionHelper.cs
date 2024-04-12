@@ -18,7 +18,8 @@ internal class RedactionHelper
 
         // Preallocate some size to avoid re-sizing multiple times.
         // Since the size will increase, allocating twice as much.
-        // TODO: Check to see if perf can be improved here.
+        // TODO: Check to see if we can borrow from https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/System/Text/ValueStringBuilder.cs
+        // to improve perf.
         StringBuilder queryBuilder = new(2 * length);
         while (index < query.Length)
         {
