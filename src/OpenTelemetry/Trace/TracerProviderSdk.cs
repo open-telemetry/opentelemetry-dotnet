@@ -378,24 +378,31 @@ internal sealed class TracerProviderSdk : TracerProvider
                 {
                     foreach (var item in this.instrumentations)
                     {
-                        (item as IDisposable)?.Dispose();
+                        if (item is IDisposable disposableItem)
+                        {
+                            disposableItem.Dispose();
+                        }
                     }
 
                     this.instrumentations.Clear();
+                    this.instrumentations = null;
                 }
 
-                (this.sampler as IDisposable)?.Dispose();
+                if (this.sampler is IDisposable disposableSampler)
+                {
+                    disposableSampler.Dispose();
+                    this.sampler = null;
+                }
 
-                // Wait for up to 5 seconds grace period
                 this.processor?.Shutdown(5000);
                 this.processor?.Dispose();
+                this.processor = null;
 
-                // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
-                // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
-                // sessions that were open.
                 this.listener?.Dispose();
+                this.listener = null;
 
                 this.OwnedServiceProvider?.Dispose();
+                this.OwnedServiceProvider = null;
             }
 
             this.Disposed = true;
