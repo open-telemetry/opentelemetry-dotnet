@@ -10,25 +10,52 @@
          what you want to release and look for `MinVerTagPrefix`.
 
          * `core-`: Core packages. These packages are defined\goverened by the
-           OpenTelemetry Specification and have released stable versions. They
-           may be released as `alpha`, `beta`, `rc`, or stable.
+           OpenTelemetry Specification or are part of fundamental infrastructure
+            and have released stable versions. They may be released as `alpha`,
+           `beta`, `rc`, or stable.
+
+           * `OpenTelemetry.Api` - Defined by spec (API)
+           * `OpenTelemetry.Api.ProviderBuilderExtensions` - Fundamental
+             infrastructure
+           * `OpenTelemetry` - Defined by spec (SDK)
+           * `OpenTelemetry.Exporter.Console` - Defined by spec
+           * `OpenTelemetry.Exporter.InMemory` - Defined by spec
+           * `OpenTelemetry.Exporter.OpenTelemetryProtocol` - Defined by spec
+           * `OpenTelemetry.Exporter.Zipkin` - Defined by spec
+           * `OpenTelemetry.Extensions.Hosting` - Fundamental infrastructure
+           * `OpenTelemetry.Extensions.Propagators` - Defined by spec
 
          * `coreunstable-`: Core unstable packages. These packages are
-           defined\goverened by the OpenTelemetry Specification but have not
-           released stable versions. They may be released as `alpha` or `beta`.
+           defined\goverened by the OpenTelemetry Specification or are part of
+           fundamental infrastructure but have not released stable versions. As
+           of the `1.9.0` release cycle they may only be released as `alpha` or
+           `beta`.
+
+           * `OpenTelemetry.Exporter.Prometheus.AspNetCore` - Defined by spec
+             (experimental)
+           * `OpenTelemetry.Exporter.Prometheus.HttpListener` - Defined by spec
+             (experimental)
+           * `OpenTelemetry.Shims.OpenTracing` - Defined by spec (stable but
+             incomplete implementation)
 
          * Everything else: Instrumentation packages have dedicated tags. Some
            packages have released stable and some have not. These packages may
            be released as `alpha`, `beta`, `rc`, or stable depending on the
            stability of the semantic conventions used by the instrumentation.
 
-       * Instrumentation packages and core unstable packages always depend on
-       the stable versions of core packages. Before releasing a non-core
-       component ensure the `OTelLatestStableVer` property in
-       `Directory.Packages.props` has been updated to the latest stable core
-       version.
+           * Stable: 
+             * `OpenTelemetry.Instrumentation.AspNetCore` (`Instrumentation.AspNetCore-`)
+             * `OpenTelemetry.Instrumentation.Http` (`Instrumentation.Http-`)
 
-       * Core unstable packages may only be released as `alpha` or `beta`.
+           * Unstable:
+             * `OpenTelemetry.Instrumentation.GrpcNetClient` (`Instrumentation.GrpcNetClient-`)
+             * `OpenTelemetry.Instrumentation.SqlClient` (`Instrumentation.SqlClient-`)
+
+       * As of the `1.9.0` release cycle instrumentation packages and core
+         unstable packages always depend on the stable versions of core
+         packages. Before releasing a non-core component ensure the
+         `OTelLatestStableVer` property in `Directory.Packages.props` has been
+         updated to the latest stable core version.
 
  2. Run the following PowerShell from the root of the repo to get combined
     changelog (to be used later).
