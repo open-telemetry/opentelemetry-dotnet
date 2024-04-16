@@ -22,7 +22,7 @@
            be released as `alpha`, `beta`, `rc`, or stable depending on the
            stability of the semantic conventions used by the instrumentation.
 
-       * Instrumentation packages are core unstable packages always depend on
+       * Instrumentation packages and core unstable packages always depend on
        the stable versions of core packages. Before releasing a non-core
        component ensure the `OTelLatestStableVer` property in
        `Directory.Packages.props` has been updated to the latest stable core
