@@ -137,9 +137,25 @@ public class MetricStreamConfiguration
         }
     }
 
-    // TODO: Expose this to be complaint with the spec:
-    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#stream-configuration
-    internal Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Gets or sets a factory function used to generate an <see
+    /// cref="ExemplarReservoir"/> for the metric managed by the view to use
+    /// when storing <see cref="Exemplar"/>s.
+    /// </summary>
+    /// <remarks>
+    /// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
+    /// Specification: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#stream-configuration"/>.
+    /// </remarks>
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
+    public
+#else
+internal
+#endif
+        Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
 
     internal string[]? CopiedTagKeys { get; private set; }
 
