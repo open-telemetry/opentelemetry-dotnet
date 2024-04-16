@@ -11,7 +11,7 @@
 
          * `core-`: Core packages. These packages are defined\goverened by the
            OpenTelemetry Specification or are part of fundamental infrastructure
-            and have released stable versions. They may be released as `alpha`,
+           and have released stable versions. They may be released as `alpha`,
            `beta`, `rc`, or stable.
 
            * `OpenTelemetry.Api` - Defined by spec (API)
