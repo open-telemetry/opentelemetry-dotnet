@@ -34,7 +34,7 @@ jobs:
           instrumentation-packages: ['src/OpenTelemetry.Instrumentation*/**', '!**/*.md']
           sdk-code: ['src/OpenTelemetry/**', 'test/OpenTelemetry.Tests/**', '!**/*.md']
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
-          unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.SemanticConventions/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
+          unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
           otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
 
   lint-md:

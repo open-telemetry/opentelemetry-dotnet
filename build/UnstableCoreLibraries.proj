@@ -2,7 +2,6 @@
   <ItemGroup>
     <SolutionProjects Include="..\**\OpenTelemetry.Exporter.Prometheus.AspNetCore*.csproj" />
     <SolutionProjects Include="..\**\OpenTelemetry.Exporter.Prometheus.HttpListener*.csproj" />
-    <SolutionProjects Include="..\**\OpenTelemetry.SemanticConventions.csproj" />
     <SolutionProjects Include="..\**\OpenTelemetry.Shims.OpenTracing*.csproj" />
 
     <TestProjects Include="..\test\**\OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests.csproj" />
