@@ -43,7 +43,7 @@
            be released as `alpha`, `beta`, `rc`, or stable depending on the
            stability of the semantic conventions used by the instrumentation.
 
-           * Stable: 
+           * Stable:
              * `OpenTelemetry.Instrumentation.AspNetCore` (`Instrumentation.AspNetCore-`)
              * `OpenTelemetry.Instrumentation.Http` (`Instrumentation.Http-`)
 
