@@ -1,8 +1,12 @@
 <Project>
 
   <PropertyGroup>
-    <!-- Note: PackageValidationBaselineVersion is defined in targets because $(MinVerTagPrefix) is not available to props as they apply before csproj. -->
+    <!-- Note: PackageValidationBaselineVersion and IsPackable are defined in
+    targets because $(MinVerTagPrefix) is not available in props files as they
+    apply before csproj. -->
     <PackageValidationBaselineVersion Condition="'$(MinVerTagPrefix)' == 'core-'">$(OTelLatestStableVer)</PackageValidationBaselineVersion>
+    <IsPackable Condition="'$(PackTag)' != '' AND $(PackTag.StartsWith($(MinVerTagPrefix))) == false">false</IsPackable>
+
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
 
