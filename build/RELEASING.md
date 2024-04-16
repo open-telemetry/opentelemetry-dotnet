@@ -155,8 +155,8 @@
     tags](https://github.com/open-telemetry/opentelemetry-dotnet/tags) and find
     the tag(s) which were pushed. Click the three dots next to the tag and
     choose `Create release`.
-      * Give the release a name based on the tags created (e.g., `1.9.0-beta.1 /
-      1.9.0`).
+      * Give the release a name based on the tags created (e.g.
+      `core-1.9.0-beta.1` or `Instrumentation.Http-1.8.0`).
       * Paste the contents of combined changelog from Step 2. Only include
         projects with changes.
       * Check "This is a pre-release" if applicable.
