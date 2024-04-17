@@ -1,0 +1,23 @@
+<Project>
+  <ItemGroup>
+    <SolutionProjects Include="..\**\OpenTelemetry.Exporter.Prometheus.AspNetCore*.csproj" />
+    <SolutionProjects Include="..\**\OpenTelemetry.Exporter.Prometheus.HttpListener*.csproj" />
+    <SolutionProjects Include="..\**\OpenTelemetry.Shims.OpenTracing*.csproj" />
+
+    <TestProjects Include="..\test\**\OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests.csproj" />
+    <TestProjects Include="..\test\**\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests.csproj" />
+    <TestProjects Include="..\test\**\OpenTelemetry.Shims.OpenTracing.Tests.csproj" />
+  </ItemGroup>
+
+  <Target Name="Build">
+    <MSBuild Projects="@(SolutionProjects)" Targets="Build" ContinueOnError="ErrorAndStop" />
+  </Target>
+
+  <Target Name="Restore">
+    <MSBuild Projects="@(SolutionProjects)" Targets="Restore" ContinueOnError="ErrorAndStop" />
+  </Target>
+
+  <Target Name="VSTest">
+    <MSBuild Projects="@(TestProjects)" Targets="VSTest" ContinueOnError="ErrorAndStop" />
+  </Target>
+</Project>
