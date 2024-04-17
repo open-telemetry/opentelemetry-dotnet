@@ -153,7 +153,7 @@ public class MetricStreamConfiguration
 #endif
     public
 #else
-internal
+    internal
 #endif
         Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
 
