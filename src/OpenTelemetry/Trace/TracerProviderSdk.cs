@@ -370,44 +370,42 @@ internal sealed class TracerProviderSdk : TracerProvider
 
     protected override void Dispose(bool disposing)
     {
-        if (!this.Disposed)
+        if (this.Disposed)
         {
-            if (disposing)
+            return;
+        }
+
+        if (disposing)
+        {
+            if (this.instrumentations != null)
             {
-                if (this.instrumentations != null)
+                foreach (var item in this.instrumentations)
                 {
-                    foreach (var item in this.instrumentations)
+                    if (item is IDisposable disposableItem)
                     {
-                        if (item is IDisposable disposableItem)
-                        {
-                            disposableItem.Dispose();
-                        }
+                        disposableItem.Dispose();
                     }
-
-                    this.instrumentations.Clear();
-                    this.instrumentations = null;
                 }
 
-                if (this.sampler is IDisposable disposableSampler)
-                {
-                    disposableSampler.Dispose();
-                    this.sampler = null;
-                }
-
-                this.processor?.Shutdown(5000);
-                this.processor?.Dispose();
-                this.processor = null;
-
-                this.listener?.Dispose();
-                this.listener = null;
-
-                this.OwnedServiceProvider?.Dispose();
-                this.OwnedServiceProvider = null;
+                this.instrumentations.Clear();
             }
 
-            this.Disposed = true;
-            OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(TracerProvider));
+            if (this.sampler is IDisposable disposableSampler)
+            {
+                disposableSampler.Dispose();
+            }
+
+            this.processor?.Shutdown(5000);
+            this.processor?.Dispose();
+            this.processor = null;
+
+            this.listener?.Dispose();
+
+            this.OwnedServiceProvider?.Dispose();
         }
+
+        this.Disposed = true;
+        OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(TracerProvider));
 
         base.Dispose(disposing);
     }
