@@ -322,13 +322,13 @@ public static class MeterProviderBuilderExtensions
     /// Sets the <see cref="ExemplarFilterType"/> to be used for this provider
     /// which controls how measurements will be offered to exemplar reservoirs.
     /// Default provider configuration: <see
-    /// cref="ExemplarFilterType.AlwaysOff"/>.
+    /// cref="ExemplarFilterType.TraceBased"/>.
     /// </summary>
     /// <remarks>
     /// <inheritdoc cref="Exemplar"
     /// path="/remarks/para[@experimental-warning='true']"/>
-    /// <para>Note: Use <see cref="ExemplarFilterType.TraceBased"/> or <see
-    /// cref="ExemplarFilterType.AlwaysOn"/> to enable exemplars.</para>
+    /// <para>Note: Use <see cref="ExemplarFilterType.AlwaysOff"/> to disable
+    /// exemplars.</para>
     /// <para>Specification: <see
     /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplarfilter"/>.</para>
     /// </remarks>
@@ -347,7 +347,7 @@ public static class MeterProviderBuilderExtensions
 #endif
             static MeterProviderBuilder SetExemplarFilter(
         this MeterProviderBuilder meterProviderBuilder,
-        ExemplarFilterType exemplarFilter = ExemplarFilterType.TraceBased)
+        ExemplarFilterType exemplarFilter)
     {
         meterProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
