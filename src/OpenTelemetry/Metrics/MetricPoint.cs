@@ -62,11 +62,13 @@ public struct MetricPoint
         ExemplarReservoir? reservoir;
         try
         {
-            reservoir = aggregatorStore.ExemplarReservoirFactory?.Invoke();
+            reservoir = isExemplarEnabled
+                ? aggregatorStore.ExemplarReservoirFactory?.Invoke()
+                : null;
         }
-        catch
+        catch (Exception ex)
         {
-            // TODO : Log that the factory on view threw an exception, once view exposes that capability
+            OpenTelemetrySdkEventSource.Log.MetricViewException("ExemplarReservoirFactory", ex);
             reservoir = null;
         }
 
