@@ -36,7 +36,7 @@ jobs:
       run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
 
     - name: dotnet pack
-      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build
+      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref }}
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4

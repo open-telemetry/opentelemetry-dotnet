@@ -67,7 +67,8 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [Prometheus HttpListener](./src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
 * [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
-See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) and
+See the [OpenTelemetry
+registry](https://opentelemetry.io/ecosystem/registry/?language=dotnet) and
 [OpenTelemetry .NET Contrib
 repo](https://github.com/open-telemetry/opentelemetry-dotnet-contrib) for more
 components.
