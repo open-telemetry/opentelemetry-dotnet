@@ -1,3 +1,6 @@
+abstract OpenTelemetry.Metrics.ExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
+abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<double> measurement) -> void
+abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<long> measurement) -> void
 OpenTelemetry.Logs.LoggerProviderBuilderExtensions
 OpenTelemetry.Logs.LoggerProviderExtensions
 OpenTelemetry.Logs.LogRecord.Logger.get -> OpenTelemetry.Logs.Logger!
@@ -21,9 +24,14 @@ OpenTelemetry.Metrics.ExemplarMeasurement<T>
 OpenTelemetry.Metrics.ExemplarMeasurement<T>.ExemplarMeasurement() -> void
 OpenTelemetry.Metrics.ExemplarMeasurement<T>.Tags.get -> System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string!, object?>>
 OpenTelemetry.Metrics.ExemplarMeasurement<T>.Value.get -> T
+OpenTelemetry.Metrics.ExemplarReservoir
+OpenTelemetry.Metrics.ExemplarReservoir.ExemplarReservoir() -> void
+OpenTelemetry.Metrics.ExemplarReservoir.ResetOnCollect.get -> bool
 OpenTelemetry.Metrics.MetricPoint.TryGetExemplars(out OpenTelemetry.Metrics.ReadOnlyExemplarCollection exemplars) -> bool
 OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.get -> int?
 OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void
+OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.get -> System.Func<OpenTelemetry.Metrics.ExemplarReservoir?>?
+OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.set -> void
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator.Current.get -> OpenTelemetry.Metrics.Exemplar
