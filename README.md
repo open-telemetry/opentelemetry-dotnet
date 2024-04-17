@@ -121,13 +121,13 @@ you're more than welcome to participate!
 
 * [Alan West](https://github.com/alanwest), New Relic
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
-* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 [Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Reiley Yang](https://github.com/reyang), Microsoft
+* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 * [Vishwesh Bankwar](https://github.com/vishweshbankwar), Microsoft
 
 [Triagers](https://github.com/open-telemetry/community/blob/main/community-membership.md#triager)
