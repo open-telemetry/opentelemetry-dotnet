@@ -10,7 +10,7 @@
 * **Experimental (pre-release builds only):** Exposed `ExemplarReservoir` as a
   public API and added support for setting an `ExemplarReservoir` factory
   function when configuring a view (applies to individual metrics).
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5542))
 
 ## 1.8.0
 
