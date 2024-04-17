@@ -12,6 +12,11 @@
   function when configuring a view (applies to individual metrics).
   ([#5542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5542))
 
+* **Experimental (pre-release builds only):** The default `ExemplarFilterType`
+  on `MeterProvider` is now `ExemplarFilterType.TraceBased` which will enable
+  `Exemplar`s automatically when tracing is used with metrics.
+  ([#5545](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5545))
+
 ## 1.8.0
 
 Released 2024-Apr-02
