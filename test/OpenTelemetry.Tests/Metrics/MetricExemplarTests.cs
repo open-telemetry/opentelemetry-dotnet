@@ -643,9 +643,11 @@ public class MetricExemplarTests : MetricTestsBase
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void TestTraceBasedExemplarFilter(bool enableTracing)
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    public void TestTraceBasedExemplarFilter(bool enableTracing, bool setExemplarFilter)
     {
         var exportedItems = new List<Metric>();
 
@@ -653,10 +655,18 @@ public class MetricExemplarTests : MetricTestsBase
 
         var counter = meter.CreateCounter<long>("testCounter");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
-            .AddMeter(meter.Name)
-            .SetExemplarFilter(ExemplarFilterType.TraceBased)
-            .AddInMemoryExporter(exportedItems));
+        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        {
+            builder
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            if (setExemplarFilter)
+            {
+                // Note: TraceBased is the SDK default
+                builder.SetExemplarFilter(ExemplarFilterType.TraceBased);
+            }
+        });
 
         if (enableTracing)
         {
