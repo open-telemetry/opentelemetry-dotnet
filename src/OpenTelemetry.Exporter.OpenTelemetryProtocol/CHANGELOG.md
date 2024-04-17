@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.8.1
+
+Released 2024-Apr-17
+
 * Fix native AoT warnings in `OpenTelemetry.Exporter.OpenTelemetryProtocol`.
   ([#5520](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5520))
 
