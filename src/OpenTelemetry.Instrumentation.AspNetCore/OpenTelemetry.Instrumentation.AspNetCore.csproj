@@ -6,6 +6,7 @@
     <PackageTags>$(PackageTags);distributed-tracing;AspNetCore</PackageTags>
     <MinVerTagPrefix>Instrumentation.AspNetCore-</MinVerTagPrefix>
     <IncludeDiagnosticSourceInstrumentationHelpers>true</IncludeDiagnosticSourceInstrumentationHelpers>
+    <PackageValidationBaselineVersion>1.8.1</PackageValidationBaselineVersion>
 
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
