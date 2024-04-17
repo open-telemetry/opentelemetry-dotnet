@@ -145,17 +145,19 @@ public class MetricStreamConfiguration
     /// </summary>
     /// <remarks>
     /// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
+    /// <para>Note: Returning <see langword="null"/> from the factory function will
+    /// result in the default <see cref="ExemplarReservoir"/> being chosen by
+    /// the SDK based on the type of metric.</para>
     /// Specification: <see
     /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#stream-configuration"/>.
     /// </remarks>
 #if NET8_0_OR_GREATER
     [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
-    public
+    public Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
 #else
-    internal
+    internal Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
 #endif
-        Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
 
     internal string[]? CopiedTagKeys { get; private set; }
 
