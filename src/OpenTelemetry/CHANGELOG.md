@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.8.1
+
+Released 2024-Apr-17
+
 * Fixed an issue in Logging where unwanted objects (processors, exporters, etc.)
   could be created inside delegates automatically executed by the Options API
   during configuration reload.
