@@ -269,12 +269,41 @@ internal sealed class AggregatorStore
 
             if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
             {
+                // Reclaim the MetricPoint if it was marked for it in the previous collect cycle
+                if (metricPoint.LookupData != null && metricPoint.LookupData.DeferredReclaim == true)
+                {
+                    this.ReclaimMetricPoint(ref metricPoint, i);
+                    continue;
+                }
+
+                // Check if the MetricPoint could be reclaimed in the current Collect cycle.
                 // If metricPoint.LookupData is `null` then the MetricPoint is already reclaimed and in the queue.
                 // If the Collect thread is successfully able to compare and swap the reference count from zero to int.MinValue, it means that
                 // the MetricPoint can be reused for other tags.
                 if (metricPoint.LookupData != null && Interlocked.CompareExchange(ref metricPoint.ReferenceCount, int.MinValue, 0) == 0)
                 {
-                    this.ReclaimMetricPoint(ref metricPoint, i);
+                    // This is similar to double-checked locking. For some rare case, the Collect thread might read the status as `NoCollectPending`,
+                    // and then get switched out before it could set the ReferenceCount to `int.MinValue`. In the meantime, an Update thread could come in
+                    // and update the MetricPoint, thereby, setting its status to `CollectPending`. Note that the ReferenceCount would be 0 after the update.
+                    // If the Collect thread now wakes up, it would be able to set the ReferenceCount to `int.MinValue`, thereby, marking the MetricPoint
+                    // invalid for newer updates. In such cases, the MetricPoint, should not be reclaimed before taking its Snapshot.
+
+                    if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
+                    {
+                        this.ReclaimMetricPoint(ref metricPoint, i);
+                    }
+                    else
+                    {
+                        // MetricPoint's ReferenceCount is `int.MinValue` but it still has a collect pending. Take the MetricPoint's Snapshot
+                        // and mark it to be reclaimed in the next Collect cycle.
+
+                        metricPoint.LookupData.DeferredReclaim = true;
+
+                        this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
+
+                        this.currentMetricPointBatch[this.batchSize] = i;
+                        this.batchSize++;
+                    }
                 }
 
                 continue;

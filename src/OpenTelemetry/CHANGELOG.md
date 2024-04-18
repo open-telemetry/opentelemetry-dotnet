@@ -7,6 +7,11 @@
   function when configuring a view (applies to individual metrics).
   ([#5542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5542))
 
+* Fixed a race condition for the experimental MetricPoint reclaim scenario
+  (enabled via `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS`)
+  which could have led to a measurement being dropped.
+  ([#5546](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5546))
+
 * **Experimental (pre-release builds only):** `Exemplar`s are now enabled
   automatically with the default filter type set to `TraceBased`. `Exemplar`s
   will be sampled for measurements recorded under an active trace. The default
