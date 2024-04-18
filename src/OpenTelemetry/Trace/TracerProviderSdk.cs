@@ -368,44 +368,52 @@ internal sealed class TracerProviderSdk : TracerProvider
         return result ?? true;
     }
 
+    public void Dispose()
+    {
+        this.Dispose(disposing: true);
+
+        // This object will be cleaned up by the Dispose method.
+        // Calling GC.SuppressFinalize to take this object off the finalization queue
+        // and prevent finalization code for this object from executing a second time.
+        GC.SuppressFinalize(this);
+    }
+
     protected override void Dispose(bool disposing)
     {
-        if (this.Disposed)
+        if (!this.Disposed)
         {
-            return;
-        }
-
-        if (disposing)
-        {
-            if (this.instrumentations != null)
+            if (disposing)
             {
-                foreach (var item in this.instrumentations)
+                if (this.instrumentations != null)
                 {
-                    if (item is IDisposable disposableItem)
+                    foreach (var item in this.instrumentations)
                     {
-                        disposableItem.Dispose();
+                        if (item is IDisposable disposableItem)
+                        {
+                            disposableItem.Dispose();
+                        }
                     }
+
+                    this.instrumentations.Clear();
                 }
 
-                this.instrumentations.Clear();
+                if (this.sampler is IDisposable disposableSampler)
+                {
+                    disposableSampler.Dispose();
+                }
+
+                this.processor?.Shutdown(5000);
+                this.processor?.Dispose();
+                this.processor = null;
+
+                this.listener?.Dispose();
+
+                this.OwnedServiceProvider?.Dispose();
             }
 
-            if (this.sampler is IDisposable disposableSampler)
-            {
-                disposableSampler.Dispose();
-            }
-
-            this.processor?.Shutdown(5000);
-            this.processor?.Dispose();
-            this.processor = null;
-
-            this.listener?.Dispose();
-
-            this.OwnedServiceProvider?.Dispose();
+            this.Disposed = true;
+            OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(TracerProvider));
         }
-
-        this.Disposed = true;
-        OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(TracerProvider));
 
         base.Dispose(disposing);
     }
@@ -617,5 +625,16 @@ internal sealed class TracerProviderSdk : TracerProvider
                 activity.TraceStateString = samplingResult.TraceStateString;
             }
         }
+    }
+
+    // This finalizer will run only if the Dispose method does not get called.
+    // It gives your base class the opportunity to finalize.
+    // Do not provide finalizer in types derived from this class.
+#pragma warning disable SA1201 // Elements should appear in the correct order
+    ~TracerProviderSdk()
+#pragma warning restore SA1201 // Elements should appear in the correct order
+    {
+        // Calling Dispose(disposing: false) is optimal in terms of readability and maintainability.
+        this.Dispose(disposing: false);
     }
 }
