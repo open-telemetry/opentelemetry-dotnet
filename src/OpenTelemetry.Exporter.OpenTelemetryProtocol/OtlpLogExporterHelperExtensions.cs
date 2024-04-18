@@ -29,7 +29,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
     public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions)
-        => AddOtlpExporter(loggerOptions, name: null, configure: null);
+        => AddOtlpExporter(loggerOptions, name: null, configure: (Action<OtlpExporterOptions, IServiceProvider>?)null);
 
     /// <summary>
     /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
@@ -53,6 +53,19 @@ public static class OtlpLogExporterHelperExtensions
         this OpenTelemetryLoggerOptions loggerOptions,
         string? name,
         Action<OtlpExporterOptions>? configure)
+        => AddOtlpExporter(loggerOptions, name, (OtlpExporterOptions options, IServiceProvider provider) => configure?.Invoke(options));
+
+    /// <summary>
+    /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
+    /// </summary>
+    /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="configure">Optional callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+    /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+    public static OpenTelemetryLoggerOptions AddOtlpExporter(
+        this OpenTelemetryLoggerOptions loggerOptions,
+        string? name,
+        Action<OtlpExporterOptions, IServiceProvider>? configure)
     {
         Guard.ThrowIfNull(loggerOptions);
 
@@ -64,7 +77,7 @@ public static class OtlpLogExporterHelperExtensions
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
-            configure?.Invoke(exporterOptions);
+            configure?.Invoke(exporterOptions, sp);
 
             return BuildOtlpLogExporter(
                 sp,
