@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+* **Experimental (pre-release builds only):** Exposed `ExemplarReservoir` as a
+  public API and added support for setting an `ExemplarReservoir` factory
+  function when configuring a view (applies to individual metrics).
+  ([#5542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5542))
+
+## 1.8.1
+
+Released 2024-Apr-17
+
 * Fixed an issue in Logging where unwanted objects (processors, exporters, etc.)
   could be created inside delegates automatically executed by the Options API
   during configuration reload.

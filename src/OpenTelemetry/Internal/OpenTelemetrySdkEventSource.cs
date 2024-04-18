@@ -158,6 +158,15 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         }
     }
 
+    [NonEvent]
+    public void MetricViewException(string source, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.MetricViewException(source, ex.ToInvariantString());
+        }
+    }
+
     [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
     public void SpanProcessorException(string evnt, string ex)
     {
@@ -357,6 +366,12 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     public void TracesSamplerArgConfigInvalid(string configValue)
     {
         this.WriteEvent(55, configValue);
+    }
+
+    [Event(56, Message = "Exception thrown by user code supplied on metric view ('{0}'): '{1}'.", Level = EventLevel.Error)]
+    public void MetricViewException(string source, string ex)
+    {
+        this.WriteEvent(56, source, ex);
     }
 
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
