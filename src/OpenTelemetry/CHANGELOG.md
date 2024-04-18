@@ -7,6 +7,10 @@
   function when configuring a view (applies to individual metrics).
   ([#5542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5542))
 
+* Fixed a race condition for MetricPoint reclaim scenario which could have led
+  to a measurement being dropped.
+  ([#5546](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5546))
+
 ## 1.8.1
 
 Released 2024-Apr-17
@@ -15,10 +19,6 @@ Released 2024-Apr-17
   could be created inside delegates automatically executed by the Options API
   during configuration reload.
   ([#5514](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5514))
-
-* Fixed a race condition for MetricPoint reclaim scenario which could have led
-  to a measurement being dropped.
-  ([#5546](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5546))
 
 ## 1.8.0
 
