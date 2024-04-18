@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fixed a race condition happening in simultaneous OpenMetrics and PlainText
+  requests which could cause malformed response
+  ([#5517](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5517))
+
 ## 1.8.0-rc.1
 
 Released 2024-Mar-27

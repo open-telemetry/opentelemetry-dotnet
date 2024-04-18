@@ -212,6 +212,9 @@ internal sealed class PrometheusCollectionManager
                 }
             }
 
+            // TODO: caching the response based on the request type on demand,
+            // instead of always caching two responses regardless the request type
+
             foreach (var metric in metrics)
             {
                 if (!PrometheusSerializer.CanWriteMetric(metric))
