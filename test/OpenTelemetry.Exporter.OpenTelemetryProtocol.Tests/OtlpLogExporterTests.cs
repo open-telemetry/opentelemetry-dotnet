@@ -1433,7 +1433,7 @@ public class OtlpLogExporterTests
                 {
                     configure(logging.Services);
 
-                    logging.AddOpenTelemetry(o => o.AddOtlpExporter(optionsName, configure: null));
+                    logging.AddOpenTelemetry(o => o.AddOtlpExporter(optionsName, configure: null as Action<OtlpExporterOptions, IServiceProvider>));
                 });
 
                 return (factory, factory);
@@ -1455,7 +1455,7 @@ public class OtlpLogExporterTests
 
                 services.AddLogging(
                     logging => logging.AddOpenTelemetry(o =>
-                        o.AddOtlpExporter(optionsName, configure: null)));
+                        o.AddOtlpExporter(optionsName, configure: null as Action<OtlpExporterOptions, IServiceProvider>)));
 
                 var sp = services.BuildServiceProvider();
 

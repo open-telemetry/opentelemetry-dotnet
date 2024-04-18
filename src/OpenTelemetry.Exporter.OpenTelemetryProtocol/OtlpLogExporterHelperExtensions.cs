@@ -29,7 +29,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
     public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions)
-        => AddOtlpExporter(loggerOptions, name: null, configure: (Action<OtlpExporterOptions, IServiceProvider>?)null);
+        => AddOtlpExporter(loggerOptions, name: null, configure: null as Action<OtlpExporterOptions, IServiceProvider>);
 
     /// <summary>
     /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
