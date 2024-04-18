@@ -28,9 +28,9 @@ See [Program.cs](Program.cs) for an example.
 > [!NOTE]
 > When using [`ILogger.BeginScope<TState>(TState
 state)`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger.beginscope),
-it is highly recommended to pass in an instance of `List<KeyValuePair<string,
-object?>>` or `IReadOnlyList<KeyValue<string, object?>>` as the `state` for the
-best performance. When performance is not a critical requirement,
+it is highly recommended to use `IReadOnlyList<KeyValue<string, object?>>` or
+`List<KeyValuePair<string, object?>>` as the `TState` for the best performance.
+When performance is not a critical requirement,
 `IEnumerable<KeyValuePair<string, object?>>` can be used.
 
 ### IncludeFormattedMessage
