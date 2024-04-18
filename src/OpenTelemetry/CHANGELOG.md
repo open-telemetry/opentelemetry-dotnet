@@ -7,9 +7,11 @@
   function when configuring a view (applies to individual metrics).
   ([#5542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5542))
 
-* **Experimental (pre-release builds only):** The default `ExemplarFilterType`
-  on `MeterProvider` is now `ExemplarFilterType.TraceBased` which will enable
-  `Exemplar`s automatically when tracing is used with metrics.
+* **Experimental (pre-release builds only):** `Exemplar`s are now enabled
+  automatically with the default filter type set to `TraceBased`. `Exemplar`s
+  will be sampled for measurements recorded under an active trace. The default
+  filter can be changed by calling the `SetExemplarFilter` extension on
+  `MeterProviderBuilder`. Use `AlwaysOff` to disable `Exemplar`s.
   ([#5545](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5545))
 
 ## 1.8.1
