@@ -7,6 +7,10 @@
   during configuration reload.
   ([#5514](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5514))
 
+* Fixed a race condition for MetricPoint reclaim scenario which could have led
+  to a measurement being dropped.
+  ([#5546](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5546))
+
 ## 1.8.0
 
 Released 2024-Apr-02
