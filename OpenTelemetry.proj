@@ -3,9 +3,6 @@
     <SolutionProjects Include="**\*.csproj" />
     <PackProjects Include="src\**\*.csproj" />
     <TestProjects Include="test\**\*.csproj" />
-
-    <!-- Not pack SemanticConventions project for now -->
-    <PackProjects Remove="src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">

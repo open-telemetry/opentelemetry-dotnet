@@ -54,6 +54,10 @@
       <ExposeExperimentalFeatures Condition="'$(MinVerPreRelease)' == ''">false</ExposeExperimentalFeatures>
     </PropertyGroup>
 
+    <Error
+      Condition="'$(MinVerTagPrefix)' == 'coreunstable-' AND ('$(MinVerPreRelease)' == '' OR $(MinVerPreRelease.StartsWith('rc')))"
+      Text="Unstable core packages cannot be released stable or as release candidates." />
+
     <!-- Note: The '$(TargetFramework)' != '' check here is to reduce log spam
     in builds like dotnet pack which fire MinVer but don't resolve the actual
     TargetFramework -->
@@ -61,6 +65,12 @@
       Condition="'$(TargetFramework)' != ''"
       Importance="high"
       Text="**AssemblyVersionDebug** TargetFramework: $(TargetFramework), MinVerVersion: $(MinVerVersion), BuildNumber: $(BuildNumber), FileVersion: $(FileVersion), ExposeExperimentalFeatures: $(ExposeExperimentalFeatures)" />
+  </Target>
+
+  <Target Name="EnsurePackageValidationBaselineVersion"
+          BeforeTargets="RunPackageValidation"
+          Condition="'$(DisablePackageBaselineValidation)' != 'true' AND '$(PackageValidationBaselineVersion)' == '' AND '$(MinVerTagPrefix)' != 'coreunstable-'">
+    <Error Text="Cannot perform package validation without a baseline package version." />
   </Target>
 
   <Target Name="ResolveExposeExperimentalFeatures" BeforeTargets="CoreCompile" DependsOnTargets="AssemblyVersionTarget">
