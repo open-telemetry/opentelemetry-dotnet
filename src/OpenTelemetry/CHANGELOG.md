@@ -2,11 +2,6 @@
 
 ## Unreleased
 
-* Fixed an issue in Logging where unwanted objects (processors, exporters, etc.)
-  could be created inside delegates automatically executed by the Options API
-  during configuration reload.
-  ([#5514](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5514))
-
 * **Experimental (pre-release builds only):** Exposed `ExemplarReservoir` as a
   public API and added support for setting an `ExemplarReservoir` factory
   function when configuring a view (applies to individual metrics).
@@ -16,6 +11,15 @@
   on `MeterProvider` is now `ExemplarFilterType.TraceBased` which will enable
   `Exemplar`s automatically when tracing is used with metrics.
   ([#5545](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5545))
+
+## 1.8.1
+
+Released 2024-Apr-17
+
+* Fixed an issue in Logging where unwanted objects (processors, exporters, etc.)
+  could be created inside delegates automatically executed by the Options API
+  during configuration reload.
+  ([#5514](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5514))
 
 ## 1.8.0
 
