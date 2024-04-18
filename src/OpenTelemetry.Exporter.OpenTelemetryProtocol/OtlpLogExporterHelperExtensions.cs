@@ -53,7 +53,7 @@ public static class OtlpLogExporterHelperExtensions
         this OpenTelemetryLoggerOptions loggerOptions,
         string? name,
         Action<OtlpExporterOptions>? configure)
-        => AddOtlpExporter(loggerOptions, name, (OtlpExporterOptions options, LogRecordExportProcessorOptions logRecordExportProcessorOptions, IServiceProvider provider) => configure?.Invoke(options));
+        => AddOtlpExporter(loggerOptions, name, (OtlpExporterOptions otlpExporterOptions, LogRecordExportProcessorOptions logRecordExportProcessorOptions, IServiceProvider provider) => configure?.Invoke(otlpExporterOptions));
 
     /// <summary>
     /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
