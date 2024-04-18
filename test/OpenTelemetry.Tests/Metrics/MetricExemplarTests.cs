@@ -661,9 +661,9 @@ public class MetricExemplarTests : MetricTestsBase
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems);
 
-            if (setExemplarFilter)
+            if (!IsExemplarApiExposed() || setExemplarFilter)
             {
-                // Note: TraceBased is the SDK default
+                // Note: TraceBased is the SDK default for prerelease builds only
                 builder.SetExemplarFilter(ExemplarFilterType.TraceBased);
             }
         });
