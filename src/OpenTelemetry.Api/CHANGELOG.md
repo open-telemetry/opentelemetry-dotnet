@@ -7,6 +7,10 @@
   [W3C Baggage propagation format specification](https://www.w3.org/TR/baggage/).
   ([#5303](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5303))
 
+## 1.8.1
+
+Released 2024-Apr-17
+
 ## 1.8.0
 
 Released 2024-Apr-02
