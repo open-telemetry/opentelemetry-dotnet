@@ -13,7 +13,7 @@ namespace OpenTelemetry.Metrics;
 /// ExemplarReservoir base implementation and contract.
 /// </summary>
 /// <remarks>
-/// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
+/// <inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/>
 /// Specification: <see
 /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplarreservoir"/>.
 /// </remarks>
@@ -26,6 +26,13 @@ internal
 #endif
     abstract class ExemplarReservoir
 {
+    // Note: This constructor is internal because we don't allow custom
+    // ExemplarReservoir implementations to be based directly on the base class
+    // only FixedSizeExemplarReservoir.
+    internal ExemplarReservoir()
+    {
+    }
+
     /// <summary>
     /// Gets a value indicating whether or not the <see
     /// cref="ExemplarReservoir"/> should reset its state when performing
