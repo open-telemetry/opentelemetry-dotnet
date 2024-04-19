@@ -21,10 +21,8 @@ internal sealed class PrometheusCollectionManager
     private int targetInfoBufferLength = -1; // zero or positive when target_info has been written for the first time
     private ArraySegment<byte> previousPlainTextDataView;
     private ArraySegment<byte> previousOpenMetricsDataView;
-    private DateTime? previousDataViewGeneratedAtUtc;
     private volatile int globalLockState;
     private volatile int readerCount;
-    private volatile bool collectionRunning;
     private volatile TaskCompletionSource<CollectionResponse> collectionTcs;
 
     public PrometheusCollectionManager(PrometheusExporter exporter)
@@ -34,6 +32,9 @@ internal sealed class PrometheusCollectionManager
         this.onCollectRef = this.OnCollect;
         this.metricsCache = new Dictionary<Metric, PrometheusMetric>();
         this.scopes = new HashSet<string>();
+
+        this.collectionTcs = new TaskCompletionSource<CollectionResponse>();
+        this.collectionTcs.SetResult(default);
     }
 
 #if NET6_0_OR_GREATER
@@ -43,76 +44,43 @@ internal sealed class PrometheusCollectionManager
 #endif
     {
         this.EnterGlobalLock();
+        var tcs = this.collectionTcs;
 
-        // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
-        // last successful collect, return the previous view.
-        if (this.previousDataViewGeneratedAtUtc.HasValue
-            && this.scrapeResponseCacheDurationMilliseconds > 0
-            && this.previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
+        if (tcs.Task.IsCompleted)
         {
-            Interlocked.Increment(ref this.readerCount);
-            this.ExitGlobalLock();
-#if NET6_0_OR_GREATER
-            return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: true));
-#else
-            return Task.FromResult(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: true));
-#endif
-        }
-
-        // If a collection is already running, return a task to wait on the result.
-        if (this.collectionRunning)
-        {
-            if (this.collectionTcs == null)
+            if (this.scrapeResponseCacheDurationMilliseconds > 0
+                && tcs.Task.Result.GeneratedAtUtc.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
             {
-                this.collectionTcs = new TaskCompletionSource<CollectionResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+                Interlocked.Increment(ref this.readerCount);
+                this.ExitGlobalLock();
+#if NET6_0_OR_GREATER
+                return new ValueTask<CollectionResponse>(tcs.Task);
+#else
+                return tcs.Task;
+#endif
             }
-
-            var task = this.collectionTcs.Task;
+        }
+        else
+        {
             Interlocked.Increment(ref this.readerCount);
             this.ExitGlobalLock();
 #if NET6_0_OR_GREATER
-            return new ValueTask<CollectionResponse>(task);
+            return new ValueTask<CollectionResponse>(tcs.Task);
 #else
-            return task;
+            return tcs.Task;
 #endif
         }
 
         this.WaitForReadersToComplete();
-
-        // Start a collection on the current thread.
-        this.collectionRunning = true;
-        this.previousDataViewGeneratedAtUtc = null;
         Interlocked.Increment(ref this.readerCount);
+        var newTcs = new TaskCompletionSource<CollectionResponse>();
+        this.collectionTcs = newTcs;
+        Task.Factory.StartNew(this.ExecuteCollect, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         this.ExitGlobalLock();
-
-        CollectionResponse response;
-        var result = this.ExecuteCollect();
-        if (result)
-        {
-            this.previousDataViewGeneratedAtUtc = DateTime.UtcNow;
-            response = new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: false);
-        }
-        else
-        {
-            response = default;
-        }
-
-        this.EnterGlobalLock();
-
-        this.collectionRunning = false;
-
-        if (this.collectionTcs != null)
-        {
-            this.collectionTcs.SetResult(response);
-            this.collectionTcs = null;
-        }
-
-        this.ExitGlobalLock();
-
 #if NET6_0_OR_GREATER
-        return new ValueTask<CollectionResponse>(response);
+        return new ValueTask<CollectionResponse>(newTcs.Task);
 #else
-        return Task.FromResult(response);
+        return newTcs.Task;
 #endif
     }
 
@@ -160,13 +128,29 @@ internal sealed class PrometheusCollectionManager
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool ExecuteCollect()
+    private void ExecuteCollect()
     {
         this.exporter.OnExport = this.onCollectRef;
         var result = this.exporter.Collect(Timeout.Infinite);
         this.exporter.OnExport = null;
-        return result;
+
+        CollectionResponse response;
+
+        if (result)
+        {
+            response = new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, DateTime.UtcNow, fromCache: false);
+        }
+        else
+        {
+            response = default;
+        }
+
+        // Set the result and notify all waiting readers.
+        // We are not calling `tcs.TrySetResult(response)` directly here
+        // because we don't want any continuation to be run inlined on the current thread.
+        var tcs = this.collectionTcs;
+        Task.Factory.StartNew(s => ((TaskCompletionSource<CollectionResponse>)s!).TrySetResult(response), tcs, CancellationToken.None, TaskCreationOptions.PreferFairness, TaskScheduler.Default);
+        tcs.Task.Wait();
     }
 
     private ExportResult OnCollect(Batch<Metric> metrics)
