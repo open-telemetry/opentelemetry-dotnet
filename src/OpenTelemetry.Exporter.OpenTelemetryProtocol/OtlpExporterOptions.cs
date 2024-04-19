@@ -4,6 +4,9 @@
 #nullable enable
 
 using System.Diagnostics;
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
+using Grpc.Net.Client;
+#endif
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -119,6 +122,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         get => this.protocol ?? DefaultOtlpExportProtocol;
         set => this.protocol = value;
     }
+
+
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
+    public GrpcChannelOptions? GrpcChannelOptions { get; set; }
+#endif
 
     /// <summary>
     /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.

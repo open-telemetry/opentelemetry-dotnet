@@ -32,7 +32,11 @@ internal static class OtlpExporterOptionsExtensions
         }
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
-        return GrpcChannel.ForAddress(options.Endpoint);
+        if (options.GrpcChannelOptions is null)
+        {
+            return GrpcChannel.ForAddress(options.Endpoint);
+        }
+        return GrpcChannel.ForAddress(options.Endpoint, options.GrpcChannelOptions!);
 #else
         ChannelCredentials channelCredentials;
         if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
