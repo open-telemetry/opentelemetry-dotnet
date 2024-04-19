@@ -74,14 +74,23 @@ internal sealed class PrometheusCollectionManager
         this.WaitForReadersToComplete();
         Interlocked.Increment(ref this.readerCount);
         var newTcs = new TaskCompletionSource<CollectionResponse>();
-        this.collectionTcs = newTcs;
-        Task.Factory.StartNew(this.ExecuteCollect, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
-        this.ExitGlobalLock();
+        SpinWait readWait = default;
+
+        while (true)
+        {
+            if (Interlocked.CompareExchange(ref this.collectionTcs, newTcs, tcs) == tcs)
+            {
+                Task.Factory.StartNew(this.ExecuteCollect, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+                this.ExitGlobalLock();
 #if NET6_0_OR_GREATER
-        return new ValueTask<CollectionResponse>(newTcs.Task);
+                return new ValueTask<CollectionResponse>(newTcs.Task);
 #else
-        return newTcs.Task;
+                return newTcs.Task;
 #endif
+            }
+
+            readWait.SpinOnce();
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
