@@ -115,14 +115,9 @@ name starts with "Abc.".
 A
 [View](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
 provides the ability to customize the metrics that are output by the SDK.
-Following sections explains how to use this feature. Each section has two code
-snippets. The first one uses an overload of `AddView` method that takes in the
-name of the instrument as the first parameter. The `View` configuration is then
-applied to the matching instrument name. The second code snippet shows how to
-use an advanced selection criteria to achieve the same results. This requires
-the user to provide a `Func<Instrument, MetricStreamConfiguration>` which offers
-more flexibility in filtering the instruments to which the `View` should be
-applied.
+Following sections explains how to use `AddView` method that takes the
+instrument name as the first parameter, the `View` configuration is then applied
+to the matching instrument name.
 
 #### Rename an instrument
 
