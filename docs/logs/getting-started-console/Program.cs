@@ -32,7 +32,7 @@ internal static partial class LoggerExtensions
     [LoggerMessage(LogLevel.Information, "Food `{name}` price changed to `{price}`.")]
     public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
 
-    [LoggerMessage(LogLevel.Critical, "A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).")]
+    [LoggerMessage(LogLevel.Critical)]
     public static partial void FoodRecallNotice(
         this ILogger logger,
         string brandName,

@@ -49,14 +49,13 @@ LogRecord.Timestamp:               2023-09-15T06:07:03.5683511Z
 LogRecord.CategoryName:            Program
 LogRecord.Severity:                Fatal
 LogRecord.SeverityText:            Critical
-LogRecord.Body:                    A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).
+LogRecord.Body:
 LogRecord.Attributes (Key:Value):
     brandName: Contoso
     productDescription: Salads
     productType: Food & Beverages
     recallReasonDescription: due to a possible health risk from Listeria monocytogenes
     companyName: Contoso Fresh Vegetables, Inc.
-    OriginalFormat (a.k.a Body): A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).
 LogRecord.EventId:                 1338249384
 LogRecord.EventName:               FoodRecallNotice
 
