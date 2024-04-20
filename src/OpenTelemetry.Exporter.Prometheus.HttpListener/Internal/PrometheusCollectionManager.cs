@@ -74,7 +74,7 @@ internal sealed class PrometheusCollectionManager
         this.WaitForReadersToComplete();
         Interlocked.Increment(ref this.readerCount);
         var newTcs = new TaskCompletionSource<CollectionResponse>();
-        SpinWait readWait = default;
+        SpinWait spinWait = default;
 
         while (true)
         {
@@ -89,7 +89,7 @@ internal sealed class PrometheusCollectionManager
 #endif
             }
 
-            readWait.SpinOnce();
+            spinWait.SpinOnce();
         }
     }
 
