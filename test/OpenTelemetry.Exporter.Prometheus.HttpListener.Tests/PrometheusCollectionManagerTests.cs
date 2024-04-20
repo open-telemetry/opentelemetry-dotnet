@@ -88,7 +88,11 @@ public sealed class PrometheusCollectionManagerTests
 
             // This should use the cache and ignore the second counter update.
             var task = exporter.CollectionManager.EnterCollect();
-            Assert.True(task.IsCompleted);
+            if (cacheEnabled)
+            {
+                Assert.True(task.IsCompleted);
+            }
+
             var response = await task;
             try
             {
