@@ -49,7 +49,6 @@
 
            * Unstable:
              * `OpenTelemetry.Instrumentation.GrpcNetClient` (`Instrumentation.GrpcNetClient-`)
-             * `OpenTelemetry.Instrumentation.SqlClient` (`Instrumentation.SqlClient-`)
 
        * As of the `1.9.0` release cycle instrumentation packages and core
          unstable packages always depend on the stable versions of core
