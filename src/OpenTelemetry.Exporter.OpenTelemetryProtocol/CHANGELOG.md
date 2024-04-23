@@ -6,7 +6,9 @@
   `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}+{Commit Hash}`
   to `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}`.
   ([#5528](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5528))
-* Implementation of [OTLP specification](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.2.0/opentelemetry/proto/trace/v1/trace.proto#L112-L133) for propogating `Span` and `SpanLink` flags containing W3C trace flags and `parent_is_remote` information.
+* Implementation of [OTLP specification](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.2.0/opentelemetry/proto/trace/v1/trace.proto#L112-L133)
+for propogating `Span` and `SpanLink` flags containing W3C trace flags and
+`parent_is_remote` information.
 
 ## 1.8.1
 
