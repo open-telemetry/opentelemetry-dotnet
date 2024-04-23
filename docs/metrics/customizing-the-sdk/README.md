@@ -115,14 +115,9 @@ name starts with "Abc.".
 A
 [View](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
 provides the ability to customize the metrics that are output by the SDK.
-Following sections explains how to use this feature. Each section has two code
-snippets. The first one uses an overload of `AddView` method that takes in the
-name of the instrument as the first parameter. The `View` configuration is then
-applied to the matching instrument name. The second code snippet shows how to
-use an advanced selection criteria to achieve the same results. This requires
-the user to provide a `Func<Instrument, MetricStreamConfiguration>` which offers
-more flexibility in filtering the instruments to which the `View` should be
-applied.
+Following sections explains how to use `AddView` method that takes the
+instrument name as the first parameter, the `View` configuration is then applied
+to the matching instrument name.
 
 #### Rename an instrument
 
@@ -136,20 +131,6 @@ own the instrument to create it with a different name.
     .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 ```
 
-```csharp
-    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-    .AddView((instrument) =>
-    {
-        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
-            instrument.Name == "MyCounter")
-        {
-            return new MetricStreamConfiguration() { Name = "MyCounterRenamed" };
-        }
-
-        return null;
-    })
-```
-
 #### Drop an instrument
 
 When using `AddMeter` to add a Meter to the provider, all the instruments from
@@ -160,20 +141,6 @@ then it is recommended to simply not add that `Meter` using `AddMeter`.
 ```csharp
     // Drop the instrument "MyCounterDrop".
     .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
-```
-
-```csharp
-    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-    .AddView((instrument) =>
-    {
-        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
-            instrument.Name == "MyCounterDrop")
-        {
-            return MetricStreamConfiguration.Drop;
-        }
-
-        return null;
-    })
 ```
 
 #### Select specific tags
@@ -219,23 +186,6 @@ with the metric are of interest to you.
     ...
 ```
 
-```csharp
-    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-    .AddView((instrument) =>
-    {
-        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
-            instrument.Name == "MyFruitCounter")
-        {
-            return new MetricStreamConfiguration
-            {
-                TagKeys = new string[] { "name" },
-            };
-        }
-
-        return null;
-    })
-```
-
 #### Configuring the aggregation of a Histogram
 
 There are two types of
@@ -274,24 +224,6 @@ default boundaries. This requires the use of
         new ExplicitBucketHistogramConfiguration { Boundaries = Array.Empty<double>() })
 ```
 
-```csharp
-    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-    .AddView((instrument) =>
-    {
-        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
-            instrument.Name == "MyHistogram")
-        {
-            // `ExplicitBucketHistogramConfiguration` is a child class of `MetricStreamConfiguration`
-            return new ExplicitBucketHistogramConfiguration
-            {
-                Boundaries = new double[] { 10, 20 },
-            };
-        }
-
-        return null;
-    })
-```
-
 ##### Base2 exponential bucket histogram aggregation
 
 By default, a Histogram is configured to use the
@@ -311,16 +243,6 @@ within the maximum number of buckets defined by `MaxSize`. The default
     .AddView(
         instrumentName: "MyHistogram",
         new Base2ExponentialBucketHistogramConfiguration { MaxSize = 40 })
-```
-
-```csharp
-    // Configure all histogram instruments to use the Base2 Exponential Histogram aggregation
-    .AddView((instrument) =>
-    {
-        return instrument.GetType().GetGenericTypeDefinition() == typeof(Histogram<>)
-            ? new Base2ExponentialBucketHistogramConfiguration()
-            : null;
-    })
 ```
 
 > [!NOTE]
