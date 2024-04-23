@@ -401,6 +401,10 @@ public class OtlpTraceExporterTests
         {
             OtlpTestHelpers.AssertOtlpAttributes(childLinks[i].Tags.ToList(), otlpSpan.Links[i].Attributes);
         }
+
+        var flags = (OtlpTrace.SpanFlags)otlpSpan.Flags;
+        Assert.True(flags.HasFlag(OtlpTrace.SpanFlags.ContextHasIsRemoteMask));
+        Assert.False(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
     }
 
     [Fact]
@@ -730,5 +734,100 @@ public class OtlpTraceExporterTests
         Assert.False(ReferenceEquals(tracerOptions, meterOptions));
         Assert.Equal("http://localhost/traces", tracerOptions.Endpoint.OriginalString);
         Assert.Equal("http://localhost/metrics", meterOptions.Endpoint.OriginalString);
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public void SpanFlagsTest(bool isRecorded, bool isRemote)
+    {
+        using var activitySource = new ActivitySource(nameof(this.SpanFlagsTest));
+
+        ActivityContext ctx = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            isRecorded ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None,
+            isRemote: isRemote);
+
+        using var rootActivity = activitySource.StartActivity("root", ActivityKind.Server, ctx);
+
+        var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
+
+        var flags = (OtlpTrace.SpanFlags)otlpSpan.Flags;
+
+        ActivityTraceFlags traceFlags = (ActivityTraceFlags)(flags & OtlpTrace.SpanFlags.TraceFlagsMask);
+
+        if (isRecorded)
+        {
+            Assert.True(traceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        }
+        else
+        {
+            Assert.False(traceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        }
+
+        Assert.True(flags.HasFlag(OtlpTrace.SpanFlags.ContextHasIsRemoteMask));
+
+        if (isRemote)
+        {
+            Assert.True(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
+        }
+        else
+        {
+            Assert.False(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
+        }
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public void SpanLinkFlagsTest(bool isRecorded, bool isRemote)
+    {
+        using var activitySource = new ActivitySource(nameof(this.SpanLinkFlagsTest));
+
+        ActivityContext ctx = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            isRecorded ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None,
+            isRemote: isRemote);
+
+        var links = new[]
+        {
+            new ActivityLink(ctx),
+        };
+
+        using var rootActivity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), links: links);
+
+        var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
+
+        var spanLink = Assert.Single(otlpSpan.Links);
+
+        var flags = (OtlpTrace.SpanFlags)spanLink.Flags;
+
+        ActivityTraceFlags traceFlags = (ActivityTraceFlags)(flags & OtlpTrace.SpanFlags.TraceFlagsMask);
+
+        if (isRecorded)
+        {
+            Assert.True(traceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        }
+        else
+        {
+            Assert.False(traceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        }
+
+        Assert.True(flags.HasFlag(OtlpTrace.SpanFlags.ContextHasIsRemoteMask));
+
+        if (isRemote)
+        {
+            Assert.True(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
+        }
+        else
+        {
+            Assert.False(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
+        }
     }
 }
