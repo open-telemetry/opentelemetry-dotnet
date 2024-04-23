@@ -57,68 +57,32 @@
          `OTelLatestStableVer` property in `Directory.Packages.props` has been
          updated to the latest stable core version.
 
- 2. Run the following PowerShell from the root of the repo to get combined
-    changelog (to be used later).
+ 2. Generate combined CHANGELOG
 
-    ```powershell
-        $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
-        foreach ($changelog in $changelogs)
-        {
-         Add-Content -Path .\combinedchangelog.md -Value "**$($changelog.Directory.Name)**"
-         $lines = Get-Content -Path $changelog.FullName
-         $started = $false
-         $ended = $false
-         foreach ($line in $lines)
-             {
-                if($line -like "## Unreleased" -and $started -ne $true)
-                {
-                  $started = $true
-                }
-                elseif($line -like "## *" -and $started -eq $true)
-                {
-                  $ended = $true
-                  break
-                }
-                else
-                {
-                    if ($started -eq $true)
-                    {
-                        Add-Content -Path .\combinedchangelog.md $line
-                    }
-                }
-             }
-        }
-    ```
+    Run the PowerShell script `.\build\generate-combined-changelog.ps1
+    -minVerTagPrefix [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag
+    prefix (eg `core-`) for the components being released. This generates a
+    combined changelog file to be used in GitHub release. The file is created in
+    the repo root but should not be checked in. Move it or copy the contents off
+    and then delete the file.
 
-    This generates combined changelog to be used in GitHub release. Once
-    contents of combined changelog is saved somewhere, delete the file.
+ 3. Update CHANGELOG files
 
- 3. Run the following PowerShell script from the root of the repo. This updates
-    all the changelog to have release date for the current version being
-    released. Replace the version with actual version. In the script below,
-    replace `1.4.0-beta.1` with the tag name chosen for the package in Step 1.
+    Run the PowerShell script `.\build\update-changelogs.ps1 -minVerTagPrefix
+    [MinVerTagPrefix] -version [Version]`. Where `[MinVerTagPrefix]` is the tag
+    prefix (eg `core-`) for the components being released and `[Version]` is the
+    version being released (eg `1.9.0`). This will update `CHANGELOG.md` files
+    for the projects being released.
 
-    ```powershell
-         $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
-        foreach ($changelog in $changelogs)
-        {
-         (Get-Content -Path $changelog.FullName) -replace "Unreleased", "Unreleased
+ 4. **Stable releases only**: Normalize PublicApi files
 
-    ## 1.4.0-beta.1
+    Run the PowerShell script `.\build\finalize-publicapi.ps1 -minVerTagPrefix
+    [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag prefix (eg `core-`)
+    for the components being released. This will merge the contents of any
+    detected `PublicAPI.Unshipped.txt` files in the `.publicApi` folder into the
+    corresponding `PublicAPI.Shipped.txt` files for the projects being released.
 
-    Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullName
-        }
-    ```
-
- 4. Normalize PublicApi files (Stable Release Only): Run the PowerShell script
-    `.\build\finalize-publicapi.ps1`. This will merge the contents of
-    Unshipped.txt into the Shipped.txt.
-
- 5. The scripts in steps 2-4 run over the entire repo. Remove and undo changes
-    under projects which are not being released. Submit a PR with the final
-    changes and get it merged.
-
- 6. Tag Git with version to be released. We use
+ 5. Tag Git with version to be released. We use
     [MinVer](https://github.com/adamralph/minver) to do versioning, which
     produces version numbers based on git tags.
 
@@ -151,7 +115,7 @@
        git push origin Instrumentation.AspNetCore-1.6.0
        ```
 
- 7. Go to the [list of
+ 6. Go to the [list of
     tags](https://github.com/open-telemetry/opentelemetry-dotnet/tags) and find
     the tag(s) which were pushed. Click the three dots next to the tag and
     choose `Create release`.
@@ -164,22 +128,22 @@
       MyGet
       workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml).
 
- 8. Validate using MyGet packages. Basic sanity checks :)
+ 7. Validate using MyGet packages. Basic sanity checks :)
 
- 9. From the above build, get the artifacts from the drop, which has all the
+ 8. From the above build, get the artifacts from the drop, which has all the
     NuGet packages.
 
-10. Copy all the NuGet files and symbols for the packages being released into a
+ 9. Copy all the NuGet files and symbols for the packages being released into a
     local folder.
 
-11. Download latest [nuget.exe](https://www.nuget.org/downloads) into the same
-    folder from Step 10.
+10. Download latest [nuget.exe](https://www.nuget.org/downloads) into the same
+    folder from Step 9.
 
-12. Create or regenerate an API key from nuget.org (only maintainers have
+11. Create or regenerate an API key from nuget.org (only maintainers have
     access). When creating API keys make sure it is set to expire in 1 day or
     less.
 
-13. Run the following commands from PowerShell from local folder used in Step 10:
+12. Run the following commands from PowerShell from local folder used in Step 9:
 
     ```powershell
     .\nuget.exe setApiKey <actual api key>
@@ -187,24 +151,24 @@
     get-childitem -Recurse | where {$_.extension -eq ".nupkg"} | foreach ($_) {.\nuget.exe push $_.fullname -Source https://api.nuget.org/v3/index.json}
     ```
 
-14. Validate that the package(s) are uploaded. Packages are available
+13. Validate that the package(s) are uploaded. Packages are available
     immediately to maintainers on nuget.org but aren't publicly visible until
     scanning completes. This process usually takes a few minutes.
 
-15. If a new stable version of the core packages was released, open a PR to
+14. If a new stable version of the core packages was released, open a PR to
     update the `OTelLatestStableVer` property in `Directory.Packages.props` to
     the just released stable version.
 
-16. If a new stable version of a package with a dedicated `MinVerTagPrefix` was
+15. If a new stable version of a package with a dedicated `MinVerTagPrefix` was
     released (typically instrumentation packages) open a PR to update
     `PackageValidationBaselineVersion` in the project file to reflect the stable
     version which was just released.
 
-17. If a new stable version of the core packages was released, open an issue in
+16. If a new stable version of the core packages was released, open an issue in
     the
     [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
     repo to notify maintainers to begin upgrading dependencies.
 
-18. Once the packages are available on nuget.org post an announcement in the
+17. Once the packages are available on nuget.org post an announcement in the
     [Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). Note
     any big or interesting new features as part of the announcement.
