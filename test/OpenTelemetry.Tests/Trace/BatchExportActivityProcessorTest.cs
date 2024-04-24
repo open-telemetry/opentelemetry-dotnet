@@ -118,7 +118,7 @@ public class BatchExportActivityProcessorTest
     [InlineData(Timeout.Infinite)]
     [InlineData(0)]
     [InlineData(1)]
-    public void CheckShutdownExport(int timeout)
+    public void CheckShutdownExport(int timeoutMilliseconds)
     {
         var exportedItems = new List<Activity>();
         using var exporter = new InMemoryExporter<Activity>(exportedItems);
@@ -134,12 +134,11 @@ public class BatchExportActivityProcessorTest
         };
 
         processor.OnEnd(activity);
-        processor.Shutdown(timeout);
+        processor.Shutdown(timeoutMilliseconds);
 
-        if (timeout == 0)
+        if (timeoutMilliseconds < 1_000)
         {
-            // Shutdown(0) will trigger flush and return immediately, so let's sleep for a while
-            Thread.Sleep(1_000);
+            Thread.Sleep(1_000 - timeoutMilliseconds);
         }
 
         Assert.Single(exportedItems);
