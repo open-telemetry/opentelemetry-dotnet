@@ -13,7 +13,7 @@ namespace OpenTelemetry.Metrics;
 /// ExemplarReservoir base implementation and contract.
 /// </summary>
 /// <remarks>
-/// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
+/// <inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/>
 /// Specification: <see
 /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplarreservoir"/>.
 /// </remarks>
