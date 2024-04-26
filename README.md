@@ -132,6 +132,7 @@ you're more than welcome to participate!
 ([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
 
 * [Martin Thwaites](https://github.com/martinjt), Honeycomb
+* [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 
 [Emeritus
 Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):
