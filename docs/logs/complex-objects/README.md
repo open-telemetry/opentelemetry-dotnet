@@ -32,11 +32,11 @@ Define a new complex data type, as shown in [FoodRecallNotice.cs](./FoodRecallNo
 ```csharp
 public struct FoodRecallNotice
 {
-    public string? BrandName { get; init; }
-    public string? ProductDescription { get; init; }
-    public string? ProductType { get; init; }
-    public string? RecallReasonDescription { get; init; }
-    public string? CompanyName { get; init; }
+    public string? BrandName { get; set; }
+    public string? ProductDescription { get; set; }
+    public string? ProductType { get; set; }
+    public string? RecallReasonDescription { get; set; }
+    public string? CompanyName { get; set; }
 }
 ```
 
