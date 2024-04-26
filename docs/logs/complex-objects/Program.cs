@@ -34,5 +34,5 @@ internal static partial class LoggerExtensions
     [LoggerMessage(LogLevel.Critical)]
     public static partial void FoodRecallNotice(
         this ILogger logger,
-        [LogProperties(OmitReferenceName = true)] FoodRecallNotice foodRecallNotice);
+        [LogProperties(OmitReferenceName = true)] in FoodRecallNotice foodRecallNotice);
 }
