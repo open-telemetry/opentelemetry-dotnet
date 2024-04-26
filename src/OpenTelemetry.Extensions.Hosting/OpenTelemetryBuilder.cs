@@ -19,7 +19,6 @@ namespace OpenTelemetry;
 /// Contains methods for configuring the OpenTelemetry SDK inside an <see
 /// cref="IServiceCollection"/>.
 /// </summary>
-[Obsolete("Use IOpenTelemetryBuilder instead this class will be removed in a future version.")]
 public sealed class OpenTelemetryBuilder : IOpenTelemetryBuilder
 {
     internal OpenTelemetryBuilder(IServiceCollection services)
