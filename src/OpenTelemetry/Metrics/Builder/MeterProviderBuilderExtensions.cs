@@ -319,16 +319,31 @@ public static class MeterProviderBuilderExtensions
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
-    /// Sets the <see cref="ExemplarFilterType"/> to be used for this provider
-    /// which controls how measurements will be offered to exemplar reservoirs.
-    /// Default provider configuration: <see
-    /// cref="ExemplarFilterType.AlwaysOff"/>.
+    /// Sets the default <see cref="ExemplarFilterType"/> for the provider.
     /// </summary>
     /// <remarks>
     /// <inheritdoc cref="Exemplar"
     /// path="/remarks/para[@experimental-warning='true']"/>
-    /// <para>Note: Use <see cref="ExemplarFilterType.TraceBased"/> or <see
-    /// cref="ExemplarFilterType.AlwaysOn"/> to enable exemplars.</para>
+    /// <para>Notes:
+    /// <list type="bullet">
+    /// <item>The configured <see cref="ExemplarFilterType"/> controls how
+    /// measurements will be offered to <see cref="ExemplarReservoir"/>s which
+    /// are responsible for storing <see cref="Exemplar"/>s on metrics.</item>
+    /// <item>The default provider configuration is <see
+    /// cref="ExemplarFilterType.AlwaysOff"/>.</item>
+    /// <item>Use <see cref="ExemplarFilterType.TraceBased"/> or <see
+    /// cref="ExemplarFilterType.AlwaysOn"/> to enable <see cref="Exemplar"/>s
+    /// for all metrics managed by the provider.</item>
+    /// <item>If <see cref="Exemplar"/>s are enabled on the provider by the
+    /// configured <see cref="ExemplarFilterType"/> then <see
+    /// cref="ExemplarReservoir"/>s will be configured on metrics using the
+    /// defaults described in the specification: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar-defaults"
+    /// />. To change the <see cref="ExemplarReservoir"/> for a metric use the
+    /// <c>AddView</c> API and <see
+    /// cref="MetricStreamConfiguration.ExemplarReservoirFactory"/>.</item>
+    /// </list>
+    /// </para>
     /// <para>Specification: <see
     /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplarfilter"/>.</para>
     /// </remarks>
@@ -345,9 +360,9 @@ public static class MeterProviderBuilderExtensions
 #else
     internal
 #endif
-            static MeterProviderBuilder SetExemplarFilter(
+        static MeterProviderBuilder SetExemplarFilter(
         this MeterProviderBuilder meterProviderBuilder,
-        ExemplarFilterType exemplarFilter = ExemplarFilterType.TraceBased)
+        ExemplarFilterType exemplarFilter)
     {
         meterProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
@@ -361,7 +376,7 @@ public static class MeterProviderBuilderExtensions
                         meterProviderBuilderSdk.SetExemplarFilter(exemplarFilter);
                         break;
                     default:
-                        throw new NotSupportedException($"SdkExemplarFilter '{exemplarFilter}' is not supported.");
+                        throw new NotSupportedException($"ExemplarFilterType '{exemplarFilter}' is not supported.");
                 }
             }
         });
