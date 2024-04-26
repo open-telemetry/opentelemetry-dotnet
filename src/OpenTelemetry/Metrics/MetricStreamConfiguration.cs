@@ -144,7 +144,7 @@ public class MetricStreamConfiguration
     /// when storing <see cref="Exemplar"/>s.
     /// </summary>
     /// <remarks>
-    /// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
+    /// <inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/>
     /// <para>Note: Returning <see langword="null"/> from the factory function will
     /// result in the default <see cref="ExemplarReservoir"/> being chosen by
     /// the SDK based on the type of metric.</para>
