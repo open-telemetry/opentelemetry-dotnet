@@ -130,10 +130,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.AspNetCore", "exam
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "test\Benchmarks\Benchmarks.csproj", "{DE9130A4-F30A-49D7-8834-41DE3021218B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.SqlClient.Tests", "test\OpenTelemetry.Instrumentation.SqlClient.Tests\OpenTelemetry.Instrumentation.SqlClient.Tests.csproj", "{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.SqlClient", "src\OpenTelemetry.Instrumentation.SqlClient\OpenTelemetry.Instrumentation.SqlClient.csproj", "{41C30DC1-8C57-4E14-A83A-7635A3C7960B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Http.Tests", "test\OpenTelemetry.Instrumentation.Http.Tests\OpenTelemetry.Instrumentation.Http.Tests.csproj", "{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Http", "src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj", "{412C64D1-43D6-4E4C-8AD8-E20E63B415BD}"
@@ -436,14 +432,6 @@ Global
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}.Release|Any CPU.ActiveCfg = Release|Any CPU
