@@ -45,7 +45,6 @@
 
            * Stable:
              * `OpenTelemetry.Instrumentation.AspNetCore` (`Instrumentation.AspNetCore-`)
-             * `OpenTelemetry.Instrumentation.Http` (`Instrumentation.Http-`)
 
            * Unstable:
              * `OpenTelemetry.Instrumentation.GrpcNetClient` (`Instrumentation.GrpcNetClient-`)
