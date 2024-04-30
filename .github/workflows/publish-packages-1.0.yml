@@ -43,7 +43,7 @@ jobs:
       run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
 
     - name: dotnet pack
-      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref || '' }}
+      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || '' }}
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4
@@ -51,10 +51,10 @@ jobs:
         name: ${{ github.ref_name }}-packages
         path: '**/bin/**/*.*nupkg'
 
-    - name: Publish MyGet
-      run: |
-        nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
-        nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
+    #- name: Publish MyGet
+    #  run: |
+    #    nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
+    #    nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
     - name: Create GitHub Release Draft
       if: github.ref_type == 'tag'
@@ -80,15 +80,15 @@ jobs:
         @"
         * NuGet: [$packageName v$packageVersion](https://www.nuget.org/packages/$packageName/$packageVersion)
 
-          See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ github.ref }}/src/$packageName/CHANGELOG.md) for details.
+          See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/src/$packageName/CHANGELOG.md) for details.
 
         "@
         }
 
         if ($firstPackageVersion -match '-alpha' -or $firstPackageVersion -match '-beta' -or $firstPackageVersion -match '-rc')
         {
-          gh release create ${{ github.ref }} `
-            --title ${{ github.ref }} `
+          gh release create ${{ github.ref_name }} `
+            --title ${{ github.ref_name }} `
             --verify-tag `
             --notes "$notes" `
             --prerelease `
@@ -96,8 +96,8 @@ jobs:
         }
         else
         {
-          gh release create ${{ github.ref }} `
-            --title ${{ github.ref }} `
+          gh release create ${{ github.ref_name }} `
+            --title ${{ github.ref_name }} `
             --verify-tag `
             --notes "$notes" `
             --latest `
