@@ -10,7 +10,6 @@ name: Build, pack, and publish to MyGet
 on:
   workflow_dispatch:
   push:
-    branches: [ 'main*' ]
     tags:
       - 'core-*'
       - 'coreunstable-*'
