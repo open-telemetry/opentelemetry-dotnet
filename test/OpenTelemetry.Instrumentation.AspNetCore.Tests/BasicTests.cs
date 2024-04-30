@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -629,18 +630,18 @@ public sealed class BasicTests
     }
 
     [Theory]
-    [InlineData("CONNECT", "CONNECT")]
-    [InlineData("DELETE", "DELETE")]
-    [InlineData("GET", "GET")]
-    [InlineData("PUT", "PUT")]
-    [InlineData("HEAD", "HEAD")]
-    [InlineData("OPTIONS", "OPTIONS")]
-    [InlineData("PATCH", "PATCH")]
-    [InlineData("Get", "GET")]
-    [InlineData("POST", "POST")]
-    [InlineData("TRACE", "TRACE")]
-    [InlineData("CUSTOM", "_OTHER")]
-    public async Task HttpRequestMethodIsSetAsPerSpec(string originalMethod, string expectedMethod)
+    [InlineData("CONNECT", "CONNECT", null, "CONNECT")]
+    [InlineData("DELETE", "DELETE", null, "DELETE")]
+    [InlineData("GET", "GET", null, "GET")]
+    [InlineData("PUT", "PUT", null, "PUT")]
+    [InlineData("HEAD", "HEAD", null, "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS", null, "OPTIONS")]
+    [InlineData("PATCH", "PATCH", null, "PATCH")]
+    [InlineData("Get", "GET", "Get", "GET")]
+    [InlineData("POST", "POST", null, "POST")]
+    [InlineData("TRACE", "TRACE", null, "TRACE")]
+    [InlineData("CUSTOM", "_OTHER", "CUSTOM", "HTTP")]
+    public async Task HttpRequestMethodAndActivityDisplayIsSetAsPerSpec(string originalMethod, string expectedMethod, string expectedOriginalMethod, string expectedDisplayName)
     {
         var exportedItems = new List<Activity>();
 
@@ -681,18 +682,9 @@ public sealed class BasicTests
 
         var activity = exportedItems[0];
 
-        Assert.Contains(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethod);
-
-        if (originalMethod.Equals(expectedMethod, StringComparison.OrdinalIgnoreCase))
-        {
-            Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
-        }
-        else
-        {
-            Assert.Equal(originalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
-        }
-
-        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod));
+        Assert.Equal(expectedOriginalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal));
+        Assert.Equal(expectedDisplayName, activity.DisplayName);
     }
 
     [Fact]
@@ -1060,6 +1052,78 @@ public sealed class BasicTests
         Assert.True(result);
     }
 #endif
+
+    [Theory]
+    [InlineData("?a", "?a", false)]
+    [InlineData("?a=bdjdjh", "?a=Redacted", false)]
+    [InlineData("?a=b&", "?a=Redacted&", false)]
+    [InlineData("?c=b&", "?c=Redacted&", false)]
+    [InlineData("?c=a", "?c=Redacted", false)]
+    [InlineData("?a=b&c", "?a=Redacted&c", false)]
+    [InlineData("?a=b&c=1123456&", "?a=Redacted&c=Redacted&", false)]
+    [InlineData("?a=b&c=1&a1", "?a=Redacted&c=Redacted&a1", false)]
+    [InlineData("?a=ghgjgj&c=1deedd&a1=", "?a=Redacted&c=Redacted&a1=Redacted", false)]
+    [InlineData("?a=b&c=11&a1=&", "?a=Redacted&c=Redacted&a1=Redacted&", false)]
+    [InlineData("?c&c&c&", "?c&c&c&", false)]
+    [InlineData("?a&a&a&a", "?a&a&a&a", false)]
+    [InlineData("?&&&&&&&", "?&&&&&&&", false)]
+    [InlineData("?c", "?c", false)]
+    [InlineData("?a", "?a", true)]
+    [InlineData("?a=bdfdfdf", "?a=bdfdfdf", true)]
+    [InlineData("?a=b&", "?a=b&", true)]
+    [InlineData("?c=b&", "?c=b&", true)]
+    [InlineData("?c=a", "?c=a", true)]
+    [InlineData("?a=b&c", "?a=b&c", true)]
+    [InlineData("?a=b&c=111111&", "?a=b&c=111111&", true)]
+    [InlineData("?a=b&c=1&a1", "?a=b&c=1&a1", true)]
+    [InlineData("?a=b&c=1&a1=", "?a=b&c=1&a1=", true)]
+    [InlineData("?a=b123&c=11&a1=&", "?a=b123&c=11&a1=&", true)]
+    [InlineData("?c&c&c&", "?c&c&c&", true)]
+    [InlineData("?a&a&a&a", "?a&a&a&a", true)]
+    [InlineData("?&&&&&&&", "?&&&&&&&", true)]
+    [InlineData("?c", "?c", true)]
+    [InlineData("?c=%26&", "?c=Redacted&", false)]
+    public async Task ValidateUrlQueryRedaction(string urlQuery, string expectedUrlQuery, bool disableQueryRedaction)
+    {
+        var exportedItems = new List<Activity>();
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { ["OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_DISABLE_URL_QUERY_REDACTION"] = disableQueryRedaction.ToString() })
+            .Build();
+
+        var path = "/api/values" + urlQuery;
+
+        // Arrange
+        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using (var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient())
+        {
+            try
+            {
+                using var response = await client.GetAsync(path);
+            }
+            catch (Exception)
+            {
+                // ignore errors
+            }
+
+            WaitForActivityExport(exportedItems, 1);
+        }
+
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
+
+        Assert.Equal(expectedUrlQuery, activity.GetTagValue(SemanticConventions.AttributeUrlQuery));
+    }
 
     public void Dispose()
     {

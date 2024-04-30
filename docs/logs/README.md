@@ -179,6 +179,51 @@ logger.LogInformation("Hello from {food} {price}.", food, price);
 Refer to the [logging performance
 benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
 
+:heavy_check_mark: You should hold a high bar while using
+[`ILogger.IsEnabled`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger.isenabled).
+
+The logging API is highly optimized for the scenario where most loggers are
+**disabled** for certain log levels. Making an extra call to `IsEnabled` before
+logging will not give you any performance gain.
+
+> [!WARNING]
+> The `logger.IsEnabled(LogLevel.Information)` call in the following code is not
+  going to give any performance gain. Refer to the [logging performance
+  benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
+
+```csharp
+var food = "tomato";
+var price = 2.99;
+
+if (logger.IsEnabled(LogLevel.Information)) // do not do this, there is no perf gain
+{
+    logger.SayHello(food, price);
+}
+
+internal static partial class LoggerExtensions
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Hello from {food} {price}.")]
+    public static partial void SayHello(this ILogger logger, string food, double price);
+}
+```
+
+`IsEnabled` can give performance benefits when it is expensive to evaluate the
+arguments. For example, in the following code the `Database.GetFoodPrice`
+invocation will be skipped if the logger is not enabled:
+
+```csharp
+if (logger.IsEnabled(LogLevel.Information))
+{
+    logger.SayHello(food, Database.GetFoodPrice(food));
+}
+```
+
+Although `IsEnabled` can give some performance benefits in the above scenario,
+for most users it can cause more problems. For example, the performance of the
+code is now depending on which logger is being enabled, not to mention the
+argument evaluation might have significant side effects that are now depending
+on the logging configuration.
+
 ## LoggerFactory
 
 In many cases, you can use [ILogger](#ilogger) without having to interact with

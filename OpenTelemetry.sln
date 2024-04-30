@@ -35,16 +35,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\docker-compose.net7.0.yml = build\docker-compose.net7.0.yml
 		build\docker-compose.net8.0.yml = build\docker-compose.net8.0.yml
 		build\finalize-publicapi.ps1 = build\finalize-publicapi.ps1
+		build\generate-combined-changelog.ps1 = build\generate-combined-changelog.ps1
 		build\GlobalAttrExclusions.txt = build\GlobalAttrExclusions.txt
+		build\InstrumentationLibraries.proj = build\InstrumentationLibraries.proj
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
 		build\OpenTelemetry.prod.loose.ruleset = build\OpenTelemetry.prod.loose.ruleset
 		build\OpenTelemetry.prod.ruleset = build\OpenTelemetry.prod.ruleset
 		build\OpenTelemetry.test.ruleset = build\OpenTelemetry.test.ruleset
-		build\process-codecoverage.ps1 = build\process-codecoverage.ps1
 		build\RELEASING.md = build\RELEASING.md
 		build\stylecop.json = build\stylecop.json
 		build\test-aot-compatibility.ps1 = build\test-aot-compatibility.ps1
 		build\test-threadSafety.ps1 = build\test-threadSafety.ps1
+		build\UnstableCoreLibraries.proj = build\UnstableCoreLibraries.proj
+		build\update-changelogs.ps1 = build\update-changelogs.ps1
 		build\xunit.runner.json = build\xunit.runner.json
 	EndProjectSection
 EndProject
@@ -127,14 +130,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.AspNetCore", "exam
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "test\Benchmarks\Benchmarks.csproj", "{DE9130A4-F30A-49D7-8834-41DE3021218B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.SqlClient.Tests", "test\OpenTelemetry.Instrumentation.SqlClient.Tests\OpenTelemetry.Instrumentation.SqlClient.Tests.csproj", "{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.SqlClient", "src\OpenTelemetry.Instrumentation.SqlClient\OpenTelemetry.Instrumentation.SqlClient.csproj", "{41C30DC1-8C57-4E14-A83A-7635A3C7960B}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Http.Tests", "test\OpenTelemetry.Instrumentation.Http.Tests\OpenTelemetry.Instrumentation.Http.Tests.csproj", "{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Http", "src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj", "{412C64D1-43D6-4E4C-8AD8-E20E63B415BD}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.GrpcNetClient", "src\OpenTelemetry.Instrumentation.GrpcNetClient\OpenTelemetry.Instrumentation.GrpcNetClient.csproj", "{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}"
@@ -210,8 +205,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Tests.Stress"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-prometheus-grafana", "docs\metrics\getting-started-prometheus-grafana\getting-started-prometheus-grafana.csproj", "{41B784AA-3301-4126-AF9F-1D59BD04B0BF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.SemanticConventions", "src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj", "{D4519DF6-CC72-4AC4-A851-E21383098D11}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs\logs\customizing-the-sdk\customizing-the-sdk.csproj", "{6C7A1595-36D6-4229-BBB5-5A6B5791791D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Propagators", "src\OpenTelemetry.Extensions.Propagators\OpenTelemetry.Extensions.Propagators.csproj", "{E91B2E40-E428-43B3-8A43-09709F0E69E4}"
@@ -262,6 +255,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\ActivityHelperExtensions.cs = src\Shared\ActivityHelperExtensions.cs
 		src\Shared\ActivityInstrumentationHelper.cs = src\Shared\ActivityInstrumentationHelper.cs
+		src\Shared\AssemblyVersionExtensions.cs = src\Shared\AssemblyVersionExtensions.cs
 		src\Shared\DiagnosticDefinitions.cs = src\Shared\DiagnosticDefinitions.cs
 		src\Shared\ExceptionExtensions.cs = src\Shared\ExceptionExtensions.cs
 		src\Shared\Guard.cs = src\Shared\Guard.cs
@@ -269,15 +263,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 		src\Shared\PeerServiceResolver.cs = src\Shared\PeerServiceResolver.cs
 		src\Shared\PeriodicExportingMetricReaderHelper.cs = src\Shared\PeriodicExportingMetricReaderHelper.cs
 		src\Shared\PooledList.cs = src\Shared\PooledList.cs
+		src\Shared\RedactionHelper.cs = src\Shared\RedactionHelper.cs
 		src\Shared\RequestMethodHelper.cs = src\Shared\RequestMethodHelper.cs
 		src\Shared\ResourceSemanticConventions.cs = src\Shared\ResourceSemanticConventions.cs
 		src\Shared\SemanticConventions.cs = src\Shared\SemanticConventions.cs
 		src\Shared\SpanAttributeConstants.cs = src\Shared\SpanAttributeConstants.cs
 		src\Shared\SpanHelper.cs = src\Shared\SpanHelper.cs
 		src\Shared\StatusHelper.cs = src\Shared\StatusHelper.cs
-		src\Shared\TagAndValueTransformer.cs = src\Shared\TagAndValueTransformer.cs
 		src\Shared\TagTransformer.cs = src\Shared\TagTransformer.cs
 		src\Shared\TagTransformerJsonHelper.cs = src\Shared\TagTransformerJsonHelper.cs
+		src\Shared\ThreadSafeRandom.cs = src\Shared\ThreadSafeRandom.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiagnosticSourceInstrumentation", "DiagnosticSourceInstrumentation", "{28F3EC79-660C-4659-8B73-F90DC1173316}"
@@ -297,15 +292,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EnvironmentVariables", "Env
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Options", "Options", "{494902DD-C63F-48E0-BED3-B58EFB4051C8}"
 	ProjectSection(SolutionItems) = preProject
-		src\Shared\Options\ConfigurationExtensions.cs = src\Shared\Options\ConfigurationExtensions.cs
 		src\Shared\Options\DelegatingOptionsFactory.cs = src\Shared\Options\DelegatingOptionsFactory.cs
+		src\Shared\Options\DelegatingOptionsFactoryServiceCollectionExtensions.cs = src\Shared\Options\DelegatingOptionsFactoryServiceCollectionExtensions.cs
+		src\Shared\Options\SingletonOptionsManager.cs = src\Shared\Options\SingletonOptionsManager.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shims", "Shims", "{A0CB9A10-F22D-4E66-A449-74B3D0361A9C}"
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\Shims\IsExternalInit.cs = src\Shared\Shims\IsExternalInit.cs
 		src\Shared\Shims\NullableAttributes.cs = src\Shared\Shims\NullableAttributes.cs
-		src\Shared\Shims\UnconditionalSuppressMessageAttribute.cs = src\Shared\Shims\UnconditionalSuppressMessageAttribute.cs
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api.Tests", "test\OpenTelemetry.Api.Tests\OpenTelemetry.Api.Tests.csproj", "{777C04B8-1BD5-43D7-B3CD-D2189DFABCF3}"
@@ -341,6 +336,19 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\resources\extending-the-sdk\extending-the-sdk.csproj", "{7BE494FC-4B0D-4340-A62A-9C9F3E7389FE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dedicated-pipeline", "docs\logs\dedicated-pipeline\dedicated-pipeline.csproj", "{19545B37-8518-4BDD-AD49-00C031FB3C2A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configuration", "{87A20A76-D524-4AAC-AF92-8725BFED0415}"
+	ProjectSection(SolutionItems) = preProject
+		src\Shared\Configuration\IConfigurationExtensionsLogger.cs = src\Shared\Configuration\IConfigurationExtensionsLogger.cs
+		src\Shared\Configuration\OpenTelemetryConfigurationExtensions.cs = src\Shared\Configuration\OpenTelemetryConfigurationExtensions.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TagWriter", "TagWriter", "{993E65E5-E71B-40FD-871C-60A9EBD59724}"
+	ProjectSection(SolutionItems) = preProject
+		src\Shared\TagWriter\ArrayTagWriter.cs = src\Shared\TagWriter\ArrayTagWriter.cs
+		src\Shared\TagWriter\JsonStringArrayTagWriter.cs = src\Shared\TagWriter\JsonStringArrayTagWriter.cs
+		src\Shared\TagWriter\TagWriter.cs = src\Shared\TagWriter\TagWriter.cs
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -420,22 +428,6 @@ Global
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}.Release|Any CPU.Build.0 = Release|Any CPU
-		{412C64D1-43D6-4E4C-8AD8-E20E63B415BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{412C64D1-43D6-4E4C-8AD8-E20E63B415BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{412C64D1-43D6-4E4C-8AD8-E20E63B415BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{412C64D1-43D6-4E4C-8AD8-E20E63B415BD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -516,10 +508,6 @@ Global
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -687,6 +675,8 @@ Global
 		{A115CE4C-71A8-4B95-96A5-C1DF46FD94C2} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{7BE494FC-4B0D-4340-A62A-9C9F3E7389FE} = {A115CE4C-71A8-4B95-96A5-C1DF46FD94C2}
 		{19545B37-8518-4BDD-AD49-00C031FB3C2A} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
+		{87A20A76-D524-4AAC-AF92-8725BFED0415} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
+		{993E65E5-E71B-40FD-871C-60A9EBD59724} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

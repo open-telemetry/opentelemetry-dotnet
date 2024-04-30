@@ -18,7 +18,7 @@ public class W3CTraceContextTests : IDisposable
 {
     /*
         To run the tests, invoke docker-compose.yml from the root of the repo:
-        opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
+        opentelemetry>docker compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
      */
     private const string W3cTraceContextEnvVarName = "OTEL_W3CTRACECONTEXT";
     private static readonly Version AspNetCoreHostingVersion = typeof(Microsoft.AspNetCore.Hosting.Builder.IApplicationBuilderFactory).Assembly.GetName().Version;

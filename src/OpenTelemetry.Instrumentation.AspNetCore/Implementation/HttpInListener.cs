@@ -177,7 +177,7 @@ internal class HttpInListener : ListenerHandler
             }
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = GetDisplayName(request.Method);
+            RequestMethodHelper.SetActivityDisplayName(activity, request.Method);
 
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
 
@@ -193,8 +193,14 @@ internal class HttpInListener : ListenerHandler
 
             if (request.QueryString.HasValue)
             {
-                // QueryString should be sanitized. see: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4571
-                activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
+                if (this.options.DisableUrlQueryRedaction)
+                {
+                    activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
+                }
+                else
+                {
+                    activity.SetTag(SemanticConventions.AttributeUrlQuery, RedactionHelper.GetRedactedQueryString(request.QueryString.Value));
+                }
             }
 
             RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
@@ -241,7 +247,7 @@ internal class HttpInListener : ListenerHandler
                     context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
             if (!string.IsNullOrEmpty(routePattern))
             {
-                activity.DisplayName = GetDisplayName(context.Request.Method, routePattern);
+                RequestMethodHelper.SetActivityDisplayName(activity, context.Request.Method, routePattern);
                 activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
             }
 #endif
@@ -387,14 +393,5 @@ internal class HttpInListener : ListenerHandler
                 activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
             }
         }
-    }
-
-    private static string GetDisplayName(string httpMethod, string httpRoute = null)
-    {
-        var normalizedMethod = RequestMethodHelper.GetNormalizedHttpMethod(httpMethod);
-
-        return string.IsNullOrEmpty(httpRoute)
-            ? normalizedMethod
-            : $"{normalizedMethod} {httpRoute}";
     }
 }

@@ -41,11 +41,6 @@ internal class TestLogs
                      *
                      */
 
-                    // Adding the OtlpExporter creates a GrpcChannel.
-                    // This switch must be set before creating a GrpcChannel when calling an insecure gRPC service.
-                    // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-                    AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
                     var protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
 
                     if (options.Protocol.Trim().ToLower().Equals("grpc"))

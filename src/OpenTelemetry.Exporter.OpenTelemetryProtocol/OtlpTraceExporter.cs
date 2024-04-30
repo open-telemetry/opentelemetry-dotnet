@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-using OpenTelemetry.Internal;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
@@ -26,7 +25,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
     public OtlpTraceExporter(OtlpExporterOptions options)
-        : this(options, sdkLimitOptions: new(), transmissionHandler: null)
+        : this(options, sdkLimitOptions: new(), experimentalOptions: new(), transmissionHandler: null)
     {
     }
 
@@ -35,22 +34,20 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// </summary>
     /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
+    /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
     /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
     internal OtlpTraceExporter(
-    OtlpExporterOptions exporterOptions,
-    SdkLimitOptions sdkLimitOptions,
-    OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler = null)
+        OtlpExporterOptions exporterOptions,
+        SdkLimitOptions sdkLimitOptions,
+        ExperimentalOptions experimentalOptions,
+        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
         this.sdkLimitOptions = sdkLimitOptions;
 
-        OtlpKeyValueTransformer.LogUnsupportedAttributeType = OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType;
-
-        ConfigurationExtensions.LogInvalidEnvironmentVariable = OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable;
-
-        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetTraceExportTransmissionHandler();
+        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetTraceExportTransmissionHandler(experimentalOptions);
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();

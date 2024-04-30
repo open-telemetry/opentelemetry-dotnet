@@ -11,9 +11,15 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
 
+  <!--Do not run Package Baseline Validation as this package has never released a stable version.
+  Remove this property once we have released a stable version.-->
+  <PropertyGroup>
+    <DisablePackageBaselineValidation>true</DisablePackageBaselineValidation>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\HttpRequestMessageContextPropagation.cs" Link="Includes\HttpRequestMessageContextPropagation.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\AssemblyVersionExtensions.cs" Link="Includes\AssemblyVersionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Options\*.cs" Link="Includes\Options\%(Filename).cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
   </ItemGroup>

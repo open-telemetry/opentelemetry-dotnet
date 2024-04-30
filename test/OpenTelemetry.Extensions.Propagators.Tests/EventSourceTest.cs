@@ -5,7 +5,7 @@ using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.SqlClient.Tests;
+namespace OpenTelemetry.Extensions.Propagators.Tests;
 
 public class EventSourceTest
 {

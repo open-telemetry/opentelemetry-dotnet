@@ -435,7 +435,7 @@ public partial class GrpcTests
     private static void ValidateGrpcActivity(Activity activityToValidate)
     {
         Assert.Equal(GrpcClientDiagnosticListener.ActivitySourceName, activityToValidate.Source.Name);
-        Assert.Equal(GrpcClientDiagnosticListener.Version.ToString(), activityToValidate.Source.Version);
+        Assert.Equal(GrpcClientDiagnosticListener.Version, activityToValidate.Source.Version);
         Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
     }
 }

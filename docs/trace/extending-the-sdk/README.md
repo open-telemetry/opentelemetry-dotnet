@@ -38,7 +38,10 @@ not covered by the built-in exporters:
 * Exporters should avoid generating telemetry and causing live-loop, this can be
   done via `OpenTelemetry.SuppressInstrumentationScope`.
 * Exporters should use `Activity.TagObjects` collection instead of
-  `Activity.Tags` to obtain the full set of attributes (tags).
+  `Activity.Tags` to obtain the full set of attributes (tags). `Activity.Tags` only
+   returns tags whose value are of type `string` ([source](https://source.dot.net/#System.Diagnostics.DiagnosticSource/System/Diagnostics/Activity.cs,74de547549e574e0,references)).
+  For improved performance, use [Activity.EnumerateTagObjects](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.activity.enumeratetagobjects?view=net-8.0)
+  if planning to enumerate over all TagObjects.
 * Exporters should use `ParentProvider.GetResource()` to get the `Resource`
   associated with the provider.
 
@@ -110,8 +113,6 @@ the library they instrument, and steps for enabling them.
   Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 * [gRPC
   client](../../../src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
-* [HTTP clients](../../../src/OpenTelemetry.Instrumentation.Http/README.md)
-* [SQL client](../../../src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 More community contributed instrumentations are available in [OpenTelemetry .NET
 Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src).
@@ -142,10 +143,10 @@ Writing an instrumentation library typically involves 3 steps.
    itself. For example, System.Data.SqlClient when running on .NET Framework
    happens to publish events using an `EventSource` which the [SqlClient
    instrumentation
-   library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs)
+   library](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs)
    listens to in order to trigger code as Sql commands are executed. The [.NET
    Framework HttpWebRequest
-   instrumentation](../../../src/OpenTelemetry.Instrumentation.Http/Implementation/HttpWebRequestActivitySource.netfx.cs)
+   instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Http/Implementation/HttpWebRequestActivitySource.netfx.cs)
    patches the runtime code (using reflection) and swaps a static reference that
    gets invoked as requests are processed for custom code. Every library will be
    different.
@@ -187,7 +188,7 @@ Writing an instrumentation library typically involves 3 steps.
         on the `TracerProviderBuilder` being configured.
 
         An example instrumentation using this approach is [SqlClient
-        instrumentation](../../../src/OpenTelemetry.Instrumentation.SqlClient/TracerProviderBuilderExtensions.cs).
+        instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/src/OpenTelemetry.Instrumentation.SqlClient/TracerProviderBuilderExtensions.cs).
 
       > [!WARNING]
       > The instrumentation libraries requiring state management are
@@ -225,13 +226,13 @@ activities does not by default runs through the sampler, and will have their
 with it.
 
 Some common examples of such libraries include [ASP.NET
-Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md), [HTTP
-client .NET Core](../../../src/OpenTelemetry.Instrumentation.Http/README.md) .
+Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md).
 Instrumentation libraries for these are already provided in this repo. The
 [OpenTelemetry .NET
 Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
 repository also has instrumentations for libraries like
 [ElasticSearchClient](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.ElasticsearchClient)
+and [HTTP client .NET Core](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Http/README.md)
 etc. which fall in this category.
 
 If you are writing instrumentation for such library, it is recommended to refer
@@ -256,6 +257,11 @@ Custom processors can be implemented to cover more scenarios:
   and `OnShutdown`.
 * `OnStart` and `OnEnd` should be thread safe, and should not block or take long
   time, since they will be called on critical code path.
+* Processors should use `Activity.TagObjects` collection instead of
+  `Activity.Tags` to obtain the full set of attributes (tags). `Activity.Tags` only
+   returns tags whose value are of type `string` ([source](https://source.dot.net/#System.Diagnostics.DiagnosticSource/System/Diagnostics/Activity.cs,74de547549e574e0,references)).
+  For improved performance, use [Activity.EnumerateTagObjects](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.activity.enumeratetagobjects?view=net-8.0)
+  if planning to enumerate over all TagObjects.
 
 ```csharp
 class MyProcessor : BaseProcessor<Activity>

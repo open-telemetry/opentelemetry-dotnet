@@ -1,2 +1,0 @@
-OpenTelemetry.IOpenTelemetryBuilder
-OpenTelemetry.IOpenTelemetryBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

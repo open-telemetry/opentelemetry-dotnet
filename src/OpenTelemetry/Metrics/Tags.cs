@@ -1,6 +1,12 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
+
 namespace OpenTelemetry.Metrics;
 
 internal readonly struct Tags : IEquatable<Tags>
@@ -12,31 +18,7 @@ internal readonly struct Tags : IEquatable<Tags>
     public Tags(KeyValuePair<string, object?>[] keyValuePairs)
     {
         this.KeyValuePairs = keyValuePairs;
-
-#if NET6_0_OR_GREATER
-        HashCode hashCode = default;
-        for (int i = 0; i < this.KeyValuePairs.Length; i++)
-        {
-            ref var item = ref this.KeyValuePairs[i];
-            hashCode.Add(item.Key);
-            hashCode.Add(item.Value);
-        }
-
-        var hash = hashCode.ToHashCode();
-#else
-        var hash = 17;
-        for (int i = 0; i < this.KeyValuePairs.Length; i++)
-        {
-            ref var item = ref this.KeyValuePairs[i];
-            unchecked
-            {
-                hash = (hash * 31) + (item.Key?.GetHashCode() ?? 0);
-                hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
-            }
-        }
-#endif
-
-        this.hashCode = hash;
+        this.hashCode = ComputeHashCode(keyValuePairs);
     }
 
     public readonly KeyValuePair<string, object?>[] KeyValuePairs { get; }
@@ -52,33 +34,101 @@ internal readonly struct Tags : IEquatable<Tags>
 
     public readonly bool Equals(Tags other)
     {
-        var length = this.KeyValuePairs.Length;
+        var ourKvps = this.KeyValuePairs;
+        var theirKvps = other.KeyValuePairs;
 
-        if (length != other.KeyValuePairs.Length)
+        var length = ourKvps.Length;
+
+        if (length != theirKvps.Length)
         {
             return false;
         }
 
+#if NET6_0_OR_GREATER
+        // Note: This loop uses unsafe code (pointers) to elide bounds checks on
+        // two arrays we know to be of equal length.
+        if (length > 0)
+        {
+            ref var ours = ref MemoryMarshal.GetArrayDataReference(ourKvps);
+            ref var theirs = ref MemoryMarshal.GetArrayDataReference(theirKvps);
+            while (true)
+            {
+                // Note: string.Equals performs an ordinal comparison
+                if (!ours.Key.Equals(theirs.Key))
+                {
+                    return false;
+                }
+
+                if (!ours.Value?.Equals(theirs.Value) ?? theirs.Value != null)
+                {
+                    return false;
+                }
+
+                if (--length == 0)
+                {
+                    break;
+                }
+
+                ours = ref Unsafe.Add(ref ours, 1);
+                theirs = ref Unsafe.Add(ref theirs, 1);
+            }
+        }
+#else
         for (int i = 0; i < length; i++)
         {
-            ref var left = ref this.KeyValuePairs[i];
-            ref var right = ref other.KeyValuePairs[i];
+            ref var ours = ref ourKvps[i];
 
-            // Equality check for Keys
-            if (!left.Key.Equals(right.Key, StringComparison.Ordinal))
+            // Note: Bounds check happens here for theirKvps element access
+            ref var theirs = ref theirKvps[i];
+
+            // Note: string.Equals performs an ordinal comparison
+            if (!ours.Key.Equals(theirs.Key))
             {
                 return false;
             }
 
-            // Equality check for Values
-            if (!left.Value?.Equals(right.Value) ?? right.Value != null)
+            if (!ours.Value?.Equals(theirs.Value) ?? theirs.Value != null)
             {
                 return false;
             }
         }
+#endif
 
         return true;
     }
 
     public override readonly int GetHashCode() => this.hashCode;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int ComputeHashCode(KeyValuePair<string, object?>[] keyValuePairs)
+    {
+        Debug.Assert(keyValuePairs != null, "keyValuePairs was null");
+
+#if NET6_0_OR_GREATER
+        HashCode hashCode = default;
+
+        for (int i = 0; i < keyValuePairs.Length; i++)
+        {
+            ref var item = ref keyValuePairs[i];
+            hashCode.Add(item.Key.GetHashCode());
+            hashCode.Add(item.Value);
+        }
+
+        return hashCode.ToHashCode();
+#else
+        var hash = 17;
+
+        for (int i = 0; i < keyValuePairs!.Length; i++)
+        {
+            ref var item = ref keyValuePairs[i];
+            unchecked
+            {
+                hash = (hash * 31) + item.Key.GetHashCode();
+                hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
+            }
+        }
+
+        return hash;
+#endif
+    }
 }

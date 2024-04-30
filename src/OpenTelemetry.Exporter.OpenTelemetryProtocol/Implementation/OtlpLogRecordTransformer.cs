@@ -166,7 +166,7 @@ internal sealed class OtlpLogRecordTransformer
                     {
                         otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = attribute.Value as string };
                     }
-                    else if (OtlpKeyValueTransformer.Instance.TryTransformTag(attribute, out var result, attributeValueLengthLimit))
+                    else if (OtlpTagTransformer.Instance.TryTransformTag(attribute, out var result, attributeValueLengthLimit))
                     {
                         AddAttribute(otlpLogRecord, result, attributeCountLimit);
                     }
@@ -224,7 +224,7 @@ internal sealed class OtlpLogRecordTransformer
                     }
                     else
                     {
-                        if (OtlpKeyValueTransformer.Instance.TryTransformTag(scopeItem, out var result, attributeValueLengthLimit))
+                        if (OtlpTagTransformer.Instance.TryTransformTag(scopeItem, out var result, attributeValueLengthLimit))
                         {
                             AddAttribute(otlpLog, result, attributeCountLimit);
                         }
@@ -257,7 +257,7 @@ internal sealed class OtlpLogRecordTransformer
     private static void AddStringAttribute(OtlpLogs.LogRecord logRecord, string key, string value, int? maxValueLength, int maxAttributeCount)
     {
         var attributeItem = new KeyValuePair<string, object>(key, value);
-        if (OtlpKeyValueTransformer.Instance.TryTransformTag(attributeItem, out var result, maxValueLength))
+        if (OtlpTagTransformer.Instance.TryTransformTag(attributeItem, out var result, maxValueLength))
         {
             AddAttribute(logRecord, result, maxAttributeCount);
         }
@@ -267,7 +267,7 @@ internal sealed class OtlpLogRecordTransformer
     private static void AddIntAttribute(OtlpLogs.LogRecord logRecord, string key, int value, int maxAttributeCount)
     {
         var attributeItem = new KeyValuePair<string, object>(key, value);
-        if (OtlpKeyValueTransformer.Instance.TryTransformTag(attributeItem, out var result))
+        if (OtlpTagTransformer.Instance.TryTransformTag(attributeItem, out var result))
         {
             AddAttribute(logRecord, result, maxAttributeCount);
         }

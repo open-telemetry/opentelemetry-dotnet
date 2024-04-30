@@ -1,3 +1,6 @@
+abstract OpenTelemetry.Metrics.ExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
+abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<double> measurement) -> void
+abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<long> measurement) -> void
 OpenTelemetry.Logs.LoggerProviderBuilderExtensions
 OpenTelemetry.Logs.LoggerProviderExtensions
 OpenTelemetry.Logs.LogRecord.Logger.get -> OpenTelemetry.Logs.Logger!
@@ -21,9 +24,14 @@ OpenTelemetry.Metrics.ExemplarMeasurement<T>
 OpenTelemetry.Metrics.ExemplarMeasurement<T>.ExemplarMeasurement() -> void
 OpenTelemetry.Metrics.ExemplarMeasurement<T>.Tags.get -> System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string!, object?>>
 OpenTelemetry.Metrics.ExemplarMeasurement<T>.Value.get -> T
+OpenTelemetry.Metrics.ExemplarReservoir
+OpenTelemetry.Metrics.ExemplarReservoir.ExemplarReservoir() -> void
+OpenTelemetry.Metrics.ExemplarReservoir.ResetOnCollect.get -> bool
 OpenTelemetry.Metrics.MetricPoint.TryGetExemplars(out OpenTelemetry.Metrics.ReadOnlyExemplarCollection exemplars) -> bool
 OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.get -> int?
 OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void
+OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.get -> System.Func<OpenTelemetry.Metrics.ExemplarReservoir?>?
+OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.set -> void
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator.Current.get -> OpenTelemetry.Metrics.Exemplar
@@ -48,7 +56,7 @@ static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.SetResourceBuilder(thi
 static OpenTelemetry.Logs.LoggerProviderExtensions.AddProcessor(this OpenTelemetry.Logs.LoggerProvider! provider, OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>! processor) -> OpenTelemetry.Logs.LoggerProvider!
 static OpenTelemetry.Logs.LoggerProviderExtensions.ForceFlush(this OpenTelemetry.Logs.LoggerProvider! provider, int timeoutMilliseconds = -1) -> bool
 static OpenTelemetry.Logs.LoggerProviderExtensions.Shutdown(this OpenTelemetry.Logs.LoggerProvider! provider, int timeoutMilliseconds = -1) -> bool
-static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Metrics.ExemplarFilterType exemplarFilter = OpenTelemetry.Metrics.ExemplarFilterType.TraceBased) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Metrics.ExemplarFilterType exemplarFilter) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithLogging(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithLogging(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithLogging(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> OpenTelemetry.IOpenTelemetryBuilder!

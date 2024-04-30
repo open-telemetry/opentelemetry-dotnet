@@ -4,13 +4,13 @@
 #nullable enable
 
 using System.Diagnostics;
-using System.Reflection;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter;
 /// OTEL_EXPORTER_OTLP_TIMEOUT, and OTEL_EXPORTER_OTLP_PROTOCOL environment
 /// variables are parsed during object construction.
 /// </remarks>
-public class OtlpExporterOptions
+public class OtlpExporterOptions : IOtlpExporterOptions
 {
     internal const string DefaultGrpcEndpoint = "http://localhost:4317";
     internal const string DefaultHttpEndpoint = "http://localhost:4318";
@@ -37,9 +37,9 @@ public class OtlpExporterOptions
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
-    private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
-
+    private OtlpExportProtocol? protocol;
     private Uri? endpoint;
+    private int? timeoutMilliseconds;
     private Func<HttpClient>? httpClientFactory;
 
     /// <summary>
@@ -79,38 +79,7 @@ public class OtlpExporterOptions
         this.BatchExportProcessorOptions = defaultBatchOptions!;
     }
 
-    /// <summary>
-    /// Gets or sets the target to which the exporter is going to send
-    /// telemetry.
-    /// </summary>
-    /// <remarks>
-    /// Notes:
-    /// <list type="bullet">
-    /// <item>When setting <see cref="Endpoint"/> the value must be a valid <see
-    /// cref="Uri"/> with scheme (http or https) and host, and may contain a
-    /// port and path.</item>
-    /// <item>The default value when not set is based on the <see
-    /// cref="Protocol"/> property:
-    /// <list type="bullet">
-    /// <item><c>http://localhost:4317</c> for <see
-    /// cref="OtlpExportProtocol.Grpc"/>.</item>
-    /// <item><c>http://localhost:4318</c> for <see
-    /// cref="OtlpExportProtocol.HttpProtobuf"/></item>.
-    /// </list>
-    /// <item>When <see cref="Protocol"/> is set to <see
-    /// cref="OtlpExportProtocol.HttpProtobuf"/> and <see cref="Endpoint"/> has
-    /// not been set the default value (<c>http://localhost:4318</c>) will have
-    /// a signal-specific path appended. The final default endpoint values will
-    /// be constructed as:
-    /// <list type="bullet">
-    /// <item>Logging: <c>http://localhost:4318/v1/logs</c></item>
-    /// <item>Metrics: <c>http://localhost:4318/v1/metrics</c></item>
-    /// <item>Tracing: <c>http://localhost:4318/v1/traces</c></item>
-    /// </list>
-    /// </item>
-    /// </item>
-    /// </list>
-    /// </remarks>
+    /// <inheritdoc/>
     public Uri Endpoint
     {
         get
@@ -134,27 +103,22 @@ public class OtlpExporterOptions
         }
     }
 
-    /// <summary>
-    /// Gets or sets optional headers for the connection.
-    /// </summary>
-    /// <remarks>
-    /// Note: Refer to the  <see
-    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">
-    /// OpenTelemetry Specification</see> for details on the format of <see
-    /// cref="Headers"/>.
-    /// </remarks>
+    /// <inheritdoc/>
     public string? Headers { get; set; }
 
-    /// <summary>
-    /// Gets or sets the max waiting time (in milliseconds) for the backend to
-    /// process each batch. Default value: <c>10000</c>.
-    /// </summary>
-    public int TimeoutMilliseconds { get; set; } = 10000;
+    /// <inheritdoc/>
+    public int TimeoutMilliseconds
+    {
+        get => this.timeoutMilliseconds ?? 10000;
+        set => this.timeoutMilliseconds = value;
+    }
 
-    /// <summary>
-    /// Gets or sets the the OTLP transport protocol.
-    /// </summary>
-    public OtlpExportProtocol Protocol { get; set; } = DefaultOtlpExportProtocol;
+    /// <inheritdoc/>
+    public OtlpExportProtocol Protocol
+    {
+        get => this.protocol ?? DefaultOtlpExportProtocol;
+        set => this.protocol = value;
+    }
 
     /// <summary>
     /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
@@ -168,39 +132,7 @@ public class OtlpExporterOptions
     /// <remarks>Note: This only applies when exporting traces.</remarks>
     public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
-    /// <summary>
-    /// Gets or sets the factory function called to create the <see
-    /// cref="HttpClient"/> instance that will be used at runtime to
-    /// transmit telemetry over HTTP. The returned instance will be reused
-    /// for all export invocations.
-    /// </summary>
-    /// <remarks>
-    /// Notes:
-    /// <list type="bullet">
-    /// <item>This is only invoked for the <see
-    /// cref="OtlpExportProtocol.HttpProtobuf"/> protocol.</item>
-    /// <item>The default behavior when using tracing registration extensions is
-    /// if an <a
-    /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
-    /// instance can be resolved through the application <see
-    /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
-    /// created through the factory with the name "OtlpTraceExporter" otherwise
-    /// an <see cref="HttpClient"/> will be instantiated directly.</item>
-    /// <item>The default behavior when using metrics registration extensions is
-    /// if an <a
-    /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
-    /// instance can be resolved through the application <see
-    /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
-    /// created through the factory with the name "OtlpMetricExporter" otherwise
-    /// an <see cref="HttpClient"/> will be instantiated directly.</item>
-    /// <item>
-    /// The default behavior when using logging registration extensions is an
-    /// <see cref="HttpClient"/> will be instantiated directly. <a
-    /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
-    /// is not currently supported for logging.
-    /// </item>
-    /// </list>
-    /// </remarks>
+    /// <inheritdoc/>
     public Func<HttpClient> HttpClientFactory
     {
         get => this.httpClientFactory ?? this.DefaultHttpClientFactory;
@@ -222,10 +154,11 @@ public class OtlpExporterOptions
     /// </remarks>
     internal bool AppendSignalPathToEndpoint { get; private set; } = true;
 
-    internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
-    {
-        services.RegisterOptionsFactory(CreateOtlpExporterOptions);
-    }
+    internal bool HasData
+        => this.protocol.HasValue
+        || this.endpoint != null
+        || this.timeoutMilliseconds.HasValue
+        || this.httpClientFactory != null;
 
     internal static OtlpExporterOptions CreateOtlpExporterOptions(
         IServiceProvider serviceProvider,
@@ -244,13 +177,14 @@ public class OtlpExporterOptions
         string headersEnvVarKey,
         string timeoutEnvVarKey)
     {
-        if (configuration.TryGetUriValue(endpointEnvVarKey, out var endpoint))
+        if (configuration.TryGetUriValue(OpenTelemetryProtocolExporterEventSource.Log, endpointEnvVarKey, out var endpoint))
         {
             this.endpoint = endpoint;
             this.AppendSignalPathToEndpoint = appendSignalPathToEndpoint;
         }
 
         if (configuration.TryGetValue<OtlpExportProtocol>(
+            OpenTelemetryProtocolExporterEventSource.Log,
             protocolEnvVarKey,
             OtlpExportProtocolParser.TryParse,
             out var protocol))
@@ -263,24 +197,35 @@ public class OtlpExporterOptions
             this.Headers = headers;
         }
 
-        if (configuration.TryGetIntValue(timeoutEnvVarKey, out var timeout))
+        if (configuration.TryGetIntValue(OpenTelemetryProtocolExporterEventSource.Log, timeoutEnvVarKey, out var timeout))
         {
             this.TimeoutMilliseconds = timeout;
         }
     }
 
+    internal OtlpExporterOptions ApplyDefaults(OtlpExporterOptions defaultExporterOptions)
+    {
+        this.protocol ??= defaultExporterOptions.protocol;
+
+        this.endpoint ??= defaultExporterOptions.endpoint;
+
+        // Note: We leave AppendSignalPathToEndpoint set to true here because we
+        // want to append the signal if the endpoint came from the default
+        // endpoint.
+
+        this.Headers ??= defaultExporterOptions.Headers;
+
+        this.timeoutMilliseconds ??= defaultExporterOptions.timeoutMilliseconds;
+
+        this.httpClientFactory ??= defaultExporterOptions.httpClientFactory;
+
+        return this;
+    }
+
     private static string GetUserAgentString()
     {
-        try
-        {
-            var assemblyVersion = typeof(OtlpExporterOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-            var informationalVersion = assemblyVersion?.InformationalVersion;
-            return string.IsNullOrEmpty(informationalVersion) ? UserAgentProduct : $"{UserAgentProduct}/{informationalVersion}";
-        }
-        catch (Exception)
-        {
-            return UserAgentProduct;
-        }
+        var assembly = typeof(OtlpExporterOptions).Assembly;
+        return $"OTel-OTLP-Exporter-Dotnet/{assembly.GetPackageVersion()}";
     }
 
     private void ApplyConfiguration(

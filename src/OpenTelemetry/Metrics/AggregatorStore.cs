@@ -221,14 +221,7 @@ internal sealed class AggregatorStore
                 continue;
             }
 
-            if (this.IsExemplarEnabled())
-            {
-                metricPoint.TakeSnapshotWithExemplar(outputDelta: true);
-            }
-            else
-            {
-                metricPoint.TakeSnapshot(outputDelta: true);
-            }
+            this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
 
             this.currentMetricPointBatch[this.batchSize] = i;
             this.batchSize++;
@@ -246,14 +239,7 @@ internal sealed class AggregatorStore
         ref var metricPointWithNoTags = ref this.metricPoints[0];
         if (metricPointWithNoTags.MetricPointStatus != MetricPointStatus.NoCollectPending)
         {
-            if (this.IsExemplarEnabled())
-            {
-                metricPointWithNoTags.TakeSnapshotWithExemplar(outputDelta: true);
-            }
-            else
-            {
-                metricPointWithNoTags.TakeSnapshot(outputDelta: true);
-            }
+            this.TakeMetricPointSnapshot(ref metricPointWithNoTags, outputDelta: true);
 
             this.currentMetricPointBatch[this.batchSize] = 0;
             this.batchSize++;
@@ -265,14 +251,7 @@ internal sealed class AggregatorStore
             ref var metricPointForOverflow = ref this.metricPoints[1];
             if (metricPointForOverflow.MetricPointStatus != MetricPointStatus.NoCollectPending)
             {
-                if (this.IsExemplarEnabled())
-                {
-                    metricPointForOverflow.TakeSnapshotWithExemplar(outputDelta: true);
-                }
-                else
-                {
-                    metricPointForOverflow.TakeSnapshot(outputDelta: true);
-                }
+                this.TakeMetricPointSnapshot(ref metricPointForOverflow, outputDelta: true);
 
                 this.currentMetricPointBatch[this.batchSize] = 1;
                 this.batchSize++;
@@ -286,57 +265,47 @@ internal sealed class AggregatorStore
 
             if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
             {
+                // Reclaim the MetricPoint if it was marked for it in the previous collect cycle
+                if (metricPoint.LookupData != null && metricPoint.LookupData.DeferredReclaim == true)
+                {
+                    this.ReclaimMetricPoint(ref metricPoint, i);
+                    continue;
+                }
+
+                // Check if the MetricPoint could be reclaimed in the current Collect cycle.
                 // If metricPoint.LookupData is `null` then the MetricPoint is already reclaimed and in the queue.
                 // If the Collect thread is successfully able to compare and swap the reference count from zero to int.MinValue, it means that
                 // the MetricPoint can be reused for other tags.
                 if (metricPoint.LookupData != null && Interlocked.CompareExchange(ref metricPoint.ReferenceCount, int.MinValue, 0) == 0)
                 {
-                    var lookupData = metricPoint.LookupData;
+                    // This is similar to double-checked locking. For some rare case, the Collect thread might read the status as `NoCollectPending`,
+                    // and then get switched out before it could set the ReferenceCount to `int.MinValue`. In the meantime, an Update thread could come in
+                    // and update the MetricPoint, thereby, setting its status to `CollectPending`. Note that the ReferenceCount would be 0 after the update.
+                    // If the Collect thread now wakes up, it would be able to set the ReferenceCount to `int.MinValue`, thereby, marking the MetricPoint
+                    // invalid for newer updates. In such cases, the MetricPoint, should not be reclaimed before taking its Snapshot.
 
-                    metricPoint.Reclaim();
-
-                    Debug.Assert(this.TagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
-
-                    lock (this.TagsToMetricPointIndexDictionaryDelta!)
+                    if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
                     {
-                        LookupData? dictionaryValue;
-                        if (lookupData.SortedTags != Tags.EmptyTags)
-                        {
-                            // Check if no other thread added a new entry for the same Tags.
-                            // If no, then remove the existing entries.
-                            if (this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.SortedTags, out dictionaryValue) &&
-                                dictionaryValue == lookupData)
-                            {
-                                this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.SortedTags, out var _);
-                                this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
-                            }
-                        }
-                        else
-                        {
-                            if (this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.GivenTags, out dictionaryValue) &&
-                                dictionaryValue == lookupData)
-                            {
-                                this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
-                            }
-                        }
+                        this.ReclaimMetricPoint(ref metricPoint, i);
+                    }
+                    else
+                    {
+                        // MetricPoint's ReferenceCount is `int.MinValue` but it still has a collect pending. Take the MetricPoint's Snapshot
+                        // and mark it to be reclaimed in the next Collect cycle.
 
-                        Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
+                        metricPoint.LookupData.DeferredReclaim = true;
 
-                        this.availableMetricPoints!.Enqueue(i);
+                        this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
+
+                        this.currentMetricPointBatch[this.batchSize] = i;
+                        this.batchSize++;
                     }
                 }
 
                 continue;
             }
 
-            if (this.IsExemplarEnabled())
-            {
-                metricPoint.TakeSnapshotWithExemplar(outputDelta: true);
-            }
-            else
-            {
-                metricPoint.TakeSnapshot(outputDelta: true);
-            }
+            this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
 
             this.currentMetricPointBatch[this.batchSize] = i;
             this.batchSize++;
@@ -358,14 +327,7 @@ internal sealed class AggregatorStore
                 continue;
             }
 
-            if (this.IsExemplarEnabled())
-            {
-                metricPoint.TakeSnapshotWithExemplar(outputDelta: false);
-            }
-            else
-            {
-                metricPoint.TakeSnapshot(outputDelta: false);
-            }
+            this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: false);
 
             this.currentMetricPointBatch[this.batchSize] = i;
             this.batchSize++;
@@ -393,6 +355,69 @@ internal sealed class AggregatorStore
         }
 
         return Metric.DefaultHistogramBounds;
+    }
+
+    private void TakeMetricPointSnapshot(ref MetricPoint metricPoint, bool outputDelta)
+    {
+        if (this.IsExemplarEnabled())
+        {
+            metricPoint.TakeSnapshotWithExemplar(outputDelta);
+        }
+        else
+        {
+            metricPoint.TakeSnapshot(outputDelta);
+        }
+    }
+
+    private void ReclaimMetricPoint(ref MetricPoint metricPoint, int metricPointIndex)
+    {
+        /*
+         This method does three things:
+          1. Set `metricPoint.LookupData` and `metricPoint.mpComponents` to `null` to have them collected faster by GC.
+          2. Tries to remove the entry for this MetricPoint from the lookup dictionary. An update thread which retrieves this
+             MetricPoint would realize that the MetricPoint is not valid for use since its reference count would have been set to a negative number.
+             When that happens, the update thread would also try to remove the entry for this MetricPoint from the lookup dictionary.
+             We only care about the entry getting removed from the lookup dictionary and not about which thread removes it.
+          3. Put the array index of this MetricPoint to the queue of available metric points. This makes it available for update threads
+             to use this MetricPoint to track newer dimension combinations.
+        */
+
+        var lookupData = metricPoint.LookupData;
+
+        // This method is only called after checking that `metricPoint.LookupData` is not `null`.
+        Debug.Assert(lookupData != null, "LookupData for the provided MetricPoint was null");
+
+        metricPoint.NullifyMetricPointState();
+
+        Debug.Assert(this.TagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
+
+        lock (this.TagsToMetricPointIndexDictionaryDelta!)
+        {
+            LookupData? dictionaryValue;
+            if (lookupData!.SortedTags != Tags.EmptyTags)
+            {
+                // Check if no other thread added a new entry for the same Tags.
+                // If no, then remove the existing entries.
+                if (this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.SortedTags, out dictionaryValue) &&
+                    dictionaryValue == lookupData)
+                {
+                    this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.SortedTags, out var _);
+                    this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
+                }
+            }
+            else
+            {
+                if (this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.GivenTags, out dictionaryValue) &&
+                    dictionaryValue == lookupData)
+                {
+                    this.TagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
+                }
+            }
+
+            Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
+
+            this.availableMetricPoints!.Enqueue(metricPointIndex);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -993,14 +1018,14 @@ internal sealed class AggregatorStore
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
                 tags,
-                isSampled: true);
+                offerExemplar: true);
         }
         else
         {
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
                 tags,
-                isSampled: Activity.Current?.Recorded ?? false);
+                offerExemplar: Activity.Current?.Recorded ?? false);
         }
     }
 
@@ -1048,14 +1073,14 @@ internal sealed class AggregatorStore
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
                 tags,
-                isSampled: true);
+                offerExemplar: true);
         }
         else
         {
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
                 tags,
-                isSampled: Activity.Current?.Recorded ?? false);
+                offerExemplar: Activity.Current?.Recorded ?? false);
         }
     }
 

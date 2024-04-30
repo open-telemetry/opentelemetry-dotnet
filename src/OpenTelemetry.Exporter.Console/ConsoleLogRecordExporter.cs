@@ -93,7 +93,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
                         ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", logRecord.Attributes[i].Value)
                         : logRecord.Attributes[i];
 
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
+                    if (this.TagTransformer.TryTransformTag(valueToTransform, out var result))
                     {
                         this.WriteLine($"{string.Empty,-4}{result}");
                     }
@@ -127,7 +127,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
 
                 foreach (KeyValuePair<string, object> scopeItem in scope)
                 {
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(scopeItem, out var result))
+                    if (this.TagTransformer.TryTransformTag(scopeItem, out var result))
                     {
                         exporter.WriteLine($"[Scope.{scopeDepth}]:{result}");
                     }
@@ -140,7 +140,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
                 this.WriteLine("\nResource associated with LogRecord:");
                 foreach (var resourceAttribute in resource.Attributes)
                 {
-                    if (ConsoleTagTransformer.Instance.TryTransformTag(resourceAttribute, out var result))
+                    if (this.TagTransformer.TryTransformTag(resourceAttribute, out var result))
                     {
                         this.WriteLine(result);
                     }

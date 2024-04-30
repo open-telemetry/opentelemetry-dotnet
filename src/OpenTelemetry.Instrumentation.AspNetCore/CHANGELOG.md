@@ -1,11 +1,35 @@
 # Changelog
 
-## Unreleased
+## 1.8.1
+
+Released 2024-Apr-12
+
+* **Breaking Change**: Fixed tracing instrumentation so that by default any
+  values detected in the query string component of requests are replaced with
+  the text `Redacted` when building the `url.query` tag. For example,
+  `?key1=value1&key2=value2` becomes `?key1=Redacted&key2=Redacted`. You can
+  disable this redaction by setting the environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_DISABLE_URL_QUERY_REDACTION` to `true`.
+  ([#5532](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5532))
+
+## 1.8.0
+
+Released 2024-Apr-04
 
 * Fixed an issue for spans when `server.port` attribute was not set with
   `server.address` when it has default values (`80` for `HTTP` and
   `443` for `HTTPS` protocol).
   ([#5419](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5419))
+
+* Fixed an issue where the `http.request.method_original` attribute was not set
+  on activity. Now, when `http.request.method` is set and the original method
+  is converted to its canonical form (e.g., `Get` is converted to `GET`),
+  the original value `Get` will be stored in `http.request.method_original`.
+  ([#5471](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5471))
+
+* Fixed the name of spans that have `http.request.method` attribute set to `_OTHER`.
+  The span name will be set as `HTTP {http.route}` as per the [specification](https://github.com/open-telemetry/semantic-conventions/blob/v1.24.0/docs/http/http-spans.md#name).
+  ([#5484](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5484))
 
 ## 1.7.1
 

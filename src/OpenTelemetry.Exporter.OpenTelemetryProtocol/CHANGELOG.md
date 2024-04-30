@@ -2,6 +2,51 @@
 
 ## Unreleased
 
+* `User-Agent` header format changed from
+  `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}+{Commit Hash}`
+  to `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}`.
+  ([#5528](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5528))
+
+* Implementation of [OTLP
+  specification](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.2.0/opentelemetry/proto/trace/v1/trace.proto#L112-L133)
+  for propagating `Span` and `SpanLink` flags containing W3C trace flags and
+  `parent_is_remote` information.
+  ([#5563](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5563))
+
+## 1.8.1
+
+Released 2024-Apr-17
+
+* Fix native AoT warnings in `OpenTelemetry.Exporter.OpenTelemetryProtocol`.
+  ([#5520](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5520))
+
+## 1.8.0
+
+Released 2024-Apr-02
+
+* `OtlpExporter` will no longer throw an exception (even on .NET Core 3.1)
+   when the `System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport`
+  `AppContext` switch is NOT set AND using `OtlpExportProtocol.Grpc`
+  to send to an insecure ("http") endpoint.
+  `System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport`
+  is not required to be set [when using .NET 5 or newer](https://learn.microsoft.com/aspnet/core/grpc/troubleshoot?view=aspnetcore-8.0#call-insecure-grpc-services-with-net-core-client).
+  ([#5486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5486))
+
+* Replaced environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY` with
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY`. `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY`
+  when set to `in_memory` will enable automatic retries in case of transient
+  failures during data export to an OTLP endpoint.
+  ([#5495](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5495))
+
+## 1.8.0-rc.1
+
+Released 2024-Mar-27
+
+## 1.8.0-beta.1
+
+Released 2024-Mar-14
+
 * **Experimental (pre-release builds only):** Added
   `LoggerProviderBuilder.AddOtlpExporter` registration extensions.
   [#5103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5103)
@@ -38,6 +83,36 @@
 * Setting `Endpoint` or `HttpClientFactory` properties on `OtlpExporterOptions`
   to `null` will now result in an `ArgumentNullException` being thrown.
   ([#5434](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5434))
+
+* Introduced experimental support for automatically retrying export to the otlp
+  endpoint when transient network errors occur. Users can enable this feature by
+  setting `OTEL_DOTNET_EXPERIMENTAL_OTLP_ENABLE_INMEMORY_RETRY` environment
+  variable to true.
+  ([#5435](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5435))
+
+* Added `IOpenTelemetryBuilder.UseOtlpExporter` extension to simplify setup of
+  the OTLP Exporter when all three signals are used (logs, metrics, and traces).
+  The new extension has the following behaviors:
+
+  * Calling `UseOtlpExporter` will automatically enable logging, tracing, and
+    metrics. Additional calls to `WithLogging`, `WithMetrics`, and `WithTracing`
+    are NOT required however for metrics and tracing sources/meters still need
+    to be enabled.
+
+  * `UseOtlpExporter` can only be called once and cannot be used with the
+    existing `AddOtlpExporter` extensions. Extra calls will result in
+    `NotSupportedException`s being thrown.
+
+  * `UseOtlpExporter` will register the OTLP Exporter at the end of the
+    processor pipeline for logging and tracing.
+
+  * The OTLP Exporters added for logging, tracing, and metrics can be configured
+    using environment variables or `IConfiguration`.
+
+  For details see: [README > Enable OTLP Exporter for all
+  signals](./README.md#enable-otlp-exporter-for-all-signals).
+
+  PR: [#5400](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5400)
 
 ## 1.7.0
 

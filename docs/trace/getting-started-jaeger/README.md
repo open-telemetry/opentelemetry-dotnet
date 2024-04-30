@@ -25,12 +25,12 @@ dotnet run
 Add reference to [Console
 Exporter](../../../src/OpenTelemetry.Exporter.Console/README.md), [OTLP
 Exporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md) and
-[HttpClient Instrumentation](../../../src/OpenTelemetry.Instrumentation.Http/README.md):
+[HttpClient Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Http/README.md):
 
 ```sh
 dotnet add package OpenTelemetry.Exporter.Console
 dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
-dotnet add package OpenTelemetry.Instrumentation.Http --prerelease
+dotnet add package OpenTelemetry.Instrumentation.Http
 ```
 
 Now copy the code from [Program.cs](./Program.cs).

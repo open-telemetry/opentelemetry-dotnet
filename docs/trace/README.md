@@ -95,6 +95,30 @@ or
 > [!NOTE]
 > Activities which are not yet finished/stopped will not be exported.
 
+:stop_sign: You should avoid calling
+[Activity.AddEvent](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.addevent)
+in a loop. Activities are not designed to handle hundreds or thousands of
+events, a better model is to use [correlated
+logs](../logs/README.md#log-correlation) or
+[Activity.Links](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.links).
+
+> [!WARNING]
+> The following code is not modeling `Activity.Events` correctly, and is very
+  likely to have usability and performance problems.
+
+```csharp
+private static async Task Test()
+{
+    Activity activity = Activity.Current;
+
+    while (true)
+    {
+        activity.AddEvent(new ActivityEvent("Processing background task."));
+        await Task.Delay(1000);
+    }
+}
+```
+
 ## TracerProvider Management
 
 :stop_sign: You should avoid creating `TracerProvider` instances too frequently,
@@ -140,12 +164,12 @@ expensive, excessive activities can also make trace visualization harder.
 Instead of manually creating `Activity`, check if you can leverage
 instrumentation libraries, such as [ASP.NET
 Core](../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md),
-[HttpClient](../../src/OpenTelemetry.Instrumentation.Http/README.md) which will
-not only create and populate `Activity` with tags(attributes), but also take
-care of propagating/restoring the context across process boundaries. If the
-`Activity` produced by the instrumentation library is missing some information
-you need, it is generally recommended to enrich the existing Activity with that
-information, as opposed to creating a new one.
+[HttpClient](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Http/README.md)
+which will not only create and populate `Activity` with tags(attributes),
+but also take care of propagating/restoring the context across process
+boundaries. If the `Activity` produced by the instrumentation library is missing
+some information you need, it is generally recommended to enrich the existing
+Activity with that information, as opposed to creating a new one.
 
 ### Modelling static tags as Resource
 

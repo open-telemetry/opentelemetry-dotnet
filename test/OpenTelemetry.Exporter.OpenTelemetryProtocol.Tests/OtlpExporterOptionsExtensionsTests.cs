@@ -4,6 +4,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using Xunit;
@@ -11,7 +12,7 @@ using Xunit.Sdk;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
+public class OtlpExporterOptionsExtensionsTests
 {
     [Theory]
     [InlineData("key=value", new string[] { "key" }, new string[] { "value" })]
@@ -93,14 +94,6 @@ public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient))]
     public void GetTraceExportClient_SupportedProtocol_ReturnsCorrectExportClient(OtlpExportProtocol protocol, Type expectedExportClientType)
     {
-        if (protocol == OtlpExportProtocol.Grpc && Environment.Version.Major == 3)
-        {
-            // Adding the OtlpExporter creates a GrpcChannel.
-            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
-            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-        }
-
         var options = new OtlpExporterOptions
         {
             Protocol = protocol,
@@ -109,32 +102,6 @@ public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
         var exportClient = options.GetTraceExportClient();
 
         Assert.Equal(expectedExportClientType, exportClient.GetType());
-    }
-
-    [Fact]
-    public void GetTraceExportClient_GetClientForGrpcWithoutUnencryptedFlag_ThrowsException()
-    {
-        // Adding the OtlpExporter creates a GrpcChannel.
-        // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
-        // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", false);
-
-        var options = new OtlpExporterOptions
-        {
-            Protocol = OtlpExportProtocol.Grpc,
-        };
-
-        var exception = Record.Exception(() => options.GetTraceExportClient());
-
-        if (Environment.Version.Major == 3)
-        {
-            Assert.NotNull(exception);
-            Assert.IsType<InvalidOperationException>(exception);
-        }
-        else
-        {
-            Assert.Null(exception);
-        }
     }
 
     [Fact]
@@ -185,19 +152,19 @@ public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
 
         if (exportClientType == typeof(OtlpGrpcTraceExportClient) || exportClientType == typeof(OtlpHttpTraceExportClient))
         {
-            var transmissionHandler = exporterOptions.GetTraceExportTransmissionHandler();
+            var transmissionHandler = exporterOptions.GetTraceExportTransmissionHandler(new ExperimentalOptions());
 
             AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
         }
         else if (exportClientType == typeof(OtlpGrpcMetricsExportClient) || exportClientType == typeof(OtlpHttpMetricsExportClient))
         {
-            var transmissionHandler = exporterOptions.GetMetricsExportTransmissionHandler();
+            var transmissionHandler = exporterOptions.GetMetricsExportTransmissionHandler(new ExperimentalOptions());
 
             AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
         }
         else
         {
-            var transmissionHandler = exporterOptions.GetLogsExportTransmissionHandler();
+            var transmissionHandler = exporterOptions.GetLogsExportTransmissionHandler(new ExperimentalOptions());
 
             AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds);
         }

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.PersistentStorage.Abstractions;
+using OpenTelemetry.PersistentStorage.FileSystem;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -13,5 +15,17 @@ public class EventSourceTest
     public void EventSourceTest_OpenTelemetryProtocolExporterEventSource()
     {
         EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetryProtocolExporterEventSource.Log);
+    }
+
+    [Fact]
+    public void EventSourceTest_PersistentStorageAbstractionsEventSource()
+    {
+        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(PersistentStorageAbstractionsEventSource.Log);
+    }
+
+    [Fact]
+    public void EventSourceTest_PersistentStorageEventSource()
+    {
+        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(PersistentStorageEventSource.Log);
     }
 }

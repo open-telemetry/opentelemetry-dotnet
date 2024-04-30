@@ -31,14 +31,14 @@ dotnet run --project WorkerService
 ```
 
 Instead of running the projects individually, if you are using Docker Desktop,
-a `docker-compose` file is provided. This makes standing up the Zipkin and
+a `docker compose` file is provided. This makes standing up the Zipkin and
 RabbitMQ dependencies easy, as well as starting both applications.
 
-To run the example using `docker-compose`, run the following from this
+To run the example using `docker compose`, run the following from this
 directory:
 
 ```shell
-docker-compose up --build
+docker compose up --build
 ```
 
 With everything running:

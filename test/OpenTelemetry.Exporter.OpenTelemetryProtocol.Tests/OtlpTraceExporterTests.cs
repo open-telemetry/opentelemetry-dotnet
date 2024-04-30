@@ -19,9 +19,11 @@ using Status = OpenTelemetry.Trace.Status;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 [Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
-public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
+public class OtlpTraceExporterTests
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
+
+    private static readonly ExperimentalOptions DefaultExperimentalOptions = new();
 
     static OtlpTraceExporterTests()
     {
@@ -399,6 +401,10 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
         {
             OtlpTestHelpers.AssertOtlpAttributes(childLinks[i].Tags.ToList(), otlpSpan.Links[i].Attributes);
         }
+
+        var flags = (OtlpTrace.SpanFlags)otlpSpan.Flags;
+        Assert.True(flags.HasFlag(OtlpTrace.SpanFlags.ContextHasIsRemoteMask));
+        Assert.False(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
     }
 
     [Fact]
@@ -579,14 +585,6 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
     [Fact]
     public void UseOpenTelemetryProtocolActivityExporterWithCustomActivityProcessor()
     {
-        if (Environment.Version.Major == 3)
-        {
-            // Adding the OtlpExporter creates a GrpcChannel.
-            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
-            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-        }
-
         const string ActivitySourceName = "otlp.test";
         TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
 
@@ -627,8 +625,7 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
         var exporterOptions = new OtlpExporterOptions();
         var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>(exportClientMock, exporterOptions.TimeoutMilliseconds);
 
-        var exporter = new OtlpTraceExporter(exporterOptions, DefaultSdkLimitOptions, transmissionHandler);
-
+        var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
         exporter.Shutdown();
 
         Assert.True(exportClientMock.ShutdownCalled);
@@ -737,5 +734,100 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
         Assert.False(ReferenceEquals(tracerOptions, meterOptions));
         Assert.Equal("http://localhost/traces", tracerOptions.Endpoint.OriginalString);
         Assert.Equal("http://localhost/metrics", meterOptions.Endpoint.OriginalString);
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public void SpanFlagsTest(bool isRecorded, bool isRemote)
+    {
+        using var activitySource = new ActivitySource(nameof(this.SpanFlagsTest));
+
+        ActivityContext ctx = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            isRecorded ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None,
+            isRemote: isRemote);
+
+        using var rootActivity = activitySource.StartActivity("root", ActivityKind.Server, ctx);
+
+        var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
+
+        var flags = (OtlpTrace.SpanFlags)otlpSpan.Flags;
+
+        ActivityTraceFlags traceFlags = (ActivityTraceFlags)(flags & OtlpTrace.SpanFlags.TraceFlagsMask);
+
+        if (isRecorded)
+        {
+            Assert.True(traceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        }
+        else
+        {
+            Assert.False(traceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        }
+
+        Assert.True(flags.HasFlag(OtlpTrace.SpanFlags.ContextHasIsRemoteMask));
+
+        if (isRemote)
+        {
+            Assert.True(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
+        }
+        else
+        {
+            Assert.False(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
+        }
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public void SpanLinkFlagsTest(bool isRecorded, bool isRemote)
+    {
+        using var activitySource = new ActivitySource(nameof(this.SpanLinkFlagsTest));
+
+        ActivityContext ctx = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            isRecorded ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None,
+            isRemote: isRemote);
+
+        var links = new[]
+        {
+            new ActivityLink(ctx),
+        };
+
+        using var rootActivity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), links: links);
+
+        var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
+
+        var spanLink = Assert.Single(otlpSpan.Links);
+
+        var flags = (OtlpTrace.SpanFlags)spanLink.Flags;
+
+        ActivityTraceFlags traceFlags = (ActivityTraceFlags)(flags & OtlpTrace.SpanFlags.TraceFlagsMask);
+
+        if (isRecorded)
+        {
+            Assert.True(traceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        }
+        else
+        {
+            Assert.False(traceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        }
+
+        Assert.True(flags.HasFlag(OtlpTrace.SpanFlags.ContextHasIsRemoteMask));
+
+        if (isRemote)
+        {
+            Assert.True(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
+        }
+        else
+        {
+            Assert.False(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
+        }
     }
 }

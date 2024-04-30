@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 #endif
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -175,6 +176,7 @@ public class PrometheusHttpListenerTests
             {
                 provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(meter.Name)
+                    .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
                     .AddPrometheusHttpListener(options =>
                     {
                         options.UriPrefixes = new string[] { address };
@@ -233,7 +235,10 @@ public class PrometheusHttpListenerTests
             var content = await response.Content.ReadAsStringAsync();
 
             var expected = requestOpenMetrics
-                ? "# TYPE otel_scope_info info\n"
+                ? "# TYPE target info\n"
+                  + "# HELP target Target metadata\n"
+                  + "target_info{service_name='my_service',service_instance_id='id1'} 1\n"
+                  + "# TYPE otel_scope_info info\n"
                   + "# HELP otel_scope_info Scope metadata\n"
                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
                   + "# TYPE counter_double_total counter\n"

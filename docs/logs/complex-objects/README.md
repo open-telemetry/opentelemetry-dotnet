@@ -30,16 +30,12 @@ dotnet add package Microsoft.Extensions.Telemetry.Abstractions
 Define a new complex data type, as shown in [FoodRecallNotice.cs](./FoodRecallNotice.cs):
 
 ```csharp
-public class FoodRecallNotice
+public struct FoodRecallNotice
 {
     public string? BrandName { get; set; }
-
     public string? ProductDescription { get; set; }
-
     public string? ProductType { get; set; }
-
     public string? RecallReasonDescription { get; set; }
-
     public string? CompanyName { get; set; }
 }
 ```
@@ -54,7 +50,7 @@ internal static partial class LoggerExtensions
     [LoggerMessage(LogLevel.Critical)]
     public static partial void FoodRecallNotice(
         this ILogger logger,
-        [LogProperties(OmitReferenceName = true)] FoodRecallNotice foodRecallNotice);
+        [LogProperties(OmitReferenceName = true)] in FoodRecallNotice foodRecallNotice);
 }
 ```
 
