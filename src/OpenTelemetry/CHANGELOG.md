@@ -12,6 +12,12 @@
   which could have led to a measurement being dropped.
   ([#5546](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5546))
 
+* Added `OpenTelemetrySdk.Create` API for configuring OpenTelemetry .NET signals
+  (logging, tracing, and metrics) via a single builder. This new API simplifies
+  bootstrap and teardown, and supports cross-cutting extensions targeting
+  `IOpenTelemetryBuilder`.
+  ([#5325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5325))
+
 ## 1.8.1
 
 Released 2024-Apr-17
@@ -117,12 +123,6 @@ Released 2024-Mar-14
   `trace_based`. For details see: [OpenTelemetry Environment Variable
   Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#exemplar).
   ([#5412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5412))
-
-* Added `OpenTelemetrySdk.Create` API for configuring OpenTelemetry .NET signals
-  (logging, tracing, and metrics) via a single builder. This new API simplifies
-  bootstrap and teardown, and supports cross-cutting extensions targeting
-  `IOpenTelemetryBuilder`.
-  ([#5325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5325))
 
 ## 1.7.0
 
