@@ -143,7 +143,7 @@
     [Releases](https://github.com/open-telemetry/opentelemetry-dotnet/releases)
     page on the GitHub repository. The [Build, pack, and publish to MyGet
     workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
-    creates a draft release for the tag which was pushed. Open the draft Release
+    creates a draft release for the tag which was pushed. Edit the draft Release
     and click `Publish release`.
 
 14. If a new stable version of the core packages was released, open a PR to
