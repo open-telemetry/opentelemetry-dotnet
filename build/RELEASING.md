@@ -55,16 +55,7 @@
          `OTelLatestStableVer` property in `Directory.Packages.props` has been
          updated to the latest stable core version.
 
- 2. Generate combined CHANGELOG
-
-    Run the PowerShell script `.\build\generate-combined-changelog.ps1
-    -minVerTagPrefix [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag
-    prefix (eg `core-`) for the components being released. This generates a
-    combined changelog file to be used in GitHub release. The file is created in
-    the repo root but should not be checked in. Move it or copy the contents off
-    and then delete the file.
-
- 3. Update CHANGELOG files
+ 2. Update CHANGELOG files
 
     Run the PowerShell script `.\build\update-changelogs.ps1 -minVerTagPrefix
     [MinVerTagPrefix] -version [Version]`. Where `[MinVerTagPrefix]` is the tag
@@ -72,7 +63,7 @@
     version being released (eg `1.9.0`). This will update `CHANGELOG.md` files
     for the projects being released.
 
- 4. **Stable releases only**: Normalize PublicApi files
+ 3. **Stable releases only**: Normalize PublicApi files
 
     Run the PowerShell script `.\build\finalize-publicapi.ps1 -minVerTagPrefix
     [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag prefix (eg `core-`)
@@ -80,7 +71,7 @@
     detected `PublicAPI.Unshipped.txt` files in the `.publicApi` folder into the
     corresponding `PublicAPI.Shipped.txt` files for the projects being released.
 
- 5. Tag Git with version to be released. We use
+ 4. Tag Git with version to be released. We use
     [MinVer](https://github.com/adamralph/minver) to do versioning, which
     produces version numbers based on git tags.
 
@@ -113,35 +104,30 @@
        git push origin Instrumentation.AspNetCore-1.6.0
        ```
 
- 6. Go to the [list of
-    tags](https://github.com/open-telemetry/opentelemetry-dotnet/tags) and find
-    the tag(s) which were pushed. Click the three dots next to the tag and
-    choose `Create release`.
-      * Give the release a name based on the tags created (e.g.
-      `core-1.9.0-beta.1` or `Instrumentation.Http-1.8.0`).
-      * Paste the contents of combined changelog from Step 2. Only include
-        projects with changes.
-      * Check "This is a pre-release" if applicable.
-      * Click "Publish release". This will kick off the [Pack and publish to
-      MyGet
-      workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml).
+    Pushing the tag will kick off the [Build, pack, and publish to MyGet
+    workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml).
 
- 7. Validate using MyGet packages. Basic sanity checks :)
+ 5. :stop_sign: Wait for the [Build, pack, and publish to MyGet
+    workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+    to complete.
 
- 8. From the above build, get the artifacts from the drop, which has all the
-    NuGet packages.
+ 6. Validate locally everything works using the MyGet packages pushed from the
+    release. Basic sanity checks :)
 
- 9. Copy all the NuGet files and symbols for the packages being released into a
-    local folder.
+ 7. Download the artifacts from the drop attached to the workflow run. The
+    artifacts archive (`.zip`) contains all the NuGet packages (`.nupkg`) and
+    symbols (`.snupkg`) from the build which were pushed to MyGet.
 
-10. Download latest [nuget.exe](https://www.nuget.org/downloads) into the same
-    folder from Step 9.
+ 8. Extract the artifacts from the archive (`.zip`) into a local folder.
 
-11. Create or regenerate an API key from nuget.org (only maintainers have
+ 9. Download latest [nuget.exe](https://www.nuget.org/downloads) into the same
+    folder from Step 8.
+
+10. Create or regenerate an API key from nuget.org (only maintainers have
     access). When creating API keys make sure it is set to expire in 1 day or
     less.
 
-12. Run the following commands from PowerShell from local folder used in Step 9:
+11. Run the following commands from PowerShell from local folder used in Step 8:
 
     ```powershell
     .\nuget.exe setApiKey <actual api key>
@@ -149,9 +135,16 @@
     get-childitem -Recurse | where {$_.extension -eq ".nupkg"} | foreach ($_) {.\nuget.exe push $_.fullname -Source https://api.nuget.org/v3/index.json}
     ```
 
-13. Validate that the package(s) are uploaded. Packages are available
+12. Validate that the package(s) are uploaded. Packages are available
     immediately to maintainers on nuget.org but aren't publicly visible until
     scanning completes. This process usually takes a few minutes.
+
+13. Open the
+    [Releases](https://github.com/open-telemetry/opentelemetry-dotnet/releases)
+    page on the GitHub repository. The [Build, pack, and publish to MyGet
+    workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+    creates a draft release for the tag which was pushed. Open the draft Release
+    and click `Publish release`.
 
 14. If a new stable version of the core packages was released, open a PR to
     update the `OTelLatestStableVer` property in `Directory.Packages.props` to

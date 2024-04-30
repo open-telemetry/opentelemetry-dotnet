@@ -8,10 +8,18 @@
 name: Build, pack, and publish to MyGet
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+  push:
+    branches: [ 'main*' ]
+    tags:
+      - 'core-*'
+      - 'coreunstable-*'
+      - 'Instrumentation.*-'
   schedule:
     - cron: '0 0 * * *' # once in a day at 00:00
+
+permissions:
+  contents: write
 
 jobs:
   build-pack-publish:
@@ -36,7 +44,7 @@ jobs:
       run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
 
     - name: dotnet pack
-      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref }}
+      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref || '' }}
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4
@@ -48,3 +56,51 @@ jobs:
       run: |
         nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
         nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
+
+    - name: Create GitHub Release Draft
+      if: github.ref_type == 'tag'
+      shell: pwsh
+      run: |
+        $packages = (Get-ChildItem -Path src/*/bin/Release/*.nupkg).Name
+
+        $notes = ''
+        $firstPackageVersion = ''
+
+        foreach ($package in $packages)
+        {
+            $match = [regex]::Match($package, '(.*)\.(\d+\.\d+\.\d+.*?)\.nupkg')
+            $packageName = $match.Groups[1].Value
+            $packageVersion = $match.Groups[2].Value
+
+            if ($firstPackageVersion -eq '')
+            {
+              $firstPackageVersion = $packageVersion
+            }
+
+            $notes +=
+        @"
+        * NuGet: [$packageName v$packageVersion](https://www.nuget.org/packages/$packageName/$packageVersion)
+
+          See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ github.ref }}/src/$packageName/CHANGELOG.md) for details.
+
+        "@
+        }
+
+        if ($firstPackageVersion -match '-alpha' -or $firstPackageVersion -match '-beta' -or $firstPackageVersion -match '-rc')
+        {
+          gh release create ${{ github.ref }} `
+            --title ${{ github.ref }} `
+            --verify-tag `
+            --notes "$notes" `
+            --prerelease `
+            --draft
+        }
+        else
+        {
+          gh release create ${{ github.ref }} `
+            --title ${{ github.ref }} `
+            --verify-tag `
+            --notes "$notes" `
+            --latest `
+            --draft
+        }
