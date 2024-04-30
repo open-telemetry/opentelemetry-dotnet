@@ -103,3 +103,5 @@ jobs:
             --latest `
             --draft
         }
+      env:
+        GH_TOKEN: ${{ github.token }}
