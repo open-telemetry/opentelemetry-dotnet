@@ -80,7 +80,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
             default:
                 try
                 {
-                    var stringValue = TruncateString(Convert.ToString(tag.Value, CultureInfo.InvariantCulture), tagValueMaxLength);
+                    var stringValue = TruncateString(Convert.ToString(tag.Value/*TODO: , CultureInfo.InvariantCulture*/), tagValueMaxLength);
                     if (stringValue == null)
                     {
                         return this.LogUnsupportedTagTypeAndReturnFalse(tag.Key, tag.Value);
@@ -203,7 +203,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                     var item = array.GetValue(i);
                     stringArray[i] = item == null
                         ? null
-                        : TruncateString(Convert.ToString(item, CultureInfo.InvariantCulture), tagValueMaxLength);
+                        : TruncateString(Convert.ToString(item/*TODO: , CultureInfo.InvariantCulture*/), tagValueMaxLength);
                 }
 
                 this.WriteStringsToArray(ref arrayState, new(stringArray, 0, array.Length));
