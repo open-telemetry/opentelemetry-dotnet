@@ -12,6 +12,12 @@
   which could have led to a measurement being dropped.
   ([#5546](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5546))
 
+* **Experimental (pre-release builds only):** Exposed
+  `FixedSizeExemplarReservoir` as a public API to support custom implementations
+  of `ExemplarReservoir` which may be configured using the
+  `ExemplarReservoirFactory` property on the View API.
+  ([#5558](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5558))
+
 ## 1.8.1
 
 Released 2024-Apr-17
