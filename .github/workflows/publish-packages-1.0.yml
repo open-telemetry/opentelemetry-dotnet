@@ -100,7 +100,7 @@ jobs:
                 {
                     if ($started -eq $true -and ([string]::IsNullOrWhitespace($line) -eq $false -or $content.Length -gt 0))
                     {
-                        $content += "   " + $line + "`r`n"
+                        $content += "  " + $line + "`r`n"
                     }
             }
             }
@@ -118,7 +118,7 @@ jobs:
 
         $content
 
-           See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/src/$packageName/CHANGELOG.md) for details.
+          See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/src/$packageName/CHANGELOG.md) for details.
 
         "@
         }
