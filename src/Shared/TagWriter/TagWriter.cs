@@ -222,47 +222,47 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             if (typeof(TItem) == typeof(char))
             {
-                this.arrayWriter.WriteStringTag(ref arrayState, Convert.ToString((char)(object)item)!);
+                this.arrayWriter.WriteStringValue(ref arrayState, Convert.ToString((char)(object)item)!);
             }
             else if (typeof(TItem) == typeof(bool))
             {
-                this.arrayWriter.WriteBooleanTag(ref arrayState, (bool)(object)item);
+                this.arrayWriter.WriteBooleanValue(ref arrayState, (bool)(object)item);
             }
             else if (typeof(TItem) == typeof(byte))
             {
-                this.arrayWriter.WriteIntegralTag(ref arrayState, (byte)(object)item);
+                this.arrayWriter.WriteIntegralValue(ref arrayState, (byte)(object)item);
             }
             else if (typeof(TItem) == typeof(sbyte))
             {
-                this.arrayWriter.WriteIntegralTag(ref arrayState, (sbyte)(object)item);
+                this.arrayWriter.WriteIntegralValue(ref arrayState, (sbyte)(object)item);
             }
             else if (typeof(TItem) == typeof(short))
             {
-                this.arrayWriter.WriteIntegralTag(ref arrayState, (short)(object)item);
+                this.arrayWriter.WriteIntegralValue(ref arrayState, (short)(object)item);
             }
             else if (typeof(TItem) == typeof(ushort))
             {
-                this.arrayWriter.WriteIntegralTag(ref arrayState, (ushort)(object)item);
+                this.arrayWriter.WriteIntegralValue(ref arrayState, (ushort)(object)item);
             }
             else if (typeof(TItem) == typeof(int))
             {
-                this.arrayWriter.WriteIntegralTag(ref arrayState, (int)(object)item);
+                this.arrayWriter.WriteIntegralValue(ref arrayState, (int)(object)item);
             }
             else if (typeof(TItem) == typeof(uint))
             {
-                this.arrayWriter.WriteIntegralTag(ref arrayState, (uint)(object)item);
+                this.arrayWriter.WriteIntegralValue(ref arrayState, (uint)(object)item);
             }
             else if (typeof(TItem) == typeof(long))
             {
-                this.arrayWriter.WriteIntegralTag(ref arrayState, (long)(object)item);
+                this.arrayWriter.WriteIntegralValue(ref arrayState, (long)(object)item);
             }
             else if (typeof(TItem) == typeof(float))
             {
-                this.arrayWriter.WriteFloatingPointTag(ref arrayState, (float)(object)item);
+                this.arrayWriter.WriteFloatingPointValue(ref arrayState, (float)(object)item);
             }
             else if (typeof(TItem) == typeof(double))
             {
-                this.arrayWriter.WriteFloatingPointTag(ref arrayState, (double)(object)item);
+                this.arrayWriter.WriteFloatingPointValue(ref arrayState, (double)(object)item);
             }
             else
             {
@@ -279,11 +279,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             if (item == null)
             {
-                this.arrayWriter.WriteNullTag(ref arrayState);
+                this.arrayWriter.WriteNullValue(ref arrayState);
             }
             else
             {
-                this.arrayWriter.WriteStringTag(ref arrayState, item);
+                this.arrayWriter.WriteStringValue(ref arrayState, item);
             }
         }
     }

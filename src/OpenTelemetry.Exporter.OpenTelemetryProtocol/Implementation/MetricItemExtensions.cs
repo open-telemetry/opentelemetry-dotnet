@@ -414,12 +414,11 @@ internal static class MetricItemExtensions
             otlpExemplar.AsDouble = Convert.ToDouble(value);
         }
 
+        var otlpExemplarFilteredAttributes = otlpExemplar.FilteredAttributes;
+
         foreach (var tag in exemplar.FilteredTags)
         {
-            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var result))
-            {
-                otlpExemplar.FilteredAttributes.Add(result);
-            }
+            OtlpTagWriter.Instance.TryWriteTag(ref otlpExemplarFilteredAttributes, tag);
         }
 
         return otlpExemplar;
@@ -429,10 +428,7 @@ internal static class MetricItemExtensions
     {
         foreach (var tag in tags)
         {
-            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var result))
-            {
-                attributes.Add(result);
-            }
+            OtlpTagWriter.Instance.TryWriteTag(ref attributes, tag);
         }
     }
 
@@ -440,10 +436,7 @@ internal static class MetricItemExtensions
     {
         foreach (var tag in meterTags)
         {
-            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var result))
-            {
-                attributes.Add(result);
-            }
+            OtlpTagWriter.Instance.TryWriteTag(ref attributes, tag);
         }
     }
 }
