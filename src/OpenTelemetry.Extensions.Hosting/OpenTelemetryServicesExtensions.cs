@@ -36,12 +36,7 @@ public static class OpenTelemetryServicesExtensions
     /// <param name="services"><see cref="IServiceCollection"/>.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
-#pragma warning disable CS0618 // Type or member is obsolete
-    // Note: OpenTelemetryBuilder is obsolete because users should target
-    // IOpenTelemetryBuilder for extensions but this method is valid and
-    // expected to be called to obtain a root builder.
     public static OpenTelemetryBuilder AddOpenTelemetry(this IServiceCollection services)
-#pragma warning restore CS0618 // Type or member is obsolete
     {
         Guard.ThrowIfNull(services);
 

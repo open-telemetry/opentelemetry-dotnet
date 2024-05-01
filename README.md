@@ -51,10 +51,6 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 * gRPC client:
   [Grpc.Net.Client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
-* HTTP clients: [System.Net.Http.HttpClient and
-  System.Net.HttpWebRequest](./src/OpenTelemetry.Instrumentation.Http/README.md)
-* SQL clients: [Microsoft.Data.SqlClient and
-  System.Data.SqlClient](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 Here are the [exporter
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#exporter-library):
@@ -134,6 +130,7 @@ you're more than welcome to participate!
 ([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
 
 * [Martin Thwaites](https://github.com/martinjt), Honeycomb
+* [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 
 [Emeritus
 Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):

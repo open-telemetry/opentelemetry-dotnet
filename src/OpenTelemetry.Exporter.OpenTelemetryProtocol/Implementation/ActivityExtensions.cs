@@ -174,6 +174,8 @@ internal static class ActivityExtensions
         };
         otlpLinks.EnumerateLinks(activity, sdkLimitOptions.SpanLinkCountLimit ?? int.MaxValue);
 
+        otlpSpan.Flags = ToOtlpSpanFlags(activity.Context.TraceFlags, activity.HasRemoteParent);
+
         return otlpSpan;
     }
 
@@ -250,6 +252,8 @@ internal static class ActivityExtensions
             }
         }
 
+        otlpLink.Flags = ToOtlpSpanFlags(activityLink.Context.TraceFlags, activityLink.Context.IsRemote);
+
         return otlpLink;
     }
 
@@ -279,6 +283,21 @@ internal static class ActivityExtensions
         }
 
         return otlpEvent;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static uint ToOtlpSpanFlags(ActivityTraceFlags activityTraceFlags, bool isRemote)
+    {
+        SpanFlags flags = (SpanFlags)activityTraceFlags;
+
+        flags |= SpanFlags.ContextHasIsRemoteMask;
+
+        if (isRemote)
+        {
+            flags |= SpanFlags.ContextIsRemoteMask;
+        }
+
+        return (uint)flags;
     }
 
     private struct TagEnumerationState : PeerServiceResolver.IPeerServiceState
