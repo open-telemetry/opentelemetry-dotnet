@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+* `User-Agent` header format changed from
+  `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}+{Commit Hash}`
+  to `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}`.
+  ([#5528](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5528))
+
+* Implementation of [OTLP
+  specification](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.2.0/opentelemetry/proto/trace/v1/trace.proto#L112-L133)
+  for propagating `Span` and `SpanLink` flags containing W3C trace flags and
+  `parent_is_remote` information.
+  ([#5563](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5563))
+
+## 1.8.1
+
+Released 2024-Apr-17
+
 * Fix native AoT warnings in `OpenTelemetry.Exporter.OpenTelemetryProtocol`.
   ([#5520](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5520))
 

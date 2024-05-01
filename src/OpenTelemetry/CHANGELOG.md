@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+* **Experimental (pre-release builds only):** Exposed `ExemplarReservoir` as a
+  public API and added support for setting an `ExemplarReservoir` factory
+  function when configuring a view (applies to individual metrics).
+  ([#5542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5542))
+
+* Fixed a race condition for the experimental MetricPoint reclaim scenario
+  (enabled via `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS`)
+  which could have led to a measurement being dropped.
+  ([#5546](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5546))
+
+## 1.8.1
+
+Released 2024-Apr-17
+
+* Fixed an issue in Logging where unwanted objects (processors, exporters, etc.)
+  could be created inside delegates automatically executed by the Options API
+  during configuration reload.
+  ([#5514](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5514))
+
 ## 1.8.0
 
 Released 2024-Apr-02

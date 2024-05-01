@@ -25,9 +25,6 @@
     <TrimmerRootAssembly Include="OpenTelemetry.Extensions.Propagators" />
     <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.AspNetCore" />
     <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.GrpcNetClient" />
-    <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.Http" />
-    <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.SqlClient" />
-    <TrimmerRootAssembly Include="OpenTelemetry.SemanticConventions" />
     <TrimmerRootAssembly Include="OpenTelemetry.Shims.OpenTracing" />
     <TrimmerRootAssembly Include="OpenTelemetry" />
 

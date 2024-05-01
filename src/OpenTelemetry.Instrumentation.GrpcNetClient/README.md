@@ -46,7 +46,7 @@ exporter and adds instrumentation for HttpClient, which requires adding the
 packages
 [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
 and
-[`OpenTelemetry.Instrumentation.Http`](../OpenTelemetry.Instrumentation.Http/README.md)
+[`OpenTelemetry.Instrumentation.Http`](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/src/OpenTelemetry.Instrumentation.Http/README.md)
 to the application. As Grpc.Net.Client uses HttpClient underneath, it is
 recommended to enable HttpClient instrumentation as well to ensure proper
 context propagation. This would cause an activity being produced for both a gRPC

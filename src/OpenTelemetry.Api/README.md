@@ -153,11 +153,11 @@ required only for the following scenarios:
    [Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md),
    to inject and extract context data. Some of the most common libraries
    requiring this include
-   [HttpClient](../OpenTelemetry.Instrumentation.Http/README.md), [ASP.NET
-   Core](../OpenTelemetry.Instrumentation.AspNetCore/README.md). This repo
-   already provides instrumentation for these common libraries. If your library
-   is not built on top of these, and want to leverage propagators, follow the
-   [Context propagation](#context-propagation) section.
+   [HttpClient](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Http/README.md),
+   [ASP.NET Core](../OpenTelemetry.Instrumentation.AspNetCore/README.md).
+   This or contrib repository already provides instrumentation for these common
+   libraries. If your library is not built on top of these, and want to leverage
+   propagators, follow the [Context propagation](#context-propagation) section.
 
 3. You want to leverage
    [Baggage](#baggage-api)

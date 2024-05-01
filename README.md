@@ -51,10 +51,6 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 * gRPC client:
   [Grpc.Net.Client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
-* HTTP clients: [System.Net.Http.HttpClient and
-  System.Net.HttpWebRequest](./src/OpenTelemetry.Instrumentation.Http/README.md)
-* SQL clients: [Microsoft.Data.SqlClient and
-  System.Data.SqlClient](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 Here are the [exporter
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#exporter-library):
@@ -67,7 +63,8 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [Prometheus HttpListener](./src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
 * [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
-See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) and
+See the [OpenTelemetry
+registry](https://opentelemetry.io/ecosystem/registry/?language=dotnet) and
 [OpenTelemetry .NET Contrib
 repo](https://github.com/open-telemetry/opentelemetry-dotnet-contrib) for more
 components.
@@ -120,19 +117,20 @@ you're more than welcome to participate!
 
 * [Alan West](https://github.com/alanwest), New Relic
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
-* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 [Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Reiley Yang](https://github.com/reyang), Microsoft
+* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 * [Vishwesh Bankwar](https://github.com/vishweshbankwar), Microsoft
 
 [Triagers](https://github.com/open-telemetry/community/blob/main/community-membership.md#triager)
 ([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
 
 * [Martin Thwaites](https://github.com/martinjt), Honeycomb
+* [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 
 [Emeritus
 Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):

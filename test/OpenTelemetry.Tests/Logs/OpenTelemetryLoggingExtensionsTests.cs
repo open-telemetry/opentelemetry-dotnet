@@ -7,6 +7,7 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -297,11 +298,100 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.True(loggerProvider.Processor is TestLogProcessorWithILoggerFactoryDependency);
     }
 
-    private class TestLogProcessor : BaseProcessor<LogRecord>
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public void OptionReloadingTest(bool useOptionsMonitor, bool useOptionsSnapshot)
     {
+        var delegateInvocationCount = 0;
+
+        var root = new ConfigurationBuilder().Build();
+
+        var services = new ServiceCollection();
+
+        services.AddSingleton<IConfiguration>(root);
+
+        services.AddLogging(logging => logging
+            .AddConfiguration(root.GetSection("logging"))
+            .AddOpenTelemetry(options =>
+            {
+                delegateInvocationCount++;
+
+                options.AddProcessor(new TestLogProcessor());
+            }));
+
+        using var sp = services.BuildServiceProvider();
+
+        if (useOptionsMonitor)
+        {
+            var optionsMonitor = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>();
+
+            Assert.NotNull(optionsMonitor.CurrentValue);
+        }
+
+        if (useOptionsSnapshot)
+        {
+            using var scope = sp.CreateScope();
+
+            var optionsSnapshot = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<OpenTelemetryLoggerOptions>>();
+
+            Assert.NotNull(optionsSnapshot.Value);
+        }
+
+        var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+        Assert.Equal(1, delegateInvocationCount);
+
+        root.Reload();
+
+        Assert.Equal(1, delegateInvocationCount);
     }
 
-    private class TestLogProcessorWithILoggerFactoryDependency : BaseProcessor<LogRecord>
+    [Fact]
+    public void MixedOptionsUsageTest()
+    {
+        var root = new ConfigurationBuilder().Build();
+
+        var services = new ServiceCollection();
+
+        services.AddSingleton<IConfiguration>(root);
+
+        services.AddLogging(logging => logging
+            .AddConfiguration(root.GetSection("logging"))
+            .AddOpenTelemetry(options =>
+            {
+                options.AddProcessor(new TestLogProcessor());
+            }));
+
+        using var sp = services.BuildServiceProvider();
+
+        var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+        var optionsMonitor = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+        var options = sp.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value;
+
+        Assert.True(ReferenceEquals(options, optionsMonitor));
+
+        using var scope = sp.CreateScope();
+
+        var optionsSnapshot = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<OpenTelemetryLoggerOptions>>().Value;
+        Assert.True(ReferenceEquals(options, optionsSnapshot));
+    }
+
+    private sealed class TestLogProcessor : BaseProcessor<LogRecord>
+    {
+        public bool Disposed;
+
+        protected override void Dispose(bool disposing)
+        {
+            this.Disposed = true;
+
+            base.Dispose(disposing);
+        }
+    }
+
+    private sealed class TestLogProcessorWithILoggerFactoryDependency : BaseProcessor<LogRecord>
     {
         private readonly ILogger logger;
 

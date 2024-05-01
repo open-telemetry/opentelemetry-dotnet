@@ -193,8 +193,14 @@ internal class HttpInListener : ListenerHandler
 
             if (request.QueryString.HasValue)
             {
-                // QueryString should be sanitized. see: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4571
-                activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
+                if (this.options.DisableUrlQueryRedaction)
+                {
+                    activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
+                }
+                else
+                {
+                    activity.SetTag(SemanticConventions.AttributeUrlQuery, RedactionHelper.GetRedactedQueryString(request.QueryString.Value));
+                }
             }
 
             RequestMethodHelper.SetHttpMethodTag(activity, request.Method);

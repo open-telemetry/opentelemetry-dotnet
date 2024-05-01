@@ -7,7 +7,6 @@ using System.Diagnostics;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -37,8 +36,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     };
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
-
-    private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
 
     private OtlpExportProtocol? protocol;
     private Uri? endpoint;
@@ -227,16 +224,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     private static string GetUserAgentString()
     {
-        try
-        {
-            var assemblyVersion = typeof(OtlpExporterOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-            var informationalVersion = assemblyVersion?.InformationalVersion;
-            return string.IsNullOrEmpty(informationalVersion) ? UserAgentProduct : $"{UserAgentProduct}/{informationalVersion}";
-        }
-        catch (Exception)
-        {
-            return UserAgentProduct;
-        }
+        var assembly = typeof(OtlpExporterOptions).Assembly;
+        return $"OTel-OTLP-Exporter-Dotnet/{assembly.GetPackageVersion()}";
     }
 
     private void ApplyConfiguration(
