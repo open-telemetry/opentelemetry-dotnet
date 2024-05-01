@@ -13,9 +13,7 @@ namespace OpenTelemetry.Metrics;
 /// An <see cref="ExemplarReservoir"/> implementation which contains a fixed
 /// number of <see cref="Exemplar"/>s.
 /// </summary>
-/// <remarks>
-/// <para experimental-warning="true"><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</para>
-/// </remarks>
+/// <remarks><inheritdoc cref="ExemplarReservoir" path="/remarks/para[@experimental-warning='true']"/></remarks>
 #if NET8_0_OR_GREATER
 [Experimental(DiagnosticDefinitions.ExemplarReservoirExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
