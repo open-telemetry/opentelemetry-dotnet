@@ -46,8 +46,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\stylecop.json = build\stylecop.json
 		build\test-aot-compatibility.ps1 = build\test-aot-compatibility.ps1
 		build\test-threadSafety.ps1 = build\test-threadSafety.ps1
-		build\xunit.runner.json = build\xunit.runner.json
 		build\UnstableCoreLibraries.proj = build\UnstableCoreLibraries.proj
+		build\xunit.runner.json = build\xunit.runner.json
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Zipkin", "src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj", "{7EDAE7FA-B44E-42CA-80FA-7DF2FAA2C5DD}"
@@ -332,6 +332,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "experimental-apis", "experi
 		docs\diagnostics\experimental-apis\OTEL1001.md = docs\diagnostics\experimental-apis\OTEL1001.md
 		docs\diagnostics\experimental-apis\OTEL1002.md = docs\diagnostics\experimental-apis\OTEL1002.md
 		docs\diagnostics\experimental-apis\OTEL1003.md = docs\diagnostics\experimental-apis\OTEL1003.md
+		docs\diagnostics\experimental-apis\OTEL1004.md = docs\diagnostics\experimental-apis\OTEL1004.md
 		docs\diagnostics\experimental-apis\README.md = docs\diagnostics\experimental-apis\README.md
 	EndProjectSection
 EndProject
@@ -531,10 +532,6 @@ Global
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Release|Any CPU.ActiveCfg = Release|Any CPU
