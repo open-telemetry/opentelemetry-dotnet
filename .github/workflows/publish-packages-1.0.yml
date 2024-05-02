@@ -146,7 +146,7 @@ jobs:
         GH_TOKEN: ${{ github.token }}
 
     - name: Create GitHub draft Pull Request to update stable build version in props
-      if: github.ref_type == 'tag' && startsWith(github.ref_name, "core-") && !contains(github.ref_name, "-alpha") && !contains(github.ref_name, "-beta") && !contains(github.ref_name, "-rc")
+      if: github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc')
       shell: pwsh
       run: |
         git switch --create release/post-stable-${{ github.ref_name }}-update 2>&1 | % ToString
