@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   build-pack-publish:
@@ -51,12 +52,12 @@ jobs:
         name: ${{ github.ref_name }}-packages
         path: '**/bin/**/*.*nupkg'
 
-    - name: Publish MyGet
-      run: |
-        nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
-        nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
+    #- name: Publish MyGet
+    #  run: |
+    #    nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
+    #    nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
-    - name: Create GitHub Release Draft
+    - name: Create GitHub Release draft
       if: github.ref_type == 'tag'
       shell: pwsh
       run: |
@@ -141,5 +142,53 @@ jobs:
             --latest `
             --draft
         }
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Create GitHub draft Pull Request to update stable build version in props
+      if: github.ref_type == 'tag' && startsWith(github.ref_name, "core-") && !contains(github.ref_name, "-alpha") && !contains(github.ref_name, "-beta") && !contains(github.ref_name, "-rc")
+      shell: pwsh
+      run: |
+        git switch --create release/post-stable-${{ github.ref_name }}-update 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git switch failure'
+            Return
+        }
+
+        $match = [regex]::Match('${{ github.ref_name }}', '.*?-(.*)')
+        $packageVersion = $match.Groups[1].Value
+
+        (Get-Content  Directory.Packages.props) `
+            -replace '<OTelLatestStableVer>.*<\/OTelLatestStableVer>', "<OTelLatestStableVer>$packageVersion</OTelLatestStableVer>" |
+          Set-Content Directory.Packages.props
+
+        git add Directory.Packages.props 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git add failure'
+            Return
+        }
+
+        git commit -m "Update OTelLatestStableVer in Directory.Packages.props to $packageVersion." 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git commit failure'
+            Return
+        }
+
+        git push -u origin release/post-stable-${{ github.ref_name }}-update 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git push failure'
+            Return
+        }
+
+        gh pr create `
+          --title "[repo] Stable release ${{ github.ref_name }} updates" `
+          --body "This PR was opened automatically by the release workflow. Merge once packages are available on NuGet and the build passes." `
+          --head release/post-stable-${{ github.ref_name }}-update `
+          --label infra
+          --draft
       env:
         GH_TOKEN: ${{ github.token }}
