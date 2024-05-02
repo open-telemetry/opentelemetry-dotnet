@@ -188,7 +188,7 @@ jobs:
         }
 
         gh pr create `
-          --title "[repo] Stable release ${{ github.ref_name }} updates" `
+          --title "[repo] Core stable release $packageVersion updates" `
           --body "This PR was opened automatically by the release workflow. Merge once packages are available on NuGet and the build passes." `
           --base main `
           --head release/post-stable-${{ github.ref_name }}-update `
