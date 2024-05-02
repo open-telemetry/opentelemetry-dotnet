@@ -73,7 +73,11 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
             var options = new JsonSerializerOptions
             {
                 WriteIndented = true,
+#if NETSTANDARD || NETFRAMEWORK
                 IgnoreNullValues = true,
+#else
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+#endif
                 Converters = { new JsonStringEnumConverter(), },
             };
 
