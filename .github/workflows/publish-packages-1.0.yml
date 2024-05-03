@@ -52,10 +52,13 @@ jobs:
         name: ${{ github.ref_name }}-packages
         path: '**/bin/**/*.*nupkg'
 
-    #- name: Publish MyGet
-    #  run: |
-    #    nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
-    #    nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
+    - name: Publish MyGet
+      env:
+        MYGET_TOKEN_EXISTS: ${{ secrets.MYGET_TOKEN != '' }}
+      if: env.MYGET_TOKEN_EXISTS == 'true' # Skip MyGet publish if run on a fork without the secret
+      run: |
+        nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
+        nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
     - name: Create GitHub Release draft
       if: github.ref_type == 'tag'
