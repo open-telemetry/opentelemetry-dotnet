@@ -13,12 +13,11 @@ internal static class ResourceExtensions
     {
         var processResource = new OtlpResource.Resource();
 
+        var processResourceAttributes = processResource.Attributes;
+
         foreach (KeyValuePair<string, object> attribute in resource.Attributes)
         {
-            if (OtlpTagTransformer.Instance.TryTransformTag(attribute, out var result))
-            {
-                processResource.Attributes.Add(result);
-            }
+            OtlpTagWriter.Instance.TryWriteTag(ref processResourceAttributes, attribute);
         }
 
         if (!processResource.Attributes.Any(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName))
