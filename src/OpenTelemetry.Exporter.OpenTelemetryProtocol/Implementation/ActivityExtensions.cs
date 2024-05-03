@@ -237,19 +237,18 @@ internal static class ActivityExtensions
         };
 
         int maxTags = sdkLimitOptions.SpanLinkAttributeCountLimit ?? int.MaxValue;
+
+        var otlpLinkAttributes = otlpLink.Attributes;
+
         foreach (ref readonly var tag in activityLink.EnumerateTagObjects())
         {
-            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var attribute, sdkLimitOptions.AttributeValueLengthLimit))
+            if (otlpLinkAttributes.Count == maxTags)
             {
-                if (otlpLink.Attributes.Count < maxTags)
-                {
-                    otlpLink.Attributes.Add(attribute);
-                }
-                else
-                {
-                    otlpLink.DroppedAttributesCount++;
-                }
+                otlpLink.DroppedAttributesCount++;
+                continue;
             }
+
+            OtlpTagWriter.Instance.TryWriteTag(ref otlpLinkAttributes, tag, sdkLimitOptions.AttributeValueLengthLimit);
         }
 
         otlpLink.Flags = ToOtlpSpanFlags(activityLink.Context.TraceFlags, activityLink.Context.IsRemote);
@@ -267,19 +266,18 @@ internal static class ActivityExtensions
         };
 
         int maxTags = sdkLimitOptions.SpanEventAttributeCountLimit ?? int.MaxValue;
+
+        var otlpEventAttributes = otlpEvent.Attributes;
+
         foreach (ref readonly var tag in activityEvent.EnumerateTagObjects())
         {
-            if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var attribute, sdkLimitOptions.AttributeValueLengthLimit))
+            if (otlpEventAttributes.Count == maxTags)
             {
-                if (otlpEvent.Attributes.Count < maxTags)
-                {
-                    otlpEvent.Attributes.Add(attribute);
-                }
-                else
-                {
-                    otlpEvent.DroppedAttributesCount++;
-                }
+                otlpEvent.DroppedAttributesCount++;
+                continue;
             }
+
+            OtlpTagWriter.Instance.TryWriteTag(ref otlpEventAttributes, tag, sdkLimitOptions.AttributeValueLengthLimit);
         }
 
         return otlpEvent;
@@ -322,6 +320,8 @@ internal static class ActivityExtensions
 
         public void EnumerateTags(Activity activity, int maxTags)
         {
+            var otlpSpanAttributes = this.Span.Attributes;
+
             foreach (ref readonly var tag in activity.EnumerateTagObjects())
             {
                 if (tag.Value == null)
@@ -341,26 +341,22 @@ internal static class ActivityExtensions
                         continue;
                 }
 
-                if (OtlpTagTransformer.Instance.TryTransformTag(tag, out var attribute, this.SdkLimitOptions.AttributeValueLengthLimit))
+                if (otlpSpanAttributes.Count == maxTags)
                 {
-                    if (this.Span.Attributes.Count < maxTags)
-                    {
-                        this.Span.Attributes.Add(attribute);
-                    }
-                    else
-                    {
-                        this.Span.DroppedAttributesCount++;
-                    }
+                    this.Span.DroppedAttributesCount++;
+                }
+                else
+                {
+                    OtlpTagWriter.Instance.TryWriteTag(ref otlpSpanAttributes, tag, this.SdkLimitOptions.AttributeValueLengthLimit);
+                }
 
-                    if (attribute.Value.ValueCase == AnyValue.ValueOneofCase.StringValue)
-                    {
-                        // Note: tag.Value is used and not attribute.Value here because attribute.Value may be truncated
-                        PeerServiceResolver.InspectTag(ref this, key, tag.Value as string);
-                    }
-                    else if (attribute.Value.ValueCase == AnyValue.ValueOneofCase.IntValue)
-                    {
-                        PeerServiceResolver.InspectTag(ref this, key, attribute.Value.IntValue);
-                    }
+                if (tag.Value is string tagStringValue)
+                {
+                    PeerServiceResolver.InspectTag(ref this, key, tagStringValue);
+                }
+                else if (tag.Value is int tagIntValue)
+                {
+                    PeerServiceResolver.InspectTag(ref this, key, tagIntValue);
                 }
             }
         }
