@@ -116,7 +116,7 @@ internal static class OtlpExporterOptionsExtensions
                     request.MergeFrom(data);
                     return request;
                 },
-                Path.Combine(experimentalOptions.DiskRetryStoragePath, "traces"));
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "traces"));
         }
         else
         {
@@ -150,7 +150,7 @@ internal static class OtlpExporterOptionsExtensions
                     request.MergeFrom(data);
                     return request;
                 },
-                Path.Combine(experimentalOptions.DiskRetryStoragePath, "metrics"));
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "metrics"));
         }
         else
         {
@@ -180,7 +180,7 @@ internal static class OtlpExporterOptionsExtensions
                     request.MergeFrom(data);
                     return request;
                 },
-                Path.Combine(experimentalOptions.DiskRetryStoragePath, "logs"));
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "logs"));
         }
         else
         {

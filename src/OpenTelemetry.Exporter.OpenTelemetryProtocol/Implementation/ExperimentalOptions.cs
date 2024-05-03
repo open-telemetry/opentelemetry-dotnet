@@ -17,7 +17,7 @@ internal sealed class ExperimentalOptions
 
     public const string OtlpRetryEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY";
 
-    public const string OtlpDiskRetryStoragePathEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH";
+    public const string OtlpDiskRetryDirectoryPathEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH";
 
     public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
@@ -39,14 +39,14 @@ internal sealed class ExperimentalOptions
             }
             else if (retryPolicy.Equals("disk", StringComparison.OrdinalIgnoreCase))
             {
-                if (configuration.TryGetStringValue(OtlpDiskRetryStoragePathEnvVar, out var path) && path != null)
+                if (configuration.TryGetStringValue(OtlpDiskRetryDirectoryPathEnvVar, out var path) && path != null)
                 {
                     this.EnableDiskRetry = true;
-                    this.DiskRetryStoragePath = path;
+                    this.DiskRetryDirectoryPath = path;
                 }
                 else
                 {
-                    throw new ArgumentException($"{OtlpDiskRetryStoragePathEnvVar} is required when '{retryPolicy}' retry is used");
+                    throw new ArgumentException($"{OtlpDiskRetryDirectoryPathEnvVar} is required when '{retryPolicy}' retry is used");
                 }
             }
             else
@@ -78,5 +78,5 @@ internal sealed class ExperimentalOptions
     /// <summary>
     /// Gets the path on disk where the telemetry will be stored for retries at a later point.
     /// </summary>
-    public string? DiskRetryStoragePath { get; }
+    public string? DiskRetryDirectoryPath { get; }
 }
