@@ -13,6 +13,14 @@
   `parent_is_remote` information.
   ([#5563](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5563))
 
+* Introduced experimental support for automatically retrying export to the otlp
+  endpoint by storing the telemetry offline during transient network errors.
+  Users can enable this feature by setting the
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY` environment variable to `disk` and
+  setting `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` to the path
+  on disk for storing the telemetry.
+  ([#5527](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5527))
+
 ## 1.8.1
 
 Released 2024-Apr-17

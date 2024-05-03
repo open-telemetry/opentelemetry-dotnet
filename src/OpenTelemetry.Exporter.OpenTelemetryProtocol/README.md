@@ -632,6 +632,11 @@ want to solicit feedback from the community.
 
     Added in `1.8.0`.
 
+    When set to `disk` along with setting
+    `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` to the path on
+    disk, it enables retries by storing telemetry on disk during transient
+    errors. TODO: Add package version.
+
 * Logs
 
   * `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES`
