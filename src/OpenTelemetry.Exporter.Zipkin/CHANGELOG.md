@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Zipkin will now write numeric, boolean, and floating-point tag values as
+  primitive types in its emitted JSON instead of converting the values to
+  strings.
+  ([#5590](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5590))
+
 ## 1.8.1
 
 Released 2024-Apr-17
