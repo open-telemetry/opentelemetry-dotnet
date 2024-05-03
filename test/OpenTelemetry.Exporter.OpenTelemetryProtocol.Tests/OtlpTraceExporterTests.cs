@@ -319,6 +319,7 @@ public class OtlpTraceExporterTests
             new KeyValuePair<string, object>("int_array", new int[] { 1, 2 }),
             new KeyValuePair<string, object>("double_array", new double[] { 1.0, 2.09 }),
             new KeyValuePair<string, object>("string_array", new string[] { "a", "b" }),
+            new KeyValuePair<string, object>("datetime_array", new DateTime[] { DateTime.UtcNow, DateTime.Now }),
         };
 
         foreach (var kvp in attributes)

@@ -73,12 +73,50 @@ jobs:
 
             if ($firstPackageVersion -eq '')
             {
-              $firstPackageVersion = $packageVersion
+                $firstPackageVersion = $packageVersion
             }
+
+            $changelogContent = Get-Content -Path "src/$packageName/CHANGELOG.md"
+
+            $headingWritten = $false
+            $started = $false
+            $content = ""
+
+            foreach ($line in $changelogContent)
+            {
+                if ($line -like "## ${{ github.ref_name }}" -and $started -ne $true)
+                {
+                    $started = $true
+                }
+                elseif ($line -like "Released *" -and $started -eq $true)
+                {
+                    continue
+                }
+                elseif ($line -like "## *" -and $started -eq $true)
+                {
+                    break
+                }
+                else
+                {
+                    if ($started -eq $true -and ([string]::IsNullOrWhitespace($line) -eq $false -or $content.Length -gt 0))
+                    {
+                        $content += "  " + $line + "`r`n"
+                    }
+            }
+            }
+
+            if ([string]::IsNullOrWhitespace($content) -eq $true)
+            {
+                $content = "   No notable changes."
+            }
+
+            $content = $content.trimend()
 
             $notes +=
         @"
         * NuGet: [$packageName v$packageVersion](https://www.nuget.org/packages/$packageName/$packageVersion)
+
+        $content
 
           See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/src/$packageName/CHANGELOG.md) for details.
 

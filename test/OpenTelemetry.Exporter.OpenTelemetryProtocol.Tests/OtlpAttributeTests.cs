@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Google.Protobuf.Collections;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using Xunit;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
@@ -13,19 +14,19 @@ public class OtlpAttributeTests
     public void NullValueAttribute()
     {
         var kvp = new KeyValuePair<string, object>("key", null);
-        Assert.False(OtlpTagTransformer.Instance.TryTransformTag(kvp, out var _));
+        Assert.False(TryTransformTag(kvp, out var _));
     }
 
     [Fact]
     public void EmptyArrays()
     {
         var kvp = new KeyValuePair<string, object>("key", Array.Empty<int>());
-        Assert.True(OtlpTagTransformer.Instance.TryTransformTag(kvp, out var attribute));
+        Assert.True(TryTransformTag(kvp, out var attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
         Assert.Empty(attribute.Value.ArrayValue.Values);
 
         kvp = new KeyValuePair<string, object>("key", Array.Empty<object>());
-        Assert.True(OtlpTagTransformer.Instance.TryTransformTag(kvp, out attribute));
+        Assert.True(TryTransformTag(kvp, out attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
         Assert.Empty(attribute.Value.ArrayValue.Values);
     }
@@ -48,7 +49,7 @@ public class OtlpAttributeTests
     public void IntegralTypesSupported(object value)
     {
         var kvp = new KeyValuePair<string, object>("key", value);
-        Assert.True(OtlpTagTransformer.Instance.TryTransformTag(kvp, out var attribute));
+        Assert.True(TryTransformTag(kvp, out var attribute));
 
         switch (value)
         {
@@ -77,7 +78,7 @@ public class OtlpAttributeTests
     public void FloatingPointTypesSupported(object value)
     {
         var kvp = new KeyValuePair<string, object>("key", value);
-        Assert.True(OtlpTagTransformer.Instance.TryTransformTag(kvp, out var attribute));
+        Assert.True(TryTransformTag(kvp, out var attribute));
 
         switch (value)
         {
@@ -104,7 +105,7 @@ public class OtlpAttributeTests
     public void BooleanTypeSupported(object value)
     {
         var kvp = new KeyValuePair<string, object>("key", value);
-        Assert.True(OtlpTagTransformer.Instance.TryTransformTag(kvp, out var attribute));
+        Assert.True(TryTransformTag(kvp, out var attribute));
 
         switch (value)
         {
@@ -131,7 +132,7 @@ public class OtlpAttributeTests
     public void StringTypesSupported(object value)
     {
         var kvp = new KeyValuePair<string, object>("key", value);
-        Assert.True(OtlpTagTransformer.Instance.TryTransformTag(kvp, out var attribute));
+        Assert.True(TryTransformTag(kvp, out var attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
         Assert.Equal(Convert.ToString(value), attribute.Value.StringValue);
     }
@@ -143,12 +144,12 @@ public class OtlpAttributeTests
         var stringArray = new string[] { "a", "b", "c", string.Empty, null };
 
         var kvp = new KeyValuePair<string, object>("key", charArray);
-        Assert.True(OtlpTagTransformer.Instance.TryTransformTag(kvp, out var attribute));
+        Assert.True(TryTransformTag(kvp, out var attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
         Assert.Equal(charArray.Select(x => x.ToString()), attribute.Value.ArrayValue.Values.Select(x => x.StringValue));
 
         kvp = new KeyValuePair<string, object>("key", stringArray);
-        Assert.True(OtlpTagTransformer.Instance.TryTransformTag(kvp, out attribute));
+        Assert.True(TryTransformTag(kvp, out attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
 
         for (var i = 0; i < stringArray.Length; ++i)
@@ -188,7 +189,7 @@ public class OtlpAttributeTests
         foreach (var value in testValues)
         {
             var kvp = new KeyValuePair<string, object>("key", value);
-            Assert.True(OtlpTagTransformer.Instance.TryTransformTag(kvp, out var attribute));
+            Assert.True(TryTransformTag(kvp, out var attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
             Assert.Equal(value.ToString(), attribute.Value.StringValue);
         }
@@ -196,7 +197,7 @@ public class OtlpAttributeTests
         foreach (var value in testArrayValues)
         {
             var kvp = new KeyValuePair<string, object>("key", value);
-            Assert.True(OtlpTagTransformer.Instance.TryTransformTag(kvp, out var attribute));
+            Assert.True(TryTransformTag(kvp, out var attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
 
             var array = value as Array;
@@ -220,10 +221,25 @@ public class OtlpAttributeTests
     public void ExceptionInToStringIsCaught()
     {
         var kvp = new KeyValuePair<string, object>("key", new MyToStringMethodThrowsAnException());
-        Assert.False(OtlpTagTransformer.Instance.TryTransformTag(kvp, out var _));
+        Assert.False(TryTransformTag(kvp, out var _));
 
         kvp = new KeyValuePair<string, object>("key", new object[] { 1, false, new MyToStringMethodThrowsAnException() });
-        Assert.False(OtlpTagTransformer.Instance.TryTransformTag(kvp, out var _));
+        Assert.False(TryTransformTag(kvp, out var _));
+    }
+
+    private static bool TryTransformTag(KeyValuePair<string, object> tag, out OtlpCommon.KeyValue attribute)
+    {
+        var destination = new RepeatedField<OtlpCommon.KeyValue>();
+
+        if (OtlpTagWriter.Instance.TryWriteTag(ref destination, tag))
+        {
+            Assert.NotEmpty(destination);
+            attribute = destination[0];
+            return true;
+        }
+
+        attribute = null;
+        return false;
     }
 
     private class MyToStringMethodThrowsAnException

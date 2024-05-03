@@ -63,6 +63,21 @@ internal static class OtlpTestHelpers
 
                     expectedSize++;
                 }
+                else
+                {
+                    var source = (Array)current;
+
+                    Assert.Equal(source.Length, actual[i].Value.ArrayValue.Values.Count);
+
+                    for (int j = 0; j < source.Length; j++)
+                    {
+                        var item = source.GetValue(j);
+
+                        AssertOtlpAttributeValue(item, actual[i].Value.ArrayValue.Values[j]);
+                    }
+
+                    expectedSize++;
+                }
             }
             else
             {
