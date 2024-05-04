@@ -37,7 +37,10 @@ jobs:
     - name: Create GitHub Pull Request to prepare release
       shell: pwsh
       run: |
-        Write-Host "${{ toJSON(github) }}"
+        $json = @'
+        ${{ toJSON(github) }}
+        '@
+        Write-Host $json
 
   prepare-release-pr:
     if: github.event_name == 'workflow_dispatch'
