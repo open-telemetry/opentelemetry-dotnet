@@ -53,11 +53,13 @@ jobs:
         }
 
         $body =
-        @"Note: This PR was opened automatically by the release workflow.
+        @"
+        Note: This PR was opened automatically by the release workflow.
 
         ## Changes
 
-        * CHANGELOG files updated for projects being released."
+        * CHANGELOG files updated for projects being released.
+        "@
 
         # Update CHANGELOGs
         & ./build/update-changelogs.ps1 -minVerTagPrefix "${{ inputs.tag-prefix }}" -version "${{ inputs.version }}"
