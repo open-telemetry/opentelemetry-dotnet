@@ -88,7 +88,7 @@ jobs:
 
         gh pr create `
           --title "[repo] Prepare release ${{ inputs.tag-prefix }}${{ inputs.version }}" `
-          --body $body`
+          --body $body `
           --base ${{ github.ref_name }} `
           --head release/prepare-${{ inputs.tag-prefix }}${{ inputs.version }}-release `
           --label infra
