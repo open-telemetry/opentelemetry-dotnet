@@ -30,6 +30,15 @@ permissions:
   pull-requests: write
 
 jobs:
+  debug:
+    runs-on: windows-latest
+
+    steps:
+    - name: Create GitHub Pull Request to prepare release
+      shell: pwsh
+      run: |
+        Write-Host "${{ toJSON(github) }}"
+
   prepare-release-pr:
     if: github.event_name == 'workflow_dispatch'
 
