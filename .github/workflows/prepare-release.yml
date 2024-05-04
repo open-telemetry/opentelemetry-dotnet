@@ -52,13 +52,22 @@ jobs:
             Return
         }
 
+        $body =
+        @"Note: This PR was opened automatically by the release workflow.
+
+        ## Changes
+
+        * CHANGELOG files updated for projects being released."
+
         # Update CHANGELOGs
         & ./build/update-changelogs.ps1 -minVerTagPrefix "${{ inputs.tag-prefix }}" -version "${{ inputs.version }}"
 
         # Update publicApi files for stable releases
-        if ("${{ inputs.version }}" -notcontains "-alpha" -and "${{ inputs.version }}" -notcontains "-beta" -and "${{ inputs.version }}" -notcontains "-rc")
+        if ("${{ inputs.version }}" -notlike "*-alpha*" -and "${{ inputs.version }}" -notlike "*-beta*" -and "${{ inputs.version }}" -notlike "*-rc*")
         {
           & ./build/finalize-publicapi.ps1 -minVerTagPrefix "${{ inputs.tag-prefix }}"
+
+          $body += "`r`n* Public API files updated for projects being released (only performed for stable releases)."
         }
 
         git commit -a -m "Prepare repo to release ${{ inputs.tag-prefix }}${{ inputs.version }}." 2>&1 | % ToString
@@ -77,7 +86,7 @@ jobs:
 
         gh pr create `
           --title "[repo] Prepare release ${{ inputs.tag-prefix }}${{ inputs.version }}" `
-          --body "This PR was opened automatically by the release workflow." `
+          --body $body`
           --base ${{ github.ref_name }} `
           --head release/prepare-${{ inputs.tag-prefix }}${{ inputs.version }}-release `
           --label infra
