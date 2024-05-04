@@ -1,0 +1,168 @@
+name: Prepare for a release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag-prefix:
+        type: choice
+        options:
+        - core-
+        - coreunstable-
+        - Instrumentation.AspNetCore-
+        - Instrumentation.GrpcNetClient-
+        description: 'Release tag prefix'
+        required: true
+      version:
+        type: string
+        description: 'Release version'
+        required: true
+
+  pull_request:
+    types:
+    - closed
+
+  issue_comment:
+    types:
+    - created
+
+permissions:
+  pull-requests: write
+
+jobs:
+  prepare-release-pr:
+    if: github.event_name == 'workflow_dispatch'
+
+    runs-on: windows-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+
+    - name: Create GitHub Pull Request to prepare release
+      shell: pwsh
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        git switch --create release/prepare-${{ inputs.tag-prefix }}${{ inputs.version }}-release 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git switch failure'
+            Return
+        }
+
+        # Update CHANGELOGs
+        & ./build/update-changelogs.ps1 -minVerTagPrefix "${{ inputs.tag-prefix }}" -version "${{ inputs.version }}"
+
+        # Update publicApi files for stable releases
+        if ("${{ inputs.version }}" -notcontains "-alpha" -and "${{ inputs.version }}" -notcontains "-beta" -and "${{ inputs.version }}" -notcontains "-rc")
+        {
+          & ./build/finalize-publicapi.ps1 -minVerTagPrefix "${{ inputs.tag-prefix }}"
+        }
+
+        git commit -a -m "Prepare repo to release ${{ inputs.tag-prefix }}${{ inputs.version }}." 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git commit failure'
+            Return
+        }
+
+        git push -u origin release/prepare-${{ inputs.tag-prefix }}${{ inputs.version }}-release 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git push failure'
+            Return
+        }
+
+        gh pr create `
+          --title "[repo] Prepare release ${{ inputs.tag-prefix }}${{ inputs.version }}" `
+          --body "This PR was opened automatically by the release workflow." `
+          --base ${{ github.ref_name }} `
+          --head release/prepare-${{ inputs.tag-prefix }}${{ inputs.version }}-release `
+          --label infra
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+  lock-pr-and-post-notice-to-create-release-tag:
+    if: |
+      github.event_name == 'pull_request'
+      && github.event.action == 'closed'
+      && github.event.pull_request.user.name == 'github-actions[bot]'
+      && github.event.pull_request.merged == true
+      && startsWith(github.event.pull_request.title, '[repo] Prepare release ')
+
+    runs-on: windows-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+
+    - name: Lock GitHub Pull Request to prepare release
+      shell: pwsh
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        gh pr comment ${{ github.event.pull_request.number }} `
+          --body "I noticed this PR was merged. Post a comment with /CreateReleaseTag in the body if you would like me to automatically create the release tag and trigger the package workflow for you."
+
+        gh pr lock ${{ github.event.pull_request.number }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+  create-release-tag:
+    if: |
+      github.event_name == 'issue_comment'
+      && github.event.issue.pull_request
+      && github.event.issue.locked == true
+      && contains(github.event.comment.body, '/CreateReleaseTag')
+      && startsWith(github.event.issue.title, '[repo] Prepare release ')
+      && github.event.issue.pull_request.merged_at
+
+    runs-on: windows-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+
+    - name: Create release tag to kick off the release
+      shell: pwsh
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        $prViewResponse = gh pr view ${{ github.event.issue.number }} --json mergeCommit,author | ConvertFrom-Json
+
+        if ($prViewResponse.author.is_bot -eq $false -or $prViewResponse.author.login -ne 'github-actions[bot]')
+        {
+            Write-Error 'PR author was unexpected'
+            Return
+        }
+
+        $match = [regex]::Match('${{ github.event.issue.title }}', '^\[repo\] Prepare release (.*)$')
+        if ($match.Success -eq $false)
+        {
+            Write-Error 'Could not parse tag from PR title'
+            Return
+        }
+
+        $tag = $match.Groups[1].Value
+
+        git tag -a $tag -m "$tag" $prViewResponse.mergeCommit.oid 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git tag failure'
+            Return
+        }
+
+        git push origin $tag 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git push failure'
+            Return
+        }
+
+        gh pr comment ${{ github.event.pull_request.number }} `
+          --body "I just pushed the `$tag` tag. Have a nice day!"
+      env:
+        GH_TOKEN: ${{ github.token }}
