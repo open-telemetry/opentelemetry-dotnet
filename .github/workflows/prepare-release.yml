@@ -30,18 +30,6 @@ permissions:
   pull-requests: write
 
 jobs:
-  debug:
-    runs-on: windows-latest
-
-    steps:
-    - name: Create GitHub Pull Request to prepare release
-      shell: pwsh
-      run: |
-        $json = @'
-        ${{ toJSON(github) }}
-        '@
-        Write-Host $json
-
   prepare-release-pr:
     if: github.event_name == 'workflow_dispatch'
 
@@ -157,7 +145,7 @@ jobs:
 
         $prViewResponse = gh pr view ${{ github.event.issue.number }} --json mergeCommit,author | ConvertFrom-Json
 
-        if ($prViewResponse.author.is_bot -eq $false -or $prViewResponse.author.login -ne 'github-actions[bot]')
+        if ($prViewResponse.author.is_bot -eq $false -or $prViewResponse.author.login -ne 'app/github-actions')
         {
             Write-Error 'PR author was unexpected'
             Return
