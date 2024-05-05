@@ -106,7 +106,7 @@ jobs:
                     {
                         $content += "  " + $line + "`r`n"
                     }
-            }
+                }
             }
 
             if ([string]::IsNullOrWhitespace($content) -eq $true)
@@ -190,9 +190,20 @@ jobs:
             Return
         }
 
+        $body =
+        @"
+        Note: This PR was opened automatically by the [package workflow](https://github.com/${{ github.repository }}/actions/workflows/publish-packages-1.0.yml).
+
+        Merge once packages are available on NuGet and the build passes.
+
+        ## Changes
+
+        * Sets `OTelLatestStableVer` in `Directory.Packages.props` to `$packageVersion`.
+        "@
+
         gh pr create `
           --title "[repo] Core stable release $packageVersion updates" `
-          --body "This PR was opened automatically by the release workflow. Merge once packages are available on NuGet and the build passes." `
+          --body $body `
           --base main `
           --head release/post-stable-${{ github.ref_name }}-update `
           --label infra `
