@@ -115,8 +115,31 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+        $match = [regex]::Match('${{ github.event.pull_request.title }}', '^\[repo\] Prepare release (.*)$')
+        if ($match.Success -eq $false)
+        {
+            Write-Error 'Could not parse tag from PR title'
+            Return
+        }
+
+        $tag = $match.Groups[1].Value
+
+        git tag -a $tag -m "$tag" $prViewResponse.mergeCommit.oid 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git tag failure'
+            Return
+        }
+
+        $body =
+        @"
+        I noticed this PR was merged.
+
+        Post a comment with "/CreateReleaseTag" in the body if you would like me to create the release tag `$tag` for [the merge commit](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.merge_commit_sha }}) which will trigger the package workflow.
+        "@
+
         gh pr comment ${{ github.event.pull_request.number }} `
-          --body "I noticed this PR was merged. Post a comment with /CreateReleaseTag in the body if you would like me to automatically create the release tag and trigger the package workflow for you."
+          --body $body
 
         gh pr lock ${{ github.event.pull_request.number }}
       env:
@@ -136,6 +159,9 @@ jobs:
     steps:
     - name: check out code
       uses: actions/checkout@v4
+      with:
+        # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
+        fetch-depth: 0
 
     - name: Create release tag to kick off the release
       shell: pwsh
@@ -174,7 +200,16 @@ jobs:
             Return
         }
 
+        $body =
+        @"
+        I just pushed the [$tag tag](https://github.com/${{ github.repository }}/releases/tag/$tag).
+
+        The [package workflow](https://github.com/${{ github.repository }}/actions/workflows/publish-packages-1.0.yml) should begin momentarily.
+
+        Have a nice day!
+        "@
+
         gh pr comment ${{ github.event.pull_request.number }} `
-          --body "I just pushed the `$tag` tag. Have a nice day!"
+          --body $body
       env:
         GH_TOKEN: ${{ github.token }}
