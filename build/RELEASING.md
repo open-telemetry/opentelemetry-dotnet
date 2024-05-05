@@ -2,7 +2,9 @@
 
 **Only for Maintainers.**
 
- 1. Decide the component(s) and tag name (version name) to be released.
+ 1. Decide the component(s) and tag name (version name) to be released. We use
+    [MinVer](https://github.com/adamralph/minver) to do versioning, which
+    produces version numbers based on git tags.
 
     Notes:
 
@@ -55,26 +57,36 @@
          `OTelLatestStableVer` property in `Directory.Packages.props` has been
          updated to the latest stable core version.
 
- 2. Update CHANGELOG files
+ 2. Prepare for release
 
-    Run the PowerShell script `.\build\update-changelogs.ps1 -minVerTagPrefix
-    [MinVerTagPrefix] -version [Version]`. Where `[MinVerTagPrefix]` is the tag
-    prefix (eg `core-`) for the components being released and `[Version]` is the
-    version being released (eg `1.9.0`). This will update `CHANGELOG.md` files
-    for the projects being released.
-
- 3. **Stable releases only**: Normalize PublicApi files
-
-    Run the PowerShell script `.\build\finalize-publicapi.ps1 -minVerTagPrefix
-    [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag prefix (eg `core-`)
-    for the components being released. This will merge the contents of any
-    detected `PublicAPI.Unshipped.txt` files in the `.publicApi` folder into the
+    Run the [Prepare for a
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow. Specify the `tag-prefix` and the `version` for the release. Make
+    sure to run the workflow on the branch being released. This is typically
+    `main` but could be some other branch for hotfix (eg `main-1.8.0`). The
+    workflow will open a PR to update `CHANGELOG.md` files for the projects
+    being released. If a stable version is specified as the `version` parameter,
+    the workflow will also merge the contents of any detected
+    `PublicAPI.Unshipped.txt` files in the `.publicApi` folder into the
     corresponding `PublicAPI.Shipped.txt` files for the projects being released.
 
- 4. Tag Git with version to be released. We use
-    [MinVer](https://github.com/adamralph/minver) to do versioning, which
-    produces version numbers based on git tags.
+ 3. :stop_sign: The PR opened by [Prepare for a
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow in step 2 has to be merged.
 
+ 4. Once the PR opened by [Prepare for a
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow in step 2 has been merged a trigger will automatically add a
+    comment and lock the PR. Post a comment with "/CreateReleaseTag" in the
+    body. This will tell the [Prepare for a
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow to push the tag for the merge commit of the PR. The tag push will
+    then trigger the the [Build, pack, and publish to
+    MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+    workflow.
+
+    <details>
+    <summary>Instructions for pushing tags manually</summary>
     Note: In the below examples `git push origin` is used. If running in a fork,
     add the main repo as `upstream` and use `git push upstream` instead. Pushing
     a tag to `origin` in a fork pushes the tag to the fork.
@@ -106,6 +118,7 @@
 
     Pushing the tag will kick off the [Build, pack, and publish to MyGet
     workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml).
+    </details>
 
  5. :stop_sign: Wait for the [Build, pack, and publish to MyGet
     workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
