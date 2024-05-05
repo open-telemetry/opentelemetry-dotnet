@@ -54,7 +54,7 @@ jobs:
 
         $body =
         @"
-        Note: This PR was opened automatically by the release workflow.
+        Note: This PR was opened automatically by the [prepare release workflow](https://github.com/${{ github.repository }}/actions/workflows/prepare-release.yml).
 
         ## Changes
 
