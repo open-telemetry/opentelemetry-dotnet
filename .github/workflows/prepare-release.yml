@@ -156,6 +156,9 @@ jobs:
 
     runs-on: windows-latest
 
+    outputs:
+      tag: ${{ steps.create-tag.outputs.tag }}
+
     steps:
     - name: check out code
       uses: actions/checkout@v4
@@ -163,7 +166,7 @@ jobs:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
 
-    - name: Create release tag to kick off the release
+    - name: Create release tag
       id: create-tag
       shell: pwsh
       run: |
@@ -219,7 +222,8 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
 
-    - name: Invoke publish packages workflow
-      uses: ./.github/workflows/publish-packages-1.0.yml
-      with:
-        tag: ${{ steps.create-tag.outputs.tag }}
+  invoke-package-workflow:
+    needs: create-release-tag-unlock-pr-post-notice
+    uses: ./.github/workflows/publish-packages-1.0.yml
+    with:
+      tag: ${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}
