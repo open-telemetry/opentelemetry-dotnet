@@ -137,15 +137,15 @@ internal sealed class OtlpLogRecordTransformer
 
                 if (!string.IsNullOrEmpty(logRecord.EventId.Name))
                 {
-                    AddStringAttribute(otlpLogRecord, ExperimentalOptions.LogRecordEventNameAttribute, logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
+                    AddStringAttribute(otlpLogRecord, ExperimentalOptions.LogRecordEventNameAttribute, logRecord.EventId.Name, attributeCountLimit, attributeValueLengthLimit);
                 }
             }
 
             if (logRecord.Exception != null)
             {
-                AddStringAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name, attributeValueLengthLimit, attributeCountLimit);
-                AddStringAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeValueLengthLimit, attributeCountLimit);
-                AddStringAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString(), attributeValueLengthLimit, attributeCountLimit);
+                AddStringAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name, attributeCountLimit, attributeValueLengthLimit);
+                AddStringAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeCountLimit, attributeValueLengthLimit);
+                AddStringAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString(), attributeCountLimit, attributeValueLengthLimit);
             }
 
             bool bodyPopulatedFromFormattedMessage = false;
@@ -166,9 +166,9 @@ internal sealed class OtlpLogRecordTransformer
                     {
                         otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = attribute.Value as string };
                     }
-                    else if (OtlpTagTransformer.Instance.TryTransformTag(attribute, out var result, attributeValueLengthLimit))
+                    else
                     {
-                        AddAttribute(otlpLogRecord, result, attributeCountLimit);
+                        AddAttribute(otlpLogRecord, attribute, attributeCountLimit, attributeValueLengthLimit);
                     }
                 }
 
@@ -224,10 +224,7 @@ internal sealed class OtlpLogRecordTransformer
                     }
                     else
                     {
-                        if (OtlpTagTransformer.Instance.TryTransformTag(scopeItem, out var result, attributeValueLengthLimit))
-                        {
-                            AddAttribute(otlpLog, result, attributeCountLimit);
-                        }
+                        AddAttribute(otlpLog, scopeItem, attributeCountLimit, attributeValueLengthLimit);
                     }
                 }
             }
@@ -241,36 +238,34 @@ internal sealed class OtlpLogRecordTransformer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddAttribute(OtlpLogs.LogRecord logRecord, OtlpCommon.KeyValue attribute, int maxAttributeCount)
+    private static void AddAttribute(OtlpLogs.LogRecord logRecord, KeyValuePair<string, object> attribute, int maxAttributeCount, int? maxValueLength)
     {
-        if (logRecord.Attributes.Count < maxAttributeCount)
+        var logRecordAttributes = logRecord.Attributes;
+
+        if (logRecordAttributes.Count == maxAttributeCount)
         {
-            logRecord.Attributes.Add(attribute);
+            logRecord.DroppedAttributesCount++;
         }
         else
         {
-            logRecord.DroppedAttributesCount++;
+            OtlpTagWriter.Instance.TryWriteTag(ref logRecordAttributes, attribute, maxValueLength);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddStringAttribute(OtlpLogs.LogRecord logRecord, string key, string value, int? maxValueLength, int maxAttributeCount)
+    private static void AddStringAttribute(OtlpLogs.LogRecord logRecord, string key, string value, int maxAttributeCount, int? maxValueLength)
     {
         var attributeItem = new KeyValuePair<string, object>(key, value);
-        if (OtlpTagTransformer.Instance.TryTransformTag(attributeItem, out var result, maxValueLength))
-        {
-            AddAttribute(logRecord, result, maxAttributeCount);
-        }
+
+        AddAttribute(logRecord, attributeItem, maxAttributeCount, maxValueLength);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddIntAttribute(OtlpLogs.LogRecord logRecord, string key, int value, int maxAttributeCount)
     {
         var attributeItem = new KeyValuePair<string, object>(key, value);
-        if (OtlpTagTransformer.Instance.TryTransformTag(attributeItem, out var result))
-        {
-            AddAttribute(logRecord, result, maxAttributeCount);
-        }
+
+        AddAttribute(logRecord, attributeItem, maxAttributeCount, maxValueLength: null);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
