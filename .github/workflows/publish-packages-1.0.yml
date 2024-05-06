@@ -14,6 +14,10 @@ on:
       - 'core-*'
       - 'coreunstable-*'
       - 'Instrumentation.*-'
+  workflow_call:
+    tag:
+      required: true
+      type: string
   schedule:
     - cron: '0 0 * * *' # once in a day at 00:00
 
@@ -31,7 +35,7 @@ jobs:
         # the version tag which is typically NOT on the first commit so we
         # retrieve them all.
         fetch-depth: 0
-        ref: ${{ github.ref || 'main' }}
+        ref: ${{ github.ref || inputs.tag || 'main' }}
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
@@ -43,12 +47,12 @@ jobs:
       run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
 
     - name: dotnet pack
-      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || '' }}
+      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || inputs.tag || '' }}
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ github.ref_name }}-packages
+        name: ${{ github.ref_name || inputs.tag }}-packages
         path: '**/bin/**/*.*nupkg'
 
     - name: Publish MyGet
@@ -57,7 +61,7 @@ jobs:
         nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
     - name: Create GitHub Release Draft
-      if: github.ref_type == 'tag'
+      if: github.ref_type == 'tag' || inputs.tag
       shell: pwsh
       run: |
         $packages = (Get-ChildItem -Path src/*/bin/Release/*.nupkg).Name
@@ -84,7 +88,7 @@ jobs:
 
             foreach ($line in $changelogContent)
             {
-                if ($line -like "## ${{ github.ref_name }}" -and $started -ne $true)
+                if ($line -like "## ${{ github.ref_name || inputs.tag }}" -and $started -ne $true)
                 {
                     $started = $true
                 }
@@ -118,15 +122,15 @@ jobs:
 
         $content
 
-          See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/src/$packageName/CHANGELOG.md) for details.
+          See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ github.ref_name || inputs.tag }}/src/$packageName/CHANGELOG.md) for details.
 
         "@
         }
 
         if ($firstPackageVersion -match '-alpha' -or $firstPackageVersion -match '-beta' -or $firstPackageVersion -match '-rc')
         {
-          gh release create ${{ github.ref_name }} `
-            --title ${{ github.ref_name }} `
+          gh release create ${{ github.ref_name || inputs.tag }} `
+            --title ${{ github.ref_name || inputs.tag }} `
             --verify-tag `
             --notes "$notes" `
             --prerelease `
@@ -134,8 +138,8 @@ jobs:
         }
         else
         {
-          gh release create ${{ github.ref_name }} `
-            --title ${{ github.ref_name }} `
+          gh release create ${{ github.ref_name || inputs.tag }} `
+            --title ${{ github.ref_name || inputs.tag }} `
             --verify-tag `
             --notes "$notes" `
             --latest `

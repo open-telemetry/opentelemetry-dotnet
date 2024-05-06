@@ -164,6 +164,7 @@ jobs:
         fetch-depth: 0
 
     - name: Create release tag to kick off the release
+      id: create-tag
       shell: pwsh
       run: |
         git config user.name "github-actions[bot]"
@@ -213,5 +214,12 @@ jobs:
 
         gh pr comment ${{ github.event.issue.number }} `
           --body $body
+
+        echo "tag=$tag" >> $env:GITHUB_OUTPUT
       env:
         GH_TOKEN: ${{ github.token }}
+
+    - name: Invoke publish packages workflow
+      uses: ./.github/workflows/publish-packages-1.0.yml
+      with:
+        tag: ${{ steps.create-tag.outputs.tag }}
