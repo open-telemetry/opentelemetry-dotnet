@@ -46,9 +46,6 @@
            * Stable:
              * `OpenTelemetry.Instrumentation.AspNetCore` (`Instrumentation.AspNetCore-`)
 
-           * Unstable:
-             * `OpenTelemetry.Instrumentation.GrpcNetClient` (`Instrumentation.GrpcNetClient-`)
-
        * As of the `1.9.0` release cycle instrumentation packages and core
          unstable packages always depend on the stable versions of core
          packages. Before releasing a non-core component ensure the
