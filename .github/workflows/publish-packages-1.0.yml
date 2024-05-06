@@ -15,9 +15,10 @@ on:
       - 'coreunstable-*'
       - 'Instrumentation.*-'
   workflow_call:
-    tag:
-      required: true
-      type: string
+    inputs:
+      tag:
+        required: true
+        type: string
   schedule:
     - cron: '0 0 * * *' # once in a day at 00:00
 
