@@ -200,7 +200,7 @@ jobs:
             Return
         }
 
-        gh pr unlock ${{ github.event.pull_request.number }}
+        gh pr unlock ${{ github.event.issue.number }}
 
         $body =
         @"
