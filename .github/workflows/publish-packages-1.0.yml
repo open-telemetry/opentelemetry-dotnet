@@ -19,6 +19,11 @@ on:
       tag:
         required: true
         type: string
+    outputs:
+      artifact-id:
+        value: ${{ jobs.build-pack-publish.outputs.artifact-id }}
+      artifact-url:
+        value: ${{ jobs.build-pack-publish.outputs.artifact-url }}
   schedule:
     - cron: '0 0 * * *' # once in a day at 00:00
 
@@ -28,6 +33,10 @@ permissions:
 jobs:
   build-pack-publish:
     runs-on: windows-latest
+
+    outputs:
+      artifact-id: ${{ steps.upload-artifacts.outputs.artifact-id }}
+      artifact-url: ${{ steps.upload-artifacts.outputs.artifact-url }}
 
     steps:
     - uses: actions/checkout@v4
@@ -51,6 +60,7 @@ jobs:
       run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || inputs.tag || '' }}
 
     - name: Publish Artifacts
+      id: upload-artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{ github.ref_name || inputs.tag }}-packages

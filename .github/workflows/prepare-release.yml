@@ -210,9 +210,7 @@ jobs:
         @"
         I just pushed the [$tag](https://github.com/${{ github.repository }}/releases/tag/$tag) tag.
 
-        The [package workflow](https://github.com/${{ github.repository }}/actions/workflows/publish-packages-1.0.yml) should begin momentarily.
-
-        Have a nice day!
+        The [package workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) should begin momentarily.
         "@
 
         gh pr comment ${{ github.event.issue.number }} `
@@ -227,3 +225,25 @@ jobs:
     uses: ./.github/workflows/publish-packages-1.0.yml
     with:
       tag: ${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}
+
+  post-packages-ready-notice:
+    needs:
+    - create-release-tag-unlock-pr-post-notice
+    - invoke-package-workflow
+    runs-on: windows-latest
+    steps:
+    - name: Post notice when packages are ready
+      shell: pwsh
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        $body =
+        @"
+        The packages for [$tag](https://github.com/${{ github.repository }}/releases/tag/${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}) are now available: ${{ needs.invoke-package-workflow.outputs.artifact-url }}.
+
+        Have a nice day!
+        "@
+
+        gh pr comment ${{ github.event.issue.number }} `
+          --body $body
