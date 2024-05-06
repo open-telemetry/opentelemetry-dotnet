@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.9.0-alpha.1
+
+Released 2024-May-06
+
 * Reverted obsoletion of `OpenTelemetryBuilder`.
   ([#5571](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5571))
 
