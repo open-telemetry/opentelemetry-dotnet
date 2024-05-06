@@ -87,6 +87,7 @@ jobs:
       project-name: './build/InstrumentationLibraries.proj'
       project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=false'
       code-cov-name: 'Instrumentation-Stable'
+      tfm-list: '[ "net6.0", "net7.0", "net8.0" ]'
 
   # Build instrumentation libraries using stable packages released to NuGet
   build-test-instrumentation-experimental:
@@ -100,6 +101,7 @@ jobs:
       project-name: './build/InstrumentationLibraries.proj'
       project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=true'
       code-cov-name: 'Instrumentation-Experimental'
+      tfm-list: '[ "net6.0", "net7.0", "net8.0" ]'
 
   # Build unstable core libraries using stable packages released to NuGet
   build-test-unstable-core:
