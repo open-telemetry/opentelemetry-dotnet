@@ -209,7 +209,7 @@ jobs:
         Have a nice day!
         "@
 
-        gh pr comment ${{ github.event.pull_request.number }} `
+        gh pr comment ${{ github.event.issue.number }} `
           --body $body
       env:
         GH_TOKEN: ${{ github.token }}
