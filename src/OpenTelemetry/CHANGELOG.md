@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-## 1.9.0-alpha.1
-
-Released 2024-May-06
-
 * **Experimental (pre-release builds only):** Exposed `ExemplarReservoir` as a
   public API and added support for setting an `ExemplarReservoir` factory
   function when configuring a view (applies to individual metrics).
