@@ -204,7 +204,7 @@ jobs:
 
         $body =
         @"
-        I just pushed the [$tag tag](https://github.com/${{ github.repository }}/releases/tag/$tag).
+        I just pushed the [$tag](https://github.com/${{ github.repository }}/releases/tag/$tag) tag.
 
         The [package workflow](https://github.com/${{ github.repository }}/actions/workflows/publish-packages-1.0.yml) should begin momentarily.
 
