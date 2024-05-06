@@ -145,7 +145,7 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
 
-  create-release-tag:
+  create-release-tag-unlock-pr-post-notice:
     if: |
       github.event_name == 'issue_comment'
       && github.event.issue.pull_request
@@ -199,6 +199,8 @@ jobs:
             Write-Error 'git push failure'
             Return
         }
+
+        gh pr unlock ${{ github.event.pull_request.number }}
 
         $body =
         @"
