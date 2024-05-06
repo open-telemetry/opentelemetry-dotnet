@@ -3,6 +3,8 @@
 
 #nullable enable
 
+using System.Buffers.Text;
+using System.Globalization;
 using System.Text.Json;
 using OpenTelemetry.Internal;
 
@@ -10,6 +12,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation;
 
 internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
 {
+    public const int StackallocByteThreshold = 256;
+
     private ZipkinTagWriter()
     {
     }
@@ -17,13 +21,33 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
     public static ZipkinTagWriter Instance { get; } = new();
 
     protected override void WriteIntegralTag(ref Utf8JsonWriter writer, string key, long value)
-        => writer.WriteNumber(key, value);
+    {
+        Span<byte> destination = stackalloc byte[StackallocByteThreshold];
+        if (Utf8Formatter.TryFormat(value, destination, out int bytesWritten))
+        {
+            writer.WriteString(key, destination.Slice(0, bytesWritten));
+        }
+        else
+        {
+            writer.WriteString(key, value.ToString(CultureInfo.InvariantCulture));
+        }
+    }
 
     protected override void WriteFloatingPointTag(ref Utf8JsonWriter writer, string key, double value)
-        => writer.WriteNumber(key, value);
+    {
+        Span<byte> destination = stackalloc byte[StackallocByteThreshold];
+        if (Utf8Formatter.TryFormat(value, destination, out int bytesWritten))
+        {
+            writer.WriteString(key, destination.Slice(0, bytesWritten));
+        }
+        else
+        {
+            writer.WriteString(key, value.ToString(CultureInfo.InvariantCulture));
+        }
+    }
 
     protected override void WriteBooleanTag(ref Utf8JsonWriter writer, string key, bool value)
-        => writer.WriteBoolean(key, value);
+        => writer.WriteString(key, value ? "true" : "false");
 
     protected override void WriteStringTag(ref Utf8JsonWriter writer, string key, string value)
         => writer.WriteString(key, value);

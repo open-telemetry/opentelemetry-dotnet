@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using System.Text.Json;
 using OpenTelemetry.Internal;
 
@@ -152,14 +153,27 @@ internal readonly struct ZipkinSpan
             writer.WritePropertyName(ZipkinSpanJsonHelper.TagsPropertyName);
             writer.WriteStartObject();
 
-            foreach (var tag in this.LocalEndpoint.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
-            {
-                ZipkinTagWriter.Instance.TryWriteTag(ref writer, tag);
-            }
+            // Note: The spec says "Primitive types MUST be converted to string using en-US culture settings"
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#attribute
 
-            foreach (var tag in this.Tags)
+            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+
+            try
             {
-                ZipkinTagWriter.Instance.TryWriteTag(ref writer, tag);
+                foreach (var tag in this.LocalEndpoint.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
+                {
+                    ZipkinTagWriter.Instance.TryWriteTag(ref writer, tag);
+                }
+
+                foreach (var tag in this.Tags)
+                {
+                    ZipkinTagWriter.Instance.TryWriteTag(ref writer, tag);
+                }
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentUICulture = originalUICulture;
             }
 
             writer.WriteEndObject();
