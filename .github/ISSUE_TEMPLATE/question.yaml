@@ -6,3 +6,15 @@ body:
     attributes:
       value: |
         Please use [GitHub Discussions](https://github.com/open-telemetry/opentelemetry-dotnet/discussions/new).
+
+  - type: textarea
+    attributes:
+      label: What is the question?
+      description: Describe the question you have.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Any additional information you think may be relevant to this question.
