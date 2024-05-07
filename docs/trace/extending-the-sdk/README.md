@@ -111,8 +111,6 @@ the library they instrument, and steps for enabling them.
 
 * [ASP.NET
   Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-* [gRPC
-  client](../../../src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
 
 More community contributed instrumentations are available in [OpenTelemetry .NET
 Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src).
