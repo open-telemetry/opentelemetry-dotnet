@@ -188,7 +188,6 @@ public sealed class MockCollectorIntegrationTests
         using var source = new ActivitySource(activitySourceName);
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .ConfigureServices(sp => sp.AddSingleton<IConfiguration>(configuration))
             .AddSource(activitySourceName)
             .Build();
 
