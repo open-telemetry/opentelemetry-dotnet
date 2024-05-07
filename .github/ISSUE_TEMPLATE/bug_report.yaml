@@ -14,7 +14,7 @@ body:
     attributes:
       label: Area(s)
       description: Which area(s) does your bug report concern? If none fits, please select `area:other`
-      multiple: true
+      multiple: false
       options:
         - area:api
         - area:exporter
@@ -23,6 +23,8 @@ body:
         - area:ext:hosting
         - area:other
         - area:sdk
+    validations:
+      required: true
 
   - type: textarea
     attributes:
