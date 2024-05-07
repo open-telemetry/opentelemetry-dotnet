@@ -144,6 +144,8 @@ internal static class OtlpExporterOptionsExtensions
         }
         else if (experimentalOptions.EnableDiskRetry)
         {
+            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
+
             return new OtlpExporterPersistentStorageTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(
                 exportClient,
                 timeoutMilliseconds,
@@ -174,6 +176,8 @@ internal static class OtlpExporterOptionsExtensions
         }
         else if (experimentalOptions.EnableDiskRetry)
         {
+            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
+
             return new OtlpExporterPersistentStorageTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(
                 exportClient,
                 timeoutMilliseconds,
