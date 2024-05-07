@@ -16,9 +16,12 @@
 * Introduced experimental support for automatically retrying export to the otlp
   endpoint by storing the telemetry offline during transient network errors.
   Users can enable this feature by setting the
-  `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY` environment variable to `disk` and
-  setting `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` to the path
-  on disk for storing the telemetry.
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY` environment variable to `disk`. The
+  default path where the telemetry is stored is obtained by calling
+  [Path.GetTempPath()](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath)
+  or can be customized by setting
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` environment
+  variable.
   ([#5527](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5527))
 
 ## 1.8.1
