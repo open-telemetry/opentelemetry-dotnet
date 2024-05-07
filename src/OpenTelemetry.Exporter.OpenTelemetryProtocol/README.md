@@ -627,15 +627,17 @@ want to solicit feedback from the community.
 
   * `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY`
 
-    When set to `in_memory`, it enables in-memory retry for transient errors
+    * When set to `in_memory`, it enables in-memory retry for transient errors
     encountered while sending telemetry.
 
-    Added in `1.8.0`.
+      Added in `1.8.0`.
 
-    When set to `disk` along with setting
+    * When set to `disk` along with setting
     `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` to the path on
     disk, it enables retries by storing telemetry on disk during transient
-    errors. TODO: Add package version.
+    errors.
+
+      Added in **TBD** (Unreleased).
 
 * Logs
 
