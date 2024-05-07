@@ -99,10 +99,11 @@
     comment and lock the PR. Post a comment with "/CreateReleaseTag" in the
     body. This will tell the [Prepare for a
     release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
-    workflow to push the tag for the merge commit of the PR. The tag push will
-    then trigger the the [Build, pack, and publish to
+    workflow to push the tag for the merge commit of the PR and to call the
+    [Build, pack, and publish to
     MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
-    workflow.
+    workflow. Once packages are available a comment will be posted on the PR
+    opened in step 2 with a link to the artifacts.
 
     <details>
     <summary>Instructions for pushing tags manually</summary>
