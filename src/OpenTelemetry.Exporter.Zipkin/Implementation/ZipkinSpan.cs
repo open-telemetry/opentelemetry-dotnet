@@ -153,7 +153,9 @@ internal readonly struct ZipkinSpan
             writer.WritePropertyName(ZipkinSpanJsonHelper.TagsPropertyName);
             writer.WriteStartObject();
 
-            // this will be used when we convert int, double, int[], double[] to string
+            // Note: The spec says "Primitive types MUST be converted to string using en-US culture settings"
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#attribute
+
             var originalUICulture = Thread.CurrentThread.CurrentUICulture;
             Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
@@ -161,18 +163,12 @@ internal readonly struct ZipkinSpan
             {
                 foreach (var tag in this.LocalEndpoint.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
                 {
-                    if (ZipkinTagTransformer.Instance.TryTransformTag(tag, out var result))
-                    {
-                        writer.WriteString(tag.Key, result);
-                    }
+                    ZipkinTagWriter.Instance.TryWriteTag(ref writer, tag);
                 }
 
                 foreach (var tag in this.Tags)
                 {
-                    if (ZipkinTagTransformer.Instance.TryTransformTag(tag, out var result))
-                    {
-                        writer.WriteString(tag.Key, result);
-                    }
+                    ZipkinTagWriter.Instance.TryWriteTag(ref writer, tag);
                 }
             }
             finally
