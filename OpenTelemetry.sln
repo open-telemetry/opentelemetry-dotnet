@@ -121,15 +121,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D2E73927-5
 		test\Directory.Packages.props = test\Directory.Packages.props
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Grpc.Tests", "test\OpenTelemetry.Instrumentation.Grpc.Tests\OpenTelemetry.Instrumentation.Grpc.Tests.csproj", "{305E9DFD-E73B-4A28-8769-795C25551020}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.Console", "examples\Console\Examples.Console.csproj", "{FF3E6E08-E8E4-4523-B526-847CD989279F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.AspNetCore", "examples\AspNetCore\Examples.AspNetCore.csproj", "{0935622B-9377-4056-8343-AE6ECDC274CF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "test\Benchmarks\Benchmarks.csproj", "{DE9130A4-F30A-49D7-8834-41DE3021218B}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.GrpcNetClient", "src\OpenTelemetry.Instrumentation.GrpcNetClient\OpenTelemetry.Instrumentation.GrpcNetClient.csproj", "{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}"
 EndProject
@@ -411,10 +407,6 @@ Global
 		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Release|Any CPU.Build.0 = Release|Any CPU
-		{305E9DFD-E73B-4A28-8769-795C25551020}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{305E9DFD-E73B-4A28-8769-795C25551020}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{305E9DFD-E73B-4A28-8769-795C25551020}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{305E9DFD-E73B-4A28-8769-795C25551020}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -427,10 +419,6 @@ Global
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{07336602-860B-4975-95DD-405D19C00901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{07336602-860B-4975-95DD-405D19C00901}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07336602-860B-4975-95DD-405D19C00901}.Release|Any CPU.ActiveCfg = Release|Any CPU

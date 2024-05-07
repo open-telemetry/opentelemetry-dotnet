@@ -15,8 +15,6 @@
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\Shared\Configuration\*.cs" Link="Includes\Configuration\%(Filename).cs" />
     <Compile Include="$(RepoRoot)\src\Shared\EnvironmentVariables\*.cs" Link="Includes\EnvironmentVariables\%(Filename).cs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\GrpcTagHelper.cs" Link="Includes\GrpcTagHelper.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\StatusCanonicalCode.cs" Link="Includes\StatusCanonicalCode.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\RedactionHelper.cs" Link="Includes\RedactionHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\RequestMethodHelper.cs" Link="Includes\RequestMethodHelper.cs" />
