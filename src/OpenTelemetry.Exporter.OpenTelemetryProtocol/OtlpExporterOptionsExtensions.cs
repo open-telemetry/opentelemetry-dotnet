@@ -11,6 +11,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
+using System.Diagnostics;
 using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
@@ -107,6 +108,8 @@ internal static class OtlpExporterOptionsExtensions
         }
         else if (experimentalOptions.EnableDiskRetry)
         {
+            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
+
             return new OtlpExporterPersistentStorageTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(
                 exportClient,
                 timeoutMilliseconds,
