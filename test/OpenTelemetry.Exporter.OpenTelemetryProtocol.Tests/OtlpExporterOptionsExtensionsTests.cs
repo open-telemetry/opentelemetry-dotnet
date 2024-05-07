@@ -169,32 +169,31 @@ public class OtlpExporterOptionsExtensionsTests
             };
         }
 
-        var path = Path.GetTempPath();
         var configuration = new ConfigurationBuilder()
-         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.OtlpRetryEnvVar] = retryStrategy, [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = path })
+         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.OtlpRetryEnvVar] = retryStrategy })
          .Build();
 
         if (exportClientType == typeof(OtlpGrpcTraceExportClient) || exportClientType == typeof(OtlpHttpTraceExportClient))
         {
             var transmissionHandler = exporterOptions.GetTraceExportTransmissionHandler(new ExperimentalOptions(configuration));
 
-            AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
+            AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
         }
         else if (exportClientType == typeof(OtlpGrpcMetricsExportClient) || exportClientType == typeof(OtlpHttpMetricsExportClient))
         {
             var transmissionHandler = exporterOptions.GetMetricsExportTransmissionHandler(new ExperimentalOptions(configuration));
 
-            AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
+            AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
         }
         else
         {
             var transmissionHandler = exporterOptions.GetLogsExportTransmissionHandler(new ExperimentalOptions(configuration));
 
-            AssertTransmissionHandlerProperties(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
+            AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
         }
     }
 
-    private static void AssertTransmissionHandlerProperties<T>(OtlpExporterTransmissionHandler<T> transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds, string retryStrategy)
+    private static void AssertTransmissionHandler<T>(OtlpExporterTransmissionHandler<T> transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds, string retryStrategy)
     {
         if (retryStrategy == "in_memory")
         {

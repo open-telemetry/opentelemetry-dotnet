@@ -39,14 +39,15 @@ internal sealed class ExperimentalOptions
             }
             else if (retryPolicy.Equals("disk", StringComparison.OrdinalIgnoreCase))
             {
+                this.EnableDiskRetry = true;
                 if (configuration.TryGetStringValue(OtlpDiskRetryDirectoryPathEnvVar, out var path) && path != null)
                 {
-                    this.EnableDiskRetry = true;
                     this.DiskRetryDirectoryPath = path;
                 }
                 else
                 {
-                    throw new ArgumentException($"{OtlpDiskRetryDirectoryPathEnvVar} is required when '{retryPolicy}' retry is used");
+                    // Fallback to temp location.
+                    this.DiskRetryDirectoryPath = Path.GetTempPath();
                 }
             }
             else
