@@ -1,0 +1,80 @@
+name: Bug report
+description: Create a report to help us improve
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please make sure to fill out the entire form below, providing as much context as you can in order to help us triage and track down your bug as quickly as possible.
+
+        Before filing a bug, please be sure you have searched through [existing bugs](https://github.com/open-telemetry/opentelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to see if an existing issue covers your bug.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area(s)
+      description: Which area(s) does your bug report concern? If none fits, please select `area:other`
+      multiple: false
+      options:
+        - area:other
+        - area:api
+        - area:exporter
+        - area:exporter:otlp
+        - area:exporter:prometheus
+        - area:ext:hosting
+        - area:sdk
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Package version
+      description: List of [all OpenTelemetry NuGet packages](https://www.nuget.org/profiles/OpenTelemetry) and version that you are using (e.g. `OpenTelemetry 1.0.2`)
+      value: |
+        | Package Name                          | Version |
+        | ------------------------------------- | ------- |
+        | OpenTelemetry.Api                     | 1.8.0   |
+        | OpenTelemetry                         | 1.8.0   |
+        | TBD                                   | TBD     |
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Runtime version
+      description: What .NET runtime version (e.g. `net462`, `net48`, `netcoreapp3.1`, `net6.0` etc. You can find this information from the `*.csproj` file) did you use?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Description
+      description: What happened? Please provide as much detail as you reasonably can.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: Create a self-contained project using the template of your choice, apply the minimum required code to result in the issue you are observing. We will close the issue if the repro project you share with us is complex or we cannot reproduce the behavior you are reporting. We can not investigate custom projects, so don't point us to such, please.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected Result
+      description: What did you expect to see? 
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Actual Result
+      description: What did you see instead?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Any additional information you think may be relevant to this issue.
