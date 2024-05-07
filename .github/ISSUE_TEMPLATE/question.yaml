@@ -5,7 +5,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Please ask questions using [GitHub Discussions](https://github.com/open-telemetry/opentelemetry-dotnet/discussions/new) instead of GitHub Issues.
+        > [!NOTE]
+        > Please ask questions using [GitHub Discussions](https://github.com/open-telemetry/opentelemetry-dotnet/discussions/new) instead of GitHub Issues.
 
   - type: textarea
     attributes:
