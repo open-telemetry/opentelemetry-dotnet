@@ -101,12 +101,13 @@
        git push origin Instrumentation.AspNetCore-1.6.0
        ```
 
-    Pushing the tag will kick off the [Build, pack, and publish to MyGet
-    workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml).
+    Pushing the tag will kick off the [Build, pack, and publish to
+    MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+    workflow.
 
- 5. :stop_sign: Wait for the [Build, pack, and publish to MyGet
-    workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
-    to complete.
+ 5. :stop_sign: Wait for the [Build, pack, and publish to
+    MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+    workflow to complete.
 
  6. Validate locally everything works using the MyGet packages pushed from the
     release. Basic sanity checks :)
@@ -138,14 +139,18 @@
 
 13. Open the
     [Releases](https://github.com/open-telemetry/opentelemetry-dotnet/releases)
-    page on the GitHub repository. The [Build, pack, and publish to MyGet
-    workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
-    creates a draft release for the tag which was pushed. Edit the draft Release
-    and click `Publish release`.
+    page on the GitHub repository. The [Build, pack, and publish to
+    MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+    workflow creates a draft release for the tag which was pushed. Edit the
+    draft Release and click `Publish release`.
 
-14. If a new stable version of the core packages was released, open a PR to
-    update the `OTelLatestStableVer` property in `Directory.Packages.props` to
-    the just released stable version.
+14. If a new stable version of the core packages was released, a draft PR should
+    have been automatically created by the [Build, pack, and publish to
+    MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+    workflow to update the `OTelLatestStableVer` property in
+    `Directory.Packages.props` to the just released stable version. Mark that PR
+    `Ready for review` and then merge it once the build passes (this requires
+    the packages be available on NuGet).
 
 15. If a new stable version of a package with a dedicated `MinVerTagPrefix` was
     released (typically instrumentation packages) open a PR to update
@@ -157,6 +162,6 @@
     [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
     repo to notify maintainers to begin upgrading dependencies.
 
-17. Once the packages are available on nuget.org post an announcement in the
-    [Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). Note
-    any big or interesting new features as part of the announcement.
+17. Post an announcement in the [Slack
+    channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). Note any big
+    or interesting new features as part of the announcement.
