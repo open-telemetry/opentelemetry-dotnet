@@ -164,20 +164,22 @@ jobs:
         GH_TOKEN: ${{ github.token }}
 
     - name: Create GitHub draft Pull Request to update stable build version in props
-      if: github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc')
+      if: |
+        (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
+        || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
       shell: pwsh
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-        git switch --create release/post-stable-${{ github.ref_name }}-update 2>&1 | % ToString
+        git switch --create release/post-stable-${{ github.ref_name || inputs.tag }}-update 2>&1 | % ToString
         if ($LASTEXITCODE -gt 0)
         {
             Write-Error 'git switch failure'
             Return
         }
 
-        $match = [regex]::Match('${{ github.ref_name }}', '.*?-(.*)')
+        $match = [regex]::Match('${{ github.ref_name || inputs.tag }}', '.*?-(.*)')
         $packageVersion = $match.Groups[1].Value
 
         (Get-Content  Directory.Packages.props) `
@@ -198,7 +200,7 @@ jobs:
             Return
         }
 
-        git push -u origin release/post-stable-${{ github.ref_name }}-update 2>&1 | % ToString
+        git push -u origin release/post-stable-${{ github.ref_name || inputs.tag }}-update 2>&1 | % ToString
         if ($LASTEXITCODE -gt 0)
         {
             Write-Error 'git push failure'
@@ -220,7 +222,7 @@ jobs:
           --title "[repo] Core stable release $packageVersion updates" `
           --body $body `
           --base main `
-          --head release/post-stable-${{ github.ref_name }}-update `
+          --head release/post-stable-${{ github.ref_name || inputs.tag }}-update `
           --label infra `
           --draft
       env:
