@@ -54,8 +54,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Zipk
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api", "src\OpenTelemetry.Api\OpenTelemetry.Api.csproj", "{99F8A331-05E9-45A5-89BA-4C54E825E5B2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNetCore", "src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj", "{752D2182-A351-41D8-99EE-DD363D7D5B43}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "testdata", "testdata", "{77C7929A-2EED-4AA6-8705-B5C443C8AA0F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{E359BB2B-9AEC-497D-B321-7DF2450C3B8E}"
@@ -365,10 +363,6 @@ Global
 		{99F8A331-05E9-45A5-89BA-4C54E825E5B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99F8A331-05E9-45A5-89BA-4C54E825E5B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99F8A331-05E9-45A5-89BA-4C54E825E5B2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AAC408FE-40EF-4479-97D9-697F2C1A0B28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AAC408FE-40EF-4479-97D9-697F2C1A0B28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AAC408FE-40EF-4479-97D9-697F2C1A0B28}.Release|Any CPU.ActiveCfg = Release|Any CPU
