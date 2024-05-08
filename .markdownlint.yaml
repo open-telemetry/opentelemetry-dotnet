@@ -1,7 +1,12 @@
 # Default state for all rules
 default: true
 
-# allow long lines for tables and code blocks
+# MD013/line-length : Line length : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md013.md
 MD013:
   code_blocks: false
   tables: false
+
+# MD033/no-inline-html : Inline HTML : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md033.md
+MD033:
+  # Allowed elements
+  allowed_elements: [ 'details', 'summary' ]
