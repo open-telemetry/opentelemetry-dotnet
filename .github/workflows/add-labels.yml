@@ -1,6 +1,6 @@
 name: 'Add Labels'
 on:
-  issue:
+  issues:
     types: [opened]
 
 jobs:
