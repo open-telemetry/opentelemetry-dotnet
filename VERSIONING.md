@@ -56,9 +56,9 @@ without corresponding changes here will result in build breaks - this helps
 catch any unintended changes to public API from being shipped accidentally. This
 also helps reviewers quickly understand if a given PR is proposing public API
 changes. For example,
-[this](https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/src/OpenTelemetry.Instrumentation.AspNetCore/.publicApi)
+[this](https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/.publicApi)
 shows the public APIs, per target framework for the
-`OpenTelemetry.Instrumentation.AspNetCore` package.
+`OpenTelemetry.Exporter.OpenTelemetryProtocol` package.
 
 APIs which are released as part of stable packages will be listed in the
 "Shipped.txt" file, and those APIs which are released as part of
