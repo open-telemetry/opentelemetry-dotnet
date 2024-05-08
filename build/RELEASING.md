@@ -135,16 +135,11 @@
     `Ready for review` and then merge it once the build passes (this requires
     the packages be available on NuGet).
 
-15. If a new stable version of a package with a dedicated `MinVerTagPrefix` was
-    released (typically instrumentation packages) open a PR to update
-    `PackageValidationBaselineVersion` in the project file to reflect the stable
-    version which was just released.
-
-16. If a new stable version of the core packages was released, open an issue in
+15. If a new stable version of the core packages was released, open an issue in
     the
     [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
     repo to notify maintainers to begin upgrading dependencies.
 
-17. Post an announcement in the [Slack
+16. Post an announcement in the [Slack
     channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). Note any big
     or interesting new features as part of the announcement.
