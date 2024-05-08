@@ -154,7 +154,7 @@ required only for the following scenarios:
    to inject and extract context data. Some of the most common libraries
    requiring this include
    [HttpClient](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Http/README.md),
-   [ASP.NET Core](../OpenTelemetry.Instrumentation.AspNetCore/README.md).
+   [ASP.NET Core](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md).
    This or contrib repository already provides instrumentation for these common
    libraries. If your library is not built on top of these, and want to leverage
    propagators, follow the [Context propagation](#context-propagation) section.
