@@ -41,6 +41,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\OpenTelemetry.prod.ruleset = build\OpenTelemetry.prod.ruleset
 		build\OpenTelemetry.test.ruleset = build\OpenTelemetry.test.ruleset
 		build\RELEASING.md = build\RELEASING.md
+		build\sanitycheck.py = build\sanitycheck.py
 		build\stylecop.json = build\stylecop.json
 		build\test-aot-compatibility.ps1 = build\test-aot-compatibility.ps1
 		build\test-threadSafety.ps1 = build\test-threadSafety.ps1
@@ -82,9 +83,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F1D0
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{A533C800-3DC3-4D04-90A7-0CE7A1E6BDB3}"
 	ProjectSection(SolutionItems) = preProject
-		.github\ISSUE_TEMPLATE\bug_report.yaml = .github\ISSUE_TEMPLATE\bug_report.yaml
-		.github\ISSUE_TEMPLATE\feature_request.yaml = .github\ISSUE_TEMPLATE\feature_request.yaml
-		.github\ISSUE_TEMPLATE\question.yaml = .github\ISSUE_TEMPLATE\question.yaml
+		.github\ISSUE_TEMPLATE\bug_report.yml = .github\ISSUE_TEMPLATE\bug_report.yml
+		.github\ISSUE_TEMPLATE\feature_request.yml = .github\ISSUE_TEMPLATE\feature_request.yml
+		.github\ISSUE_TEMPLATE\question.yml = .github\ISSUE_TEMPLATE\question.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
