@@ -1,11 +1,11 @@
 name: 'Add Labels'
 on:
-  issue_comment:
-    types: [created]
+  issue:
+    types: [opened]
 
 jobs:
   add-labels:
-    if: ${{ !github.event.issue.pull_request && startsWith(github.event.comment.body, '### Area(s)') }}
+    if: ${{ !github.event.issue.pull_request && startsWith(github.event.issue.body, '### Area(s)') }}
 
     runs-on: ubuntu-latest
     steps:
@@ -18,6 +18,6 @@ jobs:
         run: ./.github/workflows/scripts/add-labels.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ISSUE: ${{ github.event.issue.number }}
-          COMMENT: ${{ github.event.comment.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
           SENDER: ${{ github.event.sender.login }}

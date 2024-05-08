@@ -6,13 +6,15 @@
 
 set -euo pipefail
 
-if [[ -z "${ISSUE:-}" || -z "${COMMENT:-}" || -z "${SENDER:-}" ]]; then
-    echo "At least one of ISSUE, COMMENT, or SENDER has not been set, please ensure each is set."
+if [[ -z "${ISSUE_NUMBER:-}" || -z "${ISSUE_BODY:-}" || -z "${SENDER:-}" ]]; then
+    echo "At least one of ISSUE_NUMBER, ISSUE_BODY, or SENDER has not been set, please ensure each is set."
     exit 0
 fi
 
 CUR_DIRECTORY=$(dirname "$0")
 
-echo "${COMMENT}"
+echo "ISSUE_NUMBER: ${ISSUE_NUMBER}"
+echo "ISSUE_BODY: ${ISSUE_BODY}"
+echo "SENDER: ${SENDER}"
 
-gh issue edit "${ISSUE}" --add-label "help wanted"
+gh issue edit "${ISSUE_NUMBER}" --add-label "help wanted"
