@@ -250,3 +250,5 @@ jobs:
 
         gh pr comment ${{ github.event.issue.number }} `
           --body $body
+      env:
+        GH_TOKEN: ${{ github.token }}
