@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -370,6 +373,9 @@ public struct MetricPoint
     /// <param name="exemplars"><see cref="ReadOnlyExemplarCollection"/>.</param>
     /// <returns><see langword="true" /> if exemplars exist; <see langword="false" /> otherwise.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET8_0_OR_GREATER
+    [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
     public
 #else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
