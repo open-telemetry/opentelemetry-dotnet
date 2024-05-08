@@ -79,7 +79,7 @@
        for the projects being released.
 
     * **Stable releases only**: Normalize PublicApi files
- 
+
        Run the PowerShell script `.\build\finalize-publicapi.ps1 -minVerTagPrefix
        [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag prefix (eg `core-`)
        for the components being released. This will merge the contents of any
