@@ -103,7 +103,7 @@ jobs:
 
             foreach ($line in $changelogContent)
             {
-                if ($line -like "## ${{ inputs.tag || github.ref_name }}" -and $started -ne $true)
+                if ($line -like "## $packageVersion" -and $started -ne $true)
                 {
                     $started = $true
                 }
