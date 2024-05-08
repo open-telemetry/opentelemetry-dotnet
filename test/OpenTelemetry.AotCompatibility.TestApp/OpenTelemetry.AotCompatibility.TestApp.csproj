@@ -23,7 +23,6 @@
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Zipkin" />
     <TrimmerRootAssembly Include="OpenTelemetry.Extensions.Hosting" />
     <TrimmerRootAssembly Include="OpenTelemetry.Extensions.Propagators" />
-    <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.AspNetCore" />
     <TrimmerRootAssembly Include="OpenTelemetry.Shims.OpenTracing" />
     <TrimmerRootAssembly Include="OpenTelemetry" />
 

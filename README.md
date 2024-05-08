@@ -45,10 +45,8 @@ Here are the most commonly used components:
 * [OpenTelemetry .NET API](./src/OpenTelemetry.Api/README.md)
 * [OpenTelemetry .NET SDK](./src/OpenTelemetry/README.md)
 
-Here are the [instrumentation
-libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library):
-
-* [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
+[Instrumentation libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library)
+can be found in [contrib repository](https://github.com/open-telemetry/opentelemetry-dotnet-contrib).
 
 Here are the [exporter
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#exporter-library):
