@@ -232,6 +232,9 @@ jobs:
     - invoke-package-workflow
     runs-on: windows-latest
     steps:
+    - name: check out code
+      uses: actions/checkout@v4
+
     - name: Post notice when packages are ready
       shell: pwsh
       run: |
