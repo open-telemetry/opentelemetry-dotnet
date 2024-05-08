@@ -49,8 +49,6 @@ Here are the [instrumentation
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library):
 
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-* gRPC client:
-  [Grpc.Net.Client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
 
 Here are the [exporter
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#exporter-library):
