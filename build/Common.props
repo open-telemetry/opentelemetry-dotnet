@@ -23,7 +23,6 @@
     <!-- production TFMs -->
     <TargetFrameworksForLibraries>net8.0;net6.0;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibraries>
     <TargetFrameworksForLibrariesExtended>net8.0;net6.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibrariesExtended>
-    <TargetFrameworksForAspNetCoreInstrumentation>net8.0;net7.0;net6.0;netstandard2.0</TargetFrameworksForAspNetCoreInstrumentation>
     <TargetFrameworksForPrometheusAspNetCore>net8.0;net6.0</TargetFrameworksForPrometheusAspNetCore>
 
     <!-- non-production TFMs -->
