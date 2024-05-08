@@ -14,7 +14,7 @@ Install the
 [OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md),
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md),
 and
-[OpenTelemetry.Instrumentation.AspNetCore](../../../src/OpenTelemetry.Exporter.Console/README.md)
+[OpenTelemetry.Instrumentation.AspNetCore](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 packages:
 
 ```sh
@@ -56,7 +56,7 @@ Congratulations! You are now collecting metrics using OpenTelemetry.
 What does the above program do?
 
 The program uses the
-[OpenTelemetry.Instrumentation.AspNetCore](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
+[OpenTelemetry.Instrumentation.AspNetCore](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 package to automatically create metrics for incoming ASP.NET Core requests, uses
 the
 [OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)

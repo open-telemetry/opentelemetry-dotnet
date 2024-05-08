@@ -38,14 +38,6 @@
            * `OpenTelemetry.Shims.OpenTracing` - Defined by spec (stable but
              incomplete implementation)
 
-         * Everything else: Instrumentation packages have dedicated tags. Some
-           packages have released stable and some have not. These packages may
-           be released as `alpha`, `beta`, `rc`, or stable depending on the
-           stability of the semantic conventions used by the instrumentation.
-
-           * Stable:
-             * `OpenTelemetry.Instrumentation.AspNetCore` (`Instrumentation.AspNetCore-`)
-
        * As of the `1.9.0` release cycle instrumentation packages and core
          unstable packages always depend on the stable versions of core
          packages. Before releasing a non-core component ensure the
@@ -90,15 +82,6 @@
        ```sh
        git tag -a coreunstable-1.9.0-beta.1 -m "1.9.0-beta.1 of all core unstable components"
        git push origin coreunstable-1.9.0-beta.1
-       ```
-
-    * If releasing a particular non-core component which has a dedicated
-    `MinverTagPrefix` (such as AspNetCore instrumentation), push the tag with
-    that particular prefix. For example:
-
-       ```sh
-       git tag -a Instrumentation.AspNetCore-1.6.0 -m "1.6.0 of AspNetCore instrumentation library"
-       git push origin Instrumentation.AspNetCore-1.6.0
        ```
 
     Pushing the tag will kick off the [Build, pack, and publish to
