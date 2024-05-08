@@ -135,7 +135,7 @@ jobs:
         @"
         I noticed this PR was merged.
 
-        Post a comment with "/CreateReleaseTag" in the body if you would like me to create the release tag ``$tag`` for [the merge commit](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.merge_commit_sha }}) which will trigger the package workflow.
+        Post a comment with "/CreateReleaseTag" in the body if you would like me to create the release tag ``$tag`` for [the merge commit](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.merge_commit_sha }}) and then trigger the package workflow.
         "@
 
         gh pr comment ${{ github.event.pull_request.number }} `

@@ -46,7 +46,7 @@ jobs:
         # the version tag which is typically NOT on the first commit so we
         # retrieve them all.
         fetch-depth: 0
-        ref: ${{ github.ref || inputs.tag || 'main' }}
+        ref: ${{ inputs.tag || github.ref || 'main' }}
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
@@ -64,7 +64,7 @@ jobs:
       id: upload-artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ github.ref_name || inputs.tag }}-packages
+        name: ${{ inputs.tag || github.ref_name }}-packages
         path: '**/bin/**/*.*nupkg'
 
     - name: Publish MyGet
@@ -103,7 +103,7 @@ jobs:
 
             foreach ($line in $changelogContent)
             {
-                if ($line -like "## ${{ github.ref_name || inputs.tag }}" -and $started -ne $true)
+                if ($line -like "## ${{ inputs.tag || github.ref_name }}" -and $started -ne $true)
                 {
                     $started = $true
                 }
@@ -137,15 +137,15 @@ jobs:
 
         $content
 
-          See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ github.ref_name || inputs.tag }}/src/$packageName/CHANGELOG.md) for details.
+          See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ inputs.tag || github.ref_name }}/src/$packageName/CHANGELOG.md) for details.
 
         "@
         }
 
         if ($firstPackageVersion -match '-alpha' -or $firstPackageVersion -match '-beta' -or $firstPackageVersion -match '-rc')
         {
-          gh release create ${{ github.ref_name || inputs.tag }} `
-            --title ${{ github.ref_name || inputs.tag }} `
+          gh release create ${{ inputs.tag || github.ref_name }} `
+            --title ${{ inputs.tag || github.ref_name }} `
             --verify-tag `
             --notes "$notes" `
             --prerelease `
@@ -153,8 +153,8 @@ jobs:
         }
         else
         {
-          gh release create ${{ github.ref_name || inputs.tag }} `
-            --title ${{ github.ref_name || inputs.tag }} `
+          gh release create ${{ inputs.tag || github.ref_name }} `
+            --title ${{ inputs.tag || github.ref_name }} `
             --verify-tag `
             --notes "$notes" `
             --latest `
@@ -172,14 +172,14 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-        git switch --create release/post-stable-${{ github.ref_name || inputs.tag }}-update 2>&1 | % ToString
+        git switch --create release/post-stable-${{ inputs.tag || github.ref_name }}-update 2>&1 | % ToString
         if ($LASTEXITCODE -gt 0)
         {
             Write-Error 'git switch failure'
             Return
         }
 
-        $match = [regex]::Match('${{ github.ref_name || inputs.tag }}', '.*?-(.*)')
+        $match = [regex]::Match('${{ inputs.tag || github.ref_name }}', '.*?-(.*)')
         $packageVersion = $match.Groups[1].Value
 
         (Get-Content  Directory.Packages.props) `
@@ -200,7 +200,7 @@ jobs:
             Return
         }
 
-        git push -u origin release/post-stable-${{ github.ref_name || inputs.tag }}-update 2>&1 | % ToString
+        git push -u origin release/post-stable-${{ inputs.tag || github.ref_name }}-update 2>&1 | % ToString
         if ($LASTEXITCODE -gt 0)
         {
             Write-Error 'git push failure'
@@ -222,7 +222,7 @@ jobs:
           --title "[repo] Core stable release $packageVersion updates" `
           --body $body `
           --base main `
-          --head release/post-stable-${{ github.ref_name || inputs.tag }}-update `
+          --head release/post-stable-${{ inputs.tag || github.ref_name }}-update `
           --label infra `
           --draft
       env:

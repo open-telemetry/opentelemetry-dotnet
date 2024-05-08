@@ -69,7 +69,8 @@
 
     <details>
     <summary>Instructions for preparing for a release manually</summary>
-    1. Update CHANGELOG files
+
+    * Update CHANGELOG files
 
        Run the PowerShell script `.\build\update-changelogs.ps1 -minVerTagPrefix
        [MinVerTagPrefix] -version [Version]`. Where `[MinVerTagPrefix]` is the tag
@@ -77,7 +78,7 @@
        version being released (eg `1.9.0`). This will update `CHANGELOG.md` files
        for the projects being released.
 
-    2. **Stable releases only**: Normalize PublicApi files
+    * **Stable releases only**: Normalize PublicApi files
  
        Run the PowerShell script `.\build\finalize-publicapi.ps1 -minVerTagPrefix
        [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag prefix (eg `core-`)
@@ -104,6 +105,7 @@
 
     <details>
     <summary>Instructions for pushing tags manually</summary>
+
     Note: In the below examples `git push origin` is used. If running in a fork,
     add the main repo as `upstream` and use `git push upstream` instead. Pushing
     a tag to `origin` in a fork pushes the tag to the fork.
