@@ -1,0 +1,27 @@
+name: 'Add labels for area found in bug issue descriptions'
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  add-labels:
+    if: ${{ !github.event.issue.pull_request }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add labels for areas found in bug issue descriptions
+        shell: pwsh
+        run: |
+          $match = [regex]::Match('${{ github.event.issue.body }}', '^[#]+ Area\s*?(area:\w+)')
+          if ($match.Success -eq $false)
+          {
+              Return
+          }
+
+          gh issue edit ${{ github.event.issue.number }}
+            --add-label $match.Groups[1].Value
+        env:
+          GH_TOKEN: ${{ github.token }}

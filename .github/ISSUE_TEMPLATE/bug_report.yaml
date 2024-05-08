@@ -5,15 +5,15 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report! Please make sure to fill out the entire form below, providing as much context as you can in order to help us triage and track down your bug as quickly as possible.
+        Thanks for taking the time to fill out this bug report! Please make sure to fill out the entire form below, providing as much context as you can in order to help us triage and track down the bug as quickly as possible.
 
-        Before filing a bug, please be sure you have searched through [existing bugs](https://github.com/open-telemetry/opentelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to see if an existing issue covers your bug.
+        Before filing a bug, please be sure you have searched through [existing bugs](https://github.com/open-telemetry/opentelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to see if an existing issue covers the bug.
 
   - type: dropdown
     id: area
     attributes:
-      label: Area(s)
-      description: Which area(s) does your bug report concern? If none fits, please select `area:other`
+      label: Area
+      description: Which area does this bug report concern? If none fits, please select `area:other`
       multiple: false
       options:
         - area:other
@@ -28,7 +28,7 @@ body:
 
   - type: textarea
     attributes:
-      label: Package version
+      label: Package Version
       description: List of [all OpenTelemetry NuGet packages](https://www.nuget.org/profiles/OpenTelemetry) and version that you are using (e.g. `OpenTelemetry 1.0.2`)
       value: |
         | Package Name                          | Version |
@@ -41,8 +41,8 @@ body:
 
   - type: input
     attributes:
-      label: Runtime version
-      description: What .NET runtime version (e.g. `net462`, `net48`, `netcoreapp3.1`, `net6.0` etc. You can find this information from the `*.csproj` file) did you use?
+      label: Runtime Version
+      description: What .NET runtime version did you use? (e.g. `net462`, `net48`, `netcoreapp3.1`, `net6.0` etc. You can find this information from the `*.csproj` file)
     validations:
       required: true
 
@@ -63,7 +63,7 @@ body:
   - type: textarea
     attributes:
       label: Expected Result
-      description: What did you expect to see? 
+      description: What did you expect to see?
     validations:
       required: true
 
@@ -76,5 +76,5 @@ body:
 
   - type: textarea
     attributes:
-      label: Additional context
+      label: Additional Context
       description: Any additional information you think may be relevant to this issue.

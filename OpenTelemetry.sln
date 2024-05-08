@@ -82,13 +82,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F1D0
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{A533C800-3DC3-4D04-90A7-0CE7A1E6BDB3}"
 	ProjectSection(SolutionItems) = preProject
-		.github\ISSUE_TEMPLATE\bug_report.md = .github\ISSUE_TEMPLATE\bug_report.md
-		.github\ISSUE_TEMPLATE\feature_request.md = .github\ISSUE_TEMPLATE\feature_request.md
-		.github\ISSUE_TEMPLATE\question.md = .github\ISSUE_TEMPLATE\question.md
+		.github\ISSUE_TEMPLATE\bug_report.yaml = .github\ISSUE_TEMPLATE\bug_report.yaml
+		.github\ISSUE_TEMPLATE\feature_request.yaml = .github\ISSUE_TEMPLATE\feature_request.yaml
+		.github\ISSUE_TEMPLATE\question.yaml = .github\ISSUE_TEMPLATE\question.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
 	ProjectSection(SolutionItems) = preProject
+		.github\workflows\add-labels.yml = .github\workflows\add-labels.yml
 		.github\workflows\ci.yml = .github\workflows\ci.yml
 		.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
 		.github\workflows\Component.BuildTest.yml = .github\workflows\Component.BuildTest.yml
