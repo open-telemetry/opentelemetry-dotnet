@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 
+import re
 import os
 import subprocess
 
-print(os.environ['ISSUE_NUMBER'])
-print(os.environ['ISSUE_BODY'])
-print(os.environ['SENDER'])
+issue_number = os.environ['ISSUE_NUMBER']
+issue_body = os.environ['ISSUE_BODY']
+issue_sender = os.environ['SENDER']
 
-print(os.environ)
+pattern = re.compile(r'^[#]+ Area\n\n(area:\w+)', re.MULTILINE)
 
-subprocess.run(['gh', 'issue', 'edit', os.environ['ISSUE_NUMBER'], '--add-label', 'help wanted'])
+tag = pattern.match(issue_body).group(1)
+
+print('Area tag:', tag)
+
+subprocess.run(['gh', 'issue', 'edit', issue_number, '--add-label', tag])
