@@ -13,7 +13,7 @@ body:
     id: area
     attributes:
       label: Area
-      description: Which area does your bug report concern? If none fits, please select `area:other`
+      description: Which area does this bug report concern? If none fits, please select `area:other`
       multiple: false
       options:
         - area:other
@@ -28,7 +28,7 @@ body:
 
   - type: textarea
     attributes:
-      label: Package version
+      label: Package Version
       description: List of [all OpenTelemetry NuGet packages](https://www.nuget.org/profiles/OpenTelemetry) and version that you are using (e.g. `OpenTelemetry 1.0.2`)
       value: |
         | Package Name                          | Version |
@@ -41,8 +41,8 @@ body:
 
   - type: input
     attributes:
-      label: Runtime version
-      description: What .NET runtime version (e.g. `net462`, `net48`, `netcoreapp3.1`, `net6.0` etc. You can find this information from the `*.csproj` file) did you use?
+      label: Runtime Version
+      description: What .NET runtime version did you use? (e.g. `net462`, `net48`, `netcoreapp3.1`, `net6.0` etc. You can find this information from the `*.csproj` file)
     validations:
       required: true
 
@@ -76,5 +76,5 @@ body:
 
   - type: textarea
     attributes:
-      label: Additional context
+      label: Additional Context
       description: Any additional information you think may be relevant to this issue.
