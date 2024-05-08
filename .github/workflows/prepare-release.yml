@@ -232,15 +232,9 @@ jobs:
     - invoke-package-workflow
     runs-on: windows-latest
     steps:
-    - name: check out code
-      uses: actions/checkout@v4
-
     - name: Post notice when packages are ready
       shell: pwsh
       run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
         $body =
         @"
         The packages for [$tag](https://github.com/${{ github.repository }}/releases/tag/${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}) are now available: ${{ needs.invoke-package-workflow.outputs.artifact-url }}.
