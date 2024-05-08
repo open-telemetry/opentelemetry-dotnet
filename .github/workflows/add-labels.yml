@@ -12,6 +12,9 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
+      - name: check out code
+        uses: actions/checkout@v4
+
       - name: Add labels for areas found in bug issue descriptions
         shell: pwsh
         run: |
