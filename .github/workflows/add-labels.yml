@@ -21,7 +21,7 @@ jobs:
               Return
           }
 
-          gh issue edit ${{ github.event.issue.number }}
+          gh issue edit ${{ github.event.issue.number }} `
             --add-label $match.Groups[1].Value
         env:
           GH_TOKEN: ${{ github.token }}
