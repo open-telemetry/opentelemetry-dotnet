@@ -11,11 +11,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run update permissions
+      - name: Update permissions
         run: chmod +x ./.github/scripts/add-labels.sh
 
       - name: Run add-labels.sh
-        run: ./.github/workflows/scripts/add-labels.sh
+        run: ./.github/scripts/add-labels.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
