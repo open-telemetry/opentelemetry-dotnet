@@ -110,7 +110,7 @@ the following instrumentation libraries. The individual docs for them describes
 the library they instrument, and steps for enabling them.
 
 * [ASP.NET
-  Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
+  Core](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 
 More community contributed instrumentations are available in [OpenTelemetry .NET
 Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src).
@@ -224,7 +224,7 @@ activities does not by default runs through the sampler, and will have their
 with it.
 
 Some common examples of such libraries include [ASP.NET
-Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md).
+Core](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md).
 Instrumentation libraries for these are already provided in this repo. The
 [OpenTelemetry .NET
 Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)

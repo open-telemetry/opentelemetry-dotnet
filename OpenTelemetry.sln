@@ -36,12 +36,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\docker-compose.net8.0.yml = build\docker-compose.net8.0.yml
 		build\finalize-publicapi.ps1 = build\finalize-publicapi.ps1
 		build\GlobalAttrExclusions.txt = build\GlobalAttrExclusions.txt
-		build\InstrumentationLibraries.proj = build\InstrumentationLibraries.proj
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
 		build\OpenTelemetry.prod.loose.ruleset = build\OpenTelemetry.prod.loose.ruleset
 		build\OpenTelemetry.prod.ruleset = build\OpenTelemetry.prod.ruleset
 		build\OpenTelemetry.test.ruleset = build\OpenTelemetry.test.ruleset
 		build\RELEASING.md = build\RELEASING.md
+		build\sanitycheck.py = build\sanitycheck.py
 		build\stylecop.json = build\stylecop.json
 		build\test-aot-compatibility.ps1 = build\test-aot-compatibility.ps1
 		build\test-threadSafety.ps1 = build\test-threadSafety.ps1
@@ -53,10 +53,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Zipkin", "src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj", "{7EDAE7FA-B44E-42CA-80FA-7DF2FAA2C5DD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api", "src\OpenTelemetry.Api\OpenTelemetry.Api.csproj", "{99F8A331-05E9-45A5-89BA-4C54E825E5B2}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNetCore", "src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj", "{752D2182-A351-41D8-99EE-DD363D7D5B43}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNetCore.Tests", "test\OpenTelemetry.Instrumentation.AspNetCore.Tests\OpenTelemetry.Instrumentation.AspNetCore.Tests.csproj", "{2A47F6A8-63E5-4237-8046-94CAF321E797}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "testdata", "testdata", "{77C7929A-2EED-4AA6-8705-B5C443C8AA0F}"
 EndProject
@@ -87,13 +83,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F1D0
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{A533C800-3DC3-4D04-90A7-0CE7A1E6BDB3}"
 	ProjectSection(SolutionItems) = preProject
-		.github\ISSUE_TEMPLATE\bug_report.md = .github\ISSUE_TEMPLATE\bug_report.md
-		.github\ISSUE_TEMPLATE\feature_request.md = .github\ISSUE_TEMPLATE\feature_request.md
-		.github\ISSUE_TEMPLATE\question.md = .github\ISSUE_TEMPLATE\question.md
+		.github\ISSUE_TEMPLATE\bug_report.yml = .github\ISSUE_TEMPLATE\bug_report.yml
+		.github\ISSUE_TEMPLATE\feature_request.yml = .github\ISSUE_TEMPLATE\feature_request.yml
+		.github\ISSUE_TEMPLATE\question.yml = .github\ISSUE_TEMPLATE\question.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
 	ProjectSection(SolutionItems) = preProject
+		.github\workflows\add-labels.yml = .github\workflows\add-labels.yml
 		.github\workflows\ci.yml = .github\workflows\ci.yml
 		.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
 		.github\workflows\Component.BuildTest.yml = .github\workflows\Component.BuildTest.yml
@@ -259,11 +256,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 		src\Shared\PeriodicExportingMetricReaderHelper.cs = src\Shared\PeriodicExportingMetricReaderHelper.cs
 		src\Shared\PooledList.cs = src\Shared\PooledList.cs
 		src\Shared\RedactionHelper.cs = src\Shared\RedactionHelper.cs
-		src\Shared\RequestMethodHelper.cs = src\Shared\RequestMethodHelper.cs
 		src\Shared\ResourceSemanticConventions.cs = src\Shared\ResourceSemanticConventions.cs
 		src\Shared\SemanticConventions.cs = src\Shared\SemanticConventions.cs
 		src\Shared\SpanAttributeConstants.cs = src\Shared\SpanAttributeConstants.cs
-		src\Shared\SpanHelper.cs = src\Shared\SpanHelper.cs
 		src\Shared\StatusHelper.cs = src\Shared\StatusHelper.cs
 		src\Shared\TagTransformer.cs = src\Shared\TagTransformer.cs
 		src\Shared\TagTransformerJsonHelper.cs = src\Shared\TagTransformerJsonHelper.cs
@@ -272,9 +267,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiagnosticSourceInstrumentation", "DiagnosticSourceInstrumentation", "{28F3EC79-660C-4659-8B73-F90DC1173316}"
 	ProjectSection(SolutionItems) = preProject
-		src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceListener.cs = src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceListener.cs
-		src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceSubscriber.cs = src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceSubscriber.cs
-		src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs = src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs
 		src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs = src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs
 	EndProjectSection
 EndProject
@@ -367,14 +359,6 @@ Global
 		{99F8A331-05E9-45A5-89BA-4C54E825E5B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99F8A331-05E9-45A5-89BA-4C54E825E5B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99F8A331-05E9-45A5-89BA-4C54E825E5B2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2A47F6A8-63E5-4237-8046-94CAF321E797}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2A47F6A8-63E5-4237-8046-94CAF321E797}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2A47F6A8-63E5-4237-8046-94CAF321E797}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2A47F6A8-63E5-4237-8046-94CAF321E797}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AAC408FE-40EF-4479-97D9-697F2C1A0B28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AAC408FE-40EF-4479-97D9-697F2C1A0B28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AAC408FE-40EF-4479-97D9-697F2C1A0B28}.Release|Any CPU.ActiveCfg = Release|Any CPU
