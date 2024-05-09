@@ -8,8 +8,6 @@ on:
         options:
         - core-
         - coreunstable-
-        - Instrumentation.AspNetCore-
-        - Instrumentation.GrpcNetClient-
         description: 'Release tag prefix'
         required: true
       version:
