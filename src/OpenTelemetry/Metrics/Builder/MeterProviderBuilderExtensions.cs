@@ -317,13 +317,10 @@ public static class MeterProviderBuilderExtensions
         throw new NotSupportedException($"Build is not supported on '{meterProviderBuilder?.GetType().FullName ?? "null"}' instances.");
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Sets the default <see cref="ExemplarFilterType"/> for the provider.
     /// </summary>
     /// <remarks>
-    /// <inheritdoc cref="Exemplar"
-    /// path="/remarks/para[@experimental-warning='true']"/>
     /// <para>Notes:
     /// <list type="bullet">
     /// <item>The configured <see cref="ExemplarFilterType"/> controls how
@@ -353,14 +350,7 @@ public static class MeterProviderBuilderExtensions
     /// use.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for
     /// chaining.</returns>
-#if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-    public
-#else
-    internal
-#endif
-        static MeterProviderBuilder SetExemplarFilter(
+    public static MeterProviderBuilder SetExemplarFilter(
         this MeterProviderBuilder meterProviderBuilder,
         ExemplarFilterType exemplarFilter)
     {

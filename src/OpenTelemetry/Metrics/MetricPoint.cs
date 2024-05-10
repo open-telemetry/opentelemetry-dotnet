@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
-using System.Diagnostics.CodeAnalysis;
-#endif
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -365,23 +362,13 @@ public struct MetricPoint
         return false;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets the exemplars associated with the metric point.
     /// </summary>
-    /// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
     /// <param name="exemplars"><see cref="ReadOnlyExemplarCollection"/>.</param>
     /// <returns><see langword="true" /> if exemplars exist; <see langword="false" /> otherwise.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-    public
-#else
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal
-#endif
-        readonly bool TryGetExemplars(out ReadOnlyExemplarCollection exemplars)
+    public readonly bool TryGetExemplars(out ReadOnlyExemplarCollection exemplars)
     {
         exemplars = this.mpComponents?.Exemplars ?? ReadOnlyExemplarCollection.Empty;
         return exemplars.MaximumCount > 0;
