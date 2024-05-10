@@ -11,6 +11,8 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
+using System.Diagnostics;
+using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
@@ -100,9 +102,29 @@ internal static class OtlpExporterOptionsExtensions
             ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
-        return experimentalOptions.EnableInMemoryRetry
-            ? new OtlpExporterRetryTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(exportClient, timeoutMilliseconds)
-            : new OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(exportClient, timeoutMilliseconds);
+        if (experimentalOptions.EnableInMemoryRetry)
+        {
+            return new OtlpExporterRetryTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(exportClient, timeoutMilliseconds);
+        }
+        else if (experimentalOptions.EnableDiskRetry)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
+
+            return new OtlpExporterPersistentStorageTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(
+                exportClient,
+                timeoutMilliseconds,
+                (byte[] data) =>
+                {
+                    var request = new TraceOtlpCollector.ExportTraceServiceRequest();
+                    request.MergeFrom(data);
+                    return request;
+                },
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "traces"));
+        }
+        else
+        {
+            return new OtlpExporterTransmissionHandler<TraceOtlpCollector.ExportTraceServiceRequest>(exportClient, timeoutMilliseconds);
+        }
     }
 
     public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
@@ -116,9 +138,29 @@ internal static class OtlpExporterOptionsExtensions
             ? httpMetricsExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
-        return experimentalOptions.EnableInMemoryRetry
-            ? new OtlpExporterRetryTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds)
-            : new OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds);
+        if (experimentalOptions.EnableInMemoryRetry)
+        {
+            return new OtlpExporterRetryTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds);
+        }
+        else if (experimentalOptions.EnableDiskRetry)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
+
+            return new OtlpExporterPersistentStorageTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(
+                exportClient,
+                timeoutMilliseconds,
+                (byte[] data) =>
+                {
+                    var request = new MetricsOtlpCollector.ExportMetricsServiceRequest();
+                    request.MergeFrom(data);
+                    return request;
+                },
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "metrics"));
+        }
+        else
+        {
+            return new OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds);
+        }
     }
 
     public static OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest> GetLogsExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
@@ -128,9 +170,29 @@ internal static class OtlpExporterOptionsExtensions
             ? httpLogExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
-        return experimentalOptions.EnableInMemoryRetry
-            ? new OtlpExporterRetryTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds)
-            : new OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
+        if (experimentalOptions.EnableInMemoryRetry)
+        {
+            return new OtlpExporterRetryTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
+        }
+        else if (experimentalOptions.EnableDiskRetry)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
+
+            return new OtlpExporterPersistentStorageTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(
+                exportClient,
+                timeoutMilliseconds,
+                (byte[] data) =>
+                {
+                    var request = new LogOtlpCollector.ExportLogsServiceRequest();
+                    request.MergeFrom(data);
+                    return request;
+                },
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "logs"));
+        }
+        else
+        {
+            return new OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
+        }
     }
 
     public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>

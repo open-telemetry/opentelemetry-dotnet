@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   build-pack-publish:
@@ -52,11 +53,14 @@ jobs:
         path: '**/bin/**/*.*nupkg'
 
     - name: Publish MyGet
+      env:
+        MYGET_TOKEN_EXISTS: ${{ secrets.MYGET_TOKEN != '' }}
+      if: env.MYGET_TOKEN_EXISTS == 'true' # Skip MyGet publish if run on a fork without the secret
       run: |
         nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
         nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
-    - name: Create GitHub Release Draft
+    - name: Create GitHub Release draft
       if: github.ref_type == 'tag'
       shell: pwsh
       run: |
@@ -73,12 +77,50 @@ jobs:
 
             if ($firstPackageVersion -eq '')
             {
-              $firstPackageVersion = $packageVersion
+                $firstPackageVersion = $packageVersion
             }
+
+            $changelogContent = Get-Content -Path "src/$packageName/CHANGELOG.md"
+
+            $headingWritten = $false
+            $started = $false
+            $content = ""
+
+            foreach ($line in $changelogContent)
+            {
+                if ($line -like "## ${{ github.ref_name }}" -and $started -ne $true)
+                {
+                    $started = $true
+                }
+                elseif ($line -like "Released *" -and $started -eq $true)
+                {
+                    continue
+                }
+                elseif ($line -like "## *" -and $started -eq $true)
+                {
+                    break
+                }
+                else
+                {
+                    if ($started -eq $true -and ([string]::IsNullOrWhitespace($line) -eq $false -or $content.Length -gt 0))
+                    {
+                        $content += "  " + $line + "`r`n"
+                    }
+                }
+            }
+
+            if ([string]::IsNullOrWhitespace($content) -eq $true)
+            {
+                $content = "   No notable changes."
+            }
+
+            $content = $content.trimend()
 
             $notes +=
         @"
         * NuGet: [$packageName v$packageVersion](https://www.nuget.org/packages/$packageName/$packageVersion)
+
+        $content
 
           See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/src/$packageName/CHANGELOG.md) for details.
 
@@ -103,5 +145,68 @@ jobs:
             --latest `
             --draft
         }
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Create GitHub draft Pull Request to update stable build version in props
+      if: github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc')
+      shell: pwsh
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        git switch --create release/post-stable-${{ github.ref_name }}-update 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git switch failure'
+            Return
+        }
+
+        $match = [regex]::Match('${{ github.ref_name }}', '.*?-(.*)')
+        $packageVersion = $match.Groups[1].Value
+
+        (Get-Content  Directory.Packages.props) `
+            -replace '<OTelLatestStableVer>.*<\/OTelLatestStableVer>', "<OTelLatestStableVer>$packageVersion</OTelLatestStableVer>" |
+          Set-Content Directory.Packages.props
+
+        git add Directory.Packages.props 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git add failure'
+            Return
+        }
+
+        git commit -m "Update OTelLatestStableVer in Directory.Packages.props to $packageVersion." 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git commit failure'
+            Return
+        }
+
+        git push -u origin release/post-stable-${{ github.ref_name }}-update 2>&1 | % ToString
+        if ($LASTEXITCODE -gt 0)
+        {
+            Write-Error 'git push failure'
+            Return
+        }
+
+        $body =
+        @"
+        Note: This PR was opened automatically by the [package workflow](https://github.com/${{ github.repository }}/actions/workflows/publish-packages-1.0.yml).
+
+        Merge once packages are available on NuGet and the build passes.
+
+        ## Changes
+
+        * Sets `OTelLatestStableVer` in `Directory.Packages.props` to `$packageVersion`.
+        "@
+
+        gh pr create `
+          --title "[repo] Core stable release $packageVersion updates" `
+          --body $body `
+          --base main `
+          --head release/post-stable-${{ github.ref_name }}-update `
+          --label infra `
+          --draft
       env:
         GH_TOKEN: ${{ github.token }}

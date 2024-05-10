@@ -31,7 +31,6 @@ jobs:
           api-code: ['*/OpenTelemetry.Api*/**', '!**/*.md']
           api-packages: ['src/OpenTelemetry.Api*/**', '!**/*.md']
           instrumentation: ['*/OpenTelemetry.Instrumentation*/**', 'test/TestApp.AspNetCore/**', '!**/*.md']
-          instrumentation-packages: ['src/OpenTelemetry.Instrumentation*/**', '!**/*.md']
           sdk-code: ['src/OpenTelemetry/**', 'test/OpenTelemetry.Tests/**', '!**/*.md']
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
           unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
@@ -74,32 +73,6 @@ jobs:
       project-name: 'OpenTelemetry.sln'
       project-build-commands: '-p:ExposeExperimentalFeatures=true'
       code-cov-name: 'Solution-Experimental'
-
-  # Build instrumentation libraries using stable packages released to NuGet
-  build-test-instrumentation-stable:
-    needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'instrumentation-packages')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/Component.BuildTest.yml
-    with:
-      project-name: './build/InstrumentationLibraries.proj'
-      project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=false'
-      code-cov-name: 'Instrumentation-Stable'
-
-  # Build instrumentation libraries using stable packages released to NuGet
-  build-test-instrumentation-experimental:
-    needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'instrumentation-packages')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/Component.BuildTest.yml
-    with:
-      project-name: './build/InstrumentationLibraries.proj'
-      project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=true'
-      code-cov-name: 'Instrumentation-Experimental'
 
   # Build unstable core libraries using stable packages released to NuGet
   build-test-unstable-core:
@@ -192,8 +165,6 @@ jobs:
       lint-dotnet-format,
       build-test-solution-stable,
       build-test-solution-experimental,
-      build-test-instrumentation-stable,
-      build-test-instrumentation-experimental,
       build-test-unstable-core,
       otlp-integration-test,
       w3c-trace-context-integration-test,
