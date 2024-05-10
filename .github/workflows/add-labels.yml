@@ -18,18 +18,8 @@ jobs:
       - name: Add labels for areas found in bug issue descriptions
         shell: pwsh
         run: |
-          $body =
-          @"
-          ${{ github.event.issue.body }}
-          "@
-
-          $match = [regex]::Match($body, '^[#]+ Area\s*?(area:\w+)')
-          if ($match.Success -eq $false)
-          {
-              Return
-          }
-
-          gh issue edit ${{ github.event.issue.number }} `
-            --add-label $match.Groups[1].Value
+          .\build\scripts\add-labels.ps1 -issueNumber $env:ISSUE_NUMBER -issueBody $env:ISSUE_BODY
         env:
           GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
