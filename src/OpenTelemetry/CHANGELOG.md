@@ -23,7 +23,7 @@
   `ReadOnlyExemplarCollection`, `ReadOnlyFilteredTagCollection`, &
   `MetricPoint.TryGetExemplars`) will now be part of the public API and
   supported in stable builds.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5607](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5607))
 
 ## 1.8.1
 
