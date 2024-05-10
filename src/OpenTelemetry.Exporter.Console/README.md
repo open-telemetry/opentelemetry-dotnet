@@ -7,7 +7,7 @@ The console exporter prints data to the Console window.
 ConsoleExporter supports exporting logs, metrics and traces.
 
 > [!WARNING]
-> This exporter is intended to be used during learning how telemetry
+> This component is intended to be used during learning how telemetry
 data are created and exported. It is not recommended for any production
 environment.
 

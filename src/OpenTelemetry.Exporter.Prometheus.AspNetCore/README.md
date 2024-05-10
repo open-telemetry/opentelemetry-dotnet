@@ -8,7 +8,7 @@ for configuring an ASP.NET Core application with an endpoint for Prometheus
 to scrape.
 
 > [!WARNING]
-> This exporter is still under development due to a dependency on the
+> This component is still under development due to a dependency on the
   experimental [Prometheus and OpenMetrics
   Compatibility](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/compatibility/prometheus_and_openmetrics.md)
   specification and can undergo breaking changes before stable release.
