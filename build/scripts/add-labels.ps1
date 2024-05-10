@@ -9,5 +9,4 @@ if ($match.Success -eq $false)
     Return
 }
 
-gh issue edit $issueNumber `
-  --add-label $match.Groups[1].Value
+gh issue edit $issueNumber --add-label $match.Groups[1].Value
