@@ -244,7 +244,7 @@ jobs:
       run: |
         $body =
         @"
-        The packages for [$tag](https://github.com/${{ github.repository }}/releases/tag/${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}) are now available: ${{ needs.invoke-package-workflow.outputs.artifact-url }}.
+        The packages for [${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}](https://github.com/${{ github.repository }}/releases/tag/${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}) are now available: ${{ needs.invoke-package-workflow.outputs.artifact-url }}.
 
         Have a nice day!
         "@
