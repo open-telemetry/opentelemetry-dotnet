@@ -103,6 +103,9 @@ jobs:
 
     runs-on: windows-latest
 
+    env:
+      PULL_REQUEST_TITLE: ${{ github.event.pull_request.title }}
+
     steps:
     - name: check out code
       uses: actions/checkout@v4
@@ -113,7 +116,7 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-        $match = [regex]::Match('${{ github.event.pull_request.title }}', '^\[repo\] Prepare release (.*)$')
+        $match = [regex]::Match($env:PULL_REQUEST_TITLE, '^\[repo\] Prepare release (.*)$')
         if ($match.Success -eq $false)
         {
             Write-Error 'Could not parse tag from PR title'
@@ -154,6 +157,9 @@ jobs:
 
     runs-on: windows-latest
 
+    env:
+      PULL_REQUEST_TITLE: ${{ github.event.pull_request.title }}
+
     outputs:
       tag: ${{ steps.create-tag.outputs.tag }}
 
@@ -179,7 +185,7 @@ jobs:
             Return
         }
 
-        $match = [regex]::Match('${{ github.event.issue.title }}', '^\[repo\] Prepare release (.*)$')
+        $match = [regex]::Match($env:PULL_REQUEST_TITLE, '^\[repo\] Prepare release (.*)$')
         if ($match.Success -eq $false)
         {
             Write-Error 'Could not parse tag from PR title'
