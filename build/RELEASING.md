@@ -64,19 +64,21 @@
 
     * Update CHANGELOG files
 
-       Run the PowerShell script `.\build\update-changelogs.ps1 -minVerTagPrefix
-       [MinVerTagPrefix] -version [Version]`. Where `[MinVerTagPrefix]` is the tag
-       prefix (eg `core-`) for the components being released and `[Version]` is the
-       version being released (eg `1.9.0`). This will update `CHANGELOG.md` files
-       for the projects being released.
+       Run the PowerShell script `.\build\scripts\update-changelogs.ps1
+       -minVerTagPrefix [MinVerTagPrefix] -version [Version]`. Where
+       `[MinVerTagPrefix]` is the tag prefix (eg `core-`) for the components
+       being released and `[Version]` is the version being released (eg
+       `1.9.0`). This will update `CHANGELOG.md` files for the projects being
+       released.
 
     * **Stable releases only**: Normalize PublicApi files
 
-       Run the PowerShell script `.\build\finalize-publicapi.ps1 -minVerTagPrefix
-       [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag prefix (eg `core-`)
-       for the components being released. This will merge the contents of any
-       detected `PublicAPI.Unshipped.txt` files in the `.publicApi` folder into the
-       corresponding `PublicAPI.Shipped.txt` files for the projects being released.
+       Run the PowerShell script `.\build\scripts\finalize-publicapi.ps1
+       -minVerTagPrefix [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag
+       prefix (eg `core-`) for the components being released. This will merge
+       the contents of any detected `PublicAPI.Unshipped.txt` files in the
+       `.publicApi` folder into the corresponding `PublicAPI.Shipped.txt` files
+       for the projects being released.
     </details
 
  3. :stop_sign: The PR opened by [Prepare for a

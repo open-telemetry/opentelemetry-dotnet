@@ -34,7 +34,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\docker-compose.net6.0.yml = build\docker-compose.net6.0.yml
 		build\docker-compose.net7.0.yml = build\docker-compose.net7.0.yml
 		build\docker-compose.net8.0.yml = build\docker-compose.net8.0.yml
-		build\finalize-publicapi.ps1 = build\finalize-publicapi.ps1
 		build\GlobalAttrExclusions.txt = build\GlobalAttrExclusions.txt
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
 		build\OpenTelemetry.prod.loose.ruleset = build\OpenTelemetry.prod.loose.ruleset
@@ -46,7 +45,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\test-aot-compatibility.ps1 = build\test-aot-compatibility.ps1
 		build\test-threadSafety.ps1 = build\test-threadSafety.ps1
 		build\UnstableCoreLibraries.proj = build\UnstableCoreLibraries.proj
-		build\update-changelogs.ps1 = build\update-changelogs.ps1
 		build\xunit.runner.json = build\xunit.runner.json
 	EndProjectSection
 EndProject
@@ -342,6 +340,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{44982E0D-C8C6-42DC-9F8F-714981F27CE6}"
 	ProjectSection(SolutionItems) = preProject
 		build\scripts\add-labels.ps1 = build\scripts\add-labels.ps1
+		build\scripts\finalize-publicapi.ps1 = build\scripts\finalize-publicapi.ps1
+		build\scripts\update-changelogs.ps1 = build\scripts\update-changelogs.ps1
 	EndProjectSection
 EndProject
 Global

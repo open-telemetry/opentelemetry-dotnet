@@ -60,12 +60,12 @@ jobs:
         "@
 
         # Update CHANGELOGs
-        & ./build/update-changelogs.ps1 -minVerTagPrefix "${{ inputs.tag-prefix }}" -version "${{ inputs.version }}"
+        & ./build/scripts/update-changelogs.ps1 -minVerTagPrefix "${{ inputs.tag-prefix }}" -version "${{ inputs.version }}"
 
         # Update publicApi files for stable releases
         if ("${{ inputs.version }}" -notlike "*-alpha*" -and "${{ inputs.version }}" -notlike "*-beta*" -and "${{ inputs.version }}" -notlike "*-rc*")
         {
-          & ./build/finalize-publicapi.ps1 -minVerTagPrefix "${{ inputs.tag-prefix }}"
+          & ./build/scripts/finalize-publicapi.ps1 -minVerTagPrefix "${{ inputs.tag-prefix }}"
 
           $body += "`r`n* Public API files updated for projects being released (only performed for stable releases)."
         }
