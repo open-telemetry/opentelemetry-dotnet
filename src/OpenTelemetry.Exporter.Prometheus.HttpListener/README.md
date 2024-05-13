@@ -8,13 +8,12 @@ that configures an [HttpListener](https://docs.microsoft.com/dotnet/api/system.n
 instance for Prometheus to scrape.
 
 > [!WARNING]
-> This component is intended for dev inner-loop, there is no plan to
-make it production ready. Production environments should use
-[OpenTelemetry.Exporter.Prometheus.AspNetCore](../OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md),
-or a combination of
-[OpenTelemetry.Exporter.OpenTelemetryProtocol](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
-and [OpenTelemetry
-Collector](https://github.com/open-telemetry/opentelemetry-collector).
+> This component is intended for dev inner-loop, there is no plan to make it
+  production ready. Production environments should consider using
+  [OpenTelemetry.Exporter.OpenTelemetryProtocol](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md).
+  Refer to the [Getting Started with Prometheus and
+  Grafana](../../docs/metrics/getting-started-prometheus-grafana/README.md)
+  tutorial for more information.
 
 ## Prerequisite
 

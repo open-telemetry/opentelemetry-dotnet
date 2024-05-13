@@ -337,6 +337,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TagWriter", "TagWriter", "{
 		src\Shared\TagWriter\TagWriter.cs = src\Shared\TagWriter\TagWriter.cs
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{44982E0D-C8C6-42DC-9F8F-714981F27CE6}"
+	ProjectSection(SolutionItems) = preProject
+		build\scripts\add-labels.ps1 = build\scripts\add-labels.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -648,6 +653,7 @@ Global
 		{19545B37-8518-4BDD-AD49-00C031FB3C2A} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{87A20A76-D524-4AAC-AF92-8725BFED0415} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 		{993E65E5-E71B-40FD-871C-60A9EBD59724} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
+		{44982E0D-C8C6-42DC-9F8F-714981F27CE6} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
