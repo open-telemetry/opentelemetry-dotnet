@@ -372,6 +372,9 @@ OpenTelemetry SDK comes with the following `ExemplarFilters` (defined on
 The `SetExemplarFilter` extension method on `MeterProviderBuilder` can be used
 to set the desired `ExemplarFilterType` and enable `Exemplar` collection:
 
+> [!NOTE]
+> The `SetExemplarFilter` API was added in the `1.9.0` release.
+
 ```csharp
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -381,6 +384,24 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .SetExemplarFilter(ExemplarFilterType.TraceBased)
     .Build();
 ```
+
+It is also possible to configure the `ExemplarFilter` by using following
+environmental variables:
+
+> [!NOTE]
+> Programmatically calling `SetExemplarFilter` will override any defaults set
+  using environment variables or configuration.
+
+| Environment variable       | Description                                        | Notes |
+| -------------------------- | -------------------------------------------------- |-------|
+| `OTEL_METRICS_EXEMPLAR_FILTER` | Sets the default `ExemplarFilter` to use for all metrics. | Added in `1.9.0` |
+| `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS`        | Sets the default `ExemplarFilter` to use for histogram metrics. If not set than `OTEL_METRICS_EXEMPLAR_FILTER` also applies to histograms. | Experimental key (may be removed or changed in the future). Added in `1.9.0` |
+
+Allowed values:
+
+* `always_off`: Eqivalent to `ExemplarFilterType.AlwaysOff`
+* `always_on`: Eqivalent to `ExemplarFilterType.AlwaysOn`
+* `trace_based`: Eqivalent to `ExemplarFilterType.TraceBased`
 
 #### ExemplarReservoir
 
@@ -398,7 +419,8 @@ metrics except Histograms with buckets. It has a fixed reservoir pool, and
 implements the equivalent of [naive
 reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
 size (currently defaulting to 1) determines the maximum number of exemplars
-stored.
+stored. Exponential histograms use a `SimpleFixedSizeExemplarReservoir` with a
+pool size equal to the number of buckets up to a max of `20`.
 
 > [!NOTE]
 > Currently there is no ability to change or configure `ExemplarReservoir`.

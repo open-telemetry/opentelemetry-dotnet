@@ -16,6 +16,7 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
     internal const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
     internal const string ExemplarFilterConfigKey = "OTEL_METRICS_EXEMPLAR_FILTER";
+    internal const string ExemplarFilterHistogramsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS";
 
     internal readonly IServiceProvider ServiceProvider;
     internal readonly IDisposable? OwnedServiceProvider;
@@ -24,6 +25,7 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal bool EmitOverflowAttribute;
     internal bool ReclaimUnusedMetricPoints;
     internal ExemplarFilterType? ExemplarFilter;
+    internal ExemplarFilterType? ExemplarFilterForHistograms;
     internal Action? OnCollectObservableInstruments;
 
     private readonly List<object> instrumentations = new();
@@ -83,7 +85,8 @@ internal sealed class MeterProviderSdk : MeterProvider
                 state.CardinalityLimit,
                 this.EmitOverflowAttribute,
                 this.ReclaimUnusedMetricPoints,
-                this.ExemplarFilter);
+                this.ExemplarFilter,
+                this.ExemplarFilterForHistograms);
 
             if (this.reader == null)
             {
@@ -490,29 +493,18 @@ internal sealed class MeterProviderSdk : MeterProvider
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Reclaim unused metric point feature enabled via configuration.");
         }
 
+        var hasProgrammaticExemplarFilterValue = this.ExemplarFilter.HasValue;
+
         if (configuration.TryGetStringValue(ExemplarFilterConfigKey, out var configValue))
         {
-            if (this.ExemplarFilter.HasValue)
+            if (hasProgrammaticExemplarFilterValue)
             {
                 OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
                     $"Exemplar filter configuration value '{configValue}' has been ignored because a value '{this.ExemplarFilter}' was set programmatically.");
                 return;
             }
 
-            ExemplarFilterType? exemplarFilter;
-            if (string.Equals("always_off", configValue, StringComparison.OrdinalIgnoreCase))
-            {
-                exemplarFilter = ExemplarFilterType.AlwaysOff;
-            }
-            else if (string.Equals("always_on", configValue, StringComparison.OrdinalIgnoreCase))
-            {
-                exemplarFilter = ExemplarFilterType.AlwaysOn;
-            }
-            else if (string.Equals("trace_based", configValue, StringComparison.OrdinalIgnoreCase))
-            {
-                exemplarFilter = ExemplarFilterType.TraceBased;
-            }
-            else
+            if (!TryParseExemplarFilterFromConfigurationValue(configValue, out var exemplarFilter))
             {
                 OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exemplar filter configuration was found but the value '{configValue}' is invalid and will be ignored.");
                 return;
@@ -521,6 +513,50 @@ internal sealed class MeterProviderSdk : MeterProvider
             this.ExemplarFilter = exemplarFilter;
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exemplar filter set to '{exemplarFilter}' from configuration.");
+        }
+
+        if (configuration.TryGetStringValue(ExemplarFilterHistogramsConfigKey, out configValue))
+        {
+            if (hasProgrammaticExemplarFilterValue)
+            {
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
+                    $"Exemplar filter histogram configuration value '{configValue}' has been ignored because a value '{this.ExemplarFilter}' was set programmatically.");
+                return;
+            }
+
+            if (!TryParseExemplarFilterFromConfigurationValue(configValue, out var exemplarFilter))
+            {
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exemplar filter histogram configuration was found but the value '{configValue}' is invalid and will be ignored.");
+                return;
+            }
+
+            this.ExemplarFilterForHistograms = exemplarFilter;
+
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exemplar filter for histograms set to '{exemplarFilter}' from configuration.");
+        }
+
+        static bool TryParseExemplarFilterFromConfigurationValue(string? configValue, out ExemplarFilterType? exemplarFilter)
+        {
+            if (string.Equals("always_off", configValue, StringComparison.OrdinalIgnoreCase))
+            {
+                exemplarFilter = ExemplarFilterType.AlwaysOff;
+                return true;
+            }
+
+            if (string.Equals("always_on", configValue, StringComparison.OrdinalIgnoreCase))
+            {
+                exemplarFilter = ExemplarFilterType.AlwaysOn;
+                return true;
+            }
+
+            if (string.Equals("trace_based", configValue, StringComparison.OrdinalIgnoreCase))
+            {
+                exemplarFilter = ExemplarFilterType.TraceBased;
+                return true;
+            }
+
+            exemplarFilter = null;
+            return false;
         }
     }
 }
