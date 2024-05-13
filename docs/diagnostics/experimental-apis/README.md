@@ -39,6 +39,12 @@ Description: MetricStreamConfiguration CardinalityLimit Support
 
 Details: [OTEL1003](./OTEL1003.md)
 
+### OTEL1004
+
+Description: ExemplarReservoir Support
+
+Details: [OTEL1004](./OTEL1004.md)
+
 ## Inactive
 
 Experimental APIs which have been released stable or removed:

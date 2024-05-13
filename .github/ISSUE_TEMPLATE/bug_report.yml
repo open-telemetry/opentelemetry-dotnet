@@ -56,7 +56,7 @@ body:
   - type: textarea
     attributes:
       label: Steps to Reproduce
-      description: Create a self-contained project using the template of your choice, apply the minimum required code to result in the issue you are observing. We will close the issue if the repro project you share with us is complex or we cannot reproduce the behavior you are reporting. We can not investigate custom projects, so don't point us to such, please.
+      description: Create a self-contained project using the template of your choice, apply the minimum required code to result in the issue you are observing. We will close the issue if the repro project you share with us is complex or we cannot reproduce the behavior you are reporting. We cannot investigate custom projects, so don't point us to such, please.
     validations:
       required: true
 
