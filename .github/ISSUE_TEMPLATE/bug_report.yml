@@ -10,10 +10,10 @@ body:
         Before filing a bug, please be sure you have searched through [existing bugs](https://github.com/open-telemetry/opentelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to see if an existing issue covers the bug.
 
   - type: dropdown
-    id: component
+    id: package
     attributes:
-      label: Component
-      description: Which component does this bug report concern?
+      label: Package
+      description: Which NuGet Package does this bug report concern?
       multiple: false
       options:
         - OpenTelemetry
