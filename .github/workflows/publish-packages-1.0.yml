@@ -172,7 +172,7 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-        git switch --create release/post-stable-${{ inputs.tag || github.ref_name }}-update 2>&1 | % ToString
+        git switch --create release/post-stable-${{ inputs.tag || github.ref_name }}-update main 2>&1 | % ToString
         if ($LASTEXITCODE -gt 0)
         {
             Write-Error 'git switch failure'
