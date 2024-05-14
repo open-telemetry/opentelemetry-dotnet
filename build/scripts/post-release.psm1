@@ -114,7 +114,7 @@ function CreateStableVersionUpdatePullRequest {
   git config user.name $gitUserName
   git config user.email $gitUserEmail
 
-  git switch --create $branch $targetBranch 2>&1 | % ToString
+  git switch --create $branch origin\$targetBranch --no-track 2>&1 | % ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git switch failure'
