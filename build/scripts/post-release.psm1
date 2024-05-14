@@ -152,7 +152,7 @@ Merge once packages are available on NuGet and the build passes.
 
 ## Changes
 
-* Sets `OTelLatestStableVer` in `Directory.Packages.props` to `$packageVersion`.
+* Sets ``OTelLatestStableVer`` in ``Directory.Packages.props`` to ``$packageVersion``.
 "@
 
   gh pr create `
