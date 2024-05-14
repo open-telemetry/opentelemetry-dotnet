@@ -83,6 +83,7 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
 
             var json = JsonSerializer.Serialize(output, options);
             this.WriteLine(json);
+
         }
 
         return ExportResult.Success;

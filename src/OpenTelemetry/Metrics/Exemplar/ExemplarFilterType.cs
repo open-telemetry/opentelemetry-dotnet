@@ -2,30 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
-using System.Diagnostics.CodeAnalysis;
-using OpenTelemetry.Internal;
-#endif
 
 namespace OpenTelemetry.Metrics;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Defines the supported exemplar filters.
 /// </summary>
 /// <remarks>
-/// <inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/>
 /// Specification: <see
 /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplarfilter"/>.
 /// </remarks>
-#if NET8_0_OR_GREATER
-[Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-public
-#else
-internal
-#endif
-    enum ExemplarFilterType
+public enum ExemplarFilterType
 {
     /// <summary>
     /// An exemplar filter which makes no measurements eligible for becoming an

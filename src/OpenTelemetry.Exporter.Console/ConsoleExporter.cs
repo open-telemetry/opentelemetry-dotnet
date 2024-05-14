@@ -12,10 +12,10 @@ public abstract class ConsoleExporter<T> : BaseExporter<T>
     {
         this.options = options ?? new ConsoleExporterOptions();
 
-        this.TagTransformer = new ConsoleTagTransformer(this.OnUnsupportedTagDropped);
+        this.TagWriter = new ConsoleTagWriter(this.OnUnsupportedTagDropped);
     }
 
-    internal ConsoleTagTransformer TagTransformer { get; }
+    internal ConsoleTagWriter TagWriter { get; }
 
     protected void WriteLine(string message)
     {

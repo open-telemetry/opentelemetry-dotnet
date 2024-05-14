@@ -2,7 +2,9 @@
 
 **Only for Maintainers.**
 
- 1. Decide the component(s) and tag name (version name) to be released.
+ 1. Decide the component(s) and tag name (version name) to be released. We use
+    [MinVer](https://github.com/adamralph/minver) to do versioning, which
+    produces version numbers based on git tags.
 
     Notes:
 
@@ -38,39 +40,65 @@
            * `OpenTelemetry.Shims.OpenTracing` - Defined by spec (stable but
              incomplete implementation)
 
-         * Everything else: Instrumentation packages have dedicated tags. Some
-           packages have released stable and some have not. These packages may
-           be released as `alpha`, `beta`, `rc`, or stable depending on the
-           stability of the semantic conventions used by the instrumentation.
-
-           * Stable:
-             * `OpenTelemetry.Instrumentation.AspNetCore` (`Instrumentation.AspNetCore-`)
-
        * As of the `1.9.0` release cycle instrumentation packages and core
          unstable packages always depend on the stable versions of core
          packages. Before releasing a non-core component ensure the
          `OTelLatestStableVer` property in `Directory.Packages.props` has been
          updated to the latest stable core version.
 
- 2. Update CHANGELOG files
+ 2. Prepare for release
 
-    Run the PowerShell script `.\build\update-changelogs.ps1 -minVerTagPrefix
-    [MinVerTagPrefix] -version [Version]`. Where `[MinVerTagPrefix]` is the tag
-    prefix (eg `core-`) for the components being released and `[Version]` is the
-    version being released (eg `1.9.0`). This will update `CHANGELOG.md` files
-    for the projects being released.
-
- 3. **Stable releases only**: Normalize PublicApi files
-
-    Run the PowerShell script `.\build\finalize-publicapi.ps1 -minVerTagPrefix
-    [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag prefix (eg `core-`)
-    for the components being released. This will merge the contents of any
-    detected `PublicAPI.Unshipped.txt` files in the `.publicApi` folder into the
+    Run the [Prepare for a
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow. Specify the `tag-prefix` and the `version` for the release. Make
+    sure to run the workflow on the branch being released. This is typically
+    `main` but could be some other branch for hotfix (eg `main-1.8.0`). The
+    workflow will open a PR to update `CHANGELOG.md` files for the projects
+    being released. If a stable version is specified as the `version` parameter,
+    the workflow will also merge the contents of any detected
+    `PublicAPI.Unshipped.txt` files in the `.publicApi` folder into the
     corresponding `PublicAPI.Shipped.txt` files for the projects being released.
 
- 4. Tag Git with version to be released. We use
-    [MinVer](https://github.com/adamralph/minver) to do versioning, which
-    produces version numbers based on git tags.
+    <details>
+    <summary>Instructions for preparing for a release manually</summary>
+
+    * Update CHANGELOG files
+
+       Run the PowerShell script `.\build\scripts\update-changelogs.ps1
+       -minVerTagPrefix [MinVerTagPrefix] -version [Version]`. Where
+       `[MinVerTagPrefix]` is the tag prefix (eg `core-`) for the components
+       being released and `[Version]` is the version being released (eg
+       `1.9.0`). This will update `CHANGELOG.md` files for the projects being
+       released.
+
+    * **Stable releases only**: Normalize PublicApi files
+
+       Run the PowerShell script `.\build\scripts\finalize-publicapi.ps1
+       -minVerTagPrefix [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag
+       prefix (eg `core-`) for the components being released. This will merge
+       the contents of any detected `PublicAPI.Unshipped.txt` files in the
+       `.publicApi` folder into the corresponding `PublicAPI.Shipped.txt` files
+       for the projects being released.
+    </details
+
+ 3. :stop_sign: The PR opened by [Prepare for a
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow in step 2 has to be merged.
+
+ 4. Once the PR opened by [Prepare for a
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow in step 2 has been merged a trigger will automatically add a
+    comment and lock the PR. Post a comment with "/CreateReleaseTag" in the
+    body. This will tell the [Prepare for a
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow to push the tag for the merge commit of the PR and to call the
+    [Build, pack, and publish to
+    MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+    workflow. Once packages are available a comment will be posted on the PR
+    opened in step 2 with a link to the artifacts.
+
+    <details>
+    <summary>Instructions for pushing tags manually</summary>
 
     Note: In the below examples `git push origin` is used. If running in a fork,
     add the main repo as `upstream` and use `git push upstream` instead. Pushing
@@ -92,18 +120,10 @@
        git push origin coreunstable-1.9.0-beta.1
        ```
 
-    * If releasing a particular non-core component which has a dedicated
-    `MinverTagPrefix` (such as AspNetCore instrumentation), push the tag with
-    that particular prefix. For example:
-
-       ```sh
-       git tag -a Instrumentation.AspNetCore-1.6.0 -m "1.6.0 of AspNetCore instrumentation library"
-       git push origin Instrumentation.AspNetCore-1.6.0
-       ```
-
     Pushing the tag will kick off the [Build, pack, and publish to
     MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
     workflow.
+    </details>
 
  5. :stop_sign: Wait for the [Build, pack, and publish to
     MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
@@ -152,16 +172,11 @@
     `Ready for review` and then merge it once the build passes (this requires
     the packages be available on NuGet).
 
-15. If a new stable version of a package with a dedicated `MinVerTagPrefix` was
-    released (typically instrumentation packages) open a PR to update
-    `PackageValidationBaselineVersion` in the project file to reflect the stable
-    version which was just released.
-
-16. If a new stable version of the core packages was released, open an issue in
+15. If a new stable version of the core packages was released, open an issue in
     the
     [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
     repo to notify maintainers to begin upgrading dependencies.
 
-17. Post an announcement in the [Slack
+16. Post an announcement in the [Slack
     channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). Note any big
     or interesting new features as part of the announcement.

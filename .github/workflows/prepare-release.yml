@@ -1,0 +1,139 @@
+name: Prepare for a release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag-prefix:
+        type: choice
+        options:
+        - core-
+        - coreunstable-
+        description: 'Release tag prefix'
+        required: true
+      version:
+        type: string
+        description: 'Release version'
+        required: true
+
+  pull_request:
+    types:
+    - closed
+
+  issue_comment:
+    types:
+    - created
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare-release-pr:
+    if: github.event_name == 'workflow_dispatch'
+
+    runs-on: windows-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+
+    - name: Create GitHub Pull Request to prepare release
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\prepare-release.psm1
+
+        CreatePullRequestToUpdateChangelogsAndPublicApis `
+          -minVerTagPrefix '${{ inputs.tag-prefix }}' `
+          -version '${{ inputs.version }}' `
+          -targetBranch '${{ github.ref_name }}'
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+  lock-pr-and-post-notice-to-create-release-tag:
+    if: |
+      github.event_name == 'pull_request'
+      && github.event.action == 'closed'
+      && github.event.pull_request.user.login == 'github-actions[bot]'
+      && github.event.pull_request.merged == true
+      && startsWith(github.event.pull_request.title, '[repo] Prepare release ')
+
+    runs-on: windows-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+
+    - name: Lock GitHub Pull Request to prepare release
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\prepare-release.psm1
+
+        LockPullRequestAndPostNoticeToCreateReleaseTag `
+          -pullRequestNumber '${{ github.event.pull_request.number }}'
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+  create-release-tag-unlock-pr-post-notice:
+    if: |
+      github.event_name == 'issue_comment'
+      && github.event.issue.pull_request
+      && github.event.issue.locked == true
+      && contains(github.event.comment.body, '/CreateReleaseTag')
+      && startsWith(github.event.issue.title, '[repo] Prepare release ')
+      && github.event.issue.pull_request.merged_at
+
+    runs-on: windows-latest
+
+    outputs:
+      tag: ${{ steps.create-tag.outputs.tag }}
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+      with:
+        # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
+        fetch-depth: 0
+
+    - name: Create release tag
+      id: create-tag
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\prepare-release.psm1
+
+        $tag = ''
+
+        CreateReleaseTag `
+          -pullRequestNumber '${{ github.event.issue.number }}' `
+          -actionRunId '${{ github.run_id }}' `
+          -tag ([ref]$tag)
+
+        echo "tag=$tag" >> $env:GITHUB_OUTPUT
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+  invoke-package-workflow:
+    needs: create-release-tag-unlock-pr-post-notice
+    uses: ./.github/workflows/publish-packages-1.0.yml
+    with:
+      tag: ${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}
+
+  post-packages-ready-notice:
+    needs:
+    - create-release-tag-unlock-pr-post-notice
+    - invoke-package-workflow
+    runs-on: windows-latest
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+
+    - name: Post notice when packages are ready
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\prepare-release.psm1
+
+        PostPackagesReadyNotice `
+          -pullRequestNumber '${{ github.event.issue.number }}' `
+          -tag '${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}' `
+          -packagesUrl '${{ needs.invoke-package-workflow.outputs.artifact-url }}'
+      env:
+        GH_TOKEN: ${{ github.token }}

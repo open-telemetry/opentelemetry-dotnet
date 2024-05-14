@@ -490,7 +490,6 @@ internal sealed class MeterProviderSdk : MeterProvider
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Reclaim unused metric point feature enabled via configuration.");
         }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
         if (configuration.TryGetStringValue(ExemplarFilterConfigKey, out var configValue))
         {
             if (this.ExemplarFilter.HasValue)
@@ -523,12 +522,5 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exemplar filter set to '{exemplarFilter}' from configuration.");
         }
-#else
-        if (configuration.TryGetStringValue(ExemplarFilterConfigKey, out var configValue))
-        {
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
-                $"Exemplar filter configuration value '{configValue}' has been ignored because exemplars are an experimental feature not available in stable builds.");
-        }
-#endif
     }
 }
