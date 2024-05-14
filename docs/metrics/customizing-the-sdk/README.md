@@ -399,9 +399,9 @@ environmental variables:
 
 Allowed values:
 
-* `always_off`: Eqivalent to `ExemplarFilterType.AlwaysOff`
-* `always_on`: Eqivalent to `ExemplarFilterType.AlwaysOn`
-* `trace_based`: Eqivalent to `ExemplarFilterType.TraceBased`
+* `always_off`: Equivalent to `ExemplarFilterType.AlwaysOff`
+* `always_on`: Equivalent to `ExemplarFilterType.AlwaysOn`
+* `trace_based`: Equivalent to `ExemplarFilterType.TraceBased`
 
 #### ExemplarReservoir
 
