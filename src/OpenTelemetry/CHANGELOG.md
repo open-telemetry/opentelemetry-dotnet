@@ -25,6 +25,12 @@
   supported in stable builds.
   ([#5607](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5607))
 
+* `SamplingResult(SamplingDecision decision,
+  IEnumerable<KeyValuePair<string, object>>? attributes)`
+  and `SamplingResult(SamplingDecision decision, string? traceStateString)` constructors
+  accept `null` for `attributes` and `traceStateString` parameters respectively.
+  ([#5614](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5614))
+
 ## 1.8.1
 
 Released 2024-Apr-17
