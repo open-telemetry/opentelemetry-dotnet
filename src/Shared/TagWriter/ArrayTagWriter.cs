@@ -18,7 +18,7 @@ internal abstract class ArrayTagWriter<TArrayState>
 
     public abstract void WriteBooleanValue(ref TArrayState state, bool value);
 
-    public abstract void WriteStringValue(ref TArrayState state, string value);
+    public abstract void WriteStringValue(ref TArrayState state, ReadOnlySpan<char> value);
 
     public abstract void EndWriteArray(ref TArrayState state);
 }

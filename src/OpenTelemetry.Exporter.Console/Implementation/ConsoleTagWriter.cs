@@ -51,10 +51,10 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         consoleTag.Value = value ? "true" : "false";
     }
 
-    protected override void WriteStringTag(ref ConsoleTag consoleTag, string key, string value)
+    protected override void WriteStringTag(ref ConsoleTag consoleTag, string key, ReadOnlySpan<char> value)
     {
         consoleTag.Key = key;
-        consoleTag.Value = value;
+        consoleTag.Value = value.ToString();
     }
 
     protected override void WriteArrayTag(ref ConsoleTag consoleTag, string key, ArraySegment<byte> arrayUtf8JsonBytes)
