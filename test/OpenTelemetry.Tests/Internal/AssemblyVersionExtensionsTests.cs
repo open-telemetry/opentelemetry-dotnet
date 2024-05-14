@@ -4,10 +4,9 @@
 #nullable enable
 
 using System.Reflection;
-using OpenTelemetry.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Tests;
+namespace OpenTelemetry.Internal.Tests;
 
 public class AssemblyVersionExtensionsTests
 {

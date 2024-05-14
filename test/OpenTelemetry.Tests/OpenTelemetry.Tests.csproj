@@ -25,7 +25,7 @@
     <Compile Include="$(RepoRoot)\src\Shared\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\RedactionHelper.cs" Link="Includes\RedactionHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\PooledList.cs" Link="Includes\PooledList.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\TagTransformerJsonHelper.cs" Link="Includes\TagTransformerJsonHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\TagWriter\*.cs" Link="Includes\TagWriter\%(Filename).cs" />
   </ItemGroup>
 
   <ItemGroup>

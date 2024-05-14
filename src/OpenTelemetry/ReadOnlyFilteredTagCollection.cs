@@ -5,28 +5,16 @@
 using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
-#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
-using System.Diagnostics.CodeAnalysis;
-using OpenTelemetry.Internal;
-#endif
 
 namespace OpenTelemetry;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// A read-only collection of tag key/value pairs which returns a filtered
 /// subset of tags when enumerated.
 /// </summary>
 // Note: Does not implement IReadOnlyCollection<> or IEnumerable<> to
 // prevent accidental boxing.
-#if NET8_0_OR_GREATER
-[Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-public
-#else
-internal
-#endif
-    readonly struct ReadOnlyFilteredTagCollection
+public readonly struct ReadOnlyFilteredTagCollection
 {
 #if NET8_0_OR_GREATER
     private readonly FrozenSet<string>? excludedKeys;

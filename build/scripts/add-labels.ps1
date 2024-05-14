@@ -3,10 +3,10 @@ param(
   [Parameter(Mandatory=$true)][string]$issueBody
 )
 
-$match = [regex]::Match($issueBody, '^[#]+ Area\s*?(area:\w+)')
+$match = [regex]::Match($issueBody, '^[#]+ Package\s*(OpenTelemetry(?:\.\w+)*)')
 if ($match.Success -eq $false)
 {
     Return
 }
 
-gh issue edit $issueNumber --add-label $match.Groups[1].Value
+gh issue edit $issueNumber --add-label $("pkg:" + $match.Groups[1].Value)

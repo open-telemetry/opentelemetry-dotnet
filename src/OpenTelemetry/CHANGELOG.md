@@ -18,6 +18,13 @@
   `ExemplarReservoirFactory` property on the View API.
   ([#5558](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5558))
 
+* The experimental APIs previously covered by `OTEL1002` (`Exemplar`,
+  `ExemplarFilterType`, `MeterProviderBuilder.SetExemplarFilter`,
+  `ReadOnlyExemplarCollection`, `ReadOnlyFilteredTagCollection`, &
+  `MetricPoint.TryGetExemplars`) will now be part of the public API and
+  supported in stable builds.
+  ([#5607](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5607))
+
 ## 1.8.1
 
 Released 2024-Apr-17

@@ -45,9 +45,9 @@ internal sealed class OtlpTagWriter : TagWriter<RepeatedField<OtlpCommon.KeyValu
         tags.Add(new OtlpCommon.KeyValue { Key = key, Value = ToAnyValue(value) });
     }
 
-    protected override void WriteStringTag(ref RepeatedField<OtlpCommon.KeyValue> tags, string key, string value)
+    protected override void WriteStringTag(ref RepeatedField<OtlpCommon.KeyValue> tags, string key, ReadOnlySpan<char> value)
     {
-        tags.Add(new OtlpCommon.KeyValue { Key = key, Value = ToAnyValue(value) });
+        tags.Add(new OtlpCommon.KeyValue { Key = key, Value = ToAnyValue(value.ToString()) });
     }
 
     protected override void WriteArrayTag(ref RepeatedField<OtlpCommon.KeyValue> tags, string key, ref OtlpCommon.ArrayValue value)
@@ -95,9 +95,9 @@ internal sealed class OtlpTagWriter : TagWriter<RepeatedField<OtlpCommon.KeyValu
             array.Values.Add(ToAnyValue(value));
         }
 
-        public override void WriteStringValue(ref OtlpCommon.ArrayValue array, string value)
+        public override void WriteStringValue(ref OtlpCommon.ArrayValue array, ReadOnlySpan<char> value)
         {
-            array.Values.Add(ToAnyValue(value));
+            array.Values.Add(ToAnyValue(value.ToString()));
         }
 
         public override void EndWriteArray(ref OtlpCommon.ArrayValue array)
