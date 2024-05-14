@@ -98,6 +98,8 @@ Export-ModuleMember -Function CreateDraftRelease
 function CreateStableVersionUpdatePullRequest {
   param(
     [Parameter(Mandatory=$true)][string]$tag,
+    [Parameter()][string]$gitUserName=$gitHubBotUserName,
+    [Parameter()][string]$gitUserEmail=$gitHubBotEmail,
     [Parameter()][string]$targetBranch="main"
   )
 
