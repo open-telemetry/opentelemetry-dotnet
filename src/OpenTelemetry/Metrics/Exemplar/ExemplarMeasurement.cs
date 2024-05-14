@@ -12,10 +12,10 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Represents an Exemplar measurement.
 /// </summary>
-/// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
+/// <remarks><inheritdoc cref="ExemplarReservoir" path="/remarks/para[@experimental-warning='true']"/></remarks>
 /// <typeparam name="T">Measurement type.</typeparam>
 #if NET8_0_OR_GREATER
-[Experimental(DiagnosticDefinitions.ExemplarExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+[Experimental(DiagnosticDefinitions.ExemplarReservoirExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
 public
 #else

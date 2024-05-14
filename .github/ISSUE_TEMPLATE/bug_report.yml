@@ -10,19 +10,24 @@ body:
         Before filing a bug, please be sure you have searched through [existing bugs](https://github.com/open-telemetry/opentelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to see if an existing issue covers the bug.
 
   - type: dropdown
-    id: area
+    id: package
     attributes:
-      label: Area
-      description: Which area does this bug report concern? If none fits, please select `area:other`
+      label: Package
+      description: Which NuGet package does this bug report concern?
       multiple: false
       options:
-        - area:other
-        - area:api
-        - area:exporter
-        - area:exporter:otlp
-        - area:exporter:prometheus
-        - area:ext:hosting
-        - area:sdk
+        - OpenTelemetry
+        - OpenTelemetry.Api
+        - OpenTelemetry.Api.ProviderBuilderExtensions
+        - OpenTelemetry.Exporter.Console
+        - OpenTelemetry.Exporter.InMemory
+        - OpenTelemetry.Exporter.OpenTelemetryProtocol
+        - OpenTelemetry.Exporter.Prometheus.AspNetCore
+        - OpenTelemetry.Exporter.Prometheus.HttpListener
+        - OpenTelemetry.Exporter.Zipkin
+        - OpenTelemetry.Extensions.Hosting
+        - OpenTelemetry.Extensions.Propagators
+        - OpenTelemetry.Shims.OpenTracing
     validations:
       required: true
 
@@ -56,7 +61,7 @@ body:
   - type: textarea
     attributes:
       label: Steps to Reproduce
-      description: Create a self-contained project using the template of your choice, apply the minimum required code to result in the issue you are observing. We will close the issue if the repro project you share with us is complex or we cannot reproduce the behavior you are reporting. We can not investigate custom projects, so don't point us to such, please.
+      description: Provide a [minimal reproducible example](https://stackoverflow.com/help/minimal-reproducible-example). We will close the issue if the repro project you share with us is complex or we cannot reproduce the behavior you are reporting. We cannot investigate custom projects, so don't point us to such, please.
     validations:
       required: true
 

@@ -362,20 +362,13 @@ public struct MetricPoint
         return false;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets the exemplars associated with the metric point.
     /// </summary>
-    /// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
     /// <param name="exemplars"><see cref="ReadOnlyExemplarCollection"/>.</param>
     /// <returns><see langword="true" /> if exemplars exist; <see langword="false" /> otherwise.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public
-#else
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal
-#endif
-        readonly bool TryGetExemplars(out ReadOnlyExemplarCollection exemplars)
+    public readonly bool TryGetExemplars(out ReadOnlyExemplarCollection exemplars)
     {
         exemplars = this.mpComponents?.Exemplars ?? ReadOnlyExemplarCollection.Empty;
         return exemplars.MaximumCount > 0;
