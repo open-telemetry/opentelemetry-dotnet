@@ -290,6 +290,7 @@ public class MetricExemplarTests : MetricTestsBase
         {
             configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
             {
+                [MeterProviderSdk.ExemplarFilterConfigKey] = "always_off",
                 [MeterProviderSdk.ExemplarFilterHistogramsConfigKey] = configValue,
             });
         }
