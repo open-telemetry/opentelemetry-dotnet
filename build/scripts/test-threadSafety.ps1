@@ -8,7 +8,7 @@ param(
 
 $env:OTEL_RUN_COYOTE_TESTS = 'true'
 
-$rootDirectory = Split-Path $PSScriptRoot -Parent
+$rootDirectory = Get-Location
 
 Write-Host "Install Coyote CLI."
 dotnet tool install --global Microsoft.Coyote.CLI
