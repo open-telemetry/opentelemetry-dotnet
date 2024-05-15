@@ -75,7 +75,7 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
             state.Writer.WriteNullValue();
         }
 
-        public override void WriteStringValue(ref JsonArrayTagWriterState state, string value)
+        public override void WriteStringValue(ref JsonArrayTagWriterState state, ReadOnlySpan<char> value)
         {
             state.Writer.WriteStringValue(value);
         }
