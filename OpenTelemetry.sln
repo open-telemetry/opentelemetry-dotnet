@@ -40,10 +40,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\OpenTelemetry.prod.ruleset = build\OpenTelemetry.prod.ruleset
 		build\OpenTelemetry.test.ruleset = build\OpenTelemetry.test.ruleset
 		build\RELEASING.md = build\RELEASING.md
-		build\sanitycheck.py = build\sanitycheck.py
 		build\stylecop.json = build\stylecop.json
-		build\test-aot-compatibility.ps1 = build\test-aot-compatibility.ps1
-		build\test-threadSafety.ps1 = build\test-threadSafety.ps1
 		build\UnstableCoreLibraries.proj = build\UnstableCoreLibraries.proj
 		build\xunit.runner.json = build\xunit.runner.json
 	EndProjectSection
@@ -259,8 +256,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 		src\Shared\SemanticConventions.cs = src\Shared\SemanticConventions.cs
 		src\Shared\SpanAttributeConstants.cs = src\Shared\SpanAttributeConstants.cs
 		src\Shared\StatusHelper.cs = src\Shared\StatusHelper.cs
-		src\Shared\TagTransformer.cs = src\Shared\TagTransformer.cs
-		src\Shared\TagTransformerJsonHelper.cs = src\Shared\TagTransformerJsonHelper.cs
 		src\Shared\ThreadSafeRandom.cs = src\Shared\ThreadSafeRandom.cs
 	EndProjectSection
 EndProject
@@ -340,7 +335,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{4498
 	ProjectSection(SolutionItems) = preProject
 		build\scripts\add-labels.ps1 = build\scripts\add-labels.ps1
 		build\scripts\finalize-publicapi.ps1 = build\scripts\finalize-publicapi.ps1
+		build\scripts\post-release.psm1 = build\scripts\post-release.psm1
 		build\scripts\prepare-release.psm1 = build\scripts\prepare-release.psm1
+		build\scripts\sanitycheck.py = build\scripts\sanitycheck.py
+		build\scripts\test-aot-compatibility.ps1 = build\scripts\test-aot-compatibility.ps1
+		build\scripts\test-threadSafety.ps1 = build\scripts\test-threadSafety.ps1
 		build\scripts\update-changelogs.ps1 = build\scripts\update-changelogs.ps1
 	EndProjectSection
 EndProject

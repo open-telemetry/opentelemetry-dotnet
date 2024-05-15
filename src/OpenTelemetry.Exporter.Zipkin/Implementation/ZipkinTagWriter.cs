@@ -49,7 +49,7 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
     protected override void WriteBooleanTag(ref Utf8JsonWriter writer, string key, bool value)
         => writer.WriteString(key, value ? "true" : "false");
 
-    protected override void WriteStringTag(ref Utf8JsonWriter writer, string key, string value)
+    protected override void WriteStringTag(ref Utf8JsonWriter writer, string key, ReadOnlySpan<char> value)
         => writer.WriteString(key, value);
 
     protected override void WriteArrayTag(ref Utf8JsonWriter writer, string key, ArraySegment<byte> arrayUtf8JsonBytes)

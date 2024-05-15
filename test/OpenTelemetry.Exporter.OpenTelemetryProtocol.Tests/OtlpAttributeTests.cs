@@ -138,6 +138,44 @@ public class OtlpAttributeTests
     }
 
     [Fact]
+    public void ObjectArrayTypesSupported()
+    {
+        var obj = new object();
+        var objectArray = new object[] { null, "a", 'b', true, int.MaxValue, long.MaxValue, float.MaxValue, double.MaxValue, obj };
+
+        var kvp = new KeyValuePair<string, object>("key", objectArray);
+
+        Assert.True(TryTransformTag(kvp, out var attribute));
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
+
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.None, attribute.Value.ArrayValue.Values[0].ValueCase);
+
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ArrayValue.Values[1].ValueCase);
+        Assert.Equal("a", attribute.Value.ArrayValue.Values[1].StringValue);
+
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ArrayValue.Values[2].ValueCase);
+        Assert.Equal("b", attribute.Value.ArrayValue.Values[2].StringValue);
+
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.BoolValue, attribute.Value.ArrayValue.Values[3].ValueCase);
+        Assert.True(attribute.Value.ArrayValue.Values[3].BoolValue);
+
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.IntValue, attribute.Value.ArrayValue.Values[4].ValueCase);
+        Assert.Equal(int.MaxValue, attribute.Value.ArrayValue.Values[4].IntValue);
+
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.IntValue, attribute.Value.ArrayValue.Values[5].ValueCase);
+        Assert.Equal(long.MaxValue, attribute.Value.ArrayValue.Values[5].IntValue);
+
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.DoubleValue, attribute.Value.ArrayValue.Values[6].ValueCase);
+        Assert.Equal(float.MaxValue, attribute.Value.ArrayValue.Values[6].DoubleValue);
+
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.DoubleValue, attribute.Value.ArrayValue.Values[7].ValueCase);
+        Assert.Equal(double.MaxValue, attribute.Value.ArrayValue.Values[7].DoubleValue);
+
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ArrayValue.Values[8].ValueCase);
+        Assert.Equal(obj.ToString(), attribute.Value.ArrayValue.Values[8].StringValue);
+    }
+
+    [Fact]
     public void StringArrayTypesSupported()
     {
         var charArray = new char[] { 'a', 'b', 'c' };
@@ -183,7 +221,7 @@ public class OtlpAttributeTests
             new nint[] { 1, 2, 3 },
             new nuint[] { 1, 2, 3 },
             new decimal[] { 1, 2, 3 },
-            new object[] { 1, new object(), false, null },
+            new object[] { new object[3], new object(), null },
         };
 
         foreach (var value in testValues)
