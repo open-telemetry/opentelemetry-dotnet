@@ -25,7 +25,7 @@
   supported in stable builds.
   ([#5607](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5607))
 
-* Fixed the nullable annotations for the SamplingResult constructors
+* Fixed the nullable annotations for the `SamplingResult` constructors
   to allow `null` being supplied as `attributes` or `traceStateString`
   which has always been supported.
   ([#5614](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5614))
