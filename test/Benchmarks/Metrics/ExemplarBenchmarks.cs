@@ -210,6 +210,14 @@ public class ExemplarBenchmarks
             }
         }
 
+        public override void Offer(in ExemplarMeasurement<decimal> measurement)
+        {
+            if ((double)measurement.Value >= this.threshold)
+            {
+                this.UpdateExemplar(this.measurementCount++ % this.Capacity, in measurement);
+            }
+        }
+
         protected override void OnCollected()
         {
             this.measurementCount = 0;

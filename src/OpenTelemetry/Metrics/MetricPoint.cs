@@ -25,6 +25,8 @@ public struct MetricPoint
 
     private readonly AggregationType aggType;
 
+    private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
+
     private MetricPointOptionalComponents? mpComponents;
 
     // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
@@ -197,6 +199,24 @@ public struct MetricPoint
     }
 
     /// <summary>
+    /// Gets the sum decimal value associated with the metric point.
+    /// </summary>
+    /// <remarks>
+    /// Applies to <see cref="MetricType.DecimalSum"/> metric type.
+    /// </remarks>
+    /// <returns>Long sum value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly decimal GetSumDecimal()
+    {
+        if (this.aggType != AggregationType.DecimalSumIncomingDelta && this.aggType != AggregationType.DecimalSumIncomingCumulative)
+        {
+            this.ThrowNotSupportedMetricTypeException(nameof(this.GetSumLong));
+        }
+
+        return this.snapshotValue.AsDecimal;
+    }
+
+    /// <summary>
     /// Gets the last long value of the gauge associated with the metric point.
     /// </summary>
     /// <remarks>
@@ -230,6 +250,24 @@ public struct MetricPoint
         }
 
         return this.snapshotValue.AsDouble;
+    }
+
+    /// <summary>
+    /// Gets the last decimal value of the gauge associated with the metric point.
+    /// </summary>
+    /// <remarks>
+    /// Applies to <see cref="MetricType.DecimalGauge"/> metric type.
+    /// </remarks>
+    /// <returns>Decimal gauge value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly decimal GetGaugeLastValueDecimal()
+    {
+        if (this.aggType != AggregationType.DecimalGauge)
+        {
+            this.ThrowNotSupportedMetricTypeException(nameof(this.GetGaugeLastValueDecimal));
+        }
+
+        return this.snapshotValue.AsDecimal;
     }
 
     /// <summary>
@@ -613,6 +651,130 @@ public struct MetricPoint
         this.UpdateExemplar(number, tags, offerExemplar);
     }
 
+    internal void Update(decimal number)
+    {
+        switch (this.aggType)
+        {
+            case AggregationType.DecimalSumIncomingDelta:
+                {
+                    this.semaphore.Wait();
+                    this.runningValue.AsDecimal += number;
+                    this.semaphore.Release();
+                    break;
+                }
+
+            case AggregationType.DecimalSumIncomingCumulative:
+            case AggregationType.DecimalGauge:
+                {
+                    this.semaphore.Wait();
+                    this.runningValue.AsDecimal = number;
+                    this.semaphore.Release();
+                    break;
+                }
+
+            case AggregationType.Histogram:
+                {
+                    this.UpdateHistogram((double)number);
+                    return;
+                }
+
+            case AggregationType.HistogramWithMinMax:
+                {
+                    this.UpdateHistogramWithMinMax((double)number);
+                    return;
+                }
+
+            case AggregationType.HistogramWithBuckets:
+                {
+                    this.UpdateHistogramWithBuckets((double)number);
+                    return;
+                }
+
+            case AggregationType.HistogramWithMinMaxBuckets:
+                {
+                    this.UpdateHistogramWithBucketsAndMinMax((double)number);
+                    return;
+                }
+
+            case AggregationType.Base2ExponentialHistogram:
+                {
+                    this.UpdateBase2ExponentialHistogram((double)number);
+                    return;
+                }
+
+            case AggregationType.Base2ExponentialHistogramWithMinMax:
+                {
+                    this.UpdateBase2ExponentialHistogramWithMinMax((double)number);
+                    return;
+                }
+        }
+
+        this.CompleteUpdate();
+    }
+
+    internal void UpdateWithExemplar(decimal number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool offerExemplar)
+    {
+        switch (this.aggType)
+        {
+            case AggregationType.DecimalSumIncomingDelta:
+                {
+                    this.semaphore.Wait();
+                    this.runningValue.AsDecimal += number;
+                    this.semaphore.Release();
+                    break;
+                }
+
+            case AggregationType.DecimalSumIncomingCumulative:
+            case AggregationType.DecimalGauge:
+                {
+                    this.semaphore.Wait();
+                    this.runningValue.AsDecimal = number;
+                    this.semaphore.Release();
+                    break;
+                }
+
+            case AggregationType.Histogram:
+                {
+                    this.UpdateHistogram((double)number, tags, offerExemplar);
+                    return;
+                }
+
+            case AggregationType.HistogramWithMinMax:
+                {
+                    this.UpdateHistogramWithMinMax((double)number, tags, offerExemplar);
+                    return;
+                }
+
+            case AggregationType.HistogramWithBuckets:
+                {
+                    this.UpdateHistogramWithBuckets((double)number, tags, offerExemplar);
+                    return;
+                }
+
+            case AggregationType.HistogramWithMinMaxBuckets:
+                {
+                    this.UpdateHistogramWithBucketsAndMinMax((double)number, tags, offerExemplar);
+                    return;
+                }
+
+            case AggregationType.Base2ExponentialHistogram:
+                {
+                    this.UpdateBase2ExponentialHistogram((double)number, tags, offerExemplar);
+                    return;
+                }
+
+            case AggregationType.Base2ExponentialHistogramWithMinMax:
+                {
+                    this.UpdateBase2ExponentialHistogramWithMinMax((double)number, tags, offerExemplar);
+                    return;
+                }
+        }
+
+        this.CompleteUpdate();
+
+        this.UpdateExemplar(number, tags, offerExemplar);
+    }
+
     internal void TakeSnapshot(bool outputDelta)
     {
         switch (this.aggType)
@@ -667,6 +829,35 @@ public struct MetricPoint
                     break;
                 }
 
+            case AggregationType.DecimalSumIncomingDelta:
+            case AggregationType.DecimalSumIncomingCumulative:
+                {
+                    this.semaphore.Wait();
+
+                    if (outputDelta)
+                    {
+                        decimal initValue = this.runningValue.AsDecimal;
+                        this.snapshotValue.AsDecimal = initValue - this.deltaLastValue.AsDecimal;
+                        this.deltaLastValue.AsDecimal = initValue;
+                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                        // Check again if value got updated, if yes reset status.
+                        // This ensures no Updates get Lost.
+                        if (initValue != this.runningValue.AsDecimal)
+                        {
+                            this.MetricPointStatus = MetricPointStatus.CollectPending;
+                        }
+                    }
+                    else
+                    {
+                        this.snapshotValue.AsDecimal = this.runningValue.AsDecimal;
+                    }
+
+                    this.semaphore.Release();
+
+                    break;
+                }
+
             case AggregationType.LongGauge:
                 {
                     this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
@@ -693,6 +884,25 @@ public struct MetricPoint
                     {
                         this.MetricPointStatus = MetricPointStatus.CollectPending;
                     }
+
+                    break;
+                }
+
+            case AggregationType.DecimalGauge:
+                {
+                    this.semaphore.Wait();
+
+                    this.snapshotValue.AsDecimal = this.runningValue.AsDecimal;
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    // Check again if value got updated, if yes reset status.
+                    // This ensures no Updates get Lost.
+                    if (this.snapshotValue.AsDecimal != this.runningValue.AsDecimal)
+                    {
+                        this.MetricPointStatus = MetricPointStatus.CollectPending;
+                    }
+
+                    this.semaphore.Release();
 
                     break;
                 }
@@ -1061,6 +1271,19 @@ public struct MetricPoint
             // TODO: A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
             this.mpComponents!.ExemplarReservoir!.Offer(
                 new ExemplarMeasurement<double>(number, tags, explicitBucketHistogramBucketIndex));
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private readonly void UpdateExemplar(decimal number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool offerExemplar)
+    {
+        if (offerExemplar)
+        {
+            Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
+
+            // TODO: A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+            this.mpComponents!.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<decimal>(number, tags));
         }
     }
 

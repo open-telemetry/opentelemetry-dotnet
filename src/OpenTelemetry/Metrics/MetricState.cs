@@ -11,15 +11,18 @@ internal sealed class MetricState
 
     public readonly RecordMeasurementAction<long> RecordMeasurementLong;
     public readonly RecordMeasurementAction<double> RecordMeasurementDouble;
+    public readonly RecordMeasurementAction<decimal> RecordMeasurementDecimal;
 
     private MetricState(
         Action completeMeasurement,
         RecordMeasurementAction<long> recordMeasurementLong,
-        RecordMeasurementAction<double> recordMeasurementDouble)
+        RecordMeasurementAction<double> recordMeasurementDouble,
+        RecordMeasurementAction<decimal> recordMeasurementDecimal)
     {
         this.CompleteMeasurement = completeMeasurement;
         this.RecordMeasurementLong = recordMeasurementLong;
         this.RecordMeasurementDouble = recordMeasurementDouble;
+        this.RecordMeasurementDecimal = recordMeasurementDecimal;
     }
 
     internal delegate void RecordMeasurementAction<T>(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
@@ -32,7 +35,8 @@ internal sealed class MetricState
         return new(
             completeMeasurement: () => MetricReader.DeactivateMetric(metric!),
             recordMeasurementLong: metric!.UpdateLong,
-            recordMeasurementDouble: metric!.UpdateDouble);
+            recordMeasurementDouble: metric!.UpdateDouble,
+            recordMeasurementDecimal: metric!.UpdateDecimal);
     }
 
     public static MetricState BuildForMetricList(
@@ -64,6 +68,13 @@ internal sealed class MetricState
                 for (int i = 0; i < metricsArray.Length; i++)
                 {
                     metricsArray[i].UpdateDouble(v, t);
+                }
+            },
+            recordMeasurementDecimal: (v, t) =>
+            {
+                for (int i = 0; i < metricsArray.Length; i++)
+                {
+                    metricsArray[i].UpdateDecimal(v, t);
                 }
             });
     }

@@ -69,4 +69,19 @@ internal enum AggregationType
     /// Exponential Histogram with sum, count, min, max.
     /// </summary>
     Base2ExponentialHistogramWithMinMax = 11,
+
+    /// <summary>
+    /// Calculate SUM from incoming delta measurements.
+    /// </summary>
+    DecimalSumIncomingDelta = 12,
+
+    /// <summary>
+    /// Calculate SUM from incoming cumulative measurements.
+    /// </summary>
+    DecimalSumIncomingCumulative = 13,
+
+    /// <summary>
+    /// Keep LastValue.
+    /// </summary>
+    DecimalGauge = 14,
 }

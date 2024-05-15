@@ -32,4 +32,13 @@ internal sealed class AlignedHistogramBucketExemplarReservoir : FixedSizeExempla
 
         this.UpdateExemplar(measurement.ExplicitBucketHistogramBucketIndex, in measurement);
     }
+
+    public override void Offer(in ExemplarMeasurement<decimal> measurement)
+    {
+        Debug.Assert(
+            measurement.ExplicitBucketHistogramBucketIndex != -1,
+            "ExplicitBucketHistogramBucketIndex was -1");
+
+        this.UpdateExemplar(measurement.ExplicitBucketHistogramBucketIndex, in measurement);
+    }
 }

@@ -51,6 +51,7 @@ internal sealed class AggregatorStore
     private readonly int exponentialHistogramMaxScale;
     private readonly UpdateLongDelegate updateLongCallback;
     private readonly UpdateDoubleDelegate updateDoubleCallback;
+    private readonly UpdateDecimalDelegate updateDecimalCallback;
     private readonly ExemplarFilterType exemplarFilter;
     private readonly Func<KeyValuePair<string, object?>[], int, int> lookupAggregatorStore;
 
@@ -91,11 +92,13 @@ internal sealed class AggregatorStore
         {
             this.updateLongCallback = this.UpdateLong;
             this.updateDoubleCallback = this.UpdateDouble;
+            this.updateDecimalCallback = this.UpdateDecimal;
         }
         else
         {
             this.updateLongCallback = this.UpdateLongCustomTags;
             this.updateDoubleCallback = this.UpdateDoubleCustomTags;
+            this.updateDecimalCallback = this.UpdateDecimalCustomTags;
 #if NET8_0_OR_GREATER
             var hs = FrozenSet.ToFrozenSet(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
 #else
@@ -150,6 +153,8 @@ internal sealed class AggregatorStore
 
     private delegate void UpdateDoubleDelegate(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
 
+    private delegate void UpdateDecimalDelegate(decimal value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
+
     internal DateTimeOffset StartTimeExclusive { get; private set; }
 
     internal DateTimeOffset EndTimeInclusive { get; private set; }
@@ -181,6 +186,19 @@ internal sealed class AggregatorStore
         try
         {
             this.updateDoubleCallback(value, tags);
+        }
+        catch (Exception)
+        {
+            Interlocked.Increment(ref this.DroppedMeasurements);
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
+        }
+    }
+
+    internal void Update(decimal value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        try
+        {
+            this.updateDecimalCallback(value, tags);
         }
         catch (Exception)
         {
@@ -1043,8 +1061,63 @@ internal sealed class AggregatorStore
         this.UpdateDoubleMetricPoint(index, value, tags);
     }
 
+    private void UpdateDecimal(decimal value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        var index = this.FindMetricAggregatorsDefault(tags);
+
+        this.UpdateDecimalMetricPoint(index, value, tags);
+    }
+
+    private void UpdateDecimalCustomTags(decimal value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        var index = this.FindMetricAggregatorsCustomTag(tags);
+
+        this.UpdateDecimalMetricPoint(index, value, tags);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void UpdateDoubleMetricPoint(int metricPointIndex, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        if (metricPointIndex < 0)
+        {
+            Interlocked.Increment(ref this.DroppedMeasurements);
+
+            if (this.EmitOverflowAttribute)
+            {
+                this.InitializeOverflowTagPointIfNotInitialized();
+                this.metricPoints[1].Update(value);
+            }
+            else if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+            {
+                OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
+            }
+
+            return;
+        }
+
+        var exemplarFilterType = this.exemplarFilter;
+        if (exemplarFilterType == ExemplarFilterType.AlwaysOff)
+        {
+            this.metricPoints[metricPointIndex].Update(value);
+        }
+        else if (exemplarFilterType == ExemplarFilterType.AlwaysOn)
+        {
+            this.metricPoints[metricPointIndex].UpdateWithExemplar(
+                value,
+                tags,
+                offerExemplar: true);
+        }
+        else
+        {
+            this.metricPoints[metricPointIndex].UpdateWithExemplar(
+                value,
+                tags,
+                offerExemplar: Activity.Current?.Recorded ?? false);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdateDecimalMetricPoint(int metricPointIndex, decimal value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         if (metricPointIndex < 0)
         {

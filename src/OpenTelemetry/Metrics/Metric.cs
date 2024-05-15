@@ -83,6 +83,16 @@ public sealed class Metric
             aggType = AggregationType.DoubleSumIncomingCumulative;
             this.MetricType = MetricType.DoubleSum;
         }
+        else if (instrumentIdentity.InstrumentType == typeof(Counter<decimal>))
+        {
+            aggType = AggregationType.DecimalSumIncomingDelta;
+            this.MetricType = MetricType.DecimalSum;
+        }
+        else if (instrumentIdentity.InstrumentType == typeof(ObservableCounter<decimal>))
+        {
+            aggType = AggregationType.DecimalSumIncomingCumulative;
+            this.MetricType = MetricType.DecimalSum;
+        }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<long>)
             || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<int>)
             || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<short>)
@@ -111,6 +121,16 @@ public sealed class Metric
             aggType = AggregationType.DoubleSumIncomingCumulative;
             this.MetricType = MetricType.DoubleSumNonMonotonic;
         }
+        else if (instrumentIdentity.InstrumentType == typeof(UpDownCounter<decimal>))
+        {
+            aggType = AggregationType.DecimalSumIncomingDelta;
+            this.MetricType = MetricType.DecimalSumNonMonotonic;
+        }
+        else if (instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<decimal>))
+        {
+            aggType = AggregationType.DecimalSumIncomingCumulative;
+            this.MetricType = MetricType.DecimalSumNonMonotonic;
+        }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<double>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<float>))
         {
@@ -125,12 +145,18 @@ public sealed class Metric
             aggType = AggregationType.LongGauge;
             this.MetricType = MetricType.LongGauge;
         }
+        else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<decimal>))
+        {
+            aggType = AggregationType.DecimalGauge;
+            this.MetricType = MetricType.DecimalGauge;
+        }
         else if (instrumentIdentity.InstrumentType == typeof(Histogram<long>)
             || instrumentIdentity.InstrumentType == typeof(Histogram<int>)
             || instrumentIdentity.InstrumentType == typeof(Histogram<short>)
             || instrumentIdentity.InstrumentType == typeof(Histogram<byte>)
             || instrumentIdentity.InstrumentType == typeof(Histogram<float>)
-            || instrumentIdentity.InstrumentType == typeof(Histogram<double>))
+            || instrumentIdentity.InstrumentType == typeof(Histogram<double>)
+            || instrumentIdentity.InstrumentType == typeof(Histogram<decimal>))
         {
             var explicitBucketBounds = instrumentIdentity.HistogramBucketBounds;
             var exponentialMaxSize = instrumentIdentity.ExponentialHistogramMaxSize;
@@ -226,6 +252,9 @@ public sealed class Metric
         => this.AggregatorStore.Update(value, tags);
 
     internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        => this.AggregatorStore.Update(value, tags);
+
+    internal void UpdateDecimal(decimal value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
         => this.AggregatorStore.Update(value, tags);
 
     internal int Snapshot()

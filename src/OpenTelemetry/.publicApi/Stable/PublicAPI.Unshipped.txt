@@ -1,3 +1,4 @@
+abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<decimal> measurement) -> void
 OpenTelemetry.Metrics.Exemplar
 OpenTelemetry.Metrics.Exemplar.DoubleValue.get -> double
 OpenTelemetry.Metrics.Exemplar.Exemplar() -> void
@@ -10,7 +11,12 @@ OpenTelemetry.Metrics.ExemplarFilterType
 OpenTelemetry.Metrics.ExemplarFilterType.AlwaysOff = 0 -> OpenTelemetry.Metrics.ExemplarFilterType
 OpenTelemetry.Metrics.ExemplarFilterType.AlwaysOn = 1 -> OpenTelemetry.Metrics.ExemplarFilterType
 OpenTelemetry.Metrics.ExemplarFilterType.TraceBased = 2 -> OpenTelemetry.Metrics.ExemplarFilterType
+OpenTelemetry.Metrics.MetricPoint.GetGaugeLastValueDecimal() -> decimal
+OpenTelemetry.Metrics.MetricPoint.GetSumDecimal() -> decimal
 OpenTelemetry.Metrics.MetricPoint.TryGetExemplars(out OpenTelemetry.Metrics.ReadOnlyExemplarCollection exemplars) -> bool
+OpenTelemetry.Metrics.MetricType.DecimalGauge = 46 -> OpenTelemetry.Metrics.MetricType
+OpenTelemetry.Metrics.MetricType.DecimalSum = 30 -> OpenTelemetry.Metrics.MetricType
+OpenTelemetry.Metrics.MetricType.DecimalSumNonMonotonic = 142 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator.Current.get -> OpenTelemetry.Metrics.Exemplar

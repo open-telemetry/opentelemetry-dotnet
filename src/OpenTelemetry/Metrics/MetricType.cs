@@ -72,4 +72,19 @@ public enum MetricType : byte
     /// Non-monotonic Sum of Double type.
     /// </summary>
     DoubleSumNonMonotonic = 0x8d,
+
+    /// <summary>
+    /// Sum of Decimal type.
+    /// </summary>
+    DecimalSum = 0x1e,
+
+    /// <summary>
+    /// Non-monotonic Sum of Decimal type.
+    /// </summary>
+    DecimalSumNonMonotonic = 0x8e,
+
+    /// <summary>
+    /// Gauge of Decimal type.
+    /// </summary>
+    DecimalGauge = 0x2e,
 }

@@ -180,6 +180,9 @@ internal sealed class MeterProviderSdk : MeterProvider
         this.listener.SetMeasurementEventCallback<short>(static (instrument, value, tags, state) => MeasurementRecordedLong(instrument, value, tags, state));
         this.listener.SetMeasurementEventCallback<byte>(static (instrument, value, tags, state) => MeasurementRecordedLong(instrument, value, tags, state));
 
+        // decimal
+        this.listener.SetMeasurementEventCallback<decimal>(MeasurementRecordedDecimal);
+
         this.listener.MeasurementsCompleted = MeasurementsCompleted;
 
         this.listener.Start();
@@ -226,6 +229,17 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
 
         metricState.RecordMeasurementDouble(value, tags);
+    }
+
+    internal static void MeasurementRecordedDecimal(Instrument instrument, decimal value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+    {
+        if (state is not MetricState metricState)
+        {
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "SDK internal error occurred.", "Contact SDK owners.");
+            return;
+        }
+
+        metricState.RecordMeasurementDecimal(value, tags);
     }
 
     internal object? InstrumentPublished(Instrument instrument, bool listeningIsManagedExternally)

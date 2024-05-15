@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -1581,36 +1580,173 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     }
 
     [Fact]
-    public void UnsupportedMetricInstrument()
+    public void DecimalCounterMeasurement()
     {
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
-        using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
-        {
-            var counter = meter.CreateCounter<decimal>("counter");
-            counter.Add(1);
+        var counter = meter.CreateCounter<decimal>("myCounter");
+        counter.Add(1);
+        counter.Add(1);
 
-            // This validates that we log InstrumentIgnored event
-            // and not something else.
-            var instrumentIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 33);
-#if BUILDING_HOSTING_TESTS
-            // Note: When using IMetricsListener this event is fired twice. Once
-            // for the SDK listener ignoring it because it isn't listening to
-            // the meter and then once for IMetricsListener ignoring it because
-            // decimal is not supported.
-            Assert.Equal(2, instrumentIgnoredEvents.Count());
-#else
-            Assert.Single(instrumentIgnoredEvents);
-#endif
+        meterProvider.ForceFlush();
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("myCounter", metric.Name);
+        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
         }
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Empty(exportedItems);
+        Assert.Single(metricPoints);
+        var metricPoint = metricPoints[0];
+        Assert.Equal(2, metricPoint.GetSumDecimal());
+    }
+
+    [Fact]
+    public void DecimalObservableCounterMeasurement()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var observableCounter = meter.CreateObservableCounter<decimal>("myObservableCounter", () => 100.5m);
+
+        meterProvider.ForceFlush();
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("myObservableCounter", metric.Name);
+        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        var metricPoint = metricPoints[0];
+        Assert.Equal(100.5m, metricPoint.GetSumDecimal());
+    }
+
+    [Fact]
+    public void DecimalUpDownCounterMeasurement()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var upDownCounter = meter.CreateUpDownCounter<decimal>("myUpDownCounter");
+        upDownCounter.Add(2);
+        upDownCounter.Add(-1);
+
+        meterProvider.ForceFlush();
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("myUpDownCounter", metric.Name);
+        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        var metricPoint = metricPoints[0];
+        Assert.Equal(1, metricPoint.GetSumDecimal());
+    }
+
+    [Fact]
+    public void DecimalObservableUpDownCounterMeasurement()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var observableUpDownCounter = meter.CreateObservableUpDownCounter<decimal>("myObservableUpDownCounter", () => 100.5m);
+
+        meterProvider.ForceFlush();
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("myObservableUpDownCounter", metric.Name);
+        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        var metricPoint = metricPoints[0];
+        Assert.Equal(100.5m, metricPoint.GetSumDecimal());
+    }
+
+    [Fact]
+    public void DecimalObservableGaugeMeasurement()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var gauge = meter.CreateObservableGauge<decimal>("myObservableGauge", () => 100.5m);
+
+        meterProvider.ForceFlush();
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("myObservableGauge", metric.Name);
+        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        var metricPoint = metricPoints[0];
+        Assert.Equal(100.5m, metricPoint.GetGaugeLastValueDecimal());
+    }
+
+    [Fact]
+    public void DecimalHistogramMeasurement()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var histogram = meter.CreateHistogram<decimal>("myHistogram");
+        histogram.Record(1);
+        histogram.Record(100.5m);
+        histogram.Record(300.5436543m);
+
+        meterProvider.ForceFlush();
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("myHistogram", metric.Name);
+        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        var metricPoint = metricPoints[0];
+        Assert.Equal(3, metricPoint.GetHistogramCount());
+        Assert.Equal(402.0436543, metricPoint.GetHistogramSum());
     }
 
     internal static IConfiguration BuildConfiguration(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)

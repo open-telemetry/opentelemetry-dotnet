@@ -841,5 +841,10 @@ public class MetricExemplarTests : MetricTestsBase
         {
             throw new NotSupportedException();
         }
+
+        public override void Offer(in ExemplarMeasurement<decimal> measurement)
+        {
+            throw new NotSupportedException();
+        }
     }
 }

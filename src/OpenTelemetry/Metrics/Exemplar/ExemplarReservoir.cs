@@ -59,6 +59,12 @@ internal
     public abstract void Offer(in ExemplarMeasurement<double> measurement);
 
     /// <summary>
+    /// Offers a measurement to the reservoir.
+    /// </summary>
+    /// <param name="measurement"><see cref="ExemplarMeasurement{T}"/>.</param>
+    public abstract void Offer(in ExemplarMeasurement<decimal> measurement);
+
+    /// <summary>
     /// Collects all the exemplars accumulated by the Reservoir.
     /// </summary>
     /// <returns><see cref="ReadOnlyExemplarCollection"/>.</returns>

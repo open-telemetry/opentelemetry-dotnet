@@ -32,6 +32,11 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
         this.Offer(in measurement);
     }
 
+    public override void Offer(in ExemplarMeasurement<decimal> measurement)
+    {
+        this.Offer(in measurement);
+    }
+
     protected override void OnCollected()
     {
         // Reset internal state irrespective of temporality.

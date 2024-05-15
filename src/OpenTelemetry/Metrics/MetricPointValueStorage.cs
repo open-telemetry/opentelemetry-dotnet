@@ -13,4 +13,7 @@ internal struct MetricPointValueStorage
 
     [FieldOffset(0)]
     public double AsDouble;
+
+    [FieldOffset(0)]
+    public decimal AsDecimal;
 }
