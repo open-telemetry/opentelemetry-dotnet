@@ -1,4 +1,3 @@
-abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<decimal> measurement) -> void
 OpenTelemetry.Metrics.Exemplar
 OpenTelemetry.Metrics.Exemplar.DoubleValue.get -> double
 OpenTelemetry.Metrics.Exemplar.Exemplar() -> void
