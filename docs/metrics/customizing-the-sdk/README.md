@@ -352,19 +352,30 @@ tutorial](../exemplars/README.md) demonstrates how to use exemplars to achieve
 correlation from metrics to traces, which is one of the primary use cases for
 exemplars.
 
+#### Default behavior
+
+Exemplars in OpenTelemetry .NET are **off by default**
+(`ExemplarFilterType.AlwaysOff`). The [OpenTelemetry
+Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplarfilter)
+recommends Exemplars collection should be on by default
+(`ExemplarFilterType.TraceBased`) however there is a performance cost associated
+with Exemplars so OpenTelemetry .NET has taken a more conservative stance for
+its default behavior.
+
 #### ExemplarFilter
 
 `ExemplarFilter` determines which measurements are offered to the configured
 `ExemplarReservoir`, which makes the final decision about whether or not the
 offered measurement gets recorded as an `Exemplar`. Generally `ExemplarFilter`
-is a mechanism to control the overhead associated with `Exemplar` offering.
+is a mechanism to control the overhead associated with the offering and
+recording of `Exemplar`s.
 
-OpenTelemetry SDK comes with the following `ExemplarFilters` (defined on
+OpenTelemetry SDK comes with the following `ExemplarFilter`s (defined on
 `ExemplarFilterType`):
 
-* `AlwaysOff`: Makes no measurements eligible for becoming an `Exemplar`. Using
-  this is as good as turning off the `Exemplar` feature and is the current
-  default.
+* (Default behavior) `AlwaysOff`: Makes no measurements eligible for becoming an
+  `Exemplar`. Using this disables `Exemplar` collection and avoids all
+  performance costs.
 * `AlwaysOn`: Makes all measurements eligible for becoming an `Exemplar`.
 * `TraceBased`: Makes those measurements eligible for becoming an `Exemplar`
   which are recorded in the context of a sampled `Activity` (span).
@@ -395,7 +406,7 @@ environmental variables:
 | Environment variable       | Description                                        | Notes |
 | -------------------------- | -------------------------------------------------- |-------|
 | `OTEL_METRICS_EXEMPLAR_FILTER` | Sets the default `ExemplarFilter` to use for all metrics. | Added in `1.9.0` |
-| `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS`        | Sets the default `ExemplarFilter` to use for histogram metrics. If not set than `OTEL_METRICS_EXEMPLAR_FILTER` also applies to histograms. | Experimental key (may be removed or changed in the future). Added in `1.9.0` |
+| `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS`        | Sets the default `ExemplarFilter` to use for histogram metrics. If set `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS` takes precedence over `OTEL_METRICS_EXEMPLAR_FILTER` for histogram metrics. | Experimental key (may be removed or changed in the future). Added in `1.9.0` |
 
 Allowed values:
 
