@@ -25,8 +25,4 @@ OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator.Enumerator() -> void
 OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator.MoveNext() -> bool
 OpenTelemetry.ReadOnlyFilteredTagCollection.GetEnumerator() -> OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator
 OpenTelemetry.ReadOnlyFilteredTagCollection.ReadOnlyFilteredTagCollection() -> void
-*REMOVED*OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, string! traceStateString) -> void
-*REMOVED*OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes) -> void
-OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, string? traceStateString) -> void
-OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>? attributes) -> void
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Metrics.ExemplarFilterType exemplarFilter) -> OpenTelemetry.Metrics.MeterProviderBuilder!
