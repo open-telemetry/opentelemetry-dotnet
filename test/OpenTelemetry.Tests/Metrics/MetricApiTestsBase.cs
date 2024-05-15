@@ -1618,7 +1618,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
-        var observableCounter = meter.CreateObservableCounter<decimal>("myObservableCounter", () => 100.5m);
+        var observableCounter = meter.CreateObservableCounter("myObservableCounter", () => 100.5m);
 
         meterProvider.ForceFlush();
         Assert.Single(exportedItems);
@@ -1674,7 +1674,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
-        var observableUpDownCounter = meter.CreateObservableUpDownCounter<decimal>("myObservableUpDownCounter", () => 100.5m);
+        var observableUpDownCounter = meter.CreateObservableUpDownCounter("myObservableUpDownCounter", () => 100.5m);
 
         meterProvider.ForceFlush();
         Assert.Single(exportedItems);
@@ -1701,7 +1701,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
-        var gauge = meter.CreateObservableGauge<decimal>("myObservableGauge", () => 100.5m);
+        var gauge = meter.CreateObservableGauge("myObservableGauge", () => 100.5m);
 
         meterProvider.ForceFlush();
         Assert.Single(exportedItems);
