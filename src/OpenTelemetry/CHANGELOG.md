@@ -25,6 +25,9 @@
   supported in stable builds.
   ([#5607](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5607))
 
+* Add support for decimal metric instruments.
+  ([#5620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5620))
+
 ## 1.8.1
 
 Released 2024-Apr-17
