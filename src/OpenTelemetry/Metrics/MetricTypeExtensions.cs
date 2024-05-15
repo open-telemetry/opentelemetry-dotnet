@@ -95,4 +95,17 @@ public static class MetricTypeExtensions
     {
         return (self & POINT_KIND_MASK) == POINT_KIND_I8;
     }
+
+    /// <summary>
+    /// Determines if the supplied <see cref="MetricType"/> is a decimal definition.
+    /// </summary>
+    /// <param name="self"><see cref="MetricType"/>.</param>
+    /// <returns><see langword="true"/> if the supplied <see cref="MetricType"/>
+    /// is a decimal definition.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsDecimal(this MetricType self)
+    {
+        MetricType mask = MetricType.DecimalSum | MetricType.DecimalSumNonMonotonic | MetricType.DecimalGauge;
+        return (self & POINT_KIND_MASK) == (mask & POINT_KIND_MASK);
+    }
 }

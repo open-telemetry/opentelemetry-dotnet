@@ -186,6 +186,17 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                         valueDisplay = metricPoint.GetGaugeLastValueLong().ToString(CultureInfo.InvariantCulture);
                     }
                 }
+                else if (metricType.IsDecimal())
+                {
+                    if (metricType.IsSum())
+                    {
+                        valueDisplay = metricPoint.GetSumDecimal().ToString(CultureInfo.InvariantCulture);
+                    }
+                    else
+                    {
+                        valueDisplay = metricPoint.GetGaugeLastValueDecimal().ToString(CultureInfo.InvariantCulture);
+                    }
+                }
 
                 var exemplarString = new StringBuilder();
                 if (metricPoint.TryGetExemplars(out var exemplars))

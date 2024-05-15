@@ -31,3 +31,4 @@ OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator.MoveNext() -> bool
 OpenTelemetry.ReadOnlyFilteredTagCollection.GetEnumerator() -> OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator
 OpenTelemetry.ReadOnlyFilteredTagCollection.ReadOnlyFilteredTagCollection() -> void
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Metrics.ExemplarFilterType exemplarFilter) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.MetricTypeExtensions.IsDecimal(this OpenTelemetry.Metrics.MetricType self) -> bool

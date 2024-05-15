@@ -212,6 +212,43 @@ internal static class MetricItemExtensions
                     break;
                 }
 
+            case MetricType.DecimalSum:
+            case MetricType.DecimalSumNonMonotonic:
+                {
+                    var sum = new Sum
+                    {
+                        IsMonotonic = metric.MetricType == MetricType.DecimalSum,
+                        AggregationTemporality = temporality,
+                    };
+
+                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    {
+                        var dataPoint = new NumberDataPoint
+                        {
+                            StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                            TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                        };
+
+                        AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+
+                        dataPoint.AsDouble = (double)metricPoint.GetSumDecimal();
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.DoubleValue, in exemplar));
+                            }
+                        }
+
+                        sum.DataPoints.Add(dataPoint);
+                    }
+
+                    otlpMetric.Sum = sum;
+                    break;
+                }
+
             case MetricType.LongGauge:
                 {
                     var gauge = new Gauge();
@@ -257,6 +294,37 @@ internal static class MetricItemExtensions
                         AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                         dataPoint.AsDouble = metricPoint.GetGaugeLastValueDouble();
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                dataPoint.Exemplars.Add(
+                                    ToOtlpExemplar(exemplar.DoubleValue, in exemplar));
+                            }
+                        }
+
+                        gauge.DataPoints.Add(dataPoint);
+                    }
+
+                    otlpMetric.Gauge = gauge;
+                    break;
+                }
+
+            case MetricType.DecimalGauge:
+                {
+                    var gauge = new Gauge();
+                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    {
+                        var dataPoint = new NumberDataPoint
+                        {
+                            StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                            TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                        };
+
+                        AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+
+                        dataPoint.AsDouble = (double)metricPoint.GetGaugeLastValueDecimal();
 
                         if (metricPoint.TryGetExemplars(out var exemplars))
                         {
