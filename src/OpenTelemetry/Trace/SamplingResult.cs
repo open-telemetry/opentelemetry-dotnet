@@ -32,7 +32,7 @@ public readonly struct SamplingResult : IEquatable<SamplingResult>
     /// <param name="decision">indicates whether an activity object is recorded and sampled.</param>
     /// <param name="attributes">Attributes associated with the sampling decision. Attributes list passed to
     /// this method must be immutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
-    public SamplingResult(SamplingDecision decision, IEnumerable<KeyValuePair<string, object>> attributes)
+    public SamplingResult(SamplingDecision decision, IEnumerable<KeyValuePair<string, object>>? attributes)
         : this(decision, attributes, traceStateString: null)
     {
     }
@@ -42,7 +42,7 @@ public readonly struct SamplingResult : IEquatable<SamplingResult>
     /// </summary>
     /// <param name="decision">indicates whether an activity object is recorded and sampled.</param>
     /// <param name="traceStateString">traceStateString associated with the created Activity.</param>
-    public SamplingResult(SamplingDecision decision, string traceStateString)
+    public SamplingResult(SamplingDecision decision, string? traceStateString)
         : this(decision, attributes: null, traceStateString)
     {
     }
@@ -67,7 +67,7 @@ public readonly struct SamplingResult : IEquatable<SamplingResult>
     }
 
     /// <summary>
-    /// Gets a value indicating indicates whether an activity object is recorded and sampled.
+    /// Gets a value indicating whether an activity object is recorded and sampled.
     /// </summary>
     public SamplingDecision Decision { get; }
 
