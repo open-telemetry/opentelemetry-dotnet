@@ -85,6 +85,7 @@ internal sealed class PrometheusCollectionManager
 
         // Start a collection on the current thread.
         this.collectionRunning = true;
+
         if (openMetricsRequested)
         {
             this.previousOpenMetricsDataViewGeneratedAtUtc = null;
@@ -93,6 +94,7 @@ internal sealed class PrometheusCollectionManager
         {
             this.previousPlainTextDataViewGeneratedAtUtc = null;
         }
+
         Interlocked.Increment(ref this.readerCount);
         this.ExitGlobalLock();
 

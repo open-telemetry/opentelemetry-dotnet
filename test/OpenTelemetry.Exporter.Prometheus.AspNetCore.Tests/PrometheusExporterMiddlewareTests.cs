@@ -410,6 +410,7 @@ public sealed class PrometheusExporterMiddlewareTests
                                 configureOptions?.Invoke(o);
                             }));
                     }
+
                     configureServices?.Invoke(services);
                 })
                 .Configure(configure))
