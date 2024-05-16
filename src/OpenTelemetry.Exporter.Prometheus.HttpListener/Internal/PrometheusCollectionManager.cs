@@ -22,7 +22,8 @@ internal sealed class PrometheusCollectionManager
     private ArraySegment<byte> previousPlainTextDataView;
     private ArraySegment<byte> previousOpenMetricsDataView;
     private int globalLockState;
-    private DateTime? previousDataViewGeneratedAtUtc;
+    private DateTime? previousPlainTextDataViewGeneratedAtUtc;
+    private DateTime? previousOpenMetricsDataViewGeneratedAtUtc;
     private int readerCount;
     private bool collectionRunning;
     private TaskCompletionSource<CollectionResponse> collectionTcs;
@@ -46,16 +47,20 @@ internal sealed class PrometheusCollectionManager
 
         // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
         // last successful collect, return the previous view.
-        if (this.previousDataViewGeneratedAtUtc.HasValue
+        var previousDataViewGeneratedAtUtc = openMetricsRequested
+            ? this.previousOpenMetricsDataViewGeneratedAtUtc
+            : this.previousPlainTextDataViewGeneratedAtUtc;
+
+        if (previousDataViewGeneratedAtUtc.HasValue
             && this.scrapeResponseCacheDurationMilliseconds > 0
-            && this.previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
+            && previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
         {
             Interlocked.Increment(ref this.readerCount);
             this.ExitGlobalLock();
 #if NET6_0_OR_GREATER
-            return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: true));
+            return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, openMetricsRequested, previousDataViewGeneratedAtUtc.Value, fromCache: true));
 #else
-            return Task.FromResult(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: true));
+            return Task.FromResult(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, openMetricsRequested, previousDataViewGeneratedAtUtc.Value, fromCache: true));
 #endif
         }
 
@@ -80,7 +85,14 @@ internal sealed class PrometheusCollectionManager
 
         // Start a collection on the current thread.
         this.collectionRunning = true;
-        this.previousDataViewGeneratedAtUtc = null;
+        if (openMetricsRequested)
+        {
+            this.previousOpenMetricsDataViewGeneratedAtUtc = null;
+        }
+        else
+        {
+            this.previousPlainTextDataViewGeneratedAtUtc = null;
+        }
         Interlocked.Increment(ref this.readerCount);
         this.ExitGlobalLock();
 
@@ -88,8 +100,20 @@ internal sealed class PrometheusCollectionManager
         var result = this.ExecuteCollect(openMetricsRequested);
         if (result)
         {
-            this.previousDataViewGeneratedAtUtc = DateTime.UtcNow;
-            response = new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: false);
+            if (openMetricsRequested)
+            {
+                this.previousOpenMetricsDataViewGeneratedAtUtc = DateTime.UtcNow;
+            }
+            else
+            {
+                this.previousPlainTextDataViewGeneratedAtUtc = DateTime.UtcNow;
+            }
+
+            previousDataViewGeneratedAtUtc = openMetricsRequested
+                ? this.previousOpenMetricsDataViewGeneratedAtUtc
+                : this.previousPlainTextDataViewGeneratedAtUtc;
+
+            response = new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, openMetricsRequested, previousDataViewGeneratedAtUtc.Value, fromCache: false);
         }
         else
         {
@@ -215,6 +239,10 @@ internal sealed class PrometheusCollectionManager
                         }
                     }
                 }
+            }
+            else
+            {
+                int a = 1;
             }
 
             foreach (var metric in metrics)
@@ -350,10 +378,11 @@ internal sealed class PrometheusCollectionManager
 
     public readonly struct CollectionResponse
     {
-        public CollectionResponse(ArraySegment<byte> openMetricsView, ArraySegment<byte> plainTextView, DateTime generatedAtUtc, bool fromCache)
+        public CollectionResponse(ArraySegment<byte> openMetricsView, ArraySegment<byte> plainTextView, bool openMetricsRequested, DateTime generatedAtUtc, bool fromCache)
         {
             this.OpenMetricsView = openMetricsView;
             this.PlainTextView = plainTextView;
+            this.OpenMetricsRequested = openMetricsRequested;
             this.GeneratedAtUtc = generatedAtUtc;
             this.FromCache = fromCache;
         }
@@ -361,6 +390,8 @@ internal sealed class PrometheusCollectionManager
         public ArraySegment<byte> OpenMetricsView { get; }
 
         public ArraySegment<byte> PlainTextView { get; }
+
+        public bool OpenMetricsRequested { get; }
 
         public DateTime GeneratedAtUtc { get; }
 

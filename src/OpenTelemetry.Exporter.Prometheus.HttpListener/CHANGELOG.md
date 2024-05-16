@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fixed an issue with corrupted buffers when reading both OpenMetrics and
+  plain text formats formats from Prometheus exporters
+  ([#5517](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5517))
+
 ## 1.8.0-rc.1
 
 Released 2024-Mar-27
