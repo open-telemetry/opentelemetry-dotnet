@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Fixed an issue with corrupted buffers when reading both OpenMetrics and
-  plain text formats formats from Prometheus exporters
+  plain text formats from Prometheus exporters.
   ([#5623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5623))
 
 ## 1.8.0-rc.1
