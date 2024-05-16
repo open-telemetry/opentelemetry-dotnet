@@ -25,6 +25,18 @@
   supported in stable builds.
   ([#5607](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5607))
 
+* Fixed the nullable annotations for the `SamplingResult` constructors
+  to allow `null` being supplied as `attributes` or `traceStateString`
+  which has always been supported.
+  ([#5614](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5614))
+
+* The `ExemplarFilter` used by SDK `MeterProvider`s for histogram metrics can
+  now be controlled via the experimental
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS` environment
+  variable. The supported values are: `always_off`, `always_on`, and
+  `trace_based`.
+  ([#5611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5611))
+
 ## 1.8.1
 
 Released 2024-Apr-17

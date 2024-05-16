@@ -125,12 +125,7 @@ public sealed class Metric
             aggType = AggregationType.LongGauge;
             this.MetricType = MetricType.LongGauge;
         }
-        else if (instrumentIdentity.InstrumentType == typeof(Histogram<long>)
-            || instrumentIdentity.InstrumentType == typeof(Histogram<int>)
-            || instrumentIdentity.InstrumentType == typeof(Histogram<short>)
-            || instrumentIdentity.InstrumentType == typeof(Histogram<byte>)
-            || instrumentIdentity.InstrumentType == typeof(Histogram<float>)
-            || instrumentIdentity.InstrumentType == typeof(Histogram<double>))
+        else if (instrumentIdentity.IsHistogram)
         {
             var explicitBucketBounds = instrumentIdentity.HistogramBucketBounds;
             var exponentialMaxSize = instrumentIdentity.ExponentialHistogramMaxSize;

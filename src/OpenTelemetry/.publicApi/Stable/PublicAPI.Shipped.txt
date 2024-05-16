@@ -315,8 +315,8 @@ OpenTelemetry.Trace.SamplingResult.Equals(OpenTelemetry.Trace.SamplingResult oth
 OpenTelemetry.Trace.SamplingResult.SamplingResult() -> void
 OpenTelemetry.Trace.SamplingResult.SamplingResult(bool isSampled) -> void
 OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision) -> void
-OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, string! traceStateString) -> void
-OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes) -> void
+OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, string? traceStateString) -> void
+OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>? attributes) -> void
 OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>? attributes, string? traceStateString) -> void
 OpenTelemetry.Trace.SamplingResult.TraceStateString.get -> string?
 OpenTelemetry.Trace.TraceIdRatioBasedSampler
