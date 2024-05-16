@@ -331,6 +331,28 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 
+### Changing the ExemplarReservoir for a Metric
+
+To set the [ExemplarReservoir](#exemplarreservoir) for an individual metric, use
+the `MetricStreamConfiguration.ExemplarReservoirFactory` property on the View
+API:
+
+> [!NOTE]
+> `MetricStreamConfiguration.ExemplarReservoirFactory` is an experimental API only
+  available in pre-release builds. For details see:
+  [OTEL1004](../../diagnostics/experimental-apis/OTEL1004.md).
+
+```csharp
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
+    // Use MyCustomExemplarReservoir for "MyFruitCounter"
+    .AddView(
+        instrumentName: "MyFruitCounter",
+        new MetricStreamConfiguration { ExemplarReservoirFactory = () => new MyCustomExemplarReservoir() })
+    .AddConsoleExporter()
+    .Build();
+```
+
 ### Exemplars
 
 Exemplars are example data points for aggregated data. They provide access to
@@ -421,20 +443,25 @@ and is responsible for recording `Exemplar`s. The following are the default
 reservoirs:
 
 * `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
-Histograms with buckets, and it stores at most one exemplar per histogram
-bucket. The exemplar stored is the last measurement recorded - i.e. any new
+Histograms with buckets, and it stores at most one `Exemplar` per histogram
+bucket. The `Exemplar` stored is the last measurement recorded - i.e. any new
 measurement overwrites the previous one in that bucket.
 
 * `SimpleFixedSizeExemplarReservoir` is the default reservoir used for all
-metrics except Histograms with buckets. It has a fixed reservoir pool, and
+metrics except histograms with buckets. It has a fixed reservoir pool, and
 implements the equivalent of [naive
 reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
-size (currently defaulting to 1) determines the maximum number of exemplars
+size (currently defaulting to 1) determines the maximum number of `Exemplar`s
 stored. Exponential histograms use a `SimpleFixedSizeExemplarReservoir` with a
 pool size equal to the number of buckets up to a max of `20`.
 
-> [!NOTE]
-> Currently there is no ability to change or configure `ExemplarReservoir`.
+See [Changing the ExemplarReservoir for a
+Metric](#changing-the-exemplarreservoir-for-a-metric) for details on how to use
+the View API to change `ExemplarReservoir`s for a Metric.
+
+See [Building your own exemplar
+reservoir](../extending-the-sdk/README.md#exemplarreservoir) for details on how
+to implement custom `ExemplarReservoir`s.
 
 ### Instrumentation
 

@@ -2,7 +2,6 @@
 
 * [Building your own exporter](#exporter)
 * [Building your own reader](#reader)
-* [Building your own exemplar filter](#exemplarfilter)
 * [Building your own exemplar reservoir](#exemplarreservoir)
 * [Building your own resource detector](../../resources/README.md#resource-detector)
 * [References](#references)
@@ -72,12 +71,88 @@ to the `MeterProvider` as shown in the example [here](./Program.cs).
 
 Not supported.
 
-## ExemplarFilter
-
-Not supported.
-
 ## ExemplarReservoir
 
-Not supported.
+> [!NOTE]
+> `ExemplarReservoir` is an experimental API only available in pre-release
+  builds. For details see:
+  [OTEL1004](../../diagnostics/experimental-apis/OTEL1004.md).
+
+Custom [ExemplarReservoir](../customizing-the-sdk/README.md#exemplarreservoir)s
+can be implemented to control how `Exemplar`s are recorded for a metric:
+
+* `ExemplarReservoir`s should derive from `FixedSizeExemplarReservoir` (which
+  belongs to the [OpenTelemetry](../../../src/OpenTelemetry/README.md) package)
+  and implement the `Offer` methods.
+* The `FixedSizeExemplarReservoir` constructor accepts a `capacity` parameter to
+  control the number of `Exemplar`s which may be recorded by the
+  `ExemplarReservoir`.
+* The `virtual` `OnCollected` method is called after the `ExemplarReservoir`
+  collection operation has completed and may be used to implement cleanup or
+  reset logic.
+* The `bool` `ResetOnCollect` property on `ExemplarReservoir` is set to `true`
+  when delta aggregation temporality is used for the metric using the
+  `ExemplarReservoir`.
+
+```csharp
+class HighestValueExemplarReservoir : FixedSizeExemplarReservoir
+{
+    private readonly object lockObject = new();
+    private long? previousValueLong;
+    private double? previousValueDouble;
+
+    public HighestValueExemplarReservoir()
+        : base(capacity: 1)
+    {
+    }
+
+    public override void Offer(in ExemplarMeasurement<long> measurement)
+    {
+        if (!this.previousValueLong.HasValue || measurement.Value > this.previousValueLong.Value)
+        {
+            lock (this.lockObject)
+            {
+                if (!this.previousValueLong.HasValue || measurement.Value > this.previousValueLong.Value)
+                {
+                    this.UpdateExemplar(0, in measurement);
+                    this.previousValueLong = measurement.Value;
+                }
+            }
+        }
+    }
+
+    public override void Offer(in ExemplarMeasurement<double> measurement)
+    {
+        if (!this.previousValueDouble.HasValue || measurement.Value > this.previousValueDouble.Value)
+        {
+            lock (this.lockObject)
+            {
+                if (!this.previousValueDouble.HasValue || measurement.Value > this.previousValueDouble.Value)
+                {
+                    this.UpdateExemplar(0, in measurement);
+                    this.previousValueDouble = measurement.Value;
+                }
+            }
+        }
+    }
+
+    protected override void OnCollected()
+    {
+        if (this.ResetOnCollect)
+        {
+            lock (this.lockObject)
+            {
+                this.previousValueLong = null;
+                this.previousValueDouble = null;
+            }
+        }
+    }
+}
+```
+
+Custom [ExemplarReservoir](../customizing-the-sdk/README.md#exemplarreservoir)s
+can be configured using the View API. For details see: [Changing the
+ExemplarReservoir for a
+Metric](../customizing-the-sdk/README.md#changing-the-exemplarreservoir-for-a-metric).
 
 ## References
