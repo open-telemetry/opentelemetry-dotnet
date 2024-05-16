@@ -74,6 +74,9 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         this.viewConfigs = state.ViewConfigs;
 
+        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
+            $"MeterProvider configuration: {{MetricLimit={state.MetricLimit}, CardinalityLimit={state.CardinalityLimit}, EmitOverflowAttribute={this.EmitOverflowAttribute}, ReclaimUnusedMetricPoints={this.ReclaimUnusedMetricPoints}, ExemplarFilter={this.ExemplarFilter}, ExemplarFilterForHistograms={this.ExemplarFilterForHistograms}}}.");
+
         foreach (var reader in state.Readers)
         {
             Guard.ThrowIfNull(reader);
