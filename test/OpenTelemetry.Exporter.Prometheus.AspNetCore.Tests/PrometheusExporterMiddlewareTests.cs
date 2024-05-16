@@ -268,7 +268,7 @@ public sealed class PrometheusExporterMiddlewareTests
         counter.Add(100.18D, tags);
         counter.Add(0.99D, tags);
 
-        var testCases = new bool[] { true, false };
+        var testCases = new bool[] { true, false, true, true, false };
 
         using var client = host.GetTestClient();
 
