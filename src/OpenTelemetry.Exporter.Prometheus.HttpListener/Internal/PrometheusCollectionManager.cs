@@ -58,9 +58,9 @@ internal sealed class PrometheusCollectionManager
             Interlocked.Increment(ref this.readerCount);
             this.ExitGlobalLock();
 #if NET6_0_OR_GREATER
-            return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, openMetricsRequested, previousDataViewGeneratedAtUtc.Value, fromCache: true));
+            return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: true));
 #else
-            return Task.FromResult(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, openMetricsRequested, previousDataViewGeneratedAtUtc.Value, fromCache: true));
+            return Task.FromResult(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: true));
 #endif
         }
 
@@ -113,7 +113,7 @@ internal sealed class PrometheusCollectionManager
                 ? this.previousOpenMetricsDataViewGeneratedAtUtc
                 : this.previousPlainTextDataViewGeneratedAtUtc;
 
-            response = new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, openMetricsRequested, previousDataViewGeneratedAtUtc.Value, fromCache: false);
+            response = new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: false);
         }
         else
         {
@@ -239,10 +239,6 @@ internal sealed class PrometheusCollectionManager
                         }
                     }
                 }
-            }
-            else
-            {
-                int a = 1;
             }
 
             foreach (var metric in metrics)
@@ -378,11 +374,10 @@ internal sealed class PrometheusCollectionManager
 
     public readonly struct CollectionResponse
     {
-        public CollectionResponse(ArraySegment<byte> openMetricsView, ArraySegment<byte> plainTextView, bool openMetricsRequested, DateTime generatedAtUtc, bool fromCache)
+        public CollectionResponse(ArraySegment<byte> openMetricsView, ArraySegment<byte> plainTextView, DateTime generatedAtUtc, bool fromCache)
         {
             this.OpenMetricsView = openMetricsView;
             this.PlainTextView = plainTextView;
-            this.OpenMetricsRequested = openMetricsRequested;
             this.GeneratedAtUtc = generatedAtUtc;
             this.FromCache = fromCache;
         }
@@ -390,8 +385,6 @@ internal sealed class PrometheusCollectionManager
         public ArraySegment<byte> OpenMetricsView { get; }
 
         public ArraySegment<byte> PlainTextView { get; }
-
-        public bool OpenMetricsRequested { get; }
 
         public DateTime GeneratedAtUtc { get; }
 
