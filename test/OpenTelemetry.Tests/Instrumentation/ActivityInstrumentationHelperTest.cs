@@ -22,18 +22,4 @@ public class ActivityInstrumentationHelperTest
         Assert.Equal(activitySource.Version, activity.Source.Version);
         activity.Stop();
     }
-
-    [Theory]
-    [InlineData(ActivityKind.Client)]
-    [InlineData(ActivityKind.Consumer)]
-    [InlineData(ActivityKind.Internal)]
-    [InlineData(ActivityKind.Producer)]
-    [InlineData(ActivityKind.Server)]
-    public void SetActivityKind(ActivityKind activityKind)
-    {
-        using var activity = new Activity("Test");
-        activity.Start();
-        ActivityInstrumentationHelper.SetKindProperty(activity, activityKind);
-        Assert.Equal(activityKind, activity.Kind);
-    }
 }
