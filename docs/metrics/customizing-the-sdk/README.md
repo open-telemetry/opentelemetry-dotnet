@@ -375,7 +375,7 @@ OpenTelemetry SDK comes with the following `ExemplarFilter`s (defined on
 
 * (Default behavior) `AlwaysOff`: Makes no measurements eligible for becoming an
   `Exemplar`. Using this disables `Exemplar` collection and avoids all
-  performance costs.
+  performance costs associated with `Exemplar`s.
 * `AlwaysOn`: Makes all measurements eligible for becoming an `Exemplar`.
 * `TraceBased`: Makes those measurements eligible for becoming an `Exemplar`
   which are recorded in the context of a sampled `Activity` (span).
