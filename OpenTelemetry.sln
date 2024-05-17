@@ -242,7 +242,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}"
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\ActivityHelperExtensions.cs = src\Shared\ActivityHelperExtensions.cs
-		src\Shared\ActivityInstrumentationHelper.cs = src\Shared\ActivityInstrumentationHelper.cs
 		src\Shared\AssemblyVersionExtensions.cs = src\Shared\AssemblyVersionExtensions.cs
 		src\Shared\DiagnosticDefinitions.cs = src\Shared\DiagnosticDefinitions.cs
 		src\Shared\ExceptionExtensions.cs = src\Shared\ExceptionExtensions.cs

@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Instrumentation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Resources.Tests;
 using OpenTelemetry.Tests;
@@ -14,6 +13,8 @@ namespace OpenTelemetry.Trace.Tests;
 
 public class TracerProviderSdkTest : IDisposable
 {
+    private static readonly Action<Activity, ActivitySource> SetActivitySourceProperty = CreateActivitySourceSetter();
+
     public TracerProviderSdkTest()
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
@@ -639,7 +640,7 @@ public class TracerProviderSdkTest : IDisposable
 
         using var activity = new Activity(operationNameForLegacyActivity);
         activity.Start();
-        ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySourceForLegacyActivity);
+        SetActivitySourceProperty(activity, activitySourceForLegacyActivity);
         activity.Stop();
 
         Assert.True(startCalled); // Processor.OnStart is called since we provided the legacy OperationName
@@ -690,7 +691,7 @@ public class TracerProviderSdkTest : IDisposable
 
         using var activity = new Activity(operationNameForLegacyActivity);
         activity.Start();
-        ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySourceForLegacyActivity);
+        SetActivitySourceProperty(activity, activitySourceForLegacyActivity);
         activity.Stop();
 
         Assert.True(startCalled); // Processor.OnStart is called since we provided the legacy OperationName
@@ -1295,6 +1296,12 @@ public class TracerProviderSdkTest : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
+    }
+
+    private static Action<Activity, ActivitySource> CreateActivitySourceSetter()
+    {
+        return (Action<Activity, ActivitySource>)typeof(Activity).GetProperty("Source")
+            .SetMethod.CreateDelegate(typeof(Action<Activity, ActivitySource>));
     }
 
     private sealed class TestTracerProviderBuilder : TracerProviderBuilderBase
