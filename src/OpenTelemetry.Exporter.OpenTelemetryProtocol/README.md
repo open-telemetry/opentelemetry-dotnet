@@ -640,15 +640,14 @@ want to solicit feedback from the community.
     `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` environment
     variable.
 
-      The OTLP exporter uses a forked version of the
+      The OTLP exporter utilizes a forked version of the
       [OpenTelemetry.PersistentStorage.FileSystem](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem)
-      library to store telemetry data on disk during temporary network failures.
-      Each transient failure results in the creation of a single file at the
-      configured directory path on disk, which contains the request data in
-      serialized format that was attempted to be sent to the OTLP ingestion. A
-      background thread attempts to resend any offline stored telemetry every 60
-      seconds. For more information on how these files are managed on disk,
-      refer to the [File
+      library to store telemetry data on disk. When a transient failure occurs,
+      a file is created at the specified directory path on disk containing the
+      serialized request data that was attempted to be sent to the OTLP
+      ingestion. A background thread attempts to resend any offline stored
+      telemetry every 60 seconds. For more details on how these files are
+      managed on disk, refer to the [File
       details](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem#file-details).
 
       Added in **TBD** (Unreleased).
