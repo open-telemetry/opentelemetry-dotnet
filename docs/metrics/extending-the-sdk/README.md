@@ -167,8 +167,7 @@ class HighestValueExemplarReservoir : FixedSizeExemplarReservoir
 ```
 
 Custom [ExemplarReservoir](../customizing-the-sdk/README.md#exemplarreservoir)s
-can be configured using the View API. For details see: [Changing the
-ExemplarReservoir for a
-Metric](../customizing-the-sdk/README.md#changing-the-exemplarreservoir-for-a-metric).
+can be configured using the View API. For details see: [Change the
+ExemplarReservoir](../customizing-the-sdk/README.md#change-the-exemplarreservoir).
 
 ## References
