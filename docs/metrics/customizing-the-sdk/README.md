@@ -261,6 +261,11 @@ To set the [ExemplarReservoir](#exemplarreservoir) for an instrument, use the
   available in pre-release builds. For details see:
   [OTEL1004](../../diagnostics/experimental-apis/OTEL1004.md).
 
+> [!IMPORTANT]
+> Setting `MetricStreamConfiguration.ExemplarReservoirFactory` alone will NOT
+  enable `Exemplar`s for an instrument. An [ExemplarFilter](#exemplarfilter)
+  MUST also be used.
+
 ```csharp
 var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter("MyCompany.MyProduct.MyLibrary")
