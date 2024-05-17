@@ -640,14 +640,14 @@ want to solicit feedback from the community.
       The OTLP exporter uses a forked version of
       [OpenTelemetry.PersistentStorage.FileSystem](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem)
       to store telemetry data on disk during temporary network failures. Each
-      transient failure results in the creation of a file on disk that contains
-      the request data that was meant to be sent to the OTLP ingestion. A
-      background thread attempts to resend any offline stored telemetry every `60
-      seconds`. For more information on how these files are managed on disk,
-      refer to the [File
+      transient failure results in the creation of a single file on disk that
+      contains the request data that was attempted to be sent to the OTLP
+      ingestion. A background thread attempts to resend any offline stored
+      telemetry every `60 seconds`. For more information on how these files are
+      managed on disk, refer to the [File
       details](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem#file-details).
 
-    Added in **TBD** (Unreleased).
+      Added in **TBD** (Unreleased).
 
 * Logs
 
