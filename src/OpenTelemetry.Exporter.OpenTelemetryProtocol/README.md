@@ -632,19 +632,23 @@ want to solicit feedback from the community.
 
       Added in `1.8.0`.
 
-    * When set to `disk` along with setting
-    `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` to the path on
-    disk, it enables retries by storing telemetry on disk during transient
-    errors.
+    * When set to `disk`, it enables retries by storing telemetry on disk during
+    transient errors.  The default path where the telemetry is stored is
+    obtained by calling
+    [Path.GetTempPath()](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath)
+    or can be customized by setting
+    `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` environment
+    variable.
 
-      The OTLP exporter uses a forked version of
+      The OTLP exporter uses a forked version of the
       [OpenTelemetry.PersistentStorage.FileSystem](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem)
-      to store telemetry data on disk during temporary network failures. Each
-      transient failure results in the creation of a single file on disk that
-      contains the request data that was attempted to be sent to the OTLP
-      ingestion. A background thread attempts to resend any offline stored
-      telemetry every `60 seconds`. For more information on how these files are
-      managed on disk, refer to the [File
+      library to store telemetry data on disk during temporary network failures.
+      Each transient failure results in the creation of a single file at the
+      configured directory path on disk, which contains the request data in
+      serialized format that was attempted to be sent to the OTLP ingestion. A
+      background thread attempts to resend any offline stored telemetry every 60
+      seconds. For more information on how these files are managed on disk,
+      refer to the [File
       details](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem#file-details).
 
       Added in **TBD** (Unreleased).
