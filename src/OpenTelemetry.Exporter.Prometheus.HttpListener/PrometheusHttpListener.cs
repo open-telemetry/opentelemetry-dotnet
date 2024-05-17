@@ -153,7 +153,10 @@ internal sealed class PrometheusHttpListener : IDisposable
             try
             {
                 context.Response.Headers.Add("Server", string.Empty);
-                if (collectionResponse.View.Count > 0)
+
+                var dataView = openMetricsRequested ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
+
+                if (dataView.Count > 0)
                 {
                     context.Response.StatusCode = 200;
                     context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
@@ -161,7 +164,7 @@ internal sealed class PrometheusHttpListener : IDisposable
                         ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
                         : "text/plain; charset=utf-8; version=0.0.4";
 
-                    await context.Response.OutputStream.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
+                    await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count).ConfigureAwait(false);
                 }
                 else
                 {
