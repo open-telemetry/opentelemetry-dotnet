@@ -253,13 +253,13 @@ See [Program.cs](./Program.cs) for a complete example.
 
 #### Change the ExemplarReservoir
 
-To set the [ExemplarReservoir](#exemplarreservoir) for an instrument, use the
-`MetricStreamConfiguration.ExemplarReservoirFactory` property on the View API:
-
 > [!NOTE]
 > `MetricStreamConfiguration.ExemplarReservoirFactory` is an experimental API only
   available in pre-release builds. For details see:
   [OTEL1004](../../diagnostics/experimental-apis/OTEL1004.md).
+
+To set the [ExemplarReservoir](#exemplarreservoir) for an instrument, use the
+`MetricStreamConfiguration.ExemplarReservoirFactory` property on the View API:
 
 > [!IMPORTANT]
 > Setting `MetricStreamConfiguration.ExemplarReservoirFactory` alone will NOT
