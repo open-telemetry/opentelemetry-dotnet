@@ -248,6 +248,46 @@ public sealed class PrometheusExporterMiddlewareTests
             acceptHeader: "application/openmetrics-text; version=1.0.0");
     }
 
+    [Fact]
+    public async Task PrometheusExporterMiddlewareIntegration_CanServeOpenMetricsAndPlainFormats()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
+
+        var tags = new KeyValuePair<string, object>[]
+        {
+            new KeyValuePair<string, object>("key1", "value1"),
+            new KeyValuePair<string, object>("key2", "value2"),
+        };
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
+        var counter = meter.CreateCounter<double>("counter_double");
+        counter.Add(100.18D, tags);
+        counter.Add(0.99D, tags);
+
+        var testCases = new bool[] { true, false, true, true, false };
+
+        using var client = host.GetTestClient();
+
+        foreach (var testCase in testCases)
+        {
+            using var request = new HttpRequestMessage
+            {
+                Headers = { { "Accept", testCase ? "application/openmetrics-text" : "text/plain" } },
+                RequestUri = new Uri("/metrics", UriKind.Relative),
+                Method = HttpMethod.Get,
+            };
+            using var response = await client.SendAsync(request);
+            var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            await VerifyAsync(beginTimestamp, endTimestamp, response, testCase);
+        }
+
+        await host.StopAsync();
+    }
+
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
         string path,
         Action<IApplicationBuilder> configure,
@@ -260,26 +300,7 @@ public sealed class PrometheusExporterMiddlewareTests
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
 
-        using var host = await new HostBuilder()
-           .ConfigureWebHost(webBuilder => webBuilder
-               .UseTestServer()
-               .ConfigureServices(services =>
-               {
-                   if (registerMeterProvider)
-                   {
-                       services.AddOpenTelemetry().WithMetrics(builder => builder
-                           .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
-                           .AddMeter(MeterName)
-                           .AddPrometheusExporter(o =>
-                           {
-                               configureOptions?.Invoke(o);
-                           }));
-                   }
-
-                   configureServices?.Invoke(services);
-               })
-               .Configure(configure))
-           .StartAsync();
+        using var host = await StartTestHostAsync(configure, configureServices, registerMeterProvider, configureOptions);
 
         var tags = new KeyValuePair<string, object>[]
         {
@@ -311,41 +332,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         if (!skipMetrics)
         {
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.True(response.Content.Headers.Contains("Last-Modified"));
-
-            if (requestOpenMetrics)
-            {
-                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
-            }
-            else
-            {
-                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
-            }
-
-            string content = await response.Content.ReadAsStringAsync();
-
-            string expected = requestOpenMetrics
-                ? "# TYPE target info\n"
-                  + "# HELP target Target metadata\n"
-                  + "target_info{service_name='my_service',service_instance_id='id1'} 1\n"
-                  + "# TYPE otel_scope_info info\n"
-                  + "# HELP otel_scope_info Scope metadata\n"
-                  + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
-                  + "# TYPE counter_double_total counter\n"
-                  + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
-                  + "# EOF\n"
-                : "# TYPE counter_double_total counter\n"
-                  + $"counter_double_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
-                  + "# EOF\n";
-
-            var matches = Regex.Matches(content, ("^" + expected + "$").Replace('\'', '"'));
-
-            Assert.Single(matches);
-
-            var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty));
-
-            Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
+            await VerifyAsync(beginTimestamp, endTimestamp, response, requestOpenMetrics);
         }
         else
         {
@@ -355,6 +342,79 @@ public sealed class PrometheusExporterMiddlewareTests
         validateResponse?.Invoke(response);
 
         await host.StopAsync();
+    }
+
+    private static async Task VerifyAsync(long beginTimestamp, long endTimestamp, HttpResponseMessage response, bool requestOpenMetrics)
+    {
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Content.Headers.Contains("Last-Modified"));
+
+        if (requestOpenMetrics)
+        {
+            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
+        }
+        else
+        {
+            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+        }
+
+        string content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+
+        string expected = requestOpenMetrics
+            ? $$"""
+                    # TYPE target info
+                    # HELP target Target metadata
+                    target_info{service_name="my_service",service_instance_id="id1"} 1
+                    # TYPE otel_scope_info info
+                    # HELP otel_scope_info Scope metadata
+                    otel_scope_info{otel_scope_name="{{MeterName}}"} 1
+                    # TYPE counter_double_total counter
+                    counter_double_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101.17 (\d+\.\d{3})
+                    # EOF
+
+                    """.ReplaceLineEndings()
+            : $$"""
+                    # TYPE counter_double_total counter
+                    counter_double_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101.17 (\d+)
+                    # EOF
+
+                    """.ReplaceLineEndings();
+
+        var matches = Regex.Matches(content, "^" + expected + "$");
+
+        Assert.True(matches.Count == 1, content);
+
+        var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty));
+
+        Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp, $"{beginTimestamp} {timestamp} {endTimestamp}");
+    }
+
+    private static Task<IHost> StartTestHostAsync(
+        Action<IApplicationBuilder> configure,
+        Action<IServiceCollection> configureServices = null,
+        bool registerMeterProvider = true,
+        Action<PrometheusAspNetCoreOptions> configureOptions = null)
+    {
+        return new HostBuilder()
+            .ConfigureWebHost(webBuilder => webBuilder
+                .UseTestServer()
+                .ConfigureServices(services =>
+                {
+                    if (registerMeterProvider)
+                    {
+                        services.AddOpenTelemetry().WithMetrics(builder => builder
+                            .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
+                            .AddMeter(MeterName)
+                            .AddPrometheusExporter(o =>
+                            {
+                                configureOptions?.Invoke(o);
+                            }));
+                    }
+
+                    configureServices?.Invoke(services);
+                })
+                .Configure(configure))
+            .StartAsync();
     }
 }
 #endif
