@@ -239,7 +239,7 @@ within the maximum number of buckets defined by `MaxSize`. The default
 `MaxSize` is 160 buckets and the default `MaxScale` is 20.
 
 ```csharp
-    // Change the maximum number of buckets
+    // Change the maximum number of buckets for "MyHistogram"
     .AddView(
         instrumentName: "MyHistogram",
         new Base2ExponentialBucketHistogramConfiguration { MaxSize = 40 })
@@ -267,14 +267,10 @@ To set the [ExemplarReservoir](#exemplarreservoir) for an instrument, use the
   MUST also be used.
 
 ```csharp
-var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .AddMeter("MyCompany.MyProduct.MyLibrary")
     // Use MyCustomExemplarReservoir for "MyFruitCounter"
     .AddView(
         instrumentName: "MyFruitCounter",
         new MetricStreamConfiguration { ExemplarReservoirFactory = () => new MyCustomExemplarReservoir() })
-    .AddConsoleExporter()
-    .Build();
 ```
 
 ### Changing maximum Metric Streams
