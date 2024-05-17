@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs" Link="Includes\PropertyFetcher.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <TrimmerRootAssembly Include="OpenTelemetry.Api.ProviderBuilderExtensions" />
     <TrimmerRootAssembly Include="OpenTelemetry.Api" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Console" />
