@@ -251,6 +251,27 @@ by using Views.
 
 See [Program.cs](./Program.cs) for a complete example.
 
+#### Change the ExemplarReservoir
+
+To set the [ExemplarReservoir](#exemplarreservoir) for an instrument, use the
+`MetricStreamConfiguration.ExemplarReservoirFactory` property on the View API:
+
+> [!NOTE]
+> `MetricStreamConfiguration.ExemplarReservoirFactory` is an experimental API only
+  available in pre-release builds. For details see:
+  [OTEL1004](../../diagnostics/experimental-apis/OTEL1004.md).
+
+```csharp
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
+    // Use MyCustomExemplarReservoir for "MyFruitCounter"
+    .AddView(
+        instrumentName: "MyFruitCounter",
+        new MetricStreamConfiguration { ExemplarReservoirFactory = () => new MyCustomExemplarReservoir() })
+    .AddConsoleExporter()
+    .Build();
+```
+
 ### Changing maximum Metric Streams
 
 Every instrument results in the creation of a single Metric stream. With Views,
@@ -327,28 +348,6 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddView(
         instrumentName: "MyFruitCounter",
         new MetricStreamConfiguration { CardinalityLimit = 10 })
-    .AddConsoleExporter()
-    .Build();
-```
-
-### Changing the ExemplarReservoir for a Metric
-
-To set the [ExemplarReservoir](#exemplarreservoir) for an individual metric, use
-the `MetricStreamConfiguration.ExemplarReservoirFactory` property on the View
-API:
-
-> [!NOTE]
-> `MetricStreamConfiguration.ExemplarReservoirFactory` is an experimental API only
-  available in pre-release builds. For details see:
-  [OTEL1004](../../diagnostics/experimental-apis/OTEL1004.md).
-
-```csharp
-var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .AddMeter("MyCompany.MyProduct.MyLibrary")
-    // Use MyCustomExemplarReservoir for "MyFruitCounter"
-    .AddView(
-        instrumentName: "MyFruitCounter",
-        new MetricStreamConfiguration { ExemplarReservoirFactory = () => new MyCustomExemplarReservoir() })
     .AddConsoleExporter()
     .Build();
 ```
@@ -455,13 +454,12 @@ size (currently defaulting to 1) determines the maximum number of `Exemplar`s
 stored. Exponential histograms use a `SimpleFixedSizeExemplarReservoir` with a
 pool size equal to the number of buckets up to a max of `20`.
 
-See [Changing the ExemplarReservoir for a
-Metric](#changing-the-exemplarreservoir-for-a-metric) for details on how to use
-the View API to change `ExemplarReservoir`s for a Metric.
+See [Change the ExemplarReservoir](#change-the-exemplarreservoir) for details on
+how to use the View API to change `ExemplarReservoir`s for an instrument.
 
-See [Building your own exemplar
-reservoir](../extending-the-sdk/README.md#exemplarreservoir) for details on how
-to implement custom `ExemplarReservoir`s.
+See [Building your own
+ExemplarReservoir](../extending-the-sdk/README.md#exemplarreservoir) for details
+on how to implement custom `ExemplarReservoir`s.
 
 ### Instrumentation
 
