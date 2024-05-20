@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.9.0-alpha.1
+
+Released 2024-May-20
+
 * Fixed an issue with corrupted buffers when reading both OpenMetrics and
   plain text formats from Prometheus exporters.
   ([#5623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5623))
