@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.9.0-alpha.1
+
+Released 2024-May-20
+
 * **Breaking change:** Fix space character encoding from `+` to `%20`
   for baggage item values when propagating baggage as defined in
   [W3C Baggage propagation format specification](https://www.w3.org/TR/baggage/).

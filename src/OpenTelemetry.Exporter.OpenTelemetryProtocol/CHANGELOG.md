@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.9.0-alpha.1
+
+Released 2024-May-20
+
 * `User-Agent` header format changed from
   `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}+{Commit Hash}`
   to `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}`.
