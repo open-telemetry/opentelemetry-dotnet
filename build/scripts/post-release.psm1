@@ -28,7 +28,6 @@ function CreateDraftRelease {
 
       $changelogContent = Get-Content -Path "src/$packageName/CHANGELOG.md"
 
-      $headingWritten = $false
       $started = $false
       $content = ""
 
@@ -122,7 +121,7 @@ function CreateStableVersionUpdatePullRequest {
       throw 'git switch failure'
   }
 
-  (Get-Content  Directory.Packages.props) `
+  (Get-Content Directory.Packages.props) `
       -replace '<OTelLatestStableVer>.*<\/OTelLatestStableVer>', "<OTelLatestStableVer>$packageVersion</OTelLatestStableVer>" |
     Set-Content Directory.Packages.props
 
