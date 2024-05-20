@@ -239,7 +239,7 @@ within the maximum number of buckets defined by `MaxSize`. The default
 `MaxSize` is 160 buckets and the default `MaxScale` is 20.
 
 ```csharp
-    // Change the maximum number of buckets
+    // Change the maximum number of buckets for "MyHistogram"
     .AddView(
         instrumentName: "MyHistogram",
         new Base2ExponentialBucketHistogramConfiguration { MaxSize = 40 })
@@ -250,6 +250,28 @@ within the maximum number of buckets defined by `MaxSize`. The default
 by using Views.
 
 See [Program.cs](./Program.cs) for a complete example.
+
+#### Change the ExemplarReservoir
+
+> [!NOTE]
+> `MetricStreamConfiguration.ExemplarReservoirFactory` is an experimental API only
+  available in pre-release builds. For details see:
+  [OTEL1004](../../diagnostics/experimental-apis/OTEL1004.md).
+
+To set the [ExemplarReservoir](#exemplarreservoir) for an instrument, use the
+`MetricStreamConfiguration.ExemplarReservoirFactory` property on the View API:
+
+> [!IMPORTANT]
+> Setting `MetricStreamConfiguration.ExemplarReservoirFactory` alone will NOT
+  enable `Exemplar`s for an instrument. An [ExemplarFilter](#exemplarfilter)
+  MUST also be used.
+
+```csharp
+    // Use MyCustomExemplarReservoir for "MyFruitCounter"
+    .AddView(
+        instrumentName: "MyFruitCounter",
+        new MetricStreamConfiguration { ExemplarReservoirFactory = () => new MyCustomExemplarReservoir() })
+```
 
 ### Changing maximum Metric Streams
 
@@ -421,20 +443,24 @@ and is responsible for recording `Exemplar`s. The following are the default
 reservoirs:
 
 * `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
-Histograms with buckets, and it stores at most one exemplar per histogram
-bucket. The exemplar stored is the last measurement recorded - i.e. any new
+Histograms with buckets, and it stores at most one `Exemplar` per histogram
+bucket. The `Exemplar` stored is the last measurement recorded - i.e. any new
 measurement overwrites the previous one in that bucket.
 
 * `SimpleFixedSizeExemplarReservoir` is the default reservoir used for all
-metrics except Histograms with buckets. It has a fixed reservoir pool, and
+metrics except histograms with buckets. It has a fixed reservoir pool, and
 implements the equivalent of [naive
 reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
-size (currently defaulting to 1) determines the maximum number of exemplars
+size (currently defaulting to 1) determines the maximum number of `Exemplar`s
 stored. Exponential histograms use a `SimpleFixedSizeExemplarReservoir` with a
 pool size equal to the number of buckets up to a max of `20`.
 
-> [!NOTE]
-> Currently there is no ability to change or configure `ExemplarReservoir`.
+See [Change the ExemplarReservoir](#change-the-exemplarreservoir) for details on
+how to use the View API to change `ExemplarReservoir`s for an instrument.
+
+See [Building your own
+ExemplarReservoir](../extending-the-sdk/README.md#exemplarreservoir) for details
+on how to implement custom `ExemplarReservoir`s.
 
 ### Instrumentation
 
