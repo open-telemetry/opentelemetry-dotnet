@@ -1,13 +1,20 @@
 # Using Exemplars in OpenTelemetry .NET
 
-- [Install and run Jaeger](#install-and-run-jaeger)
-- [Install and run Prometheus](#install-and-run-prometheus)
-- [Install and configure Grafana](#install-and-configure-grafana)
-- [Export metrics and traces from the
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Table of Contents</summary>
+
+* [Install and run Jaeger](#install-and-run-jaeger)
+* [Install and run Prometheus](#install-and-run-prometheus)
+* [Install and configure Grafana](#install-and-configure-grafana)
+* [Export metrics and traces from the
   application](#export-metrics-and-traces-from-the-application)
-- [Use exemplars to navigate from metrics to
+* [Use exemplars to navigate from metrics to
   traces](#use-exemplars-to-navigate-from-metrics-to-traces)
-- [Learn more](#learn-more)
+* [Learn more](#learn-more)
+
+</details>
+<!-- markdownlint-enable MD033 -->
 
 Exemplars are example data points for aggregated data. They provide specific
 context to otherwise general aggregations. One common use case is to gain
@@ -16,13 +23,13 @@ supports Exemplars, it is only useful if the telemetry backend also supports the
 capabilities. This tutorial uses well known open-source backends to demonstrate
 the concept. The following components are involved:
 
-- [Program.cs](./Program.cs) - this application is instrumented with
+* [Program.cs](./Program.cs) - this application is instrumented with
   OpenTelemetry, it sends metrics to Prometheus, and traces to Jaeger.
-- [Prometheus](#install-and-run-prometheus) - Prometheus is used as the metrics
+* [Prometheus](#install-and-run-prometheus) - Prometheus is used as the metrics
   backend.
-- [Jaeger](#install-and-run-jaeger) - Jaeger is used as the distributed tracing
+* [Jaeger](#install-and-run-jaeger) - Jaeger is used as the distributed tracing
   backend.
-- [Grafana](#install-and-configure-grafana) - UI to query metrics from
+* [Grafana](#install-and-configure-grafana) - UI to query metrics from
   Prometheus, traces from Jaeger, and to navigate between metrics and traces
   using Exemplars.
 
@@ -146,11 +153,11 @@ exemplar](https://github.com/open-telemetry/opentelemetry-dotnet/assets/17327289
 
 ## Learn more
 
-- [Exemplar
+* [Exemplar
   specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar)
-- [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)
-- [Prometheus now supports OpenTelemetry
+* [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)
+* [Prometheus now supports OpenTelemetry
   Metrics](https://horovits.medium.com/prometheus-now-supports-opentelemetry-metrics-83f85878e46a)
-- [Jaeger Tracing](https://www.jaegertracing.io/)
-- [Grafana support for
+* [Jaeger Tracing](https://www.jaegertracing.io/)
+* [Grafana support for
   Prometheus](https://prometheus.io/docs/visualization/grafana/#creating-a-prometheus-graph)
