@@ -1,6 +1,5 @@
 # Using Exemplars in OpenTelemetry .NET
 
-<!-- markdownlint-disable MD033 -->
 <details>
 <summary>Table of Contents</summary>
 
@@ -14,7 +13,6 @@
 * [Learn more](#learn-more)
 
 </details>
-<!-- markdownlint-enable MD033 -->
 
 [Exemplars](../customizing-the-sdk/README.md#exemplars) are example data points
 for aggregated data. They provide specific context to otherwise general
