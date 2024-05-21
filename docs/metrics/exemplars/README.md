@@ -113,8 +113,17 @@ dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 ```
 
 Now copy the code from [Program.cs](./Program.cs) and run the application again.
-The application will start sending metrics (with exemplars) to Prometheus and
-traces to Jaeger.
+The application will start sending metrics to Prometheus and traces to Jaeger.
+
+The application is configured with trace-based exemplar filter, which enables
+the OpenTelemetry SDK to attach exemplars to metrics:
+
+```csharp
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    ...
+    .SetExemplarFilter(ExemplarFilterType.TraceBased)
+    ...
+```
 
 ## Use exemplars to navigate from metrics to traces
 

@@ -16,12 +16,12 @@ public class Program
 
     public static void Main()
     {
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("OpenTelemetry.Demo.Exemplar")
             .AddOtlpExporter()
             .Build();
 
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+        var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("OpenTelemetry.Demo.Exemplar")
             .SetExemplarFilter(ExemplarFilterType.TraceBased)
             .AddOtlpExporter((exporterOptions, metricReaderOptions) =>
