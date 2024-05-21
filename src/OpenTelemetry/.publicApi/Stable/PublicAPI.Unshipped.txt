@@ -1,3 +1,4 @@
+OpenTelemetry.Batch<T>.Batch(T! item) -> void
 OpenTelemetry.Metrics.Exemplar
 OpenTelemetry.Metrics.Exemplar.DoubleValue.get -> double
 OpenTelemetry.Metrics.Exemplar.Exemplar() -> void

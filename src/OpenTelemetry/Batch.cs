@@ -35,9 +35,13 @@ public readonly struct Batch<T> : IDisposable
         this.Count = this.targetCount = count;
     }
 
-    internal Batch(T item)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Batch{T}"/> struct.
+    /// </summary>
+    /// <param name="item">The item to store in the batch.</param>
+    public Batch(T item)
     {
-        Debug.Assert(item != null, $"{nameof(item)} was null.");
+        Guard.ThrowIfNull(item);
 
         this.item = item;
         this.Count = this.targetCount = 1;
