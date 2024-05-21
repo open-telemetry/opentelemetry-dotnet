@@ -1,6 +1,5 @@
 # OpenTelemetry .NET Logs
 
-<!-- markdownlint-disable MD033 -->
 <details>
 <summary>Table of Contents</summary>
 
@@ -15,7 +14,6 @@
 * [Log Redaction](#log-redaction)
 
 </details>
-<!-- markdownlint-enable MD033 -->
 
 ## Best Practices
 
