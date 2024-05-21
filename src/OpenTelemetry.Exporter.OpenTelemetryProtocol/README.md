@@ -6,7 +6,6 @@
 [The OTLP (OpenTelemetry Protocol) exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)
 implementation.
 
-<!-- markdownlint-disable MD033 -->
 <details>
 <summary>Table of Contents</summary>
 
@@ -27,7 +26,6 @@ implementation.
 * [Troubleshooting](#troubleshooting)
 
 </details>
-<!-- markdownlint-enable MD033 -->
 
 ## Prerequisite
 
