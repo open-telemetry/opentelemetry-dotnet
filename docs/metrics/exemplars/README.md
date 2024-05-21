@@ -144,6 +144,8 @@ next to the "trace_id" field to open the corresponding trace in Jaeger.
 
 ## Learn more
 
+- [Exemplar
+  specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar)
 - [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)
 - [Prometheus now supports OpenTelemetry
   Metrics](https://horovits.medium.com/prometheus-now-supports-opentelemetry-metrics-83f85878e46a)
