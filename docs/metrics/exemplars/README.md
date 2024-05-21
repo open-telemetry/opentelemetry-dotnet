@@ -22,7 +22,7 @@ the concept. The following components are involved:
   backend.
 - [Jaeger](#install-and-run-jaeger) - Jaeger is used as the distributed tracing
   backend.
-- [Grafana](#install-and-run-grafana) - UI to query metrics from
+- [Grafana](#install-and-configure-grafana) - UI to query metrics from
   Prometheus, traces from Jaeger, and to navigate between metrics and traces
   using Exemplars.
 
