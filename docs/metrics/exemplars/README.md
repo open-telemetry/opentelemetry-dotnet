@@ -133,6 +133,10 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     ...
 ```
 
+For more details about the `SetExemplarFilter` API see: [Customizing
+OpenTelemetry .NET SDK for Metrics >
+ExemplarFilter](../customizing-the-sdk/README.md#exemplarfilter).
+
 ## Use exemplars to navigate from metrics to traces
 
 Open Grafana, select Explore, and select Prometheus as the source. Select the
@@ -140,7 +144,7 @@ metric named `MyHistogram_bucket`, and plot the chart. Toggle on the "Exemplars"
 option from the UI and hit refresh.
 
 ![Enable
-Exemplars](https://github.com/open-telemetry/opentelemetry-dotnet/assets/17327289/3c2dab2f-7a0a-419f-88fe-b8010b4c69f8)
+Exemplars](https://github.com/open-telemetry/opentelemetry-dotnet/assets/17327289/bc461c6d-a0b9-49b7-a91d-94b07c3f417f)
 
 The Exemplars appear as special "diamond shaped dots" along with the metric
 charts in the UI. Select any exemplar to see the exemplar data, which includes
