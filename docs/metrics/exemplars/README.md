@@ -16,12 +16,13 @@
 </details>
 <!-- markdownlint-enable MD033 -->
 
-Exemplars are example data points for aggregated data. They provide specific
-context to otherwise general aggregations. One common use case is to gain
-ability to correlate metrics to traces (and logs). While OpenTelemetry .NET
-supports Exemplars, it is only useful if the telemetry backend also supports the
-capabilities. This tutorial uses well known open-source backends to demonstrate
-the concept. The following components are involved:
+[Exemplars](../customizing-the-sdk/README.md#exemplars) are example data points
+for aggregated data. They provide specific context to otherwise general
+aggregations. One common use case is to gain ability to correlate metrics to
+traces (and logs). While OpenTelemetry .NET supports Exemplars, it is only
+useful if the telemetry backend also supports the capabilities. This tutorial
+uses well known open-source backends to demonstrate the concept. The following
+components are involved:
 
 * [Program.cs](./Program.cs) - this application is instrumented with
   OpenTelemetry, it sends metrics to Prometheus, and traces to Jaeger.
