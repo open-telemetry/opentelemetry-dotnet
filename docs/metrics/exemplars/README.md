@@ -128,10 +128,11 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
 ## Use exemplars to navigate from metrics to traces
 
 Open Grafana, select Explore, and select Prometheus as the source. Select the
-metric named "MyFruitCounter_total", and plot the chart. Toggle on the
-"Exemplars" option from the UI and hit refresh.
+metric named `MyHistogram_bucket`, and plot the chart. Toggle on the "Exemplars"
+option from the UI and hit refresh.
 
-![Enable Exemplars](https://github.com/open-telemetry/opentelemetry-dotnet/assets/17327289/fc11fd4b-5601-4728-acdd-5129d75fbc04)
+![Enable
+Exemplars](https://github.com/open-telemetry/opentelemetry-dotnet/assets/17327289/3c2dab2f-7a0a-419f-88fe-b8010b4c69f8)
 
 The Exemplars appear as special "diamond shaped dots" along with the metric
 charts in the UI. Select any exemplar to see the exemplar data, which includes
@@ -140,7 +141,8 @@ context when the recording was done. The "trace_id" enables jumping to the
 tracing backed (Jaeger in this case). Click on the "Query with Jaeger" button
 next to the "trace_id" field to open the corresponding trace in Jaeger.
 
-![Navigate to trace with exemplar](https://user-images.githubusercontent.com/16979322/218629999-1d1cd6ba-2385-4683-975a-d4797df8361a.png)
+![Navigate to trace with
+exemplar](https://github.com/open-telemetry/opentelemetry-dotnet/assets/17327289/56bb5297-f744-41f3-bc35-8596392b8673)
 
 ## Learn more
 

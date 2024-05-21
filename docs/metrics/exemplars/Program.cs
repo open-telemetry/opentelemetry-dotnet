@@ -12,7 +12,7 @@ public class Program
 {
     private static readonly ActivitySource MyActivitySource = new("OpenTelemetry.Demo.Exemplar");
     private static readonly Meter MyMeter = new("OpenTelemetry.Demo.Exemplar");
-    private static readonly Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
+    private static readonly Histogram<double> MyHistogram = MyMeter.CreateHistogram<double>("MyHistogram");
 
     public static void Main()
     {
@@ -32,6 +32,8 @@ public class Program
             })
             .Build();
 
+        var random = new Random();
+
         Console.WriteLine("Press any key to exit");
 
         while (!Console.KeyAvailable)
@@ -46,13 +48,9 @@ public class Program
                     child?.SetTag("key3", "value3");
                     child?.SetTag("key4", "value4");
 
-                    MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
-                    MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
+                    MyHistogram.Record(random.NextDouble() * 100, new("tag1", "value1"), new("tag2", "value2"));
                 }
             }
-
-            MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
-            MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow"));
 
             Thread.Sleep(300);
         }
