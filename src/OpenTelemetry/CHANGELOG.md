@@ -4,7 +4,7 @@
 
 * Exposed a `public` constructor on `Batch<T>` which accepts a single instance
   of `T` to be contained in the batch.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5642))
 
 ## 1.9.0-alpha.1
 
