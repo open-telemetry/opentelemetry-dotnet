@@ -1,10 +1,15 @@
 # Getting Started with Jaeger
 
-- [Export traces from the application](#export-traces-from-the-application)
-  - [Check results in the console](#check-results-in-the-console)
-- [Collect and visualize traces using Jaeger](#collect-and-visualize-traces-using-jaeger)
-- [Final cleanup](#final-cleanup)
-- [Learn more](#learn-more)
+<details>
+<summary>Table of Contents</summary>
+
+* [Export traces from the application](#export-traces-from-the-application)
+  * [Check results in the console](#check-results-in-the-console)
+* [Collect and visualize traces using Jaeger](#collect-and-visualize-traces-using-jaeger)
+* [Final cleanup](#final-cleanup)
+* [Learn more](#learn-more)
+
+</details>
 
 ## Export traces from the application
 
@@ -178,6 +183,6 @@ BatchExportProcessor --> | Batch | OtlpExporter
 
 ## Learn more
 
-- [Jaeger Tracing](https://www.jaegertracing.io/)
-- [OTLP Exporter for OpenTelemetry
+* [Jaeger Tracing](https://www.jaegertracing.io/)
+* [OTLP Exporter for OpenTelemetry
   .NET](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
