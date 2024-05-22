@@ -5,7 +5,6 @@ using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-[ConcurrencyModes(ConcurrencyModes.Multithreaded | ConcurrencyModes.Reentrant)]
 internal class MyExporter : BaseExporter<LogRecord>
 {
     private readonly string name;

@@ -19,7 +19,7 @@ public enum ConcurrencyModes : byte
     | | | +----------- (reserved)
     | | +------------- (reserved)
     | +--------------- (reserved)
-    +----------------- Global
+    +----------------- (reserved)
     */
 
     /// <summary>
@@ -33,11 +33,4 @@ public enum ConcurrencyModes : byte
     /// multiple threads.
     /// </summary>
     Multithreaded = 0b10,
-
-    /// <summary>
-    /// Global, when combined with other flags, indicates that a per-instance
-    /// synchronization is insufficient, a global synchronization is required
-    /// across all instances of the component.
-    /// </summary>
-    Global = 0b10000000,
 }

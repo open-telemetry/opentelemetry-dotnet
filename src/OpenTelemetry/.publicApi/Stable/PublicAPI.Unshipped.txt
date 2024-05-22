@@ -1,5 +1,4 @@
 OpenTelemetry.ConcurrencyModes
-OpenTelemetry.ConcurrencyModes.Global = 128 -> OpenTelemetry.ConcurrencyModes
 OpenTelemetry.ConcurrencyModes.Multithreaded = 2 -> OpenTelemetry.ConcurrencyModes
 OpenTelemetry.ConcurrencyModes.Reentrant = 1 -> OpenTelemetry.ConcurrencyModes
 OpenTelemetry.ConcurrencyModesAttribute
