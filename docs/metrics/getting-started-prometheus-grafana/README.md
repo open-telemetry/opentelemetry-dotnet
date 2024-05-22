@@ -1,11 +1,16 @@
 # Getting Started with Prometheus and Grafana
 
-- [Export metrics from the application](#export-metrics-from-the-application)
-- [Collect metrics using Prometheus](#collect-metrics-using-prometheus)
-  - [Install and run Prometheus](#install-and-run-prometheus)
-  - [View results in Prometheus](#view-results-in-prometheus)
-- [Explore metrics using Grafana](#explore-metrics-using-grafana)
-- [Learn more](#learn-more)
+<details>
+<summary>Table of Contents</summary>
+
+* [Export metrics from the application](#export-metrics-from-the-application)
+* [Collect metrics using Prometheus](#collect-metrics-using-prometheus)
+  * [Install and run Prometheus](#install-and-run-prometheus)
+  * [View results in Prometheus](#view-results-in-prometheus)
+* [Explore metrics using Grafana](#explore-metrics-using-grafana)
+* [Learn more](#learn-more)
+
+</details>
 
 ## Export metrics from the application
 
@@ -140,8 +145,8 @@ UI](https://user-images.githubusercontent.com/17327289/151636769-138ecb4f-b44f-4
 
 ## Learn more
 
-- [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)
-- [Prometheus now supports OpenTelemetry
+* [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)
+* [Prometheus now supports OpenTelemetry
   Metrics](https://horovits.medium.com/prometheus-now-supports-opentelemetry-metrics-83f85878e46a)
-- [Grafana support for
+* [Grafana support for
   Prometheus](https://prometheus.io/docs/visualization/grafana/#creating-a-prometheus-graph)
