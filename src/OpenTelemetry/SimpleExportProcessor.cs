@@ -12,7 +12,7 @@ namespace OpenTelemetry;
 public abstract class SimpleExportProcessor<T> : BaseExportProcessor<T>
     where T : class
 {
-    private readonly object syncObject = new();
+    private readonly object syncObject;
     private readonly ConcurrencyModes supportedConcurrencyModes;
 
     /// <summary>
@@ -29,35 +29,39 @@ public abstract class SimpleExportProcessor<T> : BaseExportProcessor<T>
             var attr = (ConcurrencyModesAttribute)attributes[attributes.Length - 1];
             this.supportedConcurrencyModes = attr.Supported;
         }
+
+        if (!this.supportedConcurrencyModes.HasFlag(ConcurrencyModes.Multithreaded))
+        {
+            this.syncObject = new object();
+        }
     }
 
     /// <inheritdoc />
     protected override void OnExport(T data)
     {
-        if (this.supportedConcurrencyModes.HasFlag(ConcurrencyModes.Multithreaded))
+        if (this.syncObject is null)
         {
-            try
-            {
-                this.exporter.Export(new Batch<T>(data));
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnExport), ex);
-            }
-
-            return;
+            this.OnExportInternal(data);
         }
-
-        lock (this.syncObject)
+        else
         {
-            try
+            lock (this.syncObject)
             {
-                this.exporter.Export(new Batch<T>(data));
+                this.OnExportInternal(data);
             }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnExport), ex);
-            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void OnExportInternal(T data)
+    {
+        try
+        {
+            this.exporter.Export(new Batch<T>(data));
+        }
+        catch (Exception ex)
+        {
+            OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnExport), ex);
         }
     }
 }
