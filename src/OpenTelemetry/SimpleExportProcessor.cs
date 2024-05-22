@@ -13,7 +13,7 @@ namespace OpenTelemetry;
 public abstract class SimpleExportProcessor<T> : BaseExportProcessor<T>
     where T : class
 {
-    private readonly object syncObject;
+    private readonly object? syncObject;
     private readonly ConcurrencyModes supportedConcurrencyModes;
 
     /// <summary>
