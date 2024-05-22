@@ -26,7 +26,7 @@ public sealed class PrometheusMetricTests
     }
 
     [Fact]
-    public void SanitizeMetricName_RemoveUnsupportedChracters()
+    public void SanitizeMetricName_RemoveUnsupportedCharacters()
     {
         AssertSanitizeMetricName("metric_unit_$1000", "metric_unit_1000");
     }
@@ -116,13 +116,13 @@ public sealed class PrometheusMetricTests
     }
 
     [Fact]
-    public void Name_SpecialCaseGuage_AppendRatio()
+    public void Name_SpecialCaseGauge_AppendRatio()
     {
         AssertName("sample", "1", PrometheusType.Gauge, false, "sample_ratio");
     }
 
     [Fact]
-    public void Name_GuageWithUnit_NoAppendRatio()
+    public void Name_GaugeWithUnit_NoAppendRatio()
     {
         AssertName("sample", "unit", PrometheusType.Gauge, false, "sample_unit");
     }
@@ -205,6 +205,66 @@ public sealed class PrometheusMetricTests
         AssertName("2_metric_name", "By", PrometheusType.Summary, false, "_metric_name_bytes");
     }
 
+    [Fact]
+    public void OpenMetricsName_UnitAlreadyPresentInName_Appended()
+    {
+        AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Gauge, false, "db_bytes_written_bytes");
+    }
+
+    [Fact]
+    public void OpenMetricsName_SuffixedWithUnit_NotAppended()
+    {
+        AssertOpenMetricsName("db_written_bytes", "By", PrometheusType.Gauge, false, "db_written_bytes");
+    }
+
+    [Fact]
+    public void OpenMetricsName_Counter_AppendTotal()
+    {
+        AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Counter, false, "db_bytes_written_bytes_total");
+    }
+
+    [Fact]
+    public void OpenMetricsName_Counter_DisableSuffixTotal_AppendTotal()
+    {
+        AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Counter, true, "db_bytes_written_bytes_total");
+    }
+
+    [Fact]
+    public void OpenMetricsName_CounterSuffixedWithTotal_AppendUnitAndTotal()
+    {
+        AssertOpenMetricsName("db_bytes_written_total", "By", PrometheusType.Counter, false, "db_bytes_written_bytes_total");
+    }
+
+    [Fact]
+    public void OpenMetricsName_CounterSuffixedWithTotal_DisableSuffixTotal_AppendTotal()
+    {
+        AssertOpenMetricsName("db_bytes_written_total", "By", PrometheusType.Counter, false, "db_bytes_written_bytes_total");
+    }
+
+    [Fact]
+    public void OpenMetricsName_SpecialCaseGauge_AppendRatio()
+    {
+        AssertOpenMetricsName("sample", "1", PrometheusType.Gauge, false, "sample_ratio");
+    }
+
+    [Fact]
+    public void OpenMetricsMetadataName_Counter_NotAppendTotal()
+    {
+        AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, false, "db_bytes_written_bytes");
+    }
+
+    [Fact]
+    public void OpenMetricsMetadataName_Counter_DisableSuffixTotal_NotAppendTotal()
+    {
+        AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, true, "db_bytes_written_bytes");
+    }
+
+    [Fact]
+    public void OpenMetricsMetadataName_SpecialCaseGauge_AppendRatio()
+    {
+        AssertOpenMetricsMetadataName("sample", "1", PrometheusType.Gauge, false, "sample_ratio");
+    }
+
     private static void AssertName(
         string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters, string expected)
     {
@@ -216,5 +276,19 @@ public sealed class PrometheusMetricTests
     {
         var sanatizedName = PrometheusMetric.SanitizeMetricName(name);
         Assert.Equal(expected, sanatizedName);
+    }
+
+    private static void AssertOpenMetricsName(
+        string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters, string expected)
+    {
+        var prometheusMetric = new PrometheusMetric(name, unit, type, disableTotalNameSuffixForCounters);
+        Assert.Equal(expected, prometheusMetric.OpenMetricsName);
+    }
+
+    private static void AssertOpenMetricsMetadataName(
+        string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters, string expected)
+    {
+        var prometheusMetric = new PrometheusMetric(name, unit, type, disableTotalNameSuffixForCounters);
+        Assert.Equal(expected, prometheusMetric.OpenMetricsMetadataName);
     }
 }

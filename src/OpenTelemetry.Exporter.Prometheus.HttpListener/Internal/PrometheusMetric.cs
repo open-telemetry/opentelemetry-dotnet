@@ -27,6 +27,7 @@ internal sealed class PrometheusMetric
         // consecutive `_` characters MUST be replaced with a single `_` character.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L230-L233
         var sanitizedName = SanitizeMetricName(name);
+        var openMetricsName = SanitizeOpenMetricsName(sanitizedName);
 
         string sanitizedUnit = null;
         if (!string.IsNullOrEmpty(unit))
@@ -41,9 +42,30 @@ internal sealed class PrometheusMetric
             // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L242-L246
             if (!sanitizedName.Contains(sanitizedUnit))
             {
-                sanitizedName = sanitizedName + "_" + sanitizedUnit;
+                sanitizedName += $"_{sanitizedUnit}";
+            }
+
+            // OpenMetrics name MUST be suffixed with '_{unit}', regardless of whether the unit name appears within the text.
+            // Note that this may change in the future, however for the moment Prometheus will fail to read the metric using
+            // OpenMetrics format unless the suffix matches the unit.
+            // https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#unit
+            if (!openMetricsName.EndsWith(sanitizedUnit))
+            {
+                openMetricsName += $"_{sanitizedUnit}";
             }
         }
+
+        // Special case: Converting "1" to "ratio".
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L239
+        if (type == PrometheusType.Gauge && unit == "1" && !sanitizedName.Contains("ratio"))
+        {
+            sanitizedName += "_ratio";
+            openMetricsName += "_ratio";
+        }
+
+        // For TYPE, HELP and UNIT declarations for counters, the suffix '_total' is omitted in OpenMetrics format.
+        // https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#counter-1
+        this.OpenMetricsMetadataName = openMetricsName;
 
         // If the metric name for monotonic Sum metric points does not end in a suffix of `_total` a suffix of `_total` MUST be added by default, otherwise the name MUST remain unchanged.
         // Exporters SHOULD provide a configuration option to disable the addition of `_total` suffixes.
@@ -53,19 +75,24 @@ internal sealed class PrometheusMetric
             sanitizedName += "_total";
         }
 
-        // Special case: Converting "1" to "ratio".
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L239
-        if (type == PrometheusType.Gauge && unit == "1" && !sanitizedName.Contains("ratio"))
+        // For counters requested using OpenMetrics format, the MetricFamily name MUST be suffixed with '_total', regardless of the setting to disable the 'total' suffix.
+        // https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#counter-1
+        if (type == PrometheusType.Counter && !openMetricsName.EndsWith("_total"))
         {
-            sanitizedName += "_ratio";
+            openMetricsName += "_total";
         }
 
         this.Name = sanitizedName;
+        this.OpenMetricsName = openMetricsName;
         this.Unit = sanitizedUnit;
         this.Type = type;
     }
 
     public string Name { get; }
+
+    public string OpenMetricsName { get; }
+
+    public string OpenMetricsMetadataName { get; }
 
     public string Unit { get; }
 
@@ -157,6 +184,16 @@ internal sealed class PrometheusMetric
 
         sb.Append(unit, lastWriteIndex, unit.Length - lastWriteIndex);
         return sb.ToString();
+    }
+
+    private static string SanitizeOpenMetricsName(string metricName)
+    {
+        if (metricName.EndsWith("_total"))
+        {
+            return metricName.Substring(0, metricName.Length - 6);
+        }
+
+        return metricName;
     }
 
     private static string GetUnit(string unit)

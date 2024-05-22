@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Fixed issue with OpenMetrics counter suffixes for Prometheus
+  ([#5623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5623))
+
 ## 1.9.0-alpha.1
 
 Released 2024-May-20

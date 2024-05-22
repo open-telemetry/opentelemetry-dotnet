@@ -264,7 +264,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
-        var counter = meter.CreateCounter<double>("counter_double");
+        var counter = meter.CreateCounter<double>("counter_double", unit: "By");
         counter.Add(100.18D, tags);
         counter.Add(0.99D, tags);
 
@@ -312,7 +312,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
-        var counter = meter.CreateCounter<double>("counter_double");
+        var counter = meter.CreateCounter<double>("counter_double", unit: "By");
         if (!skipMetrics)
         {
             counter.Add(100.18D, tags);
@@ -368,14 +368,16 @@ public sealed class PrometheusExporterMiddlewareTests
                     # TYPE otel_scope_info info
                     # HELP otel_scope_info Scope metadata
                     otel_scope_info{otel_scope_name="{{MeterName}}"} 1
-                    # TYPE counter_double_total counter
-                    counter_double_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101.17 (\d+\.\d{3})
+                    # TYPE counter_double_bytes counter
+                    # UNIT counter_double_bytes bytes
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101.17 (\d+\.\d{3})
                     # EOF
 
                     """.ReplaceLineEndings()
             : $$"""
-                    # TYPE counter_double_total counter
-                    counter_double_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101.17 (\d+)
+                    # TYPE counter_double_bytes_total counter
+                    # UNIT counter_double_bytes_total bytes
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101.17 (\d+)
                     # EOF
 
                     """.ReplaceLineEndings();
