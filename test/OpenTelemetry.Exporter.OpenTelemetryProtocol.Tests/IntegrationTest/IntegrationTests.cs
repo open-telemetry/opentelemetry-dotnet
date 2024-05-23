@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Logs;
@@ -235,7 +234,7 @@ public sealed class IntegrationTests : IDisposable
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder
-                .AddOpenTelemetry(options => options
+                .UseOpenTelemetry(logging => logging
                     .AddProcessor(sp =>
                         OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
                             sp,

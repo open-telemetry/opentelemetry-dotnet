@@ -13,13 +13,14 @@ var builder = WebApplication.CreateBuilder(args);
 // clear these providers.
 builder.Logging.ClearProviders();
 
-builder.Logging.AddOpenTelemetry(logging =>
+builder.Logging.UseOpenTelemetry(logging =>
 {
     var resourceBuilder = ResourceBuilder
         .CreateDefault()
         .AddService(builder.Environment.ApplicationName);
 
-    logging.SetResourceBuilder(resourceBuilder)
+    logging
+        .SetResourceBuilder(resourceBuilder)
 
         // ConsoleExporter is used for demo purpose only.
         // In production environment, ConsoleExporter should be replaced with other exporters (e.g. OTLP Exporter).

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -31,9 +32,9 @@ public class Program
 
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
+            builder.UseOpenTelemetry(logging =>
             {
-                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddDetector(
+                logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddDetector(
                     new MyResourceDetector()));
             });
         });

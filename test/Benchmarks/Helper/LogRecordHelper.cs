@@ -12,9 +12,9 @@ internal class LogRecordHelper
     {
         var items = new List<LogRecord>(1);
         using var factory = LoggerFactory.Create(builder => builder
-            .AddOpenTelemetry(loggerOptions =>
+            .UseOpenTelemetry(logging =>
             {
-                loggerOptions.AddInMemoryExporter(items);
+                logging.AddInMemoryExporter(items);
             }));
 
         var logger = factory.CreateLogger("TestLogger");

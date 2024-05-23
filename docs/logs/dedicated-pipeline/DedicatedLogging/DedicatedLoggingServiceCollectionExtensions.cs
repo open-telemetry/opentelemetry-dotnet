@@ -11,7 +11,7 @@ public static class DedicatedLoggingServiceCollectionExtensions
     public static IServiceCollection AddDedicatedLogging(
         this IServiceCollection services,
         IConfiguration configuration,
-        Action<OpenTelemetryLoggerOptions> configureOpenTelemetry)
+        Action<LoggerProviderBuilder> configureOpenTelemetry)
     {
         ArgumentNullException.ThrowIfNull(configureOpenTelemetry);
 
@@ -21,7 +21,7 @@ public static class DedicatedLoggingServiceCollectionExtensions
             {
                 builder.AddConfiguration(configuration);
 
-                builder.AddOpenTelemetry(configureOpenTelemetry);
+                builder.UseOpenTelemetry(configureOpenTelemetry);
             });
 
             return new DedicatedLoggerFactory(loggerFactory);

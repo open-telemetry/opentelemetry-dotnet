@@ -50,14 +50,14 @@ public class LogBenchmarks
 
         this.loggerFactoryWithOneProcessor = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options => options
+            builder.UseOpenTelemetry(logging => logging
                 .AddProcessor(new DummyLogProcessor()));
         });
         this.loggerWithOneProcessor = this.loggerFactoryWithOneProcessor.CreateLogger<LogBenchmarks>();
 
         this.loggerFactoryWithTwoProcessor = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options => options
+            builder.UseOpenTelemetry(logging => logging
                 .AddProcessor(new DummyLogProcessor())
                 .AddProcessor(new DummyLogProcessor()));
         });
@@ -65,7 +65,7 @@ public class LogBenchmarks
 
         this.loggerFactoryWithThreeProcessor = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options => options
+            builder.UseOpenTelemetry(logging => logging
                 .AddProcessor(new DummyLogProcessor())
                 .AddProcessor(new DummyLogProcessor())
                 .AddProcessor(new DummyLogProcessor()));

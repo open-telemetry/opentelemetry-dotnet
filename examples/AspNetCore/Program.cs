@@ -127,25 +127,25 @@ appBuilder.Services.AddOpenTelemetry()
 appBuilder.Logging.ClearProviders();
 
 // Configure OpenTelemetry Logging.
-appBuilder.Logging.AddOpenTelemetry(options =>
+appBuilder.Logging.UseOpenTelemetry(builder =>
 {
     // Note: See appsettings.json Logging:OpenTelemetry section for configuration.
 
     var resourceBuilder = ResourceBuilder.CreateDefault();
     configureResource(resourceBuilder);
-    options.SetResourceBuilder(resourceBuilder);
+    builder.SetResourceBuilder(resourceBuilder);
 
     switch (logExporter)
     {
         case "otlp":
-            options.AddOtlpExporter(otlpOptions =>
+            builder.AddOtlpExporter(otlpOptions =>
             {
                 // Use IConfiguration directly for Otlp exporter endpoint option.
                 otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317")!);
             });
             break;
         default:
-            options.AddConsoleExporter();
+            builder.AddConsoleExporter();
             break;
     }
 });

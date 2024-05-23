@@ -3,7 +3,6 @@
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -111,46 +110,32 @@ public class OtlpLogExporterTests
     [Fact]
     public void AddOtlpExporterSetsDefaultBatchExportProcessor()
     {
-        var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .AddOtlpExporter()
             .Build();
 
-        CheckProcessorDefaults();
+        var loggerProviderSdk = loggerProvider as LoggerProviderSdk;
+        Assert.NotNull(loggerProviderSdk);
 
-        loggerProvider.Dispose();
+        var batchProcessor = loggerProviderSdk.Processor as BatchLogRecordExportProcessor;
+        Assert.NotNull(batchProcessor);
 
-        void CheckProcessorDefaults()
-        {
-            var bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
-
-            var processor = typeof(BaseProcessor<LogRecord>)
-                .Assembly
-                .GetType("OpenTelemetry.Logs.LoggerProviderSdk")
-                .GetProperty("Processor", bindingFlags)
-                .GetValue(loggerProvider) as BatchExportProcessor<LogRecord>;
-
-            Assert.NotNull(processor);
-
-            var scheduledDelayMilliseconds = typeof(BatchExportProcessor<LogRecord>)
-                .GetField("scheduledDelayMilliseconds", bindingFlags)
-                .GetValue(processor);
-
-            Assert.Equal(5000, scheduledDelayMilliseconds);
-        }
+        Assert.Equal(BatchLogRecordExportProcessor.DefaultScheduledDelayMilliseconds, batchProcessor.ScheduledDelayMilliseconds);
+        Assert.Equal(BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds, batchProcessor.ExporterTimeoutMilliseconds);
+        Assert.Equal(BatchLogRecordExportProcessor.DefaultMaxExportBatchSize, batchProcessor.MaxExportBatchSize);
     }
 
-    [Fact]
-    public void AddOtlpLogExporterReceivesAttributesWithParseStateValueSetToFalse()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AddOtlpLogExporterReceivesAttributesWithParseStateValueSetToFalse(bool callUseOpenTelemetry)
     {
         bool optionsValidated = false;
 
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder
-                .AddOpenTelemetry(options => options
-                    .AddInMemoryExporter(logRecords)
-                    .AddOtlpExporter());
+            ConfigureOtlpExporter(builder, callUseOpenTelemetry, logRecords: logRecords);
 
             builder.Services.Configure<OpenTelemetryLoggerOptions>(o =>
             {
@@ -172,21 +157,20 @@ public class OtlpLogExporterTests
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void AddOtlpLogExporterParseStateValueCanBeTurnedOff(bool parseState)
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    public void AddOtlpLogExporterParseStateValueCanBeTurnedOff(bool parseState, bool callUseOpenTelemetry)
     {
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder
-                .AddOpenTelemetry(options =>
-                {
-                    options.ParseStateValues = parseState;
-                    options
-                        .AddInMemoryExporter(logRecords)
-                        .AddOtlpExporter();
-                });
+            ConfigureOtlpExporter(
+                builder,
+                callUseOpenTelemetry,
+                configureOptions: o => o.ParseStateValues = parseState,
+                logRecords: logRecords);
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
@@ -215,17 +199,19 @@ public class OtlpLogExporterTests
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void AddOtlpLogExporterParseStateValueCanBeTurnedOffHosting(bool parseState)
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    public void AddOtlpLogExporterParseStateValueCanBeTurnedOffHosting(bool parseState, bool callUseOpenTelemetry)
     {
         var logRecords = new List<LogRecord>();
 
         var hostBuilder = new HostBuilder();
-        hostBuilder.ConfigureLogging(logging => logging
-            .AddOpenTelemetry(options => options
-                .AddInMemoryExporter(logRecords)
-                .AddOtlpExporter()));
+        hostBuilder.ConfigureLogging(logging =>
+        {
+            ConfigureOtlpExporter(logging, callUseOpenTelemetry, logRecords: logRecords);
+        });
 
         hostBuilder.ConfigureServices(services =>
         services.Configure<OpenTelemetryLoggerOptions>(options => options.ParseStateValues = parseState));
@@ -263,12 +249,13 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeFormattedMessage = true;
-                options.ParseStateValues = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options =>
+                {
+                    options.IncludeFormattedMessage = true;
+                    options.ParseStateValues = true;
+                });
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
@@ -308,12 +295,13 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeFormattedMessage = true;
-                options.ParseStateValues = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options =>
+                {
+                    options.IncludeFormattedMessage = true;
+                    options.ParseStateValues = true;
+                });
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
@@ -377,10 +365,7 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(logging => logging.AddInMemoryExporter(logRecords));
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
@@ -400,10 +385,7 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(logging => logging.AddInMemoryExporter(logRecords));
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
@@ -426,10 +408,7 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(logging => logging.AddInMemoryExporter(logRecords));
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
@@ -466,12 +445,11 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddInMemoryExporter(logRecords);
-                options.IncludeFormattedMessage = true;
-            })
-            .AddFilter("CheckToOtlpLogRecordSeverityLevelAndText", LogLevel.Trace);
+            builder
+                .UseOpenTelemetry(
+                    logging => logging.AddInMemoryExporter(logRecords),
+                    options => options.IncludeFormattedMessage = true)
+                .AddFilter("CheckToOtlpLogRecordSeverityLevelAndText", LogLevel.Trace);
         });
 
         var logger = loggerFactory.CreateLogger("CheckToOtlpLogRecordSeverityLevelAndText");
@@ -519,12 +497,13 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddInMemoryExporter(logRecords);
-                options.IncludeFormattedMessage = includeFormattedMessage;
-                options.ParseStateValues = true;
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options =>
+                {
+                    options.IncludeFormattedMessage = includeFormattedMessage;
+                    options.ParseStateValues = true;
+                });
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
@@ -642,10 +621,7 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(logging => logging.AddInMemoryExporter(logRecords));
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
@@ -683,11 +659,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.ParseStateValues = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.ParseStateValues = true);
         });
 
         var logger = loggerFactory.CreateLogger(string.Empty);
@@ -789,11 +763,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = false;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = false);
         });
         var logger = loggerFactory.CreateLogger("Some category");
 
@@ -826,11 +798,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -866,11 +836,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -918,11 +886,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -958,11 +924,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -998,11 +962,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -1035,11 +997,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -1071,11 +1031,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -1102,11 +1060,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -1141,11 +1097,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -1180,11 +1134,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -1223,11 +1175,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -1265,11 +1215,9 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddInMemoryExporter(logRecords);
-            });
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
         });
         var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
@@ -1303,56 +1251,66 @@ public class OtlpLogExporterTests
         Assert.Contains(scopeValue2, allScopeValues);
     }
 
-    [Fact]
-    public void AddOtlpLogExporterDefaultOptionsTest()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void AddOtlpLogExporterDefaultOptionsTest(bool callUseOpenTelemetry)
     {
-        var options = new OpenTelemetryLoggerOptions();
+        var services = new ServiceCollection();
+        services.AddLogging(builder =>
+        {
+            ConfigureOtlpExporter(builder, callUseOpenTelemetry);
+        });
 
-        options.AddOtlpExporter();
+        using var sp = services.BuildServiceProvider();
 
-        var provider = new OpenTelemetryLoggerProvider(new TestOptionsMonitor<OpenTelemetryLoggerOptions>(options));
+        sp.GetRequiredService<ILoggerFactory>();
 
-        var processor = GetProcessor(provider);
+        var provider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+        Assert.NotNull(provider);
 
-        Assert.NotNull(processor);
-
-        var batchProcesor = processor as BatchLogRecordExportProcessor;
-
+        var batchProcesor = provider.Processor as BatchLogRecordExportProcessor;
         Assert.NotNull(batchProcesor);
 
-        var batchProcessorType = typeof(BatchExportProcessor<LogRecord>);
-
-        Assert.Equal(5000, batchProcessorType.GetField("scheduledDelayMilliseconds", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(batchProcesor));
+        Assert.Equal(BatchLogRecordExportProcessor.DefaultScheduledDelayMilliseconds, batchProcesor.ScheduledDelayMilliseconds);
     }
 
     [Theory]
-    [InlineData(ExportProcessorType.Simple)]
-    [InlineData(ExportProcessorType.Batch)]
-    public void AddOtlpLogExporterLogRecordProcessorOptionsTest(ExportProcessorType processorType)
+    [InlineData(ExportProcessorType.Simple, false)]
+    [InlineData(ExportProcessorType.Batch, false)]
+    [InlineData(ExportProcessorType.Simple, true)]
+    [InlineData(ExportProcessorType.Batch, true)]
+    public void AddOtlpLogExporterLogRecordProcessorOptionsTest(ExportProcessorType processorType, bool callUseOpenTelemetry)
     {
-        var options = new OpenTelemetryLoggerOptions();
-
-        options.AddOtlpExporter((o, l) =>
+        var services = new ServiceCollection();
+        services.AddLogging(builder =>
         {
-            l.ExportProcessorType = processorType;
-            l.BatchExportProcessorOptions = new BatchExportLogRecordProcessorOptions() { ScheduledDelayMilliseconds = 1000 };
+            ConfigureOtlpExporter(
+                builder,
+                callUseOpenTelemetry,
+                configureExporterAndProcessor: (e, p) =>
+                {
+                    p.ExportProcessorType = processorType;
+                    p.BatchExportProcessorOptions = new BatchExportLogRecordProcessorOptions() { ScheduledDelayMilliseconds = 1000 };
+                });
         });
 
-        var provider = new OpenTelemetryLoggerProvider(new TestOptionsMonitor<OpenTelemetryLoggerOptions>(options));
+        using var sp = services.BuildServiceProvider();
 
-        var processor = GetProcessor(provider);
+        sp.GetRequiredService<ILoggerFactory>();
 
+        var provider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+        Assert.NotNull(provider);
+
+        var processor = provider.Processor;
         Assert.NotNull(processor);
 
         if (processorType == ExportProcessorType.Batch)
         {
             var batchProcesor = processor as BatchLogRecordExportProcessor;
-
             Assert.NotNull(batchProcesor);
 
-            var batchProcessorType = typeof(BatchExportProcessor<LogRecord>);
-
-            Assert.Equal(1000, batchProcessorType.GetField("scheduledDelayMilliseconds", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(batchProcesor));
+            Assert.Equal(1000, batchProcesor.ScheduledDelayMilliseconds);
         }
         else
         {
@@ -1368,9 +1326,7 @@ public class OtlpLogExporterTests
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder
-                .AddOpenTelemetry(options => options
-                    .AddInMemoryExporter(logRecords));
+            builder.UseOpenTelemetry(logging => logging.AddInMemoryExporter(logRecords));
         });
 
         var logger1 = loggerFactory.CreateLogger("OtlpLogExporterTests-A");
@@ -1421,9 +1377,11 @@ public class OtlpLogExporterTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("logging")]
-    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggerFactoryCreate(string optionsName)
+    [InlineData(null, false)]
+    [InlineData("logging", false)]
+    [InlineData(null, true)]
+    [InlineData("logging", true)]
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggerFactoryCreate(string optionsName, bool callUseOpenTelemetry)
     {
         RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
             optionsName,
@@ -1433,7 +1391,10 @@ public class OtlpLogExporterTests
                 {
                     configure(logging.Services);
 
-                    logging.AddOpenTelemetry(o => o.AddOtlpExporter(optionsName, configure: null));
+                    ConfigureOtlpExporter(
+                        logging,
+                        callUseOpenTelemetry,
+                        name: optionsName);
                 });
 
                 return (factory, factory);
@@ -1441,9 +1402,11 @@ public class OtlpLogExporterTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("logging")]
-    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggingBuilder(string optionsName)
+    [InlineData(null, false)]
+    [InlineData("logging", false)]
+    [InlineData(null, true)]
+    [InlineData("logging", true)]
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggingBuilder(string optionsName, bool callUseOpenTelemetry)
     {
         RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
             optionsName,
@@ -1454,8 +1417,10 @@ public class OtlpLogExporterTests
                 configure(services);
 
                 services.AddLogging(
-                    logging => logging.AddOpenTelemetry(o =>
-                        o.AddOtlpExporter(optionsName, configure: null)));
+                    logging => ConfigureOtlpExporter(
+                        logging,
+                        callUseOpenTelemetry,
+                        name: optionsName));
 
                 var sp = services.BuildServiceProvider();
 
@@ -1582,11 +1547,62 @@ public class OtlpLogExporterTests
         return record.Attributes.FirstOrDefault(att => att.Key == key);
     }
 
-    private static BaseProcessor<LogRecord> GetProcessor(OpenTelemetryLoggerProvider provider)
+    private static void ConfigureOtlpExporter(
+        ILoggingBuilder builder,
+        bool callUseOpenTelemetry,
+        string name = null,
+        Action<OtlpExporterOptions> configureExporter = null,
+        Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor = null,
+        Action<OpenTelemetryLoggerOptions> configureOptions = null,
+        List<LogRecord> logRecords = null)
     {
-        var sdkProvider = typeof(OpenTelemetryLoggerProvider).GetField("Provider", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(provider);
+        if (callUseOpenTelemetry)
+        {
+            builder.UseOpenTelemetry(
+                logging =>
+                {
+                    if (configureExporterAndProcessor != null)
+                    {
+                        logging.AddOtlpExporter(name, configureExporterAndProcessor);
+                    }
+                    else
+                    {
+                        logging.AddOtlpExporter(name, configureExporter);
+                    }
 
-        return (BaseProcessor<LogRecord>)sdkProvider.GetType().GetProperty("Processor", BindingFlags.Instance | BindingFlags.Public).GetMethod.Invoke(sdkProvider, null);
+                    if (logRecords != null)
+                    {
+                        logging.AddInMemoryExporter(logRecords);
+                    }
+                },
+                options =>
+                {
+                    configureOptions?.Invoke(options);
+                });
+        }
+        else
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            builder.AddOpenTelemetry(options =>
+            {
+                configureOptions?.Invoke(options);
+
+                if (configureExporterAndProcessor != null)
+                {
+                    options.AddOtlpExporter(name, configureExporterAndProcessor);
+                }
+                else
+                {
+                    options.AddOtlpExporter(name, configureExporter);
+                }
+
+                if (logRecords != null)
+                {
+                    options.AddInMemoryExporter(logRecords);
+                }
+            });
+#pragma warning restore CS0618 // Type or member is obsolete
+        }
     }
 
     private sealed class TestOptionsMonitor<T> : IOptionsMonitor<T>

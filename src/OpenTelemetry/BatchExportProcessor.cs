@@ -20,10 +20,10 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     internal const int DefaultMaxExportBatchSize = 512;
 
     internal readonly int MaxExportBatchSize;
+    internal readonly int ScheduledDelayMilliseconds;
+    internal readonly int ExporterTimeoutMilliseconds;
 
     private readonly CircularBuffer<T> circularBuffer;
-    private readonly int scheduledDelayMilliseconds;
-    private readonly int exporterTimeoutMilliseconds;
     private readonly Thread exporterThread;
     private readonly AutoResetEvent exportTrigger = new(false);
     private readonly ManualResetEvent dataExportedNotification = new(false);
@@ -54,8 +54,8 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         Guard.ThrowIfOutOfRange(exporterTimeoutMilliseconds, min: 0);
 
         this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
-        this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
-        this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
+        this.ScheduledDelayMilliseconds = scheduledDelayMilliseconds;
+        this.ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
         this.MaxExportBatchSize = maxExportBatchSize;
         this.exporterThread = new Thread(this.ExporterProc)
         {
@@ -252,7 +252,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
             {
                 try
                 {
-                    WaitHandle.WaitAny(triggers, this.scheduledDelayMilliseconds);
+                    WaitHandle.WaitAny(triggers, this.ScheduledDelayMilliseconds);
                 }
                 catch (ObjectDisposedException)
                 {

@@ -3,6 +3,7 @@
 
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using OpenTelemetry.Logs;
 
 namespace ExtendingTheSdk;
 
@@ -11,14 +12,13 @@ public class Program
     public static void Main()
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddProcessor(new MyProcessor("ProcessorA"))
-                       .AddProcessor(new MyProcessor("ProcessorB"))
-                       .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
-                       .AddMyExporter();
-            }));
+            builder.UseOpenTelemetry(
+                logging => logging
+                    .AddProcessor(new MyProcessor("ProcessorA"))
+                    .AddProcessor(new MyProcessor("ProcessorB"))
+                    .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
+                    .AddMyExporter(),
+                options => options.IncludeScopes = true));
 
         var logger = loggerFactory.CreateLogger<Program>();
 

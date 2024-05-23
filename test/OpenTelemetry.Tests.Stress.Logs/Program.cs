@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Tests.Stress;
 
@@ -23,9 +24,9 @@ public static class Program
         {
             this.loggerFactory = LoggerFactory.Create(builder =>
             {
-                builder.AddOpenTelemetry(options =>
+                builder.UseOpenTelemetry(logging =>
                 {
-                    options.AddProcessor(new DummyProcessor());
+                    logging.AddProcessor(new DummyProcessor());
                 });
             });
 

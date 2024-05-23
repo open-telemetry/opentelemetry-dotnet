@@ -8,10 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 
-builder.Logging.AddOpenTelemetry(options =>
+builder.Logging.UseOpenTelemetry(builder =>
 {
     // Set up primary pipeline for common app logs
-    options.AddConsoleExporter();
+    builder.AddConsoleExporter();
 });
 
 builder.Services.AddDedicatedLogging(

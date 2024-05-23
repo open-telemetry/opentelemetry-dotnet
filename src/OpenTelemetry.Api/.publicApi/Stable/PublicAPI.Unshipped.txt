@@ -1,0 +1,7 @@
+abstract OpenTelemetry.Logs.LoggerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Logs.LoggerProviderBuilder!
+OpenTelemetry.Logs.IDeferredLoggerProviderBuilder
+OpenTelemetry.Logs.IDeferredLoggerProviderBuilder.Configure(System.Action<System.IServiceProvider!, OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.Logs.LoggerProviderBuilder!
+OpenTelemetry.Logs.LoggerProvider
+OpenTelemetry.Logs.LoggerProvider.LoggerProvider() -> void
+OpenTelemetry.Logs.LoggerProviderBuilder
+OpenTelemetry.Logs.LoggerProviderBuilder.LoggerProviderBuilder() -> void

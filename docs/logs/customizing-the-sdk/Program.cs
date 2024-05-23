@@ -7,14 +7,15 @@ using OpenTelemetry.Resources;
 
 var loggerFactory = LoggerFactory.Create(builder =>
 {
-    builder.AddOpenTelemetry(logging =>
-    {
-        logging.IncludeScopes = true;
-        logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
-            serviceName: "MyService",
-            serviceVersion: "1.0.0"));
-        logging.AddConsoleExporter();
-    });
+    builder.UseOpenTelemetry(
+        logging =>
+        {
+            logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                serviceName: "MyService",
+                serviceVersion: "1.0.0"));
+            logging.AddConsoleExporter();
+        },
+        options => options.IncludeScopes = true);
 });
 
 var logger = loggerFactory.CreateLogger<Program>();
