@@ -84,20 +84,35 @@ public class BaggagePropagator : TextMapPropagator
         if (e.MoveNext() == true)
         {
             int itemCount = 0;
-            StringBuilder baggage = new StringBuilder();
+            StringBuilder baggage = null;
             do
             {
                 KeyValuePair<string, string> item = e.Current;
-                if (string.IsNullOrEmpty(item.Value))
+
+                if (!ValidateKey(item.Key))
                 {
                     continue;
                 }
 
-                baggage.Append(Uri.EscapeDataString(item.Key)).Append('=').Append(Uri.EscapeDataString(item.Value)).Append(',');
+                if (baggage == null)
+                {
+                    baggage = new StringBuilder();
+                }
+
+                baggage.Append(item.Key).Append('=').Append(Uri.EscapeDataString(item.Value)).Append(',');
+                itemCount++;
+                if (baggage.Length >= MaxBaggageLength)
+                {
+                    break;
+                }
             }
-            while (e.MoveNext() && ++itemCount < MaxBaggageItems && baggage.Length < MaxBaggageLength);
-            baggage.Remove(baggage.Length - 1, 1);
-            setter(carrier, BaggageHeaderName, baggage.ToString());
+            while (e.MoveNext() && itemCount < MaxBaggageItems);
+
+            if (baggage is not null)
+            {
+                baggage.Remove(baggage.Length - 1, 1);
+                setter(carrier, BaggageHeaderName, baggage.ToString());
+            }
         }
     }
 
@@ -116,7 +131,8 @@ public class BaggagePropagator : TextMapPropagator
 
             if (string.IsNullOrEmpty(item))
             {
-                continue;
+                baggage = null;
+                return false;
             }
 
             foreach (var pair in item.Split(CommaSignSeparator))
@@ -131,33 +147,146 @@ public class BaggagePropagator : TextMapPropagator
 
                 if (pair.IndexOf('=') < 0)
                 {
-                    continue;
+                    baggage = null;
+                    return false;
                 }
 
                 var parts = pair.Split(EqualSignSeparator, 2);
                 if (parts.Length != 2)
                 {
-                    continue;
+                    baggage = null;
+                    return false;
                 }
 
-                var key = Uri.UnescapeDataString(parts[0]);
-                var value = Uri.UnescapeDataString(parts[1]);
+                var key = parts[0].Trim();
 
-                if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
+                if (!ValidateKey(key))
                 {
-                    continue;
+                    baggage = null;
+                    return false;
                 }
+
+                var encodedValue = parts[1].Trim();
+
+                if (!ValidateValue(encodedValue))
+                {
+                    baggage = null;
+                    return false;
+                }
+
+                var decodedValue = Uri.UnescapeDataString(encodedValue);
 
                 if (baggageDictionary == null)
                 {
                     baggageDictionary = new Dictionary<string, string>();
                 }
 
-                baggageDictionary[key] = value;
+                baggageDictionary[key] = decodedValue;
             }
         }
 
         baggage = baggageDictionary;
         return baggageDictionary != null;
+    }
+
+    private static bool ValidateValue(string encodedValue)
+    {
+        var index = 0;
+        while (index < encodedValue.Length)
+        {
+            var c = encodedValue[index];
+
+            if (c == '%')
+            {
+                if (!ValidatePercentEncoding(index, encodedValue))
+                {
+                    OpenTelemetryApiEventSource.Log.BaggageItemValueIsInvalid(encodedValue);
+                    return false;
+                }
+
+                index += 3;
+            }
+            else if (!ValidateValueCharInRange(c))
+            {
+                OpenTelemetryApiEventSource.Log.BaggageItemValueIsInvalid(encodedValue);
+                return false;
+            }
+            else
+            {
+                index++;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ValidatePercentEncoding(int index, string encodedValue)
+    {
+        return index < encodedValue.Length - 2 &&
+               ValidateHexChar(encodedValue[index + 1]) &&
+               ValidateHexChar(encodedValue[index + 2]);
+    }
+
+    private static bool ValidateHexChar(char c)
+    {
+        return c is
+            >= '0' and <= '9' or
+            >= 'A' and <= 'F' or
+            >= 'a' and <= 'f';
+    }
+
+    private static bool ValidateValueCharInRange(char c)
+    {
+        // https://w3c.github.io/baggage/#definition
+        // value                  =  *baggage-octet
+        // baggage-octet          =  %x21 / %x23-2B / %x2D-3A / %x3C-5B / %x5D-7E
+        //     ; US-ASCII characters excluding CTLs,
+        //     ; whitespace, DQUOTE, comma, semicolon,
+        // ; and backslash
+        return c is
+            '\u0021' or
+            >= '\u0023' and <= '\u002b' or
+            >= '\u002d' and <= '\u003a' or
+            >= '\u003c' and <= '\u005b' or
+            >= '\u005d' and <= '\u007e';
+    }
+
+    private static bool ValidateKey(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+        {
+            return false;
+        }
+
+        foreach (var c in key)
+        {
+            // chars permitted in token, as defined in:
+            // https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.6
+            if (!ValidateTokenChar(c) && !ValidateAsciiLetterOrDigit(c))
+            {
+                OpenTelemetryApiEventSource.Log.BaggageItemKeyIsInvalid(key);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ValidateTokenChar(char c)
+    {
+        // https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.6
+        // token          = 1*tchar
+        // tchar          = "!" / "#" / "$" / "%" / "&" / "'" / "*"
+        //                  / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
+        return c is '!' or '#' or '$' or '%' or '&' or '\'' or '*'
+            or '+' or '-' or '.' or '^' or '_' or '`' or '|' or '~';
+    }
+
+    private static bool ValidateAsciiLetterOrDigit(char c)
+    {
+        return c is
+            >= '0' and <= '9' or
+            >= 'A' and <= 'Z' or
+            >= 'a' and <= 'z';
     }
 }

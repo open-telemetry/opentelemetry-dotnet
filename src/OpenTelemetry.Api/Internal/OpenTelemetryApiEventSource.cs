@@ -108,4 +108,16 @@ internal sealed class OpenTelemetryApiEventSource : EventSource
     {
         this.WriteEvent(11, format, error);
     }
+
+    [Event(12, Message = "Baggage item key is invalid, key = '{0}'", Level = EventLevel.Warning)]
+    public void BaggageItemKeyIsInvalid(string key)
+    {
+        this.WriteEvent(12, key);
+    }
+
+    [Event(13, Message = "Baggage item value is invalid, value = '{0}'", Level = EventLevel.Warning)]
+    public void BaggageItemValueIsInvalid(string value)
+    {
+        this.WriteEvent(13, value);
+    }
 }
