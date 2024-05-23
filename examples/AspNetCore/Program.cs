@@ -34,7 +34,10 @@ Action<ResourceBuilder> configureResource = r => r.AddService(
 // for manual instrumentation
 appBuilder.Services.AddSingleton<Instrumentation>();
 
-// Configure OpenTelemetry tracing & metrics with auto-start using the
+// Clear default logging providers used by WebApplication host.
+appBuilder.Logging.ClearProviders();
+
+// Configure OpenTelemetry logging, metrics, & tracing with auto-start using the
 // AddOpenTelemetry extension from OpenTelemetry.Extensions.Hosting.
 appBuilder.Services.AddOpenTelemetry()
     .ConfigureResource(configureResource)
@@ -121,34 +124,29 @@ appBuilder.Services.AddOpenTelemetry()
                 builder.AddConsoleExporter();
                 break;
         }
-    });
-
-// Clear default logging providers used by WebApplication host.
-appBuilder.Logging.ClearProviders();
-
-// Configure OpenTelemetry Logging.
-appBuilder.Logging.UseOpenTelemetry(builder =>
-{
-    // Note: See appsettings.json Logging:OpenTelemetry section for configuration.
-
-    var resourceBuilder = ResourceBuilder.CreateDefault();
-    configureResource(resourceBuilder);
-    builder.SetResourceBuilder(resourceBuilder);
-
-    switch (logExporter)
+    })
+    .WithLogging(builder =>
     {
-        case "otlp":
-            builder.AddOtlpExporter(otlpOptions =>
-            {
-                // Use IConfiguration directly for Otlp exporter endpoint option.
-                otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317")!);
-            });
-            break;
-        default:
-            builder.AddConsoleExporter();
-            break;
-    }
-});
+        // Note: See appsettings.json Logging:OpenTelemetry section for configuration.
+
+        var resourceBuilder = ResourceBuilder.CreateDefault();
+        configureResource(resourceBuilder);
+        builder.SetResourceBuilder(resourceBuilder);
+
+        switch (logExporter)
+        {
+            case "otlp":
+                builder.AddOtlpExporter(otlpOptions =>
+                {
+                    // Use IConfiguration directly for Otlp exporter endpoint option.
+                    otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317")!);
+                });
+                break;
+            default:
+                builder.AddConsoleExporter();
+                break;
+        }
+    });
 
 appBuilder.Services.AddControllers();
 
