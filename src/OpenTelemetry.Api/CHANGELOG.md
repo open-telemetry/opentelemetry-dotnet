@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* **Breaking change:** Do not encode/decode baggage item key during injection/extraction.
+  Validate baggage item key meets `token` requirement as defined in
+  [W3C Baggage propagation format specification](https://www.w3.org/TR/baggage/).
+  Reject all baggage item values if any of them is invalid during extraction.
+  ([#5647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5647))
+
 ## 1.9.0-alpha.1
 
 Released 2024-May-20
