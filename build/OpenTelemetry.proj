@@ -6,9 +6,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
-    <!-- Skip building these projects when publish packages workflow runs as
-    these projects need to depend upon instrumentation libraries taking a
-    project reference instead of package reference on API/SDK -->
+    <!-- Skip building these projects when publish packages workflow runs -->
     <SolutionProjects Remove="docs\**\**\*.csproj" />
     <SolutionProjects Remove="examples\**\*.csproj" />
     <SolutionProjects Remove="@(TestProjects)" />
