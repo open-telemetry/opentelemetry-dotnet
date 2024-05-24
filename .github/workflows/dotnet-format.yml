@@ -20,7 +20,7 @@ jobs:
       run: dotnet restore
 
     - name: dotnet format
-      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes
+      run: dotnet format ./build/OpenTelemetry.proj --no-restore --verify-no-changes
       env:
         ExposeExperimentalFeatures: false
 
@@ -38,6 +38,6 @@ jobs:
       run: dotnet restore
 
     - name: dotnet format
-      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes
+      run: dotnet format ./build/OpenTelemetry.proj --no-restore --verify-no-changes
       env:
         ExposeExperimentalFeatures: true
