@@ -91,7 +91,7 @@
     consuming projects (tests, benchmarks, examples, etc) to add compiler
     constants which can be used to detect experimental APIs -->
     <WriteLinesToFile
-      File="$(OutputPath)$(ProjectName).BuildFlags.txt"
+      File="$(IntermediateOutputPath)$(ProjectName).BuildFlags.txt"
       Lines="ExposeExperimentalFeatures=$(ExposeExperimentalFeatures)"
       Overwrite="true"/>
 
