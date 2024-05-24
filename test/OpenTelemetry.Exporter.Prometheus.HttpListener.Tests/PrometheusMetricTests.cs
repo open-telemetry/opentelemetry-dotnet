@@ -116,12 +116,6 @@ public sealed class PrometheusMetricTests
     }
 
     [Fact]
-    public void Name_SpecialCaseGauge_AppendRatio()
-    {
-        AssertName("sample", "1", PrometheusType.Gauge, false, "sample_ratio");
-    }
-
-    [Fact]
     public void Name_GaugeWithUnit_NoAppendRatio()
     {
         AssertName("sample", "unit", PrometheusType.Gauge, false, "sample_unit");
@@ -242,12 +236,6 @@ public sealed class PrometheusMetricTests
     }
 
     [Fact]
-    public void OpenMetricsName_SpecialCaseGauge_AppendRatio()
-    {
-        AssertOpenMetricsName("sample", "1", PrometheusType.Gauge, false, "sample_ratio");
-    }
-
-    [Fact]
     public void OpenMetricsMetadataName_Counter_NotAppendTotal()
     {
         AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, false, "db_bytes_written_bytes");
@@ -257,12 +245,6 @@ public sealed class PrometheusMetricTests
     public void OpenMetricsMetadataName_Counter_DisableSuffixTotal_NotAppendTotal()
     {
         AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, true, "db_bytes_written_bytes");
-    }
-
-    [Fact]
-    public void OpenMetricsMetadataName_SpecialCaseGauge_AppendRatio()
-    {
-        AssertOpenMetricsMetadataName("sample", "1", PrometheusType.Gauge, false, "sample_ratio");
     }
 
     private static void AssertName(
