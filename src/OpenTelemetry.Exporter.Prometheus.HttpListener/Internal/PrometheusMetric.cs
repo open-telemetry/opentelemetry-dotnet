@@ -61,7 +61,7 @@ internal sealed class PrometheusMetric
             openMetricsName += "_total";
         }
 
-            // In OpenMetrics format, the UNIT, TYPE and HELP metadata must be suffixed with the unit (handled above), and not the '_total' suffix, as in the case for counters.
+        // In OpenMetrics format, the UNIT, TYPE and HELP metadata must be suffixed with the unit (handled above), and not the '_total' suffix, as in the case for counters.
         // https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#unit
         var openMetricsMetadataName = type == PrometheusType.Counter
             ? SanitizeOpenMetricsName(openMetricsName)
