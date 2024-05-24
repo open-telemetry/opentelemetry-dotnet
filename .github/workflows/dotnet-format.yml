@@ -17,10 +17,16 @@ jobs:
       uses: actions/setup-dotnet@v4
 
     - name: dotnet restore
-      run: dotnet restore
+      run: dotnet restore ./build/OpenTelemetry.proj
 
     - name: dotnet format
-      run: dotnet format ./build/OpenTelemetry.proj --no-restore --verify-no-changes
+      shell: pwsh
+      run: |
+        $projects = Get-ChildItem -Path *.csproj -Recurse
+
+        foreach ($project in $projects) {
+            dotnet format $project --no-restore --verify-no-changes
+        }
       env:
         ExposeExperimentalFeatures: false
 
@@ -35,9 +41,15 @@ jobs:
       uses: actions/setup-dotnet@v4
 
     - name: dotnet restore
-      run: dotnet restore
+      run: dotnet restore ./build/OpenTelemetry.proj
 
     - name: dotnet format
-      run: dotnet format ./build/OpenTelemetry.proj --no-restore --verify-no-changes
+      shell: pwsh
+      run: |
+        $projects = Get-ChildItem -Path *.csproj -Recurse
+
+        foreach ($project in $projects) {
+            dotnet format $project --no-restore --verify-no-changes
+        }
       env:
         ExposeExperimentalFeatures: true

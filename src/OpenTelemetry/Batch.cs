@@ -4,6 +4,8 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+// Testing dotnet format workflow
+using System.Linq;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
