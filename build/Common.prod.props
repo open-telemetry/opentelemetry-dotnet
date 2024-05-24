@@ -39,6 +39,10 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)opentelemetry-icon-color.png" Pack="true" PackagePath="\" />
     <SourceRoot Condition="'$(Deterministic)'=='true'" Include="$(MSBuildThisFileDirectory)/" />
+    <None Include="$(IntermediateOutputPath)$(ProjectName).BuildFlags.txt"
+          Link="$(ProjectName).BuildFlags.txt"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
     <!-- Note: This includes all the PublicApiAnalyzers files in projects to make editing easier in the IDE -->
     <None Include=".publicApi\**\PublicAPI.*.txt" />
   </ItemGroup>
@@ -81,6 +85,15 @@
     <PropertyGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
       <DefineConstants>$(DefineConstants);EXPOSE_EXPERIMENTAL_FEATURES</DefineConstants>
     </PropertyGroup>
+
+    <!-- Note: We write a file into the output dir which captures the state of
+    ExposeExperimentalFeatures for the current compilation. This is used by
+    consuming projects (tests, benchmarks, examples, etc) to add compiler
+    constants which can be used to detect experimental APIs -->
+    <WriteLinesToFile
+      File="$(OutputPath)$(ProjectName).BuildFlags.txt"
+      Lines="ExposeExperimentalFeatures=$(ExposeExperimentalFeatures)"
+      Overwrite="true"/>
 
     <!-- Note: This selects the correct PublicApiAnalyzers files based on $(ExposeExperimentalFeatures) -->
     <ItemGroup>
