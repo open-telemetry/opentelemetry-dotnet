@@ -128,16 +128,6 @@ internal sealed class PrometheusMetric
         static StringBuilder CreateStringBuilder(string name) => new StringBuilder(name.Length);
     }
 
-    private static string SanitizeOpenMetricsName(string metricName)
-    {
-        if (metricName.EndsWith("_total"))
-        {
-            return metricName.Substring(0, metricName.Length - 6);
-        }
-
-        return metricName;
-    }
-
     internal static string RemoveAnnotations(string unit)
     {
         // UCUM standard says the curly braces shouldn't be nested:
@@ -180,6 +170,16 @@ internal sealed class PrometheusMetric
 
         sb.Append(unit, lastWriteIndex, unit.Length - lastWriteIndex);
         return sb.ToString();
+    }
+
+    private static string SanitizeOpenMetricsName(string metricName)
+    {
+        if (metricName.EndsWith("_total"))
+        {
+            return metricName.Substring(0, metricName.Length - 6);
+        }
+
+        return metricName;
     }
 
     private static string GetUnit(string unit)
