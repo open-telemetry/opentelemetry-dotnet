@@ -17,16 +17,10 @@ jobs:
       uses: actions/setup-dotnet@v4
 
     - name: dotnet restore
-      run: dotnet restore ./build/OpenTelemetry.proj
+      run: dotnet restore OpenTelemetry.sln
 
     - name: dotnet format
-      shell: pwsh
-      run: |
-        $projects = Get-ChildItem -Path *.csproj -Recurse
-
-        foreach ($project in $projects) {
-            dotnet format $project --no-restore --verify-no-changes
-        }
+      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes # Note: .proj files are currently not supported by dotnet format
       env:
         ExposeExperimentalFeatures: false
 
@@ -44,12 +38,6 @@ jobs:
       run: dotnet restore ./build/OpenTelemetry.proj
 
     - name: dotnet format
-      shell: pwsh
-      run: |
-        $projects = Get-ChildItem -Path *.csproj -Recurse
-
-        foreach ($project in $projects) {
-            dotnet format $project --no-restore --verify-no-changes
-        }
+      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes # Note: .proj files are currently not supported by dotnet format
       env:
         ExposeExperimentalFeatures: true
