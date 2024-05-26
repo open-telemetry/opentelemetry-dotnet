@@ -26,6 +26,10 @@ on:
   schedule:
     - cron: '0 0 * * *' # once in a day at 00:00
 
+env:
+  OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
+  GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
+
 jobs:
   build-pack-publish:
     runs-on: windows-latest
@@ -42,6 +46,7 @@ jobs:
         # retrieve them all.
         fetch-depth: 0
         ref: ${{ inputs.tag || github.ref || 'main' }}
+        token: ${{ env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true' && env.GH_TOKEN || github.token }}
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
@@ -80,9 +85,6 @@ jobs:
 
         CreateDraftRelease `
           -tag '${{ inputs.tag || github.ref_name }}'
-      env:
-        GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
-        OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
 
     - name: Create GitHub draft Pull Request to update stable build version in props
       if: |
@@ -97,6 +99,3 @@ jobs:
 
         CreateStableVersionUpdatePullRequest `
           -tag '${{ inputs.tag || github.ref_name }}'
-      env:
-        GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
-        OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}

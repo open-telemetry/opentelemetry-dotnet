@@ -23,15 +23,21 @@ on:
     types:
     - created
 
+env:
+  OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
+  GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
+
 jobs:
   prepare-release-pr:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
     runs-on: windows-latest
 
     steps:
     - name: check out code
       uses: actions/checkout@v4
+      with:
+        token: ${{ env.GH_TOKEN }}
 
     - name: Create GitHub Pull Request to prepare release
       shell: pwsh
@@ -42,10 +48,6 @@ jobs:
           -minVerTagPrefix '${{ inputs.tag-prefix }}' `
           -version '${{ inputs.version }}' `
           -targetBranch '${{ github.ref_name }}'
-      env:
-        GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
-        OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
-      if: env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
   lock-pr-and-post-notice-to-create-release-tag:
     if: |
@@ -54,12 +56,15 @@ jobs:
       && github.event.pull_request.user.login == 'github-actions[bot]'
       && github.event.pull_request.merged == true
       && startsWith(github.event.pull_request.title, '[repo] Prepare release ')
+      && env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
     runs-on: windows-latest
 
     steps:
     - name: check out code
       uses: actions/checkout@v4
+      with:
+        token: ${{ env.GH_TOKEN }}
 
     - name: Lock GitHub Pull Request to prepare release
       shell: pwsh
@@ -68,10 +73,6 @@ jobs:
 
         LockPullRequestAndPostNoticeToCreateReleaseTag `
           -pullRequestNumber '${{ github.event.pull_request.number }}'
-      env:
-        GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
-        OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
-      if: env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
   create-release-tag-unlock-pr-post-notice:
     if: |
@@ -81,6 +82,7 @@ jobs:
       && contains(github.event.comment.body, '/CreateReleaseTag')
       && startsWith(github.event.issue.title, '[repo] Prepare release ')
       && github.event.issue.pull_request.merged_at
+      && env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
     runs-on: windows-latest
 
@@ -93,6 +95,7 @@ jobs:
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
+        token: ${{ env.GH_TOKEN }}
 
     - name: Create release tag
       id: create-tag
@@ -108,10 +111,6 @@ jobs:
           -tag ([ref]$tag)
 
         echo "tag=$tag" >> $env:GITHUB_OUTPUT
-      env:
-        GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
-        OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
-      if: env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
   invoke-package-workflow:
     needs: create-release-tag-unlock-pr-post-notice
@@ -127,6 +126,8 @@ jobs:
     steps:
     - name: check out code
       uses: actions/checkout@v4
+      with:
+        token: ${{ env.GH_TOKEN }}
 
     - name: Post notice when packages are ready
       shell: pwsh
@@ -137,5 +138,3 @@ jobs:
           -pullRequestNumber '${{ github.event.issue.number }}' `
           -tag '${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}' `
           -packagesUrl '${{ needs.invoke-package-workflow.outputs.artifact-url }}'
-      env:
-        GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
