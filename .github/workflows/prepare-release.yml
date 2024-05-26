@@ -23,10 +23,6 @@ on:
     types:
     - created
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   prepare-release-pr:
     if: github.event_name == 'workflow_dispatch'
@@ -47,7 +43,9 @@ jobs:
           -version '${{ inputs.version }}' `
           -targetBranch '${{ github.ref_name }}'
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
+        OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
+      if: env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
   lock-pr-and-post-notice-to-create-release-tag:
     if: |
@@ -71,7 +69,9 @@ jobs:
         LockPullRequestAndPostNoticeToCreateReleaseTag `
           -pullRequestNumber '${{ github.event.pull_request.number }}'
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
+        OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
+      if: env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
   create-release-tag-unlock-pr-post-notice:
     if: |
@@ -109,7 +109,9 @@ jobs:
 
         echo "tag=$tag" >> $env:GITHUB_OUTPUT
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
+        OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
+      if: env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
   invoke-package-workflow:
     needs: create-release-tag-unlock-pr-post-notice
@@ -136,4 +138,4 @@ jobs:
           -tag '${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}' `
           -packagesUrl '${{ needs.invoke-package-workflow.outputs.artifact-url }}'
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}

@@ -1,9 +1,4 @@
-$gitHubBotUserName="github-actions[bot]"
-$gitHubBotEmail="41898282+github-actions[bot]@users.noreply.github.com"
-
-$repoViewResponse = gh repo view --json nameWithOwner | ConvertFrom-Json
-
-$gitRepository = $repoViewResponse.nameWithOwner
+Import-Module .\build\scripts\git.psm1
 
 function CreatePullRequestToUpdateChangelogsAndPublicApis {
   param(
@@ -70,13 +65,7 @@ Export-ModuleMember -Function CreatePullRequestToUpdateChangelogsAndPublicApis
 
 function LockPullRequestAndPostNoticeToCreateReleaseTag {
   param(
-    [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter()][string]$gitUserName=$gitHubBotUserName,
-    [Parameter()][string]$gitUserEmail=$gitHubBotEmail
-  )
-
-  git config user.name $gitUserName
-  git config user.email $gitUserEmail
+    [Parameter(Mandatory=$true)][string]$pullRequestNumber  )
 
   $prViewResponse = gh pr view $pullRequestNumber --json mergeCommit,author,title | ConvertFrom-Json
 
@@ -117,13 +106,8 @@ function CreateReleaseTag {
   param(
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
     [Parameter(Mandatory=$true)][string]$actionRunId,
-    [Parameter()][string]$gitUserName=$gitHubBotUserName,
-    [Parameter()][string]$gitUserEmail=$gitHubBotEmail,
     [Parameter()][ref]$tag
   )
-
-  git config user.name $gitUserName
-  git config user.email $gitUserEmail
 
   $prViewResponse = gh pr view $pullRequestNumber --json mergeCommit,author,title | ConvertFrom-Json
 

@@ -1,9 +1,4 @@
-$gitHubBotUserName="github-actions[bot]"
-$gitHubBotEmail="41898282+github-actions[bot]@users.noreply.github.com"
-
-$repoViewResponse = gh repo view --json nameWithOwner | ConvertFrom-Json
-
-$gitRepository = $repoViewResponse.nameWithOwner
+Import-Module .\build\scripts\git.psm1
 
 function CreateDraftRelease {
   param(
