@@ -29,7 +29,7 @@ env:
 
 jobs:
   prepare-release-pr:
-    if: github.event_name == 'workflow_dispatch' && env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
+    if: github.event_name == 'workflow_dispatch' && $OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
     runs-on: windows-latest
 
@@ -37,7 +37,7 @@ jobs:
     - name: check out code
       uses: actions/checkout@v4
       with:
-        token: ${{ env.GH_TOKEN }}
+        token: $GH_TOKEN
 
     - name: Create GitHub Pull Request to prepare release
       shell: pwsh
@@ -56,7 +56,7 @@ jobs:
       && github.event.pull_request.user.login == 'github-actions[bot]'
       && github.event.pull_request.merged == true
       && startsWith(github.event.pull_request.title, '[repo] Prepare release ')
-      && env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
+      && $OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
     runs-on: windows-latest
 
@@ -64,7 +64,7 @@ jobs:
     - name: check out code
       uses: actions/checkout@v4
       with:
-        token: ${{ env.GH_TOKEN }}
+        token: $GH_TOKEN
 
     - name: Lock GitHub Pull Request to prepare release
       shell: pwsh
@@ -82,7 +82,7 @@ jobs:
       && contains(github.event.comment.body, '/CreateReleaseTag')
       && startsWith(github.event.issue.title, '[repo] Prepare release ')
       && github.event.issue.pull_request.merged_at
-      && env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
+      && $OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true'
 
     runs-on: windows-latest
 
@@ -95,7 +95,7 @@ jobs:
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
-        token: ${{ env.GH_TOKEN }}
+        token: GH_TOKEN
 
     - name: Create release tag
       id: create-tag
@@ -127,7 +127,7 @@ jobs:
     - name: check out code
       uses: actions/checkout@v4
       with:
-        token: ${{ env.GH_TOKEN }}
+        token: $GH_TOKEN
 
     - name: Post notice when packages are ready
       shell: pwsh
