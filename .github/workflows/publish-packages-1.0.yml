@@ -28,10 +28,8 @@ on:
 
 jobs:
   automation:
-    runs-on: ubuntu-latest
-    steps:
-    - name: call-automation
-      uses: ./.github/workflows/automation.yml
+    uses: ./.github/workflows/automation.yml
+    secrets: inherit
 
   build-pack-publish:
     runs-on: windows-latest

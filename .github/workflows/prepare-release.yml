@@ -25,12 +25,8 @@ on:
 
 jobs:
   automation:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: call-automation
-      uses: ./.github/workflows/automation.yml
+    uses: ./.github/workflows/automation.yml
+    secrets: inherit
 
   prepare-release-pr:
     runs-on: ubuntu-latest
