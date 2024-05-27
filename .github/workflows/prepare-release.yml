@@ -35,16 +35,16 @@ jobs:
 
     needs: automation
 
-    if: github.event_name == 'workflow_dispatch' && automation.outputs.token != ''
+    if: github.event_name == 'workflow_dispatch' && needs.automation.outputs.token != ''
 
     env:
-      GH_TOKEN: ${{ automation.outputs.token }}
+      GH_TOKEN: ${{ needs.automation.outputs.token }}
 
     steps:
     - name: check out code
       uses: actions/checkout@v4
       with:
-        token: ${{ automation.outputs.token }}
+        token: ${{ needs.automation.outputs.token }}
 
     - name: Create GitHub Pull Request to prepare release
       shell: pwsh
@@ -56,8 +56,8 @@ jobs:
           -minVerTagPrefix '${{ inputs.tag-prefix }}' `
           -version '${{ inputs.version }}' `
           -targetBranch '${{ github.ref_name }}' `
-          -gitUserName '${{ automation.outputs.username }}' `
-          -gitUserEmail '${{ automation.outputs.email }}'
+          -gitUserName '${{ needs.automation.outputs.username }}' `
+          -gitUserEmail '${{ needs.automation.outputs.email }}'
 
   lock-pr-and-post-notice-to-create-release-tag:
     runs-on: windows-latest
@@ -70,16 +70,16 @@ jobs:
       && github.event.pull_request.user.login == 'github-actions[bot]'
       && github.event.pull_request.merged == true
       && startsWith(github.event.pull_request.title, '[repo] Prepare release ')
-      && automation.outputs.token != ''
+      && needs.automation.outputs.token != ''
 
     env:
-      GH_TOKEN: ${{ automation.outputs.token }}
+      GH_TOKEN: ${{ needs.automation.outputs.token }}
 
     steps:
     - name: check out code
       uses: actions/checkout@v4
       with:
-        token: ${{ automation.outputs.token }}
+        token: ${{ needs.automation.outputs.token }}
 
     - name: Lock GitHub Pull Request to prepare release
       shell: pwsh
@@ -102,10 +102,10 @@ jobs:
       && contains(github.event.comment.body, '/CreateReleaseTag')
       && startsWith(github.event.issue.title, '[repo] Prepare release ')
       && github.event.issue.pull_request.merged_at
-      && automation.outputs.token != ''
+      && needs.automation.outputs.token != ''
 
     env:
-      GH_TOKEN: ${{ automation.outputs.token }}
+      GH_TOKEN: ${{ needs.automation.outputs.token }}
 
     outputs:
       tag: ${{ steps.create-tag.outputs.tag }}
@@ -116,7 +116,7 @@ jobs:
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
-        token: ${{ automation.outputs.token }}
+        token: ${{ needs.automation.outputs.token }}
 
     - name: Create release tag
       id: create-tag
@@ -149,13 +149,13 @@ jobs:
     - invoke-package-workflow
 
     env:
-      GH_TOKEN: ${{ automation.outputs.token }}
+      GH_TOKEN: ${{ needs.automation.outputs.token }}
 
     steps:
     - name: check out code
       uses: actions/checkout@v4
       with:
-        token: ${{ automation.outputs.token }}
+        token: ${{ needs.automation.outputs.token }}
 
     - name: Post notice when packages are ready
       shell: pwsh

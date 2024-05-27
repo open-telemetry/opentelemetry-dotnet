@@ -36,8 +36,6 @@ jobs:
   build-pack-publish:
     runs-on: windows-latest
 
-    needs: automation
-
     outputs:
       artifact-id: ${{ steps.upload-artifacts.outputs.artifact-id }}
       artifact-url: ${{ steps.upload-artifacts.outputs.artifact-url }}
@@ -50,7 +48,6 @@ jobs:
         # retrieve them all.
         fetch-depth: 0
         ref: ${{ inputs.tag || github.ref || 'main' }}
-        token: ${{ automation.outputs.token || github.token }}
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
@@ -79,13 +76,30 @@ jobs:
         nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
         nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
+  post-release:
+    runs-on: windows-latest
+
+    needs:
+    - automation
+    - build-pack-publish
+
+    if: needs.automation.outputs.token != ''
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # Note: By default GitHub only fetches 1 commit. MinVer needs to find
+        # the version tag which is typically NOT on the first commit so we
+        # retrieve them all.
+        fetch-depth: 0
+        ref: ${{ inputs.tag || github.ref || 'main' }}
+        token: ${{ automation.outputs.token }}
+
     - name: Create GitHub Release draft
-      if: |
-        automation.outputs.token != ''
-        && (github.ref_type == 'tag' || inputs.tag)
+      if: github.ref_type == 'tag' || inputs.tag
 
       env:
-        GH_TOKEN: ${{ automation.outputs.token }}
+        GH_TOKEN: ${{ needs.automation.outputs.token }}
 
       shell: pwsh
 
@@ -98,14 +112,11 @@ jobs:
 
     - name: Create GitHub draft Pull Request to update stable build version in props
       if: |
-        automation.outputs.token != ''
-        && (
-          (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
-          || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
-        )
+        (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
+        || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
 
       env:
-        GH_TOKEN: ${{ automation.outputs.token }}
+        GH_TOKEN: ${{ needs.automation.outputs.token }}
 
       shell: pwsh
 
@@ -115,5 +126,6 @@ jobs:
         CreateStableVersionUpdatePullRequest `
           -gitRepository '${{ github.repository }}' `
           -tag '${{ inputs.tag || github.ref_name }}' `
-          -gitUserName '${{ automation.outputs.username }}' `
-          -gitUserEmail '${{ automation.outputs.email }}'
+          -gitUserName '${{ needs.automation.outputs.username }}' `
+          -gitUserEmail '${{ needs.automation.outputs.email }}'
+
