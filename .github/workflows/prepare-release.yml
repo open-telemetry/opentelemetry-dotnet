@@ -25,13 +25,13 @@ on:
 
 jobs:
   automation:
-    runs-on: windows-lates
+    runs-on: ubuntu-latest
     steps:
     - name: call-automation
       uses: ./.github/workflows/automation.yml
 
   prepare-release-pr:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     needs: automation
 
@@ -60,7 +60,7 @@ jobs:
           -gitUserEmail '${{ needs.automation.outputs.email }}'
 
   lock-pr-and-post-notice-to-create-release-tag:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     needs: automation
 
@@ -91,7 +91,7 @@ jobs:
           -pullRequestNumber '${{ github.event.pull_request.number }}'
 
   create-release-tag-unlock-pr-post-notice:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     needs: automation
 
@@ -141,7 +141,7 @@ jobs:
       tag: ${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}
 
   post-packages-ready-notice:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     needs:
     - automation
