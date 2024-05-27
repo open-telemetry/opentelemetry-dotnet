@@ -21,4 +21,4 @@ jobs:
     steps:
     - id: evaluate
       run: |
-        echo "token=${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}" >> $env:GITHUB_OUTPUT
+        echo "token=${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}" >> "$GITHUB_OUTPUT"

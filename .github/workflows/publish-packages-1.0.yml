@@ -27,7 +27,7 @@ on:
     - cron: '0 0 * * *' # once in a day at 00:00
 
 jobs:
-  automation:
+  invoke-automation:
     uses: ./.github/workflows/automation.yml
     secrets: inherit
 
