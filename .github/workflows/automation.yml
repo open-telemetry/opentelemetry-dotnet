@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      token: ${{ steps.evaluate.outputs.enabled }}
+      enabled: ${{ steps.evaluate.outputs.enabled }}
 
     env:
       OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
