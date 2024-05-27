@@ -1,4 +1,4 @@
-name: Get automation settings
+name: Resolve automation settings
 
 on:
   workflow_call:
@@ -22,6 +22,7 @@ jobs:
 
     outputs:
       enabled: ${{ steps.evaluate.outputs.enabled }}
+      token-secret-name: ${{ steps.evaluate.outputs.token-secret-name }}
 
     env:
       OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
