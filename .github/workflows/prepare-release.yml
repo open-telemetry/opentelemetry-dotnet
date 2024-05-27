@@ -146,8 +146,6 @@ jobs:
     - create-release-tag-unlock-pr-post-notice
     - invoke-package-workflow
 
-    if: needs.automation.outputs.token != ''
-
     env:
       GH_TOKEN: ${{ needs.automation.outputs.token }}
 
