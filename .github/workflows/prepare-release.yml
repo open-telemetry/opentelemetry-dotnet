@@ -111,6 +111,9 @@ jobs:
       tag: ${{ steps.create-tag.outputs.tag }}
 
     steps:
+    - name: debug
+      run: echo '${{ toJSON(github.event) }}'
+
     - name: check out code
       uses: actions/checkout@v4
       with:
