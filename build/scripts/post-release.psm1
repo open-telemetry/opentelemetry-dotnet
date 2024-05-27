@@ -146,7 +146,7 @@ function CreateStableVersionUpdatePullRequest {
 
   $body =
 @"
-Note: This PR was opened automatically by the [package workflow](https://github.com/$gitRepository/actions/workflows/publish-packages-1.0.yml).
+Note: This PR was opened automatically by the [package workflow](https://github.com/$gitRepository/actions/workflows/post-release.yml).
 
 Merge once packages are available on NuGet and the build passes.
 
