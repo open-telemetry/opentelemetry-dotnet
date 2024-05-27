@@ -4,9 +4,9 @@ on:
   workflow_call:
     outputs:
       enabled:
-        value: ${{ jobs.automation.outputs.enabled == 'true' }}
+        value: ${{ jobs.resolve-automation.outputs.enabled == 'true' }}
       token-secret-name:
-        value: ${{ jobs.automation.outputs.token-secret-name }}
+        value: ${{ jobs.resolve-automation.outputs.token-secret-name }}
       username:
         value: ${{ vars.AUTOMATION_USERNAME }}
       email:
