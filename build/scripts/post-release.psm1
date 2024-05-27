@@ -4,30 +4,36 @@ function CreateDraftRelease {
     [Parameter(Mandatory=$true)][string]$tag
   )
 
-  $packages = (Get-ChildItem -Path src/*/bin/Release/*.nupkg).Name
+  $match = [regex]::Match($tag, '^(.*?-)(.*)$')
+  if ($match.Success -eq $false)
+  {
+      throw 'Could not parse prefix or version from tag'
+  }
+
+  $tagPrefix = $match.Groups[1].Value
+  $version = $match.Groups[2].Value
+
+  $projects = @(Get-ChildItem -Path src/**/*.csproj | Select-String "<MinVerTagPrefix>$tagPrefix</MinVerTagPrefix>" -List | Select Path)
+
+  if ($projects.Length -eq 0)
+  {
+      throw 'No projects found with MinVerTagPrefix matching prefix from tag'
+  }
 
   $notes = ''
-  $firstPackageVersion = ''
 
-  foreach ($package in $packages)
+  foreach ($project in $projects)
   {
-      $match = [regex]::Match($package, '(.*)\.(\d+\.\d+\.\d+.*?)\.nupkg')
-      $packageName = $match.Groups[1].Value
-      $packageVersion = $match.Groups[2].Value
+      $projectName = [System.IO.Path]::GetFileNameWithoutExtension($project.Path)
 
-      if ($firstPackageVersion -eq '')
-      {
-          $firstPackageVersion = $packageVersion
-      }
-
-      $changelogContent = Get-Content -Path "src/$packageName/CHANGELOG.md"
+      $changelogContent = Get-Content -Path "src/$projectName/CHANGELOG.md"
 
       $started = $false
       $content = ""
 
       foreach ($line in $changelogContent)
       {
-          if ($line -like "## $packageVersion" -and $started -ne $true)
+          if ($line -like "## $version" -and $started -ne $true)
           {
               $started = $true
           }
@@ -57,16 +63,16 @@ function CreateDraftRelease {
 
       $notes +=
 @"
-* NuGet: [$packageName v$packageVersion](https://www.nuget.org/packages/$packageName/$packageVersion)
+* NuGet: [$projectName v$version](https://www.nuget.org/packages/$projectName/$version)
 
 $content
 
-  See [CHANGELOG](https://github.com/$gitRepository/blob/$tag/src/$packageName/CHANGELOG.md) for details.
+  See [CHANGELOG](https://github.com/$gitRepository/blob/$tag/src/$projectName/CHANGELOG.md) for details.
 
 "@
   }
 
-  if ($firstPackageVersion -match '-alpha' -or $firstPackageVersion -match '-beta' -or $firstPackageVersion -match '-rc')
+  if ($version -match '-alpha' -or $version -match '-beta' -or $version -match '-rc')
   {
     gh release create $tag `
       --title $tag `
