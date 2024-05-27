@@ -88,11 +88,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        # Note: By default GitHub only fetches 1 commit. MinVer needs to find
-        # the version tag which is typically NOT on the first commit so we
-        # retrieve them all.
-        fetch-depth: 0
-        ref: ${{ inputs.tag || github.ref || 'main' }}
+        ref: main
         token: ${{ needs.automation.outputs.token }}
 
     - name: Create GitHub Release draft
