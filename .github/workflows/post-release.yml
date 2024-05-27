@@ -9,11 +9,6 @@ on:
         type: string
   release:
     types: [published]
-  workflow_call:
-    inputs:
-      tag:
-        required: true
-        type: string
 
 jobs:
   automation:
@@ -26,22 +21,23 @@ jobs:
     needs:
     - automation
 
-    if: needs.automation.outputs.enabled
+    if: |
+      needs.automation.outputs.enabled
+      &&
+      (
+        (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
+        || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
+      )
+
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
     - uses: actions/checkout@v4
       with:
-        ref: main
         token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     - name: Create GitHub Pull Request to update stable build version in props
-      if: |
-        (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
-        || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
-
-      env:
-        GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
       shell: pwsh
       run: |
         Import-Module .\build\scripts\post-release.psm1

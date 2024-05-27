@@ -81,15 +81,18 @@ jobs:
     - automation
     - build-pack-publish
 
-    if: needs.automation.outputs.enabled
+    if: needs.automation.outputs.enabled && (github.ref_type == 'tag' || inputs.tag)
+
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
+    - name: check out code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
     - name: Create GitHub Release draft
-      if: github.ref_type == 'tag' || inputs.tag
-
-      env:
-        GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
       shell: pwsh
       run: |
         Import-Module .\build\scripts\post-release.psm1

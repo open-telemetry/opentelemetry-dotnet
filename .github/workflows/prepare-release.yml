@@ -74,6 +74,11 @@ jobs:
       GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
+    - name: check out code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
     - name: Lock GitHub Pull Request to prepare release
       shell: pwsh
       run: |
@@ -149,6 +154,11 @@ jobs:
       GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
+    - name: check out code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
     - name: Post notice when packages are ready
       shell: pwsh
       run: |
