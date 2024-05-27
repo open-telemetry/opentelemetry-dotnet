@@ -98,7 +98,7 @@ jobs:
       github.event_name == 'issue_comment'
       && github.event.issue.pull_request
       && github.event.issue.locked == true
-      && github.event.issue.comment.user.login != needs.automation.outputs.username
+      && github.event.comment.user.login != needs.automation.outputs.username
       && contains(github.event.comment.body, '/CreateReleaseTag')
       && startsWith(github.event.issue.title, '[repo] Prepare release ')
       && github.event.issue.pull_request.merged_at
@@ -111,9 +111,6 @@ jobs:
       tag: ${{ steps.create-tag.outputs.tag }}
 
     steps:
-    - name: debug
-      run: echo '${{ toJSON(github.event) }}'
-
     - name: check out code
       uses: actions/checkout@v4
       with:
