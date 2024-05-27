@@ -27,6 +27,8 @@ jobs:
   automation:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v4
+
     - name: call-automation
       uses: ./.github/workflows/automation.yml
 
