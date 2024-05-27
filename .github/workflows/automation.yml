@@ -19,6 +19,6 @@ jobs:
       token: ${{ steps.evaluate.outputs.token }}
 
     steps:
-    - name: evaluate
+    - id: evaluate
       run: |
         echo "token=${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}" >> $env:GITHUB_OUTPUT
