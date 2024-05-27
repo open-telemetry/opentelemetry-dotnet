@@ -65,7 +65,7 @@ jobs:
     if: |
       github.event_name == 'pull_request'
       && github.event.action == 'closed'
-      && github.event.pull_request.user.login == 'github-actions[bot]'
+      && github.event.pull_request.user.login == needs.automation.outputs.username
       && github.event.pull_request.merged == true
       && startsWith(github.event.pull_request.title, '[repo] Prepare release ')
       && needs.automation.outputs.enabled
@@ -81,7 +81,8 @@ jobs:
 
         LockPullRequestAndPostNoticeToCreateReleaseTag `
           -gitRepository '${{ github.repository }}' `
-          -pullRequestNumber '${{ github.event.pull_request.number }}'
+          -pullRequestNumber '${{ github.event.pull_request.number }}' `
+          -botUserName '${{ needs.automation.outputs.username }}'
 
   create-release-tag-unlock-pr-post-notice:
     runs-on: ubuntu-latest
@@ -123,6 +124,7 @@ jobs:
           -gitRepository '${{ github.repository }}' `
           -pullRequestNumber '${{ github.event.issue.number }}' `
           -actionRunId '${{ github.run_id }}' `
+          -botUserName '${{ needs.automation.outputs.username }}' `
           -tag ([ref]$tag) `
           -gitUserName '${{ needs.automation.outputs.username }}' `
           -gitUserEmail '${{ needs.automation.outputs.email }}'

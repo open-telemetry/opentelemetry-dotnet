@@ -71,12 +71,13 @@ Export-ModuleMember -Function CreatePullRequestToUpdateChangelogsAndPublicApis
 function LockPullRequestAndPostNoticeToCreateReleaseTag {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
-    [Parameter(Mandatory=$true)][string]$pullRequestNumber
+    [Parameter(Mandatory=$true)][string]$pullRequestNumber,
+    [Parameter(Mandatory=$true)][string]$botUserName
   )
 
   $prViewResponse = gh pr view $pullRequestNumber --json mergeCommit,author,title | ConvertFrom-Json
 
-  if ($prViewResponse.author.is_bot -eq $false -or $prViewResponse.author.login -ne 'app/github-actions')
+  if ($prViewResponse.author.login -ne $botUserName)
   {
       throw 'PR author was unexpected'
   }
@@ -114,6 +115,7 @@ function CreateReleaseTag {
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
     [Parameter(Mandatory=$true)][string]$actionRunId,
+    [Parameter(Mandatory=$true)][string]$botUserName,
     [Parameter()][ref]$tag,
     [Parameter()][string]$gitUserName,
     [Parameter()][string]$gitUserEmail
@@ -121,7 +123,7 @@ function CreateReleaseTag {
 
   $prViewResponse = gh pr view $pullRequestNumber --json mergeCommit,author,title | ConvertFrom-Json
 
-  if ($prViewResponse.author.is_bot -eq $false -or $prViewResponse.author.login -ne 'app/github-actions')
+  if ($prViewResponse.author.login -ne $botUserName)
   {
       throw 'PR author was unexpected'
   }
