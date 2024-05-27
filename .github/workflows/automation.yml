@@ -4,7 +4,8 @@ on:
   workflow_call:
     outputs:
       enabled:
-        value: ${{ jobs.automation.outputs.enabled }}
+        value: ${{ jobs.automation.outputs.enabled == 'true' }}
+        type: boolean
       token-secret-name:
         value: ${{ jobs.automation.outputs.token-secret-name }}
       username:
