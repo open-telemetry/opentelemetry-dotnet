@@ -3,12 +3,17 @@ name: Get automation settings
 on:
   workflow_call:
     outputs:
-      token:
-        value: ${{ jobs.automation.outputs.token }}
+      enabled:
+        value: ${{ jobs.automation.outputs.enabled }}
+      token-secret-name:
+        value: ${{ jobs.automation.outputs.token-secret-name }}
       username:
         value: ${{ vars.AUTOMATION_USERNAME }}
       email:
         value: ${{ vars.AUTOMATION_EMAIL }}
+    secrets:
+      OPENTELEMETRYBOT_GITHUB_TOKEN:
+        required: true
 
 jobs:
   resolve-automation:
@@ -16,9 +21,13 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      token: ${{ steps.evaluate.outputs.token }}
+      token: ${{ steps.evaluate.outputs.enabled }}
+
+    env:
+      OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
 
     steps:
     - id: evaluate
       run: |
-        echo "token=${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}" >> "$GITHUB_OUTPUT"
+        echo "enabled=${{ env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true' }}" >> "$GITHUB_OUTPUT"
+        echo "token-secret-name=OPENTELEMETRYBOT_GITHUB_TOKEN" >> "$GITHUB_OUTPUT"

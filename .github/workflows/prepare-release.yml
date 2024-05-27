@@ -33,16 +33,16 @@ jobs:
 
     needs: automation
 
-    if: github.event_name == 'workflow_dispatch' && needs.automation.outputs.token != ''
+    if: github.event_name == 'workflow_dispatch' && needs.automation.outputs.enabled
 
     env:
-      GH_TOKEN: ${{ needs.automation.outputs.token }}
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
     - name: check out code
       uses: actions/checkout@v4
       with:
-        token: ${{ needs.automation.outputs.token }}
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     - name: Create GitHub Pull Request to prepare release
       shell: pwsh
@@ -68,16 +68,16 @@ jobs:
       && github.event.pull_request.user.login == 'github-actions[bot]'
       && github.event.pull_request.merged == true
       && startsWith(github.event.pull_request.title, '[repo] Prepare release ')
-      && needs.automation.outputs.token != ''
+      && needs.automation.outputs.enabled
 
     env:
-      GH_TOKEN: ${{ needs.automation.outputs.token }}
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
     - name: check out code
       uses: actions/checkout@v4
       with:
-        token: ${{ needs.automation.outputs.token }}
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     - name: Lock GitHub Pull Request to prepare release
       shell: pwsh
@@ -100,10 +100,10 @@ jobs:
       && contains(github.event.comment.body, '/CreateReleaseTag')
       && startsWith(github.event.issue.title, '[repo] Prepare release ')
       && github.event.issue.pull_request.merged_at
-      && needs.automation.outputs.token != ''
+      && needs.automation.outputs.enabled
 
     env:
-      GH_TOKEN: ${{ needs.automation.outputs.token }}
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     outputs:
       tag: ${{ steps.create-tag.outputs.tag }}
@@ -114,7 +114,7 @@ jobs:
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
-        token: ${{ needs.automation.outputs.token }}
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     - name: Create release tag
       id: create-tag
@@ -147,13 +147,13 @@ jobs:
     - invoke-package-workflow
 
     env:
-      GH_TOKEN: ${{ needs.automation.outputs.token }}
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
     - name: check out code
       uses: actions/checkout@v4
       with:
-        token: ${{ needs.automation.outputs.token }}
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     - name: Post notice when packages are ready
       shell: pwsh

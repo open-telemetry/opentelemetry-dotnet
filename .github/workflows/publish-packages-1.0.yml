@@ -81,19 +81,19 @@ jobs:
     - automation
     - build-pack-publish
 
-    if: needs.automation.outputs.token != ''
+    if: needs.automation.outputs.enabled
 
     steps:
     - uses: actions/checkout@v4
       with:
         ref: main
-        token: ${{ needs.automation.outputs.token }}
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     - name: Create GitHub Release draft
       if: github.ref_type == 'tag' || inputs.tag
 
       env:
-        GH_TOKEN: ${{ needs.automation.outputs.token }}
+        GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
       shell: pwsh
 
@@ -110,7 +110,7 @@ jobs:
         || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
 
       env:
-        GH_TOKEN: ${{ needs.automation.outputs.token }}
+        GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
       shell: pwsh
 
