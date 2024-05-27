@@ -1,0 +1,21 @@
+name: Automation
+
+on:
+  workflow_call:
+    outputs:
+      token:
+        value: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
+      username:
+        value: ${{ vars.AUTOMATION_USERNAME }}
+      email:
+        value: ${{ vars.AUTOMATION_EMAIL }}
+
+jobs:
+  automation:
+
+    runs-on: windows-latest
+
+    steps:
+    - name: evaluate
+      run: |
+        echo ✓

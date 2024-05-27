@@ -1,7 +1,6 @@
-Import-Module .\build\scripts\git.psm1
-
 function CreateDraftRelease {
   param(
+    [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$tag
   )
 
@@ -91,10 +90,11 @@ Export-ModuleMember -Function CreateDraftRelease
 
 function CreateStableVersionUpdatePullRequest {
   param(
+    [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$tag,
-    [Parameter()][string]$gitUserName=$gitHubBotUserName,
-    [Parameter()][string]$gitUserEmail=$gitHubBotEmail,
-    [Parameter()][string]$targetBranch="main"
+    [Parameter()][string]$targetBranch="main",
+    [Parameter()][string]$gitUserName,
+    [Parameter()][string]$gitUserEmail
   )
 
   $match = [regex]::Match($tag, '.*?-(.*)')
@@ -107,8 +107,14 @@ function CreateStableVersionUpdatePullRequest {
 
   $branch="release/post-stable-${tag}-update"
 
-  git config user.name $gitUserName
-  git config user.email $gitUserEmail
+  if ([string]::IsNullOrEmpty($gitUserName) -eq $false)
+  {
+    git config user.name $gitUserName
+  }
+  if ([string]::IsNullOrEmpty($gitUserEmail) -eq $false)
+  {
+    git config user.email $gitUserEmail
+  }
 
   git switch --create $branch origin/$targetBranch --no-track 2>&1 | % ToString
   if ($LASTEXITCODE -gt 0)

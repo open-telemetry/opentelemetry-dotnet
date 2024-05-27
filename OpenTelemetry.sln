@@ -86,6 +86,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\add-labels.yml = .github\workflows\add-labels.yml
+		.github\workflows\automation.yml = .github\workflows\automation.yml
 		.github\workflows\ci.yml = .github\workflows\ci.yml
 		.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
 		.github\workflows\Component.BuildTest.yml = .github\workflows\Component.BuildTest.yml
@@ -328,7 +329,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{4498
 	ProjectSection(SolutionItems) = preProject
 		build\scripts\add-labels.ps1 = build\scripts\add-labels.ps1
 		build\scripts\finalize-publicapi.ps1 = build\scripts\finalize-publicapi.ps1
-		build\scripts\git.psm1 = build\scripts\git.psm1
 		build\scripts\post-release.psm1 = build\scripts\post-release.psm1
 		build\scripts\prepare-release.psm1 = build\scripts\prepare-release.psm1
 		build\scripts\sanitycheck.py = build\scripts\sanitycheck.py
