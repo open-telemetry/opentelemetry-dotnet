@@ -93,7 +93,7 @@ jobs:
         # retrieve them all.
         fetch-depth: 0
         ref: ${{ inputs.tag || github.ref || 'main' }}
-        token: ${{ automation.outputs.token }}
+        token: ${{ needs.automation.outputs.token }}
 
     - name: Create GitHub Release draft
       if: github.ref_type == 'tag' || inputs.tag
