@@ -74,11 +74,6 @@ jobs:
       GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
-    - name: check out code
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     - name: Lock GitHub Pull Request to prepare release
       shell: pwsh
       run: |
@@ -128,7 +123,9 @@ jobs:
           -gitRepository '${{ github.repository }}' `
           -pullRequestNumber '${{ github.event.issue.number }}' `
           -actionRunId '${{ github.run_id }}' `
-          -tag ([ref]$tag)
+          -tag ([ref]$tag) `
+          -gitUserName '${{ needs.automation.outputs.username }}' `
+          -gitUserEmail '${{ needs.automation.outputs.email }}'
 
         echo "tag=$tag" >> $env:GITHUB_OUTPUT
 
@@ -150,11 +147,6 @@ jobs:
       GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
-    - name: check out code
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     - name: Post notice when packages are ready
       shell: pwsh
       run: |

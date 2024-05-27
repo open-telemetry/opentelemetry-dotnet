@@ -114,7 +114,9 @@ function CreateReleaseTag {
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
     [Parameter(Mandatory=$true)][string]$actionRunId,
-    [Parameter()][ref]$tag
+    [Parameter()][ref]$tag,
+    [Parameter()][string]$gitUserName,
+    [Parameter()][string]$gitUserEmail
   )
 
   $prViewResponse = gh pr view $pullRequestNumber --json mergeCommit,author,title | ConvertFrom-Json
@@ -136,6 +138,15 @@ function CreateReleaseTag {
   if ([string]::IsNullOrEmpty($commit) -eq $true)
   {
       throw 'Could not find merge commit'
+  }
+
+  if ([string]::IsNullOrEmpty($gitUserName) -eq $false)
+  {
+    git config user.name $gitUserName
+  }
+  if ([string]::IsNullOrEmpty($gitUserEmail) -eq $false)
+  {
+    git config user.email $gitUserEmail
   }
 
   git tag -a $tagValue -m "$tagValue" $commit 2>&1 | % ToString

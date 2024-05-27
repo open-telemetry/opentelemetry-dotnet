@@ -160,8 +160,7 @@ Merge once packages are available on NuGet and the build passes.
     --body $body `
     --base $targetBranch `
     --head $branch `
-    --label infra `
-    --draft
+    --label infra
 }
 
 Export-ModuleMember -Function CreateStableVersionUpdatePullRequest

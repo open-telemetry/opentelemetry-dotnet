@@ -74,7 +74,7 @@ jobs:
         nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
         nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
-  post-release:
+  post-build:
     runs-on: ubuntu-latest
 
     needs:
@@ -84,11 +84,6 @@ jobs:
     if: needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        ref: main
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     - name: Create GitHub Release draft
       if: github.ref_type == 'tag' || inputs.tag
 
@@ -96,7 +91,6 @@ jobs:
         GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
       shell: pwsh
-
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
@@ -104,22 +98,4 @@ jobs:
           -gitRepository '${{ github.repository }}' `
           -tag '${{ inputs.tag || github.ref_name }}'
 
-    - name: Create GitHub draft Pull Request to update stable build version in props
-      if: |
-        (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
-        || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
-
-      env:
-        GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
-      shell: pwsh
-
-      run: |
-        Import-Module .\build\scripts\post-release.psm1
-
-        CreateStableVersionUpdatePullRequest `
-          -gitRepository '${{ github.repository }}' `
-          -tag '${{ inputs.tag || github.ref_name }}' `
-          -gitUserName '${{ needs.automation.outputs.username }}' `
-          -gitUserEmail '${{ needs.automation.outputs.email }}'
 
