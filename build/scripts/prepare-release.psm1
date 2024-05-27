@@ -110,13 +110,11 @@ Post a comment with "/CreateReleaseTag" in the body if you would like me to crea
 
 Export-ModuleMember -Function LockPullRequestAndPostNoticeToCreateReleaseTag
 
-function CreateReleaseTag {
+function CreateReleaseTagAndPostNoticeOnPullRequest {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter(Mandatory=$true)][string]$actionRunId,
     [Parameter(Mandatory=$true)][string]$botUserName,
-    [Parameter()][ref]$tag,
     [Parameter()][string]$gitUserName,
     [Parameter()][string]$gitUserEmail
   )
@@ -134,7 +132,7 @@ function CreateReleaseTag {
       throw 'Could not parse tag from PR title'
   }
 
-  $tagValue = $match.Groups[1].Value
+  $tag = $match.Groups[1].Value
 
   $commit = $prViewResponse.mergeCommit.oid
   if ([string]::IsNullOrEmpty($commit) -eq $true)
@@ -151,13 +149,13 @@ function CreateReleaseTag {
     git config user.email $gitUserEmail
   }
 
-  git tag -a $tagValue -m "$tagValue" $commit 2>&1 | % ToString
+  git tag -a $tag -m "$tag" $commit 2>&1 | % ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git tag failure'
   }
 
-  git push origin $tagValue 2>&1 | % ToString
+  git push origin $tag 2>&1 | % ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git push failure'
@@ -167,34 +165,12 @@ function CreateReleaseTag {
 
   $body =
 @"
-I just pushed the [$tagValue](https://github.com/$gitRepository/releases/tag/$tagValue) tag.
+I just pushed the [$tag](https://github.com/$gitRepository/releases/tag/$tag) tag.
 
-The [package workflow](https://github.com/$gitRepository/actions/runs/$actionRunId) should begin momentarily.
-"@
-
-  gh pr comment $pullRequestNumber --body $body
-
-  $tag.value = $tagValue
-}
-
-Export-ModuleMember -Function CreateReleaseTag
-
-function PostPackagesReadyNotice {
-  param(
-    [Parameter(Mandatory=$true)][string]$gitRepository,
-    [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter(Mandatory=$true)][string]$tag,
-    [Parameter(Mandatory=$true)][string]$packagesUrl
-  )
-
-  $body =
-@"
-The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available: $packagesUrl.
-
-Have a nice day!
+The [package workflow](https://github.com/$gitRepository/actions/workflows/publish-packages-1.0.yml) should begin momentarily.
 "@
 
   gh pr comment $pullRequestNumber --body $body
 }
 
-Export-ModuleMember -Function PostPackagesReadyNotice
+Export-ModuleMember -Function CreateReleaseTagAndPostNoticeOnPullRequest

@@ -107,9 +107,6 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
-    outputs:
-      tag: ${{ steps.create-tag.outputs.tag }}
-
     steps:
     - name: check out code
       uses: actions/checkout@v4
@@ -124,50 +121,9 @@ jobs:
       run: |
         Import-Module .\build\scripts\prepare-release.psm1
 
-        $tag = ''
-
-        CreateReleaseTag `
+        CreateReleaseTagAndPostNoticeOnPullRequest `
           -gitRepository '${{ github.repository }}' `
           -pullRequestNumber '${{ github.event.issue.number }}' `
-          -actionRunId '${{ github.run_id }}' `
           -botUserName '${{ needs.automation.outputs.username }}' `
-          -tag ([ref]$tag) `
           -gitUserName '${{ needs.automation.outputs.username }}' `
           -gitUserEmail '${{ needs.automation.outputs.email }}'
-
-        echo "tag=$tag" >> $env:GITHUB_OUTPUT
-
-  invoke-package-workflow:
-    needs: create-release-tag-unlock-pr-post-notice
-    uses: ./.github/workflows/publish-packages-1.0.yml
-    with:
-      tag: ${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}
-    secrets: inherit
-
-  post-packages-ready-notice:
-    runs-on: ubuntu-latest
-
-    needs:
-    - automation
-    - create-release-tag-unlock-pr-post-notice
-    - invoke-package-workflow
-
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
-    steps:
-    - name: check out code
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
-    - name: Post notice when packages are ready
-      shell: pwsh
-      run: |
-        Import-Module .\build\scripts\prepare-release.psm1
-
-        PostPackagesReadyNotice `
-          -gitRepository '${{ github.repository }}' `
-          -pullRequestNumber '${{ github.event.issue.number }}' `
-          -tag '${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}' `
-          -packagesUrl '${{ needs.invoke-package-workflow.outputs.artifact-url }}'

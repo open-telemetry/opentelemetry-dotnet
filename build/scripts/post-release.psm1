@@ -170,3 +170,60 @@ Merge once packages are available on NuGet and the build passes.
 }
 
 Export-ModuleMember -Function CreateStableVersionUpdatePullRequest
+
+function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
+  param(
+    [Parameter(Mandatory=$true)][string]$gitRepository,
+    [Parameter(Mandatory=$true)][string]$tag,
+    [Parameter(Mandatory=$true)][string]$tagSha,
+    [Parameter(Mandatory=$true)][string]$packagesUrl,
+    [Parameter(Mandatory=$true)][string]$botUserName
+  )
+
+  $prListResponse = gh pr list --search $tagSha --state merged --json number,author,title,comments | ConvertFrom-Json
+
+  if ($prListResponse.Length -eq 0)
+  {
+    Write-Host 'No prepare release PR found for tag & commit skipping post notice'
+    return
+  }
+
+  foreach ($pr in $prListResponse)
+  {
+    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[repo] Prepare release $tag")
+    {
+      continue
+    }
+
+    $foundComment = $false
+    foreach ($comment in $pr.comments)
+    {
+      if ($comment.author.login -eq $botUserName -and $comment.body.StartsWith("I just pushed the [$tag]"))
+      {
+        $foundComment = $true
+        break
+      }
+    }
+
+    if ($foundComment -eq $false)
+    {
+      continue
+    }
+
+  $body =
+@"
+The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available: $packagesUrl.
+
+Have a nice day!
+"@
+
+    $pullRequestNumber = $pr.number
+
+    gh pr comment $pullRequestNumber --body $body
+    return
+  }
+
+  Write-Host 'No prepare release PR found matched author and title with a valid comment'
+}
+
+Export-ModuleMember -Function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest
