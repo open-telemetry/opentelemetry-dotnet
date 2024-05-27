@@ -24,7 +24,7 @@ on:
     - created
 
 jobs:
-  invoke-automation:
+  automation:
     uses: ./.github/workflows/automation.yml
     secrets: inherit
 

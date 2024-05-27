@@ -1,4 +1,4 @@
-name: Automation
+name: Get automation settings
 
 on:
   workflow_call:
@@ -11,7 +11,7 @@ on:
         value: ${{ vars.AUTOMATION_EMAIL }}
 
 jobs:
-  automation:
+  resolve-automation:
 
     runs-on: ubuntu-latest
 
