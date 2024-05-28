@@ -45,5 +45,6 @@ jobs:
         CreateStableVersionUpdatePullRequest `
           -gitRepository '${{ github.repository }}' `
           -tag '${{ inputs.tag || github.ref_name }}' `
+          -targetBranch '${{ github.ref_name }}' `
           -gitUserName '${{ needs.automation.outputs.username }}' `
           -gitUserEmail '${{ needs.automation.outputs.email }}'
