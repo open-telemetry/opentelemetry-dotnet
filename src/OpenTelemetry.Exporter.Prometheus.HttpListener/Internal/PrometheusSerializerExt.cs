@@ -24,9 +24,9 @@ internal static partial class PrometheusSerializer
 
     public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool openMetricsRequested = false)
     {
-        cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric);
-        cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric);
-        cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description);
+        cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
+        cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
+        cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description, openMetricsRequested);
 
         if (!metric.MetricType.IsHistogram())
         {
@@ -35,7 +35,7 @@ internal static partial class PrometheusSerializer
                 var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                 // Counter and Gauge
-                cursor = WriteMetricName(buffer, cursor, prometheusMetric);
+                cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                 cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
 
                 buffer[cursor++] = unchecked((byte)' ');
@@ -85,7 +85,7 @@ internal static partial class PrometheusSerializer
                 {
                     totalCount += histogramMeasurement.BucketCount;
 
-                    cursor = WriteMetricName(buffer, cursor, prometheusMetric);
+                    cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
                     cursor = WriteTags(buffer, cursor, metric, tags, writeEnclosingBraces: false);
 
@@ -111,7 +111,7 @@ internal static partial class PrometheusSerializer
                 }
 
                 // Histogram sum
-                cursor = WriteMetricName(buffer, cursor, prometheusMetric);
+                cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
                 cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
 
@@ -125,7 +125,7 @@ internal static partial class PrometheusSerializer
                 buffer[cursor++] = ASCII_LINEFEED;
 
                 // Histogram count
-                cursor = WriteMetricName(buffer, cursor, prometheusMetric);
+                cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
                 cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
 
