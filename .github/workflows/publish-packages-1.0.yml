@@ -39,13 +39,13 @@ jobs:
       uses: actions/setup-dotnet@v4
 
     - name: dotnet restore
-      run: dotnet restore OpenTelemetry.proj -p:RunningDotNetPack=true
+      run: dotnet restore ./build/OpenTelemetry.proj -p:RunningDotNetPack=true
 
     - name: dotnet build
-      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
+      run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
 
     - name: dotnet pack
-      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || '' }}
+      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || '' }}
 
     - name: Publish Artifacts
       id: upload-artifacts
