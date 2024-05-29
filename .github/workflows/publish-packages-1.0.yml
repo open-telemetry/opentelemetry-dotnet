@@ -13,29 +13,18 @@ on:
     tags:
       - 'core-*'
       - 'coreunstable-*'
-  workflow_call:
-    inputs:
-      tag:
-        required: true
-        type: string
-    outputs:
-      artifact-id:
-        value: ${{ jobs.build-pack-publish.outputs.artifact-id }}
-      artifact-url:
-        value: ${{ jobs.build-pack-publish.outputs.artifact-url }}
   schedule:
     - cron: '0 0 * * *' # once in a day at 00:00
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
+  automation:
+    uses: ./.github/workflows/automation.yml
+    secrets: inherit
+
   build-pack-publish:
     runs-on: windows-latest
 
     outputs:
-      artifact-id: ${{ steps.upload-artifacts.outputs.artifact-id }}
       artifact-url: ${{ steps.upload-artifacts.outputs.artifact-url }}
 
     steps:
@@ -45,7 +34,6 @@ jobs:
         # the version tag which is typically NOT on the first commit so we
         # retrieve them all.
         fetch-depth: 0
-        ref: ${{ inputs.tag || github.ref || 'main' }}
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
@@ -57,13 +45,13 @@ jobs:
       run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
 
     - name: dotnet pack
-      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || inputs.tag || '' }}
+      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || '' }}
 
     - name: Publish Artifacts
       id: upload-artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.tag || github.ref_name }}-packages
+        name: ${{ github.ref_name }}-packages
         path: '**/bin/**/*.*nupkg'
 
     - name: Publish MyGet
@@ -74,26 +62,43 @@ jobs:
         nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
         nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
+  post-build:
+    runs-on: ubuntu-latest
+
+    needs:
+    - automation
+    - build-pack-publish
+
+    if: needs.automation.outputs.enabled && github.event_name == 'push'
+
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
     - name: Create GitHub Release draft
-      if: github.ref_type == 'tag' || inputs.tag
       shell: pwsh
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
         CreateDraftRelease `
-          -tag '${{ inputs.tag || github.ref_name }}'
-      env:
-        GH_TOKEN: ${{ github.token }}
+          -gitRepository '${{ github.repository }}' `
+          -tag '${{ github.ref_name }}'
 
-    - name: Create GitHub draft Pull Request to update stable build version in props
-      if: |
-        (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
-        || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
+    - name: Post notice when packages are ready
       shell: pwsh
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
-        CreateStableVersionUpdatePullRequest `
-          -tag '${{ inputs.tag || github.ref_name }}'
-      env:
-        GH_TOKEN: ${{ github.token }}
+        TryPostPackagesReadyNoticeOnPrepareReleasePullRequest `
+          -gitRepository '${{ github.repository }}' `
+          -tag '${{ github.ref_name }}' `
+          -tagSha '${{ github.sha }}' `
+          -packagesUrl '${{ needs.build-pack-publish.outputs.artifact-url }}' `
+          -botUserName '${{ needs.automation.outputs.username }}'
+
+
