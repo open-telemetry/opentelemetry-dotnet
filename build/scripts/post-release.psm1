@@ -227,3 +227,24 @@ Merge once packages are available on NuGet and the build passes.
 }
 
 Export-ModuleMember -Function CreateStableVersionUpdatePullRequest
+
+function InvokeCoreVersionUpdateWorkflowInRemoteRepository {
+  param(
+    [Parameter(Mandatory=$true)][string]$repository,
+    [Parameter(Mandatory=$true)][string]$tag,
+    [Parameter()][string]$targetBranch="main"
+  )
+
+  $match = [regex]::Match($tag, '^(.*?-)(.*)$')
+  if ($match.Success -eq $false)
+  {
+      throw 'Could not parse prefix or version from tag'
+  }
+
+  gh workflow run "core-version-update.yml" `
+    --repo $repository `
+    --ref $targetBranch `
+    --field "tag=$tag"
+}
+
+Export-ModuleMember -Function InvokeCoreVersionUpdateWorkflowInRemoteRepository
