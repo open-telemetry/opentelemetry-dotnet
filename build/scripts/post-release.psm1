@@ -136,8 +136,6 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
   $body =
 @"
 The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available: $packagesUrl.
-
-Have a nice day!
 "@
 
     $pullRequestNumber = $pr.number
@@ -230,7 +228,7 @@ Export-ModuleMember -Function CreateStableVersionUpdatePullRequest
 
 function InvokeCoreVersionUpdateWorkflowInRemoteRepository {
   param(
-    [Parameter(Mandatory=$true)][string]$repository,
+    [Parameter(Mandatory=$true)][string]$remoteGitRepository,
     [Parameter(Mandatory=$true)][string]$tag,
     [Parameter()][string]$targetBranch="main"
   )
@@ -242,9 +240,69 @@ function InvokeCoreVersionUpdateWorkflowInRemoteRepository {
   }
 
   gh workflow run "core-version-update.yml" `
-    --repo $repository `
+    --repo $remoteGitRepository `
     --ref $targetBranch `
     --field "tag=$tag"
 }
 
 Export-ModuleMember -Function InvokeCoreVersionUpdateWorkflowInRemoteRepository
+
+function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
+  param(
+    [Parameter(Mandatory=$true)][string]$gitRepository,
+    [Parameter(Mandatory=$true)][string]$tag
+  )
+
+  $tagSha = git rev-list -n 1 $tag 2>&1 | % ToString
+  if ($LASTEXITCODE -gt 0)
+  {
+      throw 'git rev-list failure'
+  }
+
+  $prListResponse = gh pr list --search $tagSha --state merged --json number,author,title,comments | ConvertFrom-Json
+
+  if ($prListResponse.Length -eq 0)
+  {
+    Write-Host 'No prepare release PR found for tag & commit skipping post notice'
+    return
+  }
+
+  foreach ($pr in $prListResponse)
+  {
+    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[repo] Prepare release $tag")
+    {
+      continue
+    }
+
+    $foundComment = $false
+    foreach ($comment in $pr.comments)
+    {
+      if ($comment.author.login -eq $botUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
+      {
+        $foundComment = $true
+        break
+      }
+    }
+
+    if ($foundComment -eq $false)
+    {
+      continue
+    }
+
+  $body =
+@"
+The release [$tag](https://github.com/$gitRepository/releases/tag/$tag) has been published and packages should be available on NuGet momentarily.
+
+Have a nice day!
+"@
+
+    $pullRequestNumber = $pr.number
+
+    gh pr comment $pullRequestNumber --body $body
+    return
+  }
+
+  Write-Host 'No prepare release PR found matched author and title with a valid comment'
+}
+
+Export-ModuleMember -Function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest
