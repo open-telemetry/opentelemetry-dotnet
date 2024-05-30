@@ -164,18 +164,21 @@
     workflow creates a draft release for the tag which was pushed. Edit the
     draft Release and click `Publish release`.
 
-14. If a new stable version of the core packages was released, a draft PR should
-    have been automatically created by the [Build, pack, and publish to
-    MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+14. If a new stable version of the core packages was released, a PR should have
+    been automatically created by the [Complete
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/post-release.yml)
     workflow to update the `OTelLatestStableVer` property in
-    `Directory.Packages.props` to the just released stable version. Mark that PR
-    `Ready for review` and then merge it once the build passes (this requires
-    the packages be available on NuGet).
+    `Directory.Packages.props` to the just released stable version. Merge that
+    PR once the build passes (this requires the packages be available on NuGet).
 
-15. If a new stable version of the core packages was released, open an issue in
-    the
-    [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
-    repo to notify maintainers to begin upgrading dependencies.
+15. The [Complete
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/post-release.yml)
+    workflow should have invoked the [Core version
+    update](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/actions/workflows/core-version-update.yml)
+    workflow on the
+    [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/)
+    repository which opens a PR to update dependencies. Verify this PR was
+    opened successfully.
 
 16. Post an announcement in the [Slack
     channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). Note any big
