@@ -6,7 +6,9 @@
   (`LoggerProviderBuilder` `AddProcessor` & `ConfigureResource` extensions,
   `LoggerProvider` `ForceFlush` & `Shutdown` extensions, and
   `ILoggingBuilder.UseOpenTelemetry` extension) will now be part of the public
-  API and supported in stable builds.
+  API and supported in stable builds. The existing `OpenTelemetryLoggerOptions`
+  `AddProcessor` & `SetResourceBuilder` methods and the
+  `ILoggingBuilder.AddOpenTelemetry` extension have been marked `Obsolete`.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
 ## 1.9.0-alpha.1
