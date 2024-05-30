@@ -17,7 +17,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		global.json = global.json
 		LICENSE.TXT = LICENSE.TXT
 		NuGet.config = NuGet.config
-		OpenTelemetry.proj = OpenTelemetry.proj
 		README.md = README.md
 		THIRD-PARTY-NOTICES.TXT = THIRD-PARTY-NOTICES.TXT
 		VERSIONING.md = VERSIONING.md
@@ -38,6 +37,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
 		build\OpenTelemetry.prod.loose.ruleset = build\OpenTelemetry.prod.loose.ruleset
 		build\OpenTelemetry.prod.ruleset = build\OpenTelemetry.prod.ruleset
+		build\OpenTelemetry.proj = build\OpenTelemetry.proj
 		build\OpenTelemetry.test.ruleset = build\OpenTelemetry.test.ruleset
 		build\RELEASING.md = build\RELEASING.md
 		build\stylecop.json = build\stylecop.json
@@ -86,6 +86,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\add-labels.yml = .github\workflows\add-labels.yml
+		.github\workflows\automation.yml = .github\workflows\automation.yml
 		.github\workflows\ci.yml = .github\workflows\ci.yml
 		.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
 		.github\workflows\Component.BuildTest.yml = .github\workflows\Component.BuildTest.yml
@@ -94,6 +95,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\dotnet-format.yml = .github\workflows\dotnet-format.yml
 		.github\workflows\markdownlint.yml = .github\workflows\markdownlint.yml
 		.github\workflows\package-validation.yml = .github\workflows\package-validation.yml
+		.github\workflows\post-release.yml = .github\workflows\post-release.yml
 		.github\workflows\prepare-release.yml = .github\workflows\prepare-release.yml
 		.github\workflows\publish-packages-1.0.yml = .github\workflows\publish-packages-1.0.yml
 		.github\workflows\sanitycheck.yml = .github\workflows\sanitycheck.yml
@@ -335,6 +337,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{4498
 		build\scripts\test-threadSafety.ps1 = build\scripts\test-threadSafety.ps1
 		build\scripts\update-changelogs.ps1 = build\scripts\update-changelogs.ps1
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "exemplars", "docs\metrics\exemplars\exemplars.csproj", "{79C12C80-B27B-41FB-AE79-A3BB74CFA782}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -590,6 +594,10 @@ Global
 		{19545B37-8518-4BDD-AD49-00C031FB3C2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19545B37-8518-4BDD-AD49-00C031FB3C2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19545B37-8518-4BDD-AD49-00C031FB3C2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79C12C80-B27B-41FB-AE79-A3BB74CFA782}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79C12C80-B27B-41FB-AE79-A3BB74CFA782}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79C12C80-B27B-41FB-AE79-A3BB74CFA782}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79C12C80-B27B-41FB-AE79-A3BB74CFA782}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -647,6 +655,7 @@ Global
 		{87A20A76-D524-4AAC-AF92-8725BFED0415} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 		{993E65E5-E71B-40FD-871C-60A9EBD59724} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 		{44982E0D-C8C6-42DC-9F8F-714981F27CE6} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
+		{79C12C80-B27B-41FB-AE79-A3BB74CFA782} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

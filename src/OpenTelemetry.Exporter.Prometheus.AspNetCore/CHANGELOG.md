@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.9.0-alpha.2
+
+Released 2024-May-29
+
+* Fixed issue with OpenMetrics suffixes for Prometheus
+  ([#5646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5646))
+
 ## 1.9.0-alpha.1
 
 Released 2024-May-20
