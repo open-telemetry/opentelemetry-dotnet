@@ -67,4 +67,5 @@ jobs:
 
         TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
           -gitRepository '${{ github.repository }}' `
+          -botUserName '${{ needs.automation.outputs.username }}' `
           -tag '${{ inputs.tag || github.ref_name }}'

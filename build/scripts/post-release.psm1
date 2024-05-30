@@ -250,6 +250,7 @@ Export-ModuleMember -Function InvokeCoreVersionUpdateWorkflowInRemoteRepository
 function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
+    [Parameter(Mandatory=$true)][string]$botUserName,
     [Parameter(Mandatory=$true)][string]$tag
   )
 
