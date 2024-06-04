@@ -239,7 +239,7 @@ within the maximum number of buckets defined by `MaxSize`. The default
 `MaxSize` is 160 buckets and the default `MaxScale` is 20.
 
 ```csharp
-    // Change the maximum number of buckets
+    // Change the maximum number of buckets for "MyHistogram"
     .AddView(
         instrumentName: "MyHistogram",
         new Base2ExponentialBucketHistogramConfiguration { MaxSize = 40 })
@@ -250,6 +250,28 @@ within the maximum number of buckets defined by `MaxSize`. The default
 by using Views.
 
 See [Program.cs](./Program.cs) for a complete example.
+
+#### Change the ExemplarReservoir
+
+> [!NOTE]
+> `MetricStreamConfiguration.ExemplarReservoirFactory` is an experimental API only
+  available in pre-release builds. For details see:
+  [OTEL1004](../../diagnostics/experimental-apis/OTEL1004.md).
+
+To set the [ExemplarReservoir](#exemplarreservoir) for an instrument, use the
+`MetricStreamConfiguration.ExemplarReservoirFactory` property on the View API:
+
+> [!IMPORTANT]
+> Setting `MetricStreamConfiguration.ExemplarReservoirFactory` alone will NOT
+  enable `Exemplar`s for an instrument. An [ExemplarFilter](#exemplarfilter)
+  MUST also be used.
+
+```csharp
+    // Use MyCustomExemplarReservoir for "MyFruitCounter"
+    .AddView(
+        instrumentName: "MyFruitCounter",
+        new MetricStreamConfiguration { ExemplarReservoirFactory = () => new MyCustomExemplarReservoir() })
+```
 
 ### Changing maximum Metric Streams
 
@@ -352,25 +374,39 @@ tutorial](../exemplars/README.md) demonstrates how to use exemplars to achieve
 correlation from metrics to traces, which is one of the primary use cases for
 exemplars.
 
+#### Default behavior
+
+Exemplars in OpenTelemetry .NET are **off by default**
+(`ExemplarFilterType.AlwaysOff`). The [OpenTelemetry
+Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplarfilter)
+recommends Exemplars collection should be on by default
+(`ExemplarFilterType.TraceBased`) however there is a performance cost associated
+with Exemplars so OpenTelemetry .NET has taken a more conservative stance for
+its default behavior.
+
 #### ExemplarFilter
 
 `ExemplarFilter` determines which measurements are offered to the configured
 `ExemplarReservoir`, which makes the final decision about whether or not the
 offered measurement gets recorded as an `Exemplar`. Generally `ExemplarFilter`
-is a mechanism to control the overhead associated with `Exemplar` offering.
+is a mechanism to control the overhead associated with the offering and
+recording of `Exemplar`s.
 
-OpenTelemetry SDK comes with the following `ExemplarFilters` (defined on
+OpenTelemetry SDK comes with the following `ExemplarFilter`s (defined on
 `ExemplarFilterType`):
 
-* `AlwaysOff`: Makes no measurements eligible for becoming an `Exemplar`. Using
-  this is as good as turning off the `Exemplar` feature and is the current
-  default.
+* (Default behavior) `AlwaysOff`: Makes no measurements eligible for becoming an
+  `Exemplar`. Using this disables `Exemplar` collection and avoids all
+  performance costs associated with `Exemplar`s.
 * `AlwaysOn`: Makes all measurements eligible for becoming an `Exemplar`.
 * `TraceBased`: Makes those measurements eligible for becoming an `Exemplar`
   which are recorded in the context of a sampled `Activity` (span).
 
 The `SetExemplarFilter` extension method on `MeterProviderBuilder` can be used
 to set the desired `ExemplarFilterType` and enable `Exemplar` collection:
+
+> [!NOTE]
+> The `SetExemplarFilter` API was added in the `1.9.0` release.
 
 ```csharp
 using OpenTelemetry;
@@ -382,6 +418,24 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 
+It is also possible to configure the `ExemplarFilter` by using following
+environmental variables:
+
+> [!NOTE]
+> Programmatically calling `SetExemplarFilter` will override any defaults set
+  using environment variables or configuration.
+
+| Environment variable       | Description                                        | Notes |
+| -------------------------- | -------------------------------------------------- |-------|
+| `OTEL_METRICS_EXEMPLAR_FILTER` | Sets the default `ExemplarFilter` to use for all metrics. | Added in `1.9.0` |
+| `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS`        | Sets the default `ExemplarFilter` to use for histogram metrics. If set `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS` takes precedence over `OTEL_METRICS_EXEMPLAR_FILTER` for histogram metrics. | Experimental key (may be removed or changed in the future). Added in `1.9.0` |
+
+Allowed values:
+
+* `always_off`: Equivalent to `ExemplarFilterType.AlwaysOff`
+* `always_on`: Equivalent to `ExemplarFilterType.AlwaysOn`
+* `trace_based`: Equivalent to `ExemplarFilterType.TraceBased`
+
 #### ExemplarReservoir
 
 `ExemplarReservoir` receives the measurements sampled by the `ExemplarFilter`
@@ -389,19 +443,24 @@ and is responsible for recording `Exemplar`s. The following are the default
 reservoirs:
 
 * `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
-Histograms with buckets, and it stores at most one exemplar per histogram
-bucket. The exemplar stored is the last measurement recorded - i.e. any new
+Histograms with buckets, and it stores at most one `Exemplar` per histogram
+bucket. The `Exemplar` stored is the last measurement recorded - i.e. any new
 measurement overwrites the previous one in that bucket.
 
 * `SimpleFixedSizeExemplarReservoir` is the default reservoir used for all
-metrics except Histograms with buckets. It has a fixed reservoir pool, and
+metrics except histograms with buckets. It has a fixed reservoir pool, and
 implements the equivalent of [naive
 reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
-size (currently defaulting to 1) determines the maximum number of exemplars
-stored.
+size (currently defaulting to 1) determines the maximum number of `Exemplar`s
+stored. Exponential histograms use a `SimpleFixedSizeExemplarReservoir` with a
+pool size equal to the number of buckets up to a max of `20`.
 
-> [!NOTE]
-> Currently there is no ability to change or configure `ExemplarReservoir`.
+See [Change the ExemplarReservoir](#change-the-exemplarreservoir) for details on
+how to use the View API to change `ExemplarReservoir`s for an instrument.
+
+See [Building your own
+ExemplarReservoir](../extending-the-sdk/README.md#exemplarreservoir) for details
+on how to implement custom `ExemplarReservoir`s.
 
 ### Instrumentation
 

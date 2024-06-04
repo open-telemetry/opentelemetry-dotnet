@@ -13,30 +13,18 @@ on:
     tags:
       - 'core-*'
       - 'coreunstable-*'
-      - 'Instrumentation.*-'
-  workflow_call:
-    inputs:
-      tag:
-        required: true
-        type: string
-    outputs:
-      artifact-id:
-        value: ${{ jobs.build-pack-publish.outputs.artifact-id }}
-      artifact-url:
-        value: ${{ jobs.build-pack-publish.outputs.artifact-url }}
   schedule:
     - cron: '0 0 * * *' # once in a day at 00:00
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
+  automation:
+    uses: ./.github/workflows/automation.yml
+    secrets: inherit
+
   build-pack-publish:
     runs-on: windows-latest
 
     outputs:
-      artifact-id: ${{ steps.upload-artifacts.outputs.artifact-id }}
       artifact-url: ${{ steps.upload-artifacts.outputs.artifact-url }}
 
     steps:
@@ -46,25 +34,24 @@ jobs:
         # the version tag which is typically NOT on the first commit so we
         # retrieve them all.
         fetch-depth: 0
-        ref: ${{ inputs.tag || github.ref || 'main' }}
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
 
     - name: dotnet restore
-      run: dotnet restore OpenTelemetry.proj -p:RunningDotNetPack=true
+      run: dotnet restore ./build/OpenTelemetry.proj -p:RunningDotNetPack=true
 
     - name: dotnet build
-      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
+      run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
 
     - name: dotnet pack
-      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || inputs.tag || '' }}
+      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || '' }}
 
     - name: Publish Artifacts
       id: upload-artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.tag || github.ref_name }}-packages
+        name: ${{ github.ref_name }}-packages
         path: '**/bin/**/*.*nupkg'
 
     - name: Publish MyGet
@@ -75,155 +62,43 @@ jobs:
         nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
         nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
+  post-build:
+    runs-on: ubuntu-latest
+
+    needs:
+    - automation
+    - build-pack-publish
+
+    if: needs.automation.outputs.enabled && github.event_name == 'push'
+
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
     - name: Create GitHub Release draft
-      if: github.ref_type == 'tag' || inputs.tag
       shell: pwsh
       run: |
-        $packages = (Get-ChildItem -Path src/*/bin/Release/*.nupkg).Name
+        Import-Module .\build\scripts\post-release.psm1
 
-        $notes = ''
-        $firstPackageVersion = ''
+        CreateDraftRelease `
+          -gitRepository '${{ github.repository }}' `
+          -tag '${{ github.ref_name }}'
 
-        foreach ($package in $packages)
-        {
-            $match = [regex]::Match($package, '(.*)\.(\d+\.\d+\.\d+.*?)\.nupkg')
-            $packageName = $match.Groups[1].Value
-            $packageVersion = $match.Groups[2].Value
-
-            if ($firstPackageVersion -eq '')
-            {
-                $firstPackageVersion = $packageVersion
-            }
-
-            $changelogContent = Get-Content -Path "src/$packageName/CHANGELOG.md"
-
-            $headingWritten = $false
-            $started = $false
-            $content = ""
-
-            foreach ($line in $changelogContent)
-            {
-                if ($line -like "## $packageVersion" -and $started -ne $true)
-                {
-                    $started = $true
-                }
-                elseif ($line -like "Released *" -and $started -eq $true)
-                {
-                    continue
-                }
-                elseif ($line -like "## *" -and $started -eq $true)
-                {
-                    break
-                }
-                else
-                {
-                    if ($started -eq $true -and ([string]::IsNullOrWhitespace($line) -eq $false -or $content.Length -gt 0))
-                    {
-                        $content += "  " + $line + "`r`n"
-                    }
-                }
-            }
-
-            if ([string]::IsNullOrWhitespace($content) -eq $true)
-            {
-                $content = "   No notable changes."
-            }
-
-            $content = $content.trimend()
-
-            $notes +=
-        @"
-        * NuGet: [$packageName v$packageVersion](https://www.nuget.org/packages/$packageName/$packageVersion)
-
-        $content
-
-          See [CHANGELOG](https://github.com/${{ github.repository }}/blob/${{ inputs.tag || github.ref_name }}/src/$packageName/CHANGELOG.md) for details.
-
-        "@
-        }
-
-        if ($firstPackageVersion -match '-alpha' -or $firstPackageVersion -match '-beta' -or $firstPackageVersion -match '-rc')
-        {
-          gh release create ${{ inputs.tag || github.ref_name }} `
-            --title ${{ inputs.tag || github.ref_name }} `
-            --verify-tag `
-            --notes "$notes" `
-            --prerelease `
-            --draft
-        }
-        else
-        {
-          gh release create ${{ inputs.tag || github.ref_name }} `
-            --title ${{ inputs.tag || github.ref_name }} `
-            --verify-tag `
-            --notes "$notes" `
-            --latest `
-            --draft
-        }
-      env:
-        GH_TOKEN: ${{ github.token }}
-
-    - name: Create GitHub draft Pull Request to update stable build version in props
-      if: |
-        (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
-        || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
+    - name: Post notice when packages are ready
       shell: pwsh
       run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        Import-Module .\build\scripts\post-release.psm1
 
-        git switch --create release/post-stable-${{ inputs.tag || github.ref_name }}-update main 2>&1 | % ToString
-        if ($LASTEXITCODE -gt 0)
-        {
-            Write-Error 'git switch failure'
-            Return
-        }
+        TryPostPackagesReadyNoticeOnPrepareReleasePullRequest `
+          -gitRepository '${{ github.repository }}' `
+          -tag '${{ github.ref_name }}' `
+          -tagSha '${{ github.sha }}' `
+          -packagesUrl '${{ needs.build-pack-publish.outputs.artifact-url }}' `
+          -botUserName '${{ needs.automation.outputs.username }}'
 
-        $match = [regex]::Match('${{ inputs.tag || github.ref_name }}', '.*?-(.*)')
-        $packageVersion = $match.Groups[1].Value
 
-        (Get-Content  Directory.Packages.props) `
-            -replace '<OTelLatestStableVer>.*<\/OTelLatestStableVer>', "<OTelLatestStableVer>$packageVersion</OTelLatestStableVer>" |
-          Set-Content Directory.Packages.props
-
-        git add Directory.Packages.props 2>&1 | % ToString
-        if ($LASTEXITCODE -gt 0)
-        {
-            Write-Error 'git add failure'
-            Return
-        }
-
-        git commit -m "Update OTelLatestStableVer in Directory.Packages.props to $packageVersion." 2>&1 | % ToString
-        if ($LASTEXITCODE -gt 0)
-        {
-            Write-Error 'git commit failure'
-            Return
-        }
-
-        git push -u origin release/post-stable-${{ inputs.tag || github.ref_name }}-update 2>&1 | % ToString
-        if ($LASTEXITCODE -gt 0)
-        {
-            Write-Error 'git push failure'
-            Return
-        }
-
-        $body =
-        @"
-        Note: This PR was opened automatically by the [package workflow](https://github.com/${{ github.repository }}/actions/workflows/publish-packages-1.0.yml).
-
-        Merge once packages are available on NuGet and the build passes.
-
-        ## Changes
-
-        * Sets `OTelLatestStableVer` in `Directory.Packages.props` to `$packageVersion`.
-        "@
-
-        gh pr create `
-          --title "[repo] Core stable release $packageVersion updates" `
-          --body $body `
-          --base main `
-          --head release/post-stable-${{ inputs.tag || github.ref_name }}-update `
-          --label infra `
-          --draft
-      env:
-        GH_TOKEN: ${{ github.token }}

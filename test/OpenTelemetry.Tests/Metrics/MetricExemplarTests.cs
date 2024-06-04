@@ -34,6 +34,7 @@ public class MetricExemplarTests : MetricTestsBase
             configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 [MeterProviderSdk.ExemplarFilterConfigKey] = configValue,
+                [MeterProviderSdk.ExemplarFilterHistogramsConfigKey] = configValue,
             });
         }
 
@@ -52,6 +53,14 @@ public class MetricExemplarTests : MetricTestsBase
 
         Assert.NotNull(meterProviderSdk);
         Assert.Equal((ExemplarFilterType?)expectedValue, meterProviderSdk.ExemplarFilter);
+        if (programmaticValue.HasValue)
+        {
+            Assert.False(meterProviderSdk.ExemplarFilterForHistograms.HasValue);
+        }
+        else
+        {
+            Assert.Equal((ExemplarFilterType?)expectedValue, meterProviderSdk.ExemplarFilterForHistograms);
+        }
     }
 
     [Theory]
@@ -260,9 +269,10 @@ public class MetricExemplarTests : MetricTestsBase
     }
 
     [Theory]
-    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(MetricReaderTemporalityPreference.Delta)]
-    public void TestExemplarsHistogramWithBuckets(MetricReaderTemporalityPreference temporality)
+    [InlineData(MetricReaderTemporalityPreference.Cumulative, null)]
+    [InlineData(MetricReaderTemporalityPreference.Delta, null)]
+    [InlineData(MetricReaderTemporalityPreference.Delta, "always_on")]
+    public void TestExemplarsHistogramWithBuckets(MetricReaderTemporalityPreference temporality, string? configValue)
     {
         DateTime testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
@@ -275,31 +285,49 @@ public class MetricExemplarTests : MetricTestsBase
 
         var buckets = new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
-            .AddMeter(meter.Name)
-            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
-            .AddView(i =>
+        var configBuilder = new ConfigurationBuilder();
+        if (!string.IsNullOrEmpty(configValue))
+        {
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                if (i.Name.StartsWith("histogramWithBucketsAndMinMax"))
-                {
-                    return new ExplicitBucketHistogramConfiguration
-                    {
-                        Boundaries = buckets,
-                    };
-                }
-                else
-                {
-                    return new ExplicitBucketHistogramConfiguration
-                    {
-                        Boundaries = buckets,
-                        RecordMinMax = false,
-                    };
-                }
-            })
-            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                [MeterProviderSdk.ExemplarFilterConfigKey] = "always_off",
+                [MeterProviderSdk.ExemplarFilterHistogramsConfigKey] = configValue,
+            });
+        }
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        {
+            if (string.IsNullOrEmpty(configValue))
             {
-                metricReaderOptions.TemporalityPreference = temporality;
-            }));
+                builder.SetExemplarFilter(ExemplarFilterType.AlwaysOn);
+            }
+
+            builder
+                .ConfigureServices(s => s.AddSingleton<IConfiguration>(configBuilder.Build()))
+                .AddMeter(meter.Name)
+                .AddView(i =>
+                {
+                    if (i.Name.StartsWith("histogramWithBucketsAndMinMax"))
+                    {
+                        return new ExplicitBucketHistogramConfiguration
+                        {
+                            Boundaries = buckets,
+                        };
+                    }
+                    else
+                    {
+                        return new ExplicitBucketHistogramConfiguration
+                        {
+                            Boundaries = buckets,
+                            RecordMinMax = false,
+                        };
+                    }
+                })
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                {
+                    metricReaderOptions.TemporalityPreference = temporality;
+                });
+        });
 
         var measurementValues = buckets
             /* 2000 is here to test overflow measurement */

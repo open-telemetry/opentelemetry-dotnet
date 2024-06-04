@@ -6,7 +6,6 @@
 [The OTLP (OpenTelemetry Protocol) exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)
 implementation.
 
-<!-- markdownlint-disable MD033 -->
 <details>
 <summary>Table of Contents</summary>
 
@@ -27,7 +26,6 @@ implementation.
 * [Troubleshooting](#troubleshooting)
 
 </details>
-<!-- markdownlint-enable MD033 -->
 
 ## Prerequisite
 
@@ -632,10 +630,23 @@ want to solicit feedback from the community.
 
       Added in `1.8.0`.
 
-    * When set to `disk` along with setting
-    `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` to the path on
-    disk, it enables retries by storing telemetry on disk during transient
-    errors.
+    * When set to `disk`, it enables retries by storing telemetry on disk during
+    transient errors.  The default path where the telemetry is stored is
+    obtained by calling
+    [Path.GetTempPath()](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath)
+    or can be customized by setting
+    `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` environment
+    variable.
+
+      The OTLP exporter utilizes a forked version of the
+      [OpenTelemetry.PersistentStorage.FileSystem](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem)
+      library to store telemetry data on disk. When a transient failure occurs,
+      a file is created at the specified directory path on disk containing the
+      serialized request data that was attempted to be sent to the OTLP
+      ingestion. A background thread attempts to resend any offline stored
+      telemetry every 60 seconds. For more details on how these files are
+      managed on disk, refer to the [File
+      details](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem#file-details).
 
       Added in **TBD** (Unreleased).
 

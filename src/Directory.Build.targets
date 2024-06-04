@@ -14,7 +14,7 @@
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)"/>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)'=='net462'">
+  <ItemGroup Condition="'$(TargetFramework)'=='$(NetFrameworkMinimumSupportedVersion)'">
     <!--ImplicitUsings will add this namespace that is not available for NetFX.
     https://github.com/dotnet/sdk/issues/24146
     https://github.com/dotnet/runtime/issues/59163

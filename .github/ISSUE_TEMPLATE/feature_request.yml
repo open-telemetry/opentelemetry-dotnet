@@ -9,6 +9,26 @@ body:
 
         Before opening a feature request, consider whether the feature should/could be implemented in the [other OpenTelemetry client libraries](https://github.com/open-telemetry/). If so, please [open an issue on opentelemetry-specification](https://github.com/open-telemetry/opentelemetry-specification/issues/new) first.
 
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      description: Which NuGet package does this feature request concern?
+      multiple: false
+      options:
+        - OpenTelemetry
+        - OpenTelemetry.Api
+        - OpenTelemetry.Api.ProviderBuilderExtensions
+        - OpenTelemetry.Exporter.Console
+        - OpenTelemetry.Exporter.InMemory
+        - OpenTelemetry.Exporter.OpenTelemetryProtocol
+        - OpenTelemetry.Exporter.Prometheus.AspNetCore
+        - OpenTelemetry.Exporter.Prometheus.HttpListener
+        - OpenTelemetry.Exporter.Zipkin
+        - OpenTelemetry.Extensions.Hosting
+        - OpenTelemetry.Extensions.Propagators
+        - OpenTelemetry.Shims.OpenTracing
+
   - type: textarea
     attributes:
       label: Is your feature request related to a problem?
