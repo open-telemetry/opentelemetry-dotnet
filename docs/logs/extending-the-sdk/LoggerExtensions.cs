@@ -6,13 +6,13 @@ using OpenTelemetry.Logs;
 
 internal static class LoggerExtensions
 {
-    public static LoggerProviderBuilder AddMyExporter(this LoggerProviderBuilder builder)
+    public static OpenTelemetryLoggerOptions AddMyExporter(this OpenTelemetryLoggerOptions options)
     {
-        if (builder == null)
+        if (options == null)
         {
-            throw new ArgumentNullException(nameof(builder));
+            throw new ArgumentNullException(nameof(options));
         }
 
-        return builder.AddProcessor(new BatchLogRecordExportProcessor(new MyExporter()));
+        return options.AddProcessor(new BatchLogRecordExportProcessor(new MyExporter()));
     }
 }

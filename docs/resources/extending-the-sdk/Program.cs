@@ -32,7 +32,7 @@ public class Program
 
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.UseOpenTelemetry(logging =>
+            builder.AddOpenTelemetry(logging =>
             {
                 logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddDetector(
                     new MyResourceDetector()));

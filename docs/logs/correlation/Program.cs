@@ -20,7 +20,7 @@ public class Program
 
         var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.UseOpenTelemetry(logging =>
+            builder.AddOpenTelemetry(logging =>
             {
                 logging.AddConsoleExporter();
             });
