@@ -25,7 +25,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <remarks><inheritdoc cref="AddOtlpExporter(OpenTelemetryLoggerOptions, Action{OtlpExporterOptions})" path="/remarks"/></remarks>
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
-    [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
+    // TODO: [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
     public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions)
         => AddOtlpExporter(loggerOptions, name: null, configure: null);
 
@@ -35,7 +35,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
-    [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
+    // TODO: [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
         Action<OtlpExporterOptions> configure)
@@ -48,7 +48,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="name">Optional name which is used when retrieving options.</param>
     /// <param name="configure">Optional callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
-    [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
+    // TODO: [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
         string? name,
@@ -81,7 +81,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <param name="configureExporterAndProcessor">Callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="LogRecordExportProcessorOptions"/>.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
-    [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
+    // TODO: [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
         Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
@@ -94,7 +94,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="name">Optional name which is used when retrieving options.</param>
     /// <param name="configureExporterAndProcessor">Optional callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="LogRecordExportProcessorOptions"/>.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
-    [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
+    // TODO: [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
         string? name,

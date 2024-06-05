@@ -27,9 +27,6 @@ OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator.Enumerator() -> void
 OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator.MoveNext() -> bool
 OpenTelemetry.ReadOnlyFilteredTagCollection.GetEnumerator() -> OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator
 OpenTelemetry.ReadOnlyFilteredTagCollection.ReadOnlyFilteredTagCollection() -> void
-static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
-static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> Microsoft.Extensions.Logging.ILoggingBuilder!
-static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithLogging(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithLogging(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithLogging(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> OpenTelemetry.IOpenTelemetryBuilder!

@@ -22,5 +22,8 @@ OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.get -> System.Func<OpenTelemetry.Metrics.ExemplarReservoir?>?
 OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.set -> void
 override sealed OpenTelemetry.Metrics.FixedSizeExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
+static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static OpenTelemetry.Sdk.CreateLoggerProviderBuilder() -> OpenTelemetry.Logs.LoggerProviderBuilder!
 virtual OpenTelemetry.Metrics.FixedSizeExemplarReservoir.OnCollected() -> void

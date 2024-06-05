@@ -14,7 +14,7 @@ public static class InMemoryExporterLoggingExtensions
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <param name="exportedItems">Collection which will be populated with the exported <see cref="LogRecord"/>.</param>
     /// <returns>The supplied instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
-    [Obsolete("Call LoggerProviderBuilder.AddInMemoryExporter instead this method will be removed in a future version.")]
+    // TODO: [Obsolete("Call LoggerProviderBuilder.AddInMemoryExporter instead this method will be removed in a future version.")]
     public static OpenTelemetryLoggerOptions AddInMemoryExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
         ICollection<LogRecord> exportedItems)
