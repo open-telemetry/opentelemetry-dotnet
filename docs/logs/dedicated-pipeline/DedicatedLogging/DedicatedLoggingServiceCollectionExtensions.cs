@@ -15,16 +15,21 @@ public static class DedicatedLoggingServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(configureOpenTelemetry);
 
-        services.TryAddSingleton(sp =>
+        services.TryAddSingleton(_ =>
         {
-            var loggerFactory = LoggerFactory.Create(builder =>
+            var services = new ServiceCollection();
+            services.AddLogging(builder =>
             {
                 builder.AddConfiguration(configuration);
 
-                builder.UseOpenTelemetry(configureOpenTelemetry);
+                builder.AddOpenTelemetry();
             });
 
-            return new DedicatedLoggerFactory(loggerFactory);
+            services.ConfigureOpenTelemetryLoggerProvider(configureOpenTelemetry);
+
+            var sp = services.BuildServiceProvider();
+
+            return new DedicatedLoggerFactory(sp);
         });
 
         services.TryAdd(ServiceDescriptor.Singleton(typeof(IDedicatedLogger<>), typeof(DedicatedLogger<>)));
@@ -54,11 +59,13 @@ public static class DedicatedLoggingServiceCollectionExtensions
 
     private sealed class DedicatedLoggerFactory : ILoggerFactory
     {
+        private readonly ServiceProvider serviceProvider;
         private readonly ILoggerFactory innerLoggerFactory;
 
-        public DedicatedLoggerFactory(ILoggerFactory loggerFactory)
+        public DedicatedLoggerFactory(ServiceProvider serviceProvider)
         {
-            this.innerLoggerFactory = loggerFactory;
+            this.serviceProvider = serviceProvider;
+            this.innerLoggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
         }
 
         public void AddProvider(ILoggerProvider provider)
@@ -68,6 +75,6 @@ public static class DedicatedLoggingServiceCollectionExtensions
             => this.innerLoggerFactory.CreateLogger(categoryName);
 
         public void Dispose()
-            => this.innerLoggerFactory.Dispose();
+            => this.serviceProvider.Dispose();
     }
 }
