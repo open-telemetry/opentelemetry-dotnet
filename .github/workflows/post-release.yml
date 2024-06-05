@@ -21,13 +21,7 @@ jobs:
     needs:
     - automation
 
-    if: |
-      needs.automation.outputs.enabled
-      &&
-      (
-        (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
-        || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
-      )
+    if: needs.automation.outputs.enabled
 
     env:
       GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
@@ -35,10 +29,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
+        # Note: By default GitHub only fetches 1 commit. We need all the tags
+        # for this work.
+        fetch-depth: 0
         ref: ${{ github.event.repository.default_branch }}
         token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     - name: Create GitHub Pull Request to update stable build version in props
+      if: |
+          (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
+          || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
       shell: pwsh
       run: |
         Import-Module .\build\scripts\post-release.psm1
@@ -49,3 +49,23 @@ jobs:
           -targetBranch '${{ github.event.repository.default_branch }}' `
           -gitUserName '${{ needs.automation.outputs.username }}' `
           -gitUserEmail '${{ needs.automation.outputs.email }}'
+
+    - name: Invoke core version update workflow in opentelemetry-dotnet-contrib repository
+      if: vars.CONTRIB_REPO
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\post-release.psm1
+
+        InvokeCoreVersionUpdateWorkflowInRemoteRepository `
+          -remoteGitRepository '${{ vars.CONTRIB_REPO }}' `
+          -tag '${{ inputs.tag || github.ref_name }}'
+
+    - name: Post notice when release is published
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\post-release.psm1
+
+        TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
+          -gitRepository '${{ github.repository }}' `
+          -botUserName '${{ needs.automation.outputs.username }}' `
+          -tag '${{ inputs.tag || github.ref_name }}'
