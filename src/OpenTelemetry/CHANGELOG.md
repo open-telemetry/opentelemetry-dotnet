@@ -3,12 +3,9 @@
 ## Unreleased
 
 * The experimental APIs previously covered by `OTEL1000`
-  (`LoggerProviderBuilder` `AddProcessor` & `ConfigureResource` extensions,
-  `LoggerProvider` `ForceFlush` & `Shutdown` extensions, and
-  `ILoggingBuilder.UseOpenTelemetry` extension) will now be part of the public
-  API and supported in stable builds. The existing `OpenTelemetryLoggerOptions`
-  `AddProcessor` & `SetResourceBuilder` methods and the
-  `ILoggingBuilder.AddOpenTelemetry` extension have been marked `Obsolete`.
+  (`LoggerProviderBuilder` `AddProcessor` & `ConfigureResource` extensions, and
+  `LoggerProvider` `ForceFlush` & `Shutdown` extensions) will now be part of the
+  public API and supported in stable builds.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
 ## 1.9.0-alpha.1

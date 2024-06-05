@@ -4,9 +4,7 @@
 
 * The experimental APIs previously covered by `OTEL1000`
   (`LoggerProviderBuilder.AddConsoleExporter` extension) will now be part of the
-  public API and supported in stable builds. The existing
-  `OpenTelemetryLoggerOptions.AddConsoleExporter` extension has been marked
-  `Obsolete`.
+  public API and supported in stable builds.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
 ## 1.9.0-alpha.1
