@@ -24,12 +24,6 @@ var logExporter = appBuilder.Configuration.GetValue("UseLogExporter", defaultVal
 // Note: Switch between Explicit/Exponential by setting HistogramAggregation in appsettings.json
 var histogramAggregation = appBuilder.Configuration.GetValue("HistogramAggregation", defaultValue: "explicit")!.ToLowerInvariant();
 
-// Build a resource configuration action to set service information.
-Action<ResourceBuilder> configureResource = r => r.AddService(
-    serviceName: appBuilder.Configuration.GetValue("ServiceName", defaultValue: "otel-test")!,
-    serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown",
-    serviceInstanceId: Environment.MachineName);
-
 // Create a service to expose ActivitySource, and Metric Instruments
 // for manual instrumentation
 appBuilder.Services.AddSingleton<Instrumentation>();
@@ -40,7 +34,11 @@ appBuilder.Logging.ClearProviders();
 // Configure OpenTelemetry logging, metrics, & tracing with auto-start using the
 // AddOpenTelemetry extension from OpenTelemetry.Extensions.Hosting.
 appBuilder.Services.AddOpenTelemetry()
-    .ConfigureResource(configureResource)
+    .ConfigureResource(r => r
+        .AddService(
+            serviceName: appBuilder.Configuration.GetValue("ServiceName", defaultValue: "otel-test")!,
+            serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown",
+            serviceInstanceId: Environment.MachineName))
     .WithTracing(builder =>
     {
         // Tracing
@@ -128,10 +126,6 @@ appBuilder.Services.AddOpenTelemetry()
     .WithLogging(builder =>
     {
         // Note: See appsettings.json Logging:OpenTelemetry section for configuration.
-
-        var resourceBuilder = ResourceBuilder.CreateDefault();
-        configureResource(resourceBuilder);
-        builder.SetResourceBuilder(resourceBuilder);
 
         switch (logExporter)
         {
