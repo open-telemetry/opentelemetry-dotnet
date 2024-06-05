@@ -82,6 +82,7 @@ public class OpenTelemetryLoggerOptions
     /// </summary>
     /// <param name="processor">Log processor to add.</param>
     /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+    // TODO: [Obsolete("Use LoggerProviderBuilder.AddProcessor instead this method will be removed in a future version.")]
     public OpenTelemetryLoggerOptions AddProcessor(BaseProcessor<LogRecord> processor)
     {
         Guard.ThrowIfNull(processor);
@@ -96,6 +97,7 @@ public class OpenTelemetryLoggerOptions
     /// </summary>
     /// <param name="implementationFactory">The factory that creates the service.</param>
     /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+    // TODO: [Obsolete("Use LoggerProviderBuilder.AddProcessor instead this method will be removed in a future version.")]
     public OpenTelemetryLoggerOptions AddProcessor(
         Func<IServiceProvider, BaseProcessor<LogRecord>> implementationFactory)
     {
@@ -112,6 +114,7 @@ public class OpenTelemetryLoggerOptions
     /// </summary>
     /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
     /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+    // TODO: [Obsolete("Use LoggerProviderBuilder.SetResourceBuilder instead this method will be removed in a future version.")]
     public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
     {
         Guard.ThrowIfNull(resourceBuilder);
