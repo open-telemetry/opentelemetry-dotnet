@@ -83,11 +83,11 @@ jobs:
 
     - name: Download Artifacts
       run: |
-        curl `
-          -H "Accept: application/vnd.github+json" `
-          -H "Authorization: token ${{ github.token }}" `
-          -L `
-          -o '${{ github.workspace }}/artifacts/${{ github.ref_name }}-packages.zip' `
+        curl \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: token ${{ github.token }}" \
+          -L \
+          -o '${{ github.workspace }}/artifacts/${{ github.ref_name }}-packages.zip' \
           "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ needs.build-pack-publish.outputs.artifact-id }}/zip"
 
     - name: Display structure of downloaded files
