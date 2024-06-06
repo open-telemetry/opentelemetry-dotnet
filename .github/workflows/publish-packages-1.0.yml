@@ -87,6 +87,9 @@ jobs:
         name: ${{ github.ref_name }}-packages
         path: '${{ github.workspace }}/artifacts'
 
+    - name: Display structure of downloaded files
+      run: ls -R
+
     - name: Create GitHub Release draft
       shell: pwsh
       run: |
