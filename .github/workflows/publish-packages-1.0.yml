@@ -80,6 +80,12 @@ jobs:
       with:
         token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
+    - name: Download Artifacts
+      id: download-artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ github.ref_name }}-packages
+
     - name: Create GitHub Release draft
       shell: pwsh
       run: |
@@ -87,7 +93,8 @@ jobs:
 
         CreateDraftRelease `
           -gitRepository '${{ github.repository }}' `
-          -tag '${{ github.ref_name }}'
+          -tag '${{ github.ref_name }}' `
+          -artifactsPath '${{ steps.download-artifacts.outputs.download-path }}'
 
     - name: Post notice when packages are ready
       shell: pwsh
