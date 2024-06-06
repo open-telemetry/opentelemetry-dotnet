@@ -23,19 +23,26 @@ on:
     types:
     - created
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
-  prepare-release-pr:
-    if: github.event_name == 'workflow_dispatch'
+  automation:
+    uses: ./.github/workflows/automation.yml
+    secrets: inherit
 
-    runs-on: windows-latest
+  prepare-release-pr:
+    runs-on: ubuntu-latest
+
+    needs: automation
+
+    if: github.event_name == 'workflow_dispatch' && needs.automation.outputs.enabled
+
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
     - name: check out code
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     - name: Create GitHub Pull Request to prepare release
       shell: pwsh
@@ -43,25 +50,34 @@ jobs:
         Import-Module .\build\scripts\prepare-release.psm1
 
         CreatePullRequestToUpdateChangelogsAndPublicApis `
+          -gitRepository '${{ github.repository }}' `
           -minVerTagPrefix '${{ inputs.tag-prefix }}' `
           -version '${{ inputs.version }}' `
-          -targetBranch '${{ github.ref_name }}'
-      env:
-        GH_TOKEN: ${{ github.token }}
+          -targetBranch '${{ github.ref_name }}' `
+          -gitUserName '${{ needs.automation.outputs.username }}' `
+          -gitUserEmail '${{ needs.automation.outputs.email }}'
 
   lock-pr-and-post-notice-to-create-release-tag:
+    runs-on: ubuntu-latest
+
+    needs: automation
+
     if: |
       github.event_name == 'pull_request'
       && github.event.action == 'closed'
-      && github.event.pull_request.user.login == 'github-actions[bot]'
+      && github.event.pull_request.user.login == needs.automation.outputs.username
       && github.event.pull_request.merged == true
       && startsWith(github.event.pull_request.title, '[repo] Prepare release ')
+      && needs.automation.outputs.enabled
 
-    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
     - name: check out code
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     - name: Lock GitHub Pull Request to prepare release
       shell: pwsh
@@ -69,23 +85,27 @@ jobs:
         Import-Module .\build\scripts\prepare-release.psm1
 
         LockPullRequestAndPostNoticeToCreateReleaseTag `
-          -pullRequestNumber '${{ github.event.pull_request.number }}'
-      env:
-        GH_TOKEN: ${{ github.token }}
+          -gitRepository '${{ github.repository }}' `
+          -pullRequestNumber '${{ github.event.pull_request.number }}' `
+          -botUserName '${{ needs.automation.outputs.username }}'
 
   create-release-tag-unlock-pr-post-notice:
+    runs-on: ubuntu-latest
+
+    needs: automation
+
     if: |
       github.event_name == 'issue_comment'
       && github.event.issue.pull_request
       && github.event.issue.locked == true
+      && github.event.comment.user.login != needs.automation.outputs.username
       && contains(github.event.comment.body, '/CreateReleaseTag')
       && startsWith(github.event.issue.title, '[repo] Prepare release ')
       && github.event.issue.pull_request.merged_at
+      && needs.automation.outputs.enabled
 
-    runs-on: windows-latest
-
-    outputs:
-      tag: ${{ steps.create-tag.outputs.tag }}
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
     - name: check out code
@@ -93,6 +113,7 @@ jobs:
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     - name: Create release tag
       id: create-tag
@@ -100,40 +121,9 @@ jobs:
       run: |
         Import-Module .\build\scripts\prepare-release.psm1
 
-        $tag = ''
-
-        CreateReleaseTag `
+        CreateReleaseTagAndPostNoticeOnPullRequest `
+          -gitRepository '${{ github.repository }}' `
           -pullRequestNumber '${{ github.event.issue.number }}' `
-          -actionRunId '${{ github.run_id }}' `
-          -tag ([ref]$tag)
-
-        echo "tag=$tag" >> $env:GITHUB_OUTPUT
-      env:
-        GH_TOKEN: ${{ github.token }}
-
-  invoke-package-workflow:
-    needs: create-release-tag-unlock-pr-post-notice
-    uses: ./.github/workflows/publish-packages-1.0.yml
-    with:
-      tag: ${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}
-
-  post-packages-ready-notice:
-    needs:
-    - create-release-tag-unlock-pr-post-notice
-    - invoke-package-workflow
-    runs-on: windows-latest
-    steps:
-    - name: check out code
-      uses: actions/checkout@v4
-
-    - name: Post notice when packages are ready
-      shell: pwsh
-      run: |
-        Import-Module .\build\scripts\prepare-release.psm1
-
-        PostPackagesReadyNotice `
-          -pullRequestNumber '${{ github.event.issue.number }}' `
-          -tag '${{ needs.create-release-tag-unlock-pr-post-notice.outputs.tag }}' `
-          -packagesUrl '${{ needs.invoke-package-workflow.outputs.artifact-url }}'
-      env:
-        GH_TOKEN: ${{ github.token }}
+          -botUserName '${{ needs.automation.outputs.username }}' `
+          -gitUserName '${{ needs.automation.outputs.username }}' `
+          -gitUserEmail '${{ needs.automation.outputs.email }}'

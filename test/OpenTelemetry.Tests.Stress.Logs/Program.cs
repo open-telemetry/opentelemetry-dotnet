@@ -23,9 +23,9 @@ public static class Program
         {
             this.loggerFactory = LoggerFactory.Create(builder =>
             {
-                builder.AddOpenTelemetry(options =>
+                builder.AddOpenTelemetry(logging =>
                 {
-                    options.AddProcessor(new DummyProcessor());
+                    logging.AddProcessor(new DummyProcessor());
                 });
             });
 

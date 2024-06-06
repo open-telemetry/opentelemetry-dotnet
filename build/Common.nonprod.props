@@ -44,4 +44,24 @@
 
     <Message Importance="high" Text="Skipping test execution for '$(TargetPath)' because it does not contain the '$(TargetFramework)' target." Condition="'$(_SkipTests)' == 'true'" />
   </Target>
+
+  <Target Name="ResolveExposedExperimentalFeatures" BeforeTargets="CoreCompile">
+    <!-- Note: What this does is look for $(ProjectReferenceName).BuildFlags.txt
+        files for all the dependencies of the project being compiled. If
+        ExposeExperimentalFeatures=true is found in those files we set compiler
+        constants for each project where experimental features were exposed.
+        Example:
+        OPENTELEMETRY_EXPORTER_INMEMORY_EXPERIMENTAL_FEATURES_EXPOSED;OPENTELEMETRY_EXPERIMENTAL_FEATURES_EXPOSED;OPENTELEMETRY_API_EXPERIMENTAL_FEATURES_EXPOSED;OPENTELEMETRY_API_PROVIDERBUILDEREXTENSIONS_EXPERIMENTAL_FEATURES_EXPOSED
+        -->
+    <ItemGroup>
+      <DependenciesWithExposedExperimentalFeatures
+        Include="@(_ResolvedProjectReferencePaths->'%(Filename)')"
+        Condition="$([System.IO.File]::Exists('%(RootDir)%(Directory)%(Filename).BuildFlags.txt')) AND $([System.IO.File]::ReadAllText('%(RootDir)%(Directory)%(Filename).BuildFlags.txt').Contains('ExposeExperimentalFeatures=true'))" />
+      <CompilerConstantsForDependenciesWithExposedExperimentalFeatures Include="@(DependenciesWithExposedExperimentalFeatures->'$([System.String]::Copy('%(DependenciesWithExposedExperimentalFeatures.Identity)').ToUpper().Replace('.', '_'))_EXPERIMENTAL_FEATURES_EXPOSED')" />
+    </ItemGroup>
+
+    <PropertyGroup Condition="'@(CompilerConstantsForDependenciesWithExposedExperimentalFeatures)' != ''">
+      <DefineConstants>$(DefineConstants);@(CompilerConstantsForDependenciesWithExposedExperimentalFeatures)</DefineConstants>
+    </PropertyGroup>
+  </Target>
 </Project>

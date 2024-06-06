@@ -1,24 +1,24 @@
-$gitHubBotUserName="github-actions[bot]"
-$gitHubBotEmail="41898282+github-actions[bot]@users.noreply.github.com"
-
-$repoViewResponse = gh repo view --json nameWithOwner | ConvertFrom-Json
-
-$gitRepository = $repoViewResponse.nameWithOwner
-
 function CreatePullRequestToUpdateChangelogsAndPublicApis {
   param(
+    [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$minVerTagPrefix,
     [Parameter(Mandatory=$true)][string]$version,
-    [Parameter()][string]$gitUserName=$gitHubBotUserName,
-    [Parameter()][string]$gitUserEmail=$gitHubBotEmail,
-    [Parameter()][string]$targetBranch="main"
+    [Parameter()][string]$targetBranch="main",
+    [Parameter()][string]$gitUserName,
+    [Parameter()][string]$gitUserEmail
   )
 
   $tag="${minVerTagPrefix}${version}"
   $branch="release/prepare-${tag}-release"
 
-  git config user.name $gitUserName
-  git config user.email $gitUserEmail
+  if ([string]::IsNullOrEmpty($gitUserName) -eq $false)
+  {
+    git config user.name $gitUserName
+  }
+  if ([string]::IsNullOrEmpty($gitUserEmail) -eq $false)
+  {
+    git config user.email $gitUserEmail
+  }
 
   git switch --create $branch 2>&1 | % ToString
   if ($LASTEXITCODE -gt 0)
@@ -70,17 +70,14 @@ Export-ModuleMember -Function CreatePullRequestToUpdateChangelogsAndPublicApis
 
 function LockPullRequestAndPostNoticeToCreateReleaseTag {
   param(
+    [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter()][string]$gitUserName=$gitHubBotUserName,
-    [Parameter()][string]$gitUserEmail=$gitHubBotEmail
+    [Parameter(Mandatory=$true)][string]$botUserName
   )
-
-  git config user.name $gitUserName
-  git config user.email $gitUserEmail
 
   $prViewResponse = gh pr view $pullRequestNumber --json mergeCommit,author,title | ConvertFrom-Json
 
-  if ($prViewResponse.author.is_bot -eq $false -or $prViewResponse.author.login -ne 'app/github-actions')
+  if ($prViewResponse.author.login -ne $botUserName)
   {
       throw 'PR author was unexpected'
   }
@@ -113,21 +110,18 @@ Post a comment with "/CreateReleaseTag" in the body if you would like me to crea
 
 Export-ModuleMember -Function LockPullRequestAndPostNoticeToCreateReleaseTag
 
-function CreateReleaseTag {
+function CreateReleaseTagAndPostNoticeOnPullRequest {
   param(
+    [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter(Mandatory=$true)][string]$actionRunId,
-    [Parameter()][string]$gitUserName=$gitHubBotUserName,
-    [Parameter()][string]$gitUserEmail=$gitHubBotEmail,
-    [Parameter()][ref]$tag
+    [Parameter(Mandatory=$true)][string]$botUserName,
+    [Parameter()][string]$gitUserName,
+    [Parameter()][string]$gitUserEmail
   )
-
-  git config user.name $gitUserName
-  git config user.email $gitUserEmail
 
   $prViewResponse = gh pr view $pullRequestNumber --json mergeCommit,author,title | ConvertFrom-Json
 
-  if ($prViewResponse.author.is_bot -eq $false -or $prViewResponse.author.login -ne 'app/github-actions')
+  if ($prViewResponse.author.login -ne $botUserName)
   {
       throw 'PR author was unexpected'
   }
@@ -138,7 +132,7 @@ function CreateReleaseTag {
       throw 'Could not parse tag from PR title'
   }
 
-  $tagValue = $match.Groups[1].Value
+  $tag = $match.Groups[1].Value
 
   $commit = $prViewResponse.mergeCommit.oid
   if ([string]::IsNullOrEmpty($commit) -eq $true)
@@ -146,13 +140,22 @@ function CreateReleaseTag {
       throw 'Could not find merge commit'
   }
 
-  git tag -a $tagValue -m "$tagValue" $commit 2>&1 | % ToString
+  if ([string]::IsNullOrEmpty($gitUserName) -eq $false)
+  {
+    git config user.name $gitUserName
+  }
+  if ([string]::IsNullOrEmpty($gitUserEmail) -eq $false)
+  {
+    git config user.email $gitUserEmail
+  }
+
+  git tag -a $tag -m "$tag" $commit 2>&1 | % ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git tag failure'
   }
 
-  git push origin $tagValue 2>&1 | % ToString
+  git push origin $tag 2>&1 | % ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git push failure'
@@ -162,33 +165,12 @@ function CreateReleaseTag {
 
   $body =
 @"
-I just pushed the [$tagValue](https://github.com/$gitRepository/releases/tag/$tagValue) tag.
+I just pushed the [$tag](https://github.com/$gitRepository/releases/tag/$tag) tag.
 
-The [package workflow](https://github.com/$gitRepository/actions/runs/$actionRunId) should begin momentarily.
-"@
-
-  gh pr comment $pullRequestNumber --body $body
-
-  $tag.value = $tagValue
-}
-
-Export-ModuleMember -Function CreateReleaseTag
-
-function PostPackagesReadyNotice {
-  param(
-    [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter(Mandatory=$true)][string]$tag,
-    [Parameter(Mandatory=$true)][string]$packagesUrl
-  )
-
-  $body =
-@"
-The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available: $packagesUrl.
-
-Have a nice day!
+The [package workflow](https://github.com/$gitRepository/actions/workflows/publish-packages-1.0.yml) should begin momentarily.
 "@
 
   gh pr comment $pullRequestNumber --body $body
 }
 
-Export-ModuleMember -Function PostPackagesReadyNotice
+Export-ModuleMember -Function CreateReleaseTagAndPostNoticeOnPullRequest

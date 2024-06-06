@@ -1,12 +1,16 @@
 <Project>
-  <ItemGroup>
-    <SolutionProjects Include="..\**\OpenTelemetry.Exporter.Prometheus.AspNetCore*.csproj" />
-    <SolutionProjects Include="..\**\OpenTelemetry.Exporter.Prometheus.HttpListener*.csproj" />
-    <SolutionProjects Include="..\**\OpenTelemetry.Shims.OpenTracing*.csproj" />
+  <PropertyGroup>
+    <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
+  </PropertyGroup>
 
-    <TestProjects Include="..\test\**\OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests.csproj" />
-    <TestProjects Include="..\test\**\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests.csproj" />
-    <TestProjects Include="..\test\**\OpenTelemetry.Shims.OpenTracing.Tests.csproj" />
+  <ItemGroup>
+    <SolutionProjects Include="$(RepoRoot)\**\OpenTelemetry.Exporter.Prometheus.AspNetCore*.csproj" />
+    <SolutionProjects Include="$(RepoRoot)\**\OpenTelemetry.Exporter.Prometheus.HttpListener*.csproj" />
+    <SolutionProjects Include="$(RepoRoot)\**\OpenTelemetry.Shims.OpenTracing*.csproj" />
+
+    <TestProjects Include="$(RepoRoot)\test\**\OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests.csproj" />
+    <TestProjects Include="$(RepoRoot)\test\**\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests.csproj" />
+    <TestProjects Include="$(RepoRoot)\test\**\OpenTelemetry.Shims.OpenTracing.Tests.csproj" />
   </ItemGroup>
 
   <Target Name="Build">

@@ -39,8 +39,8 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
 
-    - name: dotnet pack OpenTelemetry.proj
-      run: dotnet pack OpenTelemetry.proj --configuration Release
+    - name: dotnet pack
+      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

@@ -7,6 +7,10 @@
   [W3C Baggage propagation format specification](https://www.w3.org/TR/baggage/).
   Reject all baggage item values if any of them is invalid during extraction.
   ([#5647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5647))
+* The experimental APIs previously covered by `OTEL1000` (`LoggerProvider`,
+  `LoggerProviderBuilder`, & `IDeferredLoggerProviderBuilder`) will now be part
+  of the public API and supported in stable builds.
+  ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
 ## 1.9.0-alpha.1
 
