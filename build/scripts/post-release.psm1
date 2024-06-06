@@ -234,7 +234,6 @@ I am publishing the release without uploading the packages to NuGet because a to
   gh release edit $tag --draft=false
 
   gh pr unlock $pullRequestNumber
-
 }
 
 Export-ModuleMember -Function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest
