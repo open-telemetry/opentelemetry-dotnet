@@ -206,10 +206,10 @@ I'm sorry @$commentUserName but you don't have permission to push packages. Only
   }
 
   gh release download $tag `
-    -p Packages `
-    -O "$artifactDownloadPath\$tag-packages.zip"
+    -p "$tag-packages.zip" `
+    -D "$artifactDownloadPath"
 
-  Expand-Archive -LiteralPath "$artifactDownloadPath\$tag-packages.zip" -DestinationPath "$artifactDownloadPath\"
+  Expand-Archive -LiteralPath "$artifactDownloadPath/$tag-packages.zip" -DestinationPath "$artifactDownloadPath\"
 
   if ($pushToNuget -eq 'true')
   {
