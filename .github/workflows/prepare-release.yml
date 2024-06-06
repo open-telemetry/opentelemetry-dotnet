@@ -89,7 +89,7 @@ jobs:
           -pullRequestNumber '${{ github.event.pull_request.number }}' `
           -botUserName '${{ needs.automation.outputs.username }}'
 
-  create-release-tag-unlock-pr-post-notice:
+  create-release-tag-pr-post-notice:
     runs-on: ubuntu-latest
 
     needs: automation
@@ -127,3 +127,4 @@ jobs:
           -botUserName '${{ needs.automation.outputs.username }}' `
           -gitUserName '${{ needs.automation.outputs.username }}' `
           -gitUserEmail '${{ needs.automation.outputs.email }}'
+

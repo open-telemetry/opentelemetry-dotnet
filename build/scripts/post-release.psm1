@@ -136,6 +136,8 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
   $body =
 @"
 The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available: $packagesUrl.
+
+Once these packages have been validated have a maintainer post a comment with "/PushPackages" in the body if you would like me to push to NuGet.
 "@
 
     $pullRequestNumber = $pr.number
@@ -148,6 +150,79 @@ The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are
 }
 
 Export-ModuleMember -Function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest
+
+function PushPackagesAndPublishRelease {
+  param(
+    [Parameter(Mandatory=$true)][string]$gitRepository,
+    [Parameter(Mandatory=$true)][string]$pullRequestNumber,
+    [Parameter(Mandatory=$true)][string]$botUserName,
+    [Parameter(Mandatory=$true)][string]$commentUserName
+  )
+
+  $prViewResponse = gh pr view $pullRequestNumber --json author,title,comments | ConvertFrom-Json
+
+  if ($prViewResponse.author.login -ne $botUserName)
+  {
+      throw 'PR author was unexpected'
+  }
+
+  $match = [regex]::Match($prViewResponse.title, '^\[repo\] Prepare release (.*)$')
+  if ($match.Success -eq $false)
+  {
+      throw 'Could not parse tag from PR title'
+  }
+
+  $tag = $match.Groups[1].Value
+
+  $commentUserPermission = gh api "repos/$gitRepository/collaborators/$commentUserName/permission" | ConvertFrom-Json
+  if ($commentUserPermission.permission -ne 'admin')
+  {
+    $body =
+@"
+I'm sorry @$commentUserName but you don't have permission to push packages. Only maintainers can push to NuGet.
+"@
+
+    gh pr comment $pullRequestNumber --body $body
+    return
+  }
+
+  $foundComment = $false
+  $packagesUrl = ''
+  foreach ($comment in $prViewResponse.comments)
+  {
+    if ($comment.author.login -eq $botUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
+    {
+      $match = [regex]::Match($comment.body, '^\[repo\] Prepare release (.*)$')
+      if ($match.Success -eq $false)
+      {
+        throw 'Could not parse packagesUrl from PR comment'
+      }
+      $packagesUrl = $match.Groups[1].Value
+      $foundComment = $true
+      break
+    }
+  }
+
+  if ($foundComment -eq $false)
+  {
+    throw 'Could not find package push comment on pr'
+  }
+
+  $body =
+@"
+I am uploading the packages for ``$tag`` to NuGet and then I will publish the release.
+"@
+
+  gh pr comment $pullRequestNumber --body $body
+
+  gh pr unlock $pullRequestNumber
+
+  # todo: download artifacts
+  # todo: push artifacts to NuGet using PAT
+  # todo: publish release
+}
+
+Export-ModuleMember -Function PushPackagesAndPublishRelease
 
 function CreateStableVersionUpdatePullRequest {
   param(

@@ -161,8 +161,6 @@ function CreateReleaseTagAndPostNoticeOnPullRequest {
       throw 'git push failure'
   }
 
-  gh pr unlock $pullRequestNumber
-
   $body =
 @"
 I just pushed the [$tag](https://github.com/$gitRepository/releases/tag/$tag) tag.
