@@ -48,6 +48,8 @@ jobs:
 
     - name: Push packages and publish release
       shell: pwsh
+      env:
+        NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
@@ -55,7 +57,9 @@ jobs:
           -gitRepository '${{ github.repository }}' `
           -pullRequestNumber '${{ github.event.issue.number }}' `
           -botUserName '${{ needs.automation.outputs.username }}' `
-          -commentUserName '${{ github.event.comment.user.login }}'
+          -commentUserName '${{ github.event.comment.user.login }}' `
+          -artifactDownloadPath '${{ github.workspace }}/artifacts' `
+          -pushToNuget '${{ secrets.NUGET_TOKEN != '' }}'
 
   post-release-published:
     runs-on: ubuntu-latest

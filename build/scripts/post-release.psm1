@@ -156,7 +156,9 @@ function PushPackagesAndPublishRelease {
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
     [Parameter(Mandatory=$true)][string]$botUserName,
-    [Parameter(Mandatory=$true)][string]$commentUserName
+    [Parameter(Mandatory=$true)][string]$commentUserName,
+    [Parameter(Mandatory=$true)][string]$artifactDownloadPath,
+    [Parameter(Mandatory=$true)][string]$pushToNuget
   )
 
   $prViewResponse = gh pr view $pullRequestNumber --json author,title,comments | ConvertFrom-Json
@@ -192,12 +194,6 @@ I'm sorry @$commentUserName but you don't have permission to push packages. Only
   {
     if ($comment.author.login -eq $botUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
     {
-      $match = [regex]::Match($comment.body, '^\[repo\] Prepare release (.*)$')
-      if ($match.Success -eq $false)
-      {
-        throw 'Could not parse packagesUrl from PR comment'
-      }
-      $packagesUrl = $match.Groups[1].Value
       $foundComment = $true
       break
     }
@@ -208,18 +204,36 @@ I'm sorry @$commentUserName but you don't have permission to push packages. Only
     throw 'Could not find package push comment on pr'
   }
 
-  $body =
+  gh release download $tag `
+    -p Packages `
+    -o "$artifactDownloadPath\$tag-packages.zip"
+
+  Expand-Archive -LiteralPath "$artifactDownloadPath\$tag-packages.zip" -DestinationPath "$artifactDownloadPath\"
+
+  if ($pushToNuget -eq 'true')
+  {
+    $body =
 @"
 I am uploading the packages for ``$tag`` to NuGet and then I will publish the release.
 "@
 
-  gh pr comment $pullRequestNumber --body $body
+    gh pr comment $pullRequestNumber --body $body
+
+    nuget push "$artifactDownloadPath\**\*.nupkg" -Source https://api.nuget.org/v3/index.json -ApiKey "$env.NUGET_TOKEN" -SymbolApiKey "$env.NUGET_TOKEN"
+  }
+  else {
+    $body =
+@"
+I am publishing the release without uploading the packages to NuGet because a token wasn't configured.
+"@
+
+    gh pr comment $pullRequestNumber --body $body
+  }
+
+  gh release edit $tag --draft=false
 
   gh pr unlock $pullRequestNumber
 
-  # todo: download artifacts
-  # todo: push artifacts to NuGet using PAT
-  # todo: publish release
 }
 
 Export-ModuleMember -Function PushPackagesAndPublishRelease
