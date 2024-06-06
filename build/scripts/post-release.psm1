@@ -1,7 +1,8 @@
 function CreateDraftRelease {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
-    [Parameter(Mandatory=$true)][string]$tag
+    [Parameter(Mandatory=$true)][string]$tag,
+    [Parameter()][string]$releaseFiles
   )
 
   $match = [regex]::Match($tag, '^(.*?-)(.*)$')
@@ -74,7 +75,7 @@ $content
 
   if ($version -match '-alpha' -or $version -match '-beta' -or $version -match '-rc')
   {
-    gh release create $tag `
+    gh release create $tag $releaseFiles `
       --title $tag `
       --verify-tag `
       --notes $notes `
@@ -83,7 +84,7 @@ $content
   }
   else
   {
-    gh release create $tag `
+    gh release create $tag $releaseFiles `
       --title $tag `
       --verify-tag `
       --notes $notes `
