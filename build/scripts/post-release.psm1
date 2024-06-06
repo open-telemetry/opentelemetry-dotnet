@@ -152,7 +152,7 @@ Once these packages have been validated have a maintainer post a comment with "/
 
 Export-ModuleMember -Function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest
 
-function PushPackagesAndPublishRelease {
+function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
@@ -207,7 +207,7 @@ I'm sorry @$commentUserName but you don't have permission to push packages. Only
 
   gh release download $tag `
     -p Packages `
-    -o "$artifactDownloadPath\$tag-packages.zip"
+    -O "$artifactDownloadPath\$tag-packages.zip"
 
   Expand-Archive -LiteralPath "$artifactDownloadPath\$tag-packages.zip" -DestinationPath "$artifactDownloadPath\"
 
@@ -237,7 +237,7 @@ I am publishing the release without uploading the packages to NuGet because a to
 
 }
 
-Export-ModuleMember -Function PushPackagesAndPublishRelease
+Export-ModuleMember -Function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest
 
 function CreateStableVersionUpdatePullRequest {
   param(

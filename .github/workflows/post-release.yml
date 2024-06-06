@@ -53,7 +53,7 @@ jobs:
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
-        PushPackagesAndPublishRelease `
+        PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest `
           -gitRepository '${{ github.repository }}' `
           -pullRequestNumber '${{ github.event.issue.number }}' `
           -botUserName '${{ needs.automation.outputs.username }}' `
