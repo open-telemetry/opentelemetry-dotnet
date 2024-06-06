@@ -75,7 +75,7 @@ $content
 
   if ($version -match '-alpha' -or $version -match '-beta' -or $version -match '-rc')
   {
-    gh release create $tag "$artifactsPath/**/*.*nupkg" `
+    gh release create $tag "$artifactsPath#Packages" `
       --title $tag `
       --verify-tag `
       --notes $notes `
@@ -84,7 +84,7 @@ $content
   }
   else
   {
-    gh release create $tag "$artifactsPath/**/*.*nupkg" `
+    gh release create $tag "$artifactsPath#Packages" `
       --title $tag `
       --verify-tag `
       --notes $notes `

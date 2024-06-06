@@ -94,7 +94,7 @@ jobs:
         CreateDraftRelease `
           -gitRepository '${{ github.repository }}' `
           -tag '${{ github.ref_name }}' `
-          -artifactsPath '${{ steps.download-artifacts.outputs.download-path }}'
+          -artifactsPath '${{ steps.download-artifacts.outputs.download-path }}/${{ github.ref_name }}-packages.zip'
 
     - name: Post notice when packages are ready
       shell: pwsh
