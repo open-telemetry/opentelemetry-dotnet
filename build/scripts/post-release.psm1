@@ -220,7 +220,7 @@ I am uploading the packages for ``$tag`` to NuGet and then I will publish the re
 
     gh pr comment $pullRequestNumber --body $body
 
-    nuget push "$artifactDownloadPath\**\*.nupkg" -Source https://api.nuget.org/v3/index.json -ApiKey "$env.NUGET_TOKEN" -SymbolApiKey "$env.NUGET_TOKEN"
+    nuget push "$artifactDownloadPath/**/*.nupkg" -Source https://api.nuget.org/v3/index.json -ApiKey "$env.NUGET_TOKEN" -SymbolApiKey "$env.NUGET_TOKEN"
   }
   else {
     $body =
