@@ -288,6 +288,30 @@ public sealed class PrometheusExporterMiddlewareTests
         await host.StopAsync();
     }
 
+    [Fact]
+    public async Task PrometheusExporterMiddlewareIntegration_ALotOfMetrics()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        for (var x = 0; x < 1000; x++)
+        {
+            var counter = meter.CreateCounter<double>("counter_double_" + x, unit: "By");
+            counter.Add(1);
+        }
+
+        using var client = host.GetTestClient();
+
+        using var response = await client.GetAsync("/metrics");
+        var text = await response.Content.ReadAsStringAsync();
+
+        Assert.NotEmpty(text);
+
+        await host.StopAsync();
+    }
+
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
         string path,
         Action<IApplicationBuilder> configure,

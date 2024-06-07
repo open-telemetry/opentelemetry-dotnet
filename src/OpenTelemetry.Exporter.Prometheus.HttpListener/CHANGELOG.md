@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Fix collection output buffer management when its resized
+  ([#5661](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5661))
+
 ## 1.9.0-alpha.2
 
 Released 2024-May-29

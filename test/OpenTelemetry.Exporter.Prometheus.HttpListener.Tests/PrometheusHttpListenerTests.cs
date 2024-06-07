@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System;
 using System.Diagnostics.Metrics;
 using System.Net;
 #if NETFRAMEWORK
@@ -18,6 +19,48 @@ public class PrometheusHttpListenerTests
     private const string MeterVersion = "1.0.1";
 
     private static readonly string MeterName = Utils.GetCurrentMethodName();
+
+    private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, out string address)
+    {
+        Random random = new Random();
+        int retryAttempts = 5;
+        int port = 0;
+        string generatedAddress = null;
+        MeterProvider provider = null;
+
+        while (retryAttempts-- != 0)
+        {
+            port = random.Next(2000, 5000);
+            generatedAddress = $"http://localhost:{port}/";
+
+            try
+            {
+                provider = Sdk.CreateMeterProviderBuilder()
+                    .AddMeter(meter.Name)
+                    .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1").AddAttributes(attributes))
+                    .AddPrometheusHttpListener(options =>
+                    {
+                        options.UriPrefixes = new string[] { generatedAddress };
+                    })
+                    .Build();
+
+                break;
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        address = generatedAddress;
+
+        if (provider == null)
+        {
+            throw new InvalidOperationException("HttpListener could not be started");
+        }
+
+        return provider;
+    }
 
     [Theory]
     [InlineData("http://+:9464")]
@@ -144,6 +187,45 @@ public class PrometheusHttpListenerTests
         listener?.Dispose();
     }
 
+    [Theory]
+    [InlineData("application/openmetrics-text")]
+    [InlineData("")]
+    public async Task PrometheusExporterHttpServerIntegration_LargePayload(string acceptHeader)
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        var attributes = new List<KeyValuePair<string, object>>();
+        var oneKb = new string('A', 1024);
+        for (var x = 0; x < 8500; x++)
+        {
+            attributes.Add(new KeyValuePair<string, object>(x.ToString(), oneKb));
+        }
+
+        var provider = BuildMeterProvider(meter, attributes, out var address);
+
+        for (var x = 0; x < 1000; x++)
+        {
+            var counter = meter.CreateCounter<double>("counter_double_" + x, unit: "By");
+            counter.Add(1);
+        }
+
+        using HttpClient client = new HttpClient();
+
+        if (!string.IsNullOrEmpty(acceptHeader))
+        {
+            client.DefaultRequestHeaders.Add("Accept", acceptHeader);
+        }
+
+        using var response = await client.GetAsync($"{address}metrics");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var content = await response.Content.ReadAsStringAsync();
+        Assert.Contains("counter_double_999", content);
+        Assert.DoesNotContain('\0', content);
+
+        provider.Dispose();
+    }
+
     private static void TestPrometheusHttpListenerUriPrefixOptions(string[] uriPrefixes)
     {
         using var exporter = new PrometheusExporter(new());
@@ -159,42 +241,9 @@ public class PrometheusHttpListenerTests
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
 
-        Random random = new Random();
-        int retryAttempts = 5;
-        int port = 0;
-        string address = null;
-
-        MeterProvider provider = null;
         using var meter = new Meter(MeterName, MeterVersion);
 
-        while (retryAttempts-- != 0)
-        {
-            port = random.Next(2000, 5000);
-            address = $"http://localhost:{port}/";
-
-            try
-            {
-                provider = Sdk.CreateMeterProviderBuilder()
-                    .AddMeter(meter.Name)
-                    .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
-                    .AddPrometheusHttpListener(options =>
-                    {
-                        options.UriPrefixes = new string[] { address };
-                    })
-                    .Build();
-
-                break;
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        if (provider == null)
-        {
-            throw new InvalidOperationException("HttpListener could not be started");
-        }
+        var provider = BuildMeterProvider(meter, [], out var address);
 
         var tags = new KeyValuePair<string, object>[]
         {
