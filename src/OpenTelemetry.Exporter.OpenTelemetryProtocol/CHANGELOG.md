@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.9.0-rc.1
+
+Released 2024-Jun-07
+
 * The experimental APIs previously covered by `OTEL1000`
   (`LoggerProviderBuilder.AddOtlpExporter` extension) will now be part of the
   public API and supported in stable builds.
