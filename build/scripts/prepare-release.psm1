@@ -100,7 +100,7 @@ function LockPullRequestAndPostNoticeToCreateReleaseTag {
 @"
 I noticed this PR was merged.
 
-Post a comment with "/CreateReleaseTag" in the body if you would like me to create the release tag ``$tag`` for [the merge commit](https://github.com/$gitRepository/commit/$commit) and then trigger the package workflow.
+Post a comment with "/CreateReleaseTag" in the body if you would like me to create the release tag ``$tag`` for [the merge commit](https://github.com/$gitRepository/commit/$commit) which will trigger the package workflow.
 "@
 
   gh pr comment $pullRequestNumber --body $body
@@ -160,8 +160,6 @@ function CreateReleaseTagAndPostNoticeOnPullRequest {
   {
       throw 'git push failure'
   }
-
-  gh pr unlock $pullRequestNumber
 
   $body =
 @"

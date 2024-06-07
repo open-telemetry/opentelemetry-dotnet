@@ -53,7 +53,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ github.ref_name }}-packages
-        path: '**/bin/**/*.*nupkg'
+        path: 'src/**/*.*nupkg'
 
     - name: Publish MyGet
       env:
@@ -61,7 +61,7 @@ jobs:
       if: env.MYGET_TOKEN_EXISTS == 'true' # Skip MyGet publish if run on a fork without the secret
       run: |
         nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
-        nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
+        nuget push src/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
   post-build:
     runs-on: ubuntu-latest
