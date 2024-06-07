@@ -180,12 +180,8 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   $commentUserPermission = gh api "repos/$gitRepository/collaborators/$commentUserName/permission" | ConvertFrom-Json
   if ($commentUserPermission.permission -ne 'admin')
   {
-    $body =
-@"
-I'm sorry @$commentUserName but you don't have permission to push packages. Only maintainers can push to NuGet.
-"@
-
-    gh pr comment $pullRequestNumber --body $body
+    gh pr comment $pullRequestNumber `
+      --body "I'm sorry @$commentUserName but you don't have permission to push packages. Only maintainers can push to NuGet."
     return
   }
 
@@ -213,22 +209,22 @@ I'm sorry @$commentUserName but you don't have permission to push packages. Only
 
   if ($pushToNuget -eq 'true')
   {
-    $body =
-@"
-I am uploading the packages for ``$tag`` to NuGet and then I will publish the release.
-"@
-
-    gh pr comment $pullRequestNumber --body $body
+    gh pr comment $pullRequestNumber `
+      --body "I am uploading the packages for ``$tag`` to NuGet and then I will publish the release."
 
     nuget push "$artifactDownloadPath/**/*.nupkg" -Source https://api.nuget.org/v3/index.json -ApiKey "$env.NUGET_TOKEN" -SymbolApiKey "$env.NUGET_TOKEN"
+
+    if ($LASTEXITCODE -gt 0)
+    {
+      gh pr comment $pullRequestNumber `
+        --body "Something went wrong uploading the packages for ``$tag`` to NuGet."
+
+      throw 'nuget push failure'
+    }
   }
   else {
-    $body =
-@"
-I am publishing the release without uploading the packages to NuGet because a token wasn't configured.
-"@
-
-    gh pr comment $pullRequestNumber --body $body
+    gh pr comment $pullRequestNumber `
+      --body "I am publishing the release without uploading the packages to NuGet because a token wasn't configured."
   }
 
   gh release edit $tag --draft=false
