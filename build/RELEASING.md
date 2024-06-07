@@ -146,11 +146,12 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
 
     1. The [Build, pack, and publish to
        MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
-       workflow pushes the packages to MyGet and attaches them as artifacts on the workflow run.
+       workflow pushes the packages to MyGet and attaches them as artifacts on
+       the workflow run.
 
     2. Validate locally everything works using the packages pushed to MyGet or
-       downloaded from the drop attached to the workflow run. Basic sanity checks
-       :)
+       downloaded from the drop attached to the workflow run. Basic sanity
+       checks :)
 
     3. Download the artifacts from the drop attached to the workflow run. The
        artifacts archive (`.zip`) contains all the NuGet packages (`.nupkg`) and
@@ -158,14 +159,15 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
 
     4. Extract the artifacts from the archive (`.zip`) into a local folder.
 
-    5. Download latest [nuget.exe](https://www.nuget.org/downloads) into the same
-       folder from step 4.
+    5. Download latest [nuget.exe](https://www.nuget.org/downloads) into the
+       same folder from step 4.
 
     6. Create or regenerate an API key from nuget.org (only maintainers have
        access). When creating API keys make sure it is set to expire in 1 day or
        less.
 
-    7. Run the following commands from PowerShell from local folder used in step 4:
+    7. Run the following commands from PowerShell from local folder used in step
+       4:
 
        ```powershell
        .\nuget.exe setApiKey <actual api key>
