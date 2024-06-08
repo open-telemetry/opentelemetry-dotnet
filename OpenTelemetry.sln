@@ -328,7 +328,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TagWriter", "TagWriter", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{44982E0D-C8C6-42DC-9F8F-714981F27CE6}"
 	ProjectSection(SolutionItems) = preProject
-		build\scripts\add-labels.ps1 = build\scripts\add-labels.ps1
+		build\scripts\add-labels.psm1 = build\scripts\add-labels.psm1
 		build\scripts\finalize-publicapi.ps1 = build\scripts\finalize-publicapi.ps1
 		build\scripts\post-release.psm1 = build\scripts\post-release.psm1
 		build\scripts\prepare-release.psm1 = build\scripts\prepare-release.psm1

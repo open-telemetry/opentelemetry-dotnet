@@ -1,16 +1,21 @@
-name: 'Add labels for area found in bug issue descriptions'
+name: 'Add labels to issues and pull requests'
 on:
   issues:
-    types: [opened]
+    types: [ opened ]
+
+  pull_request:
+    branches: [ 'main*' ]
 
 permissions:
   issues: write
+  pull-requests: write
 
 jobs:
-  add-labels:
-    if: ${{ !github.event.issue.pull_request }}
+  add-labels-on-issues:
+    if: github.event_name == 'issues' && !github.event.issue.pull_request
 
     runs-on: ubuntu-latest
+
     steps:
       - name: check out code
         uses: actions/checkout@v4
@@ -18,8 +23,31 @@ jobs:
       - name: Add labels for areas found in bug issue descriptions
         shell: pwsh
         run: |
-          .\build\scripts\add-labels.ps1 -issueNumber $env:ISSUE_NUMBER -issueBody $env:ISSUE_BODY
+          Import-Module .\build\scripts\add-labels.psm1
+
+          AddLabelsOnIssuesForAreaFoundInBody `
+            -issueNumber ${{ github.event.issue.number }} `
+            -issueBody $env:ISSUE_BODY
         env:
           GH_TOKEN: ${{ github.token }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_BODY: ${{ github.event.issue.body }}
+
+  add-labels-on-pull-requests:
+    if: github.event_name == 'pull_request'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: check out code
+        uses: actions/checkout@v4
+
+      - name: Add labels for files changed on pull requests
+        shell: pwsh
+        run: |
+          Import-Module .\build\scripts\add-labels.psm1
+
+          AddLabelsOnPullRequestsBasedOnFilesChanged `
+            -pullRequestNumber ${{ github.event.pull_request.number }} `
+            -labelPackagePrefix 'pkg:'
+        env:
+          GH_TOKEN: ${{ github.token }}
