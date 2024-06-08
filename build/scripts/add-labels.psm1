@@ -18,7 +18,7 @@ Export-ModuleMember -Function AddLabelsOnIssuesForAreaFoundInBody
 function AddLabelsOnPullRequestsBasedOnFilesChanged {
   param(
     [Parameter(Mandatory=$true)][int]$pullRequestNumber,
-    [Parameter(Mandatory=$true)][int]$labelPackagePrefix # 'pkg:' on main repo, 'comp:' on contrib repo
+    [Parameter(Mandatory=$true)][string]$labelPackagePrefix # 'pkg:' on main repo, 'comp:' on contrib repo
   )
 
   # Note: This function is intended to work on main repo and on contrib. Please
