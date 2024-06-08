@@ -114,7 +114,7 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
 
   foreach ($pr in $prListResponse)
   {
-    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[repo] Prepare release $tag")
+    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[release] Prepare release $tag")
     {
       continue
     }
@@ -169,7 +169,7 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
       throw 'PR author was unexpected'
   }
 
-  $match = [regex]::Match($prViewResponse.title, '^\[repo\] Prepare release (.*)$')
+  $match = [regex]::Match($prViewResponse.title, '^\[release\] Prepare release (.*)$')
   if ($match.Success -eq $false)
   {
       throw 'Could not parse tag from PR title'
@@ -302,11 +302,11 @@ Merge once packages are available on NuGet and the build passes.
 "@
 
   gh pr create `
-    --title "[repo] Core stable release $packageVersion updates" `
+    --title "[release] Core stable release $packageVersion updates" `
     --body $body `
     --base $targetBranch `
     --head $branch `
-    --label infra
+    --label release
 }
 
 Export-ModuleMember -Function CreateStableVersionUpdatePullRequest
@@ -355,7 +355,7 @@ function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
 
   foreach ($pr in $prListResponse)
   {
-    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[repo] Prepare release $tag")
+    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[release] Prepare release $tag")
     {
       continue
     }
