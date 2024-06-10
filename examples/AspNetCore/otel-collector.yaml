@@ -5,8 +5,8 @@ receivers:
       http:
 
 exporters:
-  logging:
-    loglevel: debug
+  debug:
+    verbosity: detailed
   prometheus:
     endpoint: ":9201"
     send_timestamps: true
@@ -21,10 +21,10 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [logging,otlp]
+      exporters: [debug, otlp]
     metrics:
       receivers: [otlp]
-      exporters: [logging,prometheus]
+      exporters: [debug, prometheus]
     logs:
       receivers: [otlp]
-      exporters: [logging]
+      exporters: [debug]
