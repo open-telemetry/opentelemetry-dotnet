@@ -1,4 +1,4 @@
-function AddLabelsOnIssuesForAreaFoundInBody {
+function AddLabelsOnIssuesForPackageFoundInBody {
   param(
     [Parameter(Mandatory=$true)][int]$issueNumber,
     [Parameter(Mandatory=$true)][string]$issueBody
@@ -13,7 +13,7 @@ function AddLabelsOnIssuesForAreaFoundInBody {
   gh issue edit $issueNumber --add-label $("pkg:" + $match.Groups[1].Value)
 }
 
-Export-ModuleMember -Function AddLabelsOnIssuesForAreaFoundInBody
+Export-ModuleMember -Function AddLabelsOnIssuesForPackageFoundInBody
 
 function AddLabelsOnPullRequestsBasedOnFilesChanged {
   param(

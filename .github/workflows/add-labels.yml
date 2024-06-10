@@ -20,12 +20,12 @@ jobs:
       - name: check out code
         uses: actions/checkout@v4
 
-      - name: Add labels for areas found in bug issue descriptions
+      - name: Add labels for package found in bug issue descriptions
         shell: pwsh
         run: |
           Import-Module .\build\scripts\add-labels.psm1
 
-          AddLabelsOnIssuesForAreaFoundInBody `
+          AddLabelsOnIssuesForPackageFoundInBody `
             -issueNumber ${{ github.event.issue.number }} `
             -issueBody $env:ISSUE_BODY
         env:
