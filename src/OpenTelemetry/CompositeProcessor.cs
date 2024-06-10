@@ -14,6 +14,8 @@ public class CompositeProcessor<T> : BaseProcessor<T>
 {
     internal readonly DoublyLinkedListNode Head;
     private DoublyLinkedListNode tail;
+
+    // test
     private bool disposed;
 
     /// <summary>
