@@ -67,7 +67,7 @@ jobs:
       && github.event.action == 'closed'
       && github.event.pull_request.user.login == needs.automation.outputs.username
       && github.event.pull_request.merged == true
-      && startsWith(github.event.pull_request.title, '[repo] Prepare release ')
+      && startsWith(github.event.pull_request.title, '[release] Prepare release ')
       && needs.automation.outputs.enabled
 
     env:
@@ -100,7 +100,7 @@ jobs:
       && github.event.issue.locked == true
       && github.event.comment.user.login != needs.automation.outputs.username
       && contains(github.event.comment.body, '/CreateReleaseTag')
-      && startsWith(github.event.issue.title, '[repo] Prepare release ')
+      && startsWith(github.event.issue.title, '[release] Prepare release ')
       && github.event.issue.pull_request.merged_at
       && needs.automation.outputs.enabled
 

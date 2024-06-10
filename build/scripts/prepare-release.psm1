@@ -59,11 +59,11 @@ Note: This PR was opened automatically by the [prepare release workflow](https:/
   }
 
   gh pr create `
-    --title "[repo] Prepare release $tag" `
+    --title "[release] Prepare release $tag" `
     --body $body `
     --base $targetBranch `
     --head $branch `
-    --label infra
+    --label release
 }
 
 Export-ModuleMember -Function CreatePullRequestToUpdateChangelogsAndPublicApis
@@ -82,7 +82,7 @@ function LockPullRequestAndPostNoticeToCreateReleaseTag {
       throw 'PR author was unexpected'
   }
 
-  $match = [regex]::Match($prViewResponse.title, '^\[repo\] Prepare release (.*)$')
+  $match = [regex]::Match($prViewResponse.title, '^\[release\] Prepare release (.*)$')
   if ($match.Success -eq $false)
   {
       throw 'Could not parse tag from PR title'
@@ -126,7 +126,7 @@ function CreateReleaseTagAndPostNoticeOnPullRequest {
       throw 'PR author was unexpected'
   }
 
-  $match = [regex]::Match($prViewResponse.title, '^\[repo\] Prepare release (.*)$')
+  $match = [regex]::Match($prViewResponse.title, '^\[release\] Prepare release (.*)$')
   if ($match.Success -eq $false)
   {
       throw 'Could not parse tag from PR title'
