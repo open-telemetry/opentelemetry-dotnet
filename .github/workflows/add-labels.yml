@@ -3,12 +3,11 @@ on:
   issues:
     types: [ opened ]
 
-  pull_request:
+  pull_request_target:
     branches: [ 'main*' ]
 
 permissions:
   issues: write
-  pull-requests: write
 
 jobs:
   add-labels-on-issues:
@@ -40,6 +39,8 @@ jobs:
     steps:
       - name: check out code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
 
       - name: Add labels for files changed on pull requests
         shell: pwsh
