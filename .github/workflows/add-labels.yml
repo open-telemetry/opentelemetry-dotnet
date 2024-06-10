@@ -32,7 +32,7 @@ jobs:
           ISSUE_BODY: ${{ github.event.issue.body }}
 
   add-labels-on-pull-requests:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request_target'
 
     runs-on: ubuntu-latest
 
