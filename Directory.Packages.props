@@ -98,12 +98,12 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="6.0.21" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="6.0.31" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="7.0.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="7.0.20" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="8.0.6" />
   </ItemGroup>
 </Project>
