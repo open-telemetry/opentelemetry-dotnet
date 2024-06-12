@@ -26,6 +26,7 @@ jobs:
 
     outputs:
       artifact-url: ${{ steps.upload-artifacts.outputs.artifact-url }}
+      artifact-id: ${{ steps.upload-artifacts.outputs.artifact-id }}
 
     steps:
     - uses: actions/checkout@v4
@@ -52,7 +53,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ github.ref_name }}-packages
-        path: '**/bin/**/*.*nupkg'
+        path: 'src/**/*.*nupkg'
 
     - name: Publish MyGet
       env:
@@ -60,7 +61,7 @@ jobs:
       if: env.MYGET_TOKEN_EXISTS == 'true' # Skip MyGet publish if run on a fork without the secret
       run: |
         nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
-        nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
+        nuget push src/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
   post-build:
     runs-on: ubuntu-latest
@@ -80,6 +81,16 @@ jobs:
       with:
         token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
+    - name: Download Artifacts
+      run: |
+        curl \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: token ${{ github.token }}" \
+          -L \
+          -o '${{ github.workspace }}/artifacts/${{ github.ref_name }}-packages.zip' \
+          --create-dirs \
+          "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ needs.build-pack-publish.outputs.artifact-id }}/zip"
+
     - name: Create GitHub Release draft
       shell: pwsh
       run: |
@@ -87,7 +98,8 @@ jobs:
 
         CreateDraftRelease `
           -gitRepository '${{ github.repository }}' `
-          -tag '${{ github.ref_name }}'
+          -tag '${{ github.ref_name }}' `
+          -releaseFiles '${{ github.workspace }}/artifacts/${{ github.ref_name }}-packages.zip#Packages'
 
     - name: Post notice when packages are ready
       shell: pwsh

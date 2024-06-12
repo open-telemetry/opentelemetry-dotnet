@@ -1,7 +1,8 @@
 function CreateDraftRelease {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
-    [Parameter(Mandatory=$true)][string]$tag
+    [Parameter(Mandatory=$true)][string]$tag,
+    [Parameter()][string]$releaseFiles
   )
 
   $match = [regex]::Match($tag, '^(.*?-)(.*)$')
@@ -74,7 +75,7 @@ $content
 
   if ($version -match '-alpha' -or $version -match '-beta' -or $version -match '-rc')
   {
-    gh release create $tag `
+    gh release create $tag $releaseFiles `
       --title $tag `
       --verify-tag `
       --notes $notes `
@@ -83,7 +84,7 @@ $content
   }
   else
   {
-    gh release create $tag `
+    gh release create $tag $releaseFiles `
       --title $tag `
       --verify-tag `
       --notes $notes `
@@ -113,7 +114,7 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
 
   foreach ($pr in $prListResponse)
   {
-    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[repo] Prepare release $tag")
+    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[release] Prepare release $tag")
     {
       continue
     }
@@ -136,6 +137,8 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
   $body =
 @"
 The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available: $packagesUrl.
+
+Once these packages have been validated have a maintainer post a comment with "/PushPackages" in the body if you would like me to push to NuGet.
 "@
 
     $pullRequestNumber = $pr.number
@@ -148,6 +151,88 @@ The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are
 }
 
 Export-ModuleMember -Function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest
+
+function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest {
+  param(
+    [Parameter(Mandatory=$true)][string]$gitRepository,
+    [Parameter(Mandatory=$true)][string]$pullRequestNumber,
+    [Parameter(Mandatory=$true)][string]$botUserName,
+    [Parameter(Mandatory=$true)][string]$commentUserName,
+    [Parameter(Mandatory=$true)][string]$artifactDownloadPath,
+    [Parameter(Mandatory=$true)][string]$pushToNuget
+  )
+
+  $prViewResponse = gh pr view $pullRequestNumber --json author,title,comments | ConvertFrom-Json
+
+  if ($prViewResponse.author.login -ne $botUserName)
+  {
+      throw 'PR author was unexpected'
+  }
+
+  $match = [regex]::Match($prViewResponse.title, '^\[release\] Prepare release (.*)$')
+  if ($match.Success -eq $false)
+  {
+      throw 'Could not parse tag from PR title'
+  }
+
+  $tag = $match.Groups[1].Value
+
+  $commentUserPermission = gh api "repos/$gitRepository/collaborators/$commentUserName/permission" | ConvertFrom-Json
+  if ($commentUserPermission.permission -ne 'admin')
+  {
+    gh pr comment $pullRequestNumber `
+      --body "I'm sorry @$commentUserName but you don't have permission to push packages. Only maintainers can push to NuGet."
+    return
+  }
+
+  $foundComment = $false
+  $packagesUrl = ''
+  foreach ($comment in $prViewResponse.comments)
+  {
+    if ($comment.author.login -eq $botUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
+    {
+      $foundComment = $true
+      break
+    }
+  }
+
+  if ($foundComment -eq $false)
+  {
+    throw 'Could not find package push comment on pr'
+  }
+
+  gh release download $tag `
+    -p "$tag-packages.zip" `
+    -D "$artifactDownloadPath"
+
+  Expand-Archive -LiteralPath "$artifactDownloadPath/$tag-packages.zip" -DestinationPath "$artifactDownloadPath\"
+
+  if ($pushToNuget -eq 'true')
+  {
+    gh pr comment $pullRequestNumber `
+      --body "I am uploading the packages for ``$tag`` to NuGet and then I will publish the release."
+
+    nuget push "$artifactDownloadPath/**/*.nupkg" -Source https://api.nuget.org/v3/index.json -ApiKey "$env:NUGET_TOKEN" -SymbolApiKey "$env:NUGET_TOKEN"
+
+    if ($LASTEXITCODE -gt 0)
+    {
+      gh pr comment $pullRequestNumber `
+        --body "Something went wrong uploading the packages for ``$tag`` to NuGet."
+
+      throw 'nuget push failure'
+    }
+  }
+  else {
+    gh pr comment $pullRequestNumber `
+      --body "I am publishing the release without uploading the packages to NuGet because a token wasn't configured."
+  }
+
+  gh release edit $tag --draft=false
+
+  gh pr unlock $pullRequestNumber
+}
+
+Export-ModuleMember -Function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest
 
 function CreateStableVersionUpdatePullRequest {
   param(
@@ -217,11 +302,11 @@ Merge once packages are available on NuGet and the build passes.
 "@
 
   gh pr create `
-    --title "[repo] Core stable release $packageVersion updates" `
+    --title "[release] Core stable release $packageVersion updates" `
     --body $body `
     --base $targetBranch `
     --head $branch `
-    --label infra
+    --label release
 }
 
 Export-ModuleMember -Function CreateStableVersionUpdatePullRequest
@@ -270,7 +355,7 @@ function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
 
   foreach ($pr in $prListResponse)
   {
-    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[repo] Prepare release $tag")
+    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[release] Prepare release $tag")
     {
       continue
     }

@@ -90,7 +90,7 @@ public static class Sdk
     /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
     /// to build a <see cref="LoggerProvider"/>.</returns>
 #if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     public
 #else

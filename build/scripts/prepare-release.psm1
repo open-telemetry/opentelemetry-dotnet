@@ -59,11 +59,11 @@ Note: This PR was opened automatically by the [prepare release workflow](https:/
   }
 
   gh pr create `
-    --title "[repo] Prepare release $tag" `
+    --title "[release] Prepare release $tag" `
     --body $body `
     --base $targetBranch `
     --head $branch `
-    --label infra
+    --label release
 }
 
 Export-ModuleMember -Function CreatePullRequestToUpdateChangelogsAndPublicApis
@@ -82,7 +82,7 @@ function LockPullRequestAndPostNoticeToCreateReleaseTag {
       throw 'PR author was unexpected'
   }
 
-  $match = [regex]::Match($prViewResponse.title, '^\[repo\] Prepare release (.*)$')
+  $match = [regex]::Match($prViewResponse.title, '^\[release\] Prepare release (.*)$')
   if ($match.Success -eq $false)
   {
       throw 'Could not parse tag from PR title'
@@ -100,7 +100,7 @@ function LockPullRequestAndPostNoticeToCreateReleaseTag {
 @"
 I noticed this PR was merged.
 
-Post a comment with "/CreateReleaseTag" in the body if you would like me to create the release tag ``$tag`` for [the merge commit](https://github.com/$gitRepository/commit/$commit) and then trigger the package workflow.
+Post a comment with "/CreateReleaseTag" in the body if you would like me to create the release tag ``$tag`` for [the merge commit](https://github.com/$gitRepository/commit/$commit) which will trigger the package workflow.
 "@
 
   gh pr comment $pullRequestNumber --body $body
@@ -126,7 +126,7 @@ function CreateReleaseTagAndPostNoticeOnPullRequest {
       throw 'PR author was unexpected'
   }
 
-  $match = [regex]::Match($prViewResponse.title, '^\[repo\] Prepare release (.*)$')
+  $match = [regex]::Match($prViewResponse.title, '^\[release\] Prepare release (.*)$')
   if ($match.Success -eq $false)
   {
       throw 'Could not parse tag from PR title'
@@ -160,8 +160,6 @@ function CreateReleaseTagAndPostNoticeOnPullRequest {
   {
       throw 'git push failure'
   }
-
-  gh pr unlock $pullRequestNumber
 
   $body =
 @"
