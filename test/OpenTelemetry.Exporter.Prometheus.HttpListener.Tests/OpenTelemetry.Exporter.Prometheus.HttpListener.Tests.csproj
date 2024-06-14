@@ -18,7 +18,14 @@
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
+    <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
   </ItemGroup>
 
   <ItemGroup>
