@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.9.0
+
+Released 2024-Jun-14
+
 * **Breaking change:** Revert space character encoding change from `+` to `%20`
   for baggage item values from [#5303](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5303)
   ([#5687](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5687))
