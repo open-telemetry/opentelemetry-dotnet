@@ -239,6 +239,7 @@ function CreateStableVersionUpdatePullRequest {
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$tag,
     [Parameter()][string]$targetBranch="main",
+    [Parameter()][string]$lineEnding="`n",
     [Parameter()][string]$gitUserName,
     [Parameter()][string]$gitUserEmail
   )
@@ -249,7 +250,7 @@ function CreateStableVersionUpdatePullRequest {
       throw 'Could not parse version from tag'
   }
 
-  $packageVersion = $match.Groups[1].Value
+  $version = $match.Groups[1].Value
 
   $branch="release/post-stable-${tag}-update"
 
@@ -268,9 +269,30 @@ function CreateStableVersionUpdatePullRequest {
       throw 'git switch failure'
   }
 
+  $projectsAndDependenciesBefore = GetCoreDependenciesForProjects
+
   (Get-Content Directory.Packages.props) `
-      -replace '<OTelLatestStableVer>.*<\/OTelLatestStableVer>', "<OTelLatestStableVer>$packageVersion</OTelLatestStableVer>" |
+      -replace '<OTelLatestStableVer>.*<\/OTelLatestStableVer>', "<OTelLatestStableVer>[$version,2.0)</OTelLatestStableVer>" |
     Set-Content Directory.Packages.props
+
+  $projectsAndDependenciesAfter = GetCoreDependenciesForProjects
+
+  $changedProjects = @{}
+
+  $projectsAndDependenciesBefore.GetEnumerator() | ForEach-Object {
+    $projectDir = $_.Key
+    $projectDependenciesBefore = $_.Value
+    $projectDependenciesAfter = $projectsAndDependenciesAfter[$projectDir]
+
+    $projectDependenciesBefore.GetEnumerator() | ForEach-Object {
+      $packageName = $_.Key
+      $packageVersionBefore = $_.Value
+      if ($projectDependenciesAfter[$packageName] -ne $packageVersionBefore)
+      {
+          $changedProjects[$projectDir] = $true
+      }
+    }
+  }
 
   git add Directory.Packages.props 2>&1 | % ToString
   if ($LASTEXITCODE -gt 0)
@@ -278,7 +300,7 @@ function CreateStableVersionUpdatePullRequest {
       throw 'git add failure'
   }
 
-  git commit -m "Update OTelLatestStableVer in Directory.Packages.props to $packageVersion." 2>&1 | % ToString
+  git commit -m "Update OTelLatestStableVer in Directory.Packages.props to $version." 2>&1 | % ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git commit failure'
@@ -298,18 +320,176 @@ Merge once packages are available on NuGet and the build passes.
 
 ## Changes
 
-* Sets ``OTelLatestStableVer`` in ``Directory.Packages.props`` to ``$packageVersion``.
+* Sets ``OTelLatestStableVer`` in ``Directory.Packages.props`` to ``$version``.
 "@
 
-  gh pr create `
-    --title "[release] Core stable release $packageVersion updates" `
+  $createPullRequestResponse = gh pr create `
+    --title "[release] Core stable release $version updates" `
     --body $body `
     --base $targetBranch `
     --head $branch `
     --label release
+
+  Write-Host $createPullRequestResponse
+
+  $match = [regex]::Match($createPullRequestResponse, "\/pull\/(.*)$")
+  if ($match.Success -eq $false)
+  {
+      throw 'Could not parse pull request number from gh pr create response'
+  }
+
+  $pullRequestNumber = $match.Groups[1].Value
+
+  if ($changedProjects.Count -eq 0)
+  {
+    Return
+  }
+
+  $entry = @"
+* Updated OpenTelemetry core component version(s) to ``$version``.
+  ([#$pullRequestNumber](https://github.com/$gitRepository/pull/$pullRequestNumber))
+
+
+"@
+
+  $lastLineBlank = $true
+  $changelogFilesUpdated = 0
+
+  foreach ($projectDir in $changedProjects.Keys)
+  {
+      $path = Join-Path -Path $projectDir -ChildPath "CHANGELOG.md"
+
+      if ([System.IO.File]::Exists($path) -eq $false)
+      {
+        Write-Host "No CHANGELOG found in $projectDir"
+        continue
+      }
+
+      $changelogContent = Get-Content -Path $path
+
+      $started = $false
+      $isRemoving = $false
+      $content = ""
+
+      foreach ($line in $changelogContent)
+      {
+          if ($line -like "## Unreleased" -and $started -ne $true)
+          {
+              $started = $true
+          }
+          elseif ($line -like "## *" -and $started -eq $true)
+          {
+              if ($lastLineBlank -eq $false)
+              {
+                  $content += $lineEnding
+              }
+              $content += $entry
+              $started = $false
+              $isRemoving = $false
+          }
+          elseif ($started -eq $true -and ($line -like '*Update* OpenTelemetry SDK version to*' -or $line -like '*Updated OpenTelemetry core component version(s) to*'))
+          {
+            $isRemoving = $true
+            continue
+          }
+
+          if ($line.StartsWith('* '))
+          {
+              if ($isRemoving -eq $true)
+              {
+                  $isRemoving = $false
+              }
+
+              if ($lastLineBlank -eq $false)
+              {
+                  $content += $lineEnding
+              }
+          }
+
+          if ($isRemoving -eq $true)
+          {
+              continue
+          }
+
+          $content += $line + $lineEnding
+
+          $lastLineBlank = [string]::IsNullOrWhitespace($line)
+      }
+
+      if ($started -eq $true)
+      {
+        # Note: If we never wrote the entry it means the file ended in the unreleased section
+        if ($lastLineBlank -eq $false)
+        {
+            $content += $lineEnding
+        }
+        $content += $entry
+      }
+
+      Set-Content -Path $path -Value $content.TrimEnd()
+
+      git add $path 2>&1 | % ToString
+      if ($LASTEXITCODE -gt 0)
+      {
+          throw 'git add failure'
+      }
+
+      $changelogFilesUpdated++
+  }
+
+  if ($changelogFilesUpdated -gt 0)
+  {
+    git commit -m "Update CHANGELOGs for projects using OTelLatestStableVer." 2>&1 | % ToString
+    if ($LASTEXITCODE -gt 0)
+    {
+        throw 'git commit failure'
+    }
+
+    git push -u origin $branch 2>&1 | % ToString
+    if ($LASTEXITCODE -gt 0)
+    {
+        throw 'git push failure'
+    }
+  }
 }
 
 Export-ModuleMember -Function CreateStableVersionUpdatePullRequest
+
+function GetCoreDependenciesForProjects {
+    $projects = @(Get-ChildItem -Path 'src/*/*.csproj')
+
+    $projectsAndDependencies = @{}
+
+    foreach ($project in $projects)
+    {
+        # Note: dotnet restore may fail if the core packages aren't available yet but that is fine, we just want to generate project.assets.json for these projects.
+        $output = dotnet restore $project
+
+        $projectDir = $project | Split-Path -Parent
+
+        $content = (Get-Content "$projectDir/obj/project.assets.json" -Raw)
+
+        $projectDependencies = @{}
+
+        $matches = [regex]::Matches($content, '"(OpenTelemetry(?:.*))?": {[\S\s]*?"target": "Package",[\S\s]*?"version": "(.*)"[\S\s]*?}')
+        foreach ($match in $matches)
+        {
+            $packageName = $match.Groups[1].Value
+            $packageVersion = $match.Groups[2].Value
+            if ($packageName -eq 'OpenTelemetry' -or
+                $packageName -eq 'OpenTelemetry.Api' -or
+                $packageName -eq 'OpenTelemetry.Api.ProviderBuilderExtensions' -or
+                $packageName -eq 'OpenTelemetry.Extensions.Hosting' -or
+                $packageName -eq 'OpenTelemetry.Extensions.Propagators')
+            {
+                $projectDependencies[$packageName.ToString()] = $packageVersion.ToString()
+            }
+        }
+        $projectsAndDependencies[$projectDir.ToString()] = $projectDependencies
+    }
+
+    return $projectsAndDependencies
+}
 
 function InvokeCoreVersionUpdateWorkflowInRemoteRepository {
   param(

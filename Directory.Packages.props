@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <OTelLatestStableVer>1.9.0</OTelLatestStableVer>
+    <OTelLatestStableVer>[1.9.0,2.0)</OTelLatestStableVer>
   </PropertyGroup>
 
   <!--
