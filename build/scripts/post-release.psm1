@@ -463,7 +463,7 @@ function GetCoreDependenciesForProjects {
     foreach ($project in $projects)
     {
         # Note: dotnet restore may fail if the core packages aren't available yet but that is fine, we just want to generate project.assets.json for these projects.
-        $output = dotnet restore $project
+        $output = dotnet restore $project -p:RunningDotNetPack=true
 
         $projectDir = $project | Split-Path -Parent
 
