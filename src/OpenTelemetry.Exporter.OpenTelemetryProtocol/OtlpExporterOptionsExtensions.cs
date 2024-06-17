@@ -13,6 +13,7 @@ using Grpc.Net.Client;
 #endif
 using System.Diagnostics;
 using Google.Protobuf;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
@@ -34,7 +35,7 @@ internal static class OtlpExporterOptionsExtensions
         }
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
-        return GrpcChannel.ForAddress(options.Endpoint);
+        return GrpcChannel.ForAddress(options.Endpoint, new GrpcChannelOptions() { HttpClient = options.HttpClientFactory() });
 #else
         ChannelCredentials channelCredentials;
         if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
@@ -127,6 +128,96 @@ internal static class OtlpExporterOptionsExtensions
         }
     }
 
+    public static OtlpExporterTransmissionHandler GetTraceExportTransmissionHandlerNew(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
+    {
+        var exportClient = GetTraceExportClientNew(options);
+
+        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
+        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
+        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
+        double timeoutMilliseconds = exportClient is OtlpHttpExportClient httpTraceExportClient
+            ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
+            : options.TimeoutMilliseconds;
+
+        if (experimentalOptions.EnableInMemoryRetry)
+        {
+            return new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds);
+        }
+        else if (experimentalOptions.EnableDiskRetry)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
+
+            return new OtlpExporterPersistentStorageTransmissionHandler(
+                exportClient,
+                timeoutMilliseconds,
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "traces"));
+        }
+        else
+        {
+            return new OtlpExporterTransmissionHandler(exportClient, timeoutMilliseconds);
+        }
+    }
+
+    public static OtlpExporterTransmissionHandler GetMetricsExportTransmissionHandlerNew(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
+    {
+        var exportClient = GetMetricsExportClientNew(options);
+
+        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
+        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
+        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
+        double timeoutMilliseconds = exportClient is OtlpHttpExportClient httpTraceExportClient
+            ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
+            : options.TimeoutMilliseconds;
+
+        if (experimentalOptions.EnableInMemoryRetry)
+        {
+            return new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds);
+        }
+        else if (experimentalOptions.EnableDiskRetry)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
+
+            return new OtlpExporterPersistentStorageTransmissionHandler(
+                exportClient,
+                timeoutMilliseconds,
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "metrics"));
+        }
+        else
+        {
+            return new OtlpExporterTransmissionHandler(exportClient, timeoutMilliseconds);
+        }
+    }
+
+    public static OtlpExporterTransmissionHandler GetLogsExportTransmissionHandlerNew(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
+    {
+        var exportClient = GetLogsExportClientNew(options);
+
+        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
+        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
+        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
+        double timeoutMilliseconds = exportClient is OtlpHttpExportClient httpTraceExportClient
+            ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
+            : options.TimeoutMilliseconds;
+
+        if (experimentalOptions.EnableInMemoryRetry)
+        {
+            return new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds);
+        }
+        else if (experimentalOptions.EnableDiskRetry)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
+
+            return new OtlpExporterPersistentStorageTransmissionHandler(
+                exportClient,
+                timeoutMilliseconds,
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "logs"));
+        }
+        else
+        {
+            return new OtlpExporterTransmissionHandler(exportClient, timeoutMilliseconds);
+        }
+    }
+
     public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
     {
         var exportClient = GetMetricsExportClient(options);
@@ -192,6 +283,48 @@ internal static class OtlpExporterOptionsExtensions
         else
         {
             return new OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
+        }
+    }
+
+    public static IExportClient GetTraceExportClientNew(this OtlpExporterOptions options)
+    {
+        var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
+
+        if (options.Protocol == OtlpExportProtocol.Grpc)
+        {
+            return new OtlpGrpcExportClient(options, httpClient, "opentelemetry.proto.collector.trace.v1.TraceService/Export");
+        }
+        else
+        {
+            return new OtlpHttpExportClient(options, httpClient, "v1/traces");
+        }
+    }
+
+    public static IExportClient GetMetricsExportClientNew(this OtlpExporterOptions options)
+    {
+        var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
+
+        if (options.Protocol == OtlpExportProtocol.Grpc)
+        {
+            return new OtlpGrpcExportClient(options, httpClient, "opentelemetry.proto.collector.trace.v1.LogService/Export");
+        }
+        else
+        {
+            return new OtlpHttpExportClient(options, httpClient, "v1/metrics");
+        }
+    }
+
+    public static IExportClient GetLogsExportClientNew(this OtlpExporterOptions options)
+    {
+        var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
+
+        if (options.Protocol == OtlpExportProtocol.Grpc)
+        {
+            return new OtlpGrpcExportClient(options, httpClient, "opentelemetry.proto.collector.trace.v1.LogService/Export");
+        }
+        else
+        {
+            return new OtlpHttpExportClient(options, httpClient, "v1/logs");
         }
     }
 
