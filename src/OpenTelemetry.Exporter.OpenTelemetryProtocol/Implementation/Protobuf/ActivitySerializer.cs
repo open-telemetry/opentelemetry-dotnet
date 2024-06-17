@@ -11,7 +11,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
 
-internal class TraceSerializer
+internal class ActivitySerializer
 {
     private readonly SdkLimitOptions sdkLimitOptions;
 
@@ -19,7 +19,7 @@ internal class TraceSerializer
 
     private readonly Dictionary<string, List<Activity>> scopeTraces = new();
 
-    internal TraceSerializer(SdkLimitOptions sdkLimitOptions)
+    internal ActivitySerializer(SdkLimitOptions sdkLimitOptions)
     {
         this.sdkLimitOptions = sdkLimitOptions;
         this.activitySizeCalculator = new ActivitySizeCalculator(sdkLimitOptions);

@@ -188,7 +188,7 @@ public class OtlpTraceExporterNewTests
         {
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
-            var traceSerializer = new TraceSerializer(sdkOptions);
+            var traceSerializer = new ActivitySerializer(sdkOptions);
 
             byte[] buffer = new byte[10000];
 
@@ -883,13 +883,13 @@ public class OtlpTraceExporterNewTests
     {
         var request = new OtlpCollector.ExportTraceServiceRequest();
 
-        var traceSerializer = new TraceSerializer(sdkLimitOptions ?? DefaultSdkLimitOptions);
+        var activitySerializer = new ActivitySerializer(sdkLimitOptions ?? DefaultSdkLimitOptions);
 
         byte[] buffer = new byte[10000];
 
         var batch = new Batch<Activity>(new[] { activity }, 1);
 
-        var cursor = traceSerializer.Serialize(ref buffer, 0, Resource.Empty, batch);
+        var cursor = activitySerializer.Serialize(ref buffer, 0, Resource.Empty, batch);
 
         var requestArray = new byte[cursor];
 

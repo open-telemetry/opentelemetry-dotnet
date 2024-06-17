@@ -20,7 +20,7 @@ internal class OtlpTraceExporterNew : BaseExporter<Activity>
     private static byte[] buffer;
 
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
-    private readonly TraceSerializer traceSerializer;
+    private readonly ActivitySerializer activitySerializer;
     private readonly int bufferOffSet;
 
     private Resource resource;
@@ -50,7 +50,7 @@ internal class OtlpTraceExporterNew : BaseExporter<Activity>
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
 
         this.transmissionHandler = exporterOptions.GetTraceExportTransmissionHandlerNew(experimentalOptions);
-        this.traceSerializer = new TraceSerializer(sdkLimitOptions);
+        this.activitySerializer = new ActivitySerializer(sdkLimitOptions);
 
         if (exporterOptions.Protocol == OtlpExportProtocol.Grpc)
         {
@@ -68,7 +68,7 @@ internal class OtlpTraceExporterNew : BaseExporter<Activity>
 
         buffer ??= new byte[100];
 
-        var cursor = this.traceSerializer.Serialize(ref buffer, this.bufferOffSet, this.Resource, activityBatch);
+        var cursor = this.activitySerializer.Serialize(ref buffer, this.bufferOffSet, this.Resource, activityBatch);
 
         var arrcopy = new byte[cursor - this.bufferOffSet];
         Buffer.BlockCopy(buffer, this.bufferOffSet, arrcopy, 0, arrcopy.Length);
