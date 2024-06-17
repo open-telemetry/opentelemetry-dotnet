@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* **Breaking change**: Non-primitive tag values converted using
+  `Convert.ToString` will now format using `CultureInfo.InvariantCulture`.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.9.0
 
 Released 2024-Jun-14
