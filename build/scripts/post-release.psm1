@@ -272,7 +272,7 @@ function CreateStableVersionUpdatePullRequest {
   $projectsAndDependenciesBefore = GetCoreDependenciesForProjects
 
   (Get-Content Directory.Packages.props) `
-      -replace '<OTelLatestStableVer>.*<\/OTelLatestStableVer>', "<OTelLatestStableVer>[$version,2.0)</OTelLatestStableVer>" |
+      -replace '<OTelLatestStableVer>.*<\/OTelLatestStableVer>', "<OTelLatestStableVer>$version</OTelLatestStableVer>" |
     Set-Content Directory.Packages.props
 
   $projectsAndDependenciesAfter = GetCoreDependenciesForProjects
