@@ -58,17 +58,17 @@ internal class ActivitySerializer
     private static int SerializeTraceId(ref byte[] buffer, int cursor, ActivityTraceId activityTraceId)
     {
         // TODO: optimize alloc for buffer resizing scenario.
-        if (cursor + 16 <= buffer.Length)
+        if (cursor + ActivitySizeCalculator.TraceIdSize <= buffer.Length)
         {
-            var traceBytes = new Span<byte>(buffer, cursor, 16);
+            var traceBytes = new Span<byte>(buffer, cursor, ActivitySizeCalculator.TraceIdSize);
             activityTraceId.CopyTo(traceBytes);
-            cursor += 16;
+            cursor += ActivitySizeCalculator.TraceIdSize;
 
             return cursor;
         }
         else
         {
-            var traceIdBytes = new byte[16];
+            var traceIdBytes = new byte[ActivitySizeCalculator.TraceIdSize];
             activityTraceId.CopyTo(traceIdBytes);
 
             foreach (var b in traceIdBytes)
@@ -83,17 +83,17 @@ internal class ActivitySerializer
     private static int SerializeSpanId(ref byte[] buffer, int cursor, ActivitySpanId activitySpanId)
     {
         // TODO: optimize alloc for buffer resizing scenario.
-        if (cursor + 8 <= buffer.Length)
+        if (cursor + ActivitySizeCalculator.SpanIdSize <= buffer.Length)
         {
-            var spanIdBytes = new Span<byte>(buffer, cursor, 8);
+            var spanIdBytes = new Span<byte>(buffer, cursor, ActivitySizeCalculator.SpanIdSize);
             activitySpanId.CopyTo(spanIdBytes);
-            cursor += 8;
+            cursor += ActivitySizeCalculator.SpanIdSize;
 
             return cursor;
         }
         else
         {
-            var spanIdBytes = new byte[8];
+            var spanIdBytes = new byte[ActivitySizeCalculator.SpanIdSize];
             activitySpanId.CopyTo(spanIdBytes);
 
             foreach (var b in spanIdBytes)
@@ -105,6 +105,21 @@ internal class ActivitySerializer
         }
     }
 
+    private static int SerializeTraceFlags(ref byte[] buffer, int cursor, ActivityTraceFlags activityTraceFlags, bool hasRemoteParent, int fieldNumber)
+    {
+        uint spanFlags = (uint)activityTraceFlags & (byte)0x000000FF;
+
+        spanFlags |= 0x00000100;
+        if (hasRemoteParent)
+        {
+            spanFlags |= 0x00000200;
+        }
+
+        cursor = Writer.WriteFixed32WithTag(ref buffer, cursor, fieldNumber, spanFlags);
+
+        return cursor;
+    }
+
     private int SerializeLinkTags(ref byte[] buffer, int cursor, ActivityLink link)
     {
         int maxAttributeCount = this.sdkLimitOptions.SpanLinkAttributeCountLimit ?? int.MaxValue;
@@ -114,10 +129,7 @@ internal class ActivitySerializer
         {
             if (attributeCount < maxAttributeCount)
             {
-                var tagSize = this.activitySizeCalculator.ComputeKeyValuePairSize(tag);
-                cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, tagSize, FieldNumberConstants.Link_attributes, WireType.LEN);
-                cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, tag.Key);
-                cursor = this.SerializeAnyValue(ref buffer, cursor, tag.Value, FieldNumberConstants.KeyValue_value);
+                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Link_attributes, tag);
                 attributeCount++;
             }
             else
@@ -135,6 +147,16 @@ internal class ActivitySerializer
         return cursor;
     }
 
+    private int SerializeKeyValuePair(ref byte[] buffer, int cursor, int fieldNumber, KeyValuePair<string, object?> tag)
+    {
+        var tagSize = this.activitySizeCalculator.ComputeKeyValuePairSize(tag);
+        cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, tagSize, fieldNumber, WireType.LEN);
+        cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, tag.Key);
+        cursor = this.SerializeAnyValue(ref buffer, cursor, tag.Value, FieldNumberConstants.KeyValue_value);
+
+        return cursor;
+    }
+
     private int SerializeEventTags(ref byte[] buffer, int cursor, ActivityEvent evnt)
     {
         int maxAttributeCount = this.sdkLimitOptions.SpanEventAttributeCountLimit ?? int.MaxValue;
@@ -144,10 +166,7 @@ internal class ActivitySerializer
         {
             if (attributeCount < maxAttributeCount)
             {
-                var tagSize = this.activitySizeCalculator.ComputeKeyValuePairSize(tag);
-                cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, tagSize, FieldNumberConstants.Event_attributes, WireType.LEN);
-                cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, tag.Key);
-                cursor = this.SerializeAnyValue(ref buffer, cursor, tag.Value, FieldNumberConstants.KeyValue_value);
+                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Event_attributes, tag);
                 attributeCount++;
             }
             else
@@ -186,10 +205,7 @@ internal class ActivitySerializer
 
             if (attributeCount < maxAttributeCount)
             {
-                var tagSize = this.activitySizeCalculator.ComputeKeyValuePairSize(tag);
-                cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, tagSize, FieldNumberConstants.Span_attributes, WireType.LEN);
-                cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, tag.Key);
-                cursor = this.SerializeAnyValue(ref buffer, cursor, tag.Value, FieldNumberConstants.KeyValue_value);
+                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Span_attributes, tag);
                 attributeCount++;
             }
             else
@@ -368,22 +384,7 @@ internal class ActivitySerializer
         cursor = this.SerializeActivityStatus(ref buffer, cursor, activity, statusCode, statusMessage);
         cursor = this.SerializeActivityEvents(ref buffer, cursor, activity);
         cursor = this.SerializeActivityLinks(ref buffer, cursor, activity);
-        cursor = this.SerializeTraceFlags(ref buffer, cursor, activity.ActivityTraceFlags, activity.HasRemoteParent, FieldNumberConstants.Span_flags);
-        return cursor;
-    }
-
-    private int SerializeTraceFlags(ref byte[] buffer, int cursor, ActivityTraceFlags activityTraceFlags, bool hasRemoteParent, int fieldNumber)
-    {
-        uint spanFlags = (uint)activityTraceFlags & (byte)0x000000FF;
-
-        spanFlags |= 0x00000100;
-        if (hasRemoteParent)
-        {
-            spanFlags |= 0x00000200;
-        }
-
-        cursor = Writer.WriteFixed32WithTag(ref buffer, cursor, fieldNumber, spanFlags);
-
+        cursor = SerializeTraceFlags(ref buffer, cursor, activity.ActivityTraceFlags, activity.HasRemoteParent, FieldNumberConstants.Span_flags);
         return cursor;
     }
 
@@ -435,11 +436,11 @@ internal class ActivitySerializer
             {
                 var linkSize = this.activitySizeCalculator.ComputeActivityLinkSize(link);
                 cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, linkSize, FieldNumberConstants.Span_links, WireType.LEN);
-                cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, 16, FieldNumberConstants.Link_trace_id, WireType.LEN);
+                cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, ActivitySizeCalculator.TraceIdSize, FieldNumberConstants.Link_trace_id, WireType.LEN);
                 cursor = SerializeTraceId(ref buffer, cursor, link.Context.TraceId);
-                cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, 8, FieldNumberConstants.Link_span_id, WireType.LEN);
+                cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, ActivitySizeCalculator.SpanIdSize, FieldNumberConstants.Link_span_id, WireType.LEN);
                 cursor = SerializeSpanId(ref buffer, cursor, link.Context.SpanId);
-                cursor = this.SerializeTraceFlags(ref buffer, cursor, link.Context.TraceFlags, link.Context.IsRemote, FieldNumberConstants.Link_flags);
+                cursor = SerializeTraceFlags(ref buffer, cursor, link.Context.TraceFlags, link.Context.IsRemote, FieldNumberConstants.Link_flags);
                 cursor = this.SerializeLinkTags(ref buffer, cursor, link);
                 linkCount++;
             }

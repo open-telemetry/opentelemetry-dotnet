@@ -14,8 +14,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
 
 internal class ActivitySizeCalculator
 {
-    private const int TraceIdSize = 16;
-    private const int SpanIdSize = 8;
+    internal const int TraceIdSize = 16;
+    internal const int SpanIdSize = 8;
     private const int KindSize = 1;
     private const int TimeSize = 8;
 
