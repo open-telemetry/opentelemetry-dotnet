@@ -139,7 +139,7 @@ internal class ActivitySizeCalculator
         int linkCount = 0;
         if (activity.Links != null)
         {
-            foreach (var link in activity.EnumerateLinks())
+            foreach (ref readonly var link in activity.EnumerateLinks())
             {
                 if (linkCount < maxLinksCount)
                 {
@@ -173,7 +173,7 @@ internal class ActivitySizeCalculator
         int droppedAttributeCount = 0;
         int attributeCount = 0;
 
-        foreach (var tag in link.EnumerateTagObjects())
+        foreach (ref readonly var tag in link.EnumerateTagObjects())
         {
             if (attributeCount < this.sdkLimitOptions.SpanLinkAttributeCountLimit)
             {
@@ -204,7 +204,7 @@ internal class ActivitySizeCalculator
         int eventCount = 0;
         if (activity.Events != null)
         {
-            foreach (var evnt in activity.EnumerateEvents())
+            foreach (ref readonly var evnt in activity.EnumerateEvents())
             {
                 if (eventCount < maxEventCountLimit)
                 {
@@ -231,7 +231,7 @@ internal class ActivitySizeCalculator
         size += ComputeStringWithTagSize(FieldNumberConstants.Event_name, evnt.Name);
         size += TimeSize; // event time
         size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Event_time_unix_nano);
-        foreach (var tag in evnt.EnumerateTagObjects())
+        foreach (ref readonly var tag in evnt.EnumerateTagObjects())
         {
             if (attributeCount < spanEventAttributeCountLimit)
             {

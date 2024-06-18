@@ -131,169 +131,40 @@ internal class ActivitySerializer
         return cursor;
     }
 
-    private int SerializeLinkTags(ref byte[] buffer, int cursor, ActivityLink link)
+    private static int SerializeActivityStatus(ref byte[] buffer, int cursor, Activity activity, StatusCode? statusCode, string? statusMessage)
     {
-        int maxAttributeCount = this.sdkLimitOptions.SpanLinkAttributeCountLimit ?? int.MaxValue;
-        int attributeCount = 0;
-        int droppedAttributeCount = 0;
-        foreach (var tag in link.EnumerateTagObjects())
-        {
-            if (attributeCount < maxAttributeCount)
-            {
-                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Link_attributes, tag);
-                attributeCount++;
-            }
-            else
-            {
-                droppedAttributeCount++;
-            }
-        }
-
-        if (droppedAttributeCount > 0)
-        {
-            cursor = Writer.WriteTag(ref buffer, cursor, FieldNumberConstants.Link_dropped_attributes_count, WireType.VARINT);
-            cursor = Writer.WriteVarint32(ref buffer, cursor, (uint)droppedAttributeCount);
-        }
-
-        return cursor;
-    }
-
-    private int SerializeKeyValuePair(ref byte[] buffer, int cursor, int fieldNumber, KeyValuePair<string, object?> tag)
-    {
-        var tagSize = this.activitySizeCalculator.ComputeKeyValuePairSize(tag);
-        cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, tagSize, fieldNumber, WireType.LEN);
-        cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, tag.Key);
-        cursor = this.SerializeAnyValue(ref buffer, cursor, tag.Value, FieldNumberConstants.KeyValue_value);
-
-        return cursor;
-    }
-
-    private int SerializeEventTags(ref byte[] buffer, int cursor, ActivityEvent evnt)
-    {
-        int maxAttributeCount = this.sdkLimitOptions.SpanEventAttributeCountLimit ?? int.MaxValue;
-        int attributeCount = 0;
-        int droppedAttributeCount = 0;
-        foreach (var tag in evnt.EnumerateTagObjects())
-        {
-            if (attributeCount < maxAttributeCount)
-            {
-                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Event_attributes, tag);
-                attributeCount++;
-            }
-            else
-            {
-                droppedAttributeCount++;
-            }
-        }
-
-        if (droppedAttributeCount > 0)
-        {
-            cursor = Writer.WriteTag(ref buffer, cursor, FieldNumberConstants.Event_dropped_attributes_count, WireType.VARINT);
-            cursor = Writer.WriteVarint32(ref buffer, cursor, (uint)droppedAttributeCount);
-        }
-
-        return cursor;
-    }
-
-    private int SerializeActivityTags(ref byte[] buffer, int cursor, Activity activity, out StatusCode? statusCode, out string? statusMessage)
-    {
-        statusCode = null;
-        statusMessage = null;
-        int maxAttributeCount = this.sdkLimitOptions.SpanAttributeCountLimit ?? int.MaxValue;
-        int attributeCount = 0;
-        int droppedAttributeCount = 0;
-        foreach (var tag in activity.EnumerateTagObjects())
-        {
-            switch (tag.Key)
-            {
-                case SpanAttributeConstants.StatusCodeKey:
-                    statusCode = StatusHelper.GetStatusCodeForTagValue(tag.Value as string);
-                    continue;
-                case SpanAttributeConstants.StatusDescriptionKey:
-                    statusMessage = tag.Value as string;
-                    continue;
-            }
-
-            if (attributeCount < maxAttributeCount)
-            {
-                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Span_attributes, tag);
-                attributeCount++;
-            }
-            else
-            {
-                droppedAttributeCount++;
-            }
-        }
-
-        if (droppedAttributeCount > 0)
-        {
-            cursor = Writer.WriteTag(ref buffer, cursor, FieldNumberConstants.Span_dropped_attributes_count, WireType.VARINT);
-            cursor = Writer.WriteVarint32(ref buffer, cursor, (uint)droppedAttributeCount);
-        }
-
-        return cursor;
-    }
-
-    private int SerializeArray(ref byte[] buffer, int cursor, Array array)
-    {
-        var arraySize = this.activitySizeCalculator.ComputeArrayValueSize(array);
-        cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, arraySize, FieldNumberConstants.AnyValue_array_value, WireType.LEN);
-        foreach (var ar in array)
-        {
-            cursor = this.SerializeAnyValue(ref buffer, cursor, ar, FieldNumberConstants.ArrayValue_Value);
-        }
-
-        return cursor;
-    }
-
-    private int SerializeAnyValue(ref byte[] buffer, int cursor, object? value, int fieldNumber)
-    {
-        var anyValueSize = this.activitySizeCalculator.ComputeAnyValueSize(value);
-        cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, anyValueSize, fieldNumber, WireType.LEN);
-        if (value == null)
+        if (activity.Status == ActivityStatusCode.Unset && statusCode == null)
         {
             return cursor;
         }
 
-        var stringSizeLimit = this.sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
-        switch (value)
+        var statusSize = ActivitySizeCalculator.ComputeActivityStatusSize(activity, statusCode, statusMessage);
+
+        if (statusSize > 0)
         {
-            case char:
-            case string:
-                var rawStringVal = Convert.ToString(value, CultureInfo.InvariantCulture);
-                var stringVal = rawStringVal;
-                if (rawStringVal?.Length > stringSizeLimit)
-                {
-                    stringVal = rawStringVal.Substring(0, stringSizeLimit);
-                }
-
-                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, stringVal);
-            case bool:
-                return Writer.WriteBoolWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_bool_value, (bool)value);
-            case byte:
-            case sbyte:
-            case short:
-            case ushort:
-            case int:
-            case uint:
-            case long:
-            case ulong:
-                return Writer.WriteInt64WithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_int_value, (ulong)Convert.ToInt64(value, CultureInfo.InvariantCulture));
-            case float:
-            case double:
-                return Writer.WriteDoubleWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_double_value, Convert.ToDouble(value, CultureInfo.InvariantCulture));
-            case Array array:
-                return this.SerializeArray(ref buffer, cursor, array);
-            default:
-                var defaultRawStringVal = Convert.ToString(value); // , CultureInfo.InvariantCulture);
-                var defaultStringVal = defaultRawStringVal;
-                if (defaultRawStringVal?.Length > stringSizeLimit)
-                {
-                    defaultStringVal = defaultRawStringVal.Substring(0, stringSizeLimit);
-                }
-
-                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, defaultStringVal);
+            cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, statusSize, FieldNumberConstants.Span_status, WireType.LEN);
         }
+
+        if (activity.Status != ActivityStatusCode.Unset)
+        {
+            cursor = Writer.WriteEnumWithTag(ref buffer, cursor, FieldNumberConstants.Status_code, (int)activity.Status);
+
+            if (activity.Status == ActivityStatusCode.Error && activity.StatusDescription != null)
+            {
+                cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.Status_message, activity.StatusDescription);
+            }
+        }
+        else if (statusCode != StatusCode.Unset)
+        {
+            cursor = Writer.WriteEnumWithTag(ref buffer, cursor, FieldNumberConstants.Status_code, (int)statusCode!);
+
+            if (statusCode == StatusCode.Error && statusMessage != null)
+            {
+                cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.Status_message, statusMessage);
+            }
+        }
+
+        return cursor;
     }
 
     // SerializeResourceSpans
@@ -394,44 +265,47 @@ internal class ActivitySerializer
         }
 
         cursor = this.SerializeActivityTags(ref buffer, cursor, activity, out var statusCode, out var statusMessage);
-        cursor = this.SerializeActivityStatus(ref buffer, cursor, activity, statusCode, statusMessage);
+        cursor = SerializeActivityStatus(ref buffer, cursor, activity, statusCode, statusMessage);
         cursor = this.SerializeActivityEvents(ref buffer, cursor, activity);
         cursor = this.SerializeActivityLinks(ref buffer, cursor, activity);
         cursor = SerializeTraceFlags(ref buffer, cursor, activity.ActivityTraceFlags, activity.HasRemoteParent, FieldNumberConstants.Span_flags);
         return cursor;
     }
 
-    private int SerializeActivityStatus(ref byte[] buffer, int cursor, Activity activity, StatusCode? statusCode, string? statusMessage)
+    private int SerializeActivityTags(ref byte[] buffer, int cursor, Activity activity, out StatusCode? statusCode, out string? statusMessage)
     {
-        if (activity.Status == ActivityStatusCode.Unset && statusCode == null)
+        statusCode = null;
+        statusMessage = null;
+        int maxAttributeCount = this.sdkLimitOptions.SpanAttributeCountLimit ?? int.MaxValue;
+        int attributeCount = 0;
+        int droppedAttributeCount = 0;
+        foreach (ref readonly var tag in activity.EnumerateTagObjects())
         {
-            return cursor;
-        }
-
-        var statusSize = ActivitySizeCalculator.ComputeActivityStatusSize(activity, statusCode, statusMessage);
-
-        if (statusSize > 0)
-        {
-            cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, statusSize, FieldNumberConstants.Span_status, WireType.LEN);
-        }
-
-        if (activity.Status != ActivityStatusCode.Unset)
-        {
-            cursor = Writer.WriteEnumWithTag(ref buffer, cursor, FieldNumberConstants.Status_code, (int)activity.Status);
-
-            if (activity.Status == ActivityStatusCode.Error && activity.StatusDescription != null)
+            switch (tag.Key)
             {
-                cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.Status_message, activity.StatusDescription);
+                case SpanAttributeConstants.StatusCodeKey:
+                    statusCode = StatusHelper.GetStatusCodeForTagValue(tag.Value as string);
+                    continue;
+                case SpanAttributeConstants.StatusDescriptionKey:
+                    statusMessage = tag.Value as string;
+                    continue;
+            }
+
+            if (attributeCount < maxAttributeCount)
+            {
+                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Span_attributes, tag);
+                attributeCount++;
+            }
+            else
+            {
+                droppedAttributeCount++;
             }
         }
-        else if (statusCode != StatusCode.Unset)
-        {
-            cursor = Writer.WriteEnumWithTag(ref buffer, cursor, FieldNumberConstants.Status_code, (int)statusCode!);
 
-            if (statusCode == StatusCode.Error && statusMessage != null)
-            {
-                cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.Status_message, statusMessage);
-            }
+        if (droppedAttributeCount > 0)
+        {
+            cursor = Writer.WriteTag(ref buffer, cursor, FieldNumberConstants.Span_dropped_attributes_count, WireType.VARINT);
+            cursor = Writer.WriteVarint32(ref buffer, cursor, (uint)droppedAttributeCount);
         }
 
         return cursor;
@@ -443,7 +317,7 @@ internal class ActivitySerializer
         int linkCount = 0;
         int droppedLinkCount = 0;
 
-        foreach (var link in activity.EnumerateLinks())
+        foreach (ref readonly var link in activity.EnumerateLinks())
         {
             if (linkCount < maxLinksCount)
             {
@@ -472,12 +346,39 @@ internal class ActivitySerializer
         return cursor;
     }
 
+    private int SerializeLinkTags(ref byte[] buffer, int cursor, ActivityLink link)
+    {
+        int maxAttributeCount = this.sdkLimitOptions.SpanLinkAttributeCountLimit ?? int.MaxValue;
+        int attributeCount = 0;
+        int droppedAttributeCount = 0;
+        foreach (ref readonly var tag in link.EnumerateTagObjects())
+        {
+            if (attributeCount < maxAttributeCount)
+            {
+                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Link_attributes, tag);
+                attributeCount++;
+            }
+            else
+            {
+                droppedAttributeCount++;
+            }
+        }
+
+        if (droppedAttributeCount > 0)
+        {
+            cursor = Writer.WriteTag(ref buffer, cursor, FieldNumberConstants.Link_dropped_attributes_count, WireType.VARINT);
+            cursor = Writer.WriteVarint32(ref buffer, cursor, (uint)droppedAttributeCount);
+        }
+
+        return cursor;
+    }
+
     private int SerializeActivityEvents(ref byte[] buffer, int cursor, Activity activity)
     {
         int maxEventCountLimit = this.sdkLimitOptions.SpanEventCountLimit ?? int.MaxValue;
         int eventCount = 0;
         int droppedEventCount = 0;
-        foreach (var evnt in activity.EnumerateEvents())
+        foreach (ref readonly var evnt in activity.EnumerateEvents())
         {
             if (eventCount < maxEventCountLimit)
             {
@@ -501,5 +402,104 @@ internal class ActivitySerializer
         }
 
         return cursor;
+    }
+
+    private int SerializeEventTags(ref byte[] buffer, int cursor, ActivityEvent evnt)
+    {
+        int maxAttributeCount = this.sdkLimitOptions.SpanEventAttributeCountLimit ?? int.MaxValue;
+        int attributeCount = 0;
+        int droppedAttributeCount = 0;
+        foreach (ref readonly var tag in evnt.EnumerateTagObjects())
+        {
+            if (attributeCount < maxAttributeCount)
+            {
+                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Event_attributes, tag);
+                attributeCount++;
+            }
+            else
+            {
+                droppedAttributeCount++;
+            }
+        }
+
+        if (droppedAttributeCount > 0)
+        {
+            cursor = Writer.WriteTag(ref buffer, cursor, FieldNumberConstants.Event_dropped_attributes_count, WireType.VARINT);
+            cursor = Writer.WriteVarint32(ref buffer, cursor, (uint)droppedAttributeCount);
+        }
+
+        return cursor;
+    }
+
+    private int SerializeKeyValuePair(ref byte[] buffer, int cursor, int fieldNumber, KeyValuePair<string, object?> tag)
+    {
+        var tagSize = this.activitySizeCalculator.ComputeKeyValuePairSize(tag);
+        cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, tagSize, fieldNumber, WireType.LEN);
+        cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, tag.Key);
+        cursor = this.SerializeAnyValue(ref buffer, cursor, tag.Value, FieldNumberConstants.KeyValue_value);
+
+        return cursor;
+    }
+
+    private int SerializeArray(ref byte[] buffer, int cursor, Array array)
+    {
+        var arraySize = this.activitySizeCalculator.ComputeArrayValueSize(array);
+        cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, arraySize, FieldNumberConstants.AnyValue_array_value, WireType.LEN);
+        foreach (var ar in array)
+        {
+            cursor = this.SerializeAnyValue(ref buffer, cursor, ar, FieldNumberConstants.ArrayValue_Value);
+        }
+
+        return cursor;
+    }
+
+    private int SerializeAnyValue(ref byte[] buffer, int cursor, object? value, int fieldNumber)
+    {
+        var anyValueSize = this.activitySizeCalculator.ComputeAnyValueSize(value);
+        cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, anyValueSize, fieldNumber, WireType.LEN);
+        if (value == null)
+        {
+            return cursor;
+        }
+
+        var stringSizeLimit = this.sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
+        switch (value)
+        {
+            case char:
+            case string:
+                var rawStringVal = Convert.ToString(value, CultureInfo.InvariantCulture);
+                var stringVal = rawStringVal;
+                if (rawStringVal?.Length > stringSizeLimit)
+                {
+                    stringVal = rawStringVal.Substring(0, stringSizeLimit);
+                }
+
+                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, stringVal);
+            case bool:
+                return Writer.WriteBoolWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_bool_value, (bool)value);
+            case byte:
+            case sbyte:
+            case short:
+            case ushort:
+            case int:
+            case uint:
+            case long:
+            case ulong:
+                return Writer.WriteInt64WithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_int_value, (ulong)Convert.ToInt64(value, CultureInfo.InvariantCulture));
+            case float:
+            case double:
+                return Writer.WriteDoubleWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_double_value, Convert.ToDouble(value, CultureInfo.InvariantCulture));
+            case Array array:
+                return this.SerializeArray(ref buffer, cursor, array);
+            default:
+                var defaultRawStringVal = Convert.ToString(value); // , CultureInfo.InvariantCulture);
+                var defaultStringVal = defaultRawStringVal;
+                if (defaultRawStringVal?.Length > stringSizeLimit)
+                {
+                    defaultStringVal = defaultRawStringVal.Substring(0, stringSizeLimit);
+                }
+
+                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, defaultStringVal);
+        }
     }
 }
