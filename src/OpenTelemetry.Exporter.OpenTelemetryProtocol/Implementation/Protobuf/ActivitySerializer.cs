@@ -353,7 +353,7 @@ internal class ActivitySerializer
     // SerializeSingleScopeSpan
     private int SerializeSingleScopeSpan(ref byte[] buffer, int cursor, string activitySourceName, string? activitySourceVersion, List<Activity> activities)
     {
-        var instrumentationScopeSize = this.activitySizeCalculator.ComputeInstrumentationScopeSize(activitySourceName, activitySourceVersion);
+        var instrumentationScopeSize = ActivitySizeCalculator.ComputeInstrumentationScopeSize(activitySourceName, activitySourceVersion);
         cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, instrumentationScopeSize, FieldNumberConstants.ScopeSpans_scope, WireType.LEN);
         cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.InstrumentationScope_name, activitySourceName);
         if (activitySourceVersion != null)
@@ -408,7 +408,7 @@ internal class ActivitySerializer
             return cursor;
         }
 
-        var statusSize = this.activitySizeCalculator.ComputeActivityStatusSize(activity, statusCode, statusMessage);
+        var statusSize = ActivitySizeCalculator.ComputeActivityStatusSize(activity, statusCode, statusMessage);
 
         if (statusSize > 0)
         {

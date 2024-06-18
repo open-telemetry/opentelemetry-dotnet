@@ -27,70 +27,21 @@ internal class ActivitySizeCalculator
         this.sdkLimitOptions = sdkLimitOptions;
     }
 
-    internal int ComputeActivitySize(Activity activity)
+    internal static int ComputeInstrumentationScopeSize(string activitySourceName, string? activitySourceVersion)
     {
         int size = 0;
-        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_trace_id);
-        size += WireTypesSizeCalculator.ComputeLengthSize(TraceIdSize);
-        size += TraceIdSize;
-        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_span_id);
-        size += WireTypesSizeCalculator.ComputeLengthSize(SpanIdSize);
-        size += SpanIdSize;
-        if (activity.ParentSpanId != default)
+
+        size += ComputeStringWithTagSize(FieldNumberConstants.InstrumentationScope_name, activitySourceName);
+
+        if (activitySourceVersion != null)
         {
-            size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_parent_span_id);
-            size += WireTypesSizeCalculator.ComputeLengthSize(SpanIdSize);
-            size += SpanIdSize;
+            size += ComputeStringWithTagSize(FieldNumberConstants.InstrumentationScope_version, activitySourceVersion);
         }
-
-        size += ComputeStringWithTagSize(FieldNumberConstants.Span_name, activity.DisplayName);
-
-        if (activity.TraceStateString != null)
-        {
-            size += ComputeStringWithTagSize(FieldNumberConstants.Span_trace_state, activity.TraceStateString);
-        }
-
-        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_kind);
-        size += KindSize; // kind value
-        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_start_time_unix_nano);
-        size += TimeSize; // start time
-        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_end_time_unix_nano);
-        size += TimeSize; // end time
-
-        size += this.ComputeActivityAttributesSize(activity, out var droppedCount, out var statusCode, out var statusMessage);
-        if (droppedCount > 0)
-        {
-            size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_dropped_attributes_count);
-            size += WireTypesSizeCalculator.ComputeRawVarint32Size((uint)droppedCount);
-        }
-
-        var statusMessageSize = this.ComputeActivityStatusSize(activity, statusCode, statusMessage);
-        if (statusMessageSize > 0)
-        {
-            size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Span_status, statusMessageSize);
-        }
-
-        size += this.ComputeActivityEventsSize(activity, out var droppedEventCount);
-        if (droppedEventCount > 0)
-        {
-            size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_dropped_events_count);
-            size += WireTypesSizeCalculator.ComputeRawVarint32Size((uint)droppedEventCount);
-        }
-
-        size += this.ComputeActivityLinksSize(activity, out var droppedLinkCount);
-        if (droppedLinkCount > 0)
-        {
-            size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_dropped_links_count);
-            size += WireTypesSizeCalculator.ComputeRawVarint32Size((uint)droppedLinkCount);
-        }
-
-        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_flags);
-        size += I32Size;
 
         return size;
     }
 
-    internal int ComputeActivityStatusSize(Activity activity, StatusCode? statusCode, string? statusMessage)
+    internal static int ComputeActivityStatusSize(Activity activity, StatusCode? statusCode, string? statusMessage)
     {
         int size = 0;
         if (activity.Status == ActivityStatusCode.Unset && statusCode == null)
@@ -118,6 +69,64 @@ internal class ActivitySizeCalculator
                 size += ComputeStringWithTagSize(FieldNumberConstants.Status_message, statusMessage);
             }
         }
+
+        return size;
+    }
+
+    internal int ComputeActivitySize(Activity activity)
+    {
+        int size = 0;
+        size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Span_trace_id, TraceIdSize);
+        size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Span_span_id, SpanIdSize);
+
+        if (activity.ParentSpanId != default)
+        {
+            size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Span_parent_span_id, SpanIdSize);
+        }
+
+        size += ComputeStringWithTagSize(FieldNumberConstants.Span_name, activity.DisplayName);
+
+        if (activity.TraceStateString != null)
+        {
+            size += ComputeStringWithTagSize(FieldNumberConstants.Span_trace_state, activity.TraceStateString);
+        }
+
+        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_kind);
+        size += KindSize; // kind value
+        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_start_time_unix_nano);
+        size += TimeSize; // start time
+        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_end_time_unix_nano);
+        size += TimeSize; // end time
+
+        size += this.ComputeActivityAttributesSize(activity, out var droppedCount, out var statusCode, out var statusMessage);
+        if (droppedCount > 0)
+        {
+            size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_dropped_attributes_count);
+            size += WireTypesSizeCalculator.ComputeRawVarint32Size((uint)droppedCount);
+        }
+
+        var statusMessageSize = ComputeActivityStatusSize(activity, statusCode, statusMessage);
+        if (statusMessageSize > 0)
+        {
+            size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Span_status, statusMessageSize);
+        }
+
+        size += this.ComputeActivityEventsSize(activity, out var droppedEventCount);
+        if (droppedEventCount > 0)
+        {
+            size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_dropped_events_count);
+            size += WireTypesSizeCalculator.ComputeRawVarint32Size((uint)droppedEventCount);
+        }
+
+        size += this.ComputeActivityLinksSize(activity, out var droppedLinkCount);
+        if (droppedLinkCount > 0)
+        {
+            size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_dropped_links_count);
+            size += WireTypesSizeCalculator.ComputeRawVarint32Size((uint)droppedLinkCount);
+        }
+
+        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_flags);
+        size += I32Size;
 
         return size;
     }
@@ -285,7 +294,7 @@ internal class ActivitySizeCalculator
         int size = 0;
         size += ComputeStringWithTagSize(FieldNumberConstants.KeyValue_key, tag.Key);
 
-        var anyValueSize = this.ComputeAnyValueSize(tag.Value!);
+        var anyValueSize = this.ComputeAnyValueSize(tag.Value);
         size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.KeyValue_value, anyValueSize);
 
         return size;
@@ -356,27 +365,13 @@ internal class ActivitySizeCalculator
     internal int ComputeScopeSize(string activitySourceName, string? activitySourceVersion, List<Activity> scopeActivities)
     {
         int size = 0;
-        var instrumentationScopeSize = this.ComputeInstrumentationScopeSize(activitySourceName, activitySourceVersion);
+        var instrumentationScopeSize = ComputeInstrumentationScopeSize(activitySourceName, activitySourceVersion);
         size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.ScopeSpans_scope, instrumentationScopeSize);
 
         foreach (var activity in scopeActivities)
         {
             var activitySize = this.ComputeActivitySize(activity);
             size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.ScopeSpans_span, activitySize);
-        }
-
-        return size;
-    }
-
-    internal int ComputeInstrumentationScopeSize(string activitySourceName, string? activitySourceVersion)
-    {
-        int size = 0;
-
-        size += ComputeStringWithTagSize(FieldNumberConstants.InstrumentationScope_name, activitySourceName);
-
-        if (activitySourceVersion != null)
-        {
-            size += ComputeStringWithTagSize(FieldNumberConstants.InstrumentationScope_version, activitySourceVersion);
         }
 
         return size;
