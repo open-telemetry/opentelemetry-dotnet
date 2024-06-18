@@ -37,6 +37,7 @@ namespace Benchmarks.Exporter;
 public class OtlpTraceExporterBenchmarks
 {
     private OtlpTraceExporter exporter;
+    private OtlpTraceExporterNew newExporter;
     private Activity activity;
     private CircularBuffer<Activity> activityBatch;
 
@@ -100,6 +101,30 @@ public class OtlpTraceExporterBenchmarks
         this.activityBatch.Add(this.activity);
     }
 
+    [GlobalSetup(Target = nameof(OtlpTraceExporter_Http_Custom))]
+    public void GlobalSetupHttpCustom()
+    {
+        this.server = TestHttpServer.RunServer(
+            (ctx) =>
+            {
+                ctx.Response.StatusCode = 200;
+                ctx.Response.OutputStream.Close();
+            },
+            out this.serverHost,
+            out this.serverPort);
+
+        var options = new OtlpExporterOptions
+        {
+            Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+        };
+        this.newExporter = new OtlpTraceExporterNew(options);
+
+        this.activity = ActivityHelper.CreateTestActivity();
+        this.activityBatch = new CircularBuffer<Activity>(1);
+        this.activityBatch.Add(this.activity);
+    }
+
     [GlobalCleanup(Target = nameof(OtlpTraceExporter_Grpc))]
     public void GlobalCleanupGrpc()
     {
@@ -118,10 +143,25 @@ public class OtlpTraceExporterBenchmarks
         this.activity.Dispose();
     }
 
+    [GlobalCleanup(Target = nameof(OtlpTraceExporter_Http_Custom))]
+    public void GlobalCleanupHttpCustom()
+    {
+        this.newExporter.Shutdown();
+        this.newExporter.Dispose();
+        this.server.Dispose();
+        this.activity.Dispose();
+    }
+
     [Benchmark]
     public void OtlpTraceExporter_Http()
     {
         this.exporter.Export(new Batch<Activity>(this.activityBatch, 1));
+    }
+
+    [Benchmark]
+    public void OtlpTraceExporter_Http_Custom()
+    {
+        this.newExporter.Export(new Batch<Activity>(this.activityBatch, 1));
     }
 
     [Benchmark]

@@ -16,7 +16,7 @@ internal class Writer
     internal static Encoding Utf8Encoding => Encoding.UTF8;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteStringTag(ref byte[] buffer, int cursor, int fieldNumber, string value)
+    internal static int WriteStringWithTag(ref byte[] buffer, int cursor, int fieldNumber, string value)
     {
         int stringSize = Utf8Encoding.GetByteCount(value);
 

@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using Google.Protobuf;
+
+// using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
 using OpenTelemetry.Resources;
-using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
+
+// using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter;
 
@@ -66,16 +68,16 @@ internal class OtlpTraceExporterNew : BaseExporter<Activity>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
-        buffer ??= new byte[100];
+        buffer ??= new byte[100000];
 
         var cursor = this.activitySerializer.Serialize(ref buffer, this.bufferOffSet, this.Resource, activityBatch);
 
         var arrcopy = new byte[cursor - this.bufferOffSet];
         Buffer.BlockCopy(buffer, this.bufferOffSet, arrcopy, 0, arrcopy.Length);
 
-        var request = new OtlpCollector.ExportTraceServiceRequest();
+        // var request = new OtlpCollector.ExportTraceServiceRequest();
 
-        request.MergeFrom(arrcopy!);
+        // request.MergeFrom(arrcopy!);
 
         if (!this.transmissionHandler.TrySubmitRequest(buffer, cursor))
         {

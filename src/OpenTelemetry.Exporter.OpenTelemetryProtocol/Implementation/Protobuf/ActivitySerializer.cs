@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using OpenTelemetry.Internal;
@@ -13,11 +14,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
 
 internal class ActivitySerializer
 {
+    private static readonly ConcurrentBag<List<Activity>> ActivityListPool = new();
+
     private readonly SdkLimitOptions sdkLimitOptions;
 
     private readonly ActivitySizeCalculator activitySizeCalculator;
-
-    private readonly Dictionary<string, List<Activity>> scopeTraces = new();
 
     internal ActivitySerializer(SdkLimitOptions sdkLimitOptions)
     {
@@ -27,31 +28,41 @@ internal class ActivitySerializer
 
     internal int Serialize(ref byte[] buffer, int offset, Resource resource, Batch<Activity> batch)
     {
+        Dictionary<string, List<Activity>> scopeTraces = new();
         foreach (var activity in batch)
         {
-            if (this.scopeTraces.TryGetValue(activity.Source.Name, out var activityList))
+            if (scopeTraces.TryGetValue(activity.Source.Name, out var activityList))
             {
                 activityList.Add(activity);
             }
             else
             {
-                var newList = new List<Activity>() { activity };
-                this.scopeTraces[activity.Source.Name] = newList;
+                if (!ActivityListPool.TryTake(out var newList))
+                {
+                    newList = new List<Activity>();
+                }
+
+                newList.Add(activity);
+                scopeTraces[activity.Source.Name] = newList;
             }
         }
 
-        var cursor = this.SerializeResourceSpans(ref buffer, offset, resource);
+        var cursor = this.SerializeResourceSpans(ref buffer, offset, resource, scopeTraces);
 
-        this.ClearScopeTraces();
+        this.ReturnActivityListToPool(scopeTraces);
 
         return cursor;
     }
 
-    internal void ClearScopeTraces()
+    internal void ReturnActivityListToPool(Dictionary<string, List<Activity>>? scopeTraces)
     {
-        foreach (var entry in this.scopeTraces)
+        if (scopeTraces != null)
         {
-            entry.Value.Clear();
+            foreach (var entry in scopeTraces)
+            {
+                entry.Value.Clear();
+                ActivityListPool.Add(entry.Value);
+            }
         }
     }
 
@@ -151,7 +162,7 @@ internal class ActivitySerializer
     {
         var tagSize = this.activitySizeCalculator.ComputeKeyValuePairSize(tag);
         cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, tagSize, fieldNumber, WireType.LEN);
-        cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, tag.Key);
+        cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, tag.Key);
         cursor = this.SerializeAnyValue(ref buffer, cursor, tag.Value, FieldNumberConstants.KeyValue_value);
 
         return cursor;
@@ -241,7 +252,6 @@ internal class ActivitySerializer
         cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, anyValueSize, fieldNumber, WireType.LEN);
         if (value == null)
         {
-            // cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, 0, 0, WireType.LEN);
             return cursor;
         }
 
@@ -257,8 +267,8 @@ internal class ActivitySerializer
                     stringVal = rawStringVal.Substring(0, stringSizeLimit);
                 }
 
-                return Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, stringVal);
-            case bool b:
+                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, stringVal);
+            case bool:
                 return Writer.WriteBoolWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_bool_value, (bool)value);
             case byte:
             case sbyte:
@@ -282,12 +292,12 @@ internal class ActivitySerializer
                     defaultStringVal = defaultRawStringVal.Substring(0, stringSizeLimit);
                 }
 
-                return Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, defaultStringVal);
+                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, defaultStringVal);
         }
     }
 
     // SerializeResourceSpans
-    private int SerializeResourceSpans(ref byte[] buffer, int cursor, Resource resource)
+    private int SerializeResourceSpans(ref byte[] buffer, int cursor, Resource resource, Dictionary<string, List<Activity>> scopeTraces)
     {
         var start = cursor;
 
@@ -296,7 +306,7 @@ internal class ActivitySerializer
         var valueStart = cursor;
 
         cursor = this.SerializeResource(ref buffer, cursor, resource);
-        cursor = this.SerializeScopeSpans(ref buffer, cursor);
+        cursor = this.SerializeScopeSpans(ref buffer, cursor, scopeTraces);
         start = Writer.WriteTag(ref buffer, start, FieldNumberConstants.ResourceSpans_resource, WireType.LEN);
         _ = Writer.WriteLengthCustom(ref buffer, start, cursor - valueStart);
 
@@ -305,7 +315,7 @@ internal class ActivitySerializer
 
     private int SerializeResource(ref byte[] buffer, int cursor, Resource resource)
     {
-        if (resource != Resource.Empty)
+        if (resource != null && resource != Resource.Empty)
         {
             var resourceSize = this.activitySizeCalculator.ComputeResourceSize(resource);
             if (resourceSize > 0)
@@ -315,7 +325,7 @@ internal class ActivitySerializer
                 {
                     var tagSize = this.activitySizeCalculator.ComputeKeyValuePairSize(attribute!);
                     cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, tagSize, FieldNumberConstants.Resource_attributes, WireType.LEN);
-                    cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, attribute.Key);
+                    cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, attribute.Key);
                     cursor = this.SerializeAnyValue(ref buffer, cursor, attribute.Value, FieldNumberConstants.KeyValue_value);
                 }
             }
@@ -325,13 +335,16 @@ internal class ActivitySerializer
     }
 
     // SerializeScopeSpans
-    private int SerializeScopeSpans(ref byte[] buffer, int cursor)
+    private int SerializeScopeSpans(ref byte[] buffer, int cursor, Dictionary<string, List<Activity>> scopeTraces)
     {
-        foreach (KeyValuePair<string, List<Activity>> entry in this.scopeTraces)
+        if (scopeTraces != null)
         {
-            var scopeSize = this.activitySizeCalculator.ComputeScopeSize(entry.Key, entry.Value[0].Source.Version, entry.Value);
-            cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, scopeSize, FieldNumberConstants.ResourceSpans_scope_spans, WireType.LEN);
-            cursor = this.SerializeSingleScopeSpan(ref buffer, cursor, entry.Key, entry.Value[0].Source.Version, entry.Value);
+            foreach (KeyValuePair<string, List<Activity>> entry in scopeTraces)
+            {
+                var scopeSize = this.activitySizeCalculator.ComputeScopeSize(entry.Key, entry.Value[0].Source.Version, entry.Value);
+                cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, scopeSize, FieldNumberConstants.ResourceSpans_scope_spans, WireType.LEN);
+                cursor = this.SerializeSingleScopeSpan(ref buffer, cursor, entry.Key, entry.Value[0].Source.Version, entry.Value);
+            }
         }
 
         return cursor;
@@ -342,10 +355,10 @@ internal class ActivitySerializer
     {
         var instrumentationScopeSize = this.activitySizeCalculator.ComputeInstrumentationScopeSize(activitySourceName, activitySourceVersion);
         cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, instrumentationScopeSize, FieldNumberConstants.ScopeSpans_scope, WireType.LEN);
-        cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.InstrumentationScope_name, activitySourceName);
+        cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.InstrumentationScope_name, activitySourceName);
         if (activitySourceVersion != null)
         {
-            cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.InstrumentationScope_version, activitySourceVersion);
+            cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.InstrumentationScope_version, activitySourceVersion);
         }
 
         foreach (var activity in activities)
@@ -361,10 +374,10 @@ internal class ActivitySerializer
     // Serialize Span
     private int SerializeActivity(ref byte[] buffer, int cursor, Activity activity)
     {
-        cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.Span_name, activity.DisplayName);
+        cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.Span_name, activity.DisplayName);
         if (activity.TraceStateString != null)
         {
-            cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.Span_trace_state, activity.TraceStateString);
+            cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.Span_trace_state, activity.TraceStateString);
         }
 
         cursor = Writer.WriteEnumWithTag(ref buffer, cursor, FieldNumberConstants.Span_kind, (int)activity.Kind + 1);
@@ -408,7 +421,7 @@ internal class ActivitySerializer
 
             if (activity.Status == ActivityStatusCode.Error && activity.StatusDescription != null)
             {
-                cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.Status_message, activity.StatusDescription);
+                cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.Status_message, activity.StatusDescription);
             }
         }
         else if (statusCode != StatusCode.Unset)
@@ -417,7 +430,7 @@ internal class ActivitySerializer
 
             if (statusCode == StatusCode.Error && statusMessage != null)
             {
-                cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.Status_message, statusMessage);
+                cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.Status_message, statusMessage);
             }
         }
 
@@ -426,9 +439,9 @@ internal class ActivitySerializer
 
     private int SerializeActivityLinks(ref byte[] buffer, int cursor, Activity activity)
     {
-        int droppedLinkCount = 0;
         int maxLinksCount = this.sdkLimitOptions.SpanLinkCountLimit ?? int.MaxValue;
         int linkCount = 0;
+        int droppedLinkCount = 0;
 
         foreach (var link in activity.EnumerateLinks())
         {
@@ -470,7 +483,7 @@ internal class ActivitySerializer
             {
                 int eventSize = this.activitySizeCalculator.ComputeActivityEventSize(evnt);
                 cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, eventSize, FieldNumberConstants.Span_events, WireType.LEN);
-                cursor = Writer.WriteStringTag(ref buffer, cursor, FieldNumberConstants.Event_name, evnt.Name);
+                cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.Event_name, evnt.Name);
                 cursor = Writer.WriteFixed64WithTag(ref buffer, cursor, FieldNumberConstants.Event_time_unix_nano, (ulong)evnt.Timestamp.ToUnixTimeNanoseconds());
                 cursor = this.SerializeEventTags(ref buffer, cursor, evnt);
                 eventCount++;

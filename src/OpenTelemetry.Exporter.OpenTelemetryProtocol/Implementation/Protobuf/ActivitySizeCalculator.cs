@@ -432,7 +432,7 @@ internal class ActivitySizeCalculator
     internal int ComputeResourceSize(Resource resource)
     {
         int size = 0;
-        if (resource != Resource.Empty)
+        if (resource != null && resource != Resource.Empty)
         {
             foreach (var attribute in resource.Attributes)
             {

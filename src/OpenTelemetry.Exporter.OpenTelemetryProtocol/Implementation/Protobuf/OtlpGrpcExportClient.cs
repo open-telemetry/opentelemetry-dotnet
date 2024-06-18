@@ -8,14 +8,12 @@ using System.Buffers.Binary;
 using System.Net.Http.Headers;
 using Grpc.Core;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Proto.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
 
 /// <summary>Base class for sending OTLP export request over Grpc.</summary>
 internal class OtlpGrpcExportClient : IExportClient
 {
-
     internal const string ErrorStartingCallMessage = "Error starting gRPC call.";
     private static readonly ExportClientHttpResponse SuccessExportResponse = new ExportClientHttpResponse(success: true, deadlineUtc: default, response: null, exception: null);
 
