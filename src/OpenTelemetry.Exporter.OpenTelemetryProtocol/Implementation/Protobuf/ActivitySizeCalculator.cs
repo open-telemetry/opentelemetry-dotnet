@@ -67,9 +67,7 @@ internal class ActivitySizeCalculator
         var statusMessageSize = this.ComputeActivityStatusSize(activity, statusCode, statusMessage);
         if (statusMessageSize > 0)
         {
-            size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_status);
-            size += WireTypesSizeCalculator.ComputeLengthSize(statusMessageSize);
-            size += statusMessageSize;
+            size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Span_status, statusMessageSize);
         }
 
         size += this.ComputeActivityEventsSize(activity, out var droppedEventCount);
@@ -137,10 +135,7 @@ internal class ActivitySizeCalculator
                 if (linkCount < maxLinksCount)
                 {
                     var linkSize = this.ComputeActivityLinkSize(link);
-                    size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_links);
-                    size += WireTypesSizeCalculator.ComputeLengthSize(linkSize);
-                    size += linkSize;
-
+                    size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Span_links, linkSize);
                     linkCount++;
                 }
                 else
@@ -174,9 +169,7 @@ internal class ActivitySizeCalculator
             if (attributeCount < this.sdkLimitOptions.SpanLinkAttributeCountLimit)
             {
                 var keyValueSize = this.ComputeKeyValuePairSize(tag);
-                size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Link_attributes);
-                size += WireTypesSizeCalculator.ComputeLengthSize(keyValueSize); // length prefix for key value pair.
-                size += keyValueSize;
+                size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Link_attributes, keyValueSize);
                 attributeCount++;
             }
             else
@@ -207,9 +200,7 @@ internal class ActivitySizeCalculator
                 if (eventCount < maxEventCountLimit)
                 {
                     var evntSize = this.ComputeActivityEventSize(evnt);
-                    size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_events);
-                    size += WireTypesSizeCalculator.ComputeLengthSize(evntSize);
-                    size += evntSize;
+                    size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Span_events, evntSize);
                     eventCount++;
                 }
                 else
@@ -236,9 +227,7 @@ internal class ActivitySizeCalculator
             if (attributeCount < spanEventAttributeCountLimit)
             {
                 var keyValueSize = this.ComputeKeyValuePairSize(tag);
-                size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Event_attributes);
-                size += WireTypesSizeCalculator.ComputeLengthSize(keyValueSize); // length prefix for key value pair.
-                size += keyValueSize;
+                size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Event_attributes, keyValueSize);
                 attributeCount++;
             }
             else
@@ -261,9 +250,9 @@ internal class ActivitySizeCalculator
         statusCode = null;
         statusMessage = null;
         int maxAttributeCount = this.sdkLimitOptions.SpanAttributeCountLimit ?? int.MaxValue;
-        droppedCount = 0;
         int size = 0;
         int attributeCount = 0;
+        droppedCount = 0;
         foreach (ref readonly var tag in activity.EnumerateTagObjects())
         {
             switch (tag.Key)
@@ -279,9 +268,7 @@ internal class ActivitySizeCalculator
             if (attributeCount < maxAttributeCount)
             {
                 var keyValueSize = this.ComputeKeyValuePairSize(tag);
-                size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_attributes);
-                size += WireTypesSizeCalculator.ComputeLengthSize(keyValueSize); // length prefix for key value pair.
-                size += keyValueSize;
+                size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Span_attributes, keyValueSize);
                 attributeCount++;
             }
             else
@@ -299,9 +286,7 @@ internal class ActivitySizeCalculator
         size += ComputeStringWithTagSize(FieldNumberConstants.KeyValue_key, tag.Key);
 
         var anyValueSize = this.ComputeAnyValueSize(tag.Value!);
-        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.KeyValue_value);
-        size += WireTypesSizeCalculator.ComputeLengthSize(anyValueSize); // length prefix for any value pair.
-        size += anyValueSize;
+        size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.KeyValue_value, anyValueSize);
 
         return size;
     }
@@ -362,10 +347,7 @@ internal class ActivitySizeCalculator
         foreach (var value in array)
         {
             var anyValueSize = this.ComputeAnyValueSize(value);
-
-            size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.ArrayValue_Value);
-            size += WireTypesSizeCalculator.ComputeLengthSize(anyValueSize); // length prefix for any value pair.
-            size += anyValueSize;
+            size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.ArrayValue_Value, anyValueSize);
         }
 
         return size;
@@ -375,16 +357,12 @@ internal class ActivitySizeCalculator
     {
         int size = 0;
         var instrumentationScopeSize = this.ComputeInstrumentationScopeSize(activitySourceName, activitySourceVersion);
-        size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.ScopeSpans_scope);
-        size += WireTypesSizeCalculator.ComputeLengthSize(instrumentationScopeSize);
-        size += instrumentationScopeSize;
+        size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.ScopeSpans_scope, instrumentationScopeSize);
 
         foreach (var activity in scopeActivities)
         {
             var activitySize = this.ComputeActivitySize(activity);
-            size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.ScopeSpans_span);
-            size += WireTypesSizeCalculator.ComputeLengthSize(activitySize);
-            size += activitySize;
+            size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.ScopeSpans_span, activitySize);
         }
 
         return size;
@@ -412,9 +390,7 @@ internal class ActivitySizeCalculator
             foreach (var attribute in resource.Attributes)
             {
                 var keyValueSize = this.ComputeKeyValuePairSize(attribute!);
-                size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Resource_attributes);
-                size += WireTypesSizeCalculator.ComputeLengthSize(keyValueSize); // length prefix for key value pair.
-                size += keyValueSize;
+                size += ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.Resource_attributes, keyValueSize);
             }
         }
 
@@ -428,6 +404,16 @@ internal class ActivitySizeCalculator
         var stringLength = Encoding.UTF8.GetByteCount(value);
         size += WireTypesSizeCalculator.ComputeLengthSize(stringLength);
         size += stringLength;
+
+        return size;
+    }
+
+    private static int ComputeSizeWithTagAndLengthPrefix(int fieldNumber, int numberOfbytes)
+    {
+        int size = 0;
+        size += WireTypesSizeCalculator.ComputeTagSize(fieldNumber);
+        size += WireTypesSizeCalculator.ComputeLengthSize(numberOfbytes); // length prefix for key value pair.
+        size += numberOfbytes;
 
         return size;
     }
