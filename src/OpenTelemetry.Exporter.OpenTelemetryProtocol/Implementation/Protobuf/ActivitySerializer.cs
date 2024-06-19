@@ -176,7 +176,8 @@ internal class ActivitySerializer
         cursor += 4;
         var valueStart = cursor;
 
-        cursor = this.SerializeResource(ref buffer, cursor, resource);
+        int maxAttributeValueLength = this.sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
+        cursor = CommonTypesSerializer.SerializeResource(ref buffer, cursor, resource, maxAttributeValueLength);
         cursor = this.SerializeScopeSpans(ref buffer, cursor, scopeTraces);
         start = Writer.WriteTag(ref buffer, start, FieldNumberConstants.ResourceSpans_resource, WireType.LEN);
         _ = Writer.WriteLengthCustom(ref buffer, start, cursor - valueStart);
@@ -184,35 +185,13 @@ internal class ActivitySerializer
         return cursor;
     }
 
-    private int SerializeResource(ref byte[] buffer, int cursor, Resource resource)
-    {
-        if (resource != null && resource != Resource.Empty)
-        {
-            var resourceSize = this.activitySizeCalculator.ComputeResourceSize(resource);
-            if (resourceSize > 0)
-            {
-                cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, resourceSize, FieldNumberConstants.ResourceSpans_resource, WireType.LEN);
-                foreach (var attribute in resource.Attributes)
-                {
-                    var tagSize = this.activitySizeCalculator.ComputeKeyValuePairSize(attribute!);
-                    cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, tagSize, FieldNumberConstants.Resource_attributes, WireType.LEN);
-                    cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, attribute.Key);
-                    cursor = this.SerializeAnyValue(ref buffer, cursor, attribute.Value, FieldNumberConstants.KeyValue_value);
-                }
-            }
-        }
-
-        return cursor;
-    }
-
-    // SerializeScopeSpans
     private int SerializeScopeSpans(ref byte[] buffer, int cursor, Dictionary<string, List<Activity>> scopeTraces)
     {
         if (scopeTraces != null)
         {
             foreach (KeyValuePair<string, List<Activity>> entry in scopeTraces)
             {
-                var scopeSize = this.activitySizeCalculator.ComputeScopeSize(entry.Key, entry.Value[0].Source.Version, entry.Value);
+                var scopeSize = this.activitySizeCalculator.ComputeScopeSpanSize(entry.Key, entry.Value[0].Source.Version, entry.Value);
                 cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, scopeSize, FieldNumberConstants.ResourceSpans_scope_spans, WireType.LEN);
                 cursor = this.SerializeSingleScopeSpan(ref buffer, cursor, entry.Key, entry.Value[0].Source.Version, entry.Value);
             }
@@ -221,10 +200,9 @@ internal class ActivitySerializer
         return cursor;
     }
 
-    // SerializeSingleScopeSpan
     private int SerializeSingleScopeSpan(ref byte[] buffer, int cursor, string activitySourceName, string? activitySourceVersion, List<Activity> activities)
     {
-        var instrumentationScopeSize = ActivitySizeCalculator.ComputeInstrumentationScopeSize(activitySourceName, activitySourceVersion);
+        var instrumentationScopeSize = CommonTypesSizeCalculator.ComputeInstrumentationScopeSize(activitySourceName, activitySourceVersion);
         cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, instrumentationScopeSize, FieldNumberConstants.ScopeSpans_scope, WireType.LEN);
         cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.InstrumentationScope_name, activitySourceName);
         if (activitySourceVersion != null)
@@ -242,7 +220,6 @@ internal class ActivitySerializer
         return cursor;
     }
 
-    // Serialize Span
     private int SerializeActivity(ref byte[] buffer, int cursor, Activity activity)
     {
         cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.Span_name, activity.DisplayName);
@@ -277,6 +254,7 @@ internal class ActivitySerializer
         statusCode = null;
         statusMessage = null;
         int maxAttributeCount = this.sdkLimitOptions.SpanAttributeCountLimit ?? int.MaxValue;
+        int maxAttributeValueLength = this.sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
         int attributeCount = 0;
         int droppedAttributeCount = 0;
         foreach (ref readonly var tag in activity.EnumerateTagObjects())
@@ -293,7 +271,7 @@ internal class ActivitySerializer
 
             if (attributeCount < maxAttributeCount)
             {
-                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Span_attributes, tag);
+                cursor = CommonTypesSerializer.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Span_attributes, tag, maxAttributeValueLength);
                 attributeCount++;
             }
             else
@@ -349,13 +327,14 @@ internal class ActivitySerializer
     private int SerializeLinkTags(ref byte[] buffer, int cursor, ActivityLink link)
     {
         int maxAttributeCount = this.sdkLimitOptions.SpanLinkAttributeCountLimit ?? int.MaxValue;
+        int maxAttributeValueLength = this.sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
         int attributeCount = 0;
         int droppedAttributeCount = 0;
         foreach (ref readonly var tag in link.EnumerateTagObjects())
         {
             if (attributeCount < maxAttributeCount)
             {
-                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Link_attributes, tag);
+                cursor = CommonTypesSerializer.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Link_attributes, tag, maxAttributeValueLength);
                 attributeCount++;
             }
             else
@@ -407,13 +386,14 @@ internal class ActivitySerializer
     private int SerializeEventTags(ref byte[] buffer, int cursor, ActivityEvent evnt)
     {
         int maxAttributeCount = this.sdkLimitOptions.SpanEventAttributeCountLimit ?? int.MaxValue;
+        int maxAttributeValueLength = this.sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
         int attributeCount = 0;
         int droppedAttributeCount = 0;
         foreach (ref readonly var tag in evnt.EnumerateTagObjects())
         {
             if (attributeCount < maxAttributeCount)
             {
-                cursor = this.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Event_attributes, tag);
+                cursor = CommonTypesSerializer.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Event_attributes, tag, maxAttributeValueLength);
                 attributeCount++;
             }
             else
@@ -429,77 +409,5 @@ internal class ActivitySerializer
         }
 
         return cursor;
-    }
-
-    private int SerializeKeyValuePair(ref byte[] buffer, int cursor, int fieldNumber, KeyValuePair<string, object?> tag)
-    {
-        var tagSize = this.activitySizeCalculator.ComputeKeyValuePairSize(tag);
-        cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, tagSize, fieldNumber, WireType.LEN);
-        cursor = Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.KeyValue_key, tag.Key);
-        cursor = this.SerializeAnyValue(ref buffer, cursor, tag.Value, FieldNumberConstants.KeyValue_value);
-
-        return cursor;
-    }
-
-    private int SerializeArray(ref byte[] buffer, int cursor, Array array)
-    {
-        var arraySize = this.activitySizeCalculator.ComputeArrayValueSize(array);
-        cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, arraySize, FieldNumberConstants.AnyValue_array_value, WireType.LEN);
-        foreach (var ar in array)
-        {
-            cursor = this.SerializeAnyValue(ref buffer, cursor, ar, FieldNumberConstants.ArrayValue_Value);
-        }
-
-        return cursor;
-    }
-
-    private int SerializeAnyValue(ref byte[] buffer, int cursor, object? value, int fieldNumber)
-    {
-        var anyValueSize = this.activitySizeCalculator.ComputeAnyValueSize(value);
-        cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, anyValueSize, fieldNumber, WireType.LEN);
-        if (value == null)
-        {
-            return cursor;
-        }
-
-        var stringSizeLimit = this.sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
-        switch (value)
-        {
-            case char:
-            case string:
-                var rawStringVal = Convert.ToString(value, CultureInfo.InvariantCulture);
-                var stringVal = rawStringVal;
-                if (rawStringVal?.Length > stringSizeLimit)
-                {
-                    stringVal = rawStringVal.Substring(0, stringSizeLimit);
-                }
-
-                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, stringVal);
-            case bool:
-                return Writer.WriteBoolWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_bool_value, (bool)value);
-            case byte:
-            case sbyte:
-            case short:
-            case ushort:
-            case int:
-            case uint:
-            case long:
-            case ulong:
-                return Writer.WriteInt64WithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_int_value, (ulong)Convert.ToInt64(value, CultureInfo.InvariantCulture));
-            case float:
-            case double:
-                return Writer.WriteDoubleWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_double_value, Convert.ToDouble(value, CultureInfo.InvariantCulture));
-            case Array array:
-                return this.SerializeArray(ref buffer, cursor, array);
-            default:
-                var defaultRawStringVal = Convert.ToString(value); // , CultureInfo.InvariantCulture);
-                var defaultStringVal = defaultRawStringVal;
-                if (defaultRawStringVal?.Length > stringSizeLimit)
-                {
-                    defaultStringVal = defaultRawStringVal.Substring(0, stringSizeLimit);
-                }
-
-                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, defaultStringVal);
-        }
     }
 }

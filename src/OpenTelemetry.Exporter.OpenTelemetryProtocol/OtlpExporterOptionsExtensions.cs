@@ -306,7 +306,7 @@ internal static class OtlpExporterOptionsExtensions
 
         if (options.Protocol == OtlpExportProtocol.Grpc)
         {
-            return new OtlpGrpcExportClient(options, httpClient, "opentelemetry.proto.collector.trace.v1.LogService/Export");
+            return new OtlpGrpcExportClient(options, httpClient, "opentelemetry.proto.collector.trace.v1.MetricService/Export");
         }
         else
         {
