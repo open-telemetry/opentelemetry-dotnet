@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using System.Net;
 using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -15,6 +16,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.PersistentStorage.Abstractions;
@@ -548,6 +550,432 @@ public sealed class MockCollectorIntegrationTests
         transmissionHandler.Dispose();
     }
 
+    // For `Grpc.Core.StatusCode.DeadlineExceeded`
+    // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5436.
+    [Theory]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.Unavailable)]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.Cancelled)]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.Aborted)]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.OutOfRange)]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.DataLoss)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.Internal)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.InvalidArgument)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.Unimplemented)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.FailedPrecondition)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.PermissionDenied)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.Unauthenticated)]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.DeadlineExceeded)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.Unavailable)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.Cancelled)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.Aborted)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.OutOfRange)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DataLoss)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.Internal)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.InvalidArgument)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.FailedPrecondition)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DeadlineExceeded)]
+    public async Task GrpcRetryTestsCustom(bool useRetryTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialStatusCode)
+    {
+        var testGrpcPort = Interlocked.Increment(ref gRPCPort);
+        var testHttpPort = Interlocked.Increment(ref httpPort);
+
+        using var host = await new HostBuilder()
+           .ConfigureWebHostDefaults(webBuilder => webBuilder
+                .ConfigureKestrel(options =>
+                {
+                    options.ListenLocalhost(testHttpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    options.ListenLocalhost(testGrpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                })
+               .ConfigureServices(services =>
+               {
+                   services.AddSingleton(new MockCollectorState());
+                   services.AddGrpc();
+               })
+               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
+               .Configure(app =>
+               {
+                   app.UseRouting();
+
+                   app.UseEndpoints(endpoints =>
+                   {
+                       endpoints.MapGet(
+                           "/MockCollector/SetResponseCodes/{responseCodesCsv}",
+                           (MockCollectorState collectorState, string responseCodesCsv) =>
+                           {
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               collectorState.SetStatusCodes(codes);
+                           });
+
+                       endpoints.MapGrpcService<MockTraceService>();
+                   });
+               }))
+           .StartAsync();
+
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
+
+        // First reply with failure and then Ok
+        var codes = new[] { initialStatusCode, Grpc.Core.StatusCode.OK };
+        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+
+        var endpoint = new Uri($"http://localhost:{testGrpcPort}");
+
+        var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 200000, Protocol = OtlpExportProtocol.Grpc };
+
+        var configuration = new ConfigurationBuilder()
+         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null, [ExperimentalOptions.OtlpUseCustomSerializer] = "true" })
+         .Build();
+
+        var otlpExporter = new OtlpTraceExporterNew(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
+
+        var activitySourceName = "otel.http.grpc.retry.test";
+        using var source = new ActivitySource(activitySourceName);
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .Build();
+
+        using var activity = source.StartActivity("GrpcRetryTestCustom");
+        activity.Stop();
+        using var batch = new Batch<Activity>([activity], 1);
+
+        var exportResult = otlpExporter.Export(batch);
+
+        Assert.Equal(expectedResult, exportResult);
+
+        await host.StopAsync();
+    }
+
+    [Theory]
+    [InlineData(true, ExportResult.Success, HttpStatusCode.ServiceUnavailable)]
+    [InlineData(true, ExportResult.Success, HttpStatusCode.BadGateway)]
+    [InlineData(true, ExportResult.Success, HttpStatusCode.GatewayTimeout)]
+    [InlineData(true, ExportResult.Failure, HttpStatusCode.BadRequest)]
+    [InlineData(true, ExportResult.Success, HttpStatusCode.TooManyRequests)]
+    [InlineData(false, ExportResult.Failure, HttpStatusCode.ServiceUnavailable)]
+    [InlineData(false, ExportResult.Failure, HttpStatusCode.BadGateway)]
+    [InlineData(false, ExportResult.Failure, HttpStatusCode.GatewayTimeout)]
+    [InlineData(false, ExportResult.Failure, HttpStatusCode.TooManyRequests)]
+    [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
+    public async Task HttpRetryTestsCustom(bool useRetryTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
+    {
+        var testHttpPort = Interlocked.Increment(ref httpPort);
+
+        using var host = await new HostBuilder()
+           .ConfigureWebHostDefaults(webBuilder => webBuilder
+                .ConfigureKestrel(options =>
+                {
+                    options.ListenLocalhost(testHttpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                })
+               .ConfigureServices(services =>
+               {
+                   services.AddSingleton(new MockCollectorHttpState());
+               })
+               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
+               .Configure(app =>
+               {
+                   app.UseRouting();
+
+                   app.UseEndpoints(endpoints =>
+                   {
+                       endpoints.MapGet(
+                           "/MockCollector/SetResponseCodes/{responseCodesCsv}",
+                           (MockCollectorHttpState collectorState, string responseCodesCsv) =>
+                           {
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               collectorState.SetStatusCodes(codes);
+                           });
+
+                       endpoints.MapPost("/v1/traces", async ctx =>
+                       {
+                           var state = ctx.RequestServices.GetRequiredService<MockCollectorHttpState>();
+                           ctx.Response.StatusCode = (int)state.NextStatus();
+
+                           await ctx.Response.WriteAsync("Request Received.");
+                       });
+                   });
+               }))
+           .StartAsync();
+
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
+
+        var codes = new[] { initialHttpStatusCode, HttpStatusCode.OK };
+        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+
+        var endpoint = new Uri($"http://localhost:{testHttpPort}/v1/traces");
+
+        var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000, Protocol = OtlpExportProtocol.HttpProtobuf };
+
+        var configuration = new ConfigurationBuilder()
+         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null, [ExperimentalOptions.OtlpUseCustomSerializer] = "true" })
+         .Build();
+
+        var otlpExporter = new OtlpTraceExporterNew(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
+
+        var activitySourceName = "otel.http.retry.test";
+        using var source = new ActivitySource(activitySourceName);
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .Build();
+
+        using var activity = source.StartActivity("HttpRetryTestCustom");
+        activity.Stop();
+        using var batch = new Batch<Activity>([activity], 1);
+
+        var exportResult = otlpExporter.Export(batch);
+
+        Assert.Equal(expectedResult, exportResult);
+    }
+
+    [Theory]
+    [InlineData(true, ExportResult.Success, HttpStatusCode.ServiceUnavailable)]
+    [InlineData(true, ExportResult.Success, HttpStatusCode.BadGateway)]
+    [InlineData(true, ExportResult.Success, HttpStatusCode.GatewayTimeout)]
+    [InlineData(true, ExportResult.Failure, HttpStatusCode.BadRequest)]
+    [InlineData(true, ExportResult.Success, HttpStatusCode.TooManyRequests)]
+    [InlineData(false, ExportResult.Failure, HttpStatusCode.ServiceUnavailable)]
+    [InlineData(false, ExportResult.Failure, HttpStatusCode.BadGateway)]
+    [InlineData(false, ExportResult.Failure, HttpStatusCode.GatewayTimeout)]
+    [InlineData(false, ExportResult.Failure, HttpStatusCode.TooManyRequests)]
+    [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
+    public async Task HttpPersistentStorageRetryTestsCustom(bool usePersistentStorageTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
+    {
+        var testHttpPort = Interlocked.Increment(ref httpPort);
+
+        using var host = await new HostBuilder()
+           .ConfigureWebHostDefaults(webBuilder => webBuilder
+                .ConfigureKestrel(options =>
+                {
+                    options.ListenLocalhost(testHttpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                })
+               .ConfigureServices(services =>
+               {
+                   services.AddSingleton(new MockCollectorHttpState());
+               })
+               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
+               .Configure(app =>
+               {
+                   app.UseRouting();
+
+                   app.UseEndpoints(endpoints =>
+                   {
+                       endpoints.MapGet(
+                           "/MockCollector/SetResponseCodes/{responseCodesCsv}",
+                           (MockCollectorHttpState collectorState, string responseCodesCsv) =>
+                           {
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               collectorState.SetStatusCodes(codes);
+                           });
+
+                       endpoints.MapPost("/v1/traces", async ctx =>
+                       {
+                           var state = ctx.RequestServices.GetRequiredService<MockCollectorHttpState>();
+                           ctx.Response.StatusCode = (int)state.NextStatus();
+
+                           await ctx.Response.WriteAsync("Request Received.");
+                       });
+                   });
+               }))
+           .StartAsync();
+
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
+
+        var codes = new[] { initialHttpStatusCode, HttpStatusCode.OK };
+        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+
+        var endpoint = new Uri($"http://localhost:{testHttpPort}/v1/traces");
+
+        var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
+
+        var exportClient = new OtlpHttpExportClient(exporterOptions, new HttpClient(), "v1/traces");
+
+        // TODO: update this to configure via experimental environment variable.
+        OtlpExporterTransmissionHandler transmissionHandler;
+        MockFileProvider mockProvider = null;
+        if (usePersistentStorageTransmissionHandler)
+        {
+            mockProvider = new MockFileProvider();
+            transmissionHandler = new OtlpExporterPersistentStorageTransmissionHandler(mockProvider, exportClient, exporterOptions.TimeoutMilliseconds);
+        }
+        else
+        {
+            transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        }
+
+        var otlpExporter = new OtlpTraceExporterNew(exporterOptions, new(), new(), transmissionHandler);
+
+        var activitySourceName = "otel.http.persistent.storage.retry.test";
+        using var source = new ActivitySource(activitySourceName);
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .Build();
+
+        using var activity = source.StartActivity("HttpPersistentStorageRetryTestCustom");
+        activity.Stop();
+        using var batch = new Batch<Activity>([activity], 1);
+
+        var exportResult = otlpExporter.Export(batch);
+
+        Assert.Equal(expectedResult, exportResult);
+
+        if (usePersistentStorageTransmissionHandler)
+        {
+            if (exportResult == ExportResult.Success)
+            {
+                Assert.Single(mockProvider.TryGetBlobs());
+
+                // Force Retry
+                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler).InitiateAndWaitForRetryProcess(-1));
+
+                Assert.False(mockProvider.TryGetBlob(out _));
+            }
+            else
+            {
+                Assert.Empty(mockProvider.TryGetBlobs());
+            }
+        }
+        else
+        {
+            Assert.Null(mockProvider);
+        }
+
+        transmissionHandler.Shutdown(0);
+
+        transmissionHandler.Dispose();
+    }
+
+    // For `Grpc.Core.StatusCode.DeadlineExceeded`
+    // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5436.
+    [Theory]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.Unavailable)]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.Cancelled)]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.Aborted)]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.OutOfRange)]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.DataLoss)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.Internal)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.InvalidArgument)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.Unimplemented)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.FailedPrecondition)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.PermissionDenied)]
+    [InlineData(true, ExportResult.Failure, Grpc.Core.StatusCode.Unauthenticated)]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.DeadlineExceeded)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.Unavailable)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.Cancelled)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.Aborted)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.OutOfRange)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DataLoss)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.Internal)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.InvalidArgument)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.FailedPrecondition)]
+    [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DeadlineExceeded)]
+    public async Task GrpcPersistentStorageRetryTestsCustom(bool usePersistentStorageTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialgrpcStatusCode)
+    {
+        var testGrpcPort = Interlocked.Increment(ref gRPCPort);
+        var testHttpPort = Interlocked.Increment(ref httpPort);
+
+        using var host = await new HostBuilder()
+           .ConfigureWebHostDefaults(webBuilder => webBuilder
+                .ConfigureKestrel(options =>
+                {
+                    options.ListenLocalhost(testHttpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    options.ListenLocalhost(testGrpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                })
+               .ConfigureServices(services =>
+               {
+                   services.AddSingleton(new MockCollectorState());
+                   services.AddGrpc();
+               })
+               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
+               .Configure(app =>
+               {
+                   app.UseRouting();
+
+                   app.UseEndpoints(endpoints =>
+                   {
+                       endpoints.MapGet(
+                           "/MockCollector/SetResponseCodes/{responseCodesCsv}",
+                           (MockCollectorState collectorState, string responseCodesCsv) =>
+                           {
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               collectorState.SetStatusCodes(codes);
+                           });
+
+                       endpoints.MapGrpcService<MockTraceService>();
+                   });
+               }))
+           .StartAsync();
+
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
+
+        var codes = new[] { initialgrpcStatusCode, Grpc.Core.StatusCode.OK };
+        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+
+        var endpoint = new Uri($"http://localhost:{testGrpcPort}");
+
+        var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
+
+        var exportClient = new OtlpGrpcExportClient(exporterOptions, new HttpClient(), "opentelemetry.proto.collector.trace.v1.TraceService/Export");
+
+        // TODO: update this to configure via experimental environment variable.
+        OtlpExporterTransmissionHandler transmissionHandler;
+        MockFileProvider mockProvider = null;
+        if (usePersistentStorageTransmissionHandler)
+        {
+            mockProvider = new MockFileProvider();
+            transmissionHandler = new OtlpExporterPersistentStorageTransmissionHandler(
+                mockProvider,
+                exportClient,
+                exporterOptions.TimeoutMilliseconds);
+        }
+        else
+        {
+            transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        }
+
+        var otlpExporter = new OtlpTraceExporterNew(exporterOptions, new(), new(), transmissionHandler);
+
+        var activitySourceName = "otel.grpc.persistent.storage.retry.test";
+        using var source = new ActivitySource(activitySourceName);
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .Build();
+
+        using var activity = source.StartActivity("GrpcPersistentStorageRetryTestCustom");
+        activity.Stop();
+        using var batch = new Batch<Activity>([activity], 1);
+
+        var exportResult = otlpExporter.Export(batch);
+
+        Assert.Equal(expectedResult, exportResult);
+
+        if (usePersistentStorageTransmissionHandler)
+        {
+            if (exportResult == ExportResult.Success)
+            {
+                Assert.Single(mockProvider.TryGetBlobs());
+
+                // Force Retry
+                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler).InitiateAndWaitForRetryProcess(-1));
+
+                Assert.False(mockProvider.TryGetBlob(out _));
+            }
+            else
+            {
+                Assert.Empty(mockProvider.TryGetBlobs());
+            }
+        }
+        else
+        {
+            Assert.Null(mockProvider);
+        }
+
+        transmissionHandler.Shutdown(0);
+
+        transmissionHandler.Dispose();
+    }
+
     private class MockCollectorState
     {
         private Grpc.Core.StatusCode[] statusCodes = { };
@@ -598,12 +1026,33 @@ public sealed class MockCollectorIntegrationTests
         public override Task<ExportTraceServiceResponse> Export(ExportTraceServiceRequest request, ServerCallContext context)
         {
             var statusCode = this.state.NextStatus();
-            if (statusCode != Grpc.Core.StatusCode.OK)
+            if (statusCode == Grpc.Core.StatusCode.ResourceExhausted)
+            {
+                throw new RpcException(new Grpc.Core.Status(statusCode, "resource"), GenerateTrailers(new Duration() { Seconds = 300 }));
+            }
+            else if (statusCode != Grpc.Core.StatusCode.OK)
             {
                 throw new RpcException(new Grpc.Core.Status(statusCode, "Error."));
             }
 
             return Task.FromResult(new ExportTraceServiceResponse());
+        }
+
+        private static Metadata GenerateTrailers(Duration throttleDelay)
+        {
+            var metadata = new Metadata();
+
+            var retryInfo = new Google.Rpc.RetryInfo();
+            retryInfo.RetryDelay = throttleDelay;
+
+            var status = new Google.Rpc.Status();
+            status.Details.Add(Any.Pack(retryInfo));
+
+            var stream = new MemoryStream();
+            status.WriteTo(stream);
+
+            metadata.Add("grpc-status-details-bin", stream.ToArray());
+            return metadata;
         }
     }
 

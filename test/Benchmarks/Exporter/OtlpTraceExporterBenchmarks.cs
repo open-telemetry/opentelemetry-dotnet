@@ -77,6 +77,37 @@ public class OtlpTraceExporterBenchmarks
         this.activityBatch.Add(this.activity);
     }
 
+    [GlobalSetup(Target = nameof(OtlpTraceExporter_Grpc_Custom))]
+    public void GlobalSetupGrpcCustom()
+    {
+        this.host = new HostBuilder()
+          .ConfigureWebHostDefaults(webBuilder => webBuilder
+               .ConfigureKestrel(options =>
+               {
+                   options.ListenLocalhost(4317, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+               })
+              .ConfigureServices(services =>
+              {
+                  services.AddGrpc();
+              })
+              .Configure(app =>
+              {
+                  app.UseRouting();
+                  app.UseEndpoints(endpoints =>
+                  {
+                      endpoints.MapGrpcService<MockTraceService>();
+                  });
+              }))
+          .Start();
+
+        var options = new OtlpExporterOptions();
+        this.newExporter = new OtlpTraceExporterNew(options);
+
+        this.activity = ActivityHelper.CreateTestActivity();
+        this.activityBatch = new CircularBuffer<Activity>(1);
+        this.activityBatch.Add(this.activity);
+    }
+
     [GlobalSetup(Target = nameof(OtlpTraceExporter_Http))]
     public void GlobalSetupHttp()
     {
@@ -134,6 +165,15 @@ public class OtlpTraceExporterBenchmarks
         this.host.Dispose();
     }
 
+    [GlobalCleanup(Target = nameof(OtlpTraceExporter_Grpc_Custom))]
+    public void GlobalCleanupGrpcCustom()
+    {
+        this.newExporter.Shutdown();
+        this.newExporter.Dispose();
+        this.activity.Dispose();
+        this.host.Dispose();
+    }
+
     [GlobalCleanup(Target = nameof(OtlpTraceExporter_Http))]
     public void GlobalCleanupHttp()
     {
@@ -168,6 +208,12 @@ public class OtlpTraceExporterBenchmarks
     public void OtlpTraceExporter_Grpc()
     {
         this.exporter.Export(new Batch<Activity>(this.activityBatch, 1));
+    }
+
+    [Benchmark]
+    public void OtlpTraceExporter_Grpc_Custom()
+    {
+        this.newExporter.Export(new Batch<Activity>(this.activityBatch, 1));
     }
 
     private sealed class MockTraceService : OtlpCollector.TraceService.TraceServiceBase

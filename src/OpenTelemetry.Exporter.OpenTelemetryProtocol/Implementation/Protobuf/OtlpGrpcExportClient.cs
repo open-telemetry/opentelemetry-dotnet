@@ -15,6 +15,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
 internal class OtlpGrpcExportClient : IExportClient
 {
     internal const string ErrorStartingCallMessage = "Error starting gRPC call.";
+    private static readonly MediaTypeHeaderValue MediaHeaderValue = new MediaTypeHeaderValue("application/grpc");
+    private static readonly Version RequestVersion = new Version(2, 0);
     private static readonly ExportClientHttpResponse SuccessExportResponse = new ExportClientHttpResponse(success: true, deadlineUtc: default, response: null, exception: null);
 
     internal OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
@@ -74,7 +76,7 @@ internal class OtlpGrpcExportClient : IExportClient
     public HttpRequestMessage CreateHttpRequest(byte[] exportRequest, int contentLength)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint);
-        request.Version = new Version(2, 0);
+        request.Version = RequestVersion;
 
 #if NET6_0_OR_GREATER
         request.VersionPolicy = HttpVersionPolicy.RequestVersionExact;
@@ -90,7 +92,7 @@ internal class OtlpGrpcExportClient : IExportClient
         BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
 
         request.Content = new ByteArrayContent(exportRequest, 0, contentLength);
-        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/grpc");
+        request.Content.Headers.ContentType = MediaHeaderValue;
 
         return request;
     }

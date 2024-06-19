@@ -903,11 +903,9 @@ public class OtlpTraceExporterNewTests
         Assert.Single(resourceSpans);
 
         var scopeSpans = resourceSpans[0].ScopeSpans;
-
         Assert.Single(scopeSpans);
 
         var spans = scopeSpans[0].Spans;
-
         Assert.Single(spans);
 
         return spans[0];

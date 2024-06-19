@@ -51,7 +51,7 @@ internal class OtlpTraceExporterNew : BaseExporter<Activity>
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
 
-        this.transmissionHandler = exporterOptions.GetTraceExportTransmissionHandlerNew(experimentalOptions);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetTraceExportTransmissionHandlerNew(experimentalOptions);
         this.activitySerializer = new ActivitySerializer(sdkLimitOptions);
 
         if (exporterOptions.Protocol == OtlpExportProtocol.Grpc)
