@@ -175,6 +175,7 @@ internal static class OtlpRetry
         var statusDetails = trailers!.Get(GrpcStatusDetailsHeader);
         if (statusDetails != null && statusDetails.IsBinary)
         {
+            // TODO: Remove google.protobuf dependency for de-serialization.
             var status = Status.Parser.ParseFrom(statusDetails.ValueBytes);
             foreach (var item in status.Details)
             {
