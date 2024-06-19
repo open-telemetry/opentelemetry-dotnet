@@ -87,7 +87,7 @@ internal static class CommonTypesSizeCalculator
             case uint:
             case long:
             case ulong:
-                return WireTypesSizeCalculator.ComputeRawVarint64Size((ulong)Convert.ToInt64(value, CultureInfo.InvariantCulture)) + WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.AnyValue_int_value);
+                return WireTypesSizeCalculator.ComputeVarint64Size((ulong)Convert.ToInt64(value, CultureInfo.InvariantCulture)) + WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.AnyValue_int_value);
             case float:
             case double:
                 return 8 + WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.AnyValue_double_value);

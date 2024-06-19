@@ -100,7 +100,7 @@ internal class ActivitySizeCalculator
         if (droppedCount > 0)
         {
             size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_dropped_attributes_count);
-            size += WireTypesSizeCalculator.ComputeRawVarint32Size((uint)droppedCount);
+            size += WireTypesSizeCalculator.ComputeVarint32Size((uint)droppedCount);
         }
 
         var statusMessageSize = ComputeActivityStatusSize(activity, statusCode, statusMessage);
@@ -113,14 +113,14 @@ internal class ActivitySizeCalculator
         if (droppedEventCount > 0)
         {
             size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_dropped_events_count);
-            size += WireTypesSizeCalculator.ComputeRawVarint32Size((uint)droppedEventCount);
+            size += WireTypesSizeCalculator.ComputeVarint32Size((uint)droppedEventCount);
         }
 
         size += this.ComputeActivityLinksSize(activity, out var droppedLinkCount);
         if (droppedLinkCount > 0)
         {
             size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_dropped_links_count);
-            size += WireTypesSizeCalculator.ComputeRawVarint32Size((uint)droppedLinkCount);
+            size += WireTypesSizeCalculator.ComputeVarint32Size((uint)droppedLinkCount);
         }
 
         size += WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.Span_flags);

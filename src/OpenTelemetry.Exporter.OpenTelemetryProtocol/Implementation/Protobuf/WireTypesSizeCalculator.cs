@@ -7,7 +7,7 @@ internal class WireTypesSizeCalculator
 {
     public static int ComputeTagSize(int fieldNumber)
     {
-        return ComputeRawVarint32Size(MakeTag(fieldNumber, 0));
+        return ComputeVarint32Size(MakeTag(fieldNumber, 0));
     }
 
     public static uint MakeTag(int fieldNumber, WireType wireType)
@@ -17,10 +17,10 @@ internal class WireTypesSizeCalculator
 
     public static int ComputeLengthSize(int length)
     {
-        return ComputeRawVarint32Size((uint)length);
+        return ComputeVarint32Size((uint)length);
     }
 
-    public static int ComputeRawVarint32Size(uint value)
+    public static int ComputeVarint32Size(uint value)
     {
         if ((value & (0xffffffff << 7)) == 0)
         {
@@ -45,7 +45,7 @@ internal class WireTypesSizeCalculator
         return 5;
     }
 
-    public static int ComputeRawVarint64Size(ulong value)
+    public static int ComputeVarint64Size(ulong value)
     {
         if ((value & (0xffffffffffffffffL << 7)) == 0)
         {
