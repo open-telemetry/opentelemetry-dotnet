@@ -15,8 +15,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Shims.OpenTracing\OpenTelemetry.Shims.OpenTracing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
+    <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
   </ItemGroup>
 </Project>

@@ -7,21 +7,69 @@ on:
         required: true
         description: 'Release tag'
         type: string
+
   release:
-    types: [published]
+    types:
+    - published
+
+  issue_comment:
+    types:
+    - created
 
 jobs:
   automation:
     uses: ./.github/workflows/automation.yml
     secrets: inherit
 
-  post-release:
+  push-packages-and-publish-release:
+    runs-on: ubuntu-latest
+
+    needs: automation
+
+    if: |
+      github.event_name == 'issue_comment'
+      && github.event.issue.pull_request
+      && github.event.issue.locked == true
+      && github.event.comment.user.login != needs.automation.outputs.username
+      && contains(github.event.comment.body, '/PushPackages')
+      && startsWith(github.event.issue.title, '[release] Prepare release ')
+      && github.event.issue.pull_request.merged_at
+      && needs.automation.outputs.enabled
+
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        ref: ${{ github.event.repository.default_branch }}
+
+    - name: Push packages and publish release
+      shell: pwsh
+      env:
+        NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
+      run: |
+        Import-Module .\build\scripts\post-release.psm1
+
+        PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest `
+          -gitRepository '${{ github.repository }}' `
+          -pullRequestNumber '${{ github.event.issue.number }}' `
+          -botUserName '${{ needs.automation.outputs.username }}' `
+          -commentUserName '${{ github.event.comment.user.login }}' `
+          -artifactDownloadPath '${{ github.workspace }}/artifacts' `
+          -pushToNuget '${{ secrets.NUGET_TOKEN != '' }}'
+
+  post-release-published:
     runs-on: ubuntu-latest
 
     needs:
     - automation
 
-    if: needs.automation.outputs.enabled
+    if: |
+      needs.automation.outputs.enabled
+      && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
 
     env:
       GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
@@ -34,6 +82,9 @@ jobs:
         fetch-depth: 0
         ref: ${{ github.event.repository.default_branch }}
         token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v4
 
     - name: Create GitHub Pull Request to update stable build version in props
       if: |

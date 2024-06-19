@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+* **Breaking change**: Non-primitive attribute (logs) and tag (traces) values
+  converted using `Convert.ToString` will now format using
+  `CultureInfo.InvariantCulture`.
+  ([#5700](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5700))
+
+## 1.9.0
+
+Released 2024-Jun-14
+
+## 1.9.0-rc.1
+
+Released 2024-Jun-07
+
 * The experimental APIs previously covered by `OTEL1000`
   (`LoggerProviderBuilder.AddOtlpExporter` extension) will now be part of the
   public API and supported in stable builds.

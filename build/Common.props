@@ -15,6 +15,10 @@
     <!--<AnalysisLevel>latest-All</AnalysisLevel>-->
   </PropertyGroup>
 
+  <PropertyGroup Label="BuildFlags">
+    <RunningDotNetPack Condition="'$(RunningDotNetPack)' == ''">false</RunningDotNetPack>
+  </PropertyGroup>
+
   <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
   <PropertyGroup>
     <NetFrameworkMinimumSupportedVersion>net462</NetFrameworkMinimumSupportedVersion>

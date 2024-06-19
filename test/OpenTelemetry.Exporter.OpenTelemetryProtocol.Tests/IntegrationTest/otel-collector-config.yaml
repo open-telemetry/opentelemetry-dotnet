@@ -25,17 +25,17 @@ receivers:
           key_file: /cfg/otel-collector.key
 
 exporters:
-  logging:
+  debug:
     verbosity: detailed
 
 service:
   pipelines:
     traces:
       receivers: [otlp, otlp/tls]
-      exporters: [logging]
+      exporters: [debug]
     metrics:
       receivers: [otlp, otlp/tls]
-      exporters: [logging]
+      exporters: [debug]
     logs:
       receivers: [otlp, otlp/tls]
-      exporters: [logging]
+      exporters: [debug]
