@@ -13,6 +13,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
 internal class OtlpHttpExportClient : IExportClient
 {
     private static readonly ExportClientHttpResponse SuccessExportResponse = new ExportClientHttpResponse(success: true, deadlineUtc: default, response: null, exception: null);
+    private static readonly MediaTypeHeaderValue MediaHeaderValue = new MediaTypeHeaderValue("application/x-protobuf");
 
     internal OtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
@@ -78,7 +79,7 @@ internal class OtlpHttpExportClient : IExportClient
         }
 
         request.Content = new ByteArrayContent(exportRequest, 0, contentLength);
-        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-protobuf");
+        request.Content.Headers.ContentType = MediaHeaderValue;
 
         return request;
     }
