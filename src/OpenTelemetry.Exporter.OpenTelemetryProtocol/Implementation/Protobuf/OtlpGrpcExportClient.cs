@@ -16,7 +16,7 @@ internal class OtlpGrpcExportClient : IExportClient
 {
     internal const string ErrorStartingCallMessage = "Error starting gRPC call.";
     private static readonly MediaTypeHeaderValue MediaHeaderValue = new MediaTypeHeaderValue("application/grpc");
-    private static readonly Version RequestVersion = new Version(2, 0);
+    private static readonly Version Http2RequestVersion = new Version(2, 0);
     private static readonly ExportClientHttpResponse SuccessExportResponse = new ExportClientHttpResponse(success: true, deadlineUtc: default, response: null, exception: null);
 
     internal OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
@@ -76,7 +76,7 @@ internal class OtlpGrpcExportClient : IExportClient
     public HttpRequestMessage CreateHttpRequest(byte[] exportRequest, int contentLength)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint);
-        request.Version = RequestVersion;
+        request.Version = Http2RequestVersion;
 
 #if NET6_0_OR_GREATER
         request.VersionPolicy = HttpVersionPolicy.RequestVersionExact;
