@@ -66,7 +66,10 @@ public sealed class TraceIdRatioBasedSampler
     private static long GetLowerLong(ReadOnlySpan<byte> bytes)
     {
         long result = 0;
-        for (var i = 0; i < 8; i++)
+
+        // Byte 0 is the most significant byte while byte 15 is the least significant byte.
+        // As a result, use bytes 8->16 as those are the lower long.
+        for (var i = 8; i < 16; i++)
         {
             result <<= 8;
 #pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
