@@ -40,6 +40,17 @@ public sealed class OpenTelemetrySdk : IDisposable
     }
 
     /// <summary>
+    /// Gets the <see cref="Logs.LoggerProvider"/>.
+    /// </summary>
+    /// <remarks>
+    /// Note: The default <see cref="LoggerProvider"/> will be a no-op instance.
+    /// Call <see
+    /// cref="OpenTelemetryBuilderSdkExtensions.WithLogging(IOpenTelemetryBuilder)"/> to
+    /// enable logging.
+    /// </remarks>
+    public LoggerProvider LoggerProvider { get; }
+
+    /// <summary>
     /// Gets the <see cref="Metrics.MeterProvider"/>.
     /// </summary>
     /// <remarks>
@@ -60,17 +71,6 @@ public sealed class OpenTelemetrySdk : IDisposable
     /// to enable tracing.
     /// </remarks>
     public TracerProvider TracerProvider { get; }
-
-    /// <summary>
-    /// Gets the <see cref="Logs.LoggerProvider"/>.
-    /// </summary>
-    /// <remarks>
-    /// Note: The default <see cref="LoggerProvider"/> will be a no-op instance.
-    /// Call <see
-    /// cref="OpenTelemetryBuilderSdkExtensions.WithLogging(IOpenTelemetryBuilder)"/> to
-    /// enable logging.
-    /// </remarks>
-    public LoggerProvider LoggerProvider { get; }
 
     /// <summary>
     /// Gets the <see cref="IServiceProvider"/> containing SDK services.
