@@ -849,6 +849,7 @@ public sealed class MockCollectorIntegrationTests
     // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5436.
     [Theory]
     [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.Unavailable)]
+    [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.ResourceExhausted)]
     [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.Cancelled)]
     [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.Aborted)]
     [InlineData(true, ExportResult.Success, Grpc.Core.StatusCode.OutOfRange)]
@@ -1028,7 +1029,7 @@ public sealed class MockCollectorIntegrationTests
             var statusCode = this.state.NextStatus();
             if (statusCode == Grpc.Core.StatusCode.ResourceExhausted)
             {
-                throw new RpcException(new Grpc.Core.Status(statusCode, "resource"), GenerateTrailers(new Duration() { Seconds = 300 }));
+                throw new RpcException(new Grpc.Core.Status(statusCode, "resource"), GenerateTrailers(new Duration() { Seconds = 3 }));
             }
             else if (statusCode != Grpc.Core.StatusCode.OK)
             {

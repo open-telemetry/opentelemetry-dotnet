@@ -102,7 +102,6 @@ internal class Writer
     internal static int WriteBoolWithTag(ref byte[] buffer, int cursor, int fieldNumber, bool value)
     {
         cursor = WriteTag(ref buffer, cursor, fieldNumber, WireType.VARINT);
-
         cursor = WriteSingleByte(ref buffer, cursor, value ? (byte)1 : (byte)0);
 
         return cursor;
