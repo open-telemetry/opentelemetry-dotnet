@@ -8,7 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -661,16 +660,15 @@ public class OtlpTraceExporterNewTests
         Assert.True(endCalled);
     }
 
-    // TODO
     [Fact]
     public void Shutdown_ClientShutdownIsCalled()
     {
-        var exportClientMock = new TestExportClient<OtlpCollector.ExportTraceServiceRequest>();
+        var exportClientMock = new TestExportClientCustom();
 
         var exporterOptions = new OtlpExporterOptions();
-        var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>(exportClientMock, exporterOptions.TimeoutMilliseconds);
+        var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
 
-        var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
+        var exporter = new OtlpTraceExporterNew(new OtlpExporterOptions(), DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
         exporter.Shutdown();
 
         Assert.True(exportClientMock.ShutdownCalled);
