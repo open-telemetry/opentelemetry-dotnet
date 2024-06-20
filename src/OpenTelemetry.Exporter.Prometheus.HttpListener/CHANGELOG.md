@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Fix collection output buffer management when its resized
-  ([#5661](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5661))
+  ([#5676](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5676))
 
 ## 1.9.0-beta.1
 
