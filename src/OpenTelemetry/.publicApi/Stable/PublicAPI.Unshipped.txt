@@ -1,7 +1,7 @@
 OpenTelemetry.OpenTelemetrySdk
 OpenTelemetry.OpenTelemetrySdk.Dispose() -> void
+OpenTelemetry.OpenTelemetrySdk.LoggerProvider.get -> OpenTelemetry.Logs.LoggerProvider!
 OpenTelemetry.OpenTelemetrySdk.MeterProvider.get -> OpenTelemetry.Metrics.MeterProvider!
-OpenTelemetry.OpenTelemetrySdk.Services.get -> System.IServiceProvider!
 OpenTelemetry.OpenTelemetrySdk.TracerProvider.get -> OpenTelemetry.Trace.TracerProvider!
 OpenTelemetry.OpenTelemetrySdkExtensions
 static OpenTelemetry.OpenTelemetrySdk.Create(System.Action<OpenTelemetry.IOpenTelemetryBuilder!>! configure) -> OpenTelemetry.OpenTelemetrySdk!

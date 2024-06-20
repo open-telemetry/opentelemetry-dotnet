@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
-using System.Diagnostics.CodeAnalysis;
-#endif
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
@@ -43,11 +40,6 @@ public sealed class OpenTelemetrySdk : IDisposable
     }
 
     /// <summary>
-    /// Gets the <see cref="IServiceProvider"/> containing SDK services.
-    /// </summary>
-    public IServiceProvider Services => this.serviceProvider;
-
-    /// <summary>
     /// Gets the <see cref="Metrics.MeterProvider"/>.
     /// </summary>
     /// <remarks>
@@ -69,34 +61,21 @@ public sealed class OpenTelemetrySdk : IDisposable
     /// </remarks>
     public TracerProvider TracerProvider { get; }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets the <see cref="Logs.LoggerProvider"/>.
     /// </summary>
     /// <remarks>
-    /// <para><b>WARNING</b>: This is an experimental API which might change or
-    /// be removed in the future. Use at your own risk.</para>
     /// Note: The default <see cref="LoggerProvider"/> will be a no-op instance.
     /// Call <see
     /// cref="OpenTelemetryBuilderSdkExtensions.WithLogging(IOpenTelemetryBuilder)"/> to
     /// enable logging.
     /// </remarks>
-#if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
     public LoggerProvider LoggerProvider { get; }
-#else
+
     /// <summary>
-    /// Gets the <see cref="Logs.LoggerProvider"/>.
+    /// Gets the <see cref="IServiceProvider"/> containing SDK services.
     /// </summary>
-    /// <remarks>
-    /// Note: The default <see cref="LoggerProvider"/> will be a no-op instance.
-    /// Call <see
-    /// cref="OpenTelemetryBuilderSdkExtensions.WithLogging(IOpenTelemetryBuilder)"/> to
-    /// enable logging.
-    /// </remarks>
-    internal LoggerProvider LoggerProvider { get; }
-#endif
+    internal IServiceProvider Services => this.serviceProvider;
 
     /// <summary>
     /// Create an <see cref="OpenTelemetrySdk"/> instance.
