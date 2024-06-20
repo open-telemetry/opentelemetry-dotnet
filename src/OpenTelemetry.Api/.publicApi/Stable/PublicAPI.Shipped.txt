@@ -52,6 +52,7 @@
 ~static OpenTelemetry.Context.RuntimeContext.SetValue<T>(string slotName, T value) -> void
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Get() -> T
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Set(T value) -> void
+abstract OpenTelemetry.Logs.LoggerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 abstract OpenTelemetry.Metrics.MeterProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 abstract OpenTelemetry.Metrics.MeterProviderBuilder.AddMeter(params string![]! names) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
@@ -90,6 +91,12 @@ OpenTelemetry.Context.RuntimeContext
 OpenTelemetry.Context.RuntimeContextSlot<T>
 OpenTelemetry.Context.RuntimeContextSlot<T>.Dispose() -> void
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>
+OpenTelemetry.Logs.IDeferredLoggerProviderBuilder
+OpenTelemetry.Logs.IDeferredLoggerProviderBuilder.Configure(System.Action<System.IServiceProvider!, OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.Logs.LoggerProviderBuilder!
+OpenTelemetry.Logs.LoggerProvider
+OpenTelemetry.Logs.LoggerProvider.LoggerProvider() -> void
+OpenTelemetry.Logs.LoggerProviderBuilder
+OpenTelemetry.Logs.LoggerProviderBuilder.LoggerProviderBuilder() -> void
 OpenTelemetry.Metrics.IDeferredMeterProviderBuilder
 OpenTelemetry.Metrics.IDeferredMeterProviderBuilder.Configure(System.Action<System.IServiceProvider!, OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 OpenTelemetry.Metrics.MeterProvider
@@ -104,8 +111,8 @@ OpenTelemetry.Trace.Link.Attributes.get -> System.Collections.Generic.IEnumerabl
 OpenTelemetry.Trace.Link.Context.get -> OpenTelemetry.Trace.SpanContext
 OpenTelemetry.Trace.Link.Equals(OpenTelemetry.Trace.Link other) -> bool
 OpenTelemetry.Trace.Link.Link() -> void
-OpenTelemetry.Trace.Link.Link(in OpenTelemetry.Trace.SpanContext spanContext) -> void
 OpenTelemetry.Trace.Link.Link(in OpenTelemetry.Trace.SpanContext spanContext, OpenTelemetry.Trace.SpanAttributes? attributes) -> void
+OpenTelemetry.Trace.Link.Link(in OpenTelemetry.Trace.SpanContext spanContext) -> void
 OpenTelemetry.Trace.SpanAttributes
 OpenTelemetry.Trace.SpanAttributes.Add(string! key, bool value) -> void
 OpenTelemetry.Trace.SpanAttributes.Add(string! key, bool[]? values) -> void
@@ -145,10 +152,10 @@ OpenTelemetry.Trace.StatusCode.Error = 2 -> OpenTelemetry.Trace.StatusCode
 OpenTelemetry.Trace.StatusCode.Ok = 1 -> OpenTelemetry.Trace.StatusCode
 OpenTelemetry.Trace.StatusCode.Unset = 0 -> OpenTelemetry.Trace.StatusCode
 OpenTelemetry.Trace.TelemetrySpan
-OpenTelemetry.Trace.TelemetrySpan.AddEvent(string! name) -> OpenTelemetry.Trace.TelemetrySpan!
 OpenTelemetry.Trace.TelemetrySpan.AddEvent(string! name, OpenTelemetry.Trace.SpanAttributes? attributes) -> OpenTelemetry.Trace.TelemetrySpan!
-OpenTelemetry.Trace.TelemetrySpan.AddEvent(string! name, System.DateTimeOffset timestamp) -> OpenTelemetry.Trace.TelemetrySpan!
 OpenTelemetry.Trace.TelemetrySpan.AddEvent(string! name, System.DateTimeOffset timestamp, OpenTelemetry.Trace.SpanAttributes? attributes) -> OpenTelemetry.Trace.TelemetrySpan!
+OpenTelemetry.Trace.TelemetrySpan.AddEvent(string! name, System.DateTimeOffset timestamp) -> OpenTelemetry.Trace.TelemetrySpan!
+OpenTelemetry.Trace.TelemetrySpan.AddEvent(string! name) -> OpenTelemetry.Trace.TelemetrySpan!
 OpenTelemetry.Trace.TelemetrySpan.Context.get -> OpenTelemetry.Trace.SpanContext
 OpenTelemetry.Trace.TelemetrySpan.Dispose() -> void
 OpenTelemetry.Trace.TelemetrySpan.End() -> void
@@ -202,8 +209,8 @@ static OpenTelemetry.Baggage.operator ==(OpenTelemetry.Baggage left, OpenTelemet
 static OpenTelemetry.Context.Propagation.PropagationContext.operator !=(OpenTelemetry.Context.Propagation.PropagationContext left, OpenTelemetry.Context.Propagation.PropagationContext right) -> bool
 static OpenTelemetry.Context.Propagation.PropagationContext.operator ==(OpenTelemetry.Context.Propagation.PropagationContext left, OpenTelemetry.Context.Propagation.PropagationContext right) -> bool
 static OpenTelemetry.Trace.ActivityExtensions.GetStatus(this System.Diagnostics.Activity! activity) -> OpenTelemetry.Trace.Status
-static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity! activity, System.Exception? ex) -> void
 static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity! activity, System.Exception? ex, in System.Diagnostics.TagList tags) -> void
+static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity! activity, System.Exception? ex) -> void
 static OpenTelemetry.Trace.ActivityExtensions.SetStatus(this System.Diagnostics.Activity! activity, OpenTelemetry.Trace.Status status) -> void
 static OpenTelemetry.Trace.Link.operator !=(OpenTelemetry.Trace.Link link1, OpenTelemetry.Trace.Link link2) -> bool
 static OpenTelemetry.Trace.Link.operator ==(OpenTelemetry.Trace.Link link1, OpenTelemetry.Trace.Link link2) -> bool

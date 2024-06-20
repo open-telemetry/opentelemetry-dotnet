@@ -24,7 +24,7 @@ function AddLabelsOnPullRequestsBasedOnFilesChanged {
   # Note: This function is intended to work on main repo and on contrib. Please
   # keep them in sync.
 
-  $repoLabels = gh label list --json name,id | ConvertFrom-Json
+  $repoLabels = gh label list --json name,id -L 200 | ConvertFrom-Json
 
   $filesChangedOnPullRequest = gh pr diff $pullRequestNumber --name-only
 
