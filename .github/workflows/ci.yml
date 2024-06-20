@@ -27,11 +27,11 @@ jobs:
           build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props']
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
+          solution: ['OpenTelemetry.sln']
           packaged-code: ['src/**', '!**/*.md']
           api-code: ['*/OpenTelemetry.Api*/**', '!**/*.md']
           api-packages: ['src/OpenTelemetry.Api*/**', '!**/*.md']
           instrumentation: ['*/OpenTelemetry.Instrumentation*/**', 'test/TestApp.AspNetCore/**', '!**/*.md']
-          instrumentation-packages: ['src/OpenTelemetry.Instrumentation*/**', '!**/*.md']
           sdk-code: ['src/OpenTelemetry/**', 'test/OpenTelemetry.Tests/**', '!**/*.md']
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
           unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
@@ -51,7 +51,18 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'build')
     uses: ./.github/workflows/dotnet-format.yml
 
-  build-test-solution-stable:
+  build-test-solution:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'solution')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/Component.BuildTest.yml
+    with:
+      project-name: 'OpenTelemetry.sln'
+      code-cov-name: 'Solution'
+
+  build-test-project-stable:
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'code')
@@ -59,11 +70,11 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/Component.BuildTest.yml
     with:
-      project-name: 'OpenTelemetry.sln'
+      project-name: './build/OpenTelemetry.proj'
       project-build-commands: '-p:ExposeExperimentalFeatures=false'
-      code-cov-name: 'Solution-Stable'
+      code-cov-name: 'Project-Stable'
 
-  build-test-solution-experimental:
+  build-test-project-experimental:
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'code')
@@ -71,35 +82,9 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/Component.BuildTest.yml
     with:
-      project-name: 'OpenTelemetry.sln'
+      project-name: './build/OpenTelemetry.proj'
       project-build-commands: '-p:ExposeExperimentalFeatures=true'
-      code-cov-name: 'Solution-Experimental'
-
-  # Build instrumentation libraries using stable packages released to NuGet
-  build-test-instrumentation-stable:
-    needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'instrumentation-packages')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/Component.BuildTest.yml
-    with:
-      project-name: './build/InstrumentationLibraries.proj'
-      project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=false'
-      code-cov-name: 'Instrumentation-Stable'
-
-  # Build instrumentation libraries using stable packages released to NuGet
-  build-test-instrumentation-experimental:
-    needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'instrumentation-packages')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/Component.BuildTest.yml
-    with:
-      project-name: './build/InstrumentationLibraries.proj'
-      project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=true'
-      code-cov-name: 'Instrumentation-Experimental'
+      code-cov-name: 'Project-Experimental'
 
   # Build unstable core libraries using stable packages released to NuGet
   build-test-unstable-core:
@@ -112,7 +97,7 @@ jobs:
     with:
       project-name: './build/UnstableCoreLibraries.proj'
       project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=true'
-      code-cov-name: 'Unstable-Core'
+      code-cov-name: 'UnstableCoreLibraries-Experimental'
 
   otlp-integration-test:
     needs: detect-changes
@@ -190,10 +175,9 @@ jobs:
       detect-changes,
       lint-md,
       lint-dotnet-format,
-      build-test-solution-stable,
-      build-test-solution-experimental,
-      build-test-instrumentation-stable,
-      build-test-instrumentation-experimental,
+      build-test-solution,
+      build-test-project-stable,
+      build-test-project-experimental,
       build-test-unstable-core,
       otlp-integration-test,
       w3c-trace-context-integration-test,

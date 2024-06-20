@@ -362,20 +362,13 @@ public struct MetricPoint
         return false;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets the exemplars associated with the metric point.
     /// </summary>
-    /// <remarks><inheritdoc cref="Exemplar" path="/remarks/para[@experimental-warning='true']"/></remarks>
     /// <param name="exemplars"><see cref="ReadOnlyExemplarCollection"/>.</param>
     /// <returns><see langword="true" /> if exemplars exist; <see langword="false" /> otherwise.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public
-#else
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal
-#endif
-        readonly bool TryGetExemplars(out ReadOnlyExemplarCollection exemplars)
+    public readonly bool TryGetExemplars(out ReadOnlyExemplarCollection exemplars)
     {
         exemplars = this.mpComponents?.Exemplars ?? ReadOnlyExemplarCollection.Empty;
         return exemplars.MaximumCount > 0;
@@ -499,9 +492,9 @@ public struct MetricPoint
                 }
         }
 
-        this.CompleteUpdate();
-
         this.UpdateExemplar(number, tags, offerExemplar);
+
+        this.CompleteUpdate();
     }
 
     internal void Update(double number)
@@ -615,9 +608,9 @@ public struct MetricPoint
                 }
         }
 
-        this.CompleteUpdate();
-
         this.UpdateExemplar(number, tags, offerExemplar);
+
+        this.CompleteUpdate();
     }
 
     internal void TakeSnapshot(bool outputDelta)
@@ -906,9 +899,9 @@ public struct MetricPoint
 
         this.mpComponents.ReleaseLock();
 
-        this.CompleteUpdate();
-
         this.UpdateExemplar(number, tags, offerExemplar);
+
+        this.CompleteUpdate();
     }
 
     private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
@@ -930,9 +923,9 @@ public struct MetricPoint
 
         this.mpComponents.ReleaseLock();
 
-        this.CompleteUpdate();
-
         this.UpdateExemplar(number, tags, offerExemplar);
+
+        this.CompleteUpdate();
     }
 
     private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
@@ -954,9 +947,9 @@ public struct MetricPoint
 
         this.mpComponents.ReleaseLock();
 
-        this.CompleteUpdate();
-
         this.UpdateExemplar(number, tags, offerExemplar, bucketIndex);
+
+        this.CompleteUpdate();
     }
 
     private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
@@ -981,9 +974,9 @@ public struct MetricPoint
 
         this.mpComponents.ReleaseLock();
 
-        this.CompleteUpdate();
-
         this.UpdateExemplar(number, tags, offerExemplar, bucketIndex);
+
+        this.CompleteUpdate();
     }
 
     private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
@@ -1009,9 +1002,9 @@ public struct MetricPoint
 
         this.mpComponents.ReleaseLock();
 
-        this.CompleteUpdate();
-
         this.UpdateExemplar(number, tags, offerExemplar);
+
+        this.CompleteUpdate();
     }
 
     private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
@@ -1040,9 +1033,9 @@ public struct MetricPoint
 
         this.mpComponents.ReleaseLock();
 
-        this.CompleteUpdate();
-
         this.UpdateExemplar(number, tags, offerExemplar);
+
+        this.CompleteUpdate();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

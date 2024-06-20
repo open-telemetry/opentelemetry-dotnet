@@ -10,9 +10,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Suppress warnings for repo code using experimental features -->
-    <NoWarn>$(NoWarn);OTEL1000;OTEL1001;OTEL1002;OTEL1003</NoWarn>
+    <NoWarn>$(NoWarn);OTEL1000;OTEL1001;OTEL1002;OTEL1003;OTEL1004</NoWarn>
     <!--temporarily disable. See 3958-->
     <!--<AnalysisLevel>latest-All</AnalysisLevel>-->
+  </PropertyGroup>
+
+  <PropertyGroup Label="BuildFlags">
+    <RunningDotNetPack Condition="'$(RunningDotNetPack)' == ''">false</RunningDotNetPack>
   </PropertyGroup>
 
   <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
@@ -23,8 +27,6 @@
     <!-- production TFMs -->
     <TargetFrameworksForLibraries>net8.0;net6.0;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibraries>
     <TargetFrameworksForLibrariesExtended>net8.0;net6.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibrariesExtended>
-    <TargetFrameworksForAspNetCoreInstrumentation>net8.0;net7.0;net6.0;netstandard2.0</TargetFrameworksForAspNetCoreInstrumentation>
-    <TargetFrameworksForGrpcNetClientInstrumentation>net8.0;net6.0;netstandard2.1;netstandard2.0</TargetFrameworksForGrpcNetClientInstrumentation>
     <TargetFrameworksForPrometheusAspNetCore>net8.0;net6.0</TargetFrameworksForPrometheusAspNetCore>
 
     <!-- non-production TFMs -->
@@ -59,20 +61,11 @@
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" Condition="'$(SkipAnalysis)'!='true'" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(IncludeDiagnosticSourceInstrumentationHelpers)'=='true'">
-    <Compile Include="$(RepoRoot)\src\Shared\ActivityInstrumentationHelper.cs" Link="Includes\ActivityInstrumentationHelper.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceListener.cs" Link="Includes\DiagnosticSourceListener.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceSubscriber.cs" Link="Includes\DiagnosticSourceSubscriber.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs" Link="Includes\ListenerHandler.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs" Link="Includes\PropertyFetcher.cs" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(IncludeInstrumentationHelpers)'=='true' Or '$(IncludeDiagnosticSourceInstrumentationHelpers)'=='true'">
+  <ItemGroup Condition="'$(IncludeInstrumentationHelpers)'=='true'">
     <Compile Include="$(RepoRoot)\src\Shared\ActivityHelperExtensions.cs" Link="Includes\ActivityHelperExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\SpanHelper.cs" Link="Includes\SpanHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
   </ItemGroup>
 

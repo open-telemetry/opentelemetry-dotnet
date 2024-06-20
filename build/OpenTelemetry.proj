@@ -1,0 +1,34 @@
+<Project>
+  <PropertyGroup>
+    <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SolutionProjects Include="$(RepoRoot)\**\*.csproj" />
+    <PackProjects Include="$(RepoRoot)\src\**\*.csproj" />
+    <TestProjects Include="$(RepoRoot)\test\**\*.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
+    <!-- Skip building these projects when publish packages workflow runs -->
+    <SolutionProjects Remove="$(RepoRoot)\docs\**\*.csproj" />
+    <SolutionProjects Remove="$(RepoRoot)\examples\**\*.csproj" />
+    <SolutionProjects Remove="@(TestProjects)" />
+  </ItemGroup>
+
+  <Target Name="Build">
+    <MSBuild Projects="@(SolutionProjects)" Targets="Build" ContinueOnError="ErrorAndStop" />
+  </Target>
+
+  <Target Name="Restore">
+    <MSBuild Projects="@(SolutionProjects)" Targets="Restore" ContinueOnError="ErrorAndStop" />
+  </Target>
+
+  <Target Name="VSTest">
+    <MSBuild Projects="@(TestProjects)" Targets="VSTest" ContinueOnError="ErrorAndStop" />
+  </Target>
+
+  <Target Name="Pack">
+    <MSBuild Projects="@(PackProjects)" Targets="Pack" ContinueOnError="ErrorAndStop" />
+  </Target>
+</Project>

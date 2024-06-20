@@ -115,6 +115,14 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
     public bool HistogramRecordMinMax { get; }
 
+    public bool IsHistogram =>
+        this.InstrumentType == typeof(Histogram<long>)
+        || this.InstrumentType == typeof(Histogram<int>)
+        || this.InstrumentType == typeof(Histogram<short>)
+        || this.InstrumentType == typeof(Histogram<byte>)
+        || this.InstrumentType == typeof(Histogram<float>)
+        || this.InstrumentType == typeof(Histogram<double>);
+
     public static bool operator ==(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
 
     public static bool operator !=(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => !metricIdentity1.Equals(metricIdentity2);

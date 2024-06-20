@@ -25,6 +25,7 @@ public abstract partial class MetricReader
     private bool emitOverflowAttribute;
     private bool reclaimUnusedMetricPoints;
     private ExemplarFilterType? exemplarFilter;
+    private ExemplarFilterType? exemplarFilterForHistograms;
 
     internal static void DeactivateMetric(Metric metric)
     {
@@ -54,6 +55,11 @@ public abstract partial class MetricReader
         Debug.Assert(this.metrics != null, "this.metrics was null");
 
         var metricStreamIdentity = new MetricStreamIdentity(instrument!, metricStreamConfiguration: null);
+
+        var exemplarFilter = metricStreamIdentity.IsHistogram
+            ? this.exemplarFilterForHistograms ?? this.exemplarFilter
+            : this.exemplarFilter;
+
         lock (this.instrumentCreationLock)
         {
             if (this.TryGetExistingMetric(in metricStreamIdentity, out var existingMetric))
@@ -72,7 +78,13 @@ public abstract partial class MetricReader
                 Metric? metric = null;
                 try
                 {
-                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.cardinalityLimit, this.emitOverflowAttribute, this.reclaimUnusedMetricPoints, this.exemplarFilter);
+                    metric = new Metric(
+                        metricStreamIdentity,
+                        this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
+                        this.cardinalityLimit,
+                        this.emitOverflowAttribute,
+                        this.reclaimUnusedMetricPoints,
+                        exemplarFilter);
                 }
                 catch (NotSupportedException nse)
                 {
@@ -114,6 +126,10 @@ public abstract partial class MetricReader
                 var metricStreamConfig = metricStreamConfigs[i];
                 var metricStreamIdentity = new MetricStreamIdentity(instrument!, metricStreamConfig);
 
+                var exemplarFilter = metricStreamIdentity.IsHistogram
+                    ? this.exemplarFilterForHistograms ?? this.exemplarFilter
+                    : this.exemplarFilter;
+
                 if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamIdentity.InstrumentName))
                 {
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
@@ -150,7 +166,7 @@ public abstract partial class MetricReader
                         metricStreamConfig?.CardinalityLimit ?? this.cardinalityLimit,
                         this.emitOverflowAttribute,
                         this.reclaimUnusedMetricPoints,
-                        this.exemplarFilter,
+                        exemplarFilter,
                         metricStreamConfig?.ExemplarReservoirFactory);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
@@ -170,7 +186,8 @@ public abstract partial class MetricReader
         int cardinalityLimit,
         bool emitOverflowAttribute,
         bool reclaimUnusedMetricPoints,
-        ExemplarFilterType? exemplarFilter)
+        ExemplarFilterType? exemplarFilter,
+        ExemplarFilterType? exemplarFilterForHistograms)
     {
         this.metricLimit = metricLimit;
         this.metrics = new Metric[metricLimit];
@@ -179,6 +196,7 @@ public abstract partial class MetricReader
         this.emitOverflowAttribute = emitOverflowAttribute;
         this.reclaimUnusedMetricPoints = reclaimUnusedMetricPoints;
         this.exemplarFilter = exemplarFilter;
+        this.exemplarFilterForHistograms = exemplarFilterForHistograms;
     }
 
     private bool TryGetExistingMetric(in MetricStreamIdentity metricStreamIdentity, [NotNullWhen(true)] out Metric? existingMetric)

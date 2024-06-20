@@ -5,6 +5,10 @@
 
 The in-memory exporter stores data in a user provided memory buffer.
 
+> [!WARNING]
+> This component is intended to be used for testing purposes. It is
+  not recommended for any production environment.
+
 ## Installation
 
 ```shell

@@ -13,29 +13,8 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Contains extension methods for the <see cref="LoggerProviderBuilder"/> class.
 /// </summary>
-#if EXPOSE_EXPERIMENTAL_FEATURES
-#if NET8_0_OR_GREATER
-[Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-public
-#else
-internal
-#endif
-static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
+public static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
 {
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Adds instrumentation to the provider.
-    /// </summary>
-    /// <remarks>
-    /// <para><inheritdoc cref="AddInstrumentation{T}(LoggerProviderBuilder, T)" path="/remarks"/></para>
-    /// Note: The type specified by <typeparamref name="T"/> will be
-    /// registered as a singleton service into application services.
-    /// </remarks>
-    /// <typeparam name="T">Instrumentation type.</typeparam>
-    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
-    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-#else
     /// <summary>
     /// Adds instrumentation to the provider.
     /// </summary>
@@ -46,7 +25,6 @@ static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
     /// <typeparam name="T">Instrumentation type.</typeparam>
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-#endif
     public static LoggerProviderBuilder AddInstrumentation<
 #if NET6_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
@@ -64,16 +42,6 @@ static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
         return loggerProviderBuilder;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Adds instrumentation to the provider.
-    /// </summary>
-    /// <typeparam name="T">Instrumentation type.</typeparam>
-    /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
-    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
-    /// <param name="instrumentation">Instrumentation instance.</param>
-    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-#else
     /// <summary>
     /// Adds instrumentation to the provider.
     /// </summary>
@@ -81,7 +49,6 @@ static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <param name="instrumentation">Instrumentation instance.</param>
     /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-#endif
     public static LoggerProviderBuilder AddInstrumentation<T>(this LoggerProviderBuilder loggerProviderBuilder, T instrumentation)
         where T : class
     {
@@ -95,16 +62,6 @@ static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
         return loggerProviderBuilder;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Adds instrumentation to the provider.
-    /// </summary>
-    /// <typeparam name="T">Instrumentation type.</typeparam>
-    /// <remarks><inheritdoc cref="AddInstrumentation{T}(LoggerProviderBuilder, T)" path="/remarks"/></remarks>
-    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
-    /// <param name="instrumentationFactory">Instrumentation factory.</param>
-    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-#else
     /// <summary>
     /// Adds instrumentation to the provider.
     /// </summary>
@@ -112,7 +69,6 @@ static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <param name="instrumentationFactory">Instrumentation factory.</param>
     /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-#endif
     public static LoggerProviderBuilder AddInstrumentation<T>(
         this LoggerProviderBuilder loggerProviderBuilder,
         Func<IServiceProvider, T> instrumentationFactory)
@@ -128,16 +84,6 @@ static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
         return loggerProviderBuilder;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Adds instrumentation to the provider.
-    /// </summary>
-    /// <typeparam name="T">Instrumentation type.</typeparam>
-    /// <remarks><inheritdoc cref="AddInstrumentation{T}(LoggerProviderBuilder, T)" path="/remarks"/></remarks>
-    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
-    /// <param name="instrumentationFactory">Instrumentation factory.</param>
-    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-#else
     /// <summary>
     /// Adds instrumentation to the provider.
     /// </summary>
@@ -145,7 +91,6 @@ static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <param name="instrumentationFactory">Instrumentation factory.</param>
     /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-#endif
     public static LoggerProviderBuilder AddInstrumentation<T>(
         this LoggerProviderBuilder loggerProviderBuilder,
         Func<IServiceProvider, LoggerProvider, T> instrumentationFactory)
@@ -165,20 +110,6 @@ static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
         return loggerProviderBuilder;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Register a callback action to configure the <see
-    /// cref="IServiceCollection"/> where logging services are configured.
-    /// </summary>
-    /// <remarks>
-    /// <para><inheritdoc cref="AddInstrumentation{T}(LoggerProviderBuilder, T)" path="/remarks"/></para>
-    /// Note: Logging services are only available during the application
-    /// configuration phase.
-    /// </remarks>
-    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
-    /// <param name="configure">Configuration callback.</param>
-    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-#else
     /// <summary>
     /// Register a callback action to configure the <see
     /// cref="IServiceCollection"/> where logging services are configured.
@@ -190,7 +121,6 @@ static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <param name="configure">Configuration callback.</param>
     /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-#endif
     public static LoggerProviderBuilder ConfigureServices(
         this LoggerProviderBuilder loggerProviderBuilder,
         Action<IServiceCollection> configure)

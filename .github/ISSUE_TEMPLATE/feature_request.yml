@@ -1,0 +1,54 @@
+name: Feature request
+description: Suggest an idea for this project
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this feature request! Please make sure to fill out the entire form below, providing as much context as you can in order to help us triage and track down your request as quickly as possible.
+
+        Before opening a feature request, consider whether the feature should/could be implemented in the [other OpenTelemetry client libraries](https://github.com/open-telemetry/). If so, please [open an issue on opentelemetry-specification](https://github.com/open-telemetry/opentelemetry-specification/issues/new) first.
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      description: Which NuGet package does this feature request concern?
+      multiple: false
+      options:
+        - OpenTelemetry
+        - OpenTelemetry.Api
+        - OpenTelemetry.Api.ProviderBuilderExtensions
+        - OpenTelemetry.Exporter.Console
+        - OpenTelemetry.Exporter.InMemory
+        - OpenTelemetry.Exporter.OpenTelemetryProtocol
+        - OpenTelemetry.Exporter.Prometheus.AspNetCore
+        - OpenTelemetry.Exporter.Prometheus.HttpListener
+        - OpenTelemetry.Exporter.Zipkin
+        - OpenTelemetry.Extensions.Hosting
+        - OpenTelemetry.Extensions.Propagators
+        - OpenTelemetry.Shims.OpenTracing
+
+  - type: textarea
+    attributes:
+      label: Is your feature request related to a problem?
+      description: If so, provide a concise description of the problem.
+
+  - type: textarea
+    attributes:
+      label: What is the expected behavior?
+      description: Describe the solution you would like.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Which alternative solutions or features have you considered?
+      description: Describe alternatives you've considered.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Any additional information you think may be relevant to this feature request.

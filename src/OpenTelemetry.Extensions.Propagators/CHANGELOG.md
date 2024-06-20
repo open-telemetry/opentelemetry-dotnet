@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.9.0
+
+Released 2024-Jun-14
+
+## 1.9.0-rc.1
+
+Released 2024-Jun-07
+
+## 1.9.0-alpha.1
+
+Released 2024-May-20
+
 ## 1.8.1
 
 Released 2024-Apr-17

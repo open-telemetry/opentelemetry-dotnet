@@ -1,6 +1,5 @@
 # OpenTelemetry .NET Metrics
 
-<!-- markdownlint-disable MD033 -->
 <details>
 <summary>Table of Contents</summary>
 
@@ -18,7 +17,6 @@
 * [Metrics Enrichment](#metrics-enrichment)
 
 </details>
-<!-- markdownlint-enable MD033 -->
 
 ## Best Practices
 

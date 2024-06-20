@@ -1,19 +1,12 @@
 abstract OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributeList attributes) -> void
-abstract OpenTelemetry.Logs.LoggerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Logs.LoggerProviderBuilder!
-OpenTelemetry.Logs.IDeferredLoggerProviderBuilder
-OpenTelemetry.Logs.IDeferredLoggerProviderBuilder.Configure(System.Action<System.IServiceProvider!, OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 OpenTelemetry.Logs.Logger
 OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data) -> void
 OpenTelemetry.Logs.Logger.Logger(string? name) -> void
 OpenTelemetry.Logs.Logger.Name.get -> string!
 OpenTelemetry.Logs.Logger.Version.get -> string?
-OpenTelemetry.Logs.LoggerProvider
 OpenTelemetry.Logs.LoggerProvider.GetLogger() -> OpenTelemetry.Logs.Logger!
 OpenTelemetry.Logs.LoggerProvider.GetLogger(string? name) -> OpenTelemetry.Logs.Logger!
 OpenTelemetry.Logs.LoggerProvider.GetLogger(string? name, string? version) -> OpenTelemetry.Logs.Logger!
-OpenTelemetry.Logs.LoggerProvider.LoggerProvider() -> void
-OpenTelemetry.Logs.LoggerProviderBuilder
-OpenTelemetry.Logs.LoggerProviderBuilder.LoggerProviderBuilder() -> void
 OpenTelemetry.Logs.LogRecordAttributeList
 OpenTelemetry.Logs.LogRecordAttributeList.Add(string! key, object? value) -> void
 OpenTelemetry.Logs.LogRecordAttributeList.Add(System.Collections.Generic.KeyValuePair<string!, object?> attribute) -> void

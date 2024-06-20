@@ -20,8 +20,8 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
 
-    - name: Pack
-      run: dotnet pack OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=false /p:RunningDotNetPack=true
+    - name: dotnet pack
+      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=false /p:RunningDotNetPack=true
 
   run-package-validation-experimental:
     runs-on: windows-latest
@@ -37,5 +37,5 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
 
-    - name: Pack
-      run: dotnet pack OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=true /p:RunningDotNetPack=true
+    - name: dotnet pack
+      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=true /p:RunningDotNetPack=true

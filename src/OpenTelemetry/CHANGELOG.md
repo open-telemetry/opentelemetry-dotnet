@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 1.9.0
+
+Released 2024-Jun-14
+
+## 1.9.0-rc.1
+
+Released 2024-Jun-07
+
+* The experimental APIs previously covered by `OTEL1000`
+  (`LoggerProviderBuilder` `AddProcessor` & `ConfigureResource` extensions, and
+  `LoggerProvider` `ForceFlush` & `Shutdown` extensions) will now be part of the
+  public API and supported in stable builds.
+  ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
+
+## 1.9.0-alpha.1
+
+Released 2024-May-20
+
 * **Experimental (pre-release builds only):** Exposed `ExemplarReservoir` as a
   public API and added support for setting an `ExemplarReservoir` factory
   function when configuring a view (applies to individual metrics).
@@ -12,11 +30,30 @@
   which could have led to a measurement being dropped.
   ([#5546](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5546))
 
-* Added `OpenTelemetrySdk.Create` API for configuring OpenTelemetry .NET signals
-  (logging, tracing, and metrics) via a single builder. This new API simplifies
-  bootstrap and teardown, and supports cross-cutting extensions targeting
-  `IOpenTelemetryBuilder`.
-  ([#5325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5325))
+* **Experimental (pre-release builds only):** Exposed
+  `FixedSizeExemplarReservoir` as a public API to support custom implementations
+  of `ExemplarReservoir` which may be configured using the
+  `ExemplarReservoirFactory` property on the View API.
+  ([#5558](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5558))
+
+* The experimental APIs previously covered by `OTEL1002` (`Exemplar`,
+  `ExemplarFilterType`, `MeterProviderBuilder.SetExemplarFilter`,
+  `ReadOnlyExemplarCollection`, `ReadOnlyFilteredTagCollection`, &
+  `MetricPoint.TryGetExemplars`) will now be part of the public API and
+  supported in stable builds.
+  ([#5607](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5607))
+
+* Fixed the nullable annotations for the `SamplingResult` constructors
+  to allow `null` being supplied as `attributes` or `traceStateString`
+  which has always been supported.
+  ([#5614](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5614))
+
+* The `ExemplarFilter` used by SDK `MeterProvider`s for histogram metrics can
+  now be controlled via the experimental
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS` environment
+  variable. The supported values are: `always_off`, `always_on`, and
+  `trace_based`.
+  ([#5611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5611))
 
 ## 1.8.1
 

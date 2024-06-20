@@ -27,9 +27,9 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 this.WriteLine("Resource associated with Metric:");
                 foreach (var resourceAttribute in this.resource.Attributes)
                 {
-                    if (this.TagTransformer.TryTransformTag(resourceAttribute, out var result))
+                    if (this.TagWriter.TryTransformTag(resourceAttribute, out var result))
                     {
-                        this.WriteLine($"    {result}");
+                        this.WriteLine($"    {result.Key}: {result.Value}");
                     }
                 }
             }
@@ -67,9 +67,9 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 foreach (var meterTag in metric.MeterTags)
                 {
                     this.WriteLine("\tMeter Tags:");
-                    if (this.TagTransformer.TryTransformTag(meterTag, out var result))
+                    if (this.TagWriter.TryTransformTag(meterTag, out var result))
                     {
-                        this.WriteLine($"\t\t{result}");
+                        this.WriteLine($"\t\t{result.Key}: {result.Value}");
                     }
                 }
             }
@@ -80,9 +80,9 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 StringBuilder tagsBuilder = new StringBuilder();
                 foreach (var tag in metricPoint.Tags)
                 {
-                    if (this.TagTransformer.TryTransformTag(tag, out var result))
+                    if (this.TagWriter.TryTransformTag(tag, out var result))
                     {
-                        tagsBuilder.Append(result);
+                        tagsBuilder.Append($"{result.Key}: {result.Value}");
                         tagsBuilder.Append(' ');
                     }
                 }
@@ -216,7 +216,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                         bool appendedTagString = false;
                         foreach (var tag in exemplar.FilteredTags)
                         {
-                            if (this.TagTransformer.TryTransformTag(tag, out var result))
+                            if (this.TagWriter.TryTransformTag(tag, out var result))
                             {
                                 if (!appendedTagString)
                                 {
@@ -224,7 +224,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                                     appendedTagString = true;
                                 }
 
-                                exemplarString.Append(result);
+                                exemplarString.Append($"{result.Key}: {result.Value}");
                                 exemplarString.Append(' ');
                             }
                         }

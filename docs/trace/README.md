@@ -1,6 +1,5 @@
 # OpenTelemetry .NET Traces
 
-<!-- markdownlint-disable MD033 -->
 <details>
 <summary>Table of Contents</summary>
 
@@ -13,7 +12,6 @@
 * [Correlation](#correlation)
 
 </details>
-<!-- markdownlint-enable MD033 -->
 
 ## Best Practices
 
@@ -163,7 +161,7 @@ create too many activities (eg: for each method call). In addition to being
 expensive, excessive activities can also make trace visualization harder.
 Instead of manually creating `Activity`, check if you can leverage
 instrumentation libraries, such as [ASP.NET
-Core](../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md),
+Core](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md),
 [HttpClient](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Http/README.md)
 which will not only create and populate `Activity` with tags(attributes),
 but also take care of propagating/restoring the context across process

@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+* **Breaking change**: Non-primitive attribute (logs) and tag (traces) values
+  converted using `Convert.ToString` will now format using
+  `CultureInfo.InvariantCulture`.
+  ([#5700](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5700))
+
+## 1.9.0
+
+Released 2024-Jun-14
+
+## 1.9.0-rc.1
+
+Released 2024-Jun-07
+
+* The experimental APIs previously covered by `OTEL1000`
+  (`LoggerProviderBuilder.AddOtlpExporter` extension) will now be part of the
+  public API and supported in stable builds.
+  ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
+
+## 1.9.0-alpha.1
+
+Released 2024-May-20
+
 * `User-Agent` header format changed from
   `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}+{Commit Hash}`
   to `OTel-OTLP-Exporter-Dotnet/{NuGet Package Version}`.
@@ -12,6 +34,17 @@
   for propagating `Span` and `SpanLink` flags containing W3C trace flags and
   `parent_is_remote` information.
   ([#5563](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5563))
+
+* Introduced experimental support for automatically retrying export to the otlp
+  endpoint by storing the telemetry offline during transient network errors.
+  Users can enable this feature by setting the
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY` environment variable to `disk`. The
+  default path where the telemetry is stored is obtained by calling
+  [Path.GetTempPath()](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath)
+  or can be customized by setting
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` environment
+  variable.
+  ([#5527](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5527))
 
 ## 1.8.1
 

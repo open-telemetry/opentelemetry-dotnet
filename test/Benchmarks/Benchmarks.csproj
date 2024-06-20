@@ -20,7 +20,6 @@
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
     <PackageReference Include="Grpc.AspNetCore.Server" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj" />
   </ItemGroup>
 
   <ItemGroup>

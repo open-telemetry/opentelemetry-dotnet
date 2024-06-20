@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs" Link="Includes\PropertyFetcher.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <TrimmerRootAssembly Include="OpenTelemetry.Api.ProviderBuilderExtensions" />
     <TrimmerRootAssembly Include="OpenTelemetry.Api" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Console" />
@@ -23,8 +19,6 @@
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Zipkin" />
     <TrimmerRootAssembly Include="OpenTelemetry.Extensions.Hosting" />
     <TrimmerRootAssembly Include="OpenTelemetry.Extensions.Propagators" />
-    <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.AspNetCore" />
-    <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.GrpcNetClient" />
     <TrimmerRootAssembly Include="OpenTelemetry.Shims.OpenTracing" />
     <TrimmerRootAssembly Include="OpenTelemetry" />
 

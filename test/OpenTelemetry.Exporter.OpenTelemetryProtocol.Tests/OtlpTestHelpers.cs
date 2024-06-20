@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using Google.Protobuf.Collections;
 using Xunit;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
@@ -63,6 +64,21 @@ internal static class OtlpTestHelpers
 
                     expectedSize++;
                 }
+                else
+                {
+                    var source = (Array)current;
+
+                    Assert.Equal(source.Length, actual[i].Value.ArrayValue.Values.Count);
+
+                    for (int j = 0; j < source.Length; j++)
+                    {
+                        var item = source.GetValue(j);
+
+                        AssertOtlpAttributeValue(item, actual[i].Value.ArrayValue.Values[j]);
+                    }
+
+                    expectedSize++;
+                }
             }
             else
             {
@@ -95,7 +111,7 @@ internal static class OtlpTestHelpers
                 Assert.Equal(i, actual.IntValue);
                 break;
             default:
-                Assert.Equal(expected.ToString(), actual.StringValue);
+                Assert.Equal(Convert.ToString(expected, CultureInfo.InvariantCulture), actual.StringValue);
                 break;
         }
     }
