@@ -28,12 +28,20 @@ public class TraceIdRatioBasedSamplerTest
     {
         Sampler defaultProbability = new TraceIdRatioBasedSampler(0.0001);
 
-        // This traceId will not be sampled by the TraceIdRatioBasedSampler because the first 8 bytes as long
+        // This traceId will not be sampled by the TraceIdRatioBasedSampler because the last 8 bytes as long
         // is not less than probability * Long.MAX_VALUE;
         var notSampledtraceId =
             ActivityTraceId.CreateFromBytes(
                 new byte[]
                 {
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
                   0x8F,
                   0xFF,
                   0xFF,
@@ -42,25 +50,25 @@ public class TraceIdRatioBasedSamplerTest
                   0xFF,
                   0xFF,
                   0xFF,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
                 });
         Assert.Equal(
             SamplingDecision.Drop,
             defaultProbability.ShouldSample(new SamplingParameters(default, notSampledtraceId, ActivityDisplayName, ActivityKindServer, null, null)).Decision);
 
-        // This traceId will be sampled by the TraceIdRatioBasedSampler because the first 8 bytes as long
+        // This traceId will be sampled by the TraceIdRatioBasedSampler because the last 8 bytes as long
         // is less than probability * Long.MAX_VALUE;
         var sampledtraceId =
             ActivityTraceId.CreateFromBytes(
                 new byte[]
                 {
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
                   0x00,
                   0x00,
                   0xFF,
@@ -69,14 +77,6 @@ public class TraceIdRatioBasedSamplerTest
                   0xFF,
                   0xFF,
                   0xFF,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
                 });
         Assert.Equal(
             SamplingDecision.RecordAndSample,
