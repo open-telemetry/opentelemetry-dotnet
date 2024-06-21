@@ -118,6 +118,7 @@ you're more than welcome to participate!
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
+* [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 * [Reiley Yang](https://github.com/reyang), Microsoft
 * [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 * [Vishwesh Bankwar](https://github.com/vishweshbankwar), Microsoft
