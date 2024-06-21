@@ -77,7 +77,7 @@ internal static class MetricItemExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static ScopeMetrics GetMetricListFromPool(string name, string version, IEnumerable<KeyValuePair<string, object>> meterTags)
+    internal static ScopeMetrics GetMetricListFromPool(string name, string version, IEnumerable<KeyValuePair<string, object?>>? meterTags)
     {
         if (!MetricListPool.TryTake(out var scopeMetrics))
         {
@@ -432,7 +432,7 @@ internal static class MetricItemExtensions
         }
     }
 
-    private static void AddScopeAttributes(IEnumerable<KeyValuePair<string, object>> meterTags, RepeatedField<OtlpCommon.KeyValue> attributes)
+    private static void AddScopeAttributes(IEnumerable<KeyValuePair<string, object?>> meterTags, RepeatedField<OtlpCommon.KeyValue> attributes)
     {
         foreach (var tag in meterTags)
         {

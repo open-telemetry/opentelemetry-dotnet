@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 using Google.Rpc;
@@ -163,14 +162,12 @@ internal static class OtlpRetry
 
     private static TimeSpan? TryGetGrpcRetryDelay(StatusCode statusCode, Metadata trailers)
     {
-        Debug.Assert(trailers != null, "trailers was null");
-
         if (statusCode != StatusCode.ResourceExhausted && statusCode != StatusCode.Unavailable)
         {
             return null;
         }
 
-        var statusDetails = trailers!.Get(GrpcStatusDetailsHeader);
+        var statusDetails = trailers.Get(GrpcStatusDetailsHeader);
         if (statusDetails != null && statusDetails.IsBinary)
         {
             var status = Status.Parser.ParseFrom(statusDetails.ValueBytes);

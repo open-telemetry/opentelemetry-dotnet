@@ -233,13 +233,13 @@ internal static class OtlpExporterOptionsExtensions
         {
             options.HttpClientFactory = () =>
             {
-                Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
+                Type? httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
                 if (httpClientFactoryType != null)
                 {
-                    object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                    object? httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
                     if (httpClientFactory != null)
                     {
-                        MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
+                        MethodInfo? createClientMethod = httpClientFactoryType.GetMethod(
                             "CreateClient",
                             BindingFlags.Public | BindingFlags.Instance,
                             binder: null,
@@ -247,11 +247,14 @@ internal static class OtlpExporterOptionsExtensions
                             modifiers: null);
                         if (createClientMethod != null)
                         {
-                            HttpClient client = (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { httpClientName });
+                            HttpClient? client = (HttpClient?)createClientMethod.Invoke(httpClientFactory, new object[] { httpClientName });
 
-                            client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
+                            if (client != null)
+                            {
+                                client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
 
-                            return client;
+                                return client;
+                            }
                         }
                     }
                 }

@@ -26,9 +26,9 @@ internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequ
     }
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
-    internal GrpcChannel Channel { get; set; }
+    internal GrpcChannel? Channel { get; set; }
 #else
-    internal Channel Channel { get; set; }
+    internal Channel? Channel { get; set; }
 #endif
 
     internal Uri Endpoint { get; }

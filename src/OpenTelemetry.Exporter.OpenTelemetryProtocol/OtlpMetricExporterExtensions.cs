@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
@@ -163,11 +162,6 @@ public static class OtlpMetricExporterExtensions
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<Metric>, BaseExporter<Metric>>? configureExporterInstance = null)
     {
-        Debug.Assert(serviceProvider != null, "serviceProvider was null");
-        Debug.Assert(exporterOptions != null, "exporterOptions was null");
-        Debug.Assert(metricReaderOptions != null, "metricReaderOptions was null");
-        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
-
         if (!skipUseOtlpExporterRegistrationCheck)
         {
             serviceProvider.EnsureNoUseOtlpExporterRegistrations();
@@ -184,6 +178,6 @@ public static class OtlpMetricExporterExtensions
 
         return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
             metricExporter,
-            metricReaderOptions!);
+            metricReaderOptions);
     }
 }
