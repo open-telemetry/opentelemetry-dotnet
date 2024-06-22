@@ -221,7 +221,7 @@ function UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest {
   $version = $match.Groups[2].Value
 
   $commentUserPermission = gh api "repos/$gitRepository/collaborators/$commentUserName/permission" | ConvertFrom-Json
-  if ($commentUserPermission.permission -ne 'admin' -and $commentUserPermission.permission -ne 'writer')
+  if ($commentUserPermission.permission -ne 'admin' -and $commentUserPermission.permission -ne 'write')
   {
     gh pr comment $pullRequestNumber `
       --body "I'm sorry @$commentUserName but you don't have permission to update this PR. Only maintainers and approvers can update this PR."
