@@ -54,9 +54,9 @@ Requested by: @$requestedByUserName
 
 ## Commands
 
-`/UpdateReleaseDates`: Use to update release dates in CHANGELOGs before merging [`approvers`, `maintainers`]
-`/CreateReleaseTag`: Use after merging to push the release tag [`approvers`, `maintainers`]
-`/PushPackages`: Use after the release tag has been pushed and packages have been created [`maintainers`]
+``/UpdateReleaseDates``: Use to update release dates in CHANGELOGs before merging [``approvers``, ``maintainers``]
+``/CreateReleaseTag``: Use after merging to push the release tag and trigger the job to create packages [``approvers``, ``maintainers``]
+``/PushPackages``: Use after the created packages have been validated to push to NuGet [``maintainers``]
 "@
 
   git commit -a -m "Prepare repo to release $tag." 2>&1 | % ToString
