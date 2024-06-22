@@ -53,7 +53,7 @@ jobs:
           -gitRepository '${{ github.repository }}' `
           -minVerTagPrefix '${{ inputs.tag-prefix }}' `
           -version '${{ inputs.version }}' `
-          -requestedByUserName '${{ github.sender.login }}' `
+          -requestedByUserName '${{ github.event.sender.login }}' `
           -targetBranch '${{ github.ref_name }}' `
           -gitUserName '${{ needs.automation.outputs.username }}' `
           -gitUserEmail '${{ needs.automation.outputs.email }}'
