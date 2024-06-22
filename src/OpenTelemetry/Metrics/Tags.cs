@@ -3,7 +3,7 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-#if NET6_0_OR_GREATER
+#if NET
 using System.Runtime.InteropServices;
 #endif
 
@@ -44,7 +44,7 @@ internal readonly struct Tags : IEquatable<Tags>
             return false;
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         // Note: This loop uses unsafe code (pointers) to elide bounds checks on
         // two arrays we know to be of equal length.
         if (length > 0)
@@ -104,7 +104,7 @@ internal readonly struct Tags : IEquatable<Tags>
     {
         Debug.Assert(keyValuePairs != null, "keyValuePairs was null");
 
-#if NET6_0_OR_GREATER
+#if NET
         HashCode hashCode = default;
 
         for (int i = 0; i < keyValuePairs.Length; i++)

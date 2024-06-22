@@ -37,7 +37,7 @@ internal sealed class PrometheusCollectionManager
         this.scopes = new HashSet<string>();
     }
 
-#if NET6_0_OR_GREATER
+#if NET
     public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested)
 #else
     public Task<CollectionResponse> EnterCollect(bool openMetricsRequested)
@@ -57,7 +57,7 @@ internal sealed class PrometheusCollectionManager
         {
             Interlocked.Increment(ref this.readerCount);
             this.ExitGlobalLock();
-#if NET6_0_OR_GREATER
+#if NET
             return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: true));
 #else
             return Task.FromResult(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: true));
@@ -74,7 +74,7 @@ internal sealed class PrometheusCollectionManager
 
             Interlocked.Increment(ref this.readerCount);
             this.ExitGlobalLock();
-#if NET6_0_OR_GREATER
+#if NET
             return new ValueTask<CollectionResponse>(this.collectionTcs.Task);
 #else
             return this.collectionTcs.Task;
@@ -134,7 +134,7 @@ internal sealed class PrometheusCollectionManager
 
         this.ExitGlobalLock();
 
-#if NET6_0_OR_GREATER
+#if NET
         return new ValueTask<CollectionResponse>(response);
 #else
         return Task.FromResult(response);

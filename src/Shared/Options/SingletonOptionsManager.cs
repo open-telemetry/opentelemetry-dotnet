@@ -3,13 +3,13 @@
 
 #nullable enable
 
-#if NET6_0_OR_GREATER
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 
 namespace Microsoft.Extensions.Options;
 
-#if NET6_0_OR_GREATER
+#if NET
 internal sealed class SingletonOptionsManager<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] TOptions> : IOptionsMonitor<TOptions>, IOptionsSnapshot<TOptions>
 #else
 internal sealed class SingletonOptionsManager<TOptions> : IOptionsMonitor<TOptions>, IOptionsSnapshot<TOptions>

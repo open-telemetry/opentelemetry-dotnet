@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if !NET6_0_OR_GREATER
+#if !NET
 using System.Net.Http;
 #endif
 
@@ -20,7 +20,7 @@ internal class TestHttpMessageHandler : HttpMessageHandler
         return new HttpResponseMessage();
     }
 
-#if NET6_0_OR_GREATER
+#if NET
     protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         return this.InternalSend(request, cancellationToken);

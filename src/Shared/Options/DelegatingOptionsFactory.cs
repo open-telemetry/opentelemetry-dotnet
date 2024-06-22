@@ -16,7 +16,7 @@
 #nullable enable
 
 using System.Diagnostics;
-#if NET6_0_OR_GREATER
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using Microsoft.Extensions.Configuration;
@@ -27,7 +27,7 @@ namespace Microsoft.Extensions.Options;
 /// Implementation of <see cref="IOptionsFactory{TOptions}"/>.
 /// </summary>
 /// <typeparam name="TOptions">The type of options being requested.</typeparam>
-#if NET6_0_OR_GREATER
+#if NET
 internal sealed class DelegatingOptionsFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] TOptions> :
 #else
 internal sealed class DelegatingOptionsFactory<TOptions> :
