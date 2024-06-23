@@ -194,6 +194,48 @@ public class PrometheusHttpListenerTests
             });
     }
 
+    private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, out string address)
+    {
+        Random random = new Random();
+        int retryAttempts = 5;
+        int port = 0;
+        string generatedAddress = null;
+        MeterProvider provider = null;
+
+        while (retryAttempts-- != 0)
+        {
+            port = random.Next(2000, 5000);
+            generatedAddress = $"http://localhost:{port}/";
+
+            try
+            {
+                provider = Sdk.CreateMeterProviderBuilder()
+                    .AddMeter(meter.Name)
+                    .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1").AddAttributes(attributes))
+                    .AddPrometheusHttpListener(options =>
+                    {
+                        options.UriPrefixes = new string[] { generatedAddress };
+                    })
+                    .Build();
+
+                break;
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        address = generatedAddress;
+
+        if (provider == null)
+        {
+            throw new InvalidOperationException("HttpListener could not be started");
+        }
+
+        return provider;
+    }
+
     private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text")
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
@@ -264,47 +306,5 @@ public class PrometheusHttpListenerTests
         }
 
         provider.Dispose();
-    }
-	
-	private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, out string address)
-    {
-        Random random = new Random();
-        int retryAttempts = 5;
-        int port = 0;
-        string generatedAddress = null;
-        MeterProvider provider = null;
-
-        while (retryAttempts-- != 0)
-        {
-            port = random.Next(2000, 5000);
-            generatedAddress = $"http://localhost:{port}/";
-
-            try
-            {
-                provider = Sdk.CreateMeterProviderBuilder()
-                    .AddMeter(meter.Name)
-                    .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1").AddAttributes(attributes))
-                    .AddPrometheusHttpListener(options =>
-                    {
-                        options.UriPrefixes = new string[] { generatedAddress };
-                    })
-                    .Build();
-
-                break;
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        address = generatedAddress;
-
-        if (provider == null)
-        {
-            throw new InvalidOperationException("HttpListener could not be started");
-        }
-
-        return provider;
     }
 }
