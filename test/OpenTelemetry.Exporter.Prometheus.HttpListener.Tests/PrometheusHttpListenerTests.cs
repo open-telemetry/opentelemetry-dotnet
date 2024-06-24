@@ -147,7 +147,7 @@ public class PrometheusHttpListenerTests
     [Theory]
     [InlineData("application/openmetrics-text")]
     [InlineData("")]
-    public async Task PrometheusExporterHttpServerIntegration_LargePayload(string acceptHeader)
+    public async Task PrometheusExporterHttpServerIntegration_TestBufferSizeIncrease_With_LargePayload(string acceptHeader)
     {
         using var meter = new Meter(MeterName, MeterVersion);
 

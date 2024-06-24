@@ -289,7 +289,7 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
-    public async Task PrometheusExporterMiddlewareIntegration_ALotOfMetrics()
+    public async Task PrometheusExporterMiddlewareIntegration_TestBufferSizeIncrease_With_LotOfMetrics()
     {
         using var host = await StartTestHostAsync(
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
