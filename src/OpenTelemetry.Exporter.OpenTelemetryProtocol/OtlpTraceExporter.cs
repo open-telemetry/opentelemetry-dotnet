@@ -42,9 +42,12 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>? transmissionHandler = null)
     {
-        this.sdkLimitOptions = sdkLimitOptions;
+        Debug.Assert(exporterOptions != null, "exporterOptions was null");
+        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
-        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetTraceExportTransmissionHandler(experimentalOptions);
+        this.sdkLimitOptions = sdkLimitOptions!;
+
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetTraceExportTransmissionHandler(experimentalOptions);
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();

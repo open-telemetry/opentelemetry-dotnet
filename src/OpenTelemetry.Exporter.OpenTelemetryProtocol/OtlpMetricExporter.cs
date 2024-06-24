@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Metrics;
@@ -39,7 +40,10 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest>? transmissionHandler = null)
     {
-        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetMetricsExportTransmissionHandler(experimentalOptions);
+        Debug.Assert(exporterOptions != null, "exporterOptions was null");
+        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
+
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetMetricsExportTransmissionHandler(experimentalOptions!);
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();

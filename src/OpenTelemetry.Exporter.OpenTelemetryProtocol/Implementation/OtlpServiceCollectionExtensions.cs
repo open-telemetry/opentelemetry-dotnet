@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -12,14 +13,19 @@ internal static class OtlpServiceCollectionExtensions
 {
     public static void AddOtlpExporterLoggingServices(this IServiceCollection services)
     {
-        AddOtlpExporterSharedServices(services, registerSdkLimitOptions: true);
+        Debug.Assert(services != null, "services was null");
+
+        AddOtlpExporterSharedServices(services!, registerSdkLimitOptions: true);
     }
 
     public static void AddOtlpExporterMetricsServices(this IServiceCollection services, string name)
     {
-        AddOtlpExporterSharedServices(services, registerSdkLimitOptions: false);
+        Debug.Assert(services != null, "services was null");
+        Debug.Assert(name != null, "name was null");
 
-        services.AddOptions<MetricReaderOptions>(name).Configure<IConfiguration>(
+        AddOtlpExporterSharedServices(services!, registerSdkLimitOptions: false);
+
+        services!.AddOptions<MetricReaderOptions>(name).Configure<IConfiguration>(
             (readerOptions, config) =>
             {
                 var otlpTemporalityPreference = config[OtlpSpecConfigDefinitions.MetricsTemporalityPreferenceEnvVarName];
@@ -33,7 +39,9 @@ internal static class OtlpServiceCollectionExtensions
 
     public static void AddOtlpExporterTracingServices(this IServiceCollection services)
     {
-        AddOtlpExporterSharedServices(services, registerSdkLimitOptions: true);
+        Debug.Assert(services != null, "services was null");
+
+        AddOtlpExporterSharedServices(services!, registerSdkLimitOptions: true);
     }
 
     private static void AddOtlpExporterSharedServices(

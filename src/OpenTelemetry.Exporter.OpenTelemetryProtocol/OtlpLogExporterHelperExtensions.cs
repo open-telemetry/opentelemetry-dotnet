@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -277,9 +278,15 @@ public static class OtlpLogExporterHelperExtensions
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
     {
+        Debug.Assert(serviceProvider != null, "serviceProvider was null");
+        Debug.Assert(exporterOptions != null, "exporterOptions was null");
+        Debug.Assert(processorOptions != null, "processorOptions was null");
+        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
+        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
+
         if (!skipUseOtlpExporterRegistrationCheck)
         {
-            serviceProvider.EnsureNoUseOtlpExporterRegistrations();
+            serviceProvider!.EnsureNoUseOtlpExporterRegistrations();
         }
 
         /*
@@ -299,16 +306,16 @@ public static class OtlpLogExporterHelperExtensions
          */
 
         BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
-            exporterOptions,
-            sdkLimitOptions,
-            experimentalOptions);
+            exporterOptions!,
+            sdkLimitOptions!,
+            experimentalOptions!);
 
         if (configureExporterInstance != null)
         {
             otlpExporter = configureExporterInstance(otlpExporter);
         }
 
-        if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
+        if (processorOptions!.ExportProcessorType == ExportProcessorType.Simple)
         {
             return new SimpleLogRecordExportProcessor(otlpExporter);
         }

@@ -31,8 +31,11 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
     internal OtlpExporterPersistentStorageTransmissionHandler(PersistentBlobProvider persistentBlobProvider, IExportClient<TRequest> exportClient, double timeoutMilliseconds, Func<byte[], TRequest> requestFactory)
         : base(exportClient, timeoutMilliseconds)
     {
-        this.persistentBlobProvider = persistentBlobProvider;
-        this.requestFactory = requestFactory;
+        Debug.Assert(persistentBlobProvider != null, "persistentBlobProvider was null");
+        Debug.Assert(requestFactory != null, "requestFactory was null");
+
+        this.persistentBlobProvider = persistentBlobProvider!;
+        this.requestFactory = requestFactory!;
 
         this.thread = new Thread(this.RetryStoredRequests)
         {
