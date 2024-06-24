@@ -50,7 +50,7 @@ internal static class OtlpRetry
     private const int MaxBackoffMilliseconds = 5000;
     private const double BackoffMultiplier = 1.5;
 
-#if !NET6_0_OR_GREATER
+#if !NET
     private static readonly Random Random = new Random();
 #endif
 
@@ -191,7 +191,7 @@ internal static class OtlpRetry
 
     private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode statusCode, HttpResponseHeaders? responseHeaders)
     {
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET
         return statusCode == HttpStatusCode.TooManyRequests || statusCode == HttpStatusCode.ServiceUnavailable
 #else
         return statusCode == (HttpStatusCode)429 || statusCode == HttpStatusCode.ServiceUnavailable
@@ -222,7 +222,7 @@ internal static class OtlpRetry
     {
         switch (statusCode)
         {
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET
             case HttpStatusCode.TooManyRequests:
 #else
             case (HttpStatusCode)429:
@@ -238,7 +238,7 @@ internal static class OtlpRetry
 
     private static int GetRandomNumber(int min, int max)
     {
-#if NET6_0_OR_GREATER
+#if NET
         return Random.Shared.Next(min, max);
 #else
         // TODO: Implement this better to minimize lock contention.

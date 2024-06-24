@@ -28,7 +28,7 @@ internal static partial class PrometheusSerializer
     {
         if (MathHelper.IsFinite(value))
         {
-#if NET6_0_OR_GREATER
+#if NET
             Span<char> span = stackalloc char[128];
 
             var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
@@ -62,7 +62,7 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteLong(byte[] buffer, int cursor, long value)
     {
-#if NET6_0_OR_GREATER
+#if NET
         Span<char> span = stackalloc char[20];
 
         var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);

@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET6_0_OR_GREATER
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +26,7 @@ public static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensi
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
     public static LoggerProviderBuilder AddInstrumentation<
-#if NET6_0_OR_GREATER
+#if NET
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
     T>(this LoggerProviderBuilder loggerProviderBuilder)

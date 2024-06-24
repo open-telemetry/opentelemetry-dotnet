@@ -113,7 +113,7 @@ public class TraceContextPropagator : TextMapPropagator
             return;
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         var traceparent = string.Create(55, context.ActivityContext, WriteTraceParentIntoSpan);
 #else
         var traceparent = string.Concat("00-", context.ActivityContext.TraceId.ToHexString(), "-", context.ActivityContext.SpanId.ToHexString());
@@ -430,7 +430,7 @@ public class TraceContextPropagator : TextMapPropagator
         return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z');
     }
 
-#if NET6_0_OR_GREATER
+#if NET
     private static void WriteTraceParentIntoSpan(Span<char> destination, ActivityContext context)
     {
         "00-".CopyTo(destination);

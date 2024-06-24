@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET6_0_OR_GREATER
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Diagnostics.Metrics;
@@ -50,7 +50,7 @@ public static class MeterProviderBuilderExtensions
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder AddReader<
-#if NET6_0_OR_GREATER
+#if NET
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
     T>(this MeterProviderBuilder meterProviderBuilder)

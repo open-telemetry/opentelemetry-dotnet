@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if NET6_0_OR_GREATER
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using Microsoft.Extensions.DependencyInjection;
@@ -242,7 +242,7 @@ public static class OpenTelemetryLoggingExtensions
         // and then there should be a way to do this without any warnings.
         // The correctness of these suppressions is verified by a test which validates that all properties of OpenTelemetryLoggerOptions
         // are of a primitive type.
-#if NET6_0_OR_GREATER
+#if NET
         [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "OpenTelemetryLoggerOptions contains only primitive properties.")]
         [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "OpenTelemetryLoggerOptions contains only primitive properties.")]
 #endif
