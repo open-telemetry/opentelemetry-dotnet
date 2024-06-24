@@ -1,0 +1,8 @@
+OpenTelemetry.Shims.OpenTracing.TracerShim
+OpenTelemetry.Shims.OpenTracing.TracerShim.ActiveSpan.get -> OpenTracing.ISpan
+OpenTelemetry.Shims.OpenTracing.TracerShim.BuildSpan(string operationName) -> OpenTracing.ISpanBuilder
+OpenTelemetry.Shims.OpenTracing.TracerShim.Extract<TCarrier>(OpenTracing.Propagation.IFormat<TCarrier> format, TCarrier carrier) -> OpenTracing.ISpanContext
+OpenTelemetry.Shims.OpenTracing.TracerShim.Inject<TCarrier>(OpenTracing.ISpanContext spanContext, OpenTracing.Propagation.IFormat<TCarrier> format, TCarrier carrier) -> void
+OpenTelemetry.Shims.OpenTracing.TracerShim.ScopeManager.get -> OpenTracing.IScopeManager
+OpenTelemetry.Shims.OpenTracing.TracerShim.TracerShim(OpenTelemetry.Trace.TracerProvider tracerProvider, OpenTelemetry.Context.Propagation.TextMapPropagator textFormat) -> void
+OpenTelemetry.Shims.OpenTracing.TracerShim.TracerShim(OpenTelemetry.Trace.TracerProvider tracerProvider) -> void

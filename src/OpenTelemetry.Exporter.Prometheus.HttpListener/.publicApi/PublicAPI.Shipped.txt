@@ -1,0 +1,12 @@
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.DisableTotalNameSuffixForCounters.get -> bool
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.DisableTotalNameSuffixForCounters.set -> void
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.PrometheusHttpListenerOptions() -> void
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScrapeEndpointPath.get -> string
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScrapeEndpointPath.set -> void
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.UriPrefixes.get -> System.Collections.Generic.IReadOnlyCollection<string>
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.UriPrefixes.set -> void
+OpenTelemetry.Metrics.PrometheusHttpListenerMeterProviderBuilderExtensions
+static OpenTelemetry.Metrics.PrometheusHttpListenerMeterProviderBuilderExtensions.AddPrometheusHttpListener(this OpenTelemetry.Metrics.MeterProviderBuilder builder, string name, System.Action<OpenTelemetry.Exporter.PrometheusHttpListenerOptions> configure) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.PrometheusHttpListenerMeterProviderBuilderExtensions.AddPrometheusHttpListener(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.PrometheusHttpListenerOptions> configure) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.PrometheusHttpListenerMeterProviderBuilderExtensions.AddPrometheusHttpListener(this OpenTelemetry.Metrics.MeterProviderBuilder builder) -> OpenTelemetry.Metrics.MeterProviderBuilder
