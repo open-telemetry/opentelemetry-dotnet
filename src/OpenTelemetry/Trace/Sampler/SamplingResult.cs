@@ -102,7 +102,7 @@ public readonly struct SamplingResult : IEquatable<SamplingResult>
     /// <inheritdoc/>
     public override int GetHashCode()
     {
-#if NET6_0_OR_GREATER
+#if NET
         HashCode hashCode = default;
         hashCode.Add(this.Decision);
         hashCode.Add(this.Attributes);

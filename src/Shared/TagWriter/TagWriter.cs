@@ -4,6 +4,7 @@
 #nullable enable
 
 using System.Diagnostics;
+using System.Globalization;
 
 namespace OpenTelemetry.Internal;
 
@@ -82,7 +83,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
             default:
                 try
                 {
-                    var stringValue = Convert.ToString(tag.Value/*TODO: , CultureInfo.InvariantCulture*/);
+                    var stringValue = Convert.ToString(tag.Value, CultureInfo.InvariantCulture);
                     if (stringValue == null)
                     {
                         return this.LogUnsupportedTagTypeAndReturnFalse(tag.Key, tag.Value);
@@ -247,7 +248,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 // case ulong:   May throw an exception on overflow.
                 // case decimal: Converting to double produces rounding errors.
                 default:
-                    var stringValue = Convert.ToString(item/*TODO: , CultureInfo.InvariantCulture*/);
+                    var stringValue = Convert.ToString(item, CultureInfo.InvariantCulture);
                     if (stringValue == null)
                     {
                         this.arrayWriter.WriteNullValue(ref arrayState);

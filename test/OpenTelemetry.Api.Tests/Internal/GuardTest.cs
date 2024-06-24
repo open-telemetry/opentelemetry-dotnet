@@ -156,7 +156,7 @@ public class GuardTest
         public string Bar { get; set; }
     }
 
-#if !NET6_0_OR_GREATER
+#if !NET
     /// <summary>
     /// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
     /// </summary>

@@ -40,7 +40,7 @@ internal sealed class OtlpHttpMetricsExportClient : BaseOtlpHttpExportClient<Otl
             this.Headers.ContentType = ProtobufMediaTypeHeader;
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         protected override void SerializeToStream(Stream stream, TransportContext context, CancellationToken cancellationToken)
         {
             this.SerializeToStreamInternal(stream);
