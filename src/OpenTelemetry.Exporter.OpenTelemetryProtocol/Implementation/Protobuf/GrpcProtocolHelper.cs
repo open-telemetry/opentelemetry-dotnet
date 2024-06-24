@@ -10,6 +10,7 @@ using Grpc.Core;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
 
+// https://github.com/grpc/grpc-dotnet/blob/master/src/Grpc.Net.Client/Internal/GrpcProtocolHelpers.cs
 internal class GrpcProtocolHelper
 {
     private const string GrpcStatusHeader = "grpc-status";
