@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 namespace OpenTelemetry.Exporter;
 
 // Note: This class is added to the IServiceCollection when UseOtlpExporter is

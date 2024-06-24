@@ -6,9 +6,10 @@
 #pragma warning disable SA1649 // File name should match first type name
 #pragma warning disable SA1402 // File may only contain a single type
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
 namespace System.Diagnostics.CodeAnalysis
 {
+#if NETFRAMEWORK || NETSTANDARD2_0
     /// <summary>Specifies that null is allowed as an input even if the corresponding type disallows it.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property, Inherited = false)]
     internal sealed class AllowNullAttribute : Attribute
@@ -41,6 +42,27 @@ namespace System.Diagnostics.CodeAnalysis
         public NotNullIfNotNullAttribute(string parameterName) => ParameterName = parameterName;
 
         public string ParameterName { get; }
+    }
+#endif
+
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+    internal sealed class MemberNotNullWhenAttribute : Attribute
+    {
+        public MemberNotNullWhenAttribute(bool returnValue, string member)
+        {
+            ReturnValue = returnValue;
+            Members = new[] { member };
+        }
+
+        public MemberNotNullWhenAttribute(bool returnValue, params string[] members)
+        {
+            ReturnValue = returnValue;
+            Members = members;
+        }
+
+        public bool ReturnValue { get; }
+
+        public string[] Members { get; }
     }
 }
 #endif
