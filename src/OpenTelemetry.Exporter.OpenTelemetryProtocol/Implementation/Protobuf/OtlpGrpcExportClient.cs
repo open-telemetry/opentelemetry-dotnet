@@ -50,20 +50,46 @@ internal class OtlpGrpcExportClient : IExportClient
 
             if (rpcException != null)
             {
-                return new ExportClientGrpcResponse(false, deadlineUtc, rpcException);
+                return new ExportClientGrpcResponse(success: false, deadlineUtc: deadlineUtc, exception: rpcException);
             }
 
             // We do not need to return back response and deadline for successful response so using cached value.
             return SuccessExportResponse;
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex)
         {
-            var status = new Status(StatusCode.Unavailable, ErrorStartingCallMessage + " " + ex.Message, ex);
+            // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.sendasync?view=net-8.0#remarks
+            RpcException rpcException = null;
+            if (ex is HttpRequestException)
+            {
+                var status = new Status(StatusCode.Unavailable, ErrorStartingCallMessage + " " + ex.Message, ex);
 
-            var rpcException = new RpcException(status);
-            OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, rpcException);
+                rpcException = new RpcException(status);
 
-            return new ExportClientGrpcResponse(success: false, deadlineUtc: deadlineUtc, exception: rpcException);
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, rpcException);
+
+                return new ExportClientGrpcResponse(success: false, deadlineUtc: deadlineUtc, exception: rpcException);
+            }
+            else if (ex is TaskCanceledException)
+            {
+                // grpc-dotnet sets the timer for tracking deadline.
+                // https://github.com/grpc/grpc-dotnet/blob/1416340c85bb5925b5fed0c101e7e6de71e367e0/src/Grpc.Net.Client/Internal/GrpcCall.cs#L799-L803
+                if (ex.InnerException is TimeoutException)
+                {
+                    var status = new Status(StatusCode.DeadlineExceeded, string.Empty);
+
+                    // TODO: pre-allocate
+                    rpcException = new RpcException(status);
+
+                    OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, rpcException);
+
+                    return new ExportClientGrpcResponse(success: false, deadlineUtc: deadlineUtc, exception: rpcException);
+                }
+            }
+
+            return new ExportClientGrpcResponse(success: false, deadlineUtc: deadlineUtc, exception: ex);
+
+            // TODO: Handle additional exception types (OperationCancelledException)
         }
     }
 
@@ -87,6 +113,10 @@ internal class OtlpGrpcExportClient : IExportClient
             request.Headers.Add(header.Key, header.Value);
         }
 
+        // Grpc payload consists of 3 parts
+        // byte 0 - Specifying if the payload is compressed.
+        // 1-4 byte - Specifies the length of payload in big endian format.
+        // 5 and above -  Protobuf serialized data.
         Span<byte> data = new Span<byte>(exportRequest, 1, 4);
         var dataLength = contentLength - 5;
         BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
@@ -99,6 +129,9 @@ internal class OtlpGrpcExportClient : IExportClient
 
     protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        // grpc-dotnet calls specifies the HttpCompletion.ResponseHeadersRead.
+        // However, it is useful specifically for streaming calls?
+        // https://github.com/grpc/grpc-dotnet/blob/1416340c85bb5925b5fed0c101e7e6de71e367e0/src/Grpc.Net.Client/Internal/GrpcCall.cs#L485-L486
         return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
     }
 }
