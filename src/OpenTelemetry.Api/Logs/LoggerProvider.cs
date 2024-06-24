@@ -3,7 +3,7 @@
 
 #nullable enable
 
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 #if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
@@ -103,7 +103,7 @@ public class LoggerProvider : BaseProvider
 #endif
         virtual bool TryCreateLogger(
         string? name,
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET
         [NotNullWhen(true)]
 #endif
         out Logger? logger)

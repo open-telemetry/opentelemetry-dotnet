@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if NET6_0_OR_GREATER
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Diagnostics.Tracing;
@@ -215,7 +215,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         this.WriteEvent(31, exportProcessorName, exporterName);
     }
 
-#if NET6_0_OR_GREATER
+#if NET
     [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
 #endif
     [Event(32, Message = "'{0}' exporting to '{1}' dropped '{2}' item(s) due to buffer full.", Level = EventLevel.Warning)]
@@ -224,7 +224,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         this.WriteEvent(32, exportProcessorName, exporterName, droppedCount);
     }
 
-#if NET6_0_OR_GREATER
+#if NET
     [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
 #endif
     [Event(33, Message = "Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'", Level = EventLevel.Warning)]
@@ -257,7 +257,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         this.WriteEvent(37, providerName);
     }
 
-#if NET6_0_OR_GREATER
+#if NET
     [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
 #endif
     [Event(38, Message = "Duplicate Instrument '{0}', Meter '{1}' encountered. Reason: '{2}'. Suggested action: '{3}'", Level = EventLevel.Warning)]
@@ -278,7 +278,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         this.WriteEvent(40, message);
     }
 
-#if NET6_0_OR_GREATER
+#if NET
     [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
 #endif
     [Event(41, Message = "View Configuration ignored for Instrument '{0}', Meter '{1}'. Reason: '{2}'. Measurements from the instrument will use default configuration for Aggregation. Suggested action: '{3}'", Level = EventLevel.Warning)]
@@ -287,7 +287,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         this.WriteEvent(41, instrumentName, meterName, reason, fix);
     }
 
-#if NET6_0_OR_GREATER
+#if NET
     [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
 #endif
     [Event(43, Message = "ForceFlush invoked for processor type '{0}' returned result '{1}'.", Level = EventLevel.Verbose)]

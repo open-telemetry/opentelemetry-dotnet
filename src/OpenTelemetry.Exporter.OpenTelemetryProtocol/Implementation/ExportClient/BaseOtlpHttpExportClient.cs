@@ -88,7 +88,7 @@ internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequ
 
     protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-#if NET6_0_OR_GREATER
+#if NET
         return this.HttpClient.Send(request, cancellationToken);
 #else
         return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
