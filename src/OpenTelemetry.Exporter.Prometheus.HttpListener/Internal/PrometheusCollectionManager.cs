@@ -198,13 +198,13 @@ internal sealed class PrometheusCollectionManager
     private ExportResult OnCollect(Batch<Metric> metrics)
     {
         var cursor = 0;
-        var buffer = this.exporter.OpenMetricsRequested ? this.openMetricsBuffer : this.plainTextBuffer;
+        ref byte[] buffer = ref (this.exporter.OpenMetricsRequested ? ref this.openMetricsBuffer : ref this.plainTextBuffer);
 
         try
         {
             if (this.exporter.OpenMetricsRequested)
             {
-                cursor = this.WriteTargetInfo();
+                cursor = this.WriteTargetInfo(ref buffer);
 
                 this.scopes.Clear();
 
@@ -291,11 +291,11 @@ internal sealed class PrometheusCollectionManager
 
             if (this.exporter.OpenMetricsRequested)
             {
-                this.previousOpenMetricsDataView = new ArraySegment<byte>(this.openMetricsBuffer, 0, cursor);
+                this.previousOpenMetricsDataView = new ArraySegment<byte>(buffer, 0, cursor);
             }
             else
             {
-                this.previousPlainTextDataView = new ArraySegment<byte>(this.plainTextBuffer, 0, cursor);
+                this.previousPlainTextDataView = new ArraySegment<byte>(buffer, 0, cursor);
             }
 
             return ExportResult.Success;
@@ -315,7 +315,7 @@ internal sealed class PrometheusCollectionManager
         }
     }
 
-    private int WriteTargetInfo()
+    private int WriteTargetInfo(ref byte[] buffer)
     {
         if (this.targetInfoBufferLength < 0)
         {
@@ -323,13 +323,13 @@ internal sealed class PrometheusCollectionManager
             {
                 try
                 {
-                    this.targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(this.openMetricsBuffer, 0, this.exporter.Resource);
+                    this.targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(buffer, 0, this.exporter.Resource);
 
                     break;
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    if (!this.IncreaseBufferSize(ref this.openMetricsBuffer))
+                    if (!this.IncreaseBufferSize(ref buffer))
                     {
                         throw;
                     }
