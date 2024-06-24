@@ -6,7 +6,7 @@
 #pragma warning disable SA1649 // File name should match first type name
 #pragma warning disable SA1402 // File may only contain a single type
 
-#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
 namespace System.Diagnostics.CodeAnalysis
 {
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -44,6 +44,7 @@ namespace System.Diagnostics.CodeAnalysis
         public string ParameterName { get; }
     }
 #endif
+
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
     internal sealed class MemberNotNullWhenAttribute : Attribute
     {
