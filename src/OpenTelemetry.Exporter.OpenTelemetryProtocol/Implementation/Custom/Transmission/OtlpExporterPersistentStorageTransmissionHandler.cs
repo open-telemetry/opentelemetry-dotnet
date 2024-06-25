@@ -5,6 +5,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.PersistentStorage.Abstractions;
 using OpenTelemetry.PersistentStorage.FileSystem;
 

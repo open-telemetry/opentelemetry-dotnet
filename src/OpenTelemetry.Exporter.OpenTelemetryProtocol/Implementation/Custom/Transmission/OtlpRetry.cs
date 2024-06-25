@@ -8,7 +8,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using Google.Rpc;
 using Grpc.Core;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using Status = Google.Rpc.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Transmission;

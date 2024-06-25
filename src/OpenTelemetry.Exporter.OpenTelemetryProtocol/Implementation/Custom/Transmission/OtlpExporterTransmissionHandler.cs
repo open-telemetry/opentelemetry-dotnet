@@ -5,6 +5,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Transmission;

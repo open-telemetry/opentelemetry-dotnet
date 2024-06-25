@@ -5,6 +5,7 @@
 using System.Net.Http;
 #endif
 using System.Net.Http.Headers;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;

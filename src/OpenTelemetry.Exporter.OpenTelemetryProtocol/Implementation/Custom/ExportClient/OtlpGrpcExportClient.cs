@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Buffers.Binary;
 using System.Net.Http.Headers;
 using Grpc.Core;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;

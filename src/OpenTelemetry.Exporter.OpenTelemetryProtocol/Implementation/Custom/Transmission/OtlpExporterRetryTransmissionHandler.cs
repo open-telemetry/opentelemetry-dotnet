@@ -4,6 +4,7 @@
 #nullable enable
 
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Transmission;
 

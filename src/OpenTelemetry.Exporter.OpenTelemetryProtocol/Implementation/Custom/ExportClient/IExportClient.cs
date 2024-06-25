@@ -6,6 +6,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
 
