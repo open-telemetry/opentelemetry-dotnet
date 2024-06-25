@@ -15,6 +15,7 @@ internal class GrpcProtocolHelper
 {
     private const string GrpcStatusHeader = "grpc-status";
     private const string GrpcMessageHeader = "grpc-message";
+    private static readonly Version Http2Version = new Version(2, 0);
 
     internal static void ProcessHttpResponse(HttpResponseMessage httpResponse, out RpcException rpcException)
     {
@@ -26,19 +27,16 @@ internal class GrpcProtocolHelper
             rpcException = new RpcException(status.Value, trailers ?? Metadata.Empty);
         }
 
-        // TODO: netstandard2.0 handling.
-#if NET6_0_OR_GREATER
         if (status == null)
         {
             // Check to see if the status is part of trailers
-            TryGetStatusCore(httpResponse.TrailingHeaders, out var statusTrailer);
+            TryGetStatusCore(httpResponse.TrailingHeaders(), out status);
 
             if (status != null && status.HasValue && status.Value.StatusCode != StatusCode.OK)
             {
                 rpcException = new RpcException(status.Value, trailers ?? Metadata.Empty);
             }
         }
-#endif
     }
 
     private static bool TryGetStatusCore(HttpHeaders httpHeaders, out Status? status)
@@ -98,7 +96,7 @@ internal class GrpcProtocolHelper
 
         // ALPN negotiation is sending HTTP/1.1 and HTTP/2.
         // Check that the response wasn't downgraded to HTTP/1.1.
-        if (httpResponse.Version < new Version(2, 0))
+        if (httpResponse.Version < Http2Version)
         {
             return new Status(StatusCode.Internal, $"Bad gRPC response. Response protocol downgraded to HTTP/{httpResponse.Version.ToString(2)}.");
         }

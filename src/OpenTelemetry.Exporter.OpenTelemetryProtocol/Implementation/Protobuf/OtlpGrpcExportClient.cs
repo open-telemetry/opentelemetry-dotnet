@@ -50,6 +50,8 @@ internal class OtlpGrpcExportClient : IExportClient
 
             if (rpcException != null)
             {
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, rpcException);
+
                 return new ExportClientGrpcResponse(success: false, deadlineUtc: deadlineUtc, exception: rpcException);
             }
 
