@@ -21,10 +21,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 [Collection("EnvVars")]
 public class OtlpMetricsExporterTests : IDisposable
 {
-    private static readonly KeyValuePair<string, object>[] KeyValues = new KeyValuePair<string, object>[]
+    private static readonly KeyValuePair<string, object?>[] KeyValues = new KeyValuePair<string, object?>[]
     {
-        new KeyValuePair<string, object>("key1", "value1"),
-        new KeyValuePair<string, object>("key2", 123),
+        new("key1", "value1"),
+        new("key2", 123),
     };
 
     public OtlpMetricsExporterTests()
@@ -57,14 +57,14 @@ public class OtlpMetricsExporterTests : IDisposable
 
             var metricReader = typeof(MetricReader)
                 .Assembly
-                .GetType("OpenTelemetry.Metrics.MeterProviderSdk")
-                .GetField("reader", bindingFlags)
+                .GetType("OpenTelemetry.Metrics.MeterProviderSdk")?
+                .GetField("reader", bindingFlags)?
                 .GetValue(meterProvider) as PeriodicExportingMetricReader;
 
             Assert.NotNull(metricReader);
 
-            var exportIntervalMilliseconds = (int)typeof(PeriodicExportingMetricReader)
-                .GetField("ExportIntervalMilliseconds", bindingFlags)
+            var exportIntervalMilliseconds = (int?)typeof(PeriodicExportingMetricReader)?
+                .GetField("ExportIntervalMilliseconds", bindingFlags)?
                 .GetValue(metricReader);
 
             Assert.Equal(60000, exportIntervalMilliseconds);
@@ -129,8 +129,8 @@ public class OtlpMetricsExporterTests : IDisposable
             Assert.Equal(2, invocations);
         }
 
-        options.HttpClientFactory = () => null;
-        Assert.Throws<InvalidOperationException>(() =>
+        options.HttpClientFactory = () => throw new NotSupportedException();
+        Assert.Throws<NotSupportedException>(() =>
         {
             using var exporter = new OtlpMetricExporter(options);
         });
@@ -219,7 +219,7 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData("test_gauge", null, null, 123L, null, true)]
     [InlineData("test_gauge", null, null, null, 123.45, true)]
     [InlineData("test_gauge", "description", "unit", 123L, null)]
-    public void TestGaugeToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, bool enableExemplars = false)
+    public void TestGaugeToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, bool enableExemplars = false)
     {
         var metrics = new List<Metric>();
 
@@ -236,7 +236,7 @@ public class OtlpMetricsExporterTests : IDisposable
         }
         else
         {
-            meter.CreateObservableGauge(name, () => doubleValue.Value, unit, description);
+            meter.CreateObservableGauge(name, () => doubleValue!.Value, unit, description);
         }
 
         provider.ForceFlush();
@@ -294,7 +294,7 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    public void TestCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
+    public void TestCounterToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
     {
         var metrics = new List<Metric>();
 
@@ -308,7 +308,7 @@ public class OtlpMetricsExporterTests : IDisposable
             })
             .Build();
 
-        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object>>();
+        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object?>>();
         if (longValue.HasValue)
         {
             var counter = meter.CreateCounter<long>(name, unit, description);
@@ -317,7 +317,7 @@ public class OtlpMetricsExporterTests : IDisposable
         else
         {
             var counter = meter.CreateCounter<double>(name, unit, description);
-            counter.Add(doubleValue.Value, attributes);
+            counter.Add(doubleValue!.Value, attributes);
         }
 
         provider.ForceFlush();
@@ -391,7 +391,7 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData("test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    public void TestUpDownCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
+    public void TestUpDownCounterToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
     {
         var metrics = new List<Metric>();
 
@@ -405,7 +405,7 @@ public class OtlpMetricsExporterTests : IDisposable
             })
             .Build();
 
-        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object>>();
+        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object?>>();
         if (longValue.HasValue)
         {
             var counter = meter.CreateUpDownCounter<long>(name, unit, description);
@@ -414,7 +414,7 @@ public class OtlpMetricsExporterTests : IDisposable
         else
         {
             var counter = meter.CreateUpDownCounter<double>(name, unit, description);
-            counter.Add(doubleValue.Value, attributes);
+            counter.Add(doubleValue!.Value, attributes);
         }
 
         provider.ForceFlush();
@@ -488,7 +488,7 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    public void TestExponentialHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
+    public void TestExponentialHistogramToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
     {
         var metrics = new List<Metric>();
 
@@ -506,7 +506,7 @@ public class OtlpMetricsExporterTests : IDisposable
             })
             .Build();
 
-        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object>>();
+        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object?>>();
         if (longValue.HasValue)
         {
             var histogram = meter.CreateHistogram<long>(name, unit, description);
@@ -516,7 +516,7 @@ public class OtlpMetricsExporterTests : IDisposable
         else
         {
             var histogram = meter.CreateHistogram<double>(name, unit, description);
-            histogram.Record(doubleValue.Value, attributes);
+            histogram.Record(doubleValue!.Value, attributes);
             histogram.Record(0, attributes);
         }
 
@@ -577,7 +577,7 @@ public class OtlpMetricsExporterTests : IDisposable
             {
                 Assert.Equal(0, dataPoint.Sum);
                 Assert.Null(dataPoint.Negative);
-                Assert.True(dataPoint.Positive.Offset == 0);
+                Assert.Equal(0, dataPoint.Positive.Offset);
                 Assert.Empty(dataPoint.Positive.BucketCounts);
             }
         }
@@ -594,7 +594,7 @@ public class OtlpMetricsExporterTests : IDisposable
             {
                 Assert.Equal(0, dataPoint.Sum);
                 Assert.Null(dataPoint.Negative);
-                Assert.True(dataPoint.Positive.Offset == 0);
+                Assert.Equal(0, dataPoint.Positive.Offset);
                 Assert.Empty(dataPoint.Positive.BucketCounts);
             }
         }
@@ -628,7 +628,7 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    public void TestHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
+    public void TestHistogramToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
     {
         var metrics = new List<Metric>();
 
@@ -642,7 +642,7 @@ public class OtlpMetricsExporterTests : IDisposable
             })
             .Build();
 
-        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object>>();
+        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object?>>();
         if (longValue.HasValue)
         {
             var histogram = meter.CreateHistogram<long>(name, unit, description);
@@ -651,7 +651,7 @@ public class OtlpMetricsExporterTests : IDisposable
         else
         {
             var histogram = meter.CreateHistogram<double>(name, unit, description);
-            histogram.Record(doubleValue.Value, attributes);
+            histogram.Record(doubleValue!.Value, attributes);
         }
 
         provider.ForceFlush();
@@ -732,7 +732,7 @@ public class OtlpMetricsExporterTests : IDisposable
     {
         var testExecuted = false;
 
-        var configData = new Dictionary<string, string> { [OtlpSpecConfigDefinitionTests.MetricsData.TemporalityKeyName] = configValue };
+        var configData = new Dictionary<string, string?> { [OtlpSpecConfigDefinitionTests.MetricsData.TemporalityKeyName] = configValue };
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(configData)
             .Build();
@@ -786,9 +786,9 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData(true, true)]
     public void ToOtlpExemplarTests(bool enableTagFiltering, bool enableTracing)
     {
-        ActivitySource activitySource = null;
-        Activity activity = null;
-        TracerProvider tracerProvider = null;
+        ActivitySource? activitySource = null;
+        Activity? activity = null;
+        TracerProvider? tracerProvider = null;
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
@@ -823,8 +823,8 @@ public class OtlpMetricsExporterTests : IDisposable
         var counterDouble = meter.CreateCounter<double>("testCounterDouble");
         var counterLong = meter.CreateCounter<long>("testCounterLong");
 
-        counterDouble.Add(1.18D, new KeyValuePair<string, object>("key1", "value1"));
-        counterLong.Add(18L, new KeyValuePair<string, object>("key1", "value1"));
+        counterDouble.Add(1.18D, new KeyValuePair<string, object?>("key1", "value1"));
+        counterLong.Add(18L, new KeyValuePair<string, object?>("key1", "value1"));
 
         meterProvider.ForceFlush();
 
@@ -869,6 +869,7 @@ public class OtlpMetricsExporterTests : IDisposable
             else
             {
                 byte[] traceIdBytes = new byte[16];
+                Assert.NotNull(activity);
                 activity.TraceId.CopyTo(traceIdBytes);
 
                 byte[] spanIdBytes = new byte[8];
@@ -914,7 +915,7 @@ public class OtlpMetricsExporterTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar> getExemplarFunc, T state)
+    private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar?> getExemplarFunc, T state)
     {
         var exemplar = getExemplarFunc(state);
 
@@ -928,6 +929,7 @@ public class OtlpMetricsExporterTests : IDisposable
             }
             else
             {
+                Assert.NotNull(doubleValue);
                 Assert.Equal(doubleValue.Value, exemplar.AsDouble);
             }
         }
