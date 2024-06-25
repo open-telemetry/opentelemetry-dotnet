@@ -7,7 +7,7 @@ using System.Globalization;
 using System.Text;
 using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Serializer;
 
 internal static class CommonTypesSizeCalculator
 {

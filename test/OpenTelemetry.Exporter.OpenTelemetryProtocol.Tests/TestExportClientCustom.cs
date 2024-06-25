@@ -4,7 +4,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 

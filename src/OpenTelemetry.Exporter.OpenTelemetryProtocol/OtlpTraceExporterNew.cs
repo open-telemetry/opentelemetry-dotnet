@@ -5,7 +5,8 @@ using System.Diagnostics;
 
 // using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Serializer;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Transmission;
 using OpenTelemetry.Resources;
 
 // using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;

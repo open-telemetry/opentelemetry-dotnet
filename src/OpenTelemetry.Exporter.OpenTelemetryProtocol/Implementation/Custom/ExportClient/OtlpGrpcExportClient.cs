@@ -9,7 +9,7 @@ using System.Net.Http.Headers;
 using Grpc.Core;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
 
 /// <summary>Base class for sending OTLP export request over Grpc.</summary>
 internal class OtlpGrpcExportClient : IExportClient

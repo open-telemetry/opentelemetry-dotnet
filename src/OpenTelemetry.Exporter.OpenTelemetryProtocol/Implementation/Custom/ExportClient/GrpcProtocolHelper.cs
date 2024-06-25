@@ -8,7 +8,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using Grpc.Core;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
 
 // https://github.com/grpc/grpc-dotnet/blob/master/src/Grpc.Net.Client/Internal/GrpcProtocolHelpers.cs
 internal class GrpcProtocolHelper

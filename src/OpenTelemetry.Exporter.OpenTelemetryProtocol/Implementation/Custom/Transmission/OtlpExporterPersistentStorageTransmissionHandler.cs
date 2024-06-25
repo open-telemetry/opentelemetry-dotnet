@@ -4,10 +4,11 @@
 #nullable enable
 
 using System.Diagnostics;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
 using OpenTelemetry.PersistentStorage.Abstractions;
 using OpenTelemetry.PersistentStorage.FileSystem;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Transmission;
 
 internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExporterTransmissionHandler, IDisposable
 {

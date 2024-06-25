@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
 
 /// <summary>Base class for sending OTLP export request over HTTP.</summary>
 internal class OtlpHttpExportClient : IExportClient

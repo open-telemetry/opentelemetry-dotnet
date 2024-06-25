@@ -13,7 +13,8 @@ using Grpc.Net.Client;
 #endif
 using System.Diagnostics;
 using Google.Protobuf;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Transmission;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;

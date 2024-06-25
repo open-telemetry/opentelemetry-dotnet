@@ -8,9 +8,10 @@ using System.Net;
 using System.Net.Http.Headers;
 using Google.Rpc;
 using Grpc.Core;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
 using Status = Google.Rpc.Status;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Transmission;
 
 /// <summary>
 /// Implementation of the OTLP retry policy used by both OTLP/gRPC and OTLP/HTTP.

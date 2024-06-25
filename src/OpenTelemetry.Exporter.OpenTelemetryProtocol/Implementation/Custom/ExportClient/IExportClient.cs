@@ -7,7 +7,7 @@
 using System.Net.Http;
 #endif
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
 
 /// <summary>Export client interface.</summary>
 internal interface IExportClient

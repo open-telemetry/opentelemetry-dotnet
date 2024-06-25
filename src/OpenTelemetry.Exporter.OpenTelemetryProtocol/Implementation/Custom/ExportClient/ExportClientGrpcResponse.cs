@@ -3,7 +3,7 @@
 
 #nullable enable
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
 
 internal sealed class ExportClientGrpcResponse : ExportClientResponse
 {

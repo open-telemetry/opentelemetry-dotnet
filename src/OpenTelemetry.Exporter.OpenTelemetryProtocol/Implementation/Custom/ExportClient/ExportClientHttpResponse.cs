@@ -9,7 +9,7 @@ using System.Net.Http;
 #endif
 using System.Net.Http.Headers;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.ExportClient;
 
 internal sealed class ExportClientHttpResponse : ExportClientResponse
 {

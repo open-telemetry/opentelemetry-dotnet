@@ -6,7 +6,7 @@
 using System.Globalization;
 using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Protobuf;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Serializer;
 
 internal static class CommonTypesSerializer
 {
