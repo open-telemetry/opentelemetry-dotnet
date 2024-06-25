@@ -73,7 +73,7 @@ public class OtlpExporterOptionsExtensionsTests
     [Theory]
     [InlineData("")]
     [InlineData(null)]
-    public void GetHeaders_NoOptionHeaders_ReturnsStandardHeaders(string optionHeaders)
+    public void GetHeaders_NoOptionHeaders_ReturnsStandardHeaders(string? optionHeaders)
     {
         var options = new OtlpExporterOptions
         {
@@ -158,19 +158,19 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogExportClient), false, 10000, "disk")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), false, 10000, "disk")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), true, 8000, "disk")]
-    public void GetTransmissionHandler_InitializesCorrectHandlerExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient, int expectedTimeoutMilliseconds, string retryStrategy)
+    public void GetTransmissionHandler_InitializesCorrectHandlerExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient, int expectedTimeoutMilliseconds, string? retryStrategy)
     {
         var exporterOptions = new OtlpExporterOptions() { Protocol = protocol };
         if (customHttpClient)
         {
             exporterOptions.HttpClientFactory = () =>
             {
-                return new HttpClient() { Timeout = TimeSpan.FromMilliseconds(expectedTimeoutMilliseconds) };
+                return new HttpClient { Timeout = TimeSpan.FromMilliseconds(expectedTimeoutMilliseconds) };
             };
         }
 
         var configuration = new ConfigurationBuilder()
-         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.OtlpRetryEnvVar] = retryStrategy })
+         .AddInMemoryCollection(new Dictionary<string, string?> { [ExperimentalOptions.OtlpRetryEnvVar] = retryStrategy })
          .Build();
 
         if (exportClientType == typeof(OtlpGrpcTraceExportClient) || exportClientType == typeof(OtlpHttpTraceExportClient))
@@ -193,7 +193,7 @@ public class OtlpExporterOptionsExtensionsTests
         }
     }
 
-    private static void AssertTransmissionHandler<T>(OtlpExporterTransmissionHandler<T> transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds, string retryStrategy)
+    private static void AssertTransmissionHandler<T>(OtlpExporterTransmissionHandler<T> transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds, string? retryStrategy)
     {
         if (retryStrategy == "in_memory")
         {

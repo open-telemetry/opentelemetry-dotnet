@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using Xunit;
 
 namespace OpenTelemetry.Tests;
@@ -15,9 +17,9 @@ internal class SkipUnlessEnvVarFoundTheoryAttribute : TheoryAttribute
         }
     }
 
-    public static string GetEnvironmentVariable(string environmentVariableName)
+    public static string? GetEnvironmentVariable(string environmentVariableName)
     {
-        string environmentVariableValue = Environment.GetEnvironmentVariable(environmentVariableName, EnvironmentVariableTarget.Process);
+        string? environmentVariableValue = Environment.GetEnvironmentVariable(environmentVariableName, EnvironmentVariableTarget.Process);
 
         if (string.IsNullOrEmpty(environmentVariableValue))
         {

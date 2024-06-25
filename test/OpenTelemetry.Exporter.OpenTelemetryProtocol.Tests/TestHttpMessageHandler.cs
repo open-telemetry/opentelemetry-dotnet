@@ -9,14 +9,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 internal class TestHttpMessageHandler : HttpMessageHandler
 {
-    public HttpRequestMessage HttpRequestMessage { get; private set; }
+    public HttpRequestMessage? HttpRequestMessage { get; private set; }
 
-    public byte[] HttpRequestContent { get; private set; }
+    public byte[]? HttpRequestContent { get; private set; }
 
     public virtual HttpResponseMessage InternalSend(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         this.HttpRequestMessage = request;
-        this.HttpRequestContent = request.Content.ReadAsByteArrayAsync().Result;
+        this.HttpRequestContent = request.Content!.ReadAsByteArrayAsync().Result;
         return new HttpResponseMessage();
     }
 
