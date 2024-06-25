@@ -39,10 +39,11 @@ internal class GrpcProtocolHelper
         if (status == null)
         {
             // TODO: We need to read the response message here (content)
-            // if the returned status is OK but content is null then change status to internal
+            // if the returned status is OK but content is null then change status to internal error.
             // ref: https://github.com/grpc/grpc-dotnet/blob/1416340c85bb5925b5fed0c101e7e6de71e367e0/src/Grpc.Net.Client/Internal/GrpcCall.cs#L558-L575
-            // Check to see if the status is part of trailers
 
+            // Check to see if the status is part of trailers
+            // TODO: Proper handling of isBrowser/isWinHttp
             status = GetResponseStatus(httpResponse, false, false);
 
             if (status != null && status.HasValue && status.Value.StatusCode != StatusCode.OK)
@@ -261,6 +262,7 @@ internal class GrpcProtocolHelper
                 {
                     detail += " If the gRPC call is cross domain then CORS must be correctly configured. Access-Control-Expose-Headers needs to include 'grpc-status' and 'grpc-message'.";
                 }
+
                 if (isWinHttp)
                 {
                     detail += " Using gRPC with WinHttp has Windows and package version requirements. See https://aka.ms/aspnet/grpc/netstandard for details.";
