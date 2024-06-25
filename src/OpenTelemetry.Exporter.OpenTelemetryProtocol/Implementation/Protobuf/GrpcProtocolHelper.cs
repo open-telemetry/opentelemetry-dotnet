@@ -22,15 +22,28 @@ internal class GrpcProtocolHelper
         rpcException = null;
         var status = ValidateHeaders(httpResponse, out var trailers);
 
-        if (status != null && status.HasValue && status.Value.StatusCode != StatusCode.OK)
+        if (status != null && status.HasValue)
         {
-            rpcException = new RpcException(status.Value, trailers ?? Metadata.Empty);
+            if (status.Value.StatusCode == StatusCode.OK)
+            {
+                // TODO: Set RPC exception.
+                // https://github.com/grpc/grpc-dotnet/blob/1416340c85bb5925b5fed0c101e7e6de71e367e0/src/Grpc.Net.Client/Internal/GrpcCall.cs#L526-L527
+                // Status OK should always be set as part of Trailers.
+            }
+            else
+            {
+                rpcException = new RpcException(status.Value, trailers ?? Metadata.Empty);
+            }
         }
 
         if (status == null)
         {
+            // TODO: We need to read the response message here (content)
+            // if the returned status is OK but content is null then change status to internal
+            // ref: https://github.com/grpc/grpc-dotnet/blob/1416340c85bb5925b5fed0c101e7e6de71e367e0/src/Grpc.Net.Client/Internal/GrpcCall.cs#L558-L575
             // Check to see if the status is part of trailers
-            TryGetStatusCore(httpResponse.TrailingHeaders(), out status);
+
+            status = GetResponseStatus(httpResponse, false, false);
 
             if (status != null && status.HasValue && status.Value.StatusCode != StatusCode.OK)
             {
@@ -234,5 +247,34 @@ internal class GrpcProtocolHelper
             default:
                 return false;
         }
+    }
+
+    private static Status GetResponseStatus(HttpResponseMessage httpResponse, bool isBrowser, bool isWinHttp)
+    {
+        Status? status;
+        try
+        {
+            if (!TryGetStatusCore(httpResponse.TrailingHeaders(), out status))
+            {
+                var detail = "No grpc-status found on response.";
+                if (isBrowser)
+                {
+                    detail += " If the gRPC call is cross domain then CORS must be correctly configured. Access-Control-Expose-Headers needs to include 'grpc-status' and 'grpc-message'.";
+                }
+                if (isWinHttp)
+                {
+                    detail += " Using gRPC with WinHttp has Windows and package version requirements. See https://aka.ms/aspnet/grpc/netstandard for details.";
+                }
+
+                status = new Status(StatusCode.Cancelled, detail);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error from parsing badly formed status
+            status = new Status(StatusCode.Cancelled, ex.Message, ex);
+        }
+
+        return status.Value;
     }
 }
