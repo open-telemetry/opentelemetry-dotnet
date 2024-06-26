@@ -58,8 +58,8 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
             var offSet = 0;
             if (response is ExportClientGrpcResponse)
             {
-                payloadLength -= 4;
-                offSet = 4;
+                payloadLength -= 5;
+                offSet = 5;
             }
 
             byte[]? data = new byte[payloadLength];
