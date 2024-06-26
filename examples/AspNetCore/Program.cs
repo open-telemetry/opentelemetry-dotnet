@@ -24,20 +24,21 @@ var logExporter = appBuilder.Configuration.GetValue("UseLogExporter", defaultVal
 // Note: Switch between Explicit/Exponential by setting HistogramAggregation in appsettings.json
 var histogramAggregation = appBuilder.Configuration.GetValue("HistogramAggregation", defaultValue: "explicit")!.ToLowerInvariant();
 
-// Build a resource configuration action to set service information.
-Action<ResourceBuilder> configureResource = r => r.AddService(
-    serviceName: appBuilder.Configuration.GetValue("ServiceName", defaultValue: "otel-test")!,
-    serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown",
-    serviceInstanceId: Environment.MachineName);
-
 // Create a service to expose ActivitySource, and Metric Instruments
 // for manual instrumentation
 appBuilder.Services.AddSingleton<Instrumentation>();
 
-// Configure OpenTelemetry tracing & metrics with auto-start using the
+// Clear default logging providers used by WebApplication host.
+appBuilder.Logging.ClearProviders();
+
+// Configure OpenTelemetry logging, metrics, & tracing with auto-start using the
 // AddOpenTelemetry extension from OpenTelemetry.Extensions.Hosting.
 appBuilder.Services.AddOpenTelemetry()
-    .ConfigureResource(configureResource)
+    .ConfigureResource(r => r
+        .AddService(
+            serviceName: appBuilder.Configuration.GetValue("ServiceName", defaultValue: "otel-test")!,
+            serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown",
+            serviceInstanceId: Environment.MachineName))
     .WithTracing(builder =>
     {
         // Tracing
@@ -121,34 +122,25 @@ appBuilder.Services.AddOpenTelemetry()
                 builder.AddConsoleExporter();
                 break;
         }
-    });
-
-// Clear default logging providers used by WebApplication host.
-appBuilder.Logging.ClearProviders();
-
-// Configure OpenTelemetry Logging.
-appBuilder.Logging.AddOpenTelemetry(options =>
-{
-    // Note: See appsettings.json Logging:OpenTelemetry section for configuration.
-
-    var resourceBuilder = ResourceBuilder.CreateDefault();
-    configureResource(resourceBuilder);
-    options.SetResourceBuilder(resourceBuilder);
-
-    switch (logExporter)
+    })
+    .WithLogging(builder =>
     {
-        case "otlp":
-            options.AddOtlpExporter(otlpOptions =>
-            {
-                // Use IConfiguration directly for Otlp exporter endpoint option.
-                otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317")!);
-            });
-            break;
-        default:
-            options.AddConsoleExporter();
-            break;
-    }
-});
+        // Note: See appsettings.json Logging:OpenTelemetry section for configuration.
+
+        switch (logExporter)
+        {
+            case "otlp":
+                builder.AddOtlpExporter(otlpOptions =>
+                {
+                    // Use IConfiguration directly for Otlp exporter endpoint option.
+                    otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317")!);
+                });
+                break;
+            default:
+                builder.AddConsoleExporter();
+                break;
+        }
+    });
 
 appBuilder.Services.AddControllers();
 

@@ -13,7 +13,7 @@ on:
         value: ${{ vars.AUTOMATION_EMAIL }}
     secrets:
       OPENTELEMETRYBOT_GITHUB_TOKEN:
-        required: true
+        required: false
 
 jobs:
   resolve-automation:

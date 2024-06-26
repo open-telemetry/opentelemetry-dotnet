@@ -3,6 +3,7 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 #if NETFRAMEWORK
 using System.Net.Http;
@@ -358,7 +359,8 @@ public class ZipkinExporterTests : IDisposable
         var serviceName = (string)exporter.ParentProvider.GetDefaultResource().Attributes
             .Where(pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
         var resourceTags = string.Empty;
-        var activity = CreateTestActivity(isRootSpan: isRootSpan, status: status);
+        var dateTime = DateTime.UtcNow;
+        var activity = CreateTestActivity(isRootSpan: isRootSpan, status: status, dateTime: dateTime);
         if (useTestResource)
         {
             serviceName = "MyService";
@@ -422,7 +424,35 @@ public class ZipkinExporterTests : IDisposable
         }
 
         Assert.Equal(
-            $@"[{{""traceId"":""{traceId}"",""name"":""Name"",{parentId}""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""{serviceName}""{ipInformation}}},""remoteEndpoint"":{{""serviceName"":""http://localhost:44312/""}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{{resourceTags}""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""longArrayKey"":""[1,2]"",""boolKey"":""true"",""boolArrayKey"":""[true,false]"",""http.host"":""http://localhost:44312/"",{statusTag}{errorTag}""otel.scope.name"":""CreateTestActivity"",""otel.library.name"":""CreateTestActivity"",""peer.service"":""http://localhost:44312/""}}}}]",
+            $@"[{{""traceId"":""{traceId}"","
+            + @"""name"":""Name"","
+            + parentId
+            + $@"""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"","
+            + @"""kind"":""CLIENT"","
+            + $@"""timestamp"":{timestamp},"
+            + @"""duration"":60000000,"
+            + $@"""localEndpoint"":{{""serviceName"":""{serviceName}""{ipInformation}}},"
+            + @"""remoteEndpoint"":{""serviceName"":""http://localhost:44312/""},"
+            + $@"""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],"
+            + @"""tags"":{"
+                + resourceTags
+                + $@"""stringKey"":""value"","
+                + @"""longKey"":""1"","
+                + @"""longKey2"":""1"","
+                + @"""doubleKey"":""1"","
+                + @"""doubleKey2"":""1"","
+                + @"""longArrayKey"":""[1,2]"","
+                + @"""boolKey"":""true"","
+                + @"""boolArrayKey"":""[true,false]"","
+                + @"""http.host"":""http://localhost:44312/"","
+                + $@"""dateTimeKey"":""{Convert.ToString(dateTime, CultureInfo.InvariantCulture)}"","
+                + $@"""dateTimeArrayKey"":""[\u0022{Convert.ToString(dateTime, CultureInfo.InvariantCulture)}\u0022]"","
+                + statusTag
+                + errorTag
+                + @"""otel.scope.name"":""CreateTestActivity"","
+                + @"""otel.library.name"":""CreateTestActivity"","
+                + @"""peer.service"":""http://localhost:44312/"""
+            + "}}]",
             Responses[requestId]);
     }
 
@@ -434,12 +464,15 @@ public class ZipkinExporterTests : IDisposable
        bool addLinks = true,
        Resource resource = null,
        ActivityKind kind = ActivityKind.Client,
-       Status? status = null)
+       Status? status = null,
+       DateTime? dateTime = null)
     {
         var startTimestamp = DateTime.UtcNow;
         var endTimestamp = startTimestamp.AddSeconds(60);
         var eventTimestamp = DateTime.UtcNow;
         var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
+
+        dateTime ??= DateTime.UtcNow;
 
         var parentSpanId = isRootSpan ? default : ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
 
@@ -454,6 +487,8 @@ public class ZipkinExporterTests : IDisposable
             { "boolKey", true },
             { "boolArrayKey", new bool[] { true, false } },
             { "http.host", "http://localhost:44312/" }, // simulating instrumentation tag adding http.host
+            { "dateTimeKey", dateTime.Value },
+            { "dateTimeArrayKey", new DateTime[] { dateTime.Value } },
         };
         if (additionalAttributes != null)
         {

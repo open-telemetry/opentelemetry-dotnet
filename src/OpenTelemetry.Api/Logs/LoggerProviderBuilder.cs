@@ -3,29 +3,12 @@
 
 #nullable enable
 
-#if NET8_0_OR_GREATER && EXPOSE_EXPERIMENTAL_FEATURES
-using System.Diagnostics.CodeAnalysis;
-using OpenTelemetry.Internal;
-#endif
-
 namespace OpenTelemetry.Logs;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// LoggerProviderBuilder base class.
 /// </summary>
-/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
-#if NET8_0_OR_GREATER
-[Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-public
-#else
-/// <summary>
-/// LoggerProviderBuilder base class.
-/// </summary>
-internal
-#endif
-    abstract class LoggerProviderBuilder
+public abstract class LoggerProviderBuilder
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="LoggerProviderBuilder"/> class.
