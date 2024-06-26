@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-
-// using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Transmission;
@@ -57,6 +55,7 @@ internal class OtlpTraceExporterNew : BaseExporter<Activity>
 
         if (exporterOptions.Protocol == OtlpExportProtocol.Grpc)
         {
+            // Leave space for compression flag and mesage length.
             this.bufferOffSet = 5;
         }
     }
@@ -72,13 +71,6 @@ internal class OtlpTraceExporterNew : BaseExporter<Activity>
         buffer ??= new byte[100000];
 
         var cursor = this.activitySerializer.Serialize(ref buffer, this.bufferOffSet, this.Resource, activityBatch);
-
-        var arrcopy = new byte[cursor - this.bufferOffSet];
-        Buffer.BlockCopy(buffer, this.bufferOffSet, arrcopy, 0, arrcopy.Length);
-
-        // var request = new OtlpCollector.ExportTraceServiceRequest();
-
-        // request.MergeFrom(arrcopy!);
 
         if (!this.transmissionHandler.TrySubmitRequest(buffer, cursor))
         {
