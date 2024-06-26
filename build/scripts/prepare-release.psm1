@@ -9,6 +9,12 @@ function CreatePullRequestToUpdateChangelogsAndPublicApis {
     [Parameter()][string]$gitUserEmail
   )
 
+  $match = [regex]::Match($version, '^(\d+\.\d+\.\d+)(?:-((?:alpha)|(?:beta)|(?:rc))\.(\d+))?$')
+  if ($match.Success -eq $false)
+  {
+      throw 'Input version did not match expected format'
+  }
+
   $tag="${minVerTagPrefix}${version}"
   $branch="release/prepare-${tag}-release"
 
