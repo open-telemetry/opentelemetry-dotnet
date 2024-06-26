@@ -41,13 +41,13 @@ internal sealed class OtlpHttpTraceExportClient : BaseOtlpHttpExportClient<OtlpC
         }
 
 #if NET
-        protected override void SerializeToStream(Stream stream, TransportContext context, CancellationToken cancellationToken)
+        protected override void SerializeToStream(Stream stream, TransportContext? context, CancellationToken cancellationToken)
         {
             this.SerializeToStreamInternal(stream);
         }
 #endif
 
-        protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
+        protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
         {
             this.SerializeToStreamInternal(stream);
             return Task.CompletedTask;

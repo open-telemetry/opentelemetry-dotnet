@@ -21,7 +21,7 @@ public sealed class IntegrationTests : IDisposable
     private const int ExportIntervalMilliseconds = 10000;
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
     private static readonly ExperimentalOptions DefaultExperimentalOptions = new();
-    private static readonly string CollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorHostnameEnvVarName);
+    private static readonly string? CollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorHostnameEnvVarName);
     private readonly OpenTelemetryEventListener openTelemetryEventListener;
 
     public IntegrationTests(ITestOutputHelper outputHelper)
@@ -61,7 +61,7 @@ public sealed class IntegrationTests : IDisposable
             },
         };
 
-        DelegatingExporter<Activity> delegatingExporter = null;
+        DelegatingExporter<Activity>? delegatingExporter = null;
         var exportResults = new List<ExportResult>();
 
         var activitySourceName = "otlp.collector.test";
@@ -140,7 +140,7 @@ public sealed class IntegrationTests : IDisposable
             Protocol = protocol,
         };
 
-        DelegatingExporter<Metric> delegatingExporter = null;
+        DelegatingExporter<Metric>? delegatingExporter = null;
         var exportResults = new List<ExportResult>();
 
         var meterName = "otlp.collector.test";
@@ -220,7 +220,7 @@ public sealed class IntegrationTests : IDisposable
             Protocol = protocol,
         };
 
-        DelegatingExporter<LogRecord> delegatingExporter = null;
+        DelegatingExporter<LogRecord> delegatingExporter;
         var exportResults = new List<ExportResult>();
         var processorOptions = new LogRecordExportProcessorOptions
         {
@@ -298,8 +298,8 @@ public sealed class IntegrationTests : IDisposable
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            string message;
-            if (eventData.Message != null && (eventData.Payload?.Count ?? 0) > 0)
+            string? message;
+            if (eventData.Message != null && eventData.Payload != null && eventData.Payload.Count > 0)
             {
                 message = string.Format(eventData.Message, eventData.Payload.ToArray());
             }

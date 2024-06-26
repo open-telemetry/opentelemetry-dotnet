@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
+using System.Diagnostics.CodeAnalysis;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
@@ -14,6 +14,7 @@ internal abstract class ExportClientResponse
         this.DeadlineUtc = deadlineUtc;
     }
 
+    [MemberNotNullWhen(false, nameof(Exception))]
     public bool Success { get; }
 
     public Exception? Exception { get; }

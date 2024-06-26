@@ -1,14 +1,16 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics;
 
 namespace OpenTelemetry.Tests;
 
 internal class TestActivityProcessor : BaseProcessor<Activity>
 {
-    public Action<Activity> StartAction;
-    public Action<Activity> EndAction;
+    public Action<Activity>? StartAction;
+    public Action<Activity>? EndAction;
 
     public TestActivityProcessor()
     {

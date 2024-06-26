@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,7 +38,7 @@ internal sealed class OtlpExporterBuilder
 
         name ??= Options.DefaultName;
 
-        RegisterOtlpExporterServices(services!, name!);
+        RegisterOtlpExporterServices(services!, name);
 
         this.name = name;
         this.Services = services!;
