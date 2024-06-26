@@ -171,15 +171,12 @@ internal class ActivitySerializer
     {
         var start = cursor;
 
-        // Leave 4 bytes for length.
-        cursor += 4;
-        var valueStart = cursor;
-
         int maxAttributeValueLength = this.sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
+
+        var resourceSpansSize = this.activitySizeCalculator.ComputeResourceSpansSize(resource, scopeTraces);
+        cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, resourceSpansSize, FieldNumberConstants.ResourceSpans_resource, WireType.LEN);
         cursor = CommonTypesSerializer.SerializeResource(ref buffer, cursor, resource, maxAttributeValueLength);
         cursor = this.SerializeScopeSpans(ref buffer, cursor, scopeTraces);
-        start = Writer.WriteTag(ref buffer, start, FieldNumberConstants.ResourceSpans_resource, WireType.LEN);
-        _ = Writer.WriteLengthCustom(ref buffer, start, cursor - valueStart);
 
         return cursor;
     }

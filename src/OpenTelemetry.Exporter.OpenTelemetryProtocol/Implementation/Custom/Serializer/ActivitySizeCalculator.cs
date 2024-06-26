@@ -5,6 +5,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Serializer;
@@ -285,6 +286,26 @@ internal class ActivitySizeCalculator
             {
                 droppedCount++;
             }
+        }
+
+        return size;
+    }
+
+    internal int ComputeResourceSpansSize(Resource resource, Dictionary<string, List<Activity>> scopeTraces)
+    {
+        int maxAttributeValueLength = this.sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
+        int size = 0;
+        var resourceSize = CommonTypesSizeCalculator.ComputeResourceSize(resource, maxAttributeValueLength);
+
+        if (resourceSize > 0)
+        {
+            size += CommonTypesSizeCalculator.ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.ResourceSpans_resource, resourceSize);
+        }
+
+        foreach (var scopeTrace in scopeTraces)
+        {
+            var scopeSpanSize = this.ComputeScopeSpanSize(scopeTrace.Key, scopeTrace.Value[0].Source.Version, scopeTrace.Value);
+            size += CommonTypesSizeCalculator.ComputeSizeWithTagAndLengthPrefix(FieldNumberConstants.ResourceSpans_scope_spans, scopeSpanSize);
         }
 
         return size;
