@@ -6,6 +6,15 @@
   converted using `Convert.ToString` will now format using
   `CultureInfo.InvariantCulture`.
   ([#5700](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5700))
+* Reuse `spansByLibrary` dictionary in `ActivityExtensions` to reduce memory
+  allocation.
+  ([#4943](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4943))
+* Reuse `metricsByLibrary` dictionary in `MetricItemExtensions` to reduce memory
+  allocation.
+  ([#4943](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4943))
+* Reuse `logsByCategory` dictionary in `OtlpLogExporter` to reduce memory
+  allocation.
+  ([#4943](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4943))
 
 ## 1.9.0
 

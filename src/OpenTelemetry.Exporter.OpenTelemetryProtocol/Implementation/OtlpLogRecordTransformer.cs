@@ -17,6 +17,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 internal sealed class OtlpLogRecordTransformer
 {
     internal static readonly ConcurrentBag<OtlpLogs.ScopeLogs> LogListPool = new();
+    private Dictionary<string, OtlpLogs.ScopeLogs>? logsByCategory;
 
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
@@ -31,35 +32,42 @@ internal sealed class OtlpLogRecordTransformer
         OtlpResource.Resource processResource,
         in Batch<LogRecord> logRecordBatch)
     {
-        // TODO: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4943
-        Dictionary<string, OtlpLogs.ScopeLogs> logsByCategory = new Dictionary<string, OtlpLogs.ScopeLogs>();
+        var logsByCategory = Interlocked.Exchange(ref this.logsByCategory, null) ?? new Dictionary<string, OtlpLogs.ScopeLogs>();
 
-        var request = new OtlpCollector.ExportLogsServiceRequest();
-
-        var resourceLogs = new OtlpLogs.ResourceLogs
+        try
         {
-            Resource = processResource,
-        };
-        request.ResourceLogs.Add(resourceLogs);
+            var request = new OtlpCollector.ExportLogsServiceRequest();
 
-        foreach (var logRecord in logRecordBatch)
-        {
-            var otlpLogRecord = this.ToOtlpLog(logRecord);
-            if (otlpLogRecord != null)
+            var resourceLogs = new OtlpLogs.ResourceLogs
             {
-                var scopeName = logRecord.Logger.Name;
-                if (!logsByCategory.TryGetValue(scopeName, out var scopeLogs))
+                Resource = processResource,
+            };
+            request.ResourceLogs.Add(resourceLogs);
+
+            foreach (var logRecord in logRecordBatch)
+            {
+                var otlpLogRecord = this.ToOtlpLog(logRecord);
+                if (otlpLogRecord != null)
                 {
-                    scopeLogs = this.GetLogListFromPool(scopeName);
-                    logsByCategory.Add(scopeName, scopeLogs);
-                    resourceLogs.ScopeLogs.Add(scopeLogs);
+                    var scopeName = logRecord.Logger.Name;
+                    if (!logsByCategory.TryGetValue(scopeName, out var scopeLogs))
+                    {
+                        scopeLogs = this.GetLogListFromPool(scopeName);
+                        logsByCategory.Add(scopeName, scopeLogs);
+                        resourceLogs.ScopeLogs.Add(scopeLogs);
+                    }
+
+                    scopeLogs.LogRecords.Add(otlpLogRecord);
                 }
-
-                scopeLogs.LogRecords.Add(otlpLogRecord);
             }
-        }
 
-        return request;
+            return request;
+        }
+        finally
+        {
+            logsByCategory.Clear();
+            Interlocked.Exchange(ref this.logsByCategory, logsByCategory);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

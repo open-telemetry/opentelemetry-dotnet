@@ -20,42 +20,52 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 internal static class MetricItemExtensions
 {
     private static readonly ConcurrentBag<ScopeMetrics> MetricListPool = new();
+    private static Dictionary<string, ScopeMetrics>? metricsByLibraryCached;
 
     internal static void AddMetrics(
         this OtlpCollector.ExportMetricsServiceRequest request,
         OtlpResource.Resource processResource,
         in Batch<Metric> metrics)
     {
-        var metricsByLibrary = new Dictionary<string, ScopeMetrics>();
-        var resourceMetrics = new ResourceMetrics
+        var metricsByLibrary = Interlocked.Exchange(ref metricsByLibraryCached, null) ?? new Dictionary<string, ScopeMetrics>();
+
+        try
         {
-            Resource = processResource,
-        };
-        request.ResourceMetrics.Add(resourceMetrics);
+            var resourceMetrics = new ResourceMetrics
+            {
+                Resource = processResource,
+            };
+            request.ResourceMetrics.Add(resourceMetrics);
 
-        foreach (var metric in metrics)
+            foreach (var metric in metrics)
+            {
+                var otlpMetric = metric.ToOtlpMetric();
+
+                // TODO: Replace null check with exception handling.
+                if (otlpMetric == null)
+                {
+                    OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateMetric(
+                        nameof(MetricItemExtensions),
+                        nameof(AddMetrics));
+                    continue;
+                }
+
+                var meterName = metric.MeterName;
+                if (!metricsByLibrary.TryGetValue(meterName, out var scopeMetrics))
+                {
+                    scopeMetrics = GetMetricListFromPool(meterName, metric.MeterVersion, metric.MeterTags);
+
+                    metricsByLibrary.Add(meterName, scopeMetrics);
+                    resourceMetrics.ScopeMetrics.Add(scopeMetrics);
+                }
+
+                scopeMetrics.Metrics.Add(otlpMetric);
+            }
+        }
+        finally
         {
-            var otlpMetric = metric.ToOtlpMetric();
-
-            // TODO: Replace null check with exception handling.
-            if (otlpMetric == null)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateMetric(
-                    nameof(MetricItemExtensions),
-                    nameof(AddMetrics));
-                continue;
-            }
-
-            var meterName = metric.MeterName;
-            if (!metricsByLibrary.TryGetValue(meterName, out var scopeMetrics))
-            {
-                scopeMetrics = GetMetricListFromPool(meterName, metric.MeterVersion, metric.MeterTags);
-
-                metricsByLibrary.Add(meterName, scopeMetrics);
-                resourceMetrics.ScopeMetrics.Add(scopeMetrics);
-            }
-
-            scopeMetrics.Metrics.Add(otlpMetric);
+            metricsByLibrary.Clear();
+            Interlocked.Exchange(ref metricsByLibraryCached, metricsByLibrary);
         }
     }
 

@@ -8,6 +8,7 @@ using Google.Protobuf;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Proto.Collector.Trace.V1;
 using OpenTelemetry.Proto.Common.V1;
+using OpenTelemetry.Proto.Metrics.V1;
 using OpenTelemetry.Proto.Resource.V1;
 using OpenTelemetry.Proto.Trace.V1;
 using OpenTelemetry.Trace;
@@ -18,6 +19,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 internal static class ActivityExtensions
 {
     private static readonly ConcurrentBag<ScopeSpans> SpanListPool = new();
+    private static Dictionary<string, ScopeSpans>? spansByLibraryCached;
 
     internal static void AddBatch(
         this ExportTraceServiceRequest request,
@@ -25,34 +27,43 @@ internal static class ActivityExtensions
         Resource processResource,
         in Batch<Activity> activityBatch)
     {
-        Dictionary<string, ScopeSpans> spansByLibrary = new Dictionary<string, ScopeSpans>();
-        ResourceSpans resourceSpans = new ResourceSpans
+        var spansByLibrary = Interlocked.Exchange(ref spansByLibraryCached, null) ?? new Dictionary<string, ScopeSpans>();
+
+        try
         {
-            Resource = processResource,
-        };
-        request.ResourceSpans.Add(resourceSpans);
+            ResourceSpans resourceSpans = new ResourceSpans
+            {
+                Resource = processResource,
+            };
+            request.ResourceSpans.Add(resourceSpans);
 
-        foreach (var activity in activityBatch)
+            foreach (var activity in activityBatch)
+            {
+                Span? span = activity.ToOtlpSpan(sdkLimitOptions);
+                if (span == null)
+                {
+                    OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateActivity(
+                        nameof(ActivityExtensions),
+                        nameof(AddBatch));
+                    continue;
+                }
+
+                var activitySourceName = activity.Source.Name;
+                if (!spansByLibrary.TryGetValue(activitySourceName, out var spans))
+                {
+                    spans = GetSpanListFromPool(activitySourceName, activity.Source.Version);
+
+                    spansByLibrary.Add(activitySourceName, spans);
+                    resourceSpans.ScopeSpans.Add(spans);
+                }
+
+                spans.Spans.Add(span);
+            }
+        }
+        finally
         {
-            Span? span = activity.ToOtlpSpan(sdkLimitOptions);
-            if (span == null)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateActivity(
-                    nameof(ActivityExtensions),
-                    nameof(AddBatch));
-                continue;
-            }
-
-            var activitySourceName = activity.Source.Name;
-            if (!spansByLibrary.TryGetValue(activitySourceName, out var spans))
-            {
-                spans = GetSpanListFromPool(activitySourceName, activity.Source.Version);
-
-                spansByLibrary.Add(activitySourceName, spans);
-                resourceSpans.ScopeSpans.Add(spans);
-            }
-
-            spans.Spans.Add(span);
+            spansByLibrary.Clear();
+            Interlocked.Exchange(ref spansByLibraryCached, spansByLibrary);
         }
     }
 
