@@ -18,7 +18,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler;
 
-    private OtlpResource.Resource processResource;
+    private OtlpResource.Resource? processResource;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
@@ -40,14 +40,14 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
-        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler = null)
+        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>? transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
-        this.sdkLimitOptions = sdkLimitOptions;
+        this.sdkLimitOptions = sdkLimitOptions!;
 
-        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetTraceExportTransmissionHandler(experimentalOptions);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetTraceExportTransmissionHandler(experimentalOptions);
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();

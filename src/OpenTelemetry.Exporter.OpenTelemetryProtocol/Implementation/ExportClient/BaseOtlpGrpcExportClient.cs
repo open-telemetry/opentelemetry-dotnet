@@ -3,7 +3,7 @@
 
 using Grpc.Core;
 using OpenTelemetry.Internal;
-#if NETSTANDARD2_1 || NET6_0_OR_GREATER
+#if NETSTANDARD2_1 || NET
 using Grpc.Net.Client;
 #endif
 
@@ -25,10 +25,10 @@ internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequ
         this.TimeoutMilliseconds = options.TimeoutMilliseconds;
     }
 
-#if NETSTANDARD2_1 || NET6_0_OR_GREATER
-    internal GrpcChannel Channel { get; set; }
+#if NETSTANDARD2_1 || NET
+    internal GrpcChannel? Channel { get; set; }
 #else
-    internal Channel Channel { get; set; }
+    internal Channel? Channel { get; set; }
 #endif
 
     internal Uri Endpoint { get; }

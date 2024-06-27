@@ -74,7 +74,7 @@ public class OtlpExporterOptionsTests : IDisposable
     [Fact]
     public void OtlpExporterOptions_InvalidEnvironmentVariableOverride()
     {
-        var values = new Dictionary<string, string>()
+        var values = new Dictionary<string, string?>
         {
             ["EndpointWithInvalidValue"] = "invalid",
             ["TimeoutWithInvalidValue"] = "invalid",
@@ -104,7 +104,7 @@ public class OtlpExporterOptionsTests : IDisposable
     [Fact]
     public void OtlpExporterOptions_SetterOverridesEnvironmentVariable()
     {
-        var values = new Dictionary<string, string>()
+        var values = new Dictionary<string, string?>
         {
             ["Endpoint"] = "http://test:8888",
             ["Timeout"] = "2000",
@@ -169,7 +169,7 @@ public class OtlpExporterOptionsTests : IDisposable
     {
         var options = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default);
 
-        Assert.Throws<ArgumentNullException>(() => options.Endpoint = null);
+        Assert.Throws<ArgumentNullException>(() => options.Endpoint = null!);
     }
 
     [Fact]
@@ -177,7 +177,7 @@ public class OtlpExporterOptionsTests : IDisposable
     {
         var options = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default);
 
-        Assert.Throws<ArgumentNullException>(() => options.HttpClientFactory = null);
+        Assert.Throws<ArgumentNullException>(() => options.HttpClientFactory = null!);
     }
 
     [Fact]

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.9.0-beta.2
+
+Released 2024-Jun-24
+
+* Fixed a bug which lead to empty responses when the internal buffer is resized
+  processing a collection request
+  ([#5676](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5676))
+
 ## 1.9.0-beta.1
 
 Released 2024-Jun-14

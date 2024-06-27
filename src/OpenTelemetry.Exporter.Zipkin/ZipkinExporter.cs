@@ -61,7 +61,7 @@ public class ZipkinExporter : BaseExporter<Activity>
                 Content = new JsonContent(this, batch),
             };
 
-#if NET6_0_OR_GREATER
+#if NET
             using var response = this.httpClient.Send(request, CancellationToken.None);
 #else
             using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
@@ -190,7 +190,7 @@ public class ZipkinExporter : BaseExporter<Activity>
             this.Headers.ContentType = JsonHeader;
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         protected override void SerializeToStream(Stream stream, TransportContext context, CancellationToken cancellationToken)
         {
             this.SerializeToStreamInternal(stream);

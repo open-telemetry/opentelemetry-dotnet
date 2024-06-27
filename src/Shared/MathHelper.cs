@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if NET6_0_OR_GREATER
+#if NET
 using System.Numerics;
 #endif
 using System.Runtime.CompilerServices;
@@ -73,7 +73,7 @@ internal static class MathHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int LeadingZero64(long value)
     {
-#if NET6_0_OR_GREATER
+#if NET
         return BitOperations.LeadingZeroCount((ulong)value);
 #else
         unchecked
@@ -123,7 +123,7 @@ internal static class MathHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsFinite(double value)
     {
-#if NET6_0_OR_GREATER
+#if NET
         return double.IsFinite(value);
 #else
         return !double.IsInfinity(value) && !double.IsNaN(value);
