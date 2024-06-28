@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Added `OpenTelemetrySdk.Create` API for configuring OpenTelemetry .NET signals
+  (logging, tracing, and metrics) via a single builder. This new API simplifies
+  bootstrap and teardown, and supports cross-cutting extensions targeting
+  `IOpenTelemetryBuilder`.
+  ([#5325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5325))
+
 ## 1.9.0
 
 Released 2024-Jun-14
