@@ -12,7 +12,7 @@ internal static class MathHelper
     // https://github.com/dotnet/runtime/blob/v7.0.0/src/libraries/System.Private.CoreLib/src/System/Math.cs#L259
     public static double BitIncrement(double x)
     {
-#if NET6_0_OR_GREATER
+#if NET
         return Math.BitIncrement(x);
 #else
         long bits = BitConverter.DoubleToInt64Bits(x);
@@ -42,7 +42,7 @@ internal static class MathHelper
 
     public static double BitDecrement(double x)
     {
-#if NET6_0_OR_GREATER
+#if NET
         return Math.BitDecrement(x);
 #else
         long bits = BitConverter.DoubleToInt64Bits(x);

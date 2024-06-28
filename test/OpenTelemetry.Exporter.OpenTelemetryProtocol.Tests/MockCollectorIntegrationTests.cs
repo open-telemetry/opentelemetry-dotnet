@@ -3,6 +3,7 @@
 
 #if !NETFRAMEWORK
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
@@ -97,12 +98,12 @@ public sealed class MockCollectorIntegrationTests
 
         using var source = new ActivitySource(activitySourceName);
 
-        source.StartActivity().Stop();
+        source.StartActivity()?.Stop();
 
         Assert.Single(exportResults);
         Assert.Equal(ExportResult.Failure, exportResults[0]);
 
-        source.StartActivity().Stop();
+        source.StartActivity()?.Stop();
 
         Assert.Equal(2, exportResults.Count);
         Assert.Equal(ExportResult.Success, exportResults[1]);
@@ -182,7 +183,7 @@ public sealed class MockCollectorIntegrationTests
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000, Protocol = OtlpExportProtocol.Grpc };
 
         var configuration = new ConfigurationBuilder()
-         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null })
+         .AddInMemoryCollection(new Dictionary<string, string?> { [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null })
          .Build();
 
         var otlpExporter = new OtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
@@ -195,6 +196,7 @@ public sealed class MockCollectorIntegrationTests
             .Build();
 
         using var activity = source.StartActivity("GrpcRetryTest");
+        Assert.NotNull(activity);
         activity.Stop();
         using var batch = new Batch<Activity>([activity], 1);
 
@@ -266,7 +268,7 @@ public sealed class MockCollectorIntegrationTests
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000, Protocol = OtlpExportProtocol.HttpProtobuf };
 
         var configuration = new ConfigurationBuilder()
-         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null })
+         .AddInMemoryCollection(new Dictionary<string, string?> { [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null })
          .Build();
 
         var otlpExporter = new OtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
@@ -279,6 +281,7 @@ public sealed class MockCollectorIntegrationTests
             .Build();
 
         using var activity = source.StartActivity("HttpRetryTest");
+        Assert.NotNull(activity);
         activity.Stop();
         using var batch = new Batch<Activity>([activity], 1);
 
@@ -351,7 +354,7 @@ public sealed class MockCollectorIntegrationTests
 
         // TODO: update this to configure via experimental environment variable.
         OtlpExporterTransmissionHandler<ExportTraceServiceRequest> transmissionHandler;
-        MockFileProvider mockProvider = null;
+        MockFileProvider? mockProvider = null;
         if (usePersistentStorageTransmissionHandler)
         {
             mockProvider = new MockFileProvider();
@@ -381,6 +384,7 @@ public sealed class MockCollectorIntegrationTests
             .Build();
 
         using var activity = source.StartActivity("HttpPersistentStorageRetryTest");
+        Assert.NotNull(activity);
         activity.Stop();
         using var batch = new Batch<Activity>([activity], 1);
 
@@ -390,12 +394,13 @@ public sealed class MockCollectorIntegrationTests
 
         if (usePersistentStorageTransmissionHandler)
         {
+            Assert.NotNull(mockProvider);
             if (exportResult == ExportResult.Success)
             {
-                Assert.Single(mockProvider.TryGetBlobs());
+                Assert.Single(mockProvider!.TryGetBlobs());
 
                 // Force Retry
-                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>).InitiateAndWaitForRetryProcess(-1));
+                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>)!.InitiateAndWaitForRetryProcess(-1));
 
                 Assert.False(mockProvider.TryGetBlob(out _));
             }
@@ -488,7 +493,7 @@ public sealed class MockCollectorIntegrationTests
 
         // TODO: update this to configure via experimental environment variable.
         OtlpExporterTransmissionHandler<ExportTraceServiceRequest> transmissionHandler;
-        MockFileProvider mockProvider = null;
+        MockFileProvider? mockProvider = null;
         if (usePersistentStorageTransmissionHandler)
         {
             mockProvider = new MockFileProvider();
@@ -518,6 +523,7 @@ public sealed class MockCollectorIntegrationTests
             .Build();
 
         using var activity = source.StartActivity("GrpcPersistentStorageRetryTest");
+        Assert.NotNull(activity);
         activity.Stop();
         using var batch = new Batch<Activity>([activity], 1);
 
@@ -527,12 +533,13 @@ public sealed class MockCollectorIntegrationTests
 
         if (usePersistentStorageTransmissionHandler)
         {
+            Assert.NotNull(mockProvider);
             if (exportResult == ExportResult.Success)
             {
                 Assert.Single(mockProvider.TryGetBlobs());
 
                 // Force Retry
-                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>).InitiateAndWaitForRetryProcess(-1));
+                Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler<ExportTraceServiceRequest>)!.InitiateAndWaitForRetryProcess(-1));
 
                 Assert.False(mockProvider.TryGetBlob(out _));
             }
@@ -1081,7 +1088,7 @@ public sealed class MockCollectorIntegrationTests
             return blob.TryWrite(buffer);
         }
 
-        protected override bool OnTryGetBlob(out PersistentBlob blob)
+        protected override bool OnTryGetBlob([NotNullWhen(true)] out PersistentBlob? blob)
         {
             blob = this.GetBlobs().FirstOrDefault();
 

@@ -102,9 +102,9 @@ internal sealed class OtlpLogRecordTransformer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal OtlpLogs.LogRecord ToOtlpLog(LogRecord logRecord)
+    internal OtlpLogs.LogRecord? ToOtlpLog(LogRecord logRecord)
     {
-        OtlpLogs.LogRecord otlpLogRecord = null;
+        OtlpLogs.LogRecord? otlpLogRecord = null;
 
         try
         {
@@ -238,7 +238,7 @@ internal sealed class OtlpLogRecordTransformer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddAttribute(OtlpLogs.LogRecord logRecord, KeyValuePair<string, object> attribute, int maxAttributeCount, int? maxValueLength)
+    private static void AddAttribute(OtlpLogs.LogRecord logRecord, KeyValuePair<string, object?> attribute, int maxAttributeCount, int? maxValueLength)
     {
         var logRecordAttributes = logRecord.Attributes;
 
@@ -253,9 +253,9 @@ internal sealed class OtlpLogRecordTransformer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddStringAttribute(OtlpLogs.LogRecord logRecord, string key, string value, int maxAttributeCount, int? maxValueLength)
+    private static void AddStringAttribute(OtlpLogs.LogRecord logRecord, string key, string? value, int maxAttributeCount, int? maxValueLength)
     {
-        var attributeItem = new KeyValuePair<string, object>(key, value);
+        var attributeItem = new KeyValuePair<string, object?>(key, value);
 
         AddAttribute(logRecord, attributeItem, maxAttributeCount, maxValueLength);
     }
@@ -263,7 +263,7 @@ internal sealed class OtlpLogRecordTransformer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddIntAttribute(OtlpLogs.LogRecord logRecord, string key, int value, int maxAttributeCount)
     {
-        var attributeItem = new KeyValuePair<string, object>(key, value);
+        var attributeItem = new KeyValuePair<string, object?>(key, value);
 
         AddAttribute(logRecord, attributeItem, maxAttributeCount, maxValueLength: null);
     }

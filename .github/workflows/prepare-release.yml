@@ -53,6 +53,7 @@ jobs:
           -gitRepository '${{ github.repository }}' `
           -minVerTagPrefix '${{ inputs.tag-prefix }}' `
           -version '${{ inputs.version }}' `
+          -requestedByUserName '${{ github.event.sender.login }}' `
           -targetBranch '${{ github.ref_name }}' `
           -gitUserName '${{ needs.automation.outputs.username }}' `
           -gitUserEmail '${{ needs.automation.outputs.email }}'
@@ -125,6 +126,46 @@ jobs:
           -gitRepository '${{ github.repository }}' `
           -pullRequestNumber '${{ github.event.issue.number }}' `
           -botUserName '${{ needs.automation.outputs.username }}' `
+          -gitUserName '${{ needs.automation.outputs.username }}' `
+          -gitUserEmail '${{ needs.automation.outputs.email }}'
+
+  update-changelog-release-dates-on-prepare-pr-post-notice:
+    runs-on: ubuntu-latest
+
+    needs: automation
+
+    if: |
+      github.event_name == 'issue_comment'
+      && github.event.issue.pull_request
+      && github.event.issue.state == 'open'
+      && github.event.comment.user.login != needs.automation.outputs.username
+      && contains(github.event.comment.body, '/UpdateReleaseDates')
+      && startsWith(github.event.issue.title, '[release] Prepare release ')
+      && github.event.issue.pull_request.merged_at == null
+      && needs.automation.outputs.enabled
+
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+      with:
+        # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
+        fetch-depth: 0
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
+    - name: Update release date
+      id: create-tag
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\prepare-release.psm1
+
+        UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest `
+          -gitRepository '${{ github.repository }}' `
+          -pullRequestNumber '${{ github.event.issue.number }}' `
+          -botUserName '${{ needs.automation.outputs.username }}' `
+          -commentUserName '${{ github.event.comment.user.login }}' `
           -gitUserName '${{ needs.automation.outputs.username }}' `
           -gitUserEmail '${{ needs.automation.outputs.email }}'
 

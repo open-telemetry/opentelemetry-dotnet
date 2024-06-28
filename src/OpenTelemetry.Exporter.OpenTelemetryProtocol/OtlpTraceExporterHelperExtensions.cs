@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -133,10 +131,10 @@ public static class OtlpTraceExporterHelperExtensions
 
         if (!skipUseOtlpExporterRegistrationCheck)
         {
-            serviceProvider.EnsureNoUseOtlpExporterRegistrations();
+            serviceProvider!.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
+        exporterOptions!.TryEnableIHttpClientFactoryIntegration(serviceProvider!, "OtlpTraceExporter");
 
         BaseExporter<Activity> otlpExporter;
 

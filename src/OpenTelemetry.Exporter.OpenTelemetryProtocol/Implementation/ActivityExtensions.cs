@@ -34,7 +34,7 @@ internal static class ActivityExtensions
 
         foreach (var activity in activityBatch)
         {
-            Span span = activity.ToOtlpSpan(sdkLimitOptions);
+            Span? span = activity.ToOtlpSpan(sdkLimitOptions);
             if (span == null)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateActivity(
@@ -73,7 +73,7 @@ internal static class ActivityExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static ScopeSpans GetSpanListFromPool(string name, string version)
+    internal static ScopeSpans GetSpanListFromPool(string name, string? version)
     {
         if (!SpanListPool.TryTake(out var spans))
         {
@@ -96,7 +96,7 @@ internal static class ActivityExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static Span ToOtlpSpan(this Activity activity, SdkLimitOptions sdkLimitOptions)
+    internal static Span? ToOtlpSpan(this Activity activity, SdkLimitOptions sdkLimitOptions)
     {
         if (activity.IdFormat != ActivityIdFormat.W3C)
         {
@@ -145,7 +145,7 @@ internal static class ActivityExtensions
 
         if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
         {
-            PeerServiceResolver.Resolve(ref otlpTags, out string peerServiceName, out bool addAsTag);
+            PeerServiceResolver.Resolve(ref otlpTags, out string? peerServiceName, out bool addAsTag);
 
             if (peerServiceName != null && addAsTag)
             {
@@ -180,7 +180,7 @@ internal static class ActivityExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static OtlpTrace.Status ToOtlpStatus(this Activity activity, ref TagEnumerationState otlpTags)
+    private static OtlpTrace.Status? ToOtlpStatus(this Activity activity, ref TagEnumerationState otlpTags)
     {
         var statusCodeForTagValue = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
         if (activity.Status == ActivityStatusCode.Unset && statusCodeForTagValue == null)
@@ -189,7 +189,7 @@ internal static class ActivityExtensions
         }
 
         OtlpTrace.Status.Types.StatusCode otlpActivityStatusCode = OtlpTrace.Status.Types.StatusCode.Unset;
-        string otlpStatusDescription = null;
+        string? otlpStatusDescription = null;
         if (activity.Status != ActivityStatusCode.Unset)
         {
             // The numerical values of the two enumerations match, a simple cast is enough.
@@ -204,7 +204,7 @@ internal static class ActivityExtensions
             if (statusCodeForTagValue != StatusCode.Unset)
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
-                otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)statusCodeForTagValue;
+                otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)statusCodeForTagValue!;
                 if (statusCodeForTagValue == StatusCode.Error && !string.IsNullOrEmpty(otlpTags.StatusDescription))
                 {
                     otlpStatusDescription = otlpTags.StatusDescription;
@@ -304,17 +304,17 @@ internal static class ActivityExtensions
 
         public Span Span;
 
-        public string StatusCode;
+        public string? StatusCode;
 
-        public string StatusDescription;
+        public string? StatusDescription;
 
-        public string PeerService { get; set; }
+        public string? PeerService { get; set; }
 
         public int? PeerServicePriority { get; set; }
 
-        public string HostName { get; set; }
+        public string? HostName { get; set; }
 
-        public string IpAddress { get; set; }
+        public string? IpAddress { get; set; }
 
         public long Port { get; set; }
 

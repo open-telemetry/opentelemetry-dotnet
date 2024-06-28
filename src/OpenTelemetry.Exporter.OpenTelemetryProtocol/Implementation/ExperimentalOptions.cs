@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using Microsoft.Extensions.Configuration;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
