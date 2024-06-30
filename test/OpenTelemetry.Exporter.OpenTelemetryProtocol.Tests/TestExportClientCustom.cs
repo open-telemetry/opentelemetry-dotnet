@@ -41,7 +41,7 @@ internal class TestExportClientCustom(bool throwException = false) : IExportClie
 
     private class TestExportClientResponse : ExportClientResponse
     {
-        public TestExportClientResponse(bool success, DateTime deadline, Exception exception)
+        public TestExportClientResponse(bool success, DateTime deadline, Exception? exception)
             : base(success, deadline, exception)
         {
         }

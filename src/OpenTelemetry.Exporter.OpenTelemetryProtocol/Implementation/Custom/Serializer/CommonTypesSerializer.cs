@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Globalization;
 using OpenTelemetry.Resources;
 
@@ -10,7 +8,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Ser
 
 internal static class CommonTypesSerializer
 {
-    internal static int SerializeResource(ref byte[] buffer, int cursor, Resource resource, int maxAttributeValueLength)
+    internal static int SerializeResource(ref byte[] buffer, int cursor, Resource? resource, int maxAttributeValueLength)
     {
         if (resource != null && resource != Resource.Empty)
         {
@@ -73,7 +71,7 @@ internal static class CommonTypesSerializer
                     stringVal = rawStringVal.Substring(0, maxAttributeValueLength);
                 }
 
-                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, stringVal);
+                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, stringVal!);
             case bool:
                 return Writer.WriteBoolWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_bool_value, (bool)value);
             case byte:
@@ -91,14 +89,14 @@ internal static class CommonTypesSerializer
             case Array array:
                 return SerializeArray(ref buffer, cursor, array, maxAttributeValueLength);
             default:
-                var defaultRawStringVal = Convert.ToString(value); // , CultureInfo.InvariantCulture);
+                var defaultRawStringVal = Convert.ToString(value, CultureInfo.InvariantCulture);
                 var defaultStringVal = defaultRawStringVal;
                 if (defaultRawStringVal?.Length > maxAttributeValueLength)
                 {
                     defaultStringVal = defaultRawStringVal.Substring(0, maxAttributeValueLength);
                 }
 
-                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, defaultStringVal);
+                return Writer.WriteStringWithTag(ref buffer, cursor, FieldNumberConstants.AnyValue_string_value, defaultStringVal!);
         }
     }
 }

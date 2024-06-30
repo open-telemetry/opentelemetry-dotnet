@@ -62,7 +62,7 @@ internal class OtlpGrpcExportClient : IExportClient
         catch (Exception ex)
         {
             // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.sendasync?view=net-8.0#remarks
-            RpcException rpcException = null;
+            RpcException? rpcException = null;
             if (ex is HttpRequestException)
             {
                 var status = new Status(StatusCode.Unavailable, ErrorStartingCallMessage + " " + ex.Message, ex);

@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Globalization;
 using System.Text;
 using OpenTelemetry.Resources;
@@ -95,7 +93,7 @@ internal static class CommonTypesSizeCalculator
                 var arraySize = ComputeArrayValueSize(array, maxAttributeValueLength);
                 return WireTypesSizeCalculator.ComputeTagSize(FieldNumberConstants.AnyValue_array_value) + WireTypesSizeCalculator.ComputeLengthSize(arraySize) + arraySize;
             default:
-                var defaultRawStringVal = Convert.ToString(value); // , CultureInfo.InvariantCulture);
+                var defaultRawStringVal = Convert.ToString(value, CultureInfo.InvariantCulture);
                 var defaultStringVal = defaultRawStringVal;
                 if (defaultRawStringVal?.Length > maxAttributeValueLength)
                 {
@@ -118,7 +116,7 @@ internal static class CommonTypesSizeCalculator
         return size;
     }
 
-    internal static int ComputeResourceSize(Resource resource, int maxAttributeValueLength)
+    internal static int ComputeResourceSize(Resource? resource, int maxAttributeValueLength)
     {
         int size = 0;
         if (resource != null && resource != Resource.Empty)

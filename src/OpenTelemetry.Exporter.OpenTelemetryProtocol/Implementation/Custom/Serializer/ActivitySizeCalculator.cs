@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
@@ -291,7 +289,7 @@ internal class ActivitySizeCalculator
         return size;
     }
 
-    internal int ComputeResourceSpansSize(Resource resource, Dictionary<string, List<Activity>> scopeTraces)
+    internal int ComputeResourceSpansSize(Resource? resource, Dictionary<string, List<Activity>> scopeTraces)
     {
         int maxAttributeValueLength = this.sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
         int size = 0;

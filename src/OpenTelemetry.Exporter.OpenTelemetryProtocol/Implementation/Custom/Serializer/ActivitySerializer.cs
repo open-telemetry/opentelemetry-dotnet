@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
@@ -25,7 +23,7 @@ internal class ActivitySerializer
         this.activitySizeCalculator = new ActivitySizeCalculator(sdkLimitOptions);
     }
 
-    internal int Serialize(ref byte[] buffer, int offset, Resource resource, Batch<Activity> batch)
+    internal int Serialize(ref byte[] buffer, int offset, Resource? resource, Batch<Activity> batch)
     {
         Dictionary<string, List<Activity>> scopeTraces = new();
         foreach (var activity in batch)
@@ -167,7 +165,7 @@ internal class ActivitySerializer
     }
 
     // SerializeResourceSpans
-    private int SerializeResourceSpans(ref byte[] buffer, int cursor, Resource resource, Dictionary<string, List<Activity>> scopeTraces)
+    private int SerializeResourceSpans(ref byte[] buffer, int cursor, Resource? resource, Dictionary<string, List<Activity>> scopeTraces)
     {
         var start = cursor;
 

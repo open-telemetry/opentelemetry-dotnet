@@ -7,8 +7,6 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Seriali
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Custom.Transmission;
 using OpenTelemetry.Resources;
 
-// using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
-
 namespace OpenTelemetry.Exporter;
 
 /// <summary>
@@ -18,13 +16,13 @@ namespace OpenTelemetry.Exporter;
 internal class OtlpTraceExporterNew : BaseExporter<Activity>
 {
     [ThreadStatic]
-    private static byte[] buffer;
+    private static byte[]? buffer;
 
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly ActivitySerializer activitySerializer;
     private readonly int bufferOffSet;
 
-    private Resource resource;
+    private Resource? resource;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpTraceExporterNew"/> class.
@@ -46,21 +44,21 @@ internal class OtlpTraceExporterNew : BaseExporter<Activity>
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
-        OtlpExporterTransmissionHandler transmissionHandler = null)
+        OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
 
-        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetTraceExportTransmissionHandlerNew(experimentalOptions);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetTraceExportTransmissionHandlerNew(experimentalOptions);
         this.activitySerializer = new ActivitySerializer(sdkLimitOptions);
 
-        if (exporterOptions.Protocol == OtlpExportProtocol.Grpc)
+        if (exporterOptions!.Protocol == OtlpExportProtocol.Grpc)
         {
             // Leave space for compression flag and mesage length.
             this.bufferOffSet = 5;
         }
     }
 
-    internal Resource Resource => this.resource ??= this.ParentProvider?.GetResource();
+    internal Resource? Resource => this.resource ??= this.ParentProvider?.GetResource();
 
     /// <inheritdoc/>
     public override ExportResult Export(in Batch<Activity> activityBatch)

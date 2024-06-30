@@ -34,7 +34,7 @@ internal class GrpcProtocolHelper
     private const string GrpcMessageHeader = "grpc-message";
     private static readonly Version Http2Version = new Version(2, 0);
 
-    internal static void ProcessHttpResponse(HttpResponseMessage httpResponse, out RpcException rpcException)
+    internal static void ProcessHttpResponse(HttpResponseMessage httpResponse, out RpcException? rpcException)
     {
         rpcException = null;
         var status = ValidateHeaders(httpResponse, out var trailers);
@@ -72,7 +72,7 @@ internal class GrpcProtocolHelper
 
     private static bool TryGetStatusCore(HttpHeaders httpHeaders, out Status? status)
     {
-        httpHeaders.TryGetValues("grpc-status", out var values);
+        httpHeaders.TryGetValues(GrpcStatusHeader, out var values);
 
         if (values == null)
         {
@@ -90,9 +90,9 @@ internal class GrpcProtocolHelper
 
         // grpc-message is optional
         // Always read the gRPC message from the same headers collection as the status
-        httpHeaders.TryGetValues("grpc-message", out var message);
+        httpHeaders.TryGetValues(GrpcMessageHeader, out var message);
 
-        string grpcMessage = null;
+        string? grpcMessage = null;
 
         if (message != null)
         {
@@ -111,7 +111,7 @@ internal class GrpcProtocolHelper
         return true;
     }
 
-    private static Status? ValidateHeaders(HttpResponseMessage httpResponse, out Metadata trailers)
+    private static Status? ValidateHeaders(HttpResponseMessage httpResponse, out Metadata? trailers)
     {
         // gRPC status can be returned in the header when there is no message (e.g. unimplemented status)
         // An explicitly specified status header has priority over other failing statuses
@@ -253,8 +253,8 @@ internal class GrpcProtocolHelper
             case 'g':
             case 'G':
                 // Exclude known grpc headers. This matches Grpc.Core client behavior.
-                return string.Equals(name, "grpc-status", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(name, "grpc-message", StringComparison.OrdinalIgnoreCase)
+                return string.Equals(name, GrpcStatusHeader, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(name, GrpcMessageHeader, StringComparison.OrdinalIgnoreCase)
                     || string.Equals(name, "grpc-encoding", StringComparison.OrdinalIgnoreCase)
                     || string.Equals(name, "grpc-accept-encoding", StringComparison.OrdinalIgnoreCase);
             case 'c':
@@ -294,6 +294,6 @@ internal class GrpcProtocolHelper
             status = new Status(StatusCode.Cancelled, ex.Message, ex);
         }
 
-        return status.Value;
+        return status.HasValue ? status.Value : default;
     }
 }

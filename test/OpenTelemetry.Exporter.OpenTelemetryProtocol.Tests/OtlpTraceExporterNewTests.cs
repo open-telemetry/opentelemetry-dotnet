@@ -44,7 +44,7 @@ public class OtlpTraceExporterNewTests
         ActivitySource.AddActivityListener(listener);
 
         configuration = new ConfigurationBuilder()
-         .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.OtlpUseCustomSerializer] = "true" })
+         .AddInMemoryCollection(new Dictionary<string, string?> { [ExperimentalOptions.OtlpUseCustomSerializer] = "true" })
          .Build();
     }
 
@@ -73,8 +73,8 @@ public class OtlpTraceExporterNewTests
     [Fact]
     public void OtlpExporter_BadArgs()
     {
-        TracerProviderBuilder builder = null;
-        Assert.Throws<ArgumentNullException>(() => builder
+        TracerProviderBuilder? builder = null;
+        Assert.Throws<ArgumentNullException>(() => builder!
         .ConfigureServices(services => { services.AddSingleton<IConfiguration>(configuration); })
         .AddOtlpExporter());
     }
@@ -111,7 +111,7 @@ public class OtlpTraceExporterNewTests
             Assert.Equal(2, invocations);
         }
 
-        options.HttpClientFactory = () => null;
+        options.HttpClientFactory = () => null!;
         Assert.Throws<InvalidOperationException>(() =>
         {
             using var exporter = new OtlpTraceExporter(options);
@@ -177,7 +177,7 @@ public class OtlpTraceExporterNewTests
             var activityKind = isEven ? ActivityKind.Client : ActivityKind.Server;
             var activityTags = isEven ? evenTags : oddTags;
 
-            using Activity activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
+            using Activity? activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags!);
         }
 
         Assert.Equal(10, exportedItems.Count);
@@ -261,10 +261,10 @@ public class OtlpTraceExporterNewTests
 
         var tags = new ActivityTagsCollection()
         {
-            new KeyValuePair<string, object>("TruncatedTag", "12345"),
-            new KeyValuePair<string, object>("TruncatedStringArray", new string[] { "12345", "1234", string.Empty, null }),
-            new KeyValuePair<string, object>("TruncatedObjectTag", new object()),
-            new KeyValuePair<string, object>("OneTagTooMany", 1),
+            new KeyValuePair<string, object?>("TruncatedTag", "12345"),
+            new KeyValuePair<string, object?>("TruncatedStringArray", new string[] { "12345", "1234", string.Empty, null! }),
+            new KeyValuePair<string, object?>("TruncatedObjectTag", new object()),
+            new KeyValuePair<string, object?>("OneTagTooMany", 1),
         };
 
         var links = new[]
@@ -275,6 +275,8 @@ public class OtlpTraceExporterNewTests
 
         using var activitySource = new ActivitySource(nameof(this.SpanLimitsTest));
         using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags, links);
+
+        Assert.NotNull(activity);
 
         var event1 = new ActivityEvent("Event", DateTime.UtcNow, tags);
         var event2 = new ActivityEvent("OneEventTooMany", DateTime.Now, tags);
@@ -289,7 +291,7 @@ public class OtlpTraceExporterNewTests
         Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
         Assert.Equal("1234", otlpSpan.Attributes[0].Value.StringValue);
         ArrayValueAsserts(otlpSpan.Attributes[1].Value.ArrayValue.Values);
-        Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Attributes[2].Value.StringValue);
+        Assert.Equal(new object().ToString()?.Substring(0, 4), otlpSpan.Attributes[2].Value.StringValue);
 
         Assert.Single(otlpSpan.Events);
         Assert.Equal(1u, otlpSpan.DroppedEventsCount);
@@ -297,7 +299,7 @@ public class OtlpTraceExporterNewTests
         Assert.Equal(1u, otlpSpan.Events[0].DroppedAttributesCount);
         Assert.Equal("1234", otlpSpan.Events[0].Attributes[0].Value.StringValue);
         ArrayValueAsserts(otlpSpan.Events[0].Attributes[1].Value.ArrayValue.Values);
-        Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Events[0].Attributes[2].Value.StringValue);
+        Assert.Equal(new object().ToString()?.Substring(0, 4), otlpSpan.Events[0].Attributes[2].Value.StringValue);
 
         Assert.Single(otlpSpan.Links);
         Assert.Equal(1u, otlpSpan.DroppedLinksCount);
@@ -305,11 +307,11 @@ public class OtlpTraceExporterNewTests
         Assert.Equal(1u, otlpSpan.Links[0].DroppedAttributesCount);
         Assert.Equal("1234", otlpSpan.Links[0].Attributes[0].Value.StringValue);
         ArrayValueAsserts(otlpSpan.Links[0].Attributes[1].Value.ArrayValue.Values);
-        Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Links[0].Attributes[2].Value.StringValue);
+        Assert.Equal(new object().ToString()?.Substring(0, 4), otlpSpan.Links[0].Attributes[2].Value.StringValue);
 
         void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)
         {
-            var expectedStringArray = new string[] { "1234", "1234", string.Empty, null };
+            var expectedStringArray = new string[] { "1234", "1234", string.Empty, null! };
             for (var i = 0; i < expectedStringArray.Length; ++i)
             {
                 var expectedValue = expectedStringArray[i];
@@ -333,6 +335,8 @@ public class OtlpTraceExporterNewTests
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
 
         using var rootActivity = activitySource.StartActivity("root", ActivityKind.Producer);
+
+        Assert.NotNull(rootActivity);
 
         var attributes = new List<KeyValuePair<string, object>>
         {
@@ -362,7 +366,7 @@ public class OtlpTraceExporterNewTests
         var expectedUnixTimeTicks = (ulong)(startTime.Ticks - dateTimeOffset.Ticks);
         var duration = TimeSpan.FromMilliseconds(1555);
 
-        rootActivity.SetStartTime(startTime);
+        rootActivity!.SetStartTime(startTime);
         rootActivity.SetEndTime(startTime + duration);
 
         Span<byte> traceIdSpan = stackalloc byte[16];
@@ -379,24 +383,26 @@ public class OtlpTraceExporterNewTests
         Assert.Null(otlpSpan.Status);
         Assert.Empty(otlpSpan.Events);
         Assert.Empty(otlpSpan.Links);
-        OtlpTestHelpers.AssertOtlpAttributes(attributes, otlpSpan.Attributes);
+        OtlpTestHelpers.AssertOtlpAttributes(attributes!, otlpSpan.Attributes);
 
         var expectedStartTimeUnixNano = 100 * expectedUnixTimeTicks;
         Assert.Equal(expectedStartTimeUnixNano, otlpSpan.StartTimeUnixNano);
         var expectedEndTimeUnixNano = expectedStartTimeUnixNano + (duration.TotalMilliseconds * 1_000_000);
         Assert.Equal(expectedEndTimeUnixNano, otlpSpan.EndTimeUnixNano);
 
-        var childLinks = new List<ActivityLink> { new ActivityLink(rootActivity.Context, new ActivityTagsCollection(attributes)) };
+        var childLinks = new List<ActivityLink> { new ActivityLink(rootActivity.Context, new ActivityTagsCollection(attributes!)) };
         var childActivity = activitySource.StartActivity(
             "child",
             ActivityKind.Client,
             rootActivity.Context,
             links: childLinks);
 
+        Assert.NotNull(childActivity);
+
         childActivity.SetStatus(Status.Error);
 
-        var childEvents = new List<ActivityEvent> { new ActivityEvent("e0"), new ActivityEvent("e1", default, new ActivityTagsCollection(attributes)) };
-        childActivity.AddEvent(childEvents[0]);
+        var childEvents = new List<ActivityEvent> { new ActivityEvent("e0"), new ActivityEvent("e1", default, new ActivityTagsCollection(attributes!)) };
+        childActivity!.AddEvent(childEvents[0]);
         childActivity.AddEvent(childEvents[1]);
 
         Span<byte> parentIdSpan = stackalloc byte[8];
@@ -427,7 +433,7 @@ public class OtlpTraceExporterNewTests
         Assert.Equal(childLinks.Count, otlpSpan.Links.Count);
         for (var i = 0; i < childLinks.Count; i++)
         {
-            OtlpTestHelpers.AssertOtlpAttributes(childLinks[i].Tags.ToList(), otlpSpan.Links[i].Attributes);
+            OtlpTestHelpers.AssertOtlpAttributes(childLinks[i].Tags!.ToList(), otlpSpan.Links[i].Attributes);
         }
 
         var flags = (OtlpTrace.SpanFlags)otlpSpan.Flags;
@@ -443,7 +449,7 @@ public class OtlpTraceExporterNewTests
         using var rootActivity = activitySource.StartActivity("root", ActivityKind.Client);
         Assert.NotNull(rootActivity);
 
-        var stringArr = new string[] { "test", string.Empty, null };
+        var stringArr = new string[] { "test", string.Empty, null! };
         rootActivity.SetTag("stringArray", stringArr);
 
         var otlpSpan = GetOtlpSpan(rootActivity);
@@ -466,6 +472,7 @@ public class OtlpTraceExporterNewTests
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
         using var activity = activitySource.StartActivity("Name");
+        Assert.NotNull(activity);
         activity.SetStatus(expectedStatusCode, statusDescription);
 
         var otlpSpan = GetOtlpSpan(activity);
@@ -498,6 +505,7 @@ public class OtlpTraceExporterNewTests
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
         using var activity = activitySource.StartActivity("Name");
+        Assert.NotNull(activity);
         activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
         activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
 
@@ -531,6 +539,7 @@ public class OtlpTraceExporterNewTests
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
         using var activity = activitySource.StartActivity("Name");
+        Assert.NotNull(activity);
         activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
 
         var otlpSpan = GetOtlpSpan(activity);
@@ -552,6 +561,7 @@ public class OtlpTraceExporterNewTests
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
         using var activity = activitySource.StartActivity("Name");
         const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
+        Assert.NotNull(activity);
         activity.SetStatus(ActivityStatusCode.Ok);
         activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
         activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, TagDescriptionOnError);
@@ -569,6 +579,7 @@ public class OtlpTraceExporterNewTests
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
         using var activity = activitySource.StartActivity("Name");
         const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
+        Assert.NotNull(activity);
         activity.SetStatus(ActivityStatusCode.Error, StatusDescriptionOnError);
         activity.SetTag(SpanAttributeConstants.StatusCodeKey, "OK");
 
@@ -586,6 +597,7 @@ public class OtlpTraceExporterNewTests
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
         using var activity = activitySource.StartActivity("Name");
+        Assert.NotNull(activity);
         string tracestate = "a=b;c=d";
         if (traceStateWasSet)
         {
@@ -612,6 +624,8 @@ public class OtlpTraceExporterNewTests
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
 
         using var rootActivity = activitySource.StartActivity("root", ActivityKind.Client);
+
+        Assert.NotNull(rootActivity);
 
         rootActivity.SetTag(SemanticConventions.AttributeHttpHost, "opentelemetry.io");
 
@@ -685,7 +699,7 @@ public class OtlpTraceExporterNewTests
                 {
                     o.Protocol = OtlpExportProtocol.HttpProtobuf;
                     o.ExportProcessorType = ExportProcessorType.Batch;
-                    o.BatchExportProcessorOptions = null;
+                    o.BatchExportProcessorOptions = null!;
                 });
     }
 
@@ -694,8 +708,8 @@ public class OtlpTraceExporterNewTests
     {
         var testOptionsInstance = new OtlpExporterOptions();
 
-        OtlpExporterOptions tracerOptions = null;
-        OtlpExporterOptions meterOptions = null;
+        OtlpExporterOptions? tracerOptions = null;
+        OtlpExporterOptions? meterOptions = null;
 
         var services = new ServiceCollection();
 
@@ -740,8 +754,8 @@ public class OtlpTraceExporterNewTests
     [Fact]
     public void NamedOptionsMutateSeparateInstancesTest()
     {
-        OtlpExporterOptions tracerOptions = null;
-        OtlpExporterOptions meterOptions = null;
+        OtlpExporterOptions? tracerOptions = null;
+        OtlpExporterOptions? meterOptions = null;
 
         var services = new ServiceCollection();
 
@@ -799,7 +813,7 @@ public class OtlpTraceExporterNewTests
             isRemote: isRemote);
 
         using var rootActivity = activitySource.StartActivity("root", ActivityKind.Server, ctx);
-
+        Assert.NotNull(rootActivity);
         var otlpSpan = GetOtlpSpan(rootActivity);
 
         var flags = (OtlpTrace.SpanFlags)otlpSpan.Flags;
@@ -849,6 +863,8 @@ public class OtlpTraceExporterNewTests
 
         using var rootActivity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), links: links);
 
+        Assert.NotNull(rootActivity);
+
         var otlpSpan = GetOtlpSpan(rootActivity);
 
         var spanLink = Assert.Single(otlpSpan.Links);
@@ -878,7 +894,7 @@ public class OtlpTraceExporterNewTests
         }
     }
 
-    private static OtlpTrace.Span GetOtlpSpan(Activity activity, SdkLimitOptions sdkLimitOptions = null)
+    private static OtlpTrace.Span GetOtlpSpan(Activity activity, SdkLimitOptions? sdkLimitOptions = null)
     {
         var request = new OtlpCollector.ExportTraceServiceRequest();
 
