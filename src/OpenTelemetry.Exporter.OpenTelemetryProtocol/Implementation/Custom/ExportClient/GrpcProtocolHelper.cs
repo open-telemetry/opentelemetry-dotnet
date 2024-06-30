@@ -32,6 +32,10 @@ internal class GrpcProtocolHelper
 {
     private const string GrpcStatusHeader = "grpc-status";
     private const string GrpcMessageHeader = "grpc-message";
+    private const string MessageEncodingHeader = "grpc-encoding";
+    private const string MessageAcceptEncodingHeader = "grpc-accept-encoding";
+    private const string GrpcContentType = "application/grpc";
+
     private static readonly Version Http2Version = new Version(2, 0);
 
     internal static void ProcessHttpResponse(HttpResponseMessage httpResponse, out RpcException? rpcException)
@@ -43,9 +47,12 @@ internal class GrpcProtocolHelper
         {
             if (status.Value.StatusCode == StatusCode.OK)
             {
-                // TODO: Set RPC exception.
                 // https://github.com/grpc/grpc-dotnet/blob/1416340c85bb5925b5fed0c101e7e6de71e367e0/src/Grpc.Net.Client/Internal/GrpcCall.cs#L526-L527
                 // Status OK should always be set as part of Trailers.
+                // Change the status code to a more accurate status.
+                // This is consistent with Grpc.Core client behavior.
+                status = new Status(StatusCode.Internal, "Failed to deserialize response message. The response header contains a gRPC status of OK, which means any message returned to the client for this call should be ignored. A unary or client streaming gRPC call must have a response message, which makes this response invalid.");
+                rpcException = new RpcException(status.Value, trailers ?? Metadata.Empty);
             }
             else
             {
@@ -136,6 +143,18 @@ internal class GrpcProtocolHelper
         {
             var statusCode = MapHttpStatusToGrpcCode(httpResponse.StatusCode);
             return new Status(statusCode, "Bad gRPC response. HTTP status code: " + (int)httpResponse.StatusCode);
+        }
+
+        // Don't access Headers.ContentType property because it is not threadsafe.
+        var contentType = GetHeaderValue(httpResponse.Content?.Headers, "Content-Type");
+        if (contentType == null)
+        {
+            return new Status(StatusCode.Cancelled, "Bad gRPC response. Response did not have a content-type header.");
+        }
+
+        if (!IsContentType(GrpcContentType, contentType))
+        {
+            return new Status(StatusCode.Cancelled, "Bad gRPC response. Invalid content-type value: " + contentType);
         }
 
         // Call is still in progress
@@ -255,8 +274,8 @@ internal class GrpcProtocolHelper
                 // Exclude known grpc headers. This matches Grpc.Core client behavior.
                 return string.Equals(name, GrpcStatusHeader, StringComparison.OrdinalIgnoreCase)
                     || string.Equals(name, GrpcMessageHeader, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(name, "grpc-encoding", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(name, "grpc-accept-encoding", StringComparison.OrdinalIgnoreCase);
+                    || string.Equals(name, MessageEncodingHeader, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(name, MessageAcceptEncodingHeader, StringComparison.OrdinalIgnoreCase);
             case 'c':
             case 'C':
                 // Exclude known HTTP headers. This matches Grpc.Core client behavior.
@@ -295,5 +314,98 @@ internal class GrpcProtocolHelper
         }
 
         return status.HasValue ? status.Value : default;
+    }
+
+    private static string? GetHeaderValue(HttpHeaders? headers, string name, bool first = false)
+    {
+        if (headers == null)
+        {
+            return null;
+        }
+
+#if NET6_0_OR_GREATER
+        if (!headers.NonValidated.TryGetValues(name, out var values))
+        {
+            return null;
+        }
+
+        using (var e = values.GetEnumerator())
+        {
+            if (!e.MoveNext())
+            {
+                return null;
+            }
+
+            var result = e.Current;
+            if (!e.MoveNext())
+            {
+                return result;
+            }
+
+            if (first)
+            {
+                return result;
+            }
+        }
+
+        throw new InvalidOperationException($"Multiple {name} headers.");
+#else
+        if (!headers.TryGetValues(name, out var values))
+        {
+            return null;
+        }
+
+        // HttpHeaders appears to always return an array, but fallback to converting values to one just in case
+        var valuesArray = values as string[] ?? values.ToArray();
+
+        switch (valuesArray.Length)
+        {
+            case 0:
+                return null;
+            case 1:
+                return valuesArray[0];
+            default:
+                if (first)
+                {
+                    return valuesArray[0];
+                }
+
+                throw new InvalidOperationException($"Multiple {name} headers.");
+        }
+#endif
+    }
+
+    private static bool IsContentType(string contentType, string? s)
+    {
+        if (s == null)
+        {
+            return false;
+        }
+
+        if (!s.StartsWith(contentType, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (s.Length == contentType.Length)
+        {
+            // Exact match
+            return true;
+        }
+
+        // Support variations on the content-type (e.g. +proto, +json)
+        var nextChar = s[contentType.Length];
+        if (nextChar == ';')
+        {
+            return true;
+        }
+
+        if (nextChar == '+')
+        {
+            // Accept any message format. Marshaller could be set to support third-party formats
+            return true;
+        }
+
+        return false;
     }
 }

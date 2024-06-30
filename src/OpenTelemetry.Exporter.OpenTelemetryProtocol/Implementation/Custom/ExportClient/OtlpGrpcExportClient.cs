@@ -77,6 +77,8 @@ internal class OtlpGrpcExportClient : IExportClient
             {
                 // grpc-dotnet sets the timer for tracking deadline.
                 // https://github.com/grpc/grpc-dotnet/blob/1416340c85bb5925b5fed0c101e7e6de71e367e0/src/Grpc.Net.Client/Internal/GrpcCall.cs#L799-L803
+                // Utilizing the inner exception here to determine deadline exceeded related failures.
+                // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.sendasync?view=net-8.0#remarks
                 if (ex.InnerException is TimeoutException)
                 {
                     var status = new Status(StatusCode.DeadlineExceeded, string.Empty);
@@ -123,6 +125,8 @@ internal class OtlpGrpcExportClient : IExportClient
         Span<byte> data = new Span<byte>(exportRequest, 1, 4);
         var dataLength = contentLength - 5;
         BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
+
+        // TODO: Support compression.
 
         request.Content = new ByteArrayContent(exportRequest, 0, contentLength);
         request.Content.Headers.ContentType = MediaHeaderValue;
