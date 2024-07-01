@@ -16,10 +16,11 @@ namespace OpenTelemetry;
 public readonly struct Batch<T> : IDisposable
     where T : class
 {
-    private readonly T? item = null;
-    private readonly CircularBuffer<T>? circularBuffer = null;
-    private readonly T[]? items = null;
+    private readonly T? item;
+    private readonly CircularBuffer<T>? circularBuffer;
+    private readonly T[]? items;
     private readonly long targetCount;
+    private readonly Predicate<T>? itemProcessor;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Batch{T}"/> struct.
@@ -53,12 +54,40 @@ public readonly struct Batch<T> : IDisposable
         this.targetCount = circularBuffer.RemovedCount + this.Count;
     }
 
+    private Batch(T? item, CircularBuffer<T>? circularBuffer, long count, long targetCount, Predicate<T> itemProcessor)
+    {
+        this.item = item;
+        this.circularBuffer = circularBuffer;
+        this.Count = count;
+        this.targetCount = targetCount;
+        this.itemProcessor = itemProcessor;
+    }
+
     private delegate bool BatchEnumeratorMoveNextFunc(ref Enumerator enumerator);
 
     /// <summary>
     /// Gets the count of items in the batch.
     /// </summary>
     public long Count { get; }
+
+    public Batch<T> WithProcessor(
+        Predicate<T> itemProcessor)
+    {
+        Guard.ThrowIfNull(itemProcessor);
+
+        var currentProcessor = this.itemProcessor;
+        if (currentProcessor != null)
+        {
+            itemProcessor = i => currentProcessor(i) && itemProcessor(i);
+        }
+
+        return new Batch<T>(
+            this.item,
+            this.circularBuffer,
+            this.Count,
+            this.targetCount,
+            itemProcessor);
+    }
 
     /// <inheritdoc/>
     public void Dispose()
@@ -88,11 +117,11 @@ public readonly struct Batch<T> : IDisposable
     public Enumerator GetEnumerator()
     {
         return this.circularBuffer != null
-            ? new Enumerator(this.circularBuffer, this.targetCount)
+            ? new Enumerator(this.circularBuffer, this.targetCount, this.itemProcessor)
             : this.item != null
-                ? new Enumerator(this.item)
+                ? new Enumerator(this.item, this.itemProcessor)
                 /* In the event someone uses default/new Batch() to create Batch we fallback to empty items mode. */
-                : new Enumerator(this.items ?? Array.Empty<T>(), this.targetCount);
+                : new Enumerator(this.items ?? Array.Empty<T>(), this.targetCount, this.itemProcessor);
     }
 
     /// <summary>
@@ -179,34 +208,38 @@ public readonly struct Batch<T> : IDisposable
         [AllowNull]
         private T current;
 
-        internal Enumerator(T item)
+        internal Enumerator(T item, Predicate<T>? itemProcessor)
         {
             this.current = item;
             this.circularBuffer = null;
             this.items = null;
             this.targetCount = -1;
             this.itemIndex = 0;
-            this.moveNextFunc = MoveNextSingleItem;
+
+            this.moveNextFunc = BindMoveNextDelegate(MoveNextSingleItem, itemProcessor);
         }
 
-        internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount)
+        internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount, Predicate<T>? itemProcessor)
         {
             this.current = null;
             this.items = null;
             this.circularBuffer = circularBuffer;
             this.targetCount = targetCount;
             this.itemIndex = 0;
-            this.moveNextFunc = typeof(T) == typeof(LogRecord) ? MoveNextCircularBufferLogRecord : MoveNextCircularBuffer;
+
+            this.moveNextFunc = BindMoveNextDelegate(
+                typeof(T) == typeof(LogRecord) ? MoveNextCircularBufferLogRecord : MoveNextCircularBuffer,
+                itemProcessor);
         }
 
-        internal Enumerator(T[] items, long targetCount)
+        internal Enumerator(T[] items, long targetCount, Predicate<T>? itemProcessor)
         {
             this.current = null;
             this.circularBuffer = null;
             this.items = items;
             this.targetCount = targetCount;
             this.itemIndex = 0;
-            this.moveNextFunc = MoveNextArray;
+            this.moveNextFunc = BindMoveNextDelegate(MoveNextArray, itemProcessor);
         }
 
         /// <inheritdoc/>
@@ -243,5 +276,28 @@ public readonly struct Batch<T> : IDisposable
         /// <inheritdoc/>
         public readonly void Reset()
             => throw new NotSupportedException();
+
+        private static BatchEnumeratorMoveNextFunc BindMoveNextDelegate(BatchEnumeratorMoveNextFunc moveNextFunc, Predicate<T>? itemProcessor)
+        {
+            if (itemProcessor != null)
+            {
+                return (ref Enumerator enumerator) =>
+                {
+                    while (moveNextFunc(ref enumerator))
+                    {
+                        if (itemProcessor(enumerator.current))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                };
+            }
+            else
+            {
+                return moveNextFunc;
+            }
+        }
     }
 }
