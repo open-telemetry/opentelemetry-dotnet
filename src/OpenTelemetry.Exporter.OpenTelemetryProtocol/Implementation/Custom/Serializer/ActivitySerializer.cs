@@ -265,6 +265,27 @@ internal class ActivitySerializer
 
             if (attributeCount < maxAttributeCount)
             {
+                /*
+                    // Alternate approach
+                    // Reset the Cursor for tagwriter.
+                    this.tagWriterState.Cursor = 0;
+                    OtlpTagWriter.Instance.TryWriteTag(ref this.tagWriterState, tag, maxAttributeValueLength);
+
+                    // Write tag and length prefix for keyValue.
+                    cursor = Writer.WriteTagAndLengthPrefix(ref buffer, cursor, this.tagWriterState.Cursor, FieldNumberConstants.Span_attributes, WireType.LEN);
+
+                    // Increase buffer size if needed.
+                    if (cursor + this.tagWriterState.Cursor >= buffer.Length)
+                    {
+                        Writer.RefreshBuffer(ref buffer);
+                    }
+
+                    // Copy the tagWriter buffer to main buffer.
+                    Buffer.BlockCopy(this.tagWriterState.Buffer, 0, buffer, cursor, this.tagWriterState.Cursor);
+
+                    // Move the main buffer cursor position.
+                    cursor += this.tagWriterState.Cursor;
+                */
                 cursor = CommonTypesSerializer.SerializeKeyValuePair(ref buffer, cursor, FieldNumberConstants.Span_attributes, tag, maxAttributeValueLength);
                 attributeCount++;
             }
