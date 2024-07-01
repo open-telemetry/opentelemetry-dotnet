@@ -79,15 +79,14 @@ internal class GrpcProtocolHelper
 
     private static bool TryGetStatusCore(HttpHeaders httpHeaders, out Status? status)
     {
-        httpHeaders.TryGetValues(GrpcStatusHeader, out var values);
+        var grpcStatus = GetHeaderValue(httpHeaders, GrpcStatusHeader);
 
-        if (values == null)
+        // grpc-status is a required trailer
+        if (grpcStatus == null)
         {
             status = null;
             return false;
         }
-
-        var grpcStatus = values.FirstOrDefault();
 
         int statusValue;
         if (!int.TryParse(grpcStatus, out statusValue))
@@ -97,14 +96,7 @@ internal class GrpcProtocolHelper
 
         // grpc-message is optional
         // Always read the gRPC message from the same headers collection as the status
-        httpHeaders.TryGetValues(GrpcMessageHeader, out var message);
-
-        string? grpcMessage = null;
-
-        if (message != null)
-        {
-            grpcMessage = message.FirstOrDefault();
-        }
+        var grpcMessage = GetHeaderValue(httpHeaders, GrpcMessageHeader);
 
         if (!string.IsNullOrEmpty(grpcMessage))
         {
