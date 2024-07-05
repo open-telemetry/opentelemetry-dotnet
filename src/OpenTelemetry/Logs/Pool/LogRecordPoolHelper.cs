@@ -15,7 +15,7 @@ internal static class LogRecordPoolHelper
         {
             if (attributeStorage.Count > DefaultMaxNumberOfAttributes)
             {
-                // Don't allow the pool to grow unconstained.
+                // Don't allow the pool to grow unconstrained.
                 logRecord.AttributeStorage = null;
             }
             else
@@ -31,7 +31,7 @@ internal static class LogRecordPoolHelper
         {
             if (scopeStorage.Count > DefaultMaxNumberOfScopes)
             {
-                // Don't allow the pool to grow unconstained.
+                // Don't allow the pool to grow unconstrained.
                 logRecord.ScopeStorage = null;
             }
             else

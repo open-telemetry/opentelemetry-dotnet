@@ -1,13 +1,28 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
 namespace OpenTelemetry;
+
+/// <summary>
+/// Represents a callback action for transforming and filtering items contained
+/// in a <see cref="Batch{T}"/>.
+/// </summary>
+/// <typeparam name="TItem">Item type.</typeparam>
+/// <typeparam name="TState">State type.</typeparam>
+/// <param name="item">Item being transformed.</param>
+/// <param name="state">The state supplied for the transformation.</param>
+/// <returns>Return <see langword="false"/> to indicate the item should be
+/// removed from the <see cref="Batch{T}"/>.</returns>
+public delegate bool BatchTransformationPredicate<TItem, TState>(TItem item, ref TState state)
+    where TItem : class;
 
 /// <summary>
 /// Stores a batch of completed <typeparamref name="T"/> objects to be exported.
@@ -19,8 +34,8 @@ public readonly struct Batch<T> : IDisposable
     private readonly T? item;
     private readonly CircularBuffer<T>? circularBuffer;
     private readonly T[]? items;
+    private readonly bool rented;
     private readonly long targetCount;
-    private readonly Predicate<T>? itemProcessor;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Batch{T}"/> struct.
@@ -28,11 +43,17 @@ public readonly struct Batch<T> : IDisposable
     /// <param name="items">The items to store in the batch.</param>
     /// <param name="count">The number of items in the batch.</param>
     public Batch(T[] items, int count)
+        : this(items, count, rented: false)
+    {
+    }
+
+    internal Batch(T[] items, int count, bool rented)
     {
         Guard.ThrowIfNull(items);
         Guard.ThrowIfOutOfRange(count, min: 0, max: items.Length);
 
         this.items = items;
+        this.rented = rented;
         this.Count = this.targetCount = count;
     }
 
@@ -54,15 +75,6 @@ public readonly struct Batch<T> : IDisposable
         this.targetCount = circularBuffer.RemovedCount + this.Count;
     }
 
-    private Batch(T? item, CircularBuffer<T>? circularBuffer, long count, long targetCount, Predicate<T> itemProcessor)
-    {
-        this.item = item;
-        this.circularBuffer = circularBuffer;
-        this.Count = count;
-        this.targetCount = targetCount;
-        this.itemProcessor = itemProcessor;
-    }
-
     private delegate bool BatchEnumeratorMoveNextFunc(ref Enumerator enumerator);
 
     /// <summary>
@@ -70,23 +82,88 @@ public readonly struct Batch<T> : IDisposable
     /// </summary>
     public long Count { get; }
 
-    public Batch<T> WithProcessor(
-        Predicate<T> itemProcessor)
+    /// <summary>
+    /// Transforms and filters the items of a <see cref="Batch{T}"/> using the
+    /// supplied <see cref="BatchTransformationPredicate{TItem,TState}"/> and state.
+    /// </summary>
+    /// <typeparam name="TState">State type.</typeparam>
+    /// <param name="transformation">Transformation function. Return <see
+    /// langword="false"/> to remove an item from the <see
+    /// cref="Batch{T}"/>.</param>
+    /// <param name="state">State to be passed into <paramref name="transformation"/>.</param>
+    public void Transform<TState>(BatchTransformationPredicate<T, TState> transformation, ref TState state)
     {
-        Guard.ThrowIfNull(itemProcessor);
+        Guard.ThrowIfNull(transformation);
 
-        var currentProcessor = this.itemProcessor;
-        if (currentProcessor != null)
+        if (this.Count <= 0)
         {
-            itemProcessor = i => currentProcessor(i) && itemProcessor(i);
+            return;
         }
 
-        return new Batch<T>(
-            this.item,
-            this.circularBuffer,
-            this.Count,
-            this.targetCount,
-            itemProcessor);
+        if (this.item != null)
+        {
+            Debug.Assert(
+                typeof(T) != typeof(LogRecord)
+                || ((LogRecord)(object)this.item).Source != LogRecord.LogRecordSource.FromSharedPool,
+                "Batch contained a single item rented from the shared pool");
+
+            // Special case for a batch of a single item
+
+            if (!TransformItem(transformation, ref state, this.item))
+            {
+                Unsafe.AsRef(in this) = new Batch<T>(Array.Empty<T>(), 0, rented: false);
+            }
+
+            return;
+        }
+
+        var rentedArray = ArrayPool<T>.Shared.Rent((int)this.Count);
+
+        var i = 0;
+
+        if (typeof(T) == typeof(LogRecord))
+        {
+            foreach (var item in this)
+            {
+                if (TransformItem(transformation, ref state, item))
+                {
+                    var logRecord = (LogRecord)(object)item;
+                    if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
+                    {
+                        logRecord.AddReference();
+                    }
+
+                    rentedArray[i++] = item;
+                }
+            }
+        }
+        else
+        {
+            foreach (var item in this)
+            {
+                if (TransformItem(transformation, ref state, item))
+                {
+                    rentedArray[i++] = item;
+                }
+            }
+        }
+
+        this.Dispose();
+
+        Unsafe.AsRef(in this) = new Batch<T>(rentedArray, i, rented: true);
+
+        static bool TransformItem(BatchTransformationPredicate<T, TState> transformation, ref TState state, T item)
+        {
+            try
+            {
+                return transformation(item, ref state);
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.BatchTransformationException<T>(ex);
+                return true;
+            }
+        }
     }
 
     /// <inheritdoc/>
@@ -94,19 +171,28 @@ public readonly struct Batch<T> : IDisposable
     {
         if (this.circularBuffer != null)
         {
-            // Drain anything left in the batch.
+            // Note: Drain anything left in the batch and return to the pool if
+            // needed.
             while (this.circularBuffer.RemovedCount < this.targetCount)
             {
                 T item = this.circularBuffer.Read();
                 if (typeof(T) == typeof(LogRecord))
                 {
-                    var logRecord = (LogRecord)(object)item;
-                    if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
-                    {
-                        LogRecordSharedPool.Current.Return(logRecord);
-                    }
+                    Enumerator.TryReturnLogRecordToPool(item);
                 }
             }
+        }
+        else if (this.items != null && this.rented)
+        {
+            // Note: We don't attempt to return individual LogRecords to the
+            // pool. If the batch wasn't drained fully some records may get
+            // garbage collected but the pool will recreate more as needed. The
+            // idea is most batches are expected to be drained during export so
+            // it isn't worth the effort to track what was/was not returned.
+
+            ArrayPool<T>.Shared.Return(this.items);
+
+            Unsafe.AsRef(in this) = new Batch<T>(Array.Empty<T>(), 0);
         }
     }
 
@@ -117,11 +203,11 @@ public readonly struct Batch<T> : IDisposable
     public Enumerator GetEnumerator()
     {
         return this.circularBuffer != null
-            ? new Enumerator(this.circularBuffer, this.targetCount, this.itemProcessor)
+            ? new Enumerator(this.circularBuffer, this.targetCount)
             : this.item != null
-                ? new Enumerator(this.item, this.itemProcessor)
+                ? new Enumerator(this.item)
                 /* In the event someone uses default/new Batch() to create Batch we fallback to empty items mode. */
-                : new Enumerator(this.items ?? Array.Empty<T>(), this.targetCount, this.itemProcessor);
+                : new Enumerator(this.items ?? Array.Empty<T>(), this.targetCount);
     }
 
     /// <summary>
@@ -143,6 +229,8 @@ public readonly struct Batch<T> : IDisposable
 
         private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBuffer = (ref Enumerator enumerator) =>
         {
+            Debug.Assert(typeof(T) != typeof(LogRecord), "T was an unexpected type");
+
             var circularBuffer = enumerator.circularBuffer;
 
             if (circularBuffer!.RemovedCount < enumerator.targetCount)
@@ -157,37 +245,27 @@ public readonly struct Batch<T> : IDisposable
 
         private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBufferLogRecord = (ref Enumerator enumerator) =>
         {
-            // Note: This type check here is to give the JIT a hint it can
-            // remove all of this code when T != LogRecord
-            if (typeof(T) == typeof(LogRecord))
+            Debug.Assert(typeof(T) == typeof(LogRecord), "T was an unexpected type");
+
+            TryReturnCurrentLogRecordToPool(ref enumerator);
+
+            var circularBuffer = enumerator.circularBuffer;
+
+            if (circularBuffer!.RemovedCount < enumerator.targetCount)
             {
-                var circularBuffer = enumerator.circularBuffer;
-
-                var currentItem = enumerator.Current;
-
-                if (currentItem != null)
-                {
-                    var logRecord = (LogRecord)(object)currentItem;
-                    if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
-                    {
-                        LogRecordSharedPool.Current.Return(logRecord);
-                    }
-                }
-
-                if (circularBuffer!.RemovedCount < enumerator.targetCount)
-                {
-                    enumerator.current = circularBuffer.Read();
-                    return true;
-                }
-
-                enumerator.current = null;
+                enumerator.current = circularBuffer.Read();
+                return true;
             }
+
+            enumerator.current = null;
 
             return false;
         };
 
         private static readonly BatchEnumeratorMoveNextFunc MoveNextArray = (ref Enumerator enumerator) =>
         {
+            Debug.Assert(typeof(T) != typeof(LogRecord), "T was an unexpected type");
+
             var items = enumerator.items;
 
             if (enumerator.itemIndex < enumerator.targetCount)
@@ -200,6 +278,25 @@ public readonly struct Batch<T> : IDisposable
             return false;
         };
 
+        private static readonly BatchEnumeratorMoveNextFunc MoveNextArrayLogRecord = (ref Enumerator enumerator) =>
+        {
+            Debug.Assert(typeof(T) == typeof(LogRecord), "T was an unexpected type");
+
+            TryReturnCurrentLogRecordToPool(ref enumerator);
+
+            var items = enumerator.items;
+
+            if (enumerator.itemIndex < enumerator.targetCount)
+            {
+                enumerator.current = items![enumerator.itemIndex++];
+                return true;
+            }
+
+            enumerator.current = null;
+
+            return false;
+        };
+
         private readonly CircularBuffer<T>? circularBuffer;
         private readonly T[]? items;
         private readonly BatchEnumeratorMoveNextFunc moveNextFunc;
@@ -208,38 +305,34 @@ public readonly struct Batch<T> : IDisposable
         [AllowNull]
         private T current;
 
-        internal Enumerator(T item, Predicate<T>? itemProcessor)
+        internal Enumerator(T item)
         {
             this.current = item;
             this.circularBuffer = null;
             this.items = null;
             this.targetCount = -1;
             this.itemIndex = 0;
-
-            this.moveNextFunc = BindMoveNextDelegate(MoveNextSingleItem, itemProcessor);
+            this.moveNextFunc = MoveNextSingleItem;
         }
 
-        internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount, Predicate<T>? itemProcessor)
+        internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount)
         {
             this.current = null;
             this.items = null;
             this.circularBuffer = circularBuffer;
             this.targetCount = targetCount;
             this.itemIndex = 0;
-
-            this.moveNextFunc = BindMoveNextDelegate(
-                typeof(T) == typeof(LogRecord) ? MoveNextCircularBufferLogRecord : MoveNextCircularBuffer,
-                itemProcessor);
+            this.moveNextFunc = typeof(T) == typeof(LogRecord) ? MoveNextCircularBufferLogRecord : MoveNextCircularBuffer;
         }
 
-        internal Enumerator(T[] items, long targetCount, Predicate<T>? itemProcessor)
+        internal Enumerator(T[] items, long targetCount)
         {
             this.current = null;
             this.circularBuffer = null;
             this.items = items;
             this.targetCount = targetCount;
             this.itemIndex = 0;
-            this.moveNextFunc = BindMoveNextDelegate(MoveNextArray, itemProcessor);
+            this.moveNextFunc = typeof(T) == typeof(LogRecord) ? MoveNextArrayLogRecord : MoveNextArray;
         }
 
         /// <inheritdoc/>
@@ -256,12 +349,7 @@ public readonly struct Batch<T> : IDisposable
                 var currentItem = this.current;
                 if (currentItem != null)
                 {
-                    var logRecord = (LogRecord)(object)currentItem;
-                    if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
-                    {
-                        LogRecordSharedPool.Current.Return(logRecord);
-                    }
-
+                    TryReturnLogRecordToPool(currentItem);
                     this.current = null;
                 }
             }
@@ -277,26 +365,27 @@ public readonly struct Batch<T> : IDisposable
         public readonly void Reset()
             => throw new NotSupportedException();
 
-        private static BatchEnumeratorMoveNextFunc BindMoveNextDelegate(BatchEnumeratorMoveNextFunc moveNextFunc, Predicate<T>? itemProcessor)
+        internal static void TryReturnLogRecordToPool(T currentItem)
         {
-            if (itemProcessor != null)
-            {
-                return (ref Enumerator enumerator) =>
-                {
-                    while (moveNextFunc(ref enumerator))
-                    {
-                        if (itemProcessor(enumerator.current))
-                        {
-                            return true;
-                        }
-                    }
+            Debug.Assert(typeof(T) == typeof(LogRecord), "T was an unexpected type");
+            Debug.Assert(currentItem != null, "currentItem was null");
 
-                    return false;
-                };
-            }
-            else
+            var logRecord = (LogRecord)(object)currentItem!;
+            if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
             {
-                return moveNextFunc;
+                LogRecordSharedPool.Current.Return(logRecord);
+            }
+        }
+
+        private static void TryReturnCurrentLogRecordToPool(ref Enumerator enumerator)
+        {
+            Debug.Assert(typeof(T) == typeof(LogRecord), "T was an unexpected type");
+
+            var currentItem = enumerator.Current;
+
+            if (currentItem != null)
+            {
+                TryReturnLogRecordToPool(currentItem);
             }
         }
     }

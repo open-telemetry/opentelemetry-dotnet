@@ -167,6 +167,15 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         }
     }
 
+    [NonEvent]
+    public void BatchTransformationException<T>(Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.BatchTransformationException(typeof(T).FullName!, ex.ToInvariantString());
+        }
+    }
+
     [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
     public void SpanProcessorException(string evnt, string ex)
     {
@@ -372,6 +381,12 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     public void MetricViewException(string source, string ex)
     {
         this.WriteEvent(56, source, ex);
+    }
+
+    [Event(57, Message = "Exception thrown by user code supplied as batch of type '{0}' transformation function: '{1}'.", Level = EventLevel.Error)]
+    public void BatchTransformationException(string type, string ex)
+    {
+        this.WriteEvent(57, type, ex);
     }
 
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)

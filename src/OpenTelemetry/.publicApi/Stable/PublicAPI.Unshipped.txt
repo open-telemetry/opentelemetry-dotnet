@@ -1,0 +1,3 @@
+OpenTelemetry.Batch<T>.Transform<TState>(OpenTelemetry.BatchTransformationPredicate<T!, TState>! transformation, ref TState state) -> void
+OpenTelemetry.BatchTransformationPredicate<TItem, TState>
+virtual OpenTelemetry.BatchTransformationPredicate<TItem, TState>.Invoke(TItem! item, ref TState state) -> bool
