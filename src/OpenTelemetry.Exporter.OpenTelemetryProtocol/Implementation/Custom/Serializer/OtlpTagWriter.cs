@@ -40,9 +40,20 @@ internal sealed class OtlpTagWriter : TagWriter<OtlpTagWriter.OtlpTagWriterState
     {
         state.Cursor = Writer.WriteStringWithTag(ref state.Buffer, state.Cursor, FieldNumberConstants.KeyValue_key, key);
 
-        int stringSize = Encoding.UTF8.GetByteCount(value.ToString());
-        state.Cursor = Writer.WriteTagAndLengthPrefix(ref state.Buffer, state.Cursor, stringSize + 2, FieldNumberConstants.KeyValue_value, WireType.LEN);
-        state.Cursor = Writer.WriteStringWithTag(ref state.Buffer, state.Cursor, FieldNumberConstants.AnyValue_string_value, value.ToString());
+#if NETFRAMEWORK || NETSTANDARD2_0
+        int numberOfUtf8CharsInString;
+        unsafe
+        {
+            fixed (char* p = value)
+            {
+                numberOfUtf8CharsInString = Encoding.UTF8.GetByteCount(p, value.Length);
+            }
+        }
+#else
+        int numberOfUtf8CharsInString = Encoding.UTF8.GetByteCount(value);
+#endif
+        state.Cursor = Writer.WriteTagAndLengthPrefix(ref state.Buffer, state.Cursor, numberOfUtf8CharsInString + 2, FieldNumberConstants.KeyValue_value, WireType.LEN);
+        state.Cursor = Writer.WriteStringWithTag(ref state.Buffer, state.Cursor, FieldNumberConstants.AnyValue_string_value, value, numberOfUtf8CharsInString);
     }
 
     protected override void WriteArrayTag(ref OtlpTagWriterState state, string key, ref OtlpTagWriterArrayState value)

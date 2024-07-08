@@ -18,31 +18,59 @@ internal class Writer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteStringWithTag(ref byte[] buffer, int cursor, int fieldNumber, string value)
     {
-        int stringSize = Utf8Encoding.GetByteCount(value);
+        return WriteStringWithTag(ref buffer, cursor, fieldNumber, value.AsSpan());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteStringWithTag(
+        ref byte[] buffer,
+        int cursor,
+        int fieldNumber,
+        ReadOnlySpan<char> value,
+        int numberOfUtf8CharsInString = -1)
+    {
+        if (numberOfUtf8CharsInString < 0)
+        {
+#if NETFRAMEWORK || NETSTANDARD2_0
+            unsafe
+            {
+                fixed (char* strPtr = value)
+                {
+                    numberOfUtf8CharsInString = Encoding.UTF8.GetByteCount(strPtr, value.Length);
+                }
+            }
+#else
+            numberOfUtf8CharsInString = Encoding.UTF8.GetByteCount(value);
+#endif
+        }
 
         cursor = WriteTag(ref buffer, cursor, fieldNumber, WireType.LEN);
 
-        cursor = WriteLength(ref buffer, cursor, stringSize);
+        cursor = WriteLength(ref buffer, cursor, numberOfUtf8CharsInString);
 
-        if (cursor + stringSize > buffer.Length)
+        while (cursor + numberOfUtf8CharsInString > buffer.Length)
         {
-            byte[] values = Utf8Encoding.GetBytes(value);
+            GrowBuffer(ref buffer);
+        }
 
-            foreach (var v in values)
+#if NETFRAMEWORK || NETSTANDARD2_0
+        unsafe
+        {
+            fixed (char* strPtr = value)
             {
-                cursor = WriteSingleByte(ref buffer, cursor, v);
+                fixed (byte* bufferPtr = buffer)
+                {
+                    Encoding.UTF8.GetBytes(strPtr, value.Length, bufferPtr + cursor, numberOfUtf8CharsInString);
+                }
             }
-
-            return cursor;
         }
-        else
-        {
-            _ = Encoding.UTF8.GetBytes(value, 0, value.Length, buffer, cursor);
+#else
+        _ = Encoding.UTF8.GetBytes(value, buffer.AsSpan().Slice(cursor));
+#endif
 
-            cursor += stringSize;
+        cursor += numberOfUtf8CharsInString;
 
-            return cursor;
-        }
+        return cursor;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -284,7 +312,7 @@ internal class Writer
     {
         if (buffer.Length == cursor)
         {
-            RefreshBuffer(ref buffer);
+            GrowBuffer(ref buffer);
         }
 
         buffer[cursor++] = value;
@@ -292,7 +320,7 @@ internal class Writer
         return cursor;
     }
 
-    internal static void RefreshBuffer(ref byte[] buffer)
+    internal static void GrowBuffer(ref byte[] buffer)
     {
         var newBuffer = new byte[buffer.Length * 2];
 
