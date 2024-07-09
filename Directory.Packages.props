@@ -55,10 +55,10 @@
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="8.0.0" />
 
     <!-- A conservative version of System.Text.Encodings.Web must be used here since there is no backward compatibility guarantee during major version bumps. -->
-    <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
+    <PackageVersion Include="System.Text.Encodings.Web" Version="8.0.0" />
 
     <!-- A conservative version of System.Text.Json must be used here since there is no backward compatibility guarantee during major version bumps. -->
-    <PackageVersion Include="System.Text.Json" Version="4.7.2" />
+    <PackageVersion Include="System.Text.Json" Version="8.0.4" />
 
     <!-- A conservative version of System.Threading.Tasks.Extensions must be used here since there is no backward compatibility guarantee during major version bumps. -->
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
