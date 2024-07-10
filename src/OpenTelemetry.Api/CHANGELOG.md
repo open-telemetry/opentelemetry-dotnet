@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* **Breaking change:** CompositeTextMapPropagator.Fields now returns a unioned set of fields
+from all combined propagators. Previously this always returned an empty set.
+
 ## 1.9.0
 
 Released 2024-Jun-14
