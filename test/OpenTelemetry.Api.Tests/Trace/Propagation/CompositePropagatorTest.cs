@@ -31,19 +31,44 @@ public class CompositePropagatorTest
     private readonly ActivitySpanId spanId = ActivitySpanId.CreateRandom();
 
     [Fact]
-    public void CompositePropagator_NullTextFormatList()
+    public void CompositePropagator_NullTextMapPropagators()
     {
         Assert.Throws<ArgumentNullException>(() => new CompositeTextMapPropagator(null));
     }
 
     [Fact]
+    public void CompositePropagator_EmptyTextMapPropagators()
+    {
+        var compositePropagator = new CompositeTextMapPropagator([]);
+        Assert.Empty(compositePropagator.Fields);
+    }
+
+    [Fact]
+    public void CompositePropagator_NoOpTextMapPropagators()
+    {
+        var compositePropagator = new CompositeTextMapPropagator([new NoopTextMapPropagator()]);
+        Assert.Empty(compositePropagator.Fields);
+    }
+
+    [Fact]
+    public void CompositePropagator_SingleTextMapPropagator()
+    {
+        var testPropagator = new TestPropagator("custom-traceparent-1", "custom-tracestate-1");
+
+        var compositePropagator = new CompositeTextMapPropagator([testPropagator]);
+
+        // We expect a new HashSet, with a copy of the values from the propagator.
+        Assert.Equal(testPropagator.Fields, compositePropagator.Fields);
+        Assert.NotSame(testPropagator.Fields, compositePropagator.Fields);
+    }
+
+    [Fact]
     public void CompositePropagator_TestPropagator()
     {
-        var compositePropagator = new CompositeTextMapPropagator(new List<TextMapPropagator>
-        {
-            new TestPropagator("custom-traceparent-1", "custom-tracestate-1"),
-            new TestPropagator("custom-traceparent-2", "custom-tracestate-2"),
-        });
+        var testPropagatorA = new TestPropagator("custom-traceparent-1", "custom-tracestate-1");
+        var testPropagatorB = new TestPropagator("custom-traceparent-2", "custom-tracestate-2");
+
+        var compositePropagator = new CompositeTextMapPropagator([testPropagatorA, testPropagatorB,]);
 
         var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
         PropagationContext propagationContext = new PropagationContext(activityContext, default);
@@ -53,6 +78,18 @@ public class CompositePropagatorTest
         compositePropagator.Inject(propagationContext, carrier, Setter);
         Assert.Contains(carrier, kv => kv.Key == "custom-traceparent-1");
         Assert.Contains(carrier, kv => kv.Key == "custom-traceparent-2");
+
+        Assert.Equal(testPropagatorA.Fields.Count + testPropagatorB.Fields.Count, compositePropagator.Fields.Count);
+        Assert.Subset(compositePropagator.Fields, testPropagatorA.Fields);
+        Assert.Subset(compositePropagator.Fields, testPropagatorB.Fields);
+
+        Assert.Equal(1, testPropagatorA.InjectCount);
+        Assert.Equal(1, testPropagatorB.InjectCount);
+
+        compositePropagator.Extract(default, new Dictionary<string, string>(), Getter);
+
+        Assert.Equal(1, testPropagatorA.ExtractCount);
+        Assert.Equal(1, testPropagatorB.ExtractCount);
     }
 
     [Fact]
@@ -61,11 +98,10 @@ public class CompositePropagatorTest
         const string header01 = "custom-tracestate-01";
         const string header02 = "custom-tracestate-02";
 
-        var compositePropagator = new CompositeTextMapPropagator(new List<TextMapPropagator>
-        {
-            new TestPropagator("custom-traceparent", header01, true),
-            new TestPropagator("custom-traceparent", header02),
-        });
+        var testPropagatorA = new TestPropagator("custom-traceparent", header01, true);
+        var testPropagatorB = new TestPropagator("custom-traceparent", header02);
+
+        var compositePropagator = new CompositeTextMapPropagator([testPropagatorA, testPropagatorB,]);
 
         var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
         PropagationContext propagationContext = new PropagationContext(activityContext, default);
@@ -74,6 +110,11 @@ public class CompositePropagatorTest
 
         compositePropagator.Inject(propagationContext, carrier, Setter);
         Assert.Contains(carrier, kv => kv.Key == "custom-traceparent");
+
+        Assert.Equal(3, compositePropagator.Fields.Count);
+
+        Assert.Equal(1, testPropagatorA.InjectCount);
+        Assert.Equal(1, testPropagatorB.InjectCount);
 
         // checking if the latest propagator is the one with the data. So, it will replace the previous one.
         Assert.Equal($"00-{this.traceId}-{this.spanId}-{header02.Split('-').Last()}", carrier["custom-traceparent"]);
@@ -85,6 +126,9 @@ public class CompositePropagatorTest
         // checking if we accessed only two times: header/headerstate options
         // if that's true, we skipped the first one since we have a logic to for the default result
         Assert.Equal(2, count);
+
+        Assert.Equal(1, testPropagatorA.ExtractCount);
+        Assert.Equal(1, testPropagatorB.ExtractCount);
     }
 
     [Fact]

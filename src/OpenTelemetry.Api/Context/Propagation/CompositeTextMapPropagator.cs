@@ -11,8 +11,8 @@ namespace OpenTelemetry.Context.Propagation;
 /// </summary>
 public class CompositeTextMapPropagator : TextMapPropagator
 {
-    private static readonly ISet<string> EmptyFields = new HashSet<string>();
-    private readonly List<TextMapPropagator> propagators;
+    private readonly IReadOnlyList<TextMapPropagator> propagators;
+    private readonly ISet<string> allFields;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CompositeTextMapPropagator"/> class.
@@ -23,10 +23,37 @@ public class CompositeTextMapPropagator : TextMapPropagator
         Guard.ThrowIfNull(propagators);
 
         this.propagators = new List<TextMapPropagator>(propagators);
+
+        // For efficiency, we resolve the fields from all propagators only once, as they are
+        // not expected to change (although the implementation doesn't strictly prevent that).
+        if (this.propagators.Count == 0)
+        {
+            // Use a new empty HashSet for each instance to avoid any potential mutation issues.
+            this.allFields = new HashSet<string>();
+        }
+        else
+        {
+            ISet<string> fields = this.propagators[0].Fields;
+
+            var output = fields is not null
+                ? new HashSet<string>(fields)
+                : [];
+
+            for (int i = 1; i < this.propagators.Count; i++)
+            {
+                fields = this.propagators[i].Fields;
+                if (fields is not null)
+                {
+                    output.UnionWith(fields);
+                }
+            }
+
+            this.allFields = output;
+        }
     }
 
     /// <inheritdoc/>
-    public override ISet<string> Fields => EmptyFields;
+    public override ISet<string> Fields => this.allFields;
 
     /// <inheritdoc/>
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
