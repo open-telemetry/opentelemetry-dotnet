@@ -36,7 +36,7 @@ public class TestPropagator : TextMapPropagator
             return context;
         }
 
-        IEnumerable<string> id = getter(carrier, this.idHeaderName);
+        var id = getter(carrier, this.idHeaderName);
         if (!id.Any())
         {
             return context;
@@ -48,8 +48,8 @@ public class TestPropagator : TextMapPropagator
             return context;
         }
 
-        string tracestate = string.Empty;
-        IEnumerable<string> tracestateCollection = getter(carrier, this.stateHeaderName);
+        var tracestate = string.Empty;
+        var tracestateCollection = getter(carrier, this.stateHeaderName);
         if (tracestateCollection?.Any() ?? false)
         {
             TraceContextPropagator.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
@@ -64,14 +64,14 @@ public class TestPropagator : TextMapPropagator
     {
         Interlocked.Increment(ref this.injectCount);
 
-        string headerNumber = this.stateHeaderName.Split('-').Last();
+        var headerNumber = this.stateHeaderName.Split('-').Last();
 
         var traceparent = string.Concat("00-", context.ActivityContext.TraceId.ToHexString(), "-", context.ActivityContext.SpanId.ToHexString());
         traceparent = string.Concat(traceparent, "-", headerNumber);
 
         setter(carrier, this.idHeaderName, traceparent);
 
-        string tracestateStr = context.ActivityContext.TraceState;
+        var tracestateStr = context.ActivityContext.TraceState;
         if (tracestateStr?.Length > 0)
         {
             setter(carrier, this.stateHeaderName, tracestateStr);
