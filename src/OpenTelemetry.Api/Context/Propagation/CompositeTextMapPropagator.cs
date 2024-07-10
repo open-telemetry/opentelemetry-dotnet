@@ -22,7 +22,17 @@ public class CompositeTextMapPropagator : TextMapPropagator
     {
         Guard.ThrowIfNull(propagators);
 
-        this.propagators = new List<TextMapPropagator>(propagators);
+        var propagatorsList = new List<TextMapPropagator>();
+
+        foreach (var propagator in propagators)
+        {
+            if (propagator is not null)
+            {
+                propagatorsList.Add(propagator);
+            }
+        }
+
+        this.propagators = propagatorsList;
 
         // For efficiency, we resolve the fields from all propagators only once, as they are
         // not expected to change (although the implementation doesn't strictly prevent that).

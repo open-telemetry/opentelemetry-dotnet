@@ -44,6 +44,13 @@ public class CompositePropagatorTest
     }
 
     [Fact]
+    public void CompositePropagator_NullTextMapPropagator()
+    {
+        var compositePropagator = new CompositeTextMapPropagator([null]);
+        Assert.Empty(compositePropagator.Fields);
+    }
+
+    [Fact]
     public void CompositePropagator_NoOpTextMapPropagators()
     {
         var compositePropagator = new CompositeTextMapPropagator([new NoopTextMapPropagator()]);
