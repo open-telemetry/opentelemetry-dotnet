@@ -150,7 +150,7 @@ public class LogBenchmarks
         this.loggerWithThreeProcessors.SayHello(FoodName, FoodPrice);
     }
 
-    internal class NoOpProcessor : BaseProcessor<LogRecord>
+    internal class NoOpLogProcessor : BaseProcessor<LogRecord>
     {
     }
 
