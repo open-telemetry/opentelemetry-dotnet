@@ -353,6 +353,16 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 
+Once the cardinality limit is reached, any new measurement which
+cannot be independently aggregated because of the limit will be dropped by default.
+Instead of dropping, they can aggregated using the [overflow
+attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
+by opting in to the feature
+
+When NOT using the overflow attribute feature a warning is written
+to the [self-diagnostic log](../../src/OpenTelemetry/README.md#self-diagnostics)
+the first time an overflow is detected for a given metric.
+
 ### Exemplars
 
 Exemplars are example data points for aggregated data. They provide access to
