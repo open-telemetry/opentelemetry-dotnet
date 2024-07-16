@@ -13,12 +13,12 @@ public class TraceContextPropagatorTest
     private const string TraceId = "0af7651916cd43dd8448eb211c80319c";
     private const string SpanId = "b9c7c989f97918e1";
 
-    private static readonly string[] Empty = Array.Empty<string>();
+    private static readonly string[] Empty = [];
     private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter = (headers, name) =>
     {
         if (headers.TryGetValue(name, out var value))
         {
-            return new[] { value };
+            return [value];
         }
 
         return Empty;
@@ -31,7 +31,7 @@ public class TraceContextPropagatorTest
             return value;
         }
 
-        return Array.Empty<string>();
+        return [];
     };
 
     private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
