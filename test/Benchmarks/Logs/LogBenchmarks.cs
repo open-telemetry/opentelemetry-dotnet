@@ -54,31 +54,31 @@ public class LogBenchmarks
         this.loggerFactoryWithOneProcessor = LoggerFactory.Create(builder =>
         {
             builder.UseOpenTelemetry(logging => logging
-                .AddProcessor(new NoOpLogProcessor()));
+                .AddProcessor(new NoopLogProcessor()));
         });
         this.loggerWithOneProcessor = this.loggerFactoryWithOneProcessor.CreateLogger<LogBenchmarks>();
 
         this.loggerFactoryWithBatchProcessor = LoggerFactory.Create(builder =>
         {
             builder.UseOpenTelemetry(logging => logging
-                .AddProcessor(new BatchLogRecordExportProcessor(new NoOpExporter())));
+                .AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter())));
         });
         this.loggerWithBatchProcessor = this.loggerFactoryWithBatchProcessor.CreateLogger<LogBenchmarks>();
 
         this.loggerFactoryWithTwoProcessor = LoggerFactory.Create(builder =>
         {
             builder.UseOpenTelemetry(logging => logging
-                .AddProcessor(new NoOpLogProcessor())
-                .AddProcessor(new NoOpLogProcessor()));
+                .AddProcessor(new NoopLogProcessor())
+                .AddProcessor(new NoopLogProcessor()));
         });
         this.loggerWithTwoProcessors = this.loggerFactoryWithTwoProcessor.CreateLogger<LogBenchmarks>();
 
         this.loggerFactoryWithThreeProcessor = LoggerFactory.Create(builder =>
         {
             builder.UseOpenTelemetry(logging => logging
-                .AddProcessor(new NoOpLogProcessor())
-                .AddProcessor(new NoOpLogProcessor())
-                .AddProcessor(new NoOpLogProcessor()));
+                .AddProcessor(new NoopLogProcessor())
+                .AddProcessor(new NoopLogProcessor())
+                .AddProcessor(new NoopLogProcessor()));
         });
         this.loggerWithThreeProcessors = this.loggerFactoryWithThreeProcessor.CreateLogger<LogBenchmarks>();
     }
@@ -150,11 +150,11 @@ public class LogBenchmarks
         this.loggerWithThreeProcessors.SayHello(FoodName, FoodPrice);
     }
 
-    internal class NoOpLogProcessor : BaseProcessor<LogRecord>
+    internal class NoopLogProcessor : BaseProcessor<LogRecord>
     {
     }
 
-    internal class NoOpExporter : BaseExporter<LogRecord>
+    internal class NoopExporter : BaseExporter<LogRecord>
     {
         public override ExportResult Export(in Batch<LogRecord> batch)
         {
