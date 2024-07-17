@@ -68,9 +68,9 @@ public class CompositeTextMapPropagator : TextMapPropagator
     /// <inheritdoc/>
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
     {
-        foreach (var propagator in this.propagators)
+        for (int i = 0; i < this.propagators.Count; i++)
         {
-            context = propagator.Extract(context, carrier, getter);
+            context = this.propagators[i].Extract(context, carrier, getter);
         }
 
         return context;
@@ -79,9 +79,9 @@ public class CompositeTextMapPropagator : TextMapPropagator
     /// <inheritdoc/>
     public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
     {
-        foreach (var propagator in this.propagators)
+        for (int i = 0; i < this.propagators.Count; i++)
         {
-            propagator.Inject(context, carrier, setter);
+            this.propagators[i].Inject(context, carrier, setter);
         }
     }
 }
