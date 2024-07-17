@@ -31,10 +31,10 @@ public delegate bool BatchTransformationPredicate<TItem, TState>(TItem item, ref
 public readonly struct Batch<T> : IDisposable
     where T : class
 {
-    private readonly T? item;
-    private readonly CircularBuffer<T>? circularBuffer;
-    private readonly T[]? items;
-    private readonly bool rented;
+    internal readonly T? Item;
+    internal readonly CircularBuffer<T>? CircularBuffer;
+    internal readonly T[]? Items;
+    internal readonly bool Rented;
     private readonly long targetCount;
 
     /// <summary>
@@ -52,8 +52,8 @@ public readonly struct Batch<T> : IDisposable
         Guard.ThrowIfNull(items);
         Guard.ThrowIfOutOfRange(count, min: 0, max: items.Length);
 
-        this.items = items;
-        this.rented = rented;
+        this.Items = items;
+        this.Rented = rented;
         this.Count = this.targetCount = count;
     }
 
@@ -61,7 +61,7 @@ public readonly struct Batch<T> : IDisposable
     {
         Debug.Assert(item != null, $"{nameof(item)} was null.");
 
-        this.item = item;
+        this.Item = item;
         this.Count = this.targetCount = 1;
     }
 
@@ -70,7 +70,7 @@ public readonly struct Batch<T> : IDisposable
         Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
         Debug.Assert(circularBuffer != null, $"{nameof(circularBuffer)} was null.");
 
-        this.circularBuffer = circularBuffer;
+        this.CircularBuffer = circularBuffer;
         this.Count = Math.Min(maxSize, circularBuffer!.Count);
         this.targetCount = circularBuffer.RemovedCount + this.Count;
     }
@@ -100,16 +100,16 @@ public readonly struct Batch<T> : IDisposable
             return;
         }
 
-        if (this.item != null)
+        if (this.Item != null)
         {
             Debug.Assert(
                 typeof(T) != typeof(LogRecord)
-                || ((LogRecord)(object)this.item).Source != LogRecord.LogRecordSource.FromSharedPool,
+                || ((LogRecord)(object)this.Item).Source != LogRecord.LogRecordSource.FromSharedPool,
                 "Batch contained a single item rented from the shared pool");
 
             // Special case for a batch of a single item
 
-            if (!TransformItem(transformation, ref state, this.item))
+            if (!TransformItem(transformation, ref state, this.Item))
             {
                 Unsafe.AsRef(in this) = new Batch<T>(Array.Empty<T>(), 0, rented: false);
             }
@@ -169,20 +169,20 @@ public readonly struct Batch<T> : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (this.circularBuffer != null)
+        if (this.CircularBuffer != null)
         {
             // Note: Drain anything left in the batch and return to the pool if
             // needed.
-            while (this.circularBuffer.RemovedCount < this.targetCount)
+            while (this.CircularBuffer.RemovedCount < this.targetCount)
             {
-                T item = this.circularBuffer.Read();
+                T item = this.CircularBuffer.Read();
                 if (typeof(T) == typeof(LogRecord))
                 {
                     Enumerator.TryReturnLogRecordToPool(item);
                 }
             }
         }
-        else if (this.items != null && this.rented)
+        else if (this.Items != null && this.Rented)
         {
             // Note: We don't attempt to return individual LogRecords to the
             // pool. If the batch wasn't drained fully some records may get
@@ -190,7 +190,7 @@ public readonly struct Batch<T> : IDisposable
             // idea is most batches are expected to be drained during export so
             // it isn't worth the effort to track what was/was not returned.
 
-            ArrayPool<T>.Shared.Return(this.items);
+            ArrayPool<T>.Shared.Return(this.Items);
 
             Unsafe.AsRef(in this) = new Batch<T>(Array.Empty<T>(), 0);
         }
@@ -202,12 +202,12 @@ public readonly struct Batch<T> : IDisposable
     /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator()
     {
-        return this.circularBuffer != null
-            ? new Enumerator(this.circularBuffer, this.targetCount)
-            : this.item != null
-                ? new Enumerator(this.item)
+        return this.CircularBuffer != null
+            ? new Enumerator(this.CircularBuffer, this.targetCount)
+            : this.Item != null
+                ? new Enumerator(this.Item)
                 /* In the event someone uses default/new Batch() to create Batch we fallback to empty items mode. */
-                : new Enumerator(this.items ?? Array.Empty<T>(), this.targetCount);
+                : new Enumerator(this.Items ?? Array.Empty<T>(), this.targetCount);
     }
 
     /// <summary>
