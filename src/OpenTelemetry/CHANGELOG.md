@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added `Transform` API on `Batch<T>` which can be used to modify and/or filter
+  records contained in a batch.
+  ([#5733](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5733))
+
 ## 1.9.0
 
 Released 2024-Jun-14
