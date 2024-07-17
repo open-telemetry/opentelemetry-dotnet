@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* **Breaking change:** CompositeTextMapPropagator.Fields now returns a
+  unioned set of fields from all combined propagators. Previously this always
+  returned an empty set.
+  ([#5745](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5745))
+
 ## 1.9.0
 
 Released 2024-Jun-14
