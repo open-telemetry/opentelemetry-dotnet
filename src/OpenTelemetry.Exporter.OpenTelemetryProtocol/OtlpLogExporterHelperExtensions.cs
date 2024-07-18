@@ -317,18 +317,13 @@ public static class OtlpLogExporterHelperExtensions
 
         if (processorOptions!.ExportProcessorType == ExportProcessorType.Simple)
         {
-            return new SimpleLogRecordExportProcessor(otlpExporter);
+            return ExportProcessorFactory<LogRecord>.CreateSimpleExportProcessor(otlpExporter);
         }
         else
         {
-            var batchOptions = processorOptions.BatchExportProcessorOptions;
-
-            return new BatchLogRecordExportProcessor(
-                otlpExporter,
-                batchOptions.MaxQueueSize,
-                batchOptions.ScheduledDelayMilliseconds,
-                batchOptions.ExporterTimeoutMilliseconds,
-                batchOptions.MaxExportBatchSize);
+            return ExportProcessorFactory<LogRecord>.CreateBatchExportProcessor(
+                processorOptions.BatchExportProcessorOptions,
+                otlpExporter);
         }
     }
 

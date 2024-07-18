@@ -145,16 +145,13 @@ public static class OtlpTraceExporterHelperExtensions
 
         if (exportProcessorType == ExportProcessorType.Simple)
         {
-            return new SimpleActivityExportProcessor(otlpExporter);
+            return ExportProcessorFactory<Activity>.CreateSimpleExportProcessor(otlpExporter);
         }
         else
         {
-            return new BatchActivityExportProcessor(
-                otlpExporter,
-                batchExportProcessorOptions!.MaxQueueSize,
-                batchExportProcessorOptions.ScheduledDelayMilliseconds,
-                batchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                batchExportProcessorOptions.MaxExportBatchSize);
+            return ExportProcessorFactory<Activity>.CreateBatchExportProcessor(
+                batchExportProcessorOptions!,
+                otlpExporter);
         }
     }
 }
