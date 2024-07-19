@@ -4,7 +4,7 @@
 #nullable enable
 
 using System.Diagnostics;
-#if NET6_0_OR_GREATER
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using Microsoft.Extensions.Configuration;
@@ -15,7 +15,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 internal static class DelegatingOptionsFactoryServiceCollectionExtensions
 {
-#if NET6_0_OR_GREATER
+#if NET
     public static IServiceCollection RegisterOptionsFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(
 #else
     public static IServiceCollection RegisterOptionsFactory<T>(
@@ -40,7 +40,7 @@ internal static class DelegatingOptionsFactoryServiceCollectionExtensions
         return services!;
     }
 
-#if NET6_0_OR_GREATER
+#if NET
     public static IServiceCollection RegisterOptionsFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(
 #else
     public static IServiceCollection RegisterOptionsFactory<T>(
@@ -65,7 +65,7 @@ internal static class DelegatingOptionsFactoryServiceCollectionExtensions
         return services!;
     }
 
-#if NET6_0_OR_GREATER
+#if NET
     public static IServiceCollection DisableOptionsReloading<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(
 #else
     public static IServiceCollection DisableOptionsReloading<T>(

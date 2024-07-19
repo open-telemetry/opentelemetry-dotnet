@@ -30,30 +30,30 @@ in the console for your application (ex `http://localhost:5154`). You should see
 the trace output from the console.
 
 ```text
-Activity.TraceId:            c1572aa14ee9c0ac037dbdc3e91e5dd7
-Activity.SpanId:             45406137f33cc279
+Activity.TraceId:            c28f7b480d5c7dfc30cfbd80ad29028d
+Activity.SpanId:             27e478bbf9fdec10
 Activity.TraceFlags:         Recorded
-Activity.ActivitySourceName: OpenTelemetry.Instrumentation.AspNetCore
-Activity.DisplayName:        /
+Activity.ActivitySourceName: Microsoft.AspNetCore
+Activity.DisplayName:        GET /
 Activity.Kind:               Server
-Activity.StartTime:          2023-01-13T19:38:11.5417593Z
-Activity.Duration:           00:00:00.0167407
+Activity.StartTime:          2024-07-04T13:03:37.3318740Z
+Activity.Duration:           00:00:00.3693734
 Activity.Tags:
-    net.host.name: localhost
-    net.host.port: 5154
-    http.method: GET
-    http.scheme: http
-    http.target: /
-    http.url: http://localhost:5154/
-    http.flavor: 1.1
-    http.user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Edg/108.0.1462.76
-    http.status_code: 200
+    server.address: localhost
+    server.port: 5154
+    http.request.method: GET
+    url.scheme: https
+    url.path: /
+    network.protocol.version: 2
+    user_agent.original: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36
+    http.route: /
+    http.response.status_code: 200
 Resource associated with Activity:
     service.name: getting-started-aspnetcore
-    service.instance.id: 32c9371c-ed9d-474c-a698-b169e87a5577
+    service.instance.id: a388466b-4969-4bb0-ad96-8f39527fa66b
     telemetry.sdk.name: opentelemetry
     telemetry.sdk.language: dotnet
-    telemetry.sdk.version: 1.5.1
+    telemetry.sdk.version: 1.9.0
 ```
 
 Congratulations! You are now collecting traces using OpenTelemetry.

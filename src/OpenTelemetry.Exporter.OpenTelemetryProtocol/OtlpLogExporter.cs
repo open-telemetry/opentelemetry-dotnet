@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -49,7 +47,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
-        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetLogsExportTransmissionHandler(experimentalOptions!);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetLogsExportTransmissionHandler(experimentalOptions!);
 
         this.otlpLogRecordTransformer = new OtlpLogRecordTransformer(sdkLimitOptions!, experimentalOptions!);
     }

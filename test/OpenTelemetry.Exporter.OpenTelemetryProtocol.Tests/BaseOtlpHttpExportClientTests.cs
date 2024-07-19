@@ -17,7 +17,7 @@ public class BaseOtlpHttpExportClientTests
     [InlineData("https://custom.host", null, "https://custom.host")]
     [InlineData("http://custom.host:44318/custom/path", null, "http://custom.host:44318/custom/path")]
     [InlineData("https://custom.host", "http://from.otel.exporter.env.var", "https://custom.host")]
-    public void ValidateOtlpHttpExportClientEndpoint(string optionEndpoint, string endpointEnvVar, string expectedExporterEndpoint)
+    public void ValidateOtlpHttpExportClientEndpoint(string? optionEndpoint, string? endpointEnvVar, string expectedExporterEndpoint)
     {
         try
         {

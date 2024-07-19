@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if !NET6_0_OR_GREATER
+#if !NET
 using System.Net.Http;
 #endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -63,8 +63,8 @@ public class OtlpHttpTraceExportClientTests
     public void SendExportRequest_ExportTraceServiceRequest_SendsCorrectHttpRequest(bool includeServiceNameInResource)
     {
         // Arrange
-        var evenTags = new[] { new KeyValuePair<string, object>("k0", "v0") };
-        var oddTags = new[] { new KeyValuePair<string, object>("k1", "v1") };
+        var evenTags = new[] { new KeyValuePair<string, object?>("k0", "v0") };
+        var oddTags = new[] { new KeyValuePair<string, object?>("k1", "v1") };
         var sources = new[]
         {
             new ActivitySource("even", "2.4.6"),
@@ -116,7 +116,8 @@ public class OtlpHttpTraceExportClientTests
             var activityKind = isEven ? ActivityKind.Client : ActivityKind.Server;
             var activityTags = isEven ? evenTags : oddTags;
 
-            using Activity activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
+            using Activity? activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
+            Assert.NotNull(activity);
             processor.OnEnd(activity);
         }
 
@@ -141,6 +142,7 @@ public class OtlpHttpTraceExportClientTests
             Assert.True(result.Success);
             Assert.NotNull(httpRequest);
             Assert.Equal(HttpMethod.Post, httpRequest.Method);
+            Assert.NotNull(httpRequest.RequestUri);
             Assert.Equal("http://localhost:4317/", httpRequest.RequestUri.AbsoluteUri);
             Assert.Equal(OtlpExporterOptions.StandardHeaders.Length + 2, httpRequest.Headers.Count());
             Assert.Contains(httpRequest.Headers, h => h.Key == header1.Name && h.Value.First() == header1.Value);

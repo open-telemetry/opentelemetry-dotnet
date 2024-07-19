@@ -32,7 +32,7 @@ internal class TestExportClient<T>(bool throwException = false) : IExportClient<
 
     private class TestExportClientResponse : ExportClientResponse
     {
-        public TestExportClientResponse(bool success, DateTime deadline, Exception exception)
+        public TestExportClientResponse(bool success, DateTime deadline, Exception? exception)
             : base(success, deadline, exception)
         {
         }

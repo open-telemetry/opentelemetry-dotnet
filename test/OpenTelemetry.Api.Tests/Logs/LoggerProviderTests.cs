@@ -3,7 +3,7 @@
 
 #nullable enable
 
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using Xunit;
@@ -68,7 +68,7 @@ public sealed class LoggerProviderTests
         internal override bool TryCreateLogger(
 #endif
             string? name,
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET
             [NotNullWhen(true)]
 #endif
             out Logger? logger)
