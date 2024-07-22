@@ -73,14 +73,17 @@ public static class ConsoleExporterLoggingExtensions
 
         if (configure != null)
         {
-            loggerProviderBuilder.ConfigureServices(services => services.Configure(name, configure));
+            loggerProviderBuilder.ConfigureServices(
+                services => services.Configure(name, configure));
         }
 
-        return loggerProviderBuilder.AddProcessor(sp =>
-        {
-            var options = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);
+        return loggerProviderBuilder.AddSimpleExportProcessor(
+            name,
+            static (sp, name) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);
 
-            return new SimpleLogRecordExportProcessor(new ConsoleLogRecordExporter(options));
-        });
+                return new ConsoleLogRecordExporter(options);
+            });
     }
 }

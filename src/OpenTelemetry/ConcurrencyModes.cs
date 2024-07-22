@@ -1,8 +1,11 @@
-﻿// Copyright The OpenTelemetry Authors
+// Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
 namespace OpenTelemetry;
 
+/// <summary>
+/// Describes the concurrency mode of an OpenTelemetry component.
+/// </summary>
 [Flags]
 public enum ConcurrencyModes : byte
 {

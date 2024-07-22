@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry;
 
 /// <summary>
@@ -29,4 +31,22 @@ public class BatchExportProcessorOptions<T>
     /// Gets or sets the maximum batch size of every export. It must be smaller or equal to MaxQueueLength. The default value is 512.
     /// </summary>
     public int MaxExportBatchSize { get; set; } = BatchExportProcessor<T>.DefaultMaxExportBatchSize;
+
+    /// <summary>
+    /// Applies the settings for the current instance onto another <see
+    /// cref="BatchExportProcessorOptions{T}"/> instance.
+    /// </summary>
+    /// <param name="other"><see cref="BatchExportProcessorOptions{T}"/>.</param>
+    public void ApplyTo(BatchExportProcessorOptions<T> other)
+    {
+        Guard.ThrowIfNull(other);
+
+        if (other != this)
+        {
+            other.MaxQueueSize = this.MaxQueueSize;
+            other.ScheduledDelayMilliseconds = this.ScheduledDelayMilliseconds;
+            other.ExporterTimeoutMilliseconds = this.ExporterTimeoutMilliseconds;
+            other.MaxExportBatchSize = this.MaxExportBatchSize;
+        }
+    }
 }

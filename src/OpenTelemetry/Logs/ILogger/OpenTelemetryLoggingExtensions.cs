@@ -157,6 +157,9 @@ public static class OpenTelemetryLoggingExtensions
          */
         services.AddOpenTelemetrySharedProviderBuilderServices();
 
+        services.RegisterOptionsFactory(
+            (sp, config, name) => new OpenTelemetryLoggerOptions(sp));
+
         if (configureOptions != null)
         {
             // Note: Order is important here so that user-supplied delegate

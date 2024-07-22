@@ -46,4 +46,7 @@ public class LogRecordExportProcessorOptions
             this.batchExportProcessorOptions = value;
         }
     }
+
+    /// <inheritdoc cref="BaseProcessor{T}.PipelineWeight"/>
+    internal int PipelineWeight { get; set; }
 }

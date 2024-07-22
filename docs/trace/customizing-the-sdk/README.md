@@ -253,18 +253,32 @@ writing custom processors.
 
 #### Exporter Configuration
 
-The snippet below shows how to add export processors to the provider before it
+The snippets below shows how to add export processors to the provider before it
 is built.
 
-```csharp
-using OpenTelemetry;
-using OpenTelemetry.Trace;
+* Using 1.10.0 or newer
 
-var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddProcessor(new BatchActivityExportProcessor(new MyExporter1()))
-    .AddProcessor(new SimpleActivityExportProcessor(new MyExporter2()))
-    .Build();
-```
+   ```csharp
+   using OpenTelemetry;
+   using OpenTelemetry.Trace;
+   
+   var tracerProvider = Sdk.CreateTracerProviderBuilder()
+       .AddBatchExportProcessor(new MyExporter1())
+       .AddSimpleExportProcessor(new MyExporter2())
+       .Build();
+   ```
+
+* Using 1.9.0 or older
+
+   ```csharp
+   using OpenTelemetry;
+   using OpenTelemetry.Trace;
+   
+   var tracerProvider = Sdk.CreateTracerProviderBuilder()
+       .AddProcessor(new BatchActivityExportProcessor(new MyExporter1()))
+       .AddProcessor(new SimpleActivityExportProcessor(new MyExporter2()))
+       .Build();
+   ```
 
 It is also common for exporters to provide their own extensions to simplify
 registration. The snippet below shows how to add the

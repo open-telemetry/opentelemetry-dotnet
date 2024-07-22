@@ -1,18 +1,20 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 internal static class MyExporterExtensions
 {
-    public static TracerProviderBuilder AddMyExporter(this TracerProviderBuilder builder)
-    {
-        if (builder == null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
+    public static TracerProviderBuilder AddMyExporter(
+        this TracerProviderBuilder builder)
+        => AddMyExporter(builder, name: null);
 
-        return builder.AddProcessor(new BatchActivityExportProcessor(new MyExporter()));
+    public static TracerProviderBuilder AddMyExporter(
+        this TracerProviderBuilder builder,
+        string? name)
+    {
+        return builder.AddBatchExportProcessor(
+            name,
+            new MyExporter());
     }
 }

@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 #endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -136,6 +137,162 @@ public static class LoggerProviderBuilderExtensions
         });
 
         return loggerProviderBuilder;
+    }
+
+    /// <summary>
+    /// Adds a <see cref="BatchLogRecordExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="exporter"><see cref="BaseExporter{T}"/>.</param>
+    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
+    public static LoggerProviderBuilder AddBatchExportProcessor(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        BaseExporter<LogRecord> exporter)
+        => AddBatchExportProcessor(loggerProviderBuilder, name: null, exporter);
+
+    /// <summary>
+    /// Adds a <see cref="BatchLogRecordExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="exporter"><see cref="BaseExporter{T}"/>.</param>
+    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
+    public static LoggerProviderBuilder AddBatchExportProcessor(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        string? name,
+        BaseExporter<LogRecord> exporter)
+    {
+        Guard.ThrowIfNull(exporter);
+
+        return AddBatchExportProcessor(
+            loggerProviderBuilder,
+            name,
+            implementationFactory: (sp, name) => exporter);
+    }
+
+    /// <summary>
+    /// Adds a <see cref="BatchLogRecordExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="implementationFactory">Factory function used to create the exporter.</param>
+    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
+    public static LoggerProviderBuilder AddBatchExportProcessor(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        Func<IServiceProvider, BaseExporter<LogRecord>> implementationFactory)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return AddBatchExportProcessor(
+            loggerProviderBuilder,
+            name: null,
+            implementationFactory: (sp, name) => implementationFactory(sp));
+    }
+
+    /// <summary>
+    /// Adds a <see cref="BatchLogRecordExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="implementationFactory">Factory function used to create the exporter.</param>
+    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
+    public static LoggerProviderBuilder AddBatchExportProcessor(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        string? name,
+        Func<IServiceProvider, string?, BaseExporter<LogRecord>> implementationFactory)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return loggerProviderBuilder.AddProcessor(sp =>
+        {
+            var options = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(name);
+
+            var exporter = implementationFactory(sp, name)
+                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
+
+            return LogRecordExportProcessorFactory.CreateBatchExportProcessor(options, exporter);
+        });
+    }
+
+    /// <summary>
+    /// Adds a <see cref="SimpleLogRecordExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <remarks>
+    /// Note: The concurrency behavior of the constructed <see
+    /// cref="SimpleLogRecordExportProcessor"/> can be controlled by decorating
+    /// the exporter with the <see cref="ConcurrencyModesAttribute"/>.
+    /// </remarks>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="exporter"><see cref="BaseExporter{T}"/>.</param>
+    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
+    public static LoggerProviderBuilder AddSimpleExportProcessor(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        BaseExporter<LogRecord> exporter)
+        => AddSimpleExportProcessor(loggerProviderBuilder, name: null, exporter);
+
+    /// <summary>
+    /// Adds a <see cref="SimpleLogRecordExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddSimpleExportProcessor(LoggerProviderBuilder, BaseExporter{LogRecord})" path="/remarks"/></remarks>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="exporter"><see cref="BaseExporter{T}"/>.</param>
+    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
+    public static LoggerProviderBuilder AddSimpleExportProcessor(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        string? name,
+        BaseExporter<LogRecord> exporter)
+    {
+        Guard.ThrowIfNull(exporter);
+
+        return AddSimpleExportProcessor(
+            loggerProviderBuilder,
+            name,
+            implementationFactory: (sp, name) => exporter);
+    }
+
+    /// <summary>
+    /// Adds a <see cref="SimpleLogRecordExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddSimpleExportProcessor(LoggerProviderBuilder, BaseExporter{LogRecord})" path="/remarks"/></remarks>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="implementationFactory">Factory function used to create the exporter.</param>
+    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
+    public static LoggerProviderBuilder AddSimpleExportProcessor(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        Func<IServiceProvider, BaseExporter<LogRecord>> implementationFactory)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return AddSimpleExportProcessor(
+            loggerProviderBuilder,
+            name: null,
+            implementationFactory: (sp, name) => implementationFactory(sp));
+    }
+
+    /// <summary>
+    /// Adds a <see cref="SimpleLogRecordExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddSimpleExportProcessor(LoggerProviderBuilder, BaseExporter{LogRecord})" path="/remarks"/></remarks>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="implementationFactory">Factory function used to create the exporter.</param>
+    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
+    public static LoggerProviderBuilder AddSimpleExportProcessor(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        string? name,
+        Func<IServiceProvider, string?, BaseExporter<LogRecord>> implementationFactory)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return loggerProviderBuilder.AddProcessor(sp =>
+        {
+            var options = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(name);
+
+            var exporter = implementationFactory(sp, name)
+                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
+
+            return LogRecordExportProcessorFactory.CreateSimpleExportProcessor(options, exporter);
+        });
     }
 
     /// <summary>

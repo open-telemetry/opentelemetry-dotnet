@@ -244,6 +244,11 @@ OpenTelemetry .NET SDK has provided the following built-in processors:
 * [CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
 * [SimpleExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/SimpleExportProcessor.cs)
 
+> [!NOTE]
+> As of `1.10.0` it is recommended to use the `TracerProviderBuilder`
+> `AddBatchExportProcessor` or `AddSimpleExportProcessor` helper extension
+> methods to create batch and/or simple processors.
+
 Custom processors can be implemented to cover more scenarios:
 
 * Processors should inherit from `OpenTelemetry.BaseProcessor<Activity>` (which

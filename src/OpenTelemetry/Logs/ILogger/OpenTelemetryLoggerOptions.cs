@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -10,10 +11,25 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Contains OpenTelemetry logging options.
 /// </summary>
-public class OpenTelemetryLoggerOptions
+public class OpenTelemetryLoggerOptions : IDeferredLoggerProviderBuilder
 {
     internal readonly List<Func<IServiceProvider, BaseProcessor<LogRecord>>> ProcessorFactories = new();
     internal ResourceBuilder? ResourceBuilder;
+    private readonly IServiceProvider? serviceProvider;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OpenTelemetryLoggerOptions"/> class.
+    /// </summary>
+    public OpenTelemetryLoggerOptions()
+    {
+    }
+
+    internal OpenTelemetryLoggerOptions(IServiceProvider serviceProvider)
+    {
+        Debug.Assert(serviceProvider != null, "serviceProvider was null");
+
+        this.serviceProvider = serviceProvider;
+    }
 
     /// <summary>
     /// Gets or sets a value indicating whether or not formatted log message
@@ -122,6 +138,21 @@ public class OpenTelemetryLoggerOptions
         this.ResourceBuilder = resourceBuilder;
 
         return this;
+    }
+
+    LoggerProviderBuilder IDeferredLoggerProviderBuilder.Configure(
+        Action<IServiceProvider, LoggerProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        var sp = this.serviceProvider
+            ?? throw new NotSupportedException("Manually constructed OpenTelemetryLoggerOptions instances cannot be converted to LoggerProviderBuilder instances");
+
+        var builder = sp.GetRequiredService<LoggerProviderBuilderSdk>();
+
+        configure(sp, builder);
+
+        return builder;
     }
 
     internal OpenTelemetryLoggerOptions Copy()

@@ -48,11 +48,13 @@ public static class ConsoleExporterHelperExtensions
             builder.ConfigureServices(services => services.Configure(name, configure));
         }
 
-        return builder.AddProcessor(sp =>
-        {
-            var options = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);
+        return builder.AddSimpleExportProcessor(
+            name,
+            static (sp, name) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);
 
-            return new SimpleActivityExportProcessor(new ConsoleActivityExporter(options));
-        });
+                return new ConsoleActivityExporter(options);
+            });
     }
 }

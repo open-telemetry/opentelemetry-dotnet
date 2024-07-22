@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Logs;
@@ -69,11 +70,13 @@ public sealed class IntegrationTests : IDisposable
         var builder = Sdk.CreateTracerProviderBuilder()
             .AddSource(activitySourceName);
 
-        builder.AddProcessor(sp => OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
+        builder.ConfigureBuilder((sp, builder) => OtlpTraceExporterHelperExtensions.AddOtlpTraceExporter(
             serviceProvider: sp,
+            builder: builder,
             exporterOptions: exporterOptions,
             sdkLimitOptions: DefaultSdkLimitOptions,
             experimentalOptions: DefaultExperimentalOptions,
+            exportProcessorType: exporterOptions.ExportProcessorType,
             configureExporterInstance: otlpExporter =>
             {
                 delegatingExporter = new DelegatingExporter<Activity>
@@ -222,26 +225,26 @@ public sealed class IntegrationTests : IDisposable
 
         DelegatingExporter<LogRecord> delegatingExporter;
         var exportResults = new List<ExportResult>();
-        var processorOptions = new LogRecordExportProcessorOptions
-        {
-            ExportProcessorType = exportProcessorType,
-            BatchExportProcessorOptions = new()
-            {
-                ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
-            },
-        };
 
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder
                 .UseOpenTelemetry(logging => logging
-                    .AddProcessor(sp =>
-                        OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
+                    .ConfigureServices(services =>
+                    {
+                        services.Configure<LogRecordExportProcessorOptions>(o =>
+                        {
+                            o.BatchExportProcessorOptions.ScheduledDelayMilliseconds = ExportIntervalMilliseconds;
+                        });
+                    })
+                    .ConfigureBuilder((sp, builder) =>
+                        OtlpLogExporterHelperExtensions.AddOtlpLogExporter(
                             sp,
+                            builder,
                             exporterOptions,
-                            processorOptions,
                             DefaultSdkLimitOptions,
                             DefaultExperimentalOptions,
+                            exportProcessorType,
                             configureExporterInstance: otlpExporter =>
                             {
                                 delegatingExporter = new DelegatingExporter<LogRecord>
@@ -261,7 +264,7 @@ public sealed class IntegrationTests : IDisposable
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
         logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
 
-        switch (processorOptions.ExportProcessorType)
+        switch (exportProcessorType)
         {
             case ExportProcessorType.Batch:
                 Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));

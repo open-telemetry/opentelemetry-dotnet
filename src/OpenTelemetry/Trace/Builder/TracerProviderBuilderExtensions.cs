@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 #endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -235,6 +236,162 @@ public static class TracerProviderBuilderExtensions
         });
 
         return tracerProviderBuilder;
+    }
+
+    /// <summary>
+    /// Adds a <see cref="BatchActivityExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="exporter"><see cref="BaseExporter{T}"/>.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddBatchExportProcessor(
+        this TracerProviderBuilder tracerProviderBuilder,
+        BaseExporter<Activity> exporter)
+        => AddBatchExportProcessor(tracerProviderBuilder, name: null, exporter);
+
+    /// <summary>
+    /// Adds a <see cref="BatchActivityExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="exporter"><see cref="BaseExporter{T}"/>.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddBatchExportProcessor(
+        this TracerProviderBuilder tracerProviderBuilder,
+        string? name,
+        BaseExporter<Activity> exporter)
+    {
+        Guard.ThrowIfNull(exporter);
+
+        return AddBatchExportProcessor(
+            tracerProviderBuilder,
+            name,
+            implementationFactory: (sp, name) => exporter);
+    }
+
+    /// <summary>
+    /// Adds a <see cref="BatchActivityExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="implementationFactory">Factory function used to create the exporter.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddBatchExportProcessor(
+        this TracerProviderBuilder tracerProviderBuilder,
+        Func<IServiceProvider, BaseExporter<Activity>> implementationFactory)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return AddBatchExportProcessor(
+            tracerProviderBuilder,
+            name: null,
+            implementationFactory: (sp, name) => implementationFactory(sp));
+    }
+
+    /// <summary>
+    /// Adds a <see cref="BatchActivityExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="implementationFactory">Factory function used to create the exporter.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddBatchExportProcessor(
+        this TracerProviderBuilder tracerProviderBuilder,
+        string? name,
+        Func<IServiceProvider, string?, BaseExporter<Activity>> implementationFactory)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return tracerProviderBuilder.AddProcessor(sp =>
+        {
+            var options = sp.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>().Get(name);
+
+            var exporter = implementationFactory(sp, name)
+                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
+
+            return ActivityExportProcessorFactory.CreateBatchExportProcessor(options, exporter);
+        });
+    }
+
+    /// <summary>
+    /// Adds a <see cref="SimpleActivityExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <remarks>
+    /// Note: The concurrency behavior of the constructed <see
+    /// cref="SimpleActivityExportProcessor"/> can be controlled by decorating
+    /// the exporter with the <see cref="ConcurrencyModesAttribute"/>.
+    /// </remarks>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="exporter"><see cref="BaseExporter{T}"/>.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddSimpleExportProcessor(
+        this TracerProviderBuilder tracerProviderBuilder,
+        BaseExporter<Activity> exporter)
+        => AddSimpleExportProcessor(tracerProviderBuilder, name: null, exporter);
+
+    /// <summary>
+    /// Adds a <see cref="SimpleActivityExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddSimpleExportProcessor(TracerProviderBuilder, BaseExporter{Activity})" path="/remarks"/></remarks>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="exporter"><see cref="BaseExporter{T}"/>.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddSimpleExportProcessor(
+        this TracerProviderBuilder tracerProviderBuilder,
+        string? name,
+        BaseExporter<Activity> exporter)
+    {
+        Guard.ThrowIfNull(exporter);
+
+        return AddSimpleExportProcessor(
+            tracerProviderBuilder,
+            name,
+            implementationFactory: (sp, name) => exporter);
+    }
+
+    /// <summary>
+    /// Adds a <see cref="SimpleActivityExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddSimpleExportProcessor(TracerProviderBuilder, BaseExporter{Activity})" path="/remarks"/></remarks>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="implementationFactory">Factory function used to create the exporter.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddSimpleExportProcessor(
+        this TracerProviderBuilder tracerProviderBuilder,
+        Func<IServiceProvider, BaseExporter<Activity>> implementationFactory)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return AddSimpleExportProcessor(
+            tracerProviderBuilder,
+            name: null,
+            implementationFactory: (sp, name) => implementationFactory(sp));
+    }
+
+    /// <summary>
+    /// Adds a <see cref="SimpleActivityExportProcessor"/> to the provider for the supplied exporter.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddSimpleExportProcessor(TracerProviderBuilder, BaseExporter{Activity})" path="/remarks"/></remarks>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="implementationFactory">Factory function used to create the exporter.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddSimpleExportProcessor(
+        this TracerProviderBuilder tracerProviderBuilder,
+        string? name,
+        Func<IServiceProvider, string?, BaseExporter<Activity>> implementationFactory)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return tracerProviderBuilder.AddProcessor(sp =>
+        {
+            var options = sp.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>().Get(name);
+
+            var exporter = implementationFactory(sp, name)
+                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
+
+            return ActivityExportProcessorFactory.CreateSimpleExportProcessor(options, exporter);
+        });
     }
 
     /// <summary>

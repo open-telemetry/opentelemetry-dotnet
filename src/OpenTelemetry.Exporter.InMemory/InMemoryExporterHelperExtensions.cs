@@ -20,6 +20,7 @@ public static class InMemoryExporterHelperExtensions
         Guard.ThrowIfNull(builder);
         Guard.ThrowIfNull(exportedItems);
 
-        return builder.AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
+        return builder.AddSimpleExportProcessor(
+            new InMemoryExporter<Activity>(exportedItems));
     }
 }

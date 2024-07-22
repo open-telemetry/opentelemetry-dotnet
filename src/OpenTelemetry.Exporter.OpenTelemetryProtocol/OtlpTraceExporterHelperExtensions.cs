@@ -58,9 +58,31 @@ public static class OtlpTraceExporterHelperExtensions
             }
 
             services.AddOtlpExporterTracingServices();
+
+            services
+                .AddOptions<OtlpExporterOptions>(name)
+                .Configure<IOptionsMonitor<BatchExportActivityProcessorOptions>>(
+                    (exporterOptions, batchOptionsMonitor) =>
+                    {
+                        var defaultBatchOptions = batchOptionsMonitor.Get(name);
+
+                        var exporterBatchOptions = exporterOptions.BatchExportProcessorOptions;
+                        if (exporterBatchOptions != null
+                            && exporterBatchOptions != defaultBatchOptions)
+                        {
+                            // Note: By default
+                            // OtlpExporterOptions.BatchExportProcessorOptions
+                            // is set to BatchExportActivityProcessorOptions
+                            // retrieved from DI. But users may change it via
+                            // public setter so this code makes sure any changes
+                            // are reflected on the DI instance so the call to
+                            // AddBatchExportProcessor picks them up.
+                            exporterBatchOptions.ApplyTo(defaultBatchOptions);
+                        }
+                    });
         });
 
-        return builder.AddProcessor(sp =>
+        return builder.ConfigureBuilder((sp, builder) =>
         {
             OtlpExporterOptions exporterOptions;
 
@@ -89,45 +111,31 @@ public static class OtlpTraceExporterHelperExtensions
             // instance.
             var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-            return BuildOtlpExporterProcessor(
+            AddOtlpTraceExporter(
                 sp,
+                builder,
                 exporterOptions,
                 sdkLimitOptions,
-                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                exporterOptions.ExportProcessorType);
         });
     }
 
-    internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
+    internal static void AddOtlpTraceExporter(
         IServiceProvider serviceProvider,
-        OtlpExporterOptions exporterOptions,
-        SdkLimitOptions sdkLimitOptions,
-        ExperimentalOptions experimentalOptions,
-        Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
-        => BuildOtlpExporterProcessor(
-            serviceProvider,
-            exporterOptions,
-            sdkLimitOptions,
-            experimentalOptions,
-            exporterOptions.ExportProcessorType,
-            exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions(),
-            skipUseOtlpExporterRegistrationCheck: false,
-            configureExporterInstance: configureExporterInstance);
-
-    internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
-        IServiceProvider serviceProvider,
+        TracerProviderBuilder builder,
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
         ExportProcessorType exportProcessorType,
-        BatchExportProcessorOptions<Activity> batchExportProcessorOptions,
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
     {
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
+        Debug.Assert(builder != null, "builder was null");
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
-        Debug.Assert(batchExportProcessorOptions != null, "batchExportProcessorOptions was null");
 
         if (!skipUseOtlpExporterRegistrationCheck)
         {
@@ -145,13 +153,11 @@ public static class OtlpTraceExporterHelperExtensions
 
         if (exportProcessorType == ExportProcessorType.Simple)
         {
-            return ExportProcessorFactory<Activity>.CreateSimpleExportProcessor(otlpExporter);
+            builder!.AddSimpleExportProcessor(otlpExporter);
         }
         else
         {
-            return ExportProcessorFactory<Activity>.CreateBatchExportProcessor(
-                batchExportProcessorOptions!,
-                otlpExporter);
+            builder!.AddBatchExportProcessor(otlpExporter);
         }
     }
 }

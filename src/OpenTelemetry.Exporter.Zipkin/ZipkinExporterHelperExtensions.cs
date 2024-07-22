@@ -4,7 +4,6 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
-using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -51,7 +50,7 @@ public static class ZipkinExporterHelperExtensions
 
         name ??= Options.DefaultName;
 
-        builder.ConfigureServices(services =>
+        return builder.ConfigureServices(services =>
         {
             if (configure != null)
             {
@@ -62,24 +61,44 @@ public static class ZipkinExporterHelperExtensions
                 (sp, configuration, name) => new ZipkinExporterOptions(
                     configuration,
                     sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
-        });
 
-        return builder.AddProcessor(sp =>
-        {
-            var options = sp.GetRequiredService<IOptionsMonitor<ZipkinExporterOptions>>().Get(name);
+            services
+                .AddOptions<ZipkinExporterOptions>(name)
+                .Configure<IOptionsMonitor<BatchExportActivityProcessorOptions>>(
+                    (exporterOptions, batchOptionsMonitor) =>
+                    {
+                        var defaultBatchOptions = batchOptionsMonitor.Get(name);
 
-            return BuildZipkinExporterProcessor(builder, options, sp);
+                        var exporterBatchOptions = exporterOptions.BatchExportProcessorOptions;
+                        if (exporterBatchOptions != null
+                            && exporterBatchOptions != defaultBatchOptions)
+                        {
+                            // Note: By default
+                            // ZipkinExporterOptions.BatchExportProcessorOptions is
+                            // set to BatchExportActivityProcessorOptions retrieved
+                            // from DI. But users may change it via public setter so
+                            // this code makes sure any changes are reflected on the
+                            // DI instance so the call to AddBatchExportProcessor
+                            // picks them up.
+                            exporterBatchOptions.ApplyTo(defaultBatchOptions);
+                        }
+                    });
+
+            services.ConfigureOpenTelemetryTracerProvider(
+                (sp, builder) => AddZipkinExporter(sp, builder, name));
         });
     }
 
-    private static BaseProcessor<Activity> BuildZipkinExporterProcessor(
+    private static void AddZipkinExporter(
+        IServiceProvider serviceProvider,
         TracerProviderBuilder builder,
-        ZipkinExporterOptions options,
-        IServiceProvider serviceProvider)
+        string name)
     {
-        if (options.HttpClientFactory == ZipkinExporterOptions.DefaultHttpClientFactory)
+        var exporterOptions = serviceProvider.GetRequiredService<IOptionsMonitor<ZipkinExporterOptions>>().Get(name);
+
+        if (exporterOptions.HttpClientFactory == ZipkinExporterOptions.DefaultHttpClientFactory)
         {
-            options.HttpClientFactory = () =>
+            exporterOptions.HttpClientFactory = () =>
             {
                 Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
                 if (httpClientFactoryType != null)
@@ -104,20 +123,15 @@ public static class ZipkinExporterHelperExtensions
             };
         }
 
-        var zipkinExporter = new ZipkinExporter(options);
+        var zipkinExporter = new ZipkinExporter(exporterOptions);
 
-        if (options.ExportProcessorType == ExportProcessorType.Simple)
+        if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
         {
-            return new SimpleActivityExportProcessor(zipkinExporter);
+            builder.AddSimpleExportProcessor(zipkinExporter);
         }
         else
         {
-            return new BatchActivityExportProcessor(
-                zipkinExporter,
-                options.BatchExportProcessorOptions.MaxQueueSize,
-                options.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                options.BatchExportProcessorOptions.MaxExportBatchSize);
+            builder.AddBatchExportProcessor(zipkinExporter);
         }
     }
 }

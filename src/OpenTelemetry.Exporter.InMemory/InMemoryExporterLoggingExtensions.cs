@@ -24,8 +24,10 @@ public static class InMemoryExporterLoggingExtensions
 
         var logExporter = BuildExporter(exportedItems);
 
-        return loggerOptions.AddProcessor(
-            new SimpleLogRecordExportProcessor(logExporter));
+        ((IDeferredLoggerProviderBuilder)loggerOptions).Configure(
+            (sp, builder) => builder.AddSimpleExportProcessor(logExporter));
+
+        return loggerOptions;
     }
 
     /// <summary>
@@ -43,8 +45,7 @@ public static class InMemoryExporterLoggingExtensions
 
         var logExporter = BuildExporter(exportedItems);
 
-        return loggerProviderBuilder.AddProcessor(
-            new SimpleLogRecordExportProcessor(logExporter));
+        return loggerProviderBuilder.AddSimpleExportProcessor(logExporter);
     }
 
     private static InMemoryExporter<LogRecord> BuildExporter(ICollection<LogRecord> exportedItems)

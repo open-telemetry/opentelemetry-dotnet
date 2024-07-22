@@ -53,8 +53,10 @@ A demo exporter which simply writes log records to the console is shown
 [here](./MyExporter.cs).
 
 Apart from the exporter itself, you should also provide extension methods as
-shown [here](./LoggerExtensions.cs). This allows users to add the Exporter to
-the `OpenTelemetryLoggerOptions` as shown in the example [here](./Program.cs).
+shown [here](./MyExporterExtensions.cs). This allows users to add the exporter
+to the `OpenTelemetryLoggerOptions` (as shown in the example
+[here](./Program.cs)) or to a `LoggerProviderBuilder` using the `WithLogging`
+extension in `OpenTelemetry.Extensions.Hosting`.
 
 ## Processor
 
@@ -63,6 +65,11 @@ OpenTelemetry .NET SDK has provided the following built-in processors:
 * [BatchExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/BatchExportProcessor.cs)
 * [CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
 * [SimpleExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/SimpleExportProcessor.cs)
+
+> [!NOTE]
+> As of `1.10.0` it is recommended to use the `LoggerProviderBuilder`
+> `AddBatchExportProcessor` or `AddSimpleExportProcessor` helper extension
+> methods to create batch and/or simple processors.
 
 Custom processors can be implemented to cover more scenarios:
 

@@ -56,7 +56,7 @@ public static class OtlpLogExporterHelperExtensions
 
         var finalOptionsName = name ?? Options.DefaultName;
 
-        return loggerOptions.AddProcessor(sp =>
+        ((IDeferredLoggerProviderBuilder)loggerOptions).Configure((sp, builder) =>
         {
             var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
 
@@ -64,13 +64,16 @@ public static class OtlpLogExporterHelperExtensions
 
             configure?.Invoke(exporterOptions);
 
-            return BuildOtlpLogExporter(
+            AddOtlpLogExporter(
                 sp,
+                builder,
                 exporterOptions,
-                processorOptions,
                 GetOptions(sp, Options.DefaultName, Options.DefaultName, (sp, c, n) => new SdkLimitOptions(c)),
-                GetOptions(sp, name, finalOptionsName, (sp, c, n) => new ExperimentalOptions(c)));
+                GetOptions(sp, name, finalOptionsName, (sp, c, n) => new ExperimentalOptions(c)),
+                processorOptions.ExportProcessorType);
         });
+
+        return loggerOptions;
     }
 
     /// <summary>
@@ -102,7 +105,7 @@ public static class OtlpLogExporterHelperExtensions
 
         var finalOptionsName = name ?? Options.DefaultName;
 
-        return loggerOptions.AddProcessor(sp =>
+        ((IDeferredLoggerProviderBuilder)loggerOptions).Configure((sp, builder) =>
         {
             var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
 
@@ -110,13 +113,16 @@ public static class OtlpLogExporterHelperExtensions
 
             configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
 
-            return BuildOtlpLogExporter(
+            AddOtlpLogExporter(
                 sp,
+                builder,
                 exporterOptions,
-                processorOptions,
                 GetOptions(sp, Options.DefaultName, Options.DefaultName, (sp, c, n) => new SdkLimitOptions(c)),
-                GetOptions(sp, name, finalOptionsName, (sp, c, n) => new ExperimentalOptions(c)));
+                GetOptions(sp, name, finalOptionsName, (sp, c, n) => new ExperimentalOptions(c)),
+                processorOptions.ExportProcessorType);
         });
+
+        return loggerOptions;
     }
 
     /// <summary>
@@ -173,7 +179,7 @@ public static class OtlpLogExporterHelperExtensions
             services.AddOtlpExporterLoggingServices();
         });
 
-        return builder.AddProcessor(sp =>
+        return builder.ConfigureBuilder((sp, builder) =>
         {
             OtlpExporterOptions exporterOptions;
 
@@ -202,12 +208,13 @@ public static class OtlpLogExporterHelperExtensions
             // instance.
             var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-            return BuildOtlpLogExporter(
+            AddOtlpLogExporter(
                 sp,
+                builder,
                 exporterOptions,
-                sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName),
                 sdkLimitOptions,
-                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName).ExportProcessorType);
         });
     }
 
@@ -229,7 +236,7 @@ public static class OtlpLogExporterHelperExtensions
 
         builder.ConfigureServices(services => services.AddOtlpExporterLoggingServices());
 
-        return builder.AddProcessor(sp =>
+        return builder.ConfigureBuilder((sp, builder) =>
         {
             OtlpExporterOptions exporterOptions;
 
@@ -260,27 +267,29 @@ public static class OtlpLogExporterHelperExtensions
             // instance.
             var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-            return BuildOtlpLogExporter(
+            AddOtlpLogExporter(
                 sp,
+                builder,
                 exporterOptions,
-                processorOptions,
                 sdkLimitOptions,
-                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                processorOptions.ExportProcessorType);
         });
     }
 
-    internal static BaseProcessor<LogRecord> BuildOtlpLogExporter(
+    internal static void AddOtlpLogExporter(
         IServiceProvider serviceProvider,
+        LoggerProviderBuilder builder,
         OtlpExporterOptions exporterOptions,
-        LogRecordExportProcessorOptions processorOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
+        ExportProcessorType exportProcessorType,
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
     {
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
+        Debug.Assert(builder != null, "builder was null");
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
-        Debug.Assert(processorOptions != null, "processorOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
@@ -315,15 +324,13 @@ public static class OtlpLogExporterHelperExtensions
             otlpExporter = configureExporterInstance(otlpExporter);
         }
 
-        if (processorOptions!.ExportProcessorType == ExportProcessorType.Simple)
+        if (exportProcessorType == ExportProcessorType.Simple)
         {
-            return ExportProcessorFactory<LogRecord>.CreateSimpleExportProcessor(otlpExporter);
+            builder!.AddSimpleExportProcessor(otlpExporter);
         }
         else
         {
-            return ExportProcessorFactory<LogRecord>.CreateBatchExportProcessor(
-                processorOptions.BatchExportProcessorOptions,
-                otlpExporter);
+            builder!.AddBatchExportProcessor(otlpExporter);
         }
     }
 
