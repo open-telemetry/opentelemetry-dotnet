@@ -5,6 +5,12 @@ OpenTelemetry.ConcurrencyModes.Reentrant = 1 -> OpenTelemetry.ConcurrencyModes
 OpenTelemetry.ConcurrencyModesAttribute
 OpenTelemetry.ConcurrencyModesAttribute.ConcurrencyModesAttribute(OpenTelemetry.ConcurrencyModes supported) -> void
 OpenTelemetry.ConcurrencyModesAttribute.Supported.get -> OpenTelemetry.ConcurrencyModes
+OpenTelemetry.OpenTelemetrySdk
+OpenTelemetry.OpenTelemetrySdk.Dispose() -> void
+OpenTelemetry.OpenTelemetrySdk.LoggerProvider.get -> OpenTelemetry.Logs.LoggerProvider!
+OpenTelemetry.OpenTelemetrySdk.MeterProvider.get -> OpenTelemetry.Metrics.MeterProvider!
+OpenTelemetry.OpenTelemetrySdk.TracerProvider.get -> OpenTelemetry.Trace.TracerProvider!
+OpenTelemetry.OpenTelemetrySdkExtensions
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddBatchExportProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>! exporter) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddBatchExportProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, string? name, OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>! exporter) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddBatchExportProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, string? name, System.Func<System.IServiceProvider!, string?, OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>!>! implementationFactory) -> OpenTelemetry.Logs.LoggerProviderBuilder!
@@ -13,6 +19,8 @@ static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddSimpleExportProcess
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddSimpleExportProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, string? name, OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>! exporter) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddSimpleExportProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, string? name, System.Func<System.IServiceProvider!, string?, OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>!>! implementationFactory) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.AddSimpleExportProcessor(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>!>! implementationFactory) -> OpenTelemetry.Logs.LoggerProviderBuilder!
+static OpenTelemetry.OpenTelemetrySdk.Create(System.Action<OpenTelemetry.IOpenTelemetryBuilder!>! configure) -> OpenTelemetry.OpenTelemetrySdk!
+static OpenTelemetry.OpenTelemetrySdkExtensions.GetLoggerFactory(this OpenTelemetry.OpenTelemetrySdk! sdk) -> Microsoft.Extensions.Logging.ILoggerFactory!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddBatchExportProcessor(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, OpenTelemetry.BaseExporter<System.Diagnostics.Activity!>! exporter) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddBatchExportProcessor(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, string? name, OpenTelemetry.BaseExporter<System.Diagnostics.Activity!>! exporter) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddBatchExportProcessor(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, string? name, System.Func<System.IServiceProvider!, string?, OpenTelemetry.BaseExporter<System.Diagnostics.Activity!>!>! implementationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
