@@ -284,6 +284,7 @@ public static class OtlpLogExporterHelperExtensions
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
         ExportProcessorType exportProcessorType,
+        int processorPipelineWeight = 0,
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
     {
@@ -326,11 +327,17 @@ public static class OtlpLogExporterHelperExtensions
 
         if (exportProcessorType == ExportProcessorType.Simple)
         {
-            builder!.AddSimpleExportProcessor(otlpExporter);
+            builder!.AddSimpleExportProcessor(
+                name: null,
+                (sp, name) => otlpExporter,
+                processorPipelineWeight);
         }
         else
         {
-            builder!.AddBatchExportProcessor(otlpExporter);
+            builder!.AddBatchExportProcessor(
+                name: null,
+                (sp, name) => otlpExporter,
+                processorPipelineWeight);
         }
     }
 

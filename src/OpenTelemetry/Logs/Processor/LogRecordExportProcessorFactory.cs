@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Reflection;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
@@ -9,45 +8,37 @@ namespace OpenTelemetry.Logs;
 internal static class LogRecordExportProcessorFactory
 {
     public static BaseExportProcessor<LogRecord> CreateBatchExportProcessor(
-        LogRecordExportProcessorOptions options,
-        BaseExporter<LogRecord> exporter)
+        BaseExporter<LogRecord> exporter,
+        BatchExportProcessorOptions<LogRecord> options,
+        int pipelineWeight)
     {
-        Guard.ThrowIfNull(options);
         Guard.ThrowIfNull(exporter);
+        Guard.ThrowIfNull(options);
 
         return new BatchLogRecordExportProcessor(
             exporter,
-            options.BatchExportProcessorOptions.MaxQueueSize,
-            options.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-            options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-            options.BatchExportProcessorOptions.MaxExportBatchSize)
+            options.MaxQueueSize,
+            options.ScheduledDelayMilliseconds,
+            options.ExporterTimeoutMilliseconds,
+            options.MaxExportBatchSize)
         {
-            PipelineWeight = options.PipelineWeight,
+            PipelineWeight = pipelineWeight,
         };
     }
 
     public static BaseExportProcessor<LogRecord> CreateSimpleExportProcessor(
-        LogRecordExportProcessorOptions options,
-        BaseExporter<LogRecord> exporter)
+        BaseExporter<LogRecord> exporter,
+        int pipelineWeight)
     {
-        Guard.ThrowIfNull(options);
         Guard.ThrowIfNull(exporter);
 
-        var concurrencyMode = exporter
-            .GetType()
-            .GetCustomAttribute<ConcurrencyModesAttribute>(inherit: true)?.Supported
-            ?? ConcurrencyModes.Reentrant;
+        BaseExportProcessor<LogRecord> processor = ConcurrencyModesAttribute
+            .GetConcurrencyModeForExporter(exporter)
+            .HasFlag(ConcurrencyModes.Multithreaded)
+                ? new SimpleMultithreadedExportProcessor<LogRecord>(exporter)
+                : new SimpleLogRecordExportProcessor(exporter);
 
-        if (!concurrencyMode.HasFlag(ConcurrencyModes.Reentrant))
-        {
-            throw new NotSupportedException("Non-reentrant simple export processors are not currently supported.");
-        }
-
-        BaseExportProcessor<LogRecord> processor = concurrencyMode.HasFlag(ConcurrencyModes.Multithreaded)
-            ? new SimpleMultithreadedExportProcessor<LogRecord>(exporter)
-            : new SimpleLogRecordExportProcessor(exporter);
-
-        processor.PipelineWeight = options.PipelineWeight;
+        processor.PipelineWeight = pipelineWeight;
 
         return processor;
     }

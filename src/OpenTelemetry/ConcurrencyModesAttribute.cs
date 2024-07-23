@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
+using System.Reflection;
+
 namespace OpenTelemetry;
 
 /// <summary>
@@ -24,4 +27,23 @@ public sealed class ConcurrencyModesAttribute : Attribute
     /// Gets the supported <see cref="ConcurrencyModes"/>.
     /// </summary>
     public ConcurrencyModes Supported => this.supportedConcurrencyModes;
+
+    internal static ConcurrencyModes GetConcurrencyModeForExporter<T>(
+        BaseExporter<T> exporter)
+        where T : class
+    {
+        Debug.Assert(exporter != null, "exporter was null");
+
+        var concurrencyMode = exporter!
+            .GetType()
+            .GetCustomAttribute<ConcurrencyModesAttribute>(inherit: true)?.Supported
+            ?? ConcurrencyModes.Reentrant;
+
+        if (!concurrencyMode.HasFlag(ConcurrencyModes.Reentrant))
+        {
+            throw new NotSupportedException("Non-reentrant simple export processors are not currently supported.");
+        }
+
+        return concurrencyMode;
+    }
 }

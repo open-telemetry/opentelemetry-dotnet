@@ -266,7 +266,8 @@ public static class TracerProviderBuilderExtensions
         return AddBatchExportProcessor(
             tracerProviderBuilder,
             name,
-            implementationFactory: (sp, name) => exporter);
+            implementationFactory: (sp, name) => exporter,
+            pipelineWeight: 0);
     }
 
     /// <summary>
@@ -284,7 +285,8 @@ public static class TracerProviderBuilderExtensions
         return AddBatchExportProcessor(
             tracerProviderBuilder,
             name: null,
-            implementationFactory: (sp, name) => implementationFactory(sp));
+            implementationFactory: (sp, name) => implementationFactory(sp),
+            pipelineWeight: 0);
     }
 
     /// <summary>
@@ -298,19 +300,7 @@ public static class TracerProviderBuilderExtensions
         this TracerProviderBuilder tracerProviderBuilder,
         string? name,
         Func<IServiceProvider, string?, BaseExporter<Activity>> implementationFactory)
-    {
-        Guard.ThrowIfNull(implementationFactory);
-
-        return tracerProviderBuilder.AddProcessor(sp =>
-        {
-            var options = sp.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>().Get(name);
-
-            var exporter = implementationFactory(sp, name)
-                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
-
-            return ActivityExportProcessorFactory.CreateBatchExportProcessor(options, exporter);
-        });
-    }
+        => AddBatchExportProcessor(tracerProviderBuilder, name, implementationFactory, pipelineWeight: 0);
 
     /// <summary>
     /// Adds a <see cref="SimpleActivityExportProcessor"/> to the provider for the supplied exporter.
@@ -346,7 +336,8 @@ public static class TracerProviderBuilderExtensions
         return AddSimpleExportProcessor(
             tracerProviderBuilder,
             name,
-            implementationFactory: (sp, name) => exporter);
+            implementationFactory: (sp, name) => exporter,
+            pipelineWeight: 0);
     }
 
     /// <summary>
@@ -365,7 +356,8 @@ public static class TracerProviderBuilderExtensions
         return AddSimpleExportProcessor(
             tracerProviderBuilder,
             name: null,
-            implementationFactory: (sp, name) => implementationFactory(sp));
+            implementationFactory: (sp, name) => implementationFactory(sp),
+            pipelineWeight: 0);
     }
 
     /// <summary>
@@ -380,19 +372,7 @@ public static class TracerProviderBuilderExtensions
         this TracerProviderBuilder tracerProviderBuilder,
         string? name,
         Func<IServiceProvider, string?, BaseExporter<Activity>> implementationFactory)
-    {
-        Guard.ThrowIfNull(implementationFactory);
-
-        return tracerProviderBuilder.AddProcessor(sp =>
-        {
-            var options = sp.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>().Get(name);
-
-            var exporter = implementationFactory(sp, name)
-                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
-
-            return ActivityExportProcessorFactory.CreateSimpleExportProcessor(options, exporter);
-        });
-    }
+        => AddSimpleExportProcessor(tracerProviderBuilder, name, implementationFactory, pipelineWeight: 0);
 
     /// <summary>
     /// Run the given actions to initialize the <see cref="TracerProvider"/>.
@@ -407,5 +387,44 @@ public static class TracerProviderBuilderExtensions
         }
 
         throw new NotSupportedException($"Build is not supported on '{tracerProviderBuilder?.GetType().FullName ?? "null"}' instances.");
+    }
+
+    internal static TracerProviderBuilder AddBatchExportProcessor(
+        this TracerProviderBuilder tracerProviderBuilder,
+        string? name,
+        Func<IServiceProvider, string?, BaseExporter<Activity>> implementationFactory,
+        int pipelineWeight)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return tracerProviderBuilder.AddProcessor(sp =>
+        {
+            var options = sp.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>().Get(name);
+
+            var exporter = implementationFactory(sp, name)
+                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
+
+            return ActivityExportProcessorFactory.CreateBatchExportProcessor(
+                exporter,
+                options.BatchExportProcessorOptions,
+                pipelineWeight);
+        });
+    }
+
+    internal static TracerProviderBuilder AddSimpleExportProcessor(
+        this TracerProviderBuilder tracerProviderBuilder,
+        string? name,
+        Func<IServiceProvider, string?, BaseExporter<Activity>> implementationFactory,
+        int pipelineWeight)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return tracerProviderBuilder.AddProcessor(sp =>
+        {
+            var exporter = implementationFactory(sp, name)
+                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
+
+            return ActivityExportProcessorFactory.CreateSimpleExportProcessor(exporter, pipelineWeight);
+        });
     }
 }

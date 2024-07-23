@@ -203,8 +203,6 @@ internal sealed class OtlpExporterBuilder
                 var processorOptions = builderOptions.LogRecordExportProcessorOptions
                     ?? throw new InvalidOperationException("LogRecordExportProcessorOptions were missing with logging enabled");
 
-                processorOptions.PipelineWeight = DefaultProcessorPipelineWeight;
-
                 OtlpLogExporterHelperExtensions.AddOtlpLogExporter(
                     sp,
                     logging,
@@ -212,6 +210,7 @@ internal sealed class OtlpExporterBuilder
                     builderOptions.SdkLimitOptions,
                     builderOptions.ExperimentalOptions,
                     processorOptions.ExportProcessorType,
+                    processorPipelineWeight: DefaultProcessorPipelineWeight,
                     skipUseOtlpExporterRegistrationCheck: true);
             });
 
@@ -237,8 +236,6 @@ internal sealed class OtlpExporterBuilder
                 var processorOptions = builderOptions.ActivityExportProcessorOptions
                     ?? throw new InvalidOperationException("ActivityExportProcessorOptions were missing with tracing enabled");
 
-                processorOptions.PipelineWeight = DefaultProcessorPipelineWeight;
-
                 OtlpTraceExporterHelperExtensions.AddOtlpTraceExporter(
                     sp,
                     tracing,
@@ -246,6 +243,7 @@ internal sealed class OtlpExporterBuilder
                     builderOptions.SdkLimitOptions,
                     builderOptions.ExperimentalOptions,
                     processorOptions.ExportProcessorType,
+                    processorPipelineWeight: DefaultProcessorPipelineWeight,
                     skipUseOtlpExporterRegistrationCheck: true);
             });
 

@@ -167,7 +167,8 @@ public static class LoggerProviderBuilderExtensions
         return AddBatchExportProcessor(
             loggerProviderBuilder,
             name,
-            implementationFactory: (sp, name) => exporter);
+            implementationFactory: (sp, name) => exporter,
+            pipelineWeight: 0);
     }
 
     /// <summary>
@@ -185,7 +186,8 @@ public static class LoggerProviderBuilderExtensions
         return AddBatchExportProcessor(
             loggerProviderBuilder,
             name: null,
-            implementationFactory: (sp, name) => implementationFactory(sp));
+            implementationFactory: (sp, name) => implementationFactory(sp),
+            pipelineWeight: 0);
     }
 
     /// <summary>
@@ -199,19 +201,7 @@ public static class LoggerProviderBuilderExtensions
         this LoggerProviderBuilder loggerProviderBuilder,
         string? name,
         Func<IServiceProvider, string?, BaseExporter<LogRecord>> implementationFactory)
-    {
-        Guard.ThrowIfNull(implementationFactory);
-
-        return loggerProviderBuilder.AddProcessor(sp =>
-        {
-            var options = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(name);
-
-            var exporter = implementationFactory(sp, name)
-                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
-
-            return LogRecordExportProcessorFactory.CreateBatchExportProcessor(options, exporter);
-        });
-    }
+        => AddBatchExportProcessor(loggerProviderBuilder, name, implementationFactory, pipelineWeight: 0);
 
     /// <summary>
     /// Adds a <see cref="SimpleLogRecordExportProcessor"/> to the provider for the supplied exporter.
@@ -247,7 +237,8 @@ public static class LoggerProviderBuilderExtensions
         return AddSimpleExportProcessor(
             loggerProviderBuilder,
             name,
-            implementationFactory: (sp, name) => exporter);
+            implementationFactory: (sp, name) => exporter,
+            pipelineWeight: 0);
     }
 
     /// <summary>
@@ -266,7 +257,8 @@ public static class LoggerProviderBuilderExtensions
         return AddSimpleExportProcessor(
             loggerProviderBuilder,
             name: null,
-            implementationFactory: (sp, name) => implementationFactory(sp));
+            implementationFactory: (sp, name) => implementationFactory(sp),
+            pipelineWeight: 0);
     }
 
     /// <summary>
@@ -281,19 +273,7 @@ public static class LoggerProviderBuilderExtensions
         this LoggerProviderBuilder loggerProviderBuilder,
         string? name,
         Func<IServiceProvider, string?, BaseExporter<LogRecord>> implementationFactory)
-    {
-        Guard.ThrowIfNull(implementationFactory);
-
-        return loggerProviderBuilder.AddProcessor(sp =>
-        {
-            var options = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(name);
-
-            var exporter = implementationFactory(sp, name)
-                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
-
-            return LogRecordExportProcessorFactory.CreateSimpleExportProcessor(options, exporter);
-        });
-    }
+        => AddSimpleExportProcessor(loggerProviderBuilder, name, implementationFactory, pipelineWeight: 0);
 
     /// <summary>
     /// Run the given actions to initialize the <see cref="LoggerProvider"/>.
@@ -308,5 +288,44 @@ public static class LoggerProviderBuilderExtensions
         }
 
         throw new NotSupportedException($"Build is not supported on '{loggerProviderBuilder?.GetType().FullName ?? "null"}' instances.");
+    }
+
+    internal static LoggerProviderBuilder AddBatchExportProcessor(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        string? name,
+        Func<IServiceProvider, string?, BaseExporter<LogRecord>> implementationFactory,
+        int pipelineWeight)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return loggerProviderBuilder.AddProcessor(sp =>
+        {
+            var options = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(name);
+
+            var exporter = implementationFactory(sp, name)
+                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
+
+            return LogRecordExportProcessorFactory.CreateBatchExportProcessor(
+                exporter,
+                options.BatchExportProcessorOptions,
+                pipelineWeight);
+        });
+    }
+
+    internal static LoggerProviderBuilder AddSimpleExportProcessor(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        string? name,
+        Func<IServiceProvider, string?, BaseExporter<LogRecord>> implementationFactory,
+        int pipelineWeight)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        return loggerProviderBuilder.AddProcessor(sp =>
+        {
+            var exporter = implementationFactory(sp, name)
+                ?? throw new InvalidOperationException("Implementation factory returned a null instance");
+
+            return LogRecordExportProcessorFactory.CreateSimpleExportProcessor(exporter, pipelineWeight);
+        });
     }
 }
