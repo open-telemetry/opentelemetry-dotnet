@@ -60,29 +60,7 @@ public static class ZipkinExporterHelperExtensions
             services.RegisterOptionsFactory(
                 (sp, configuration, name) => new ZipkinExporterOptions(
                     configuration,
-                    sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
-
-            services
-                .AddOptions<ZipkinExporterOptions>(name)
-                .Configure<IOptionsMonitor<BatchExportActivityProcessorOptions>>(
-                    (exporterOptions, batchOptionsMonitor) =>
-                    {
-                        var defaultBatchOptions = batchOptionsMonitor.Get(name);
-
-                        var exporterBatchOptions = exporterOptions.BatchExportProcessorOptions;
-                        if (exporterBatchOptions != null
-                            && exporterBatchOptions != defaultBatchOptions)
-                        {
-                            // Note: By default
-                            // ZipkinExporterOptions.BatchExportProcessorOptions is
-                            // set to BatchExportActivityProcessorOptions retrieved
-                            // from DI. But users may change it via public setter so
-                            // this code makes sure any changes are reflected on the
-                            // DI instance so the call to AddBatchExportProcessor
-                            // picks them up.
-                            exporterBatchOptions.ApplyTo(defaultBatchOptions);
-                        }
-                    });
+                    sp.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>().Get(name)));
 
             services.ConfigureOpenTelemetryTracerProvider(
                 (sp, builder) => AddZipkinExporter(sp, builder, name));
@@ -95,6 +73,8 @@ public static class ZipkinExporterHelperExtensions
         string name)
     {
         var exporterOptions = serviceProvider.GetRequiredService<IOptionsMonitor<ZipkinExporterOptions>>().Get(name);
+
+        SyncExporterOptionsToDefaults(serviceProvider, name, exporterOptions);
 
         if (exporterOptions.HttpClientFactory == ZipkinExporterOptions.DefaultHttpClientFactory)
         {
@@ -127,11 +107,40 @@ public static class ZipkinExporterHelperExtensions
 
         if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
         {
-            builder.AddSimpleExportProcessor(zipkinExporter);
+            builder.AddSimpleExportProcessor(name, zipkinExporter);
         }
         else
         {
-            builder.AddBatchExportProcessor(zipkinExporter);
+            builder.AddBatchExportProcessor(name, zipkinExporter);
+        }
+    }
+
+    private static void SyncExporterOptionsToDefaults(
+        IServiceProvider serviceProvider,
+        string name,
+        ZipkinExporterOptions exporterOptions)
+    {
+        var defaultOptions = serviceProvider.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>()
+            .Get(name);
+
+        if (exporterOptions.ExportProcessorType != defaultOptions.ExportProcessorType)
+        {
+            defaultOptions.ExportProcessorType = exporterOptions.ExportProcessorType;
+        }
+
+        var defaultBatchOptions = defaultOptions.BatchExportProcessorOptions;
+        var exporterBatchOptions = exporterOptions.BatchExportProcessorOptions;
+        if (exporterBatchOptions != null
+            && exporterBatchOptions != defaultBatchOptions)
+        {
+            // Note: By default
+            // ZipkinExporterOptions.BatchExportProcessorOptions is
+            // set to BatchExportActivityProcessorOptions retrieved
+            // from DI. But users may change it via public setter so
+            // this code makes sure any changes are reflected on the
+            // DI instance so the call to AddBatchExportProcessor
+            // picks them up.
+            exporterBatchOptions.ApplyTo(defaultBatchOptions);
         }
     }
 }

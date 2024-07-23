@@ -71,6 +71,7 @@ public sealed class IntegrationTests : IDisposable
             .AddSource(activitySourceName);
 
         builder.ConfigureBuilder((sp, builder) => OtlpTraceExporterHelperExtensions.AddOtlpTraceExporter(
+            name: null,
             serviceProvider: sp,
             builder: builder,
             exporterOptions: exporterOptions,
@@ -239,6 +240,7 @@ public sealed class IntegrationTests : IDisposable
                     })
                     .ConfigureBuilder((sp, builder) =>
                         OtlpLogExporterHelperExtensions.AddOtlpLogExporter(
+                            name: null,
                             sp,
                             builder,
                             exporterOptions,

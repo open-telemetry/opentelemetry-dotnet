@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using Google.Protobuf.Collections;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Metrics;
@@ -58,6 +59,67 @@ public class OtlpTraceExporterTests
 
         Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
         Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
+    }
+
+    [Theory]
+    [InlineData(true, null)]
+    [InlineData(false, null)]
+    [InlineData(true, "otlp")]
+    [InlineData(false, "otlp")]
+    public void AddOtlpTraceExporterBatchOptionsChangedTest(bool overrideDefaults, string? name)
+    {
+        using var sdk = OpenTelemetrySdk.Create(builder => builder
+            .WithTracing(tracing => tracing
+                .ConfigureServices(services =>
+                {
+                    services.Configure<ActivityExportProcessorOptions>(
+                        name,
+                        o =>
+                        {
+                            o.ExportProcessorType = ExportProcessorType.Simple;
+                            o.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 18;
+                        });
+                })
+                .AddOtlpExporter(
+                    name,
+                    o =>
+                    {
+                        if (overrideDefaults)
+                        {
+                            o.ExportProcessorType = ExportProcessorType.Batch;
+                            o.BatchExportProcessorOptions = new()
+                            {
+                                ScheduledDelayMilliseconds = 10,
+                            };
+                        }
+                    })));
+
+        var tracerProvider = sdk.TracerProvider as TracerProviderSdk;
+
+        Assert.NotNull(tracerProvider);
+
+        if (overrideDefaults)
+        {
+            var batchProcessor = tracerProvider.Processor as BatchExportProcessor<Activity>;
+
+            Assert.NotNull(batchProcessor);
+
+            Assert.Equal(10, batchProcessor.ScheduledDelayMilliseconds);
+
+            var defaultOptions = sdk.Services.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>()
+                .Get(name);
+
+            Assert.Equal(
+                ExportProcessorType.Batch,
+                defaultOptions.ExportProcessorType);
+            Assert.Equal(
+                10,
+                defaultOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds);
+        }
+        else
+        {
+            Assert.NotNull(tracerProvider.Processor as SimpleExportProcessor<Activity>);
+        }
     }
 
     [Fact]

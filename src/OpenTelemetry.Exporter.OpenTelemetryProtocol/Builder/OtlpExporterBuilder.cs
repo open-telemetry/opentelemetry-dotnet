@@ -204,6 +204,7 @@ internal sealed class OtlpExporterBuilder
                     ?? throw new InvalidOperationException("LogRecordExportProcessorOptions were missing with logging enabled");
 
                 OtlpLogExporterHelperExtensions.AddOtlpLogExporter(
+                    name,
                     sp,
                     logging,
                     builderOptions.LoggingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
@@ -237,6 +238,7 @@ internal sealed class OtlpExporterBuilder
                     ?? throw new InvalidOperationException("ActivityExportProcessorOptions were missing with tracing enabled");
 
                 OtlpTraceExporterHelperExtensions.AddOtlpTraceExporter(
+                    name,
                     sp,
                     tracing,
                     builderOptions.TracingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),

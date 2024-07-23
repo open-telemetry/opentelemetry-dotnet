@@ -58,28 +58,6 @@ public static class OtlpTraceExporterHelperExtensions
             }
 
             services.AddOtlpExporterTracingServices();
-
-            services
-                .AddOptions<OtlpExporterOptions>(name)
-                .Configure<IOptionsMonitor<BatchExportActivityProcessorOptions>>(
-                    (exporterOptions, batchOptionsMonitor) =>
-                    {
-                        var defaultBatchOptions = batchOptionsMonitor.Get(name);
-
-                        var exporterBatchOptions = exporterOptions.BatchExportProcessorOptions;
-                        if (exporterBatchOptions != null
-                            && exporterBatchOptions != defaultBatchOptions)
-                        {
-                            // Note: By default
-                            // OtlpExporterOptions.BatchExportProcessorOptions
-                            // is set to BatchExportActivityProcessorOptions
-                            // retrieved from DI. But users may change it via
-                            // public setter so this code makes sure any changes
-                            // are reflected on the DI instance so the call to
-                            // AddBatchExportProcessor picks them up.
-                            exporterBatchOptions.ApplyTo(defaultBatchOptions);
-                        }
-                    });
         });
 
         return builder.ConfigureBuilder((sp, builder) =>
@@ -111,7 +89,10 @@ public static class OtlpTraceExporterHelperExtensions
             // instance.
             var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
+            SyncExporterOptionsToDefaults(sp, finalOptionsName, exporterOptions);
+
             AddOtlpTraceExporter(
+                finalOptionsName,
                 sp,
                 builder,
                 exporterOptions,
@@ -122,6 +103,7 @@ public static class OtlpTraceExporterHelperExtensions
     }
 
     internal static void AddOtlpTraceExporter(
+        string? name,
         IServiceProvider serviceProvider,
         TracerProviderBuilder builder,
         OtlpExporterOptions exporterOptions,
@@ -155,16 +137,45 @@ public static class OtlpTraceExporterHelperExtensions
         if (exportProcessorType == ExportProcessorType.Simple)
         {
             builder!.AddSimpleExportProcessor(
-                name: null,
+                name,
                 (sp, name) => otlpExporter,
                 processorPipelineWeight);
         }
         else
         {
             builder!.AddBatchExportProcessor(
-                name: null,
+                name,
                 (sp, name) => otlpExporter,
                 processorPipelineWeight);
+        }
+    }
+
+    private static void SyncExporterOptionsToDefaults(
+        IServiceProvider serviceProvider,
+        string finalOptionsName,
+        OtlpExporterOptions exporterOptions)
+    {
+        var defaultOptions = serviceProvider.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>()
+            .Get(finalOptionsName);
+
+        if (exporterOptions.ExportProcessorType != defaultOptions.ExportProcessorType)
+        {
+            defaultOptions.ExportProcessorType = exporterOptions.ExportProcessorType;
+        }
+
+        var defaultBatchOptions = defaultOptions.BatchExportProcessorOptions;
+        var exporterBatchOptions = exporterOptions.BatchExportProcessorOptions;
+        if (exporterBatchOptions != null
+            && exporterBatchOptions != defaultBatchOptions)
+        {
+            // Note: By default
+            // OtlpExporterOptions.BatchExportProcessorOptions
+            // is set to BatchExportActivityProcessorOptions
+            // retrieved from DI. But users may change it via
+            // public setter so this code makes sure any changes
+            // are reflected on the DI instance so the call to
+            // AddBatchExportProcessor picks them up.
+            exporterBatchOptions.ApplyTo(defaultBatchOptions);
         }
     }
 }

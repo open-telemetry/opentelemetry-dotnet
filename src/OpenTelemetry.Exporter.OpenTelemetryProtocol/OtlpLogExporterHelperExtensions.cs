@@ -65,6 +65,7 @@ public static class OtlpLogExporterHelperExtensions
             configure?.Invoke(exporterOptions);
 
             AddOtlpLogExporter(
+                finalOptionsName,
                 sp,
                 builder,
                 exporterOptions,
@@ -114,6 +115,7 @@ public static class OtlpLogExporterHelperExtensions
             configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
 
             AddOtlpLogExporter(
+                finalOptionsName,
                 sp,
                 builder,
                 exporterOptions,
@@ -209,6 +211,7 @@ public static class OtlpLogExporterHelperExtensions
             var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
             AddOtlpLogExporter(
+                finalOptionsName,
                 sp,
                 builder,
                 exporterOptions,
@@ -268,6 +271,7 @@ public static class OtlpLogExporterHelperExtensions
             var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
             AddOtlpLogExporter(
+                finalOptionsName,
                 sp,
                 builder,
                 exporterOptions,
@@ -278,6 +282,7 @@ public static class OtlpLogExporterHelperExtensions
     }
 
     internal static void AddOtlpLogExporter(
+        string? name,
         IServiceProvider serviceProvider,
         LoggerProviderBuilder builder,
         OtlpExporterOptions exporterOptions,
@@ -328,14 +333,14 @@ public static class OtlpLogExporterHelperExtensions
         if (exportProcessorType == ExportProcessorType.Simple)
         {
             builder!.AddSimpleExportProcessor(
-                name: null,
+                name,
                 (sp, name) => otlpExporter,
                 processorPipelineWeight);
         }
         else
         {
             builder!.AddBatchExportProcessor(
-                name: null,
+                name,
                 (sp, name) => otlpExporter,
                 processorPipelineWeight);
         }

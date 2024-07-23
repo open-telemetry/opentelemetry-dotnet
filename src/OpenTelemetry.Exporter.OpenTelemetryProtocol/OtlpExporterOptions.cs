@@ -53,16 +53,16 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         : this(
               configuration: new ConfigurationBuilder().AddEnvironmentVariables().Build(),
               configurationType,
-              defaultBatchOptions: new())
+              defaultOptions: new())
     {
     }
 
     internal OtlpExporterOptions(
         IConfiguration configuration,
         OtlpExporterOptionsConfigurationType configurationType,
-        BatchExportActivityProcessorOptions defaultBatchOptions)
+        ActivityExportProcessorOptions defaultOptions)
     {
-        Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
+        Debug.Assert(defaultOptions != null, "defaultOptions was null");
 
         this.ApplyConfiguration(configuration, configurationType);
 
@@ -74,7 +74,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             };
         };
 
-        this.BatchExportProcessorOptions = defaultBatchOptions!;
+        this.ExportProcessorType = defaultOptions!.ExportProcessorType;
+        this.BatchExportProcessorOptions = defaultOptions.BatchExportProcessorOptions;
     }
 
     /// <inheritdoc/>
@@ -165,7 +166,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         => new(
             configuration,
             OtlpExporterOptionsConfigurationType.Default,
-            serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name));
+            serviceProvider.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>().Get(name));
 
     internal void ApplyConfigurationUsingSpecificationEnvVars(
         IConfiguration configuration,

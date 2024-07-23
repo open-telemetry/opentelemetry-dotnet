@@ -11,6 +11,7 @@ using System.Net.Http;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -72,7 +73,7 @@ public class ZipkinExporterTests : IDisposable
     }
 
     [Fact]
-    public void AddAddZipkinExporterNamedOptionsSupported()
+    public void AddZipkinExporterNamedOptionsSupported()
     {
         int defaultExporterOptionsConfigureOptionsInvocations = 0;
         int namedExporterOptionsConfigureOptionsInvocations = 0;
@@ -90,6 +91,72 @@ public class ZipkinExporterTests : IDisposable
 
         Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
         Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
+    }
+
+    [Theory]
+    [InlineData(true, null)]
+    [InlineData(false, null)]
+    [InlineData(true, "zipkin")]
+    [InlineData(false, "zipkin")]
+    public void AddZipkinExporterBatchOptionsChangedTest(bool overrideDefaults, string name)
+    {
+        using var sdk = OpenTelemetrySdk.Create(builder => builder
+            .WithTracing(tracing => tracing
+                .ConfigureServices(services =>
+                {
+                    services.Configure<ActivityExportProcessorOptions>(
+                        name,
+                        o =>
+                        {
+                            o.ExportProcessorType = ExportProcessorType.Simple;
+                            o.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 18;
+                        });
+                })
+                .AddZipkinExporter(
+                    name,
+                    o =>
+                    {
+                        if (overrideDefaults)
+                        {
+                            o.ExportProcessorType = ExportProcessorType.Batch;
+                            o.BatchExportProcessorOptions = new()
+                            {
+                                ScheduledDelayMilliseconds = 10,
+                            };
+                        }
+                    })));
+
+        var tracerProvider = sdk.TracerProvider as TracerProviderSdk;
+
+        Assert.NotNull(tracerProvider);
+
+        if (overrideDefaults)
+        {
+            var batchProcessor = tracerProvider.Processor as BatchExportProcessor<Activity>;
+
+            Assert.NotNull(batchProcessor);
+
+            Assert.Equal(10, batchProcessor.ScheduledDelayMilliseconds);
+
+            var defaultOptions = sdk.Services.GetRequiredService<IOptionsMonitor<ActivityExportProcessorOptions>>()
+                .Get(name);
+
+            var zipkinOptions = sdk.Services.GetRequiredService<IOptionsMonitor<ZipkinExporterOptions>>()
+                .Get(name);
+
+            Assert.False(
+                ReferenceEquals(defaultOptions.BatchExportProcessorOptions, zipkinOptions.BatchExportProcessorOptions));
+            Assert.Equal(
+                defaultOptions.ExportProcessorType,
+                zipkinOptions.ExportProcessorType);
+            Assert.Equal(
+                defaultOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                zipkinOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds);
+        }
+        else
+        {
+            Assert.NotNull(tracerProvider.Processor as SimpleExportProcessor<Activity>);
+        }
     }
 
     [Fact]

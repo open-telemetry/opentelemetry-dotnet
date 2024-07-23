@@ -35,17 +35,18 @@ public sealed class ZipkinExporterOptions
 
     internal ZipkinExporterOptions(
         IConfiguration configuration,
-        BatchExportActivityProcessorOptions defaultBatchOptions)
+        ActivityExportProcessorOptions defaultOptions)
     {
         Debug.Assert(configuration != null, "configuration was null");
-        Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
+        Debug.Assert(defaultOptions != null, "defaultOptions was null");
 
         if (configuration.TryGetUriValue(ZipkinExporterEventSource.Log, ZipkinEndpointEnvVar, out var endpoint))
         {
             this.Endpoint = endpoint;
         }
 
-        this.BatchExportProcessorOptions = defaultBatchOptions;
+        this.ExportProcessorType = defaultOptions.ExportProcessorType;
+        this.BatchExportProcessorOptions = defaultOptions.BatchExportProcessorOptions;
     }
 
     /// <summary>
