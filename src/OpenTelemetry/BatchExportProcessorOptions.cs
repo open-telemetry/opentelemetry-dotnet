@@ -37,7 +37,7 @@ public class BatchExportProcessorOptions<T>
     /// cref="BatchExportProcessorOptions{T}"/> instance.
     /// </summary>
     /// <param name="other"><see cref="BatchExportProcessorOptions{T}"/>.</param>
-    public void ApplyTo(BatchExportProcessorOptions<T> other)
+    internal void ApplyTo(BatchExportProcessorOptions<T> other)
     {
         Guard.ThrowIfNull(other);
 

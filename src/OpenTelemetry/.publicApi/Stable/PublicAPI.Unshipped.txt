@@ -1,4 +1,3 @@
-OpenTelemetry.BatchExportProcessorOptions<T>.ApplyTo(OpenTelemetry.BatchExportProcessorOptions<T!>! other) -> void
 OpenTelemetry.ConcurrencyModes
 OpenTelemetry.ConcurrencyModes.Multithreaded = 2 -> OpenTelemetry.ConcurrencyModes
 OpenTelemetry.ConcurrencyModes.Reentrant = 1 -> OpenTelemetry.ConcurrencyModes
