@@ -261,7 +261,7 @@ is built.
    ```csharp
    using OpenTelemetry;
    using OpenTelemetry.Trace;
-   
+
    var tracerProvider = Sdk.CreateTracerProviderBuilder()
        .AddBatchExportProcessor(new MyExporter1())
        .AddSimpleExportProcessor(new MyExporter2())
@@ -273,7 +273,7 @@ is built.
    ```csharp
    using OpenTelemetry;
    using OpenTelemetry.Trace;
-   
+
    var tracerProvider = Sdk.CreateTracerProviderBuilder()
        .AddProcessor(new BatchActivityExportProcessor(new MyExporter1()))
        .AddProcessor(new SimpleActivityExportProcessor(new MyExporter2()))
