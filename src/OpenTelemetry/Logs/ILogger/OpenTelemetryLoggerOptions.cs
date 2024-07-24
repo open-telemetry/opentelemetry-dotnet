@@ -15,7 +15,7 @@ public class OpenTelemetryLoggerOptions : IDeferredLoggerProviderBuilder
 {
     internal readonly List<Func<IServiceProvider, BaseProcessor<LogRecord>>> ProcessorFactories = new();
     internal ResourceBuilder? ResourceBuilder;
-    private readonly IServiceProvider? serviceProvider;
+    private readonly LoggerProviderBuilderSdk? innerBuilder;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OpenTelemetryLoggerOptions"/> class.
@@ -28,7 +28,7 @@ public class OpenTelemetryLoggerOptions : IDeferredLoggerProviderBuilder
     {
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
-        this.serviceProvider = serviceProvider;
+        this.innerBuilder = serviceProvider!.GetRequiredService<LoggerProviderBuilderSdk>();
     }
 
     /// <summary>
@@ -103,7 +103,14 @@ public class OpenTelemetryLoggerOptions : IDeferredLoggerProviderBuilder
     {
         Guard.ThrowIfNull(processor);
 
-        this.ProcessorFactories.Add(_ => processor);
+        if (this.innerBuilder != null)
+        {
+            this.innerBuilder.AddProcessor(processor);
+        }
+        else
+        {
+            this.ProcessorFactories.Add(_ => processor);
+        }
 
         return this;
     }
@@ -119,7 +126,14 @@ public class OpenTelemetryLoggerOptions : IDeferredLoggerProviderBuilder
     {
         Guard.ThrowIfNull(implementationFactory);
 
-        this.ProcessorFactories.Add(implementationFactory);
+        if (this.innerBuilder != null)
+        {
+            this.innerBuilder.AddProcessor(implementationFactory);
+        }
+        else
+        {
+            this.ProcessorFactories.Add(implementationFactory);
+        }
 
         return this;
     }
@@ -135,7 +149,14 @@ public class OpenTelemetryLoggerOptions : IDeferredLoggerProviderBuilder
     {
         Guard.ThrowIfNull(resourceBuilder);
 
-        this.ResourceBuilder = resourceBuilder;
+        if (this.innerBuilder != null)
+        {
+            this.innerBuilder.SetResourceBuilder(resourceBuilder);
+        }
+        else
+        {
+            this.ResourceBuilder = resourceBuilder;
+        }
 
         return this;
     }
@@ -145,14 +166,10 @@ public class OpenTelemetryLoggerOptions : IDeferredLoggerProviderBuilder
     {
         Guard.ThrowIfNull(configure);
 
-        var sp = this.serviceProvider
+        var innerBuilder = this.innerBuilder
             ?? throw new NotSupportedException("Manually constructed OpenTelemetryLoggerOptions instances cannot be converted to LoggerProviderBuilder instances");
 
-        var builder = sp.GetRequiredService<LoggerProviderBuilderSdk>();
-
-        configure(sp, builder);
-
-        return builder;
+        return innerBuilder.ConfigureBuilder(configure);
     }
 
     internal OpenTelemetryLoggerOptions Copy()
