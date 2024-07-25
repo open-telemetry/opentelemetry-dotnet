@@ -16,6 +16,7 @@ using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
+using ProfilesOtlpCollector = OpenTelemetry.Proto.Collector.Profiles.V1Experimental;
 using TraceOtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter;
@@ -195,6 +196,37 @@ internal static class OtlpExporterOptionsExtensions
         }
     }
 
+    public static OtlpExporterTransmissionHandler<ProfilesOtlpCollector.ExportProfilesServiceRequest> GetProfilesExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
+    {
+        var exportClient = GetProfilesExportClient(options);
+        double timeoutMilliseconds = exportClient is OtlpHttpProfilesExportClient httpProfilesExportClient
+            ? httpProfilesExportClient.HttpClient.Timeout.TotalMilliseconds
+            : options.TimeoutMilliseconds;
+
+        if (experimentalOptions.EnableInMemoryRetry)
+        {
+            return new OtlpExporterRetryTransmissionHandler<ProfilesOtlpCollector.ExportProfilesServiceRequest>(exportClient, timeoutMilliseconds);
+        }
+
+        if (experimentalOptions.EnableDiskRetry)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
+
+            return new OtlpExporterPersistentStorageTransmissionHandler<ProfilesOtlpCollector.ExportProfilesServiceRequest>(
+                exportClient,
+                timeoutMilliseconds,
+                (byte[] data) =>
+                {
+                    var request = new ProfilesOtlpCollector.ExportProfilesServiceRequest();
+                    request.MergeFrom(data);
+                    return request;
+                },
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "profiles"));
+        }
+
+        return new OtlpExporterTransmissionHandler<ProfilesOtlpCollector.ExportProfilesServiceRequest>(exportClient, timeoutMilliseconds);
+    }
+
     public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
         options.Protocol switch
         {
@@ -220,6 +252,16 @@ internal static class OtlpExporterOptionsExtensions
         {
             OtlpExportProtocol.Grpc => new OtlpGrpcLogExportClient(options),
             OtlpExportProtocol.HttpProtobuf => new OtlpHttpLogExportClient(
+                options,
+                options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
+            _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
+        };
+
+    public static IExportClient<ProfilesOtlpCollector.ExportProfilesServiceRequest> GetProfilesExportClient(this OtlpExporterOptions options) =>
+        options.Protocol switch
+        {
+            OtlpExportProtocol.Grpc => new OtlpGrpcProfilesExportClient(options),
+            OtlpExportProtocol.HttpProtobuf => new OtlpHttpProfilesExportClient(
                 options,
                 options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
             _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
