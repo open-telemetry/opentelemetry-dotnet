@@ -5,9 +5,11 @@
 
 * [Installation](#installation)
 * [Introduction](#introduction)
-* [Getting started with Logging](#getting-started-with-logging)
-* [Getting started with Metrics](#getting-started-with-metrics)
-* [Getting started with Tracing](#getting-started-with-tracing)
+* [Getting started](#getting-started)
+  * [Getting started with Logging](#getting-started-with-logging)
+    * [ILogger integration](#ilogger-integration)
+  * [Getting started with Metrics](#getting-started-with-metrics)
+  * [Getting started with Tracing](#getting-started-with-tracing)
 * [Troubleshooting](#troubleshooting)
   * [Configuration Parameters](#configuration-parameters)
   * [Remarks](#remarks)
@@ -22,52 +24,62 @@ dotnet add package OpenTelemetry
 ## Introduction
 
 OpenTelemetry SDK is a reference implementation of the OpenTelemetry API. It
-implements the Tracing API, the Metrics API, and the Context API.  Once a valid
-SDK is installed and configured, all the OpenTelemetry API methods, which were
-no-ops without an SDK, will start emitting telemetry.
-This SDK also supports [ILogger](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
-integration.
+implements the Logging API, Metrics API, Tracing API, Resource API, and the
+Context API. Once a valid SDK is installed and configured all the OpenTelemetry
+API methods, which were no-ops without an SDK, will start emitting telemetry.
+This SDK also ships with an [ILogger integration](#ilogger-integration).
 
-The SDK deals with concerns such as sampling, processing pipeline, exporting
-telemetry to a particular backend etc. In most cases, users indirectly install
-and enable the SDK, when they install a particular exporter.
+The SDK deals with concerns such as sampling, processing pipelines (exporting
+telemetry to a particular backend, etc.), metrics aggregation, and other
+concerns outlined in the [OpenTelemetry
+Specification](https://github.com/open-telemetry/opentelemetry-specification).
+In most cases, users indirectly install and enable the SDK when they install an
+exporter.
 
-## Getting started with Logging
+## Getting started
 
-If you are new to logging, it is recommended to first follow the [getting
-started in 5 minutes - Console
+For general information about how to initialize the OpenTelemetry SDK see
+[getting started](../../docs//README.md).
+
+### Getting started with Logging
+
+If you are new to
+[logging](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/README.md),
+it is recommended to first follow the [getting started in 5 minutes - ASP.NET
+Core Application](../../docs/logs/getting-started-aspnetcore/README.md) guide or
+the [getting started in 5 minutes - Console
 Application](../../docs/logs/getting-started-console/README.md) guide to get up
 and running.
 
-While [OpenTelemetry
-logging](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/README.md)
-specification is an experimental signal, `ILogger` is the de-facto logging API
-provided by the .NET runtime and is a stable API recommended for production use.
-This repo ships an OpenTelemetry
-[provider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers),
-which provides the ability to enrich logs emitted with `ILogger` with
-`ActivityContext`, and export them to multiple destinations, similar to tracing.
-`ILogger` based API will become the OpenTelemetry .NET implementation of
-OpenTelemetry logging.
+For a more detailed explanation of SDK logging features see [Customizing
+OpenTelemetry .NET SDK for Logs](../../docs/logs/customizing-the-sdk/README.md).
 
-## Getting started with Metrics
+#### ILogger integration
+
+This repo ships an
+[ILoggerProvider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers)
+implementation which automatically enriches logs emitted using
+[ILogger](https://learn.microsoft.com/dotnet/core/extensions/logging) with trace
+correlation information (`ActivityContext`).
+
+### Getting started with Metrics
 
 If you are new to
-[metrics](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md),
+[metrics](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/README.md),
 it is recommended to first follow the [getting started in 5 minutes - ASP.NET
 Core Application](../../docs/metrics/getting-started-aspnetcore/README.md) guide
 or the [getting started in 5 minutes - Console
-Application](../../docs/metrics/getting-started-console/README.md) guide to get up
-and running.
+Application](../../docs/metrics/getting-started-console/README.md) guide to get
+up and running.
 
 For a more detailed explanation of SDK metric features see [Customizing
 OpenTelemetry .NET SDK for
 Metrics](../../docs/metrics/customizing-the-sdk/README.md).
 
-## Getting started with Tracing
+### Getting started with Tracing
 
 If you are new to
-[traces](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md),
+[traces](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/README.md),
 it is recommended to first follow the [getting started in 5 minutes - ASP.NET
 Core Application](../../docs/trace/getting-started-aspnetcore/README.md) guide
 or the [getting started in 5 minutes - Console
