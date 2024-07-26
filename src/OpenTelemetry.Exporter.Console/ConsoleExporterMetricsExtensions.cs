@@ -30,7 +30,7 @@ public static class ConsoleExporterMetricsExtensions
     /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
     /// <param name="configureExporter">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
-    public static MeterProviderBuilder AddConsoleExporter(this MeterProviderBuilder builder, Action<ConsoleExporterOptions> configureExporter)
+    public static MeterProviderBuilder AddConsoleExporter(this MeterProviderBuilder builder, Action<ConsoleExporterOptions>? configureExporter)
         => AddConsoleExporter(builder, name: null, configureExporter);
 
     /// <summary>
@@ -42,8 +42,8 @@ public static class ConsoleExporterMetricsExtensions
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddConsoleExporter(
         this MeterProviderBuilder builder,
-        string name,
-        Action<ConsoleExporterOptions> configureExporter)
+        string? name,
+        Action<ConsoleExporterOptions>? configureExporter)
     {
         Guard.ThrowIfNull(builder);
 
@@ -72,7 +72,7 @@ public static class ConsoleExporterMetricsExtensions
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddConsoleExporter(
         this MeterProviderBuilder builder,
-        Action<ConsoleExporterOptions, MetricReaderOptions> configureExporterAndMetricReader)
+        Action<ConsoleExporterOptions, MetricReaderOptions>? configureExporterAndMetricReader)
         => AddConsoleExporter(builder, name: null, configureExporterAndMetricReader);
 
     /// <summary>
@@ -86,8 +86,8 @@ public static class ConsoleExporterMetricsExtensions
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddConsoleExporter(
         this MeterProviderBuilder builder,
-        string name,
-        Action<ConsoleExporterOptions, MetricReaderOptions> configureExporterAndMetricReader)
+        string? name,
+        Action<ConsoleExporterOptions, MetricReaderOptions>? configureExporterAndMetricReader)
     {
         Guard.ThrowIfNull(builder);
 
