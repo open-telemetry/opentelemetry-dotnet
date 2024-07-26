@@ -26,7 +26,7 @@ public static class ConsoleExporterLoggingExtensions
     /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
     // TODO: [Obsolete("Call LoggerProviderBuilder.AddConsoleExporter instead this method will be removed in a future version.")]
-    public static OpenTelemetryLoggerOptions AddConsoleExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<ConsoleExporterOptions> configure)
+    public static OpenTelemetryLoggerOptions AddConsoleExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<ConsoleExporterOptions>? configure)
     {
         Guard.ThrowIfNull(loggerOptions);
 
@@ -52,7 +52,7 @@ public static class ConsoleExporterLoggingExtensions
     /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
     public static LoggerProviderBuilder AddConsoleExporter(
         this LoggerProviderBuilder loggerProviderBuilder,
-        Action<ConsoleExporterOptions> configure)
+        Action<ConsoleExporterOptions>? configure)
         => AddConsoleExporter(loggerProviderBuilder, name: null, configure);
 
     /// <summary>
@@ -64,8 +64,8 @@ public static class ConsoleExporterLoggingExtensions
     /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
     public static LoggerProviderBuilder AddConsoleExporter(
         this LoggerProviderBuilder loggerProviderBuilder,
-        string name,
-        Action<ConsoleExporterOptions> configure)
+        string? name,
+        Action<ConsoleExporterOptions>? configure)
     {
         Guard.ThrowIfNull(loggerProviderBuilder);
 
