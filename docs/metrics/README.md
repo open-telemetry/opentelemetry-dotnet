@@ -127,7 +127,7 @@ There are two different ways of passing tags to an instrument API:
 * Pass the tags directly to the instrument API:
 
   ```csharp
-  counter.Add(100, ("Key1", "Value1"), ("Key2", "Value2"));
+  counter.Add(100, new("Key1", "Value1"), new("Key2", "Value2"));
   ```
 
 * Use
