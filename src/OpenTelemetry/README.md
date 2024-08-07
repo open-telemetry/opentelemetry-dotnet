@@ -126,7 +126,7 @@ start from beginning and overwrite existing text.
 
 ## References
 
-* [OpenTelemetry Project](https://opentelemetry.io/)
-* [OpenTelemetry Logging specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/README.md)
-* [OpenTelemetry Metrics specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/README.md)
-* [OpenTelemetry Tracing specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/README.md)
+* [OpenTelemetry Logging SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/sdk.md)
+* [OpenTelemetry Metrics SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md)
+* [OpenTelemetry Tracing SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md)
+* [OpenTelemetry Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)

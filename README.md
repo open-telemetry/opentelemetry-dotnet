@@ -23,6 +23,7 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) implementation.
 * [Extensibility](#extensibility)
 * [Releases](#releases)
 * [Contributing](#contributing)
+* [References](#references)
 
 </details>
 
@@ -236,3 +237,8 @@ Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/ma
 ### Thanks to all the people who have contributed
 
 [![contributors](https://contributors-img.web.app/image?repo=open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/graphs/contributors)
+
+## References
+
+* [OpenTelemetry Project](https://opentelemetry.io/)
+* [OpenTelemetry Specification](https://github.com/open-telemetry/opentelemetry-specification)
