@@ -15,7 +15,6 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) implementation.
 * [Project status](#project-status)
 * [Getting started](#getting-started)
   * [Getting started with Logging](#getting-started-with-logging)
-    * [ILogger integration](#ilogger-integration)
   * [Getting started with Metrics](#getting-started-with-metrics)
   * [Getting started with Tracing](#getting-started-with-tracing)
 * [Repository structure](#repository-structure)
@@ -60,16 +59,10 @@ the [getting started in 5 minutes - Console
 Application](./docs/logs/getting-started-console/README.md) guide to get up
 and running.
 
-For a more detailed explanation of SDK logging features see [Customizing
-OpenTelemetry .NET SDK for Logs](./docs/logs/customizing-the-sdk/README.md).
-
-#### ILogger integration
-
-This repo ships an
-[ILoggerProvider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers)
-implementation which automatically enriches logs emitted using
-[ILogger](https://learn.microsoft.com/dotnet/core/extensions/logging) with trace
-correlation information (`ActivityContext`).
+For general information and best practices see: [OpenTelemetry .NET
+Logs](./docs/logs/README.md). For a more detailed explanation of SDK logging
+features see: [Customizing OpenTelemetry .NET SDK for
+Logs](./docs/logs/customizing-the-sdk/README.md).
 
 ### Getting started with Metrics
 
@@ -81,8 +74,9 @@ or the [getting started in 5 minutes - Console
 Application](./docs/metrics/getting-started-console/README.md) guide to get
 up and running.
 
-For a more detailed explanation of SDK metric features see [Customizing
-OpenTelemetry .NET SDK for
+For general information and best practices see: [OpenTelemetry .NET
+Metrics](./docs/metrics/README.md). For a more detailed explanation of SDK
+metric features see: [Customizing OpenTelemetry .NET SDK for
 Metrics](./docs/metrics/customizing-the-sdk/README.md).
 
 ### Getting started with Tracing
@@ -95,8 +89,9 @@ or the [getting started in 5 minutes - Console
 Application](./docs/trace/getting-started-console/README.md) guide to get up
 and running.
 
-For a more detailed explanation of SDK tracing features see [Customizing
-OpenTelemetry .NET SDK for
+For general information and best practices see: [OpenTelemetry .NET
+Traces](./docs/trace/README.md). For a more detailed explanation of SDK tracing
+features see: [Customizing OpenTelemetry .NET SDK for
 Tracing](./docs/trace/customizing-the-sdk/README.md).
 
 ## Repository structure

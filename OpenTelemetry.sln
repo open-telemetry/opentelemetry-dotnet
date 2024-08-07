@@ -134,6 +134,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{2C
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "trace", "trace", "{5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}"
+	ProjectSection(SolutionItems) = preProject
+		docs\trace\README.md = docs\trace\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "metrics", "metrics", "{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}"
 	ProjectSection(SolutionItems) = preProject
