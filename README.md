@@ -26,7 +26,6 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) implementation.
 
 </details>
 
-
 ## Supported .NET versions
 
 Packages shipped from this repository generally support all the officially

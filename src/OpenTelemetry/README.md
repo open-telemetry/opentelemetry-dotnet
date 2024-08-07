@@ -3,6 +3,9 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.svg)](https://www.nuget.org/packages/OpenTelemetry)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.svg)](https://www.nuget.org/packages/OpenTelemetry)
 
+<details>
+<summary>Table of Contents</summary>
+
 * [Installation](#installation)
 * [Introduction](#introduction)
 * [Troubleshooting](#troubleshooting)
@@ -10,6 +13,8 @@
     * [Configuration Parameters](#configuration-parameters)
     * [Remarks](#remarks)
 * [References](#references)
+
+</details>
 
 ## Installation
 
@@ -23,7 +28,10 @@ OpenTelemetry SDK is a reference implementation of the OpenTelemetry API. It
 implements the Logging API, Metrics API, Tracing API, Resource API, and the
 Context API. Once a valid SDK is installed and configured all the OpenTelemetry
 API methods, which were no-ops without an SDK, will start emitting telemetry.
-This SDK also ships with an [ILogger integration](#ilogger-integration).
+This SDK also ships with
+[ILogger](https://learn.microsoft.com/dotnet/core/extensions/logging)
+integration to automatically capture and enrich logs emitted using
+`Microsoft.Extensions.Logging`.
 
 The SDK deals with concerns such as sampling, processing pipelines (exporting
 telemetry to a particular backend, etc.), metrics aggregation, and other
