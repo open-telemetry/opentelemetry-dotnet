@@ -20,7 +20,7 @@ directory of each individual package.
   `OTEL_TRACES_SAMPLER_ARG` envvars.
 
 * A new `UseOtlpExporter` cross-cutting extension has been added to register the
-  `OtlpExporter` and enable all signals in a single call.  
+  `OtlpExporter` and enable all signals in a single call.
 
 * `exception.type`, `exception.message`, `exception.stacktrace` will now
   automatically be included by the `OtlpLogExporter` when logging exceptions.
