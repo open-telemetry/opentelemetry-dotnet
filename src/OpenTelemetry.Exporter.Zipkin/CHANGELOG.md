@@ -1,5 +1,9 @@
 # Changelog
 
+This file contains individual changes for the OpenTelemetry.Exporter.Zipkin
+package. For highlights and announcements covering all components see: [Release
+Notes](../../RELEASENOTES.md).
+
 ## Unreleased
 
 * **Breaking change**: Non-primitive tag values converted using
