@@ -1,4 +1,4 @@
-# Getting started with OpenTelemetry
+# OpenTelemetry .NET SDK
 
 ## Initialize the SDK
 
