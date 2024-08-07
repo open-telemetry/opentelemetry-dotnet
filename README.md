@@ -163,17 +163,21 @@ are still work in progress and can undergo breaking changes before stable
 release. Check the individual `README.md` file for each component to understand its
 current state.
 
-See the [project
-milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
-for details on upcoming releases. The dates and features described in issues and
-milestones are estimates, and subject to change.
+For details about upcoming planned releases see:
+[Milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones).
+The dates and features described in issues and milestones are estimates and
+subject to change.
 
-See [releases](https://github.com/open-telemetry/opentelemetry-dotnet/releases)
-for information about past releases.
+For highlights and annoucements for stable releases see: [Release
+Notes](./RELEASENOTES.md).
+
+To access packages, source code, and/or view a list of changes for all
+components in a release see:
+[Releases](https://github.com/open-telemetry/opentelemetry-dotnet/releases).
 
 Nightly builds from this repo are published to [MyGet](https://www.myget.org),
-and can be installed from [this
-source](https://www.myget.org/F/opentelemetry/api/v3/index.json).
+and can be installed using the
+`https://www.myget.org/F/opentelemetry/api/v3/index.json` source.
 
 ## Contributing
 
