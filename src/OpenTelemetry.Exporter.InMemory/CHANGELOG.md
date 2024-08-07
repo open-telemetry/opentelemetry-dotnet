@@ -1,5 +1,9 @@
 # Changelog
 
+This file contains individual changes for the OpenTelemetry.Exporter.InMemory
+package. For highlights and announcements covering all components see: [Release
+Notes](../../RELEASENOTES.md).
+
 ## Unreleased
 
 ## 1.9.0

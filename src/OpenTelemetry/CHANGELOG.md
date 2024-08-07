@@ -1,5 +1,9 @@
 # Changelog
 
+This file contains individual changes for the OpenTelemetry package. For
+highlights and announcements covering all components see: [Release
+Notes](../../RELEASENOTES.md).
+
 ## Unreleased
 
 * Added `OpenTelemetrySdk.Create` API for configuring OpenTelemetry .NET signals

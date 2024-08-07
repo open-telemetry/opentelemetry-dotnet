@@ -123,7 +123,7 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
                 this.WriteLine("Resource associated with Activity:");
                 foreach (var resourceAttribute in resource.Attributes)
                 {
-                    if (this.TagWriter.TryTransformTag(resourceAttribute, out var result))
+                    if (this.TagWriter.TryTransformTag(resourceAttribute.Key, resourceAttribute.Value, out var result))
                     {
                         this.WriteLine($"    {result.Key}: {result.Value}");
                     }
