@@ -22,5 +22,10 @@ guide to get up and running.
 
 ## Vendor support
 
+* [Honeycomb](https://www.honeycomb.io/): [Send Data with the OpenTelemetry .NET
+  SDK](https://docs.honeycomb.io/send-data/dotnet/opentelemetry-sdk/)
 * [NewRelic](https://newrelic.com/): [Getting Started Guide -
   .NET](https://github.com/newrelic/newrelic-opentelemetry-examples/tree/main/getting-started-guides/dotnet)
+* [Splunk](https://www.splunk.com/): [Send traces to Splunk Observability Cloud
+  using the gRPC
+  endpoint](https://docs.splunk.com/observability/en/gdi/other-ingestion-methods/grpc-data-ingest.html)
