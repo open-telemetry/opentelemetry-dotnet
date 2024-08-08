@@ -1,11 +1,12 @@
+#nullable enable
 OpenTelemetry.Extensions.Propagators.B3Propagator
 OpenTelemetry.Extensions.Propagators.B3Propagator.B3Propagator() -> void
 OpenTelemetry.Extensions.Propagators.B3Propagator.B3Propagator(bool singleHeader) -> void
 OpenTelemetry.Extensions.Propagators.JaegerPropagator
 OpenTelemetry.Extensions.Propagators.JaegerPropagator.JaegerPropagator() -> void
-override OpenTelemetry.Extensions.Propagators.B3Propagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
-override OpenTelemetry.Extensions.Propagators.B3Propagator.Fields.get -> System.Collections.Generic.ISet<string>
-override OpenTelemetry.Extensions.Propagators.B3Propagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
-override OpenTelemetry.Extensions.Propagators.JaegerPropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
-override OpenTelemetry.Extensions.Propagators.JaegerPropagator.Fields.get -> System.Collections.Generic.ISet<string>
-override OpenTelemetry.Extensions.Propagators.JaegerPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
+override OpenTelemetry.Extensions.Propagators.B3Propagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string!, System.Collections.Generic.IEnumerable<string!>?>! getter) -> OpenTelemetry.Context.Propagation.PropagationContext
+override OpenTelemetry.Extensions.Propagators.B3Propagator.Fields.get -> System.Collections.Generic.ISet<string!>!
+override OpenTelemetry.Extensions.Propagators.B3Propagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string!, string!>! setter) -> void
+override OpenTelemetry.Extensions.Propagators.JaegerPropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string!, System.Collections.Generic.IEnumerable<string!>?>! getter) -> OpenTelemetry.Context.Propagation.PropagationContext
+override OpenTelemetry.Extensions.Propagators.JaegerPropagator.Fields.get -> System.Collections.Generic.ISet<string!>!
+override OpenTelemetry.Extensions.Propagators.JaegerPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string!, string!>! setter) -> void

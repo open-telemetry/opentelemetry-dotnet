@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics;
 using Xunit;
 
@@ -33,7 +35,7 @@ public class CompositePropagatorTest
     [Fact]
     public void CompositePropagator_NullTextMapPropagators()
     {
-        Assert.Throws<ArgumentNullException>(() => new CompositeTextMapPropagator(null));
+        Assert.Throws<ArgumentNullException>(() => new CompositeTextMapPropagator(null!));
     }
 
     [Fact]
@@ -46,7 +48,7 @@ public class CompositePropagatorTest
     [Fact]
     public void CompositePropagator_NullTextMapPropagator()
     {
-        var compositePropagator = new CompositeTextMapPropagator([null]);
+        var compositePropagator = new CompositeTextMapPropagator([null!]);
         Assert.Empty(compositePropagator.Fields);
     }
 

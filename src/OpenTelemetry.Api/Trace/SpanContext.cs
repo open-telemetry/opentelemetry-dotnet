@@ -85,13 +85,14 @@ public readonly struct SpanContext : IEquatable<SpanContext>
     {
         get
         {
-            if (string.IsNullOrEmpty(this.ActivityContext.TraceState))
+            var traceState = this.ActivityContext.TraceState;
+            if (string.IsNullOrEmpty(traceState))
             {
                 return Enumerable.Empty<KeyValuePair<string, string>>();
             }
 
             var traceStateResult = new List<KeyValuePair<string, string>>();
-            TraceStateUtilsNew.AppendTraceState(this.ActivityContext.TraceState, traceStateResult);
+            TraceStateUtilsNew.AppendTraceState(traceState!, traceStateResult);
             return traceStateResult;
         }
     }

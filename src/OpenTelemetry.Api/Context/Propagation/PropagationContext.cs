@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics;
 
 namespace OpenTelemetry.Context.Propagation;
@@ -53,7 +55,7 @@ public readonly struct PropagationContext : IEquatable<PropagationContext>
     }
 
     /// <inheritdoc/>
-    public override bool Equals(object obj) => (obj is PropagationContext context) && this.Equals(context);
+    public override bool Equals(object? obj) => (obj is PropagationContext context) && this.Equals(context);
 
     /// <inheritdoc/>
     public override int GetHashCode()

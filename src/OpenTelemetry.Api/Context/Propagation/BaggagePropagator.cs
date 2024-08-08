@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Net;
 using System.Text;
 using OpenTelemetry.Internal;
@@ -24,7 +26,7 @@ public class BaggagePropagator : TextMapPropagator
     public override ISet<string> Fields => new HashSet<string> { BaggageHeaderName };
 
     /// <inheritdoc/>
-    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
     {
         if (context.Baggage != default)
         {
@@ -46,7 +48,7 @@ public class BaggagePropagator : TextMapPropagator
 
         try
         {
-            Dictionary<string, string> baggage = null;
+            Dictionary<string, string>? baggage = null;
             var baggageCollection = getter(carrier, BaggageHeaderName);
             if (baggageCollection?.Any() ?? false)
             {
@@ -102,11 +104,11 @@ public class BaggagePropagator : TextMapPropagator
         }
     }
 
-    internal static bool TryExtractBaggage(string[] baggageCollection, out Dictionary<string, string> baggage)
+    internal static bool TryExtractBaggage(string[] baggageCollection, out Dictionary<string, string>? baggage)
     {
         int baggageLength = -1;
         bool done = false;
-        Dictionary<string, string> baggageDictionary = null;
+        Dictionary<string, string>? baggageDictionary = null;
 
         foreach (var item in baggageCollection)
         {

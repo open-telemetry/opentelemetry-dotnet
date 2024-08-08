@@ -25,8 +25,12 @@ public class B3PropagatorTest
     private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
         (d, k) =>
         {
-            d.TryGetValue(k, out var v);
-            return new string[] { v };
+            if (d.TryGetValue(k, out var v))
+            {
+                return [v];
+            }
+
+            return [];
         };
 
     private readonly B3Propagator b3propagator = new();
@@ -354,6 +358,7 @@ public class B3PropagatorTest
     [Fact]
     public void Fields_list()
     {
+        Assert.Equivalent(this.b3propagator.Fields, new List<string> { B3Propagator.XB3TraceId, B3Propagator.XB3SpanId, B3Propagator.XB3ParentSpanId, B3Propagator.XB3Sampled, B3Propagator.XB3Flags, B3Propagator.XB3Flags });
         ContainsExactly(
             this.b3propagator.Fields,
             new List<string> { B3Propagator.XB3TraceId, B3Propagator.XB3SpanId, B3Propagator.XB3ParentSpanId, B3Propagator.XB3Sampled, B3Propagator.XB3Flags });

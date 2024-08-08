@@ -26,7 +26,7 @@ public class JaegerPropagator : TextMapPropagator
     public override ISet<string> Fields => new HashSet<string> { JaegerHeader };
 
     /// <inheritdoc/>
-    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
     {
         if (context.ActivityContext.IsValid())
         {
@@ -56,7 +56,7 @@ public class JaegerPropagator : TextMapPropagator
                 return context;
             }
 
-            var jaegerHeaderParsed = TryExtractTraceContext(jaegerHeader, out var traceId, out var spanId, out var traceOptions);
+            var jaegerHeaderParsed = TryExtractTraceContext(jaegerHeader!, out var traceId, out var spanId, out var traceOptions);
 
             if (!jaegerHeaderParsed)
             {

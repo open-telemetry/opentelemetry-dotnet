@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Text;
 using OpenTelemetry.Internal;
@@ -56,7 +58,7 @@ internal static class TraceStateUtilsNew
                 var keyStr = key.ToString();
                 if (names.Add(keyStr))
                 {
-                    tracestate.Add(new KeyValuePair<string, string>(keyStr, value.ToString()));
+                    tracestate!.Add(new KeyValuePair<string, string>(keyStr, value.ToString()));
                 }
                 else
                 {
@@ -82,7 +84,7 @@ internal static class TraceStateUtilsNew
 
             if (!isValid)
             {
-                tracestate.Clear();
+                tracestate!.Clear();
                 return false;
             }
 
@@ -96,7 +98,7 @@ internal static class TraceStateUtilsNew
         return false;
     }
 
-    internal static string GetString(IEnumerable<KeyValuePair<string, string>> traceState)
+    internal static string GetString(IEnumerable<KeyValuePair<string, string>>? traceState)
     {
         if (traceState == null || !traceState.Any())
         {

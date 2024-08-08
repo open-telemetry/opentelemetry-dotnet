@@ -77,7 +77,7 @@ public class JaegerPropagatorTest
         var headers = new Dictionary<string, string[]>();
 
         // act
-        var result = new JaegerPropagator().Extract(propagationContext, headers, null);
+        var result = new JaegerPropagator().Extract(propagationContext, headers, null!);
 
         // assert
         Assert.Equal(propagationContext, result);
@@ -183,7 +183,7 @@ public class JaegerPropagatorTest
         var headers = new Dictionary<string, string>();
 
         // act
-        new JaegerPropagator().Inject(propagationContext, headers, null);
+        new JaegerPropagator().Inject(propagationContext, headers, null!);
 
         // assert
         Assert.Empty(headers);
