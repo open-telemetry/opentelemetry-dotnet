@@ -37,12 +37,19 @@ files.
 
 ## Project status
 
-**Stable** across all 3 signals i.e. `Logs`, `Metrics`, and `Traces`.
+**Stable** across all 3 signals (`Logs`, `Metrics`, and `Traces`).
 
-See [Spec Compliance
-Matrix](https://github.com/open-telemetry/opentelemetry-specification/blob/main/spec-compliance-matrix.md)
-to understand which portions of the specification has been implemented in this
-repo.
+> [!CAUTION]
+> Certain components, marked as
+[pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
+are still work in progress and can undergo breaking changes before stable
+release. Check the individual `README.md` file for each component to understand its
+current state.
+
+To understand which portions of the [OpenTelemetry
+Specification](https://github.com/open-telemetry/opentelemetry-specification)
+have been implemented in OpenTelemetry .NET see: [Spec Compliance
+Matrix](https://github.com/open-telemetry/opentelemetry-specification/blob/main/spec-compliance-matrix.md).
 
 ## Getting started
 
@@ -124,16 +131,16 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 
 Additional packages including [instrumentation
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
-exporters, resource detectors, and extensions can be found in
+exporters, resource detectors, and extensions can be found in the
 [opentelemetry-dotnet-contrib
-repository](https://github.com/open-telemetry/opentelemetry-dotnet-contrib) or
+repository](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
 and/or the [OpenTelemetry
 registry](https://opentelemetry.io/ecosystem/registry/?language=dotnet).
 
 ## Troubleshooting
 
-For general instructions see [OpenTelemetry .NET SDK >
-Troubleshooting](./src/OpenTelemetry/README.md#troubleshooting). Additionally
+For general instructions see:
+[Troubleshooting](./src/OpenTelemetry/README.md#troubleshooting). Additionally
 `README.md` files for individual components may contain more detailed
 troubleshooting information.
 
@@ -155,13 +162,6 @@ extension scenarios:
   [traces](./docs/trace/extending-the-sdk/README.md#sampler).
 
 ## Releases
-
-> [!CAUTION]
-> Certain components, marked as
-[pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
-are still work in progress and can undergo breaking changes before stable
-release. Check the individual `README.md` file for each component to understand its
-current state.
 
 For details about upcoming planned releases see:
 [Milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones).

@@ -40,6 +40,11 @@ Specification](https://github.com/open-telemetry/opentelemetry-specification).
 In most cases, users indirectly install and enable the SDK when they install an
 exporter.
 
+To learn how to set up and configure the OpenTelemetry SDK see: [Getting
+started](../../README.md#getting-started). For additional details about
+initialization patterns see: [Initialize the
+SDK](../../docs/README.md#initialize-the-sdk).
+
 ## Troubleshooting
 
 All the components shipped from this repo uses
