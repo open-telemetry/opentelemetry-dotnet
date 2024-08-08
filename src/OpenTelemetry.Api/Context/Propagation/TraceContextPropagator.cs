@@ -316,7 +316,7 @@ public class TraceContextPropagator : TextMapPropagator
                         {
                             var bufferToCompare = traceStateBuffer.Slice(0, charsWritten);
 
-                            // We know which key is the first posible duplicate, so skip to that key
+                            // We know which key is the first possible duplicate, so skip to that key
                             // by slicing to the position after the appropriate comma.
                             for (int i = 1; i < potentialMatchingKeyPosition; i++)
                             {
