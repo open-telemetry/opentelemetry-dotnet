@@ -1,4 +1,6 @@
+<!-- markdownlint-disable MD013 -->
 # Getting Started with OpenTelemetry Protocol (OTLP) in 5 Minutes - ASP.NET Core Application
+<!-- markdownlint-enable MD013 -->
 
 If you haven't already, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) and
@@ -67,7 +69,7 @@ builder.Services.AddOpenTelemetry()
 > The `AddOpenTelemetry` extension is part of the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package.
-
+<!-- This comment is to make sure the two notes above and below are not merged -->
 > [!NOTE]
 > The `UseOtlpExporter` extension configures the OpenTelemetry .NET OTLP
 > exporter for logging, metrics, and tracing. For details see: [Enable OTLP
