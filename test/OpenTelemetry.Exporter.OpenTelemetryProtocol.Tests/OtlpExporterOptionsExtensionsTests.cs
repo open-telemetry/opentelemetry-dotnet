@@ -140,6 +140,9 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogExportClient), false, 10000, null)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), false, 10000, null)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), true, 8000, null)]
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcProfilesExportClient), false, 10000, null)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpProfilesExportClient), false, 10000, null)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpProfilesExportClient), true, 8000, null)]
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcTraceExportClient), false, 10000, "in_memory")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), false, 10000, "in_memory")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), true, 8000, "in_memory")]
@@ -149,6 +152,9 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogExportClient), false, 10000, "in_memory")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), false, 10000, "in_memory")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), true, 8000, "in_memory")]
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcProfilesExportClient), false, 10000, "in_memory")]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpProfilesExportClient), false, 10000, "in_memory")]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpProfilesExportClient), true, 8000, "in_memory")]
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcTraceExportClient), false, 10000, "disk")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), false, 10000, "disk")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient), true, 8000, "disk")]
@@ -158,9 +164,12 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogExportClient), false, 10000, "disk")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), false, 10000, "disk")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), true, 8000, "disk")]
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcProfilesExportClient), false, 10000, "disk")]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpProfilesExportClient), false, 10000, "disk")]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpProfilesExportClient), true, 8000, "disk")]
     public void GetTransmissionHandler_InitializesCorrectHandlerExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient, int expectedTimeoutMilliseconds, string? retryStrategy)
     {
-        var exporterOptions = new OtlpExporterOptions() { Protocol = protocol };
+        var exporterOptions = new OtlpExporterOptions { Protocol = protocol };
         if (customHttpClient)
         {
             exporterOptions.HttpClientFactory = () =>
@@ -185,9 +194,15 @@ public class OtlpExporterOptionsExtensionsTests
 
             AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
         }
-        else
+        else if (exportClientType == typeof(OtlpGrpcLogExportClient) || exportClientType == typeof(OtlpHttpLogExportClient))
         {
             var transmissionHandler = exporterOptions.GetLogsExportTransmissionHandler(new ExperimentalOptions(configuration));
+
+            AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
+        }
+        else
+        {
+            var transmissionHandler = exporterOptions.GetProfilesExportTransmissionHandler(new ExperimentalOptions(configuration));
 
             AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
         }
