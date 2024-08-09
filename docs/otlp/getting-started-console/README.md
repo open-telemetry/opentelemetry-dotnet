@@ -8,13 +8,45 @@ Install and run the [Standalone .NET Aspire
 dashboard](https://learn.microsoft.com/dotnet/aspire/fundamentals/dashboard/standalone)
 using Docker:
 
-```sh
-docker run --rm -it -p 18888:18888 -p 4317:18889 -p 4318:18890 -d --name aspire-dashboard mcr.microsoft.com/dotnet/aspire-dashboard:latest
+> [!NOTE]
+> The .NET Aspire dashboard is being used to view telemetry locally. For the
+> purposes of this guide it is being used as a visualization tool to verify the
+> output of the OpenTelemetry .NET SDK. For a list of vendors with support for
+> ingestion of [OpenTelemetry Protocol
+(OTLP)](https://github.com/open-telemetry/opentelemetry-proto/tree/main/docs)
+> see: [Vendors](../README.md#vendors).
+
+PowerShell:
+
+```powershell
+docker run --rm -it `
+    -p 18888:18888 `
+    -p 4317:18889 `
+    -p 4318:18890 `
+    -e DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true `
+    -d `
+    --name aspire-dashboard `
+    mcr.microsoft.com/dotnet/aspire-dashboard:latest
+```
+
+Bash:
+
+```bash
+docker run --rm -it \
+    -p 18888:18888 \
+    -p 4317:18889 \
+    -p 4318:18890 \
+    -e DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true \
+    -d \
+    --name aspire-dashboard \
+    mcr.microsoft.com/dotnet/aspire-dashboard:latest
 ```
 
 > [!CAUTION]
-> The .NET Aspire dashboard is being used to view telemetry locally. It is a
-> developer tool and not meant for production usage.
+> `DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS` is being used to disable
+> authentication for the Aspire dashboard. For instructions on how to run with
+> authentication enabled see: [Login to the
+> dashboard](https://learn.microsoft.com/dotnet/aspire/fundamentals/dashboard/standalone?#login-to-the-dashboard).
 
 Create a new console application:
 
@@ -36,23 +68,28 @@ Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 Run the application (using `dotnet run`) and then browse to the .NET Aspire
 dashboard (eg `http://localhost:18888/`) to view your telemetry.
 
-Congratulations! You are now collecting traces using OpenTelemetry.
+Congratulations! You are now collecting logs, metrics, and traces using
+OpenTelemetry.
 
 What does the above program do?
 
-The program creates an `ActivitySource` which represents an [OpenTelemetry
+The program creates an
+[ActivitySource](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource)
+which represents an [OpenTelemetry
 Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracer).
 
 ```csharp
 private static readonly ActivitySource MyActivitySource = new("MyCompany.MyProduct.MyLibrary");
 ```
 
-The `ActivitySource` instance is used to start an `Activity` which represents an
-[OpenTelemetry
+The `ActivitySource` instance is used to start an
+[Activity](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity)
+which represents an [OpenTelemetry
 Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span)
 and set several `Tags`, which represents
 [Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-attributes)
-on it. It also sets the [Status](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)
+on it. It also sets the
+[Status](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)
 to be `Ok`.
 
 ```csharp
@@ -68,9 +105,13 @@ using (var activity = MyActivitySource.StartActivity("SayHello"))
 }
 ```
 
-The program creates a `Meter` which represents an [OpenTelemetry
+The program creates a
+[Meter](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter)
+which represents an [OpenTelemetry
 Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
-and a `Counter<int>` which represents an [OpenTelemetry
+and a
+[Counter&lt;int&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1)
+which represents an [OpenTelemetry
 Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter).
 
 ```csharp
@@ -84,7 +125,9 @@ The `Counter<int>` is used to record a measurement:
 MyCounter.Add(1);
 ```
 
-The program creates an `ILogger<Program>` instance to emit logs:
+The program creates an
+[ILogger&lt;Program&gt;](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1)
+instance to emit logs:
 
 ```csharp
 var logger = openTelemetrySdk.GetLoggerFactory().CreateLogger<Program>();
@@ -95,8 +138,8 @@ logger.LogInformation("Application starting");
 The program uses the
 [OpenTelemetry.Exporter.OpenTelemetryProtocol](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
 package to export telemetry via OTLP to the .NET Aspire dashboard. This is done
-by configuring and starting the OpenTelemetry SDK using the
-`OpenTelemetrySdk.Create` API (added in `1.10.0`) and extension methods:
+by starting the OpenTelemetry SDK manually and calling extension methods for
+configuration:
 
 ```csharp
 var openTelemetrySdk = OpenTelemetrySdk.Create(builder =>
@@ -109,15 +152,20 @@ var openTelemetrySdk = OpenTelemetrySdk.Create(builder =>
 }
 ```
 
-> [!NOTE]
-> The `UseOtlpExporter` extension configures the OpenTelemetry .NET OTLP
-> exporter for logging, metrics, and tracing. For details see: [Enable OTLP
-> Exporter for all
-> signals](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md#enable-otlp-exporter-for-all-signals).
+The `OpenTelemetrySdk.Create` call initializes the OpenTelemetry SDK. For more
+details see: [Initialize the SDK
+manually](../../README.md#initialize-the-sdk-manually).
 
 The `tracing.AddSource` and `metrics.AddMeter` calls tell the OpenTelemetry SDK
 to listen to the custom `ActivitySource` and `Meter` created by the app to emit
-telemetry.
+telemetry. For more details see:
+  * [Activity Source](../../trace/customizing-the-sdk#activity-source)
+  * [Meter](../../metrics/customizing-the-sdk#meter)
+
+The `UseOtlpExporter` extension configures the OpenTelemetry .NET OTLP exporter
+for logging, metrics, and tracing. For more details see: [Enable OTLP Exporter
+for all
+signals](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md#enable-otlp-exporter-for-all-signals).
 
 ## Learn more
 

@@ -10,13 +10,45 @@ Install and run the [Standalone .NET Aspire
 dashboard](https://learn.microsoft.com/dotnet/aspire/fundamentals/dashboard/standalone)
 using Docker:
 
-```sh
-docker run --rm -it -p 18888:18888 -p 4317:18889 -p 4318:18890 -d --name aspire-dashboard mcr.microsoft.com/dotnet/aspire-dashboard:latest
+> [!NOTE]
+> The .NET Aspire dashboard is being used to view telemetry locally. For the
+> purposes of this guide it is being used as a visualization tool to verify the
+> output of the OpenTelemetry .NET SDK. For a list of vendors with support for
+> ingestion of [OpenTelemetry Protocol
+(OTLP)](https://github.com/open-telemetry/opentelemetry-proto/tree/main/docs)
+> see: [Vendors](../README.md#vendors).
+
+PowerShell:
+
+```powershell
+docker run --rm -it `
+    -p 18888:18888 `
+    -p 4317:18889 `
+    -p 4318:18890 `
+    -e DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true `
+    -d `
+    --name aspire-dashboard `
+    mcr.microsoft.com/dotnet/aspire-dashboard:latest
+```
+
+Bash:
+
+```bash
+docker run --rm -it \
+    -p 18888:18888 \
+    -p 4317:18889 \
+    -p 4318:18890 \
+    -e DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true \
+    -d \
+    --name aspire-dashboard \
+    mcr.microsoft.com/dotnet/aspire-dashboard:latest
 ```
 
 > [!CAUTION]
-> The .NET Aspire dashboard is being used to view telemetry locally. It is a
-> developer tool and not meant for production usage.
+> `DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS` is being used to disable
+> authentication for the Aspire dashboard. For instructions on how to run with
+> authentication enabled see: [Login to the
+> dashboard](https://learn.microsoft.com/dotnet/aspire/fundamentals/dashboard/standalone?#login-to-the-dashboard).
 
 Create a new web application:
 
@@ -43,7 +75,8 @@ Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 Run the application (using `dotnet run`) and then browse to the .NET Aspire
 dashboard (eg `http://localhost:18888/`) to view your telemetry.
 
-Congratulations! You are now collecting traces using OpenTelemetry.
+Congratulations! You are now collecting logs, metrics, and traces using
+OpenTelemetry.
 
 What does the above program do?
 
@@ -65,31 +98,35 @@ builder.Services.AddOpenTelemetry()
     .UseOtlpExporter();
 ```
 
-> [!NOTE]
-> The `AddOpenTelemetry` extension is part of the
+The `AddOpenTelemetry` extension is part of the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
-package.
-<!-- This comment is to make sure the two notes above and below are not merged -->
-> [!NOTE]
-> The `UseOtlpExporter` extension configures the OpenTelemetry .NET OTLP
-> exporter for logging, metrics, and tracing. For details see: [Enable OTLP
-> Exporter for all
-> signals](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md#enable-otlp-exporter-for-all-signals).
+package and registers the OpenTelemetry SDK into the host. For more details see:
+[Initialize the SDK using a host](../../README.md#initialize-the-sdk-using-a-host).
 
-The index route ("/") is set up to write out the OpenTelemetry trace information
-on the response:
+The `tracing.AddAspNetCoreInstrumentation()` and
+`metrics.AddAspNetCoreInstrumentation()` calls register AspNetCore
+instrumentation. For more details see:
+[OpenTelemetry.Instrumentation.AspNetCore](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md).
+
+The `UseOtlpExporter` extension configures the OpenTelemetry .NET OTLP exporter
+for logging, metrics, and tracing. For more details see: [Enable OTLP Exporter
+for all
+signals](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md#enable-otlp-exporter-for-all-signals).
+
+The programs maps the index route ("/") to write out the OpenTelemetry trace
+information on the response:
 
 ```csharp
 app.MapGet("/", () => $"Hello World! OpenTelemetry Trace: {Activity.Current?.Id}");
 ```
 
 In OpenTelemetry .NET the [Activity
-class](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity?view=net-7.0)
+class](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity)
 represents the OpenTelemetry Specification
 [Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span).
 For more details about how the OpenTelemetry Specification is implemented in
 .NET see: [Introduction to OpenTelemetry .NET Tracing
-API](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#introduction-to-opentelemetry-net-tracing-api).
+API](../../../src/OpenTelemetry.Api#introduction-to-opentelemetry-net-tracing-api).
 
 ## Learn more
 

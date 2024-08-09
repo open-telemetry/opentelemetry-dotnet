@@ -25,7 +25,7 @@ guide to get up and running.
 * [DataDog](https://www.datadoghq.com/): [OTLP Ingestion by the Datadog
   Agent](https://docs.datadoghq.com/opentelemetry/interoperability/otlp_ingest_in_the_agent/)
 
-* [Grafana](https://grafana.com/): [Send data using OpenTelemetry Protocol
+* [Grafana Labs](https://grafana.com/): [Send data using OpenTelemetry Protocol
   (OTLP)](https://grafana.com/docs/grafana-cloud/send-data/otlp/send-data-otlp/)
 
 * [Honeycomb](https://www.honeycomb.io/): [Send Data with the OpenTelemetry .NET
@@ -37,3 +37,7 @@ guide to get up and running.
 * [Splunk](https://www.splunk.com/): [Send traces to Splunk Observability Cloud
   using the gRPC
   endpoint](https://docs.splunk.com/observability/en/gdi/other-ingestion-methods/grpc-data-ingest.html)
+
+For more vendors see [Vendors who natively support
+OpenTelemetry](https://opentelemetry.io/ecosystem/vendors/). Any vendor with
+"Native OTLP" column set to "Yes" should support OTLP ingestion.
