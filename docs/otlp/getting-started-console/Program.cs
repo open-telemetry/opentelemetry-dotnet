@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -20,19 +19,13 @@ public class Program
     {
         // Note: OpenTelemetrySdk.Create was added in 1.10.0
 
-        // Configure OpenTelemetry with logs, metrics, & tracing.
-        var openTelemetrySdk = OpenTelemetrySdk.Create(builder =>
-        {
-            builder
-                .ConfigureResource(resource => resource.AddService(serviceName: "ConsoleApp"))
-                .WithTracing(tracing => tracing.AddSource(MyActivitySource.Name))
-                .WithMetrics(metrics => metrics.AddMeter(MyMeter.Name))
-                .UseOtlpExporter();
-
-            // Set OpenTelemetry metrics to use delta temporality.
-            builder.Services.Configure<MetricReaderOptions>(
-                o => o.TemporalityPreference = MetricReaderTemporalityPreference.Delta);
-        });
+        // Configure OpenTelemetry to send logs, metrics, and distributed traces
+        // via OTLP.
+        var openTelemetrySdk = OpenTelemetrySdk.Create(builder => builder
+            .ConfigureResource(resource => resource.AddService(serviceName: "ConsoleApp"))
+            .WithTracing(tracing => tracing.AddSource(MyActivitySource.Name))
+            .WithMetrics(metrics => metrics.AddMeter(MyMeter.Name))
+            .UseOtlpExporter());
 
         var logger = openTelemetrySdk.GetLoggerFactory().CreateLogger<Program>();
 
@@ -54,7 +47,7 @@ public class Program
         logger.LogInformation("Application stopping");
 
         // Dispose openTelemetrySdk before the application ends.
-        // This will flush the remaining telemetry and shutdown pipelines.
+        // This will flush any remaining telemetry and shutdown pipelines.
         openTelemetrySdk.Dispose();
     }
 }

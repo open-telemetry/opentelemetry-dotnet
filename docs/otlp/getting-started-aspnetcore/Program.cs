@@ -9,20 +9,14 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Clear default log providers added by the host.
-builder.Logging.ClearProviders();
-
-// Configure OpenTelemetry with logs, metrics, & tracing and auto-start.
+// Configure OpenTelemetry to start with the host and to send logs, metrics, and
+// distributed traces via OTLP.
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
         .AddService(serviceName: builder.Environment.ApplicationName))
     .WithTracing(tracing => tracing.AddAspNetCoreInstrumentation())
     .WithMetrics(metrics => metrics.AddAspNetCoreInstrumentation())
     .UseOtlpExporter();
-
-// Set OpenTelemetry metrics to use delta temporality.
-builder.Services.Configure<MetricReaderOptions>(
-    o => o.TemporalityPreference = MetricReaderTemporalityPreference.Delta);
 
 var app = builder.Build();
 
