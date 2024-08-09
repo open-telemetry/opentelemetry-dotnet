@@ -16,7 +16,7 @@ using Docker:
 > output of the OpenTelemetry .NET SDK. For a list of vendors with support for
 > ingestion of [OpenTelemetry Protocol
 (OTLP)](https://github.com/open-telemetry/opentelemetry-proto/tree/main/docs)
-> see: [Vendors](../README.md#vendors).
+> see: [Vendors](../README.md#vendor-support).
 
 PowerShell:
 
@@ -126,7 +126,7 @@ represents the OpenTelemetry Specification
 [Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span).
 For more details about how the OpenTelemetry Specification is implemented in
 .NET see: [Introduction to OpenTelemetry .NET Tracing
-API](../../../src/OpenTelemetry.Api#introduction-to-opentelemetry-net-tracing-api).
+API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api).
 
 ## Next steps
 
@@ -153,12 +153,13 @@ Started with OpenTelemetry Protocol (OTLP) in 5 Minutes - Console
 Application](../getting-started-console/README.md) guide contains an example for
 how to add telemetry manually.
 
-Explore how to use [samplers](../../trace/customizing-the-sdk#samplers) to
-control distributed tracing costs.
+Explore how to use
+[samplers](../../trace/customizing-the-sdk/README.md#samplers) to control
+distributed tracing costs.
 
 Consider turning on advanced features such as
-[exemplars](../../metrics/customizing-the-sdk#exemplars) to correlate metrics to
-distributed traces.
+[exemplars](../../metrics/customizing-the-sdk/README.md#exemplars) to correlate
+metrics to distributed traces.
 
 Deploy your application to production. This guide uses OpenTelemetry Protocol
 (OTLP) defaults which means all telemetry will be sent to

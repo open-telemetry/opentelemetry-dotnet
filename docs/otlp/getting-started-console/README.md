@@ -20,7 +20,7 @@ using Docker:
 > output of the OpenTelemetry .NET SDK. For a list of vendors with support for
 > ingestion of [OpenTelemetry Protocol
 (OTLP)](https://github.com/open-telemetry/opentelemetry-proto/tree/main/docs)
-> see: [Vendors](../README.md#vendors).
+> see: [Vendors](../README.md#vendor-support).
 
 PowerShell:
 
@@ -166,9 +166,9 @@ The `tracing.AddSource` and `metrics.AddMeter` calls tell the OpenTelemetry SDK
 to listen to the custom `ActivitySource` and `Meter` created by the app to emit
 telemetry. For more details see:
 
-* [Activity Source](../../trace/customizing-the-sdk#activity-source)
+* [Activity Source](../../trace/customizing-the-sdk/README.md#activity-source)
 
-* [Meter](../../metrics/customizing-the-sdk#meter)
+* [Meter](../../metrics/customizing-the-sdk/README.md#meter)
 
 The `UseOtlpExporter` extension configures the OpenTelemetry .NET OTLP exporter
 for logging, metrics, and tracing. For more details see: [Enable OTLP Exporter
@@ -197,12 +197,13 @@ and
 [ILogger&lt;T&gt;](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1)
 APIs to add custom telemetry to your application and/or libraries.
 
-Explore how to use [samplers](../../trace/customizing-the-sdk#samplers) to
-control distributed tracing costs.
+Explore how to use
+[samplers](../../trace/customizing-the-sdk/README.md#samplers) to control
+distributed tracing costs.
 
 Consider turning on advanced features such as
-[exemplars](../../metrics/customizing-the-sdk#exemplars) to correlate metrics to
-distributed traces.
+[exemplars](../../metrics/customizing-the-sdk/README.md#exemplars) to correlate
+metrics to distributed traces.
 
 Deploy your application to production. This guide uses OpenTelemetry Protocol
 (OTLP) defaults which means all telemetry will be sent to
