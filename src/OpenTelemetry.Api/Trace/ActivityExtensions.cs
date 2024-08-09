@@ -25,9 +25,14 @@ public static class ActivityExtensions
     /// This extension provides a workaround to store Status as special tags with key name of otel.status_code and otel.status_description.
     /// Read more about SetStatus here https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status.
     /// </summary>
+    /// <remarks>
+    /// This method is obsolete.
+    /// For more details see: <see href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#setting-status" />.
+    /// </remarks>
     /// <param name="activity">Activity instance.</param>
     /// <param name="status">Activity execution status.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Obsolete("This method is obsolete. Use Activity.SetStatus(ActivityStatusCode) instead.")]
     public static void SetStatus(this Activity activity, Status status)
     {
         if (activity != null)

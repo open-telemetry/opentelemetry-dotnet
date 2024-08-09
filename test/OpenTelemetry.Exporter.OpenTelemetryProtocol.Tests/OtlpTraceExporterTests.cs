@@ -370,7 +370,11 @@ public class OtlpTraceExporterTests
             links: childLinks);
 
         Assert.NotNull(childActivity);
+#pragma warning disable
+        // TODO: Remove this when SetStatus is deprecated
         childActivity.SetStatus(Status.Error);
+#pragma warning disable
+        childActivity.SetStatus(ActivityStatusCode.Error);
 
         var childEvents = new List<ActivityEvent> { new("e0"), new("e1", default, new ActivityTagsCollection(attributes)) };
         childActivity.AddEvent(childEvents[0]);

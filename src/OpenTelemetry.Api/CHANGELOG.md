@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Marked `ActivityExtensions.SetStatus` method as `[Obsolete]`.
+  Users are now encouraged to use the `Activity.SetStatus(ActivityStatusCode)`
+  method from `System.Diagnostics.DiagnosticSource`
+  for setting the status of an `Activity`.
+  ([]())
+
 * **Breaking change:** CompositeTextMapPropagator.Fields now returns a
   unioned set of fields from all combined propagators. Previously this always
   returned an empty set.
