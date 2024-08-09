@@ -10,7 +10,7 @@ Notes](../../RELEASENOTES.md).
   Users are now encouraged to use the `Activity.SetStatus(ActivityStatusCode)`
   method from `System.Diagnostics.DiagnosticSource`
   for setting the status of an `Activity`.
-  ([]())
+  ([#5781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5781))
 
 * **Breaking change:** CompositeTextMapPropagator.Fields now returns a
   unioned set of fields from all combined propagators. Previously this always
