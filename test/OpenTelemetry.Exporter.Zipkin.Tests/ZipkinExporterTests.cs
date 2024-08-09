@@ -554,7 +554,10 @@ public class ZipkinExporterTests : IDisposable
 
         if (status.HasValue)
         {
+#pragma warning disable
             activity.SetStatus(status.Value);
+#pragma warning enable
+            activity.SetStatus((ActivityStatusCode)status.Value.StatusCode);
         }
 
         activity.SetEndTime(endTimestamp);
