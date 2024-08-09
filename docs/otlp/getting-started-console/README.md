@@ -1,5 +1,11 @@
 # Getting Started with OpenTelemetry Protocol (OTLP) in 5 Minutes - Console Application
 
+> [!IMPORTANT]
+> This document and coressponding code is a work in progess and uses APIs being
+> introduced in `1.10.0`. It may only be possible to run this guide from the
+> cloned repository or using prerelease packages. Once `1.10.0` is released
+> stable this guide will be updated.
+
 If you haven't already, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) and
 [Docker](https://www.docker.com/) on your computer.
@@ -159,13 +165,51 @@ manually](../../README.md#initialize-the-sdk-manually).
 The `tracing.AddSource` and `metrics.AddMeter` calls tell the OpenTelemetry SDK
 to listen to the custom `ActivitySource` and `Meter` created by the app to emit
 telemetry. For more details see:
-  * [Activity Source](../../trace/customizing-the-sdk#activity-source)
-  * [Meter](../../metrics/customizing-the-sdk#meter)
+
+* [Activity Source](../../trace/customizing-the-sdk#activity-source)
+
+* [Meter](../../metrics/customizing-the-sdk#meter)
 
 The `UseOtlpExporter` extension configures the OpenTelemetry .NET OTLP exporter
 for logging, metrics, and tracing. For more details see: [Enable OTLP Exporter
 for all
 signals](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md#enable-otlp-exporter-for-all-signals).
+
+## Next steps
+
+Explore and add relevant [instrumentation
+libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library)
+and resource detectors to your OpenTelemetry configuration by visiting the
+[opentelemetry-dotnet-contrib
+repository](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
+and/or the [OpenTelemetry
+registry](https://opentelemetry.io/ecosystem/registry/?language=dotnet).
+Instrumentation libraries help automatically generate telemetry for common
+application tasks such as making an [outgoing HTTP
+call](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Http).
+Resource detectors help decorate telemetry with information about the hosting
+environment.
+
+Use the
+[ActivitySource](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource),
+[Meter](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter),
+and
+[ILogger&lt;T&gt;](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1)
+APIs to add custom telemetry to your application and/or libraries.
+
+Explore how to use [samplers](../../trace/customizing-the-sdk#samplers) to
+control distributed tracing costs.
+
+Consider turning on advanced features such as
+[exemplars](../../metrics/customizing-the-sdk#exemplars) to correlate metrics to
+distributed traces.
+
+Deploy your application to production. This guide uses OpenTelemetry Protocol
+(OTLP) defaults which means all telemetry will be sent to
+`http://localhost:4317` using the `OtlpExportProtocol.Grpc` protocol. But these
+settings may be configured using a variety of mechanisms. For details about how
+to configure the `OpenTelemetry.Exporter.OpenTelemetryProtocol` package see:
+[Configuration](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md#configuration).
 
 ## Learn more
 

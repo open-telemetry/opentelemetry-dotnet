@@ -17,7 +17,9 @@ public class Program
 
     public static void Main()
     {
-        // Note: OpenTelemetrySdk.Create was added in 1.10.0
+        // Note: OpenTelemetrySdk.Create in a new API being added in 1.10.0.
+        // This code will not compile using stable packages released to NuGet
+        // until 1.10.0 is released.
 
         // Configure OpenTelemetry to send logs, metrics, and distributed traces
         // via OTLP.

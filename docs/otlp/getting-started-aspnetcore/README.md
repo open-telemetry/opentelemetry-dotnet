@@ -128,6 +128,45 @@ For more details about how the OpenTelemetry Specification is implemented in
 .NET see: [Introduction to OpenTelemetry .NET Tracing
 API](../../../src/OpenTelemetry.Api#introduction-to-opentelemetry-net-tracing-api).
 
+## Next steps
+
+Explore and add relevant [instrumentation
+libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library)
+and resource detectors to your OpenTelemetry configuration by visiting the
+[opentelemetry-dotnet-contrib
+repository](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
+and/or the [OpenTelemetry
+registry](https://opentelemetry.io/ecosystem/registry/?language=dotnet).
+Instrumentation libraries help automatically generate telemetry for common
+application tasks such as making an [outgoing HTTP
+call](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Http).
+Resource detectors help decorate telemetry with information about the hosting
+environment.
+
+Use the
+[ActivitySource](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource),
+[Meter](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter),
+and
+[ILogger&lt;T&gt;](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1)
+APIs to add custom telemetry to your application and/or libraries. The [Getting
+Started with OpenTelemetry Protocol (OTLP) in 5 Minutes - Console
+Application](../getting-started-console/README.md) guide contains an example for
+how to add telemetry manually.
+
+Explore how to use [samplers](../../trace/customizing-the-sdk#samplers) to
+control distributed tracing costs.
+
+Consider turning on advanced features such as
+[exemplars](../../metrics/customizing-the-sdk#exemplars) to correlate metrics to
+distributed traces.
+
+Deploy your application to production. This guide uses OpenTelemetry Protocol
+(OTLP) defaults which means all telemetry will be sent to
+`http://localhost:4317` using the `OtlpExportProtocol.Grpc` protocol. But these
+settings may be configured using a variety of mechanisms. For details about how
+to configure the `OpenTelemetry.Exporter.OpenTelemetryProtocol` package see:
+[Configuration](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md#configuration).
+
 ## Learn more
 
 * [OpenTelemetry .NET Logs](../../logs/README.md)
