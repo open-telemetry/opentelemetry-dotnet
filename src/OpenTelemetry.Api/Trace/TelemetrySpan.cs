@@ -51,6 +51,7 @@ public class TelemetrySpan : IDisposable
         // TODO: Remove this when SetStatus is deprecated
         this.Activity?.SetStatus(value);
 #pragma warning disable
+        this.Activity?.SetStatus((ActivityStatusCode)value.StatusCode);
     }
 
     /// <summary>
