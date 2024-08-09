@@ -13,6 +13,7 @@ function CreateDraftRelease {
 
   $tagPrefix = $match.Groups[1].Value
   $version = $match.Groups[2].Value
+  $isPrerelease = $version -match '-alpha' -or $version -match '-beta' -or $version -match '-rc'
 
   $projects = @(Get-ChildItem -Path src/**/*.csproj | Select-String "<MinVerTagPrefix>$tagPrefix</MinVerTagPrefix>" -List | Select Path)
 
@@ -22,6 +23,7 @@ function CreateDraftRelease {
   }
 
   $notes = ''
+  $previousVersion = ''
 
   foreach ($project in $projects)
   {
@@ -44,6 +46,11 @@ function CreateDraftRelease {
           }
           elseif ($line -like "## *" -and $started -eq $true)
           {
+              $match = [regex]::Match($line, '^##\s*(.*)$')
+              if ($match.Success -eq $true)
+              {
+                  $previousVersion = $match.Groups[1].Value
+              }
               break
           }
           else
@@ -57,7 +64,7 @@ function CreateDraftRelease {
 
       if ([string]::IsNullOrWhitespace($content) -eq $true)
       {
-          $content = "   No notable changes."
+          $content = "  No notable changes."
       }
 
       $content = $content.trimend()
@@ -70,11 +77,19 @@ $content
 
   See [CHANGELOG](https://github.com/$gitRepository/blob/$tag/src/$projectName/CHANGELOG.md) for details.
 
+
 "@
   }
 
-  if ($version -match '-alpha' -or $version -match '-beta' -or $version -match '-rc')
+  if ($isPrerelease -eq $true)
   {
+    $notes =
+@"
+The following changes are from the previous release [$previousVersion](https://github.com/$gitRepository/releases/tag/$tagPrefix$previousVersion).
+
+
+"@ + $notes
+
     gh release create $tag $releaseFiles `
       --title $tag `
       --verify-tag `
@@ -84,6 +99,15 @@ $content
   }
   else
   {
+    $notes =
+@"
+For highlights and announcements pertaining to this release see: [Release Notes > $version](https://github.com/$gitRepository/blob/main/RELEASENOTES.md#$($version.Replace('.',''))).
+
+The following changes are from the previous release [$previousVersion](https://github.com/$gitRepository/releases/tag/$tagPrefix$previousVersion).
+
+
+"@ + $notes
+
     gh release create $tag $releaseFiles `
       --title $tag `
       --verify-tag `
