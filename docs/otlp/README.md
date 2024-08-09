@@ -38,6 +38,6 @@ guide to get up and running.
   using the gRPC
   endpoint](https://docs.splunk.com/observability/en/gdi/other-ingestion-methods/grpc-data-ingest.html)
 
-For more vendors see [Vendors who natively support
+For more vendors see: [Vendors who natively support
 OpenTelemetry](https://opentelemetry.io/ecosystem/vendors/). Any vendor with
 "Native OTLP" column set to "Yes" should support OTLP ingestion.
