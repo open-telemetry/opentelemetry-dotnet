@@ -75,6 +75,18 @@ Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 Run the application (using `dotnet run`) and then browse to the .NET Aspire
 dashboard (eg `http://localhost:18888/`) to view your telemetry.
 
+Logs:
+
+![image](https://github.com/user-attachments/assets/6149f41a-c227-47c1-be00-98c56fbcf481)
+
+Metrics:
+
+![image](https://github.com/user-attachments/assets/ba88ba94-9897-4d9b-9cb7-7d8f91821ae1)
+
+Traces:
+
+![image](https://github.com/user-attachments/assets/a6f41a9a-ceef-4325-9306-a46a2a26bfb0)
+
 Congratulations! You are now collecting logs, metrics, and traces using
 OpenTelemetry.
 
