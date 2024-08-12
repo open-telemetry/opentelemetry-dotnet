@@ -24,6 +24,8 @@ public static class ActivityExtensions
     /// </summary>
     /// <remarks>
     /// This method is obsolete.
+    /// Use the `Activity.SetStatus(ActivityStatusCode)` method
+    /// from `System.Diagnostics.DiagnosticSource` for setting the status of an `Activity`.
     /// For more details see: <see href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#setting-status" />.
     /// </remarks>
     /// <param name="activity">Activity instance.</param>
