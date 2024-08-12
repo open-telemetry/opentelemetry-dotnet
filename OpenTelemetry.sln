@@ -18,6 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE.TXT = LICENSE.TXT
 		NuGet.config = NuGet.config
 		README.md = README.md
+		RELEASENOTES.md = RELEASENOTES.md
 		THIRD-PARTY-NOTICES.TXT = THIRD-PARTY-NOTICES.TXT
 		VERSIONING.md = VERSIONING.md
 	EndProjectSection
@@ -123,6 +124,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "test\Benchmarks\Benchmarks.csproj", "{DE9130A4-F30A-49D7-8834-41DE3021218B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}"
+	ProjectSection(SolutionItems) = preProject
+		docs\README.md = docs\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948}"
 	ProjectSection(SolutionItems) = preProject
@@ -131,6 +135,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{2C
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "trace", "trace", "{5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}"
+	ProjectSection(SolutionItems) = preProject
+		docs\trace\README.md = docs\trace\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "metrics", "metrics", "{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}"
 	ProjectSection(SolutionItems) = preProject

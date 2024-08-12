@@ -10,7 +10,7 @@ namespace OpenTelemetry.Exporter;
 
 public class ConsoleMetricExporter : ConsoleExporter<Metric>
 {
-    private Resource resource;
+    private Resource? resource;
 
     public ConsoleMetricExporter(ConsoleExporterOptions options)
         : base(options)
@@ -27,7 +27,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 this.WriteLine("Resource associated with Metric:");
                 foreach (var resourceAttribute in this.resource.Attributes)
                 {
-                    if (this.TagWriter.TryTransformTag(resourceAttribute, out var result))
+                    if (this.TagWriter.TryTransformTag(resourceAttribute.Key, resourceAttribute.Value, out var result))
                     {
                         this.WriteLine($"    {result.Key}: {result.Value}");
                     }

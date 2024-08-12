@@ -41,7 +41,7 @@ public static class InMemoryExporterMetricsExtensions
     public static MeterProviderBuilder AddInMemoryExporter(
         this MeterProviderBuilder builder,
         ICollection<Metric> exportedItems,
-        Action<MetricReaderOptions> configureMetricReader)
+        Action<MetricReaderOptions>? configureMetricReader)
         => AddInMemoryExporter(builder, name: null, exportedItems, configureMetricReader);
 
     /// <summary>
@@ -57,9 +57,9 @@ public static class InMemoryExporterMetricsExtensions
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddInMemoryExporter(
         this MeterProviderBuilder builder,
-        string name,
+        string? name,
         ICollection<Metric> exportedItems,
-        Action<MetricReaderOptions> configureMetricReader)
+        Action<MetricReaderOptions>? configureMetricReader)
     {
         Guard.ThrowIfNull(builder);
         Guard.ThrowIfNull(exportedItems);
@@ -108,7 +108,7 @@ public static class InMemoryExporterMetricsExtensions
     public static MeterProviderBuilder AddInMemoryExporter(
         this MeterProviderBuilder builder,
         ICollection<MetricSnapshot> exportedItems,
-        Action<MetricReaderOptions> configureMetricReader)
+        Action<MetricReaderOptions>? configureMetricReader)
         => AddInMemoryExporter(builder, name: null, exportedItems, configureMetricReader);
 
     /// <summary>
@@ -125,9 +125,9 @@ public static class InMemoryExporterMetricsExtensions
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddInMemoryExporter(
         this MeterProviderBuilder builder,
-        string name,
+        string? name,
         ICollection<MetricSnapshot> exportedItems,
-        Action<MetricReaderOptions> configureMetricReader)
+        Action<MetricReaderOptions>? configureMetricReader)
     {
         Guard.ThrowIfNull(builder);
         Guard.ThrowIfNull(exportedItems);

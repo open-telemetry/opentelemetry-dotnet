@@ -1,5 +1,10 @@
 # Changelog
 
+This file contains individual changes for the
+OpenTelemetry.Api.ProviderBuilderExtensions package. For highlights and
+announcements covering all components see: [Release
+Notes](../../RELEASENOTES.md).
+
 ## Unreleased
 
 ## 1.9.0

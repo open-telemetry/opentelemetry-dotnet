@@ -99,12 +99,12 @@ function AddLabelsOnPullRequestsBasedOnFilesChanged {
         $rootInfraFiles.Contains($fullFileName) -or
         $fileExtension -eq ".props" -or
         $fileExtension -eq ".targets" -or
-        $fileChanged.StartsWith('test\openTelemetry.aotcompatibility'))
+        $fileChanged.StartsWith('test/openTelemetry.aotcompatibility'))
     {
         $added = $labelsToAdd.Add("infra")
     }
 
-    if ($fileChanged.StartsWith('test\benchmarks'))
+    if ($fileChanged.StartsWith('test/benchmarks'))
     {
         $added = $labelsToAdd.Add("perf")
     }
