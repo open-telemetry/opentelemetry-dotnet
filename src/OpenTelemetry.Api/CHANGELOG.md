@@ -17,6 +17,9 @@ Notes](../../RELEASENOTES.md).
   returned an empty set.
   ([#5745](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5745))
 
+* Optimize performance of `TraceContextPropagator.Extract`.
+  ([#5749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5749))
+
 ## 1.9.0
 
 Released 2024-Jun-14
