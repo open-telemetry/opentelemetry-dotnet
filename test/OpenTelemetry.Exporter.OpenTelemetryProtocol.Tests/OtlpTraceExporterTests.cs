@@ -370,10 +370,7 @@ public class OtlpTraceExporterTests
             links: childLinks);
 
         Assert.NotNull(childActivity);
-#pragma warning disable
-        // TODO: Remove this when SetStatus is deprecated
-        childActivity.SetStatus(Status.Error);
-#pragma warning disable
+
         childActivity.SetStatus(ActivityStatusCode.Error);
 
         var childEvents = new List<ActivityEvent> { new("e0"), new("e1", default, new ActivityTagsCollection(attributes)) };
@@ -392,9 +389,10 @@ public class OtlpTraceExporterTests
         Assert.Equal(traceId, otlpSpan.TraceId);
         Assert.Equal(parentId, otlpSpan.ParentSpanId);
 
-        // Assert.Equal(OtlpTrace.Status.Types.StatusCode.NotFound, otlpSpan.Status.Code);
+        Assert.NotNull(otlpSpan.Status);
+        Assert.Equal(OtlpTrace.Status.Types.StatusCode.Error, otlpSpan.Status.Code);
 
-        //Assert.Equal(Status.Error.Description ?? string.Empty, otlpSpan.Status.Message);
+        Assert.Equal(Status.Error.Description ?? string.Empty, otlpSpan.Status.Message);
         Assert.Empty(otlpSpan.Attributes);
 
         Assert.Equal(childEvents.Count, otlpSpan.Events.Count);
