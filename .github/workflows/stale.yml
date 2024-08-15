@@ -1,7 +1,7 @@
 # Syntax: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
 # Github Actions Stale: https://github.com/actions/stale
 
-name: "Close stale Issues & PRs"
+name: "Manage stale issues and pull requests"
 on:
   schedule:
     - cron: "12 3 * * *"  # arbitrary time not to DDOS GitHub
