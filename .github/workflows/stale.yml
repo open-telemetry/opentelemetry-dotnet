@@ -22,4 +22,4 @@ jobs:
           days-before-pr-close: 7
           days-before-issue-close: 7
           exempt-all-issue-milestones: true
-          exempt-issue-labels: needs-runtime-change,needs-spec-change,needs-majorversion-bump,needs-triage,help wanted,good first issue
+          exempt-issue-labels: needs-triage
