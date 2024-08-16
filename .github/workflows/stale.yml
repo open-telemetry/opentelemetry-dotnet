@@ -14,7 +14,7 @@ jobs:
         with:
           stale-issue-message: 'This issue was marked stale due to lack of activity and will be closed in 7 days. Commenting will instruct the bot to automatically remove the label. This bot runs once per day.'
           close-issue-message: 'Closed as inactive. Feel free to reopen if this issue is still a concern.'
-          stale-pr-message: 'This PR was marked stale due to lack of activity and will be closed in 7 days. Commenting or Pushing will instruct the bot to automatically remove the label. This bot runs once per day.'
+          stale-pr-message: 'This PR was marked stale due to lack of activity and will be closed in 7 days. Commenting or pushing will instruct the bot to automatically remove the label. This bot runs once per day.'
           close-pr-message: 'Closed as inactive. Feel free to reopen if this PR is still being worked on.'
           operations-per-run: 400
           days-before-pr-stale: 7
@@ -22,4 +22,4 @@ jobs:
           days-before-pr-close: 7
           days-before-issue-close: 7
           exempt-all-issue-milestones: true
-          exempt-issue-labels: need-runtime-change,await-spec,help wanted,needs-triage
+          exempt-issue-labels: needs-runtime-change,needs-spec-change,needs-majorversion-bump,needs-triage,help wanted,good first issue
