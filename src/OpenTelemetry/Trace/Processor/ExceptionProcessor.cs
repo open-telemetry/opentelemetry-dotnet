@@ -65,7 +65,7 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
 #pragma warning disable
             // TODO: Remove this when SetStatus is deprecated
             activity.SetStatus(Status.Error);
-#pragma warning disable
+#pragma warning restore
 
             // For processors/exporters checking `Status` property.
             activity.SetStatus(ActivityStatusCode.Error);
