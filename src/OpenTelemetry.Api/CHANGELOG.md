@@ -7,7 +7,8 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Marked `ActivityExtensions.SetStatus` method as `[Obsolete]`.
-  Users are now encouraged to use the `Activity.SetStatus(ActivityStatusCode)`
+  Users are now encouraged to use the [Activity.SetStatus(ActivityStatusCode]
+  (https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.setstatus)
   method from `System.Diagnostics.DiagnosticSource`
   for setting the status of an `Activity`.
   ([#5781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5781))
