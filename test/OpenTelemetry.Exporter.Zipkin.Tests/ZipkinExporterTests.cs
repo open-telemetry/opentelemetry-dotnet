@@ -58,7 +58,7 @@ public class ZipkinExporterTests : IDisposable
             string requestContent = readStream.ReadToEnd();
 
             Responses.TryAdd(
-                Guid.Parse(context.Request.QueryString["requestId"]),
+                Guid.Parse(context.Request.QueryString["requestId"]!),
                 requestContent);
 
             context.Response.OutputStream.Close();
@@ -95,8 +95,8 @@ public class ZipkinExporterTests : IDisposable
     [Fact]
     public void BadArgs()
     {
-        TracerProviderBuilder builder = null;
-        Assert.Throws<ArgumentNullException>(() => builder.AddZipkinExporter());
+        TracerProviderBuilder? builder = null;
+        Assert.Throws<ArgumentNullException>(() => builder!.AddZipkinExporter());
     }
 
     [Fact]
@@ -151,7 +151,7 @@ public class ZipkinExporterTests : IDisposable
 
             var exporterOptions = new ZipkinExporterOptions();
 
-            Assert.Equal(new Uri(Environment.GetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar)).AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
+            Assert.Equal(new Uri(Environment.GetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar)!).AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
         }
         finally
         {
@@ -205,7 +205,7 @@ public class ZipkinExporterTests : IDisposable
         };
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(values)
+            .AddInMemoryCollection(values!)
             .Build();
 
         var options = new ZipkinExporterOptions(configuration, new());
@@ -247,13 +247,13 @@ public class ZipkinExporterTests : IDisposable
             Assert.Equal(2, invocations);
         }
 
-        options.HttpClientFactory = null;
+        options.HttpClientFactory = null!;
         Assert.Throws<InvalidOperationException>(() =>
         {
             using var exporter = new ZipkinExporter(options);
         });
 
-        options.HttpClientFactory = () => null;
+        options.HttpClientFactory = () => null!;
         Assert.Throws<InvalidOperationException>(() =>
         {
             using var exporter = new ZipkinExporter(options);
@@ -288,7 +288,7 @@ public class ZipkinExporterTests : IDisposable
 
         zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
 
-        Assert.StartsWith("unknown_service:", zipkinExporter.LocalEndpoint.ServiceName);
+        Assert.StartsWith("unknown_service:", zipkinExporter.LocalEndpoint!.ServiceName);
     }
 
     [Fact]
@@ -303,7 +303,7 @@ public class ZipkinExporterTests : IDisposable
                 };
 
                 services.AddSingleton<IConfiguration>(
-                    new ConfigurationBuilder().AddInMemoryCollection(configuration).Build());
+                    new ConfigurationBuilder().AddInMemoryCollection(configuration!).Build());
             });
 
         var zipkinExporter = new ZipkinExporter(new ZipkinExporterOptions());
@@ -314,7 +314,7 @@ public class ZipkinExporterTests : IDisposable
 
         zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
 
-        Assert.Equal("myservicename", zipkinExporter.LocalEndpoint.ServiceName);
+        Assert.Equal("myservicename", zipkinExporter.LocalEndpoint!.ServiceName);
     }
 
     [Theory]
@@ -331,7 +331,7 @@ public class ZipkinExporterTests : IDisposable
         bool useTestResource,
         bool isRootSpan,
         StatusCode statusCode = StatusCode.Unset,
-        string statusDescription = null,
+        string? statusDescription = null,
         bool addErrorTag = false)
     {
         var status = statusCode switch
@@ -391,7 +391,7 @@ public class ZipkinExporterTests : IDisposable
         var eventTimestamp = activity.Events.First().Timestamp.ToEpochMicroseconds();
 
         StringBuilder ipInformation = new StringBuilder();
-        if (!string.IsNullOrEmpty(exporter.LocalEndpoint.Ipv4))
+        if (!string.IsNullOrEmpty(exporter.LocalEndpoint!.Ipv4))
         {
             ipInformation.Append($@",""ipv4"":""{exporter.LocalEndpoint.Ipv4}""");
         }
@@ -459,10 +459,10 @@ public class ZipkinExporterTests : IDisposable
     internal static Activity CreateTestActivity(
        bool isRootSpan = false,
        bool setAttributes = true,
-       Dictionary<string, object> additionalAttributes = null,
+       Dictionary<string, object>? additionalAttributes = null,
        bool addEvents = true,
        bool addLinks = true,
-       Resource resource = null,
+       Resource? resource = null,
        ActivityKind kind = ActivityKind.Client,
        Status? status = null,
        DateTime? dateTime = null)
@@ -506,14 +506,14 @@ public class ZipkinExporterTests : IDisposable
             new ActivityEvent(
                 "Event1",
                 eventTimestamp,
-                new ActivityTagsCollection(new Dictionary<string, object>
+                new ActivityTagsCollection(new Dictionary<string, object?>
                 {
                     { "key", "value" },
                 })),
             new ActivityEvent(
                 "Event2",
                 eventTimestamp,
-                new ActivityTagsCollection(new Dictionary<string, object>
+                new ActivityTagsCollection(new Dictionary<string, object?>
                 {
                     { "key", "value" },
                 })),
@@ -524,7 +524,7 @@ public class ZipkinExporterTests : IDisposable
         var activitySource = new ActivitySource(nameof(CreateTestActivity));
 
         var tags = setAttributes ?
-                attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value))
+                attributes.Select(kvp => new KeyValuePair<string, object?>(kvp.Key, kvp.Value))
                 : null;
         var links = addLinks ?
                 new[]
@@ -548,16 +548,16 @@ public class ZipkinExporterTests : IDisposable
         {
             foreach (var evnt in events)
             {
-                activity.AddEvent(evnt);
+                activity!.AddEvent(evnt);
             }
         }
 
         if (status.HasValue)
         {
-            activity.SetStatus(status.Value);
+            activity!.SetStatus(status.Value);
         }
 
-        activity.SetEndTime(endTimestamp);
+        activity!.SetEndTime(endTimestamp);
         activity.Stop();
 
         return activity;

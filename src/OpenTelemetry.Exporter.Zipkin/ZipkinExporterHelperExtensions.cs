@@ -44,8 +44,8 @@ public static class ZipkinExporterHelperExtensions
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
     public static TracerProviderBuilder AddZipkinExporter(
         this TracerProviderBuilder builder,
-        string name,
-        Action<ZipkinExporterOptions> configure)
+        string? name,
+        Action<ZipkinExporterOptions>? configure)
     {
         Guard.ThrowIfNull(builder);
 
@@ -81,13 +81,13 @@ public static class ZipkinExporterHelperExtensions
         {
             options.HttpClientFactory = () =>
             {
-                Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
+                Type? httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
                 if (httpClientFactoryType != null)
                 {
-                    object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                    object? httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
                     if (httpClientFactory != null)
                     {
-                        MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
+                        MethodInfo? createClientMethod = httpClientFactoryType.GetMethod(
                             "CreateClient",
                             BindingFlags.Public | BindingFlags.Instance,
                             binder: null,
@@ -95,7 +95,9 @@ public static class ZipkinExporterHelperExtensions
                             modifiers: null);
                         if (createClientMethod != null)
                         {
-                            return (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { "ZipkinExporter" });
+                            var parameters = new object[] { "ZipkinExporter" };
+                            var client = (HttpClient?)createClientMethod.Invoke(httpClientFactory, parameters);
+                            return client ?? new HttpClient();
                         }
                     }
                 }

@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Buffers;
 using System.Collections;
 
@@ -97,7 +99,7 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
         private readonly T[] buffer;
         private readonly int count;
         private int index;
-        private T current;
+        private T? current;
 
         public Enumerator(in PooledList<T> list)
         {
@@ -107,9 +109,9 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
             this.current = default;
         }
 
-        public T Current { get => this.current; }
+        public T Current => this.current!;
 
-        object IEnumerator.Current { get => this.Current; }
+        object IEnumerator.Current => this.Current!;
 
         public void Dispose()
         {
@@ -124,14 +126,14 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
             }
 
             this.index = this.count + 1;
-            this.current = default;
+            this.current = default!;
             return false;
         }
 
         void IEnumerator.Reset()
         {
             this.index = 0;
-            this.current = default;
+            this.current = default!;
         }
     }
 }
