@@ -42,8 +42,8 @@ public static class PrometheusExporterMeterProviderBuilderExtensions
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddPrometheusExporter(
         this MeterProviderBuilder builder,
-        string name,
-        Action<PrometheusAspNetCoreOptions> configure)
+        string? name,
+        Action<PrometheusAspNetCoreOptions>? configure)
     {
         Guard.ThrowIfNull(builder);
 

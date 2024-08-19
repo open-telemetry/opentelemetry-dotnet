@@ -173,11 +173,11 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabelValue(byte[] buffer, int cursor, string value)
+    public static int WriteLabelValue(byte[] buffer, int cursor, string? value)
     {
         Debug.Assert(value != null, $"{nameof(value)} should not be null.");
 
-        for (int i = 0; i < value.Length; i++)
+        for (int i = 0; i < value!.Length; i++)
         {
             var ordinal = (ushort)value[i];
             switch (ordinal)
@@ -204,7 +204,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object labelValue)
+    public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue)
     {
         cursor = WriteLabelKey(buffer, cursor, labelKey);
         buffer[cursor++] = unchecked((byte)'=');
@@ -216,10 +216,8 @@ internal static partial class PrometheusSerializer
 
         return cursor;
 
-        static string GetLabelValueString(object labelValue)
+        static string GetLabelValueString(object? labelValue)
         {
-            // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
-            // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
             if (labelValue is bool b)
             {
                 return b ? "true" : "false";
@@ -234,6 +232,7 @@ internal static partial class PrometheusSerializer
     {
         // Metric name has already been escaped.
         var name = openMetricsRequested ? metric.OpenMetricsName : metric.Name;
+        Guard.ThrowIfNullOrWhitespace(name, nameof(name));
 
         for (int i = 0; i < name.Length; i++)
         {
@@ -249,6 +248,7 @@ internal static partial class PrometheusSerializer
     {
         // Metric name has already been escaped.
         var name = openMetricsRequested ? metric.OpenMetricsMetadataName : metric.Name;
+        Guard.ThrowIfNullOrWhitespace(name, nameof(name));
 
         for (int i = 0; i < name.Length; i++)
         {
@@ -321,7 +321,7 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = unchecked((byte)' ');
 
         // Unit name has already been escaped.
-        for (int i = 0; i < metric.Unit.Length; i++)
+        for (int i = 0; i < metric.Unit!.Length; i++)
         {
             var ordinal = (ushort)metric.Unit[i];
             buffer[cursor++] = unchecked((byte)ordinal);

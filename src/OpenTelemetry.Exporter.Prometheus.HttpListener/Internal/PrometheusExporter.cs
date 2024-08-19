@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
@@ -13,9 +12,9 @@ namespace OpenTelemetry.Exporter.Prometheus;
 [ExportModes(ExportModes.Pull)]
 internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
 {
-    private Func<int, bool> funcCollect;
-    private Func<Batch<Metric>, ExportResult> funcExport;
-    private Resource resource;
+    private Func<int, bool>? funcCollect;
+    private Func<Batch<Metric>, ExportResult>? funcExport;
+    private Resource? resource;
     private bool disposed;
 
     /// <summary>
@@ -24,30 +23,32 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     /// <param name="options"><see cref="PrometheusExporterOptions"/>.</param>
     public PrometheusExporter(PrometheusExporterOptions options)
     {
-        Guard.ThrowIfNull(options);
-
         this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
         this.DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters;
 
         this.CollectionManager = new PrometheusCollectionManager(this);
+
+        this.funcCollect = _ => true;
+        this.funcExport = _ => ExportResult.Success;
+        this.resource = null;
     }
 
     /// <summary>
     /// Gets or sets the Collect delegate.
     /// </summary>
-    public Func<int, bool> Collect
+    public Func<int, bool>? Collect
     {
-        get => this.funcCollect;
-        set => this.funcCollect = value;
+        get => this.funcCollect ?? null;
+        set => this.funcCollect = value ?? null;
     }
 
-    internal Func<Batch<Metric>, ExportResult> OnExport
+    internal Func<Batch<Metric>, ExportResult>? OnExport
     {
-        get => this.funcExport;
-        set => this.funcExport = value;
+        get => this.funcExport ?? null;
+        set => this.funcExport = value ?? null;
     }
 
-    internal Action OnDispose { get; set; }
+    internal Action? OnDispose { get; set; }
 
     internal PrometheusCollectionManager CollectionManager { get; }
 
@@ -62,7 +63,7 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     /// <inheritdoc/>
     public override ExportResult Export(in Batch<Metric> metrics)
     {
-        return this.OnExport(metrics);
+        return this.OnExport?.Invoke(metrics) ?? ExportResult.Failure;
     }
 
     /// <inheritdoc/>

@@ -29,19 +29,21 @@ internal sealed class PrometheusMetric
         var sanitizedName = SanitizeMetricName(name);
         var openMetricsName = SanitizeOpenMetricsName(sanitizedName);
 
-        string sanitizedUnit = null;
+        string? sanitizedUnit = null;
         if (!string.IsNullOrEmpty(unit))
         {
             sanitizedUnit = GetUnit(unit);
-
-            // The resulting unit SHOULD be added to the metric as
-            // [OpenMetrics UNIT metadata](https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#metricfamily)
-            // and as a suffix to the metric name. The unit suffix comes before any type-specific suffixes.
-            // https://github.com/open-telemetry/opentelemetry-specification/blob/3dfb383fe583e3b74a2365c5a1d90256b273ee76/specification/compatibility/prometheus_and_openmetrics.md#metric-metadata-1
-            if (!sanitizedName.EndsWith(sanitizedUnit))
+            if (sanitizedUnit != null)
             {
-                sanitizedName += $"_{sanitizedUnit}";
-                openMetricsName += $"_{sanitizedUnit}";
+                // The resulting unit SHOULD be added to the metric as
+                // [OpenMetrics UNIT metadata](https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#metricfamily)
+                // and as a suffix to the metric name. The unit suffix comes before any type-specific suffixes.
+                // https://github.com/open-telemetry/opentelemetry-specification/blob/3dfb383fe583e3b74a2365c5a1d90256b273ee76/specification/compatibility/prometheus_and_openmetrics.md#metric-metadata-1
+                if (!sanitizedName.EndsWith(sanitizedUnit))
+                {
+                    sanitizedName += $"_{sanitizedUnit}";
+                    openMetricsName += $"_{sanitizedUnit}";
+                }
             }
         }
 
@@ -74,13 +76,13 @@ internal sealed class PrometheusMetric
         this.Type = type;
     }
 
-    public string Name { get; }
+    public string? Name { get; }
 
-    public string OpenMetricsName { get; }
+    public string? OpenMetricsName { get; }
 
-    public string OpenMetricsMetadataName { get; }
+    public string? OpenMetricsMetadataName { get; }
 
-    public string Unit { get; }
+    public string? Unit { get; }
 
     public PrometheusType Type { get; }
 
@@ -91,7 +93,7 @@ internal sealed class PrometheusMetric
 
     internal static string SanitizeMetricName(string metricName)
     {
-        StringBuilder sb = null;
+        StringBuilder? sb = null;
         var lastCharUnderscore = false;
 
         for (var i = 0; i < metricName.Length; i++)
@@ -134,7 +136,7 @@ internal sealed class PrometheusMetric
         // https://ucum.org/ucum#section-Character-Set-and-Lexical-Rules
         // What should happen if they are nested isn't defined.
         // Right now the remove annotations code doesn't attempt to balance multiple start and end braces.
-        StringBuilder sb = null;
+        StringBuilder? sb = null;
 
         var hasOpenBrace = false;
         var startOpenBraceIndex = 0;
@@ -168,6 +170,7 @@ internal sealed class PrometheusMetric
             return unit;
         }
 
+        sb ??= new StringBuilder();
         sb.Append(unit, lastWriteIndex, unit.Length - lastWriteIndex);
         return sb.ToString();
     }
@@ -182,7 +185,7 @@ internal sealed class PrometheusMetric
         return metricName;
     }
 
-    private static string GetUnit(string unit)
+    private static string? GetUnit(string unit)
     {
         // Dropping the portions of the Unit within brackets (e.g. {packet}). Brackets MUST NOT be included in the resulting unit. A "count of foo" is considered unitless in Prometheus.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L238
@@ -204,7 +207,7 @@ internal sealed class PrometheusMetric
         return updatedUnit;
     }
 
-    private static bool TryProcessRateUnits(string updatedUnit, out string updatedPerUnit)
+    private static bool TryProcessRateUnits(string updatedUnit, out string? updatedPerUnit)
     {
         updatedPerUnit = null;
 

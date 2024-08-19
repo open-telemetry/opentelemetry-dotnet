@@ -15,7 +15,7 @@ public class PrometheusAspNetCoreOptions
     /// <summary>
     /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
     /// </summary>
-    public string ScrapeEndpointPath { get; set; } = DefaultScrapeEndpointPath;
+    public string? ScrapeEndpointPath { get; set; } = DefaultScrapeEndpointPath;
 
     /// <summary>
     /// Gets or sets a value indicating whether addition of _total suffix for counter metric names is disabled. Default value: <see langword="false"/>.

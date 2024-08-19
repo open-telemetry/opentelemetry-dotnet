@@ -110,7 +110,7 @@ public sealed class PrometheusExporterMiddlewareTests
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
             validateResponse: rsp =>
             {
-                if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string> headers))
+                if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string>? headers))
                 {
                     headers = Array.Empty<string>();
                 }
@@ -137,7 +137,7 @@ public sealed class PrometheusExporterMiddlewareTests
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
             validateResponse: rsp =>
             {
-                if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string> headers))
+                if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string>? headers))
                 {
                     headers = Array.Empty<string>();
                 }
@@ -254,10 +254,10 @@ public sealed class PrometheusExporterMiddlewareTests
         using var host = await StartTestHostAsync(
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
 
-        var tags = new KeyValuePair<string, object>[]
+        var tags = new KeyValuePair<string, object?>[]
         {
-            new KeyValuePair<string, object>("key1", "value1"),
-            new KeyValuePair<string, object>("key2", "value2"),
+            new("key1", "value1"),
+            new("key2", "value2"),
         };
 
         using var meter = new Meter(MeterName, MeterVersion);
@@ -315,10 +315,10 @@ public sealed class PrometheusExporterMiddlewareTests
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
         string path,
         Action<IApplicationBuilder> configure,
-        Action<IServiceCollection> configureServices = null,
-        Action<HttpResponseMessage> validateResponse = null,
+        Action<IServiceCollection>? configureServices = null,
+        Action<HttpResponseMessage>? validateResponse = null,
         bool registerMeterProvider = true,
-        Action<PrometheusAspNetCoreOptions> configureOptions = null,
+        Action<PrometheusAspNetCoreOptions>? configureOptions = null,
         bool skipMetrics = false,
         string acceptHeader = "application/openmetrics-text")
     {
@@ -326,10 +326,10 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var host = await StartTestHostAsync(configure, configureServices, registerMeterProvider, configureOptions);
 
-        var tags = new KeyValuePair<string, object>[]
+        var tags = new KeyValuePair<string, object?>[]
         {
-            new KeyValuePair<string, object>("key1", "value1"),
-            new KeyValuePair<string, object>("key2", "value2"),
+            new("key1", "value1"),
+            new("key2", "value2"),
         };
 
         using var meter = new Meter(MeterName, MeterVersion);
@@ -375,11 +375,11 @@ public sealed class PrometheusExporterMiddlewareTests
 
         if (requestOpenMetrics)
         {
-            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
+            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType!.ToString());
         }
         else
         {
-            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType!.ToString());
         }
 
         string content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
@@ -417,9 +417,9 @@ public sealed class PrometheusExporterMiddlewareTests
 
     private static Task<IHost> StartTestHostAsync(
         Action<IApplicationBuilder> configure,
-        Action<IServiceCollection> configureServices = null,
+        Action<IServiceCollection>? configureServices = null,
         bool registerMeterProvider = true,
-        Action<PrometheusAspNetCoreOptions> configureOptions = null)
+        Action<PrometheusAspNetCoreOptions>? configureOptions = null)
     {
         return new HostBuilder()
             .ConfigureWebHost(webBuilder => webBuilder

@@ -38,7 +38,7 @@ public static class PrometheusExporterEndpointRouteBuilderExtensions
     /// middleware to.</param>
     /// <param name="path">The path to use for the branched pipeline.</param>
     /// <returns>A convention routes for the Prometheus scraping endpoint.</returns>
-    public static IEndpointConventionBuilder MapPrometheusScrapingEndpoint(this IEndpointRouteBuilder endpoints, string path)
+    public static IEndpointConventionBuilder MapPrometheusScrapingEndpoint(this IEndpointRouteBuilder endpoints, string? path)
     {
         Guard.ThrowIfNull(path);
         return MapPrometheusScrapingEndpoint(endpoints, path, meterProvider: null, configureBranchedPipeline: null, optionsName: null);
@@ -64,10 +64,10 @@ public static class PrometheusExporterEndpointRouteBuilderExtensions
     /// <returns>A convention routes for the Prometheus scraping endpoint.</returns>
     public static IEndpointConventionBuilder MapPrometheusScrapingEndpoint(
         this IEndpointRouteBuilder endpoints,
-        string path,
-        MeterProvider meterProvider,
-        Action<IApplicationBuilder> configureBranchedPipeline,
-        string optionsName)
+        string? path,
+        MeterProvider? meterProvider,
+        Action<IApplicationBuilder>? configureBranchedPipeline,
+        string? optionsName)
     {
         var builder = endpoints.CreateApplicationBuilder();
 

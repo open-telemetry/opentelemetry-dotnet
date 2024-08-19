@@ -30,7 +30,7 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
     /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
     public static MeterProviderBuilder AddPrometheusHttpListener(
         this MeterProviderBuilder builder,
-        Action<PrometheusHttpListenerOptions> configure)
+        Action<PrometheusHttpListenerOptions>? configure)
         => AddPrometheusHttpListener(builder, name: null, configure);
 
     /// <summary>
@@ -42,8 +42,8 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
     /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
     public static MeterProviderBuilder AddPrometheusHttpListener(
         this MeterProviderBuilder builder,
-        string name,
-        Action<PrometheusHttpListenerOptions> configure)
+        string? name,
+        Action<PrometheusHttpListenerOptions>? configure)
     {
         Guard.ThrowIfNull(builder);
 

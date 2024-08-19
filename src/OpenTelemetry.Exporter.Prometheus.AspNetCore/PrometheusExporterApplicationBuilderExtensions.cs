@@ -41,7 +41,7 @@ public static class PrometheusExporterApplicationBuilderExtensions
     /// <param name="path">Path to use for the branched pipeline.</param>
     /// <returns>A reference to the original <see
     /// cref="IApplicationBuilder"/> for chaining calls.</returns>
-    public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, string path)
+    public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, string? path)
     {
         Guard.ThrowIfNull(path);
         return UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null, predicate: null, path: path, configureBranchedPipeline: null, optionsName: null);
@@ -59,7 +59,7 @@ public static class PrometheusExporterApplicationBuilderExtensions
     /// <see cref="HttpContext"/> should be branched.</param>
     /// <returns>A reference to the original <see
     /// cref="IApplicationBuilder"/> for chaining calls.</returns>
-    public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, Func<HttpContext, bool> predicate)
+    public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, Func<HttpContext, bool>? predicate)
     {
         Guard.ThrowIfNull(predicate);
         return UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null, predicate: predicate, path: null, configureBranchedPipeline: null, optionsName: null);
@@ -93,11 +93,11 @@ public static class PrometheusExporterApplicationBuilderExtensions
     /// cref="IApplicationBuilder"/> for chaining calls.</returns>
     public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(
         this IApplicationBuilder app,
-        MeterProvider meterProvider,
-        Func<HttpContext, bool> predicate,
-        string path,
-        Action<IApplicationBuilder> configureBranchedPipeline,
-        string optionsName)
+        MeterProvider? meterProvider,
+        Func<HttpContext, bool>? predicate,
+        string? path,
+        Action<IApplicationBuilder>? configureBranchedPipeline,
+        string? optionsName)
     {
         // Note: Order is important here. MeterProvider is accessed before
         // GetOptions<PrometheusAspNetCoreOptions> so that any changes made to

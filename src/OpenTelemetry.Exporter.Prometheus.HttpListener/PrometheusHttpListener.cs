@@ -3,7 +3,6 @@
 
 using System.Net;
 using OpenTelemetry.Exporter.Prometheus;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter;
 
@@ -13,8 +12,8 @@ internal sealed class PrometheusHttpListener : IDisposable
     private readonly HttpListener httpListener = new();
     private readonly object syncObject = new();
 
-    private CancellationTokenSource tokenSource;
-    private Task workerThread;
+    private CancellationTokenSource? tokenSource;
+    private Task? workerThread;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PrometheusHttpListener"/> class.
@@ -23,9 +22,6 @@ internal sealed class PrometheusHttpListener : IDisposable
     /// <param name="options"><see cref="PrometheusHttpListenerOptions"/>The configured HttpListener options.</param>
     public PrometheusHttpListener(PrometheusExporter exporter, PrometheusHttpListenerOptions options)
     {
-        Guard.ThrowIfNull(exporter);
-        Guard.ThrowIfNull(options);
-
         this.exporter = exporter;
 
         string path = options.ScrapeEndpointPath;
@@ -40,7 +36,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             path = $"{path}/";
         }
 
-        foreach (string uriPrefix in options.UriPrefixes)
+        foreach (string uriPrefix in options.UriPrefixes!)
         {
             this.httpListener.Prefixes.Add($"{uriPrefix.TrimEnd('/')}{path}");
         }
@@ -83,7 +79,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             }
 
             this.tokenSource.Cancel();
-            this.workerThread.Wait();
+            this.workerThread!.Wait();
             this.tokenSource = null;
         }
     }
@@ -116,7 +112,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         try
         {
             using var scope = SuppressInstrumentationScope.Begin();
-            while (!this.tokenSource.IsCancellationRequested)
+            while (!this.tokenSource!.IsCancellationRequested)
             {
                 var ctxTask = this.httpListener.GetContextAsync();
                 ctxTask.Wait(this.tokenSource.Token);
@@ -164,7 +160,7 @@ internal sealed class PrometheusHttpListener : IDisposable
                         ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
                         : "text/plain; charset=utf-8; version=0.0.4";
 
-                    await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count).ConfigureAwait(false);
+                    await context.Response.OutputStream.WriteAsync(dataView.Array!, 0, dataView.Count).ConfigureAwait(false);
                 }
                 else
                 {

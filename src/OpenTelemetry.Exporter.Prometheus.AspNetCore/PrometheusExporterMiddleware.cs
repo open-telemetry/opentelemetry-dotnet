@@ -22,21 +22,22 @@ internal sealed class PrometheusExporterMiddleware
     /// </summary>
     /// <param name="meterProvider"><see cref="MeterProvider"/>.</param>
     /// <param name="next"><see cref="RequestDelegate"/>.</param>
-    public PrometheusExporterMiddleware(MeterProvider meterProvider, RequestDelegate next)
+    /// <exception cref="ArgumentException">Thrown when a <see cref="PrometheusExporter"/> could not be found on the provided <see cref="MeterProvider"/>.</exception>
+    public PrometheusExporterMiddleware(MeterProvider meterProvider, RequestDelegate? next)
     {
         Guard.ThrowIfNull(meterProvider);
 
-        if (!meterProvider.TryFindExporter(out PrometheusExporter exporter))
+        if (!meterProvider.TryFindExporter(out PrometheusExporter? exporter))
         {
             throw new ArgumentException("A PrometheusExporter could not be found configured on the provided MeterProvider.");
         }
 
-        this.exporter = exporter;
+        this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
     }
 
     internal PrometheusExporterMiddleware(PrometheusExporter exporter)
     {
-        this.exporter = exporter;
+        this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
     }
 
     /// <summary>
@@ -71,7 +72,7 @@ internal sealed class PrometheusExporterMiddleware
                         ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
                         : "text/plain; charset=utf-8; version=0.0.4";
 
-                    await response.Body.WriteAsync(dataView.Array, 0, dataView.Count).ConfigureAwait(false);
+                    await response.Body.WriteAsync(dataView.Array.AsMemory(0, dataView.Count)).ConfigureAwait(false);
                 }
                 else
                 {
@@ -108,9 +109,12 @@ internal sealed class PrometheusExporterMiddleware
 
         foreach (var header in acceptHeader)
         {
-            if (PrometheusHeadersParser.AcceptsOpenMetrics(header))
+            if (header != null)
             {
-                return true;
+                if (PrometheusHeadersParser.AcceptsOpenMetrics(header))
+                {
+                    return true;
+                }
             }
         }
 

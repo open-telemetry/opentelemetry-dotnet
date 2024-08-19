@@ -26,7 +26,7 @@ public class PrometheusHttpListenerOptions
     /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
     /// Default value: <c>["http://localhost:9464/"]</c>.
     /// </summary>
-    public IReadOnlyCollection<string> UriPrefixes
+    public IReadOnlyCollection<string>? UriPrefixes
     {
         get => this.uriPrefixes;
         set

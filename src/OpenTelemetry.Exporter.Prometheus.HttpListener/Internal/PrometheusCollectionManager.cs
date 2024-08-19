@@ -26,7 +26,7 @@ internal sealed class PrometheusCollectionManager
     private DateTime? previousOpenMetricsDataViewGeneratedAtUtc;
     private int readerCount;
     private bool collectionRunning;
-    private TaskCompletionSource<CollectionResponse> collectionTcs;
+    private TaskCompletionSource<CollectionResponse>? collectionTcs;
 
     public PrometheusCollectionManager(PrometheusExporter exporter)
     {
@@ -115,7 +115,7 @@ internal sealed class PrometheusCollectionManager
                 ? this.previousOpenMetricsDataViewGeneratedAtUtc
                 : this.previousPlainTextDataViewGeneratedAtUtc;
 
-            response = new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: false);
+            response = new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc!.Value, fromCache: false);
         }
         else
         {
@@ -190,7 +190,7 @@ internal sealed class PrometheusCollectionManager
     {
         this.exporter.OnExport = this.onCollectRef;
         this.exporter.OpenMetricsRequested = openMetricsRequested;
-        var result = this.exporter.Collect(Timeout.Infinite);
+        var result = this.exporter.Collect!(Timeout.Infinite);
         this.exporter.OnExport = null;
         return result;
     }
