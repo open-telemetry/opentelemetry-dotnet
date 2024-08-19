@@ -3,6 +3,7 @@
 
 using System.Net;
 using OpenTelemetry.Exporter.Prometheus;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter;
 
@@ -22,6 +23,9 @@ internal sealed class PrometheusHttpListener : IDisposable
     /// <param name="options"><see cref="PrometheusHttpListenerOptions"/>The configured HttpListener options.</param>
     public PrometheusHttpListener(PrometheusExporter exporter, PrometheusHttpListenerOptions options)
     {
+        Guard.ThrowIfNull(exporter);
+        Guard.ThrowIfNull(options);
+
         this.exporter = exporter;
 
         string path = options.ScrapeEndpointPath;

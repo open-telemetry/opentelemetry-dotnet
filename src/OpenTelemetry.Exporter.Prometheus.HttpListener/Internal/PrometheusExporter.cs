@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
@@ -23,6 +24,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     /// <param name="options"><see cref="PrometheusExporterOptions"/>.</param>
     public PrometheusExporter(PrometheusExporterOptions options)
     {
+        Guard.ThrowIfNull(options);
+
         this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
         this.DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters;
 

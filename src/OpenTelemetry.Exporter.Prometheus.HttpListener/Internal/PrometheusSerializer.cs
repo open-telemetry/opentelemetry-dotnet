@@ -218,6 +218,8 @@ internal static partial class PrometheusSerializer
 
         static string GetLabelValueString(object? labelValue)
         {
+            // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
+            // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
             if (labelValue is bool b)
             {
                 return b ? "true" : "false";
