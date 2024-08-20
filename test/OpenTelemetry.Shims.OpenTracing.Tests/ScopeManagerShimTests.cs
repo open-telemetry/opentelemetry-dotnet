@@ -33,7 +33,7 @@ public class ScopeManagerShimTests
         Assert.NotNull(scope);
 
         var activeScope = shim.Active;
-        Assert.Equal(scope.Span.Context.SpanId, activeScope.Span.Context.SpanId);
+        Assert.Equal(scope.Span.Context.SpanId, activeScope!.Span.Context.SpanId);
         openTracingSpan.Finish();
     }
 
@@ -64,6 +64,6 @@ public class ScopeManagerShimTests
 #endif
 
         spanShim.Finish();
-        Assert.NotEqual(default, spanShim.Span.Activity.Duration);
+        Assert.NotEqual(default, spanShim.Span.Activity!.Duration);
     }
 }

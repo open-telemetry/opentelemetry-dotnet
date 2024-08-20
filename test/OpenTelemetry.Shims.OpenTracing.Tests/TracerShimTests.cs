@@ -129,7 +129,7 @@ public class TracerShimTests
         // then extract
         var extractedSpanContext = shim.Extract(BuiltinFormats.TextMap, carrier);
 
-        AssertOpenTracerSpanContextEqual(spanContextShim, extractedSpanContext);
+        AssertOpenTracerSpanContextEqual(spanContextShim, extractedSpanContext!);
     }
 
     private static void AssertOpenTracerSpanContextEqual(ISpanContext source, ISpanContext target)

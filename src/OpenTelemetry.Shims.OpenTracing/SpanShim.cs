@@ -28,7 +28,7 @@ internal sealed class SpanShim : ISpan
 
     private readonly SpanContextShim spanContextShim;
 
-    public SpanShim(TelemetrySpan span)
+    public SpanShim(TelemetrySpan? span)
     {
         Guard.ThrowIfNull(span);
 
@@ -54,11 +54,11 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public string GetBaggageItem(string key)
+    public string GetBaggageItem(string? key)
         => Baggage.GetBaggage(key);
 
     /// <inheritdoc/>
-    public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
+    public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>>? fields)
     {
         Guard.ThrowIfNull(fields);
 
@@ -113,13 +113,13 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
+    public ISpan Log(IEnumerable<KeyValuePair<string, object>>? fields)
     {
         return this.Log(DateTimeOffset.MinValue, fields);
     }
 
     /// <inheritdoc/>
-    public ISpan Log(string @event)
+    public ISpan Log(string? @event)
     {
         Guard.ThrowIfNull(@event);
 
@@ -144,7 +144,7 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetOperationName(string operationName)
+    public ISpan SetOperationName(string? operationName)
     {
         Guard.ThrowIfNull(operationName);
 
@@ -153,7 +153,7 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(string key, string value)
+    public ISpan SetTag(string? key, string value)
     {
         Guard.ThrowIfNull(key);
 
@@ -162,7 +162,7 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(string key, bool value)
+    public ISpan SetTag(string? key, bool value)
     {
         Guard.ThrowIfNull(key);
 
@@ -181,7 +181,7 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(string key, int value)
+    public ISpan SetTag(string? key, int value)
     {
         Guard.ThrowIfNull(key);
 
@@ -190,7 +190,7 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(string key, double value)
+    public ISpan SetTag(string? key, double value)
     {
         Guard.ThrowIfNull(key);
 
@@ -199,32 +199,32 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
+    public ISpan SetTag(global::OpenTracing.Tag.BooleanTag? tag, bool value)
     {
-        return this.SetTag(tag?.Key, value);
+        return this.SetTag(tag?.Key!, value);
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
+    public ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag? tag, string value)
     {
         if (int.TryParse(value, out var result))
         {
-            return this.SetTag(tag?.Key, result);
+            return this.SetTag(tag?.Key!, result);
         }
 
-        return this.SetTag(tag?.Key, value);
+        return this.SetTag(tag?.Key!, value);
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.IntTag tag, int value)
+    public ISpan SetTag(global::OpenTracing.Tag.IntTag? tag, int value)
     {
-        return this.SetTag(tag?.Key, value);
+        return this.SetTag(tag?.Key!, value);
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.StringTag tag, string value)
+    public ISpan SetTag(global::OpenTracing.Tag.StringTag? tag, string value)
     {
-        return this.SetTag(tag?.Key, value);
+        return this.SetTag(tag?.Key!, value);
     }
 
     /// <summary>
@@ -234,7 +234,7 @@ internal sealed class SpanShim : ISpan
     /// <returns>A 2-Tuple containing the event name and payload information.</returns>
     private static Tuple<string, IDictionary<string, object>> ConvertToEventPayload(IEnumerable<KeyValuePair<string, object>> fields)
     {
-        string eventName = null;
+        string? eventName = null;
         var attributes = new Dictionary<string, object>();
 
         foreach (var field in fields)
@@ -268,7 +268,7 @@ internal sealed class SpanShim : ISpan
             else
             {
                 // TODO should we completely ignore unsupported types?
-                attributes.Add(field.Key, field.Value.ToString());
+                attributes.Add(field.Key, field.Value.ToString()!);
             }
         }
 

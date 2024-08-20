@@ -14,13 +14,13 @@ namespace OpenTelemetry.Shims.OpenTracing;
 public class TracerShim : global::OpenTracing.ITracer
 {
     private readonly Trace.Tracer tracer;
-    private readonly TextMapPropagator definedPropagator;
+    private readonly TextMapPropagator? definedPropagator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TracerShim"/> class.
     /// </summary>
     /// <param name="tracerProvider"><see cref="Trace.TracerProvider"/>.</param>
-    public TracerShim(Trace.TracerProvider tracerProvider)
+    public TracerShim(Trace.TracerProvider? tracerProvider)
         : this(tracerProvider, null)
     {
     }
@@ -30,7 +30,7 @@ public class TracerShim : global::OpenTracing.ITracer
     /// </summary>
     /// <param name="tracerProvider"><see cref="Trace.TracerProvider"/>.</param>
     /// <param name="textFormat"><see cref="TextMapPropagator"/>.</param>
-    public TracerShim(Trace.TracerProvider tracerProvider, TextMapPropagator textFormat)
+    public TracerShim(Trace.TracerProvider? tracerProvider, TextMapPropagator? textFormat)
     {
         Guard.ThrowIfNull(tracerProvider);
 
@@ -46,7 +46,7 @@ public class TracerShim : global::OpenTracing.ITracer
     public global::OpenTracing.IScopeManager ScopeManager { get; }
 
     /// <inheritdoc/>
-    public global::OpenTracing.ISpan ActiveSpan => this.ScopeManager.Active?.Span;
+    public global::OpenTracing.ISpan? ActiveSpan => this.ScopeManager.Active?.Span;
 
     private TextMapPropagator Propagator
     {
@@ -63,7 +63,7 @@ public class TracerShim : global::OpenTracing.ITracer
     }
 
     /// <inheritdoc/>
-    public global::OpenTracing.ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
+    public global::OpenTracing.ISpanContext? Extract<TCarrier>(IFormat<TCarrier>? format, TCarrier? carrier)
     {
         Guard.ThrowIfNull(format);
         Guard.ThrowIfNull(carrier);
@@ -79,7 +79,7 @@ public class TracerShim : global::OpenTracing.ITracer
                 carrierMap.Add(entry.Key, new[] { entry.Value });
             }
 
-            static IEnumerable<string> GetCarrierKeyValue(Dictionary<string, IEnumerable<string>> source, string key)
+            static IEnumerable<string>? GetCarrierKeyValue(Dictionary<string, IEnumerable<string>> source, string key)
             {
                 if (key == null || !source.TryGetValue(key, out var value))
                 {
@@ -102,9 +102,9 @@ public class TracerShim : global::OpenTracing.ITracer
 
     /// <inheritdoc/>
     public void Inject<TCarrier>(
-        global::OpenTracing.ISpanContext spanContext,
-        IFormat<TCarrier> format,
-        TCarrier carrier)
+        global::OpenTracing.ISpanContext? spanContext,
+        IFormat<TCarrier>? format,
+        TCarrier? carrier)
     {
         Guard.ThrowIfNull(spanContext);
         var shim = Guard.ThrowIfNotOfType<SpanContextShim>(spanContext);

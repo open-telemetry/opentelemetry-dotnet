@@ -37,7 +37,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     /// <summary>
     /// The parent as an TelemetrySpan, if any.
     /// </summary>
-    private TelemetrySpan parentSpan;
+    private TelemetrySpan? parentSpan;
 
     /// <summary>
     /// The parent as an SpanContext, if any.
@@ -55,7 +55,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
 
     private bool error;
 
-    public SpanBuilderShim(Tracer tracer, string spanName)
+    public SpanBuilderShim(Tracer? tracer, string? spanName)
     {
         Guard.ThrowIfNull(tracer);
         Guard.ThrowIfNull(spanName);
@@ -70,7 +70,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     private bool ParentSet => this.parentSpan != null || this.parentSpanContext.IsValid;
 
     /// <inheritdoc/>
-    public ISpanBuilder AsChildOf(ISpanContext parent)
+    public ISpanBuilder AsChildOf(ISpanContext? parent)
     {
         if (parent == null)
         {
@@ -81,7 +81,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     }
 
     /// <inheritdoc/>
-    public ISpanBuilder AsChildOf(ISpan parent)
+    public ISpanBuilder AsChildOf(ISpan? parent)
     {
         if (parent == null)
         {
@@ -132,7 +132,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     /// <inheritdoc/>
     public ISpan Start()
     {
-        TelemetrySpan span = null;
+        TelemetrySpan? span = null;
 
         // If specified, this takes precedence.
         if (this.ignoreActiveSpan)
@@ -184,7 +184,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     }
 
     /// <inheritdoc/>
-    public ISpanBuilder WithTag(string key, string value)
+    public ISpanBuilder WithTag(string? key, string? value)
     {
         // see https://opentracing.io/specification/conventions/ for special key handling.
         if (global::OpenTracing.Tag.Tags.SpanKind.Key.Equals(key, StringComparison.Ordinal))
