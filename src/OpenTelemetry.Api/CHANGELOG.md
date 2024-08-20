@@ -14,9 +14,6 @@ Notes](../../RELEASENOTES.md).
 * Optimize performance of `TraceContextPropagator.Extract`.
   ([#5749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5749))
 
-* Remove .NET 7 TargetFramework which reached End of Support
-  ([#5795](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5795))
-
 ## 1.9.0
 
 Released 2024-Jun-14

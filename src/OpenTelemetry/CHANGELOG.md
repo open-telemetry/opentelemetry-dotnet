@@ -12,9 +12,6 @@ Notes](../../RELEASENOTES.md).
   `IOpenTelemetryBuilder`.
   ([#5325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5325))
 
-* Remove .NET 7 TargetFramework which reached End of Support
-  ([#5795](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5795))
-
 ## 1.9.0
 
 Released 2024-Jun-14
