@@ -1,6 +1,7 @@
 name: Question
+title: "[question] "
 description: Ask a question to help us improve our knowledge base and documentation
-labels: ["question"]
+labels: [question,needs-triage]
 body:
   - type: markdown
     attributes:
