@@ -32,7 +32,7 @@ public static class ActivityExtensions
     /// <param name="status">Activity execution status.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [Obsolete("Call Activity.SetStatus instead this method will be removed in a future version.")]
-    public static void SetStatus(this Activity activity, Status status)
+    public static void SetStatus(this Activity? activity, Status status)
     {
         if (activity != null)
         {
@@ -68,7 +68,7 @@ public static class ActivityExtensions
     /// <returns>Activity execution status.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [Obsolete("Use Activity.Status and Activity.StatusDescription instead this method will be removed in a future version.")]
-    public static Status GetStatus(this Activity activity)
+    public static Status GetStatus(this Activity? activity)
     {
         if (activity != null)
         {
@@ -98,7 +98,7 @@ public static class ActivityExtensions
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void RecordException(this Activity activity, Exception? ex)
+    public static void RecordException(this Activity? activity, Exception? ex)
         => RecordException(activity, ex, default);
 
     /// <summary>
@@ -111,7 +111,7 @@ public static class ActivityExtensions
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void RecordException(this Activity activity, Exception? ex, in TagList tags)
+    public static void RecordException(this Activity? activity, Exception? ex, in TagList tags)
     {
         if (ex == null || activity == null)
         {
