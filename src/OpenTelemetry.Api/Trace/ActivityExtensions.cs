@@ -23,15 +23,15 @@ public static class ActivityExtensions
     /// Sets the status of activity execution.
     /// </summary>
     /// <remarks>
-    /// This method is obsolete.
-    /// Use the `Activity.SetStatus(ActivityStatusCode)` method
-    /// from `System.Diagnostics.DiagnosticSource` for setting the status of an `Activity`.
-    /// For more details see: <see href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#setting-status" />.
+    /// Note: This method is obsolete. Call the <see cref="Activity.SetStatus"/>
+    /// method instead. For more details see: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#setting-status"
+    /// />.
     /// </remarks>
     /// <param name="activity">Activity instance.</param>
     /// <param name="status">Activity execution status.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [Obsolete("Use Activity.SetStatus(ActivityStatusCode) instead.")]
+    [Obsolete("Call Activity.SetStatus instead this method will be removed in a future version.")]
     public static void SetStatus(this Activity activity, Status status)
     {
         if (activity != null)
@@ -43,12 +43,18 @@ public static class ActivityExtensions
 
     /// <summary>
     /// Gets the status of activity execution.
-    /// Activity class in .NET does not support 'Status'.
-    /// This extension provides a workaround to retrieve Status from special tags with key name otel.status_code and otel.status_description.
     /// </summary>
+    /// <remarks>
+    /// Note: This method is obsolete. Use the <see cref="Activity.Status"/> and
+    /// <see cref="Activity.StatusDescription"/> properties instead. For more
+    /// details see: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#setting-status"
+    /// />.
+    /// </remarks>
     /// <param name="activity">Activity instance.</param>
     /// <returns>Activity execution status.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Obsolete("Use Activity.Status and Activity.StatusDescription instead this method will be removed in a future version.")]
     public static Status GetStatus(this Activity activity)
     {
         if (activity == null

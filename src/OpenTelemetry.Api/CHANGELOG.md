@@ -6,12 +6,6 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Marked `ActivityExtensions.SetStatus` method as `[Obsolete]`.
-  Users are now encouraged to use the [Activity.SetStatus(ActivityStatusCode](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.setstatus)
-  method from `System.Diagnostics.DiagnosticSource`
-  for setting the status of an `Activity`.
-  ([#5781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5781))
-
 * **Breaking change:** CompositeTextMapPropagator.Fields now returns a
   unioned set of fields from all combined propagators. Previously this always
   returned an empty set.
@@ -19,6 +13,17 @@ Notes](../../RELEASENOTES.md).
 
 * Optimize performance of `TraceContextPropagator.Extract`.
   ([#5749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5749))
+
+* Obsoleted the `ActivityExtensions.GetStatus` and
+  `ActivityExtensions.SetStatus` extension methods. Users should migrate to the
+  `System.Diagnostics.DiagnosticSource`
+  [Activity.SetStatus](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.setstatus)
+  API for setting the status and
+  [Activity.Status](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.status)
+  &
+  [Activity.StatusDescription](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.statusdescription)
+  APIs for reading the status of an `Activity` instance.
+  ([#5781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5781))
 
 ## 1.9.0
 

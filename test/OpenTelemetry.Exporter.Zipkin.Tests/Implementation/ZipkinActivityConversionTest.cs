@@ -79,6 +79,7 @@ public class ZipkinActivityConversionTest
     [InlineData(StatusCode.Ok, "Ok")]
     [InlineData(StatusCode.Error, "ERROR")]
     [InlineData(StatusCode.Unset, "iNvAlId")]
+    [Obsolete("Remove when ActivityExtensions status APIs are removed")]
     public void ToZipkinSpan_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue)
     {
         // Arrange
@@ -159,6 +160,7 @@ public class ZipkinActivityConversionTest
     }
 
     [Fact]
+    [Obsolete("Remove when ActivityExtensions status APIs are removed")]
     public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsOk()
     {
         // Arrange.
@@ -184,6 +186,7 @@ public class ZipkinActivityConversionTest
     }
 
     [Fact]
+    [Obsolete("Remove when ActivityExtensions status APIs are removed")]
     public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsError()
     {
         // Arrange.
@@ -219,6 +222,7 @@ public class ZipkinActivityConversionTest
     }
 
     [Fact]
+    [Obsolete("Remove when ActivityExtensions status APIs are removed")]
     public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsError_SettingTagFirst()
     {
         // Arrange.

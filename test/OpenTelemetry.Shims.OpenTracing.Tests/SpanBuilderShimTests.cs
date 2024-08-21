@@ -216,8 +216,11 @@ public class SpanBuilderShimTests
         // build
         var spanShim = (SpanShim)shim.Start();
 
-        // Span status should be set
-        Assert.Equal(Status.Error, spanShim.Span.Activity.GetStatus());
+        // Legacy span status tag should be set
+        Assert.Equal("ERROR", spanShim.Span.Activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+
+        // Activity status code should also be set
+        Assert.Equal(ActivityStatusCode.Error, spanShim.Span.Activity.Status);
     }
 
     [Fact]
@@ -262,8 +265,11 @@ public class SpanBuilderShimTests
         // build
         var spanShim = (SpanShim)shim.Start();
 
-        // Span status should be set
-        Assert.Equal(Status.Error, spanShim.Span.Activity.GetStatus());
+        // Legacy span status tag should be set
+        Assert.Equal("ERROR", spanShim.Span.Activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+
+        // Activity status code should also be set
+        Assert.Equal(ActivityStatusCode.Error, spanShim.Span.Activity.Status);
     }
 
     [Fact]

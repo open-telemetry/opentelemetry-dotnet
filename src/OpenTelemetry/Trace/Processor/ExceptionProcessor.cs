@@ -63,7 +63,6 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
         if (snapshot != pointers)
         {
 #pragma warning disable
-            // TODO: Remove this when SetStatus is deprecated
             activity.SetStatus(Status.Error);
 #pragma warning restore
 
