@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -220,13 +219,14 @@ public class SpanBuilderShimTests
         // Legacy span status tag should be set
         Assert.Equal("ERROR", spanShim.Span.Activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
 
-        bool isApiVersionGreaterThanOrEqualTo1_10 = !typeof(TracerProvider).Assembly.TryGetPackageVersion(out var packageVersion)
-            || Version.Parse(packageVersion) >= new Version(1, 10);
-
-        if (isApiVersionGreaterThanOrEqualTo1_10)
+        if (VersionHelper.IsApiVersionGreaterThanOrEqualTo(1, 10))
         {
             // Activity status code should also be set
             Assert.Equal(ActivityStatusCode.Error, spanShim.Span.Activity.Status);
+        }
+        else
+        {
+            Assert.Equal(ActivityStatusCode.Unset, spanShim.Span.Activity.Status);
         }
     }
 
@@ -275,13 +275,14 @@ public class SpanBuilderShimTests
         // Legacy span status tag should be set
         Assert.Equal("ERROR", spanShim.Span.Activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
 
-        bool isApiVersionGreaterThanOrEqualTo1_10 = !typeof(TracerProvider).Assembly.TryGetPackageVersion(out var packageVersion)
-            || Version.Parse(packageVersion) >= new Version(1, 10);
-
-        if (isApiVersionGreaterThanOrEqualTo1_10)
+        if (VersionHelper.IsApiVersionGreaterThanOrEqualTo(1, 10))
         {
             // Activity status code should also be set
             Assert.Equal(ActivityStatusCode.Error, spanShim.Span.Activity.Status);
+        }
+        else
+        {
+            Assert.Equal(ActivityStatusCode.Unset, spanShim.Span.Activity.Status);
         }
     }
 
