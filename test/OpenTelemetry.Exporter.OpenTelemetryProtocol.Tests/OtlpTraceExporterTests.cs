@@ -370,7 +370,8 @@ public class OtlpTraceExporterTests
             links: childLinks);
 
         Assert.NotNull(childActivity);
-        childActivity.SetStatus(Status.Error);
+
+        childActivity.SetStatus(ActivityStatusCode.Error);
 
         var childEvents = new List<ActivityEvent> { new("e0"), new("e1", default, new ActivityTagsCollection(attributes)) };
         childActivity.AddEvent(childEvents[0]);
@@ -388,7 +389,8 @@ public class OtlpTraceExporterTests
         Assert.Equal(traceId, otlpSpan.TraceId);
         Assert.Equal(parentId, otlpSpan.ParentSpanId);
 
-        // Assert.Equal(OtlpTrace.Status.Types.StatusCode.NotFound, otlpSpan.Status.Code);
+        Assert.NotNull(otlpSpan.Status);
+        Assert.Equal(OtlpTrace.Status.Types.StatusCode.Error, otlpSpan.Status.Code);
 
         Assert.Equal(Status.Error.Description ?? string.Empty, otlpSpan.Status.Message);
         Assert.Empty(otlpSpan.Attributes);
@@ -474,6 +476,7 @@ public class OtlpTraceExporterTests
     [InlineData(StatusCode.Unset, "Unset", "Description will be ignored if status is Unset.")]
     [InlineData(StatusCode.Ok, "Ok", "Description must only be used with the Error StatusCode.")]
     [InlineData(StatusCode.Error, "Error", "Error description.")]
+    [Obsolete("Remove when ActivityExtensions status APIs are removed")]
     public void ToOtlpSpanStatusTagTest(StatusCode expectedStatusCode, string statusCodeTagValue, string statusDescription)
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
@@ -502,6 +505,7 @@ public class OtlpTraceExporterTests
     [InlineData(StatusCode.Unset, "uNsET")]
     [InlineData(StatusCode.Ok, "oK")]
     [InlineData(StatusCode.Error, "ERROR")]
+    [Obsolete("Remove when ActivityExtensions status APIs are removed")]
     public void ToOtlpSpanStatusTagIsCaseInsensitiveTest(StatusCode expectedStatusCode, string statusCodeTagValue)
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
@@ -517,6 +521,7 @@ public class OtlpTraceExporterTests
     }
 
     [Fact]
+    [Obsolete("Remove when ActivityExtensions status APIs are removed")]
     public void ToOtlpSpanActivityStatusTakesPrecedenceOverStatusTagsWhenActivityStatusCodeIsOk()
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
@@ -536,6 +541,7 @@ public class OtlpTraceExporterTests
     }
 
     [Fact]
+    [Obsolete("Remove when ActivityExtensions status APIs are removed")]
     public void ToOtlpSpanActivityStatusTakesPrecedenceOverStatusTagsWhenActivityStatusCodeIsError()
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
