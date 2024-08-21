@@ -36,6 +36,19 @@ public static class ActivityExtensions
     {
         if (activity != null)
         {
+            switch (status.StatusCode)
+            {
+                case StatusCode.Ok:
+                    activity.SetStatus(ActivityStatusCode.Ok);
+                    break;
+                case StatusCode.Unset:
+                    activity.SetStatus(ActivityStatusCode.Unset);
+                    break;
+                case StatusCode.Error:
+                    activity.SetStatus(ActivityStatusCode.Error, status.Description);
+                    break;
+            }
+
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
             activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
         }
@@ -57,13 +70,23 @@ public static class ActivityExtensions
     [Obsolete("Use Activity.Status and Activity.StatusDescription instead this method will be removed in a future version.")]
     public static Status GetStatus(this Activity activity)
     {
-        if (activity == null
-            || !activity.TryGetStatus(out var statusCode, out var statusDescription))
+        if (activity != null)
         {
-            return Status.Unset;
+            switch (activity.Status)
+            {
+                case ActivityStatusCode.Ok:
+                    return Status.Ok;
+                case ActivityStatusCode.Error:
+                    return new Status(StatusCode.Error, activity.StatusDescription);
+            }
+
+            if (activity.TryGetStatus(out var statusCode, out var statusDescription))
+            {
+                return new Status(statusCode, statusDescription);
+            }
         }
 
-        return new Status(statusCode, statusDescription);
+        return Status.Unset;
     }
 
     /// <summary>
