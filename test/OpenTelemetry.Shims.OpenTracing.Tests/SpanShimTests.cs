@@ -206,7 +206,7 @@ public class SpanShimTests
         shim.SetTag(Tags.Error.Key, true);
 
         Assert.Equal("foo", shim.Span.Activity!.TagObjects.First().Key);
-        Assert.True((bool?)shim.Span.Activity.TagObjects.First().Value);
+        Assert.True((bool)shim.Span.Activity.TagObjects.First().Value!);
 
         // A boolean tag named "error" is a special case that must be checked
         Assert.Equal(Status.Error, shim.Span.Activity.GetStatus());
