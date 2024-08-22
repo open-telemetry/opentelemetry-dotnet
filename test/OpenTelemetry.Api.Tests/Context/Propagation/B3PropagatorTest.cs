@@ -25,7 +25,7 @@ public class B3PropagatorTest
         (d, k) =>
         {
             d.TryGetValue(k, out var v);
-            return new string[] { v };
+            return new string[] { v! };
         };
 
     private readonly B3Propagator b3propagator = new();

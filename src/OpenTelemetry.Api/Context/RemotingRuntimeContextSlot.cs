@@ -38,10 +38,10 @@ public class RemotingRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeCont
     }
 
     /// <inheritdoc/>
-    public object Value
+    public object? Value
     {
         get => this.Get();
-        set => this.Set((T)value);
+        set => this.Set((T)value!);
     }
 
     /// <inheritdoc/>
@@ -50,13 +50,13 @@ public class RemotingRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeCont
     {
         if (!(CallContext.LogicalGetData(this.Name) is BitArray wrapper))
         {
-            return default;
+            return default!;
         }
 
         var value = WrapperField.GetValue(wrapper);
         return value is T t
             ? t
-            : default;
+            : default!;
     }
 
     /// <inheritdoc/>

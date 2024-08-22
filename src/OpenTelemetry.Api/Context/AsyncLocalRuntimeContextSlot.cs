@@ -24,17 +24,17 @@ public class AsyncLocalRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeCo
     }
 
     /// <inheritdoc/>
-    public object Value
+    public object? Value
     {
-        get => this.slot.Value;
-        set => this.slot.Value = (T)value;
+        get => this.slot.Value!;
+        set => this.slot.Value = (T)value!;
     }
 
     /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override T Get()
     {
-        return this.slot.Value;
+        return this.slot.Value!;
     }
 
     /// <inheritdoc/>

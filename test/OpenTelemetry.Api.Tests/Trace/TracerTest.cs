@@ -54,13 +54,13 @@ public class TracerTest : IDisposable
             .Build();
 
         var span1 = this.tracer.StartRootSpan(null);
-        Assert.True(string.IsNullOrEmpty(span1.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span1.Activity!.DisplayName));
 
         var span2 = this.tracer.StartRootSpan(null, SpanKind.Client);
-        Assert.True(string.IsNullOrEmpty(span2.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span2.Activity!.DisplayName));
 
         var span3 = this.tracer.StartRootSpan(null, SpanKind.Client, default);
-        Assert.True(string.IsNullOrEmpty(span3.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span3.Activity!.DisplayName));
     }
 
     [Fact]
@@ -110,13 +110,13 @@ public class TracerTest : IDisposable
             .Build();
 
         var span1 = this.tracer.StartSpan(null);
-        Assert.True(string.IsNullOrEmpty(span1.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span1.Activity!.DisplayName));
 
         var span2 = this.tracer.StartSpan(null, SpanKind.Client);
-        Assert.True(string.IsNullOrEmpty(span2.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span2.Activity!.DisplayName));
 
         var span3 = this.tracer.StartSpan(null, SpanKind.Client, null);
-        Assert.True(string.IsNullOrEmpty(span3.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span3.Activity!.DisplayName));
     }
 
     [Fact]
@@ -127,13 +127,13 @@ public class TracerTest : IDisposable
             .Build();
 
         var span1 = this.tracer.StartActiveSpan(null);
-        Assert.True(string.IsNullOrEmpty(span1.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span1.Activity!.DisplayName));
 
         var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client);
-        Assert.True(string.IsNullOrEmpty(span2.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span2.Activity!.DisplayName));
 
         var span3 = this.tracer.StartActiveSpan(null, SpanKind.Client, null);
-        Assert.True(string.IsNullOrEmpty(span3.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span3.Activity!.DisplayName));
     }
 
     [Fact]
@@ -144,10 +144,10 @@ public class TracerTest : IDisposable
             .Build();
 
         var span1 = this.tracer.StartSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance);
-        Assert.True(string.IsNullOrEmpty(span1.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span1.Activity!.DisplayName));
 
         var span2 = this.tracer.StartSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance, default);
-        Assert.True(string.IsNullOrEmpty(span2.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span2.Activity!.DisplayName));
     }
 
     [Fact]
@@ -160,10 +160,10 @@ public class TracerTest : IDisposable
         var blankContext = default(SpanContext);
 
         var span1 = this.tracer.StartSpan(null, SpanKind.Client, blankContext);
-        Assert.True(string.IsNullOrEmpty(span1.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span1.Activity!.DisplayName));
 
         var span2 = this.tracer.StartSpan(null, SpanKind.Client, blankContext, default);
-        Assert.True(string.IsNullOrEmpty(span2.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span2.Activity!.DisplayName));
     }
 
     [Fact]
@@ -174,10 +174,10 @@ public class TracerTest : IDisposable
             .Build();
 
         var span1 = this.tracer.StartActiveSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance);
-        Assert.True(string.IsNullOrEmpty(span1.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span1.Activity!.DisplayName));
 
         var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance, default);
-        Assert.True(string.IsNullOrEmpty(span2.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span2.Activity!.DisplayName));
     }
 
     [Fact]
@@ -190,10 +190,10 @@ public class TracerTest : IDisposable
         var blankContext = default(SpanContext);
 
         var span1 = this.tracer.StartActiveSpan(null, SpanKind.Client, blankContext);
-        Assert.True(string.IsNullOrEmpty(span1.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span1.Activity!.DisplayName));
 
         var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client, blankContext, default);
-        Assert.True(string.IsNullOrEmpty(span2.Activity.DisplayName));
+        Assert.True(string.IsNullOrEmpty(span2.Activity!.DisplayName));
     }
 
     [Fact]
@@ -204,20 +204,20 @@ public class TracerTest : IDisposable
             .Build();
 
         var span1 = this.tracer.StartActiveSpan("Test");
-        Assert.Equal(span1.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
+        Assert.Equal(span1.Activity!.SpanId, Tracer.CurrentSpan.Context.SpanId);
 
         var span2 = this.tracer.StartActiveSpan("Test", SpanKind.Client);
-        Assert.Equal(span2.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
+        Assert.Equal(span2.Activity!.SpanId, Tracer.CurrentSpan.Context.SpanId);
 
         var span = this.tracer.StartSpan("foo");
         Tracer.WithSpan(span);
 
         var span3 = this.tracer.StartActiveSpan("Test", SpanKind.Client, span);
-        Assert.Equal(span3.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
+        Assert.Equal(span3.Activity!.SpanId, Tracer.CurrentSpan.Context.SpanId);
 
         var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
         var span4 = this.tracer.StartActiveSpan("Test", SpanKind.Client, spanContext);
-        Assert.Equal(span4.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
+        Assert.Equal(span4.Activity!.SpanId, Tracer.CurrentSpan.Context.SpanId);
     }
 
     [Fact]
@@ -278,8 +278,8 @@ public class TracerTest : IDisposable
     [Fact]
     public void TracerBecomesNoopWhenParentProviderIsDisposedTest()
     {
-        TracerProvider provider = null;
-        Tracer tracer = null;
+        TracerProvider? provider = null;
+        Tracer? tracer = null;
 
         using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("mytracer")
@@ -349,11 +349,11 @@ public class TracerTest : IDisposable
             Thread[] getTracerThreads = new Thread[testTracerProvider.ExpectedNumberOfThreads];
             for (int i = 0; i < testTracerProvider.ExpectedNumberOfThreads; i++)
             {
-                getTracerThreads[i] = new Thread((object state) =>
+                getTracerThreads[i] = new Thread((object? state) =>
                 {
                     var testTracerProvider = state as TestTracerProvider;
 
-                    var id = Interlocked.Increment(ref testTracerProvider.NumberOfThreads);
+                    var id = Interlocked.Increment(ref testTracerProvider!.NumberOfThreads);
                     var name = $"Tracer{id}";
 
                     if (id == testTracerProvider.ExpectedNumberOfThreads)

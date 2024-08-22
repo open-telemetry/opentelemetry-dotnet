@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -75,7 +73,7 @@ public class Tracer
     /// <returns>Span instance.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TelemetrySpan StartRootSpan(
-        string name,
+        string? name,
         SpanKind kind = SpanKind.Internal,
         SpanAttributes? initialAttributes = null,
         IEnumerable<Link>? links = null,
@@ -97,7 +95,7 @@ public class Tracer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
     public TelemetrySpan StartSpan(
-        string name,
+        string? name,
         SpanKind kind,
         in TelemetrySpan? parentSpan, // <- TODO: Clean this up if we ever do a major release w/ breaking changes. The "in" here was probably a copy/paste mistake. Removing would be source compatible but binary breaking.
         SpanAttributes? initialAttributes = null,
@@ -120,7 +118,7 @@ public class Tracer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
     public TelemetrySpan StartSpan(
-        string name,
+        string? name,
         SpanKind kind = SpanKind.Internal,
         in SpanContext parentContext = default,
         SpanAttributes? initialAttributes = null,
@@ -143,7 +141,7 @@ public class Tracer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
     public TelemetrySpan StartActiveSpan(
-        string name,
+        string? name,
         SpanKind kind,
         in TelemetrySpan? parentSpan, // <- TODO: Clean this up if we ever do a major release w/ breaking changes. The "in" here was probably a copy/paste mistake. Removing would be source compatible but binary breaking.
         SpanAttributes? initialAttributes = null,
@@ -166,7 +164,7 @@ public class Tracer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
     public TelemetrySpan StartActiveSpan(
-        string name,
+        string? name,
         SpanKind kind = SpanKind.Internal,
         in SpanContext parentContext = default,
         SpanAttributes? initialAttributes = null,
@@ -193,7 +191,7 @@ public class Tracer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private TelemetrySpan StartSpanHelper(
         StartSpanBehaviors startSpanBehavior,
-        string name,
+        string? name,
         SpanKind kind,
         in SpanContext parentContext = default,
         SpanAttributes? initialAttributes = null,
@@ -219,7 +217,7 @@ public class Tracer
 
         try
         {
-            var activity = activitySource.StartActivity(name, activityKind, parentContext.ActivityContext, initialAttributes?.Attributes ?? null, activityLinks, startTime);
+            var activity = activitySource.StartActivity(name!, activityKind, parentContext.ActivityContext, initialAttributes?.Attributes ?? null, activityLinks, startTime);
             return activity == null
                 ? TelemetrySpan.NoopInstance
                 : new TelemetrySpan(activity);

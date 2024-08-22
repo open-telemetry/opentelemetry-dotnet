@@ -34,7 +34,7 @@ public class TraceContextPropagator : TextMapPropagator
     public override ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
 
     /// <inheritdoc/>
-    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>>? getter)
     {
         if (context.ActivityContext.IsValid())
         {
@@ -72,7 +72,7 @@ public class TraceContextPropagator : TextMapPropagator
                 return context;
             }
 
-            string tracestate = null;
+            string? tracestate = null;
             var tracestateCollection = getter(carrier, TraceState);
             if (tracestateCollection?.Any() ?? false)
             {
@@ -93,7 +93,7 @@ public class TraceContextPropagator : TextMapPropagator
     }
 
     /// <inheritdoc/>
-    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string>? setter)
     {
         if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
         {
@@ -122,7 +122,7 @@ public class TraceContextPropagator : TextMapPropagator
 
         setter(carrier, TraceParent, traceparent);
 
-        string tracestateStr = context.ActivityContext.TraceState;
+        string tracestateStr = context.ActivityContext.TraceState!;
         if (tracestateStr?.Length > 0)
         {
             setter(carrier, TraceState, tracestateStr);
@@ -224,7 +224,7 @@ public class TraceContextPropagator : TextMapPropagator
     {
         tracestateResult = string.Empty;
 
-        char[] rentedArray = null;
+        char[]? rentedArray = null;
         Span<char> traceStateBuffer = stackalloc char[128]; // 256B
         Span<char> keyLookupBuffer = stackalloc char[96]; // 192B (3x32 keys)
         int keys = 0;
@@ -379,7 +379,7 @@ public class TraceContextPropagator : TextMapPropagator
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void GrowBuffer(ref char[] array, ref Span<char> buffer)
+        static void GrowBuffer(ref char[]? array, ref Span<char> buffer)
         {
             var newBuffer = ArrayPool<char>.Shared.Rent(buffer.Length * 2);
 

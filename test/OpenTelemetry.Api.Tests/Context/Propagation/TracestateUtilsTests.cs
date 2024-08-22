@@ -12,7 +12,7 @@ public class TracestateUtilsTests
     [InlineData(null)]
     [InlineData(" ")]
     [InlineData("\t")]
-    public void EmptyTracestate(string tracestate)
+    public void EmptyTracestate(string? tracestate)
     {
         var tracestateEntries = new List<KeyValuePair<string, string>>();
         Assert.False(TraceStateUtilsNew.AppendTraceState(tracestate, tracestateEntries));

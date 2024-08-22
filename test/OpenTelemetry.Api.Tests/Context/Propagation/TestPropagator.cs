@@ -27,7 +27,7 @@ public class TestPropagator : TextMapPropagator
 
     public override ISet<string> Fields => new HashSet<string>() { this.idHeaderName, this.stateHeaderName };
 
-    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>>? getter)
     {
         Interlocked.Increment(ref this.extractCount);
 
@@ -36,7 +36,7 @@ public class TestPropagator : TextMapPropagator
             return context;
         }
 
-        var id = getter(carrier, this.idHeaderName);
+        var id = getter!(carrier, this.idHeaderName);
         if (!id.Any())
         {
             return context;
@@ -60,7 +60,7 @@ public class TestPropagator : TextMapPropagator
             context.Baggage);
     }
 
-    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string>? setter)
     {
         Interlocked.Increment(ref this.injectCount);
 
@@ -69,7 +69,7 @@ public class TestPropagator : TextMapPropagator
         var traceparent = string.Concat("00-", context.ActivityContext.TraceId.ToHexString(), "-", context.ActivityContext.SpanId.ToHexString());
         traceparent = string.Concat(traceparent, "-", headerNumber);
 
-        setter(carrier, this.idHeaderName, traceparent);
+        setter!(carrier, this.idHeaderName, traceparent);
 
         var tracestateStr = context.ActivityContext.TraceState;
         if (tracestateStr?.Length > 0)

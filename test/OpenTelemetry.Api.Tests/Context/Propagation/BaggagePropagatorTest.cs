@@ -12,7 +12,7 @@ public class BaggagePropagatorTest
         (d, k) =>
         {
             d.TryGetValue(k, out var v);
-            return new string[] { v };
+            return new string[] { v! };
         };
 
     private static readonly Func<IList<KeyValuePair<string, string>>, string, IEnumerable<string>> GetterList =
@@ -38,7 +38,7 @@ public class BaggagePropagatorTest
     [Fact]
     public void ValidateDefaultCarrierExtraction()
     {
-        var propagationContext = this.baggage.Extract<string>(default, null, null);
+        var propagationContext = this.baggage.Extract<string?>(default, null, null);
         Assert.Equal(default, propagationContext);
     }
 

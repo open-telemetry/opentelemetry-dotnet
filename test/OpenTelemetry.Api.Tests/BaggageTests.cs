@@ -55,9 +55,9 @@ public class BaggageTests
             new KeyValuePair<string, string>(K1, V1),
         };
 
-        Baggage.Current.SetBaggage(new KeyValuePair<string, string>(K1, V1));
+        Baggage.Current.SetBaggage(new KeyValuePair<string, string?>(K1, V1));
         var baggage = Baggage.SetBaggage(K1, V1);
-        Baggage.SetBaggage(new Dictionary<string, string> { [K1] = V1 }, baggage);
+        Baggage.SetBaggage(new Dictionary<string, string?> { [K1] = V1 }, baggage);
 
         Assert.Equal(list, Baggage.GetBaggage());
     }
@@ -78,7 +78,7 @@ public class BaggageTests
         Assert.Empty(Baggage.SetBaggage(K1, null).GetBaggage());
 
         Baggage.SetBaggage(K1, V1);
-        Baggage.SetBaggage(new Dictionary<string, string>
+        Baggage.SetBaggage(new Dictionary<string, string?>
         {
             [K1] = null,
             [K2] = V2,
@@ -94,7 +94,7 @@ public class BaggageTests
         var empty2 = Baggage.RemoveBaggage(K1);
         Assert.True(empty == empty2);
 
-        var baggage = Baggage.SetBaggage(new Dictionary<string, string>
+        var baggage = Baggage.SetBaggage(new Dictionary<string, string?>
         {
             [K1] = V1,
             [K2] = V2,
@@ -112,7 +112,7 @@ public class BaggageTests
     [Fact]
     public void ClearTest()
     {
-        var baggage = Baggage.SetBaggage(new Dictionary<string, string>
+        var baggage = Baggage.SetBaggage(new Dictionary<string, string?>
         {
             [K1] = V1,
             [K2] = V2,
@@ -201,7 +201,7 @@ public class BaggageTests
 
         Assert.Equal(default, baggage);
 
-        baggage = Baggage.Create(new Dictionary<string, string>
+        baggage = Baggage.Create(new Dictionary<string, string?>
         {
             [K1] = V1,
             ["key2"] = "value2",
@@ -252,7 +252,7 @@ public class BaggageTests
 
         Assert.NotEqual(emptyBaggage.GetHashCode(), baggage.GetHashCode());
 
-        var expectedBaggage = Baggage.Create(new Dictionary<string, string> { [K1] = V1 });
+        var expectedBaggage = Baggage.Create(new Dictionary<string, string?> { [K1] = V1 });
 
         Assert.Equal(expectedBaggage.GetHashCode(), baggage.GetHashCode());
     }

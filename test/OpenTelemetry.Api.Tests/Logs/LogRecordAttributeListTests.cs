@@ -29,14 +29,14 @@ public sealed class LogRecordAttributeListTests
             var item = attributes[i];
 
             Assert.Equal($"key{i}", item.Key);
-            Assert.Equal(i, (int)item.Value);
+            Assert.Equal(i, (int?)item.Value);
         }
 
         int index = 0;
-        foreach (KeyValuePair<string, object> item in attributes)
+        foreach (KeyValuePair<string, object?> item in attributes)
         {
             Assert.Equal($"key{index}", item.Key);
-            Assert.Equal(index, (int)item.Value);
+            Assert.Equal(index, (int?)item.Value);
             index++;
         }
 
@@ -74,7 +74,7 @@ public sealed class LogRecordAttributeListTests
                 var item = attributes[i];
 
                 Assert.Equal($"key{i}", item.Key);
-                Assert.Equal(i, (int)item.Value);
+                Assert.Equal(i, (int?)item.Value);
             }
 
             attributes.Clear();
@@ -98,7 +98,7 @@ public sealed class LogRecordAttributeListTests
             attributes.Add($"key{i}", i);
         }
 
-        List<KeyValuePair<string, object>> storage = null;
+        List<KeyValuePair<string, object?>>? storage = null;
 
         var exportedAttributes = attributes.Export(ref storage);
 
@@ -122,10 +122,10 @@ public sealed class LogRecordAttributeListTests
         }
 
         int index = 0;
-        foreach (KeyValuePair<string, object> item in exportedAttributes)
+        foreach (KeyValuePair<string, object?> item in exportedAttributes)
         {
             Assert.Equal($"key{index}", item.Key);
-            Assert.Equal(index, (int)item.Value);
+            Assert.Equal(index, (int?)item.Value);
             index++;
         }
     }

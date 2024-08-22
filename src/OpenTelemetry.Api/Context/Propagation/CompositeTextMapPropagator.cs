@@ -18,7 +18,7 @@ public class CompositeTextMapPropagator : TextMapPropagator
     /// Initializes a new instance of the <see cref="CompositeTextMapPropagator"/> class.
     /// </summary>
     /// <param name="propagators">List of <see cref="TextMapPropagator"/> wire context propagator.</param>
-    public CompositeTextMapPropagator(IEnumerable<TextMapPropagator> propagators)
+    public CompositeTextMapPropagator(IEnumerable<TextMapPropagator?>? propagators)
     {
         Guard.ThrowIfNull(propagators);
 
@@ -43,7 +43,7 @@ public class CompositeTextMapPropagator : TextMapPropagator
         }
         else
         {
-            ISet<string> fields = this.propagators[0].Fields;
+            ISet<string>? fields = this.propagators[0].Fields;
 
             var output = fields is not null
                 ? new HashSet<string>(fields)
@@ -66,7 +66,7 @@ public class CompositeTextMapPropagator : TextMapPropagator
     public override ISet<string> Fields => this.allFields;
 
     /// <inheritdoc/>
-    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>>? getter)
     {
         for (int i = 0; i < this.propagators.Count; i++)
         {
@@ -77,7 +77,7 @@ public class CompositeTextMapPropagator : TextMapPropagator
     }
 
     /// <inheritdoc/>
-    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string>? setter)
     {
         for (int i = 0; i < this.propagators.Count; i++)
         {

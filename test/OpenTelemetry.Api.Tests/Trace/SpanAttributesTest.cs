@@ -53,11 +53,10 @@ public class SpanAttributesTest
     public void ValidateConstructorWithList()
     {
         var spanAttributes = new SpanAttributes(
-           new List<KeyValuePair<string, object>>()
-           {
-                new KeyValuePair<string, object>("Span attribute int", 1),
-                new KeyValuePair<string, object>("Span attribute string", "str"),
-           });
+           [
+                new KeyValuePair<string, object?>("Span attribute int", 1),
+                new KeyValuePair<string, object?>("Span attribute string", "str"),
+           ]);
         Assert.Equal(2, spanAttributes.Attributes.Count);
     }
 
