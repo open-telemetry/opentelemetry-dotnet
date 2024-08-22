@@ -2,14 +2,14 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry.Shims.OpenTracing</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
+    <DefineConstants Condition="'$(RunningDotNetPack)' != 'true'">$(DefineConstants);BUILDING_USING_PROJECTS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NuGet.Versioning"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
