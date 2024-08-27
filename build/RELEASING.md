@@ -203,6 +203,7 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
     repository which opens a PR to update dependencies. Verify this PR was
     opened successfully.
 
- 8. Post an announcement in the [Slack
-    channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). Note any big
-    or interesting new features as part of the announcement.
+ 8. For stable releases, update [Release Notes](../RELEASENOTES.md) with any big
+    or interesting new features and then post an announcement in the [Slack
+    channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q) with the same
+    information.

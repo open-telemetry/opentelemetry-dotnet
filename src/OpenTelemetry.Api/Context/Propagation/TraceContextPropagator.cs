@@ -3,9 +3,9 @@
 
 #nullable enable
 
+using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
@@ -78,7 +78,7 @@ public class TraceContextPropagator : TextMapPropagator
             var tracestateCollection = getter(carrier, TraceState);
             if (tracestateCollection?.Any() ?? false)
             {
-                TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
+                TryExtractTracestate(tracestateCollection, out tracestate);
             }
 
             return new PropagationContext(
@@ -222,31 +222,37 @@ public class TraceContextPropagator : TextMapPropagator
         return true;
     }
 
-    internal static bool TryExtractTracestate(string[] tracestateCollection, out string tracestateResult)
+    internal static bool TryExtractTracestate(IEnumerable<string> tracestateCollection, out string tracestateResult)
     {
         tracestateResult = string.Empty;
 
-        if (tracestateCollection != null)
+        char[]? rentedArray = null;
+        Span<char> traceStateBuffer = stackalloc char[128]; // 256B
+        Span<char> keyLookupBuffer = stackalloc char[96]; // 192B (3x32 keys)
+        int keys = 0;
+        int charsWritten = 0;
+
+        try
         {
-            var keySet = new HashSet<string>();
-            var result = new StringBuilder();
-            for (int i = 0; i < tracestateCollection.Length; ++i)
+            foreach (var tracestateItem in tracestateCollection)
             {
-                var tracestate = tracestateCollection[i].AsSpan();
-                int begin = 0;
-                while (begin < tracestate.Length)
+                var tracestate = tracestateItem.AsSpan();
+                int position = 0;
+
+                while (position < tracestate.Length)
                 {
-                    int length = tracestate.Slice(begin).IndexOf(',');
+                    int length = tracestate.Slice(position).IndexOf(',');
                     ReadOnlySpan<char> listMember;
+
                     if (length != -1)
                     {
-                        listMember = tracestate.Slice(begin, length).Trim();
-                        begin += length + 1;
+                        listMember = tracestate.Slice(position, length).Trim();
+                        position += length + 1;
                     }
                     else
                     {
-                        listMember = tracestate.Slice(begin).Trim();
-                        begin = tracestate.Length;
+                        listMember = tracestate.Slice(position).Trim();
+                        position = tracestate.Length;
                     }
 
                     // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#tracestate-header-field-values
@@ -257,7 +263,7 @@ public class TraceContextPropagator : TextMapPropagator
                         continue;
                     }
 
-                    if (keySet.Count >= 32)
+                    if (keys >= 32)
                     {
                         // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#list
                         // test_tracestate_member_count_limit
@@ -288,25 +294,107 @@ public class TraceContextPropagator : TextMapPropagator
                     }
 
                     // ValidateKey() call above has ensured the key does not contain upper case letters.
-                    if (!keySet.Add(key.ToString()))
+
+                    var duplicationCheckLength = Math.Min(key.Length, 3);
+
+                    if (keys > 0)
                     {
-                        // test_tracestate_duplicated_keys
-                        return false;
+                        // Fast path check of first three chars for potential duplicated keys
+                        var potentialMatchingKeyPosition = 1;
+                        var found = false;
+                        for (int i = 0; i < keys * 3; i += 3)
+                        {
+                            if (keyLookupBuffer.Slice(i, duplicationCheckLength).SequenceEqual(key.Slice(0, duplicationCheckLength)))
+                            {
+                                found = true;
+                                break;
+                            }
+
+                            potentialMatchingKeyPosition++;
+                        }
+
+                        // If the fast check has found a possible duplicate, we need to do a full check
+                        if (found)
+                        {
+                            var bufferToCompare = traceStateBuffer.Slice(0, charsWritten);
+
+                            // We know which key is the first possible duplicate, so skip to that key
+                            // by slicing to the position after the appropriate comma.
+                            for (int i = 1; i < potentialMatchingKeyPosition; i++)
+                            {
+                                var commaIndex = bufferToCompare.IndexOf(',');
+
+                                if (commaIndex > -1)
+                                {
+                                    bufferToCompare.Slice(commaIndex);
+                                }
+                            }
+
+                            int existingIndex = -1;
+                            while ((existingIndex = bufferToCompare.IndexOf(key)) > -1)
+                            {
+                                if ((existingIndex > 0 && bufferToCompare[existingIndex - 1] != ',') || bufferToCompare[existingIndex + key.Length] != '=')
+                                {
+                                    continue; // this is not a key
+                                }
+
+                                return false; // test_tracestate_duplicated_keys
+                            }
+                        }
                     }
 
-                    if (result.Length > 0)
+                    // Store up to the first three characters of the key for use in the duplicate lookup fast path
+                    var startKeyLookupIndex = keys > 0 ? keys * 3 : 0;
+                    key.Slice(0, duplicationCheckLength).CopyTo(keyLookupBuffer.Slice(startKeyLookupIndex));
+
+                    // Check we have capacity to write the key and value
+                    var requiredCapacity = charsWritten > 0 ? listMember.Length + 1 : listMember.Length;
+
+                    while (charsWritten + requiredCapacity > traceStateBuffer.Length)
                     {
-                        result.Append(',');
+                        GrowBuffer(ref rentedArray, ref traceStateBuffer);
                     }
 
-                    result.Append(listMember.ToString());
+                    if (charsWritten > 0)
+                    {
+                        traceStateBuffer[charsWritten++] = ',';
+                    }
+
+                    listMember.CopyTo(traceStateBuffer.Slice(charsWritten));
+                    charsWritten += listMember.Length;
+
+                    keys++;
                 }
             }
 
-            tracestateResult = result.ToString();
+            tracestateResult = traceStateBuffer.Slice(0, charsWritten).ToString();
+
+            return true;
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<char>.Shared.Return(rentedArray);
+                rentedArray = null;
+            }
         }
 
-        return true;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void GrowBuffer(ref char[]? array, ref Span<char> buffer)
+        {
+            var newBuffer = ArrayPool<char>.Shared.Rent(buffer.Length * 2);
+
+            buffer.CopyTo(newBuffer.AsSpan());
+
+            if (array is not null)
+            {
+                ArrayPool<char>.Shared.Return(array);
+            }
+
+            array = newBuffer;
+            buffer = array.AsSpan();
+        }
     }
 
     private static byte HexCharToByte(char c)

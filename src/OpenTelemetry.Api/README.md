@@ -539,4 +539,8 @@ seeing these internal logs.
 
 ## References
 
-* [OpenTelemetry Project](https://opentelemetry.io/)
+* [OpenTelemetry Baggage API specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/baggage/api.md)
+* [OpenTelemetry Logs Bridge API specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/bridge-api.md)
+* [OpenTelemetry Metrics API specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md)
+* [OpenTelemetry Propagators API specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md)
+* [OpenTelemetry Tracing API specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md)
