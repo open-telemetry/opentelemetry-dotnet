@@ -12,6 +12,12 @@ Notes](../../RELEASENOTES.md).
   `CultureInfo.InvariantCulture`.
   ([#5700](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5700))
 
+* Fixed an issue causing `NotSupportedException`s to be thrown on startup when
+  `AddOtlpExporter` registration extensions are called while using custom
+  dependency injection containers which automatically create services (Unity,
+  Grace, etc.).
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.9.0
 
 Released 2024-Jun-14
