@@ -174,7 +174,7 @@ public class LogBenchmarks
                 companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
-    // [Benchmark]
+    [Benchmark]
     public void ThreeProcessors()
     {
         this.loggerWithThreeProcessors.FoodRecallNotice(
