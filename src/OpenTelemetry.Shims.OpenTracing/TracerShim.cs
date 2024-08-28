@@ -20,7 +20,7 @@ public class TracerShim : global::OpenTracing.ITracer
     /// Initializes a new instance of the <see cref="TracerShim"/> class.
     /// </summary>
     /// <param name="tracerProvider"><see cref="Trace.TracerProvider"/>.</param>
-    public TracerShim(Trace.TracerProvider? tracerProvider)
+    public TracerShim(Trace.TracerProvider tracerProvider)
         : this(tracerProvider, null)
     {
     }
@@ -30,7 +30,7 @@ public class TracerShim : global::OpenTracing.ITracer
     /// </summary>
     /// <param name="tracerProvider"><see cref="Trace.TracerProvider"/>.</param>
     /// <param name="textFormat"><see cref="TextMapPropagator"/>.</param>
-    public TracerShim(Trace.TracerProvider? tracerProvider, TextMapPropagator? textFormat)
+    public TracerShim(Trace.TracerProvider tracerProvider, TextMapPropagator? textFormat)
     {
         Guard.ThrowIfNull(tracerProvider);
 
@@ -63,7 +63,7 @@ public class TracerShim : global::OpenTracing.ITracer
     }
 
     /// <inheritdoc/>
-    public global::OpenTracing.ISpanContext? Extract<TCarrier>(IFormat<TCarrier>? format, TCarrier? carrier)
+    public global::OpenTracing.ISpanContext? Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
     {
         Guard.ThrowIfNull(format);
         Guard.ThrowIfNull(carrier);
@@ -102,9 +102,9 @@ public class TracerShim : global::OpenTracing.ITracer
 
     /// <inheritdoc/>
     public void Inject<TCarrier>(
-        global::OpenTracing.ISpanContext? spanContext,
-        IFormat<TCarrier>? format,
-        TCarrier? carrier)
+        global::OpenTracing.ISpanContext spanContext,
+        IFormat<TCarrier> format,
+        TCarrier carrier)
     {
         Guard.ThrowIfNull(spanContext);
         var shim = Guard.ThrowIfNotOfType<SpanContextShim>(spanContext);

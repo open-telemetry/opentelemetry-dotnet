@@ -16,7 +16,7 @@ public class SpanShimTests
     [Fact]
     public void CtorArgumentValidation()
     {
-        Assert.Throws<ArgumentNullException>(() => new SpanShim(null));
+        Assert.Throws<ArgumentNullException>(() => new SpanShim(null!));
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class SpanShimTests
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
         // parameter validation
-        Assert.Throws<ArgumentNullException>(() => shim.SetOperationName(null));
+        Assert.Throws<ArgumentNullException>(() => shim.SetOperationName(null!));
 
         shim.SetOperationName("bar");
         Assert.Equal("bar", shim.Span.Activity!.DisplayName);
@@ -80,7 +80,7 @@ public class SpanShimTests
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
         // parameter validation
-        Assert.Throws<ArgumentException>(() => shim.GetBaggageItem(null));
+        Assert.Throws<ArgumentException>(() => shim.GetBaggageItem(null!));
 
         // TODO - Method not implemented
     }
@@ -121,7 +121,7 @@ public class SpanShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-        Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>?)null));
+        Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null!));
 
         shim.Log(new List<KeyValuePair<string, object>>
         {
@@ -152,7 +152,7 @@ public class SpanShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-        Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>?)null));
+        Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null!));
         var now = DateTimeOffset.UtcNow;
 
         shim.Log(now, new List<KeyValuePair<string, object>>
@@ -185,7 +185,7 @@ public class SpanShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-        Assert.Throws<ArgumentNullException>(() => shim.SetTag((string?)null, "foo"));
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null!, "foo"));
 
         shim.SetTag("foo", "bar");
 
@@ -200,7 +200,7 @@ public class SpanShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-        Assert.Throws<ArgumentNullException>(() => shim.SetTag((string?)null, true));
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null!, true));
 
         shim.SetTag("foo", true);
         shim.SetTag(Tags.Error.Key, true);
@@ -221,7 +221,7 @@ public class SpanShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-        Assert.Throws<ArgumentNullException>(() => shim.SetTag((string?)null, 1));
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null!, 1));
 
         shim.SetTag("foo", 1);
 
@@ -236,7 +236,7 @@ public class SpanShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-        Assert.Throws<ArgumentNullException>(() => shim.SetTag(null, 1D));
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag(null!, 1D));
 
         shim.SetTag("foo", 1D);
 
@@ -251,7 +251,7 @@ public class SpanShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-        Assert.Throws<ArgumentNullException>(() => shim.SetTag((BooleanTag?)null, true));
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((BooleanTag)null!, true));
 
         shim.SetTag(new BooleanTag("foo"), true);
         shim.SetTag(new BooleanTag(Tags.Error.Key), true);

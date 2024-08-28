@@ -55,7 +55,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
 
     private bool error;
 
-    public SpanBuilderShim(Tracer? tracer, string? spanName)
+    public SpanBuilderShim(Tracer tracer, string spanName)
     {
         Guard.ThrowIfNull(tracer);
         Guard.ThrowIfNull(spanName);
