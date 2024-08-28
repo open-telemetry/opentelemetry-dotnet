@@ -62,7 +62,7 @@ public sealed class B3Propagator : TextMapPropagator
     public override ISet<string> Fields => AllFields;
 
     /// <inheritdoc/>
-    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
     {
         if (context.ActivityContext.IsValid())
         {
@@ -138,7 +138,7 @@ public sealed class B3Propagator : TextMapPropagator
         }
     }
 
-    private static PropagationContext ExtractFromMultipleHeaders<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+    private static PropagationContext ExtractFromMultipleHeaders<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
     {
         try
         {
@@ -171,7 +171,8 @@ public sealed class B3Propagator : TextMapPropagator
             }
 
             var traceOptions = ActivityTraceFlags.None;
-            if (SampledValues.Contains(getter(carrier, XB3Sampled)?.FirstOrDefault())
+            var xb3Sampled = getter(carrier, XB3Sampled)?.FirstOrDefault();
+            if ((xb3Sampled != null && SampledValues.Contains(xb3Sampled))
                 || FlagsValue.Equals(getter(carrier, XB3Flags)?.FirstOrDefault(), StringComparison.Ordinal))
             {
                 traceOptions |= ActivityTraceFlags.Recorded;
@@ -188,7 +189,7 @@ public sealed class B3Propagator : TextMapPropagator
         }
     }
 
-    private static PropagationContext ExtractFromSingleHeader<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+    private static PropagationContext ExtractFromSingleHeader<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
     {
         try
         {
@@ -198,7 +199,7 @@ public sealed class B3Propagator : TextMapPropagator
                 return context;
             }
 
-            var parts = header.Split(XB3CombinedDelimiter);
+            var parts = header!.Split(XB3CombinedDelimiter);
             if (parts.Length < 2 || parts.Length > 4)
             {
                 return context;
