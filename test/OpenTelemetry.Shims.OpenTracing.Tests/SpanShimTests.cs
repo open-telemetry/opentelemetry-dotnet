@@ -276,7 +276,7 @@ public class SpanShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-        Assert.Throws<ArgumentNullException>(() => shim.SetTag((StringTag?)null, "foo"));
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((StringTag)null!, "foo"));
 
         shim.SetTag(new StringTag("foo"), "bar");
 
@@ -291,7 +291,7 @@ public class SpanShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-        Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntTag?)null, 1));
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntTag)null!, 1));
 
         shim.SetTag(new IntTag("foo"), 1);
 
@@ -306,7 +306,7 @@ public class SpanShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-        Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntOrStringTag?)null, "foo"));
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntOrStringTag)null!, "foo"));
 
         shim.SetTag(new IntOrStringTag("foo"), 1);
         shim.SetTag(new IntOrStringTag("bar"), "baz");

@@ -199,32 +199,40 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.BooleanTag? tag, bool value)
+    public ISpan SetTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
     {
-        return this.SetTag(tag?.Key!, value);
+        Guard.ThrowIfNull(tag);
+
+        return this.SetTag(tag.Key, value);
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag? tag, string value)
+    public ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
     {
+        Guard.ThrowIfNull(tag);
+
         if (int.TryParse(value, out var result))
         {
-            return this.SetTag(tag?.Key!, result);
+            return this.SetTag(tag.Key, result);
         }
 
-        return this.SetTag(tag?.Key!, value);
+        return this.SetTag(tag.Key, value);
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.IntTag? tag, int value)
+    public ISpan SetTag(global::OpenTracing.Tag.IntTag tag, int value)
     {
-        return this.SetTag(tag?.Key!, value);
+        Guard.ThrowIfNull(tag);
+
+        return this.SetTag(tag.Key, value);
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.StringTag? tag, string value)
+    public ISpan SetTag(global::OpenTracing.Tag.StringTag tag, string value)
     {
-        return this.SetTag(tag?.Key!, value);
+        Guard.ThrowIfNull(tag);
+
+        return this.SetTag(tag.Key, value);
     }
 
     /// <summary>
