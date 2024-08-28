@@ -16,7 +16,7 @@ Notes](../../RELEASENOTES.md).
   `AddOtlpExporter` registration extensions are called while using custom
   dependency injection containers which automatically create services (Unity,
   Grace, etc.).
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5808](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5808))
 
 ## 1.9.0
 
