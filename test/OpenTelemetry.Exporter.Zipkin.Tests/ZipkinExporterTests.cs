@@ -542,22 +542,22 @@ public class ZipkinExporterTests : IDisposable
             parentContext: new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
             tags,
             links,
-            startTime: startTimestamp);
+            startTime: startTimestamp)!;
 
         if (addEvents)
         {
             foreach (var evnt in events)
             {
-                activity!.AddEvent(evnt);
+                activity.AddEvent(evnt);
             }
         }
 
         if (status.HasValue)
         {
-            activity!.SetStatus(status.Value);
+            activity.SetStatus(status.Value);
         }
 
-        activity!.SetEndTime(endTimestamp);
+        activity.SetEndTime(endTimestamp);
         activity.Stop();
 
         return activity;
