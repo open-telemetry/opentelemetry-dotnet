@@ -107,7 +107,12 @@ public class LogBenchmarks
     [Benchmark]
     public void NoListener()
     {
-        this.loggerWithNoListener.SayHello(FoodName, FoodPrice);
+        this.loggerWithNoListener.FoodRecallNotice(
+                brandName: "Contoso",
+                productDescription: "Salads",
+                productType: "Food & Beverages",
+                recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+                companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
     [Benchmark]
@@ -115,7 +120,12 @@ public class LogBenchmarks
     {
         if (this.loggerWithNoListener.IsEnabled(LogLevel.Information))
         {
-            this.loggerWithNoListener.SayHello(FoodName, FoodPrice);
+            this.loggerWithNoListener.FoodRecallNotice(
+                brandName: "Contoso",
+                productDescription: "Salads",
+                productType: "Food & Beverages",
+                recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+                companyName: "Contoso Fresh Vegetables, Inc.");
         }
     }
 
@@ -123,31 +133,56 @@ public class LogBenchmarks
     public void CreateLoggerRepeatedly()
     {
         var logger = this.loggerFactoryWithNoListener.CreateLogger<LogBenchmarks>();
-        logger.SayHello(FoodName, FoodPrice);
+        logger.FoodRecallNotice(
+                brandName: "Contoso",
+                productDescription: "Salads",
+                productType: "Food & Beverages",
+                recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+                companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
     [Benchmark]
     public void OneProcessor()
     {
-        this.loggerWithOneProcessor.SayHello(FoodName, FoodPrice);
+        this.loggerWithOneProcessor.FoodRecallNotice(
+                brandName: "Contoso",
+                productDescription: "Salads",
+                productType: "Food & Beverages",
+                recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+                companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
     [Benchmark]
     public void BatchProcessor()
     {
-        this.loggerWithBatchProcessor.SayHello(FoodName, FoodPrice);
+        this.loggerWithBatchProcessor.FoodRecallNotice(
+                brandName: "Contoso",
+                productDescription: "Salads",
+                productType: "Food & Beverages",
+                recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+                companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
     [Benchmark]
     public void TwoProcessors()
     {
-        this.loggerWithTwoProcessors.SayHello(FoodName, FoodPrice);
+        this.loggerWithTwoProcessors.FoodRecallNotice(
+                brandName: "Contoso",
+                productDescription: "Salads",
+                productType: "Food & Beverages",
+                recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+                companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
-    [Benchmark]
+    // [Benchmark]
     public void ThreeProcessors()
     {
-        this.loggerWithThreeProcessors.SayHello(FoodName, FoodPrice);
+        this.loggerWithThreeProcessors.FoodRecallNotice(
+                brandName: "Contoso",
+                productDescription: "Salads",
+                productType: "Food & Beverages",
+                recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+                companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
     internal class NoopLogProcessor : BaseProcessor<LogRecord>
