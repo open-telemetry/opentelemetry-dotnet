@@ -98,7 +98,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     }
 
     /// <inheritdoc/>
-    public ISpanBuilder AddReference(string referenceType, ISpanContext referencedContext)
+    public ISpanBuilder AddReference(string referenceType, ISpanContext? referencedContext)
     {
         if (referencedContext == null)
         {
@@ -184,7 +184,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     }
 
     /// <inheritdoc/>
-    public ISpanBuilder WithTag(string? key, string? value)
+    public ISpanBuilder WithTag(string key, string value)
     {
         // see https://opentracing.io/specification/conventions/ for special key handling.
         if (global::OpenTracing.Tag.Tags.SpanKind.Key.Equals(key, StringComparison.Ordinal))
@@ -247,7 +247,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     /// <inheritdoc/>
     public ISpanBuilder WithTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
     {
-        Guard.ThrowIfNull(tag?.Key);
+        Guard.ThrowIfNull(tag.Key);
 
         return this.WithTag(tag.Key, value);
     }
@@ -255,7 +255,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     /// <inheritdoc/>
     public ISpanBuilder WithTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
     {
-        Guard.ThrowIfNull(tag?.Key);
+        Guard.ThrowIfNull(tag.Key);
 
         if (int.TryParse(value, out var result))
         {
@@ -268,7 +268,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     /// <inheritdoc/>
     public ISpanBuilder WithTag(global::OpenTracing.Tag.IntTag tag, int value)
     {
-        Guard.ThrowIfNull(tag?.Key);
+        Guard.ThrowIfNull(tag.Key);
 
         return this.WithTag(tag.Key, value);
     }
@@ -276,7 +276,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     /// <inheritdoc/>
     public ISpanBuilder WithTag(global::OpenTracing.Tag.StringTag tag, string value)
     {
-        Guard.ThrowIfNull(tag?.Key);
+        Guard.ThrowIfNull(tag.Key);
 
         return this.WithTag(tag.Key, value);
     }

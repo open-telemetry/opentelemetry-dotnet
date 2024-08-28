@@ -245,7 +245,7 @@ public class SpanBuilderShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanBuilderShim(tracer, "foo");
 
-        shim.WithTag((string?)null, "unused");
+        shim.WithTag((string)null!, "unused");
 
         // build
         var spanShim = (SpanShim)shim.Start();
@@ -261,7 +261,7 @@ public class SpanBuilderShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanBuilderShim(tracer, "foo");
 
-        shim.WithTag("foo", null);
+        shim.WithTag("foo", null!);
 
         // build
         var spanShim = (SpanShim)shim.Start();
