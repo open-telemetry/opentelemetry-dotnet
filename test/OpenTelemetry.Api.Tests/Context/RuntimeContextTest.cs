@@ -16,7 +16,7 @@ public class RuntimeContextTest : IDisposable
     public static void RegisterSlotWithInvalidNameThrows()
     {
         Assert.Throws<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(string.Empty));
-        Assert.Throws<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(null));
+        Assert.Throws<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(null!));
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class RuntimeContextTest : IDisposable
     public static void GetSlotWithInvalidNameThrows()
     {
         Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<bool>(string.Empty));
-        Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<bool>(null));
+        Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<bool>(null!));
     }
 
     [Fact]

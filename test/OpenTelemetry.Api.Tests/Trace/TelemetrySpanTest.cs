@@ -18,7 +18,8 @@ public class TelemetrySpanTest
         telemetrySpan.RecordException(new ArgumentNullException(message, new Exception("new-exception")));
         Assert.Single(activity.Events);
 
-        var @event = telemetrySpan.Activity!.Events.FirstOrDefault(q => q.Name == SemanticConventions.AttributeExceptionEventName);
+        Assert.NotNull(telemetrySpan.Activity);
+        var @event = telemetrySpan.Activity.Events.FirstOrDefault(q => q.Name == SemanticConventions.AttributeExceptionEventName);
         Assert.Equal(message, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
         Assert.Equal(typeof(ArgumentNullException).Name, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
     }
@@ -35,7 +36,8 @@ public class TelemetrySpanTest
         telemetrySpan.RecordException(type, message, stack);
         Assert.Single(activity.Events);
 
-        var @event = telemetrySpan.Activity!.Events.FirstOrDefault(q => q.Name == SemanticConventions.AttributeExceptionEventName);
+        Assert.NotNull(telemetrySpan.Activity);
+        var @event = telemetrySpan.Activity.Events.FirstOrDefault(q => q.Name == SemanticConventions.AttributeExceptionEventName);
         Assert.Equal(message, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
         Assert.Equal(type, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
         Assert.Equal(stack, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionStacktrace).Value);

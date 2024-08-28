@@ -133,7 +133,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
-    public static string? GetBaggage(string? name, Baggage baggage = default)
+    public static string? GetBaggage(string name, Baggage baggage = default)
         => baggage == default ? Current.GetBaggage(name) : baggage.GetBaggage(name);
 
     /// <summary>
@@ -222,7 +222,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </summary>
     /// <param name="name">Baggage item name.</param>
     /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
-    public string? GetBaggage(string? name)
+    public string? GetBaggage(string name)
     {
         Guard.ThrowIfNullOrEmpty(name);
 

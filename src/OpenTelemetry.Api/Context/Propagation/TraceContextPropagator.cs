@@ -34,7 +34,7 @@ public class TraceContextPropagator : TextMapPropagator
     public override ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
 
     /// <inheritdoc/>
-    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>>? getter)
+    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
     {
         if (context.ActivityContext.IsValid())
         {
@@ -93,7 +93,7 @@ public class TraceContextPropagator : TextMapPropagator
     }
 
     /// <inheritdoc/>
-    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string>? setter)
+    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
     {
         if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
         {

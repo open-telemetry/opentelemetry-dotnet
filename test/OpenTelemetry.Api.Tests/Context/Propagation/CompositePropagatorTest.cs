@@ -33,7 +33,7 @@ public class CompositePropagatorTest
     [Fact]
     public void CompositePropagator_NullTextMapPropagators()
     {
-        Assert.Throws<ArgumentNullException>(() => new CompositeTextMapPropagator(null));
+        Assert.Throws<ArgumentNullException>(() => new CompositeTextMapPropagator(null!));
     }
 
     [Fact]

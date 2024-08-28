@@ -53,7 +53,7 @@ public static class RuntimeContext
     /// <param name="slotName">The name of the context slot.</param>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
     /// <returns>The slot registered.</returns>
-    public static RuntimeContextSlot<T>? RegisterSlot<T>(string? slotName)
+    public static RuntimeContextSlot<T>? RegisterSlot<T>(string slotName)
     {
         Guard.ThrowIfNullOrEmpty(slotName);
         RuntimeContextSlot<T>? slot = null;
@@ -92,7 +92,7 @@ public static class RuntimeContext
     /// <param name="slotName">The name of the context slot.</param>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
     /// <returns>The slot previously registered.</returns>
-    public static RuntimeContextSlot<T> GetSlot<T>(string? slotName)
+    public static RuntimeContextSlot<T> GetSlot<T>(string slotName)
     {
         Guard.ThrowIfNullOrEmpty(slotName);
         var slot = GuardNotFound(slotName);

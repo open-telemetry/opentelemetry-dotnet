@@ -37,7 +37,7 @@ public class SpanAttributesTest
     public void ValidateNullKey()
     {
         var spanAttribute = new SpanAttributes();
-        Assert.Throws<ArgumentNullException>(() => spanAttribute.Add(null, "null key"));
+        Assert.Throws<ArgumentNullException>(() => spanAttribute.Add(null!, "null key"));
     }
 
     [Fact]
@@ -64,6 +64,6 @@ public class SpanAttributesTest
     [Fact]
     public void ValidateConstructorWithNullList()
     {
-        Assert.Throws<ArgumentNullException>(() => new SpanAttributes(null));
+        Assert.Throws<ArgumentNullException>(() => new SpanAttributes(null!));
     }
 }

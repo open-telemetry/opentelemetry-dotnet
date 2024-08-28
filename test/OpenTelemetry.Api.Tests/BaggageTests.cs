@@ -44,7 +44,7 @@ public class BaggageTests
         Assert.Null(Baggage.GetBaggage("NO_KEY"));
         Assert.Equal(V2, Baggage.Current.GetBaggage(K2));
 
-        Assert.Throws<ArgumentException>(() => Baggage.GetBaggage(null));
+        Assert.Throws<ArgumentException>(() => Baggage.GetBaggage(null!));
     }
 
     [Fact]
