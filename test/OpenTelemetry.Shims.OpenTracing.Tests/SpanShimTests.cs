@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using OpenTelemetry.Trace;
 using OpenTracing.Tag;
 using Xunit;
@@ -209,10 +210,34 @@ public class SpanShimTests
         Assert.True((bool)shim.Span.Activity.TagObjects.First().Value!);
 
         // A boolean tag named "error" is a special case that must be checked
-        Assert.Equal(Status.Error, shim.Span.Activity.GetStatus());
+
+        // Legacy span status tag should be set
+        Assert.Equal("ERROR", shim.Span.Activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+
+        if (VersionHelper.IsApiVersionGreaterThanOrEqualTo(1, 10))
+        {
+            // Activity status code should also be set
+            Assert.Equal(ActivityStatusCode.Error, shim.Span.Activity.Status);
+        }
+        else
+        {
+            Assert.Equal(ActivityStatusCode.Unset, shim.Span.Activity.Status);
+        }
 
         shim.SetTag(Tags.Error.Key, false);
-        Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
+
+        // Legacy span status tag should be set
+        Assert.Equal("OK", shim.Span.Activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+
+        if (VersionHelper.IsApiVersionGreaterThanOrEqualTo(1, 10))
+        {
+            // Activity status code should also be set
+            Assert.Equal(ActivityStatusCode.Ok, shim.Span.Activity.Status);
+        }
+        else
+        {
+            Assert.Equal(ActivityStatusCode.Unset, shim.Span.Activity.Status);
+        }
     }
 
     [Fact]
@@ -243,27 +268,6 @@ public class SpanShimTests
         Assert.Single(shim.Span.Activity!.TagObjects);
         Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
         Assert.Equal(1, (double)shim.Span.Activity.TagObjects.First().Value!);
-    }
-
-    [Fact]
-    public void SetTagBooleanTagValue()
-    {
-        var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new SpanShim(tracer.StartSpan(SpanName));
-
-        Assert.Throws<ArgumentNullException>(() => shim.SetTag((BooleanTag)null!, true));
-
-        shim.SetTag(new BooleanTag("foo"), true);
-        shim.SetTag(new BooleanTag(Tags.Error.Key), true);
-
-        Assert.Equal("foo", shim.Span.Activity!.TagObjects.First().Key);
-        Assert.True((bool)shim.Span.Activity.TagObjects.First().Value!);
-
-        // A boolean tag named "error" is a special case that must be checked
-        Assert.Equal(Status.Error, shim.Span.Activity.GetStatus());
-
-        shim.SetTag(Tags.Error.Key, false);
-        Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
     }
 
     [Fact]

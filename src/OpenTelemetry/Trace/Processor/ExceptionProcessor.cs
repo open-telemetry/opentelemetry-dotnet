@@ -62,11 +62,9 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
 
         if (snapshot != pointers)
         {
-            // TODO: Remove this when SetStatus is deprecated
+#pragma warning disable
             activity.SetStatus(Status.Error);
-
-            // For processors/exporters checking `Status` property.
-            activity.SetStatus(ActivityStatusCode.Error);
+#pragma warning restore
         }
     }
 }

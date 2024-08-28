@@ -21,17 +21,34 @@ public static class ActivityExtensions
 {
     /// <summary>
     /// Sets the status of activity execution.
-    /// Activity class in .NET does not support 'Status'.
-    /// This extension provides a workaround to store Status as special tags with key name of otel.status_code and otel.status_description.
-    /// Read more about SetStatus here https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status.
     /// </summary>
+    /// <remarks>
+    /// Note: This method is obsolete. Call the <see cref="Activity.SetStatus"/>
+    /// method instead. For more details see: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#setting-status"
+    /// />.
+    /// </remarks>
     /// <param name="activity">Activity instance.</param>
     /// <param name="status">Activity execution status.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void SetStatus(this Activity activity, Status status)
+    [Obsolete("Call Activity.SetStatus instead this method will be removed in a future version.")]
+    public static void SetStatus(this Activity? activity, Status status)
     {
         if (activity != null)
         {
+            switch (status.StatusCode)
+            {
+                case StatusCode.Ok:
+                    activity.SetStatus(ActivityStatusCode.Ok);
+                    break;
+                case StatusCode.Unset:
+                    activity.SetStatus(ActivityStatusCode.Unset);
+                    break;
+                case StatusCode.Error:
+                    activity.SetStatus(ActivityStatusCode.Error, status.Description);
+                    break;
+            }
+
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
             activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
         }
@@ -39,21 +56,37 @@ public static class ActivityExtensions
 
     /// <summary>
     /// Gets the status of activity execution.
-    /// Activity class in .NET does not support 'Status'.
-    /// This extension provides a workaround to retrieve Status from special tags with key name otel.status_code and otel.status_description.
     /// </summary>
+    /// <remarks>
+    /// Note: This method is obsolete. Use the <see cref="Activity.Status"/> and
+    /// <see cref="Activity.StatusDescription"/> properties instead. For more
+    /// details see: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#setting-status"
+    /// />.
+    /// </remarks>
     /// <param name="activity">Activity instance.</param>
     /// <returns>Activity execution status.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Status GetStatus(this Activity activity)
+    [Obsolete("Use Activity.Status and Activity.StatusDescription instead this method will be removed in a future version.")]
+    public static Status GetStatus(this Activity? activity)
     {
-        if (activity == null
-            || !activity.TryGetStatus(out var statusCode, out var statusDescription))
+        if (activity != null)
         {
-            return Status.Unset;
+            switch (activity.Status)
+            {
+                case ActivityStatusCode.Ok:
+                    return Status.Ok;
+                case ActivityStatusCode.Error:
+                    return new Status(StatusCode.Error, activity.StatusDescription);
+            }
+
+            if (activity.TryGetStatus(out var statusCode, out var statusDescription))
+            {
+                return new Status(statusCode, statusDescription);
+            }
         }
 
-        return new Status(statusCode, statusDescription);
+        return Status.Unset;
     }
 
     /// <summary>
@@ -65,7 +98,7 @@ public static class ActivityExtensions
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void RecordException(this Activity activity, Exception? ex)
+    public static void RecordException(this Activity? activity, Exception? ex)
         => RecordException(activity, ex, default);
 
     /// <summary>
@@ -78,7 +111,7 @@ public static class ActivityExtensions
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void RecordException(this Activity activity, Exception? ex, in TagList tags)
+    public static void RecordException(this Activity? activity, Exception? ex, in TagList tags)
     {
         if (ex == null || activity == null)
         {

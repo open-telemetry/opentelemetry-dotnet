@@ -322,31 +322,18 @@ public class ZipkinExporterTests : IDisposable
     [InlineData(false, false, false)]
     [InlineData(false, true, false)]
     [InlineData(false, false, true)]
-    [InlineData(false, false, false, StatusCode.Ok)]
-    [InlineData(false, false, false, StatusCode.Ok, null, true)]
-    [InlineData(false, false, false, StatusCode.Error)]
-    [InlineData(false, false, false, StatusCode.Error, "Error description")]
+    [InlineData(false, false, false, ActivityStatusCode.Ok)]
+    [InlineData(false, false, false, ActivityStatusCode.Ok, null, true)]
+    [InlineData(false, false, false, ActivityStatusCode.Error)]
+    [InlineData(false, false, false, ActivityStatusCode.Error, "Error description")]
     public void IntegrationTest(
         bool useShortTraceIds,
         bool useTestResource,
         bool isRootSpan,
-        StatusCode statusCode = StatusCode.Unset,
+        ActivityStatusCode statusCode = ActivityStatusCode.Unset,
         string statusDescription = null,
         bool addErrorTag = false)
     {
-        var status = statusCode switch
-        {
-            StatusCode.Unset => Status.Unset,
-            StatusCode.Ok => Status.Ok,
-            StatusCode.Error => Status.Error,
-            _ => throw new InvalidOperationException(),
-        };
-
-        if (!string.IsNullOrEmpty(statusDescription))
-        {
-            status = status.WithDescription(statusDescription);
-        }
-
         Guid requestId = Guid.NewGuid();
 
         ZipkinExporter exporter = new ZipkinExporter(
@@ -360,7 +347,7 @@ public class ZipkinExporterTests : IDisposable
             .Where(pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
         var resourceTags = string.Empty;
         var dateTime = DateTime.UtcNow;
-        var activity = CreateTestActivity(isRootSpan: isRootSpan, status: status, dateTime: dateTime);
+        var activity = CreateTestActivity(isRootSpan: isRootSpan, statusCode: statusCode, statusDescription: statusDescription, dateTime: dateTime);
         if (useTestResource)
         {
             serviceName = "MyService";
@@ -409,13 +396,13 @@ public class ZipkinExporterTests : IDisposable
         string errorTag = string.Empty;
         switch (statusCode)
         {
-            case StatusCode.Ok:
+            case ActivityStatusCode.Ok:
                 statusTag = $@"""{SpanAttributeConstants.StatusCodeKey}"":""OK"",";
                 break;
-            case StatusCode.Unset:
+            case ActivityStatusCode.Unset:
                 statusTag = string.Empty;
                 break;
-            case StatusCode.Error:
+            case ActivityStatusCode.Error:
                 statusTag = $@"""{SpanAttributeConstants.StatusCodeKey}"":""ERROR"",";
                 errorTag = $@"""{ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName}"":""{statusDescription}"",";
                 break;
@@ -464,7 +451,8 @@ public class ZipkinExporterTests : IDisposable
        bool addLinks = true,
        Resource resource = null,
        ActivityKind kind = ActivityKind.Client,
-       Status? status = null,
+       ActivityStatusCode statusCode = ActivityStatusCode.Unset,
+       string statusDescription = null,
        DateTime? dateTime = null)
     {
         var startTimestamp = DateTime.UtcNow;
@@ -552,10 +540,7 @@ public class ZipkinExporterTests : IDisposable
             }
         }
 
-        if (status.HasValue)
-        {
-            activity.SetStatus(status.Value);
-        }
+        activity.SetStatus(statusCode, statusDescription);
 
         activity.SetEndTime(endTimestamp);
         activity.Stop();
