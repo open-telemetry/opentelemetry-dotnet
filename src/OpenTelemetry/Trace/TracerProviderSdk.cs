@@ -260,7 +260,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                 // or not.
-                activityListener.ShouldListenTo = (activitySource) =>
+                activityListener.ShouldListenTo = activitySource =>
                     this.supportLegacyActivity ?
                     string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
                     regex.IsMatch(activitySource.Name);
@@ -276,14 +276,14 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                 // or not.
-                activityListener.ShouldListenTo = (activitySource) => activitySources.Contains(activitySource.Name);
+                activityListener.ShouldListenTo = activitySource => activitySources.Contains(activitySource.Name);
             }
         }
         else
         {
             if (this.supportLegacyActivity)
             {
-                activityListener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name);
+                activityListener.ShouldListenTo = activitySource => string.IsNullOrEmpty(activitySource.Name);
             }
         }
 
