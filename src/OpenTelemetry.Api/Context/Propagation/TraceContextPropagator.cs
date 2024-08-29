@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -34,7 +36,7 @@ public class TraceContextPropagator : TextMapPropagator
     public override ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
 
     /// <inheritdoc/>
-    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
     {
         if (context.ActivityContext.IsValid())
         {
@@ -121,8 +123,8 @@ public class TraceContextPropagator : TextMapPropagator
 #endif
 
         setter(carrier, TraceParent, traceparent);
-
-        string tracestateStr = context.ActivityContext.TraceState!;
+        
+        string? tracestateStr = context.ActivityContext.TraceState;
         if (tracestateStr?.Length > 0)
         {
             setter(carrier, TraceState, tracestateStr);

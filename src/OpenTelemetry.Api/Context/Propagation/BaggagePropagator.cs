@@ -1,6 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
+#if NET
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Net;
 using System.Text;
 using OpenTelemetry.Internal;
@@ -24,7 +29,7 @@ public class BaggagePropagator : TextMapPropagator
     public override ISet<string> Fields => new HashSet<string> { BaggageHeaderName };
 
     /// <inheritdoc/>
-    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>>? getter)
+    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
     {
         if (context.Baggage != default)
         {
@@ -46,16 +51,16 @@ public class BaggagePropagator : TextMapPropagator
 
         try
         {
-            Dictionary<string, string>? baggage = null;
             var baggageCollection = getter(carrier, BaggageHeaderName);
             if (baggageCollection?.Any() ?? false)
             {
-                TryExtractBaggage(baggageCollection.ToArray(), out baggage);
+                if (TryExtractBaggage(baggageCollection.ToArray(), out var baggage))
+                {
+                    return new PropagationContext(context.ActivityContext, new Baggage(baggage));
+                }
             }
 
-            return new PropagationContext(
-                context.ActivityContext,
-                baggage == null ? context.Baggage : new Baggage(baggage));
+            return new PropagationContext(context.ActivityContext, context.Baggage);
         }
         catch (Exception ex)
         {
@@ -102,7 +107,12 @@ public class BaggagePropagator : TextMapPropagator
         }
     }
 
-    internal static bool TryExtractBaggage(string[] baggageCollection, out Dictionary<string, string>? baggage)
+    internal static bool TryExtractBaggage(
+        string[] baggageCollection,
+#if NET
+        [NotNullWhen(true)]
+#endif
+        out Dictionary<string, string>? baggage)
     {
         int baggageLength = -1;
         bool done = false;

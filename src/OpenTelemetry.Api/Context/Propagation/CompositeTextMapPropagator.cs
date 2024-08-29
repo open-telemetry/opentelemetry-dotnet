@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
@@ -66,7 +68,7 @@ public class CompositeTextMapPropagator : TextMapPropagator
     public override ISet<string> Fields => this.allFields;
 
     /// <inheritdoc/>
-    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+    public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
     {
         for (int i = 0; i < this.propagators.Count; i++)
         {
