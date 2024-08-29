@@ -39,7 +39,7 @@ internal sealed class SpanShim : ISpan
     /// <inheritdoc/>
     public ISpanContext Context => this.spanContextShim;
 
-    public TelemetrySpan Span { get; private set; }
+    public TelemetrySpan Span { get; }
 
     /// <inheritdoc/>
     public void Finish()
