@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics;
 using Xunit;
 using Xunit.Abstractions;
@@ -24,8 +26,12 @@ public class B3PropagatorTest
     private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
         (d, k) =>
         {
-            d.TryGetValue(k, out var v);
-            return new string[] { v };
+            if (d.TryGetValue(k, out var v))
+            {
+                return [v];
+            }
+
+            return [];
         };
 
     private readonly B3Propagator b3propagator = new();
