@@ -35,10 +35,10 @@ public class SpanShimTests
     {
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanShim(tracer.StartSpan(SpanName));
-
         shim.Finish();
 
-        Assert.NotEqual(default, shim.Span.Activity!.Duration);
+        Assert.NotNull(shim.Span.Activity);
+        Assert.NotEqual(default, shim.Span.Activity.Duration);
     }
 
     [Fact]
@@ -94,8 +94,8 @@ public class SpanShimTests
 
         shim.Log("foo");
 
-        Assert.Single(shim.Span.Activity!.Events);
-        var first = shim.Span.Activity.Events.First();
+        Assert.NotNull(shim.Span.Activity);
+        var first = Assert.Single(shim.Span.Activity.Events);
         Assert.Equal("foo", first.Name);
         Assert.False(first.Tags.Any());
     }
@@ -109,8 +109,8 @@ public class SpanShimTests
         var now = DateTimeOffset.UtcNow;
         shim.Log(now, "foo");
 
-        Assert.Single(shim.Span.Activity!.Events);
-        var first = shim.Span.Activity.Events.First();
+        Assert.NotNull(shim.Span.Activity);
+        var first = Assert.Single(shim.Span.Activity.Events);
         Assert.Equal("foo", first.Name);
         Assert.Equal(now, first.Timestamp);
         Assert.False(first.Tags.Any());
@@ -126,16 +126,18 @@ public class SpanShimTests
 
         shim.Log(new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>("foo", "bar"),
+            new("foo", "bar"),
         });
 
         // "event" is a special event name
         shim.Log(new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>("event", "foo"),
+            new("event", "foo"),
         });
 
-        var first = shim.Span.Activity!.Events.FirstOrDefault();
+        Assert.NotNull(shim.Span.Activity);
+
+        var first = shim.Span.Activity.Events.FirstOrDefault();
         var last = shim.Span.Activity.Events.LastOrDefault();
 
         Assert.Equal(2, shim.Span.Activity.Events.Count());
@@ -158,16 +160,17 @@ public class SpanShimTests
 
         shim.Log(now, new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>("foo", "bar"),
+            new("foo", "bar"),
         });
 
         // "event" is a special event name
         shim.Log(now, new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>("event", "foo"),
+            new("event", "foo"),
         });
 
-        Assert.Equal(2, shim.Span.Activity!.Events.Count());
+        Assert.NotNull(shim.Span.Activity);
+        Assert.Equal(2, shim.Span.Activity.Events.Count());
         var first = shim.Span.Activity.Events.First();
         var last = shim.Span.Activity.Events.Last();
 
@@ -190,9 +193,10 @@ public class SpanShimTests
 
         shim.SetTag("foo", "bar");
 
-        Assert.Single(shim.Span.Activity!.Tags);
-        Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
-        Assert.Equal("bar", shim.Span.Activity.Tags.First().Value);
+        Assert.NotNull(shim.Span.Activity);
+        var first = Assert.Single(shim.Span.Activity.Tags);
+        Assert.Equal("foo", first.Key);
+        Assert.Equal("bar", first.Value);
     }
 
     [Fact]
@@ -206,8 +210,11 @@ public class SpanShimTests
         shim.SetTag("foo", true);
         shim.SetTag(Tags.Error.Key, true);
 
-        Assert.Equal("foo", shim.Span.Activity!.TagObjects.First().Key);
-        Assert.True((bool)shim.Span.Activity.TagObjects.First().Value!);
+        Assert.NotNull(shim.Span.Activity);
+        var first = shim.Span.Activity.TagObjects.First();
+        Assert.Equal("foo", first.Key);
+        Assert.NotNull(first.Value);
+        Assert.True((bool)first.Value);
 
         // A boolean tag named "error" is a special case that must be checked
 
@@ -250,7 +257,8 @@ public class SpanShimTests
 
         shim.SetTag("foo", 1);
 
-        Assert.Single(shim.Span.Activity!.TagObjects);
+        Assert.NotNull(shim.Span.Activity);
+        Assert.Single(shim.Span.Activity.TagObjects);
         Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
         Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value!);
     }
@@ -265,9 +273,11 @@ public class SpanShimTests
 
         shim.SetTag("foo", 1D);
 
-        Assert.Single(shim.Span.Activity!.TagObjects);
-        Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
-        Assert.Equal(1, (double)shim.Span.Activity.TagObjects.First().Value!);
+        Assert.NotNull(shim.Span.Activity);
+        var first = Assert.Single(shim.Span.Activity.TagObjects);
+        Assert.Equal("foo", first.Key);
+        Assert.NotNull(first.Value);
+        Assert.Equal(1, (double)first.Value);
     }
 
     [Fact]
@@ -280,9 +290,10 @@ public class SpanShimTests
 
         shim.SetTag(new StringTag("foo"), "bar");
 
-        Assert.Single(shim.Span.Activity!.Tags);
-        Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
-        Assert.Equal("bar", shim.Span.Activity.Tags.First().Value);
+        Assert.NotNull(shim.Span.Activity);
+        var first = Assert.Single(shim.Span.Activity.Tags);
+        Assert.Equal("foo", first.Key);
+        Assert.Equal("bar", first.Value);
     }
 
     [Fact]
@@ -295,9 +306,11 @@ public class SpanShimTests
 
         shim.SetTag(new IntTag("foo"), 1);
 
-        Assert.Single(shim.Span.Activity!.TagObjects);
-        Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
-        Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value!);
+        Assert.NotNull(shim.Span.Activity);
+        var first = Assert.Single(shim.Span.Activity.TagObjects);
+        Assert.Equal("foo", first.Key);
+        Assert.NotNull(first.Value);
+        Assert.Equal(1L, (int)first.Value);
     }
 
     [Fact]
@@ -311,12 +324,16 @@ public class SpanShimTests
         shim.SetTag(new IntOrStringTag("foo"), 1);
         shim.SetTag(new IntOrStringTag("bar"), "baz");
 
-        Assert.Equal(2, shim.Span.Activity!.TagObjects.Count());
+        Assert.NotNull(shim.Span.Activity);
+        Assert.Equal(2, shim.Span.Activity.TagObjects.Count());
 
-        Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
-        Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value!);
+        var first = shim.Span.Activity.TagObjects.First();
+        Assert.Equal("foo", first.Key);
+        Assert.NotNull(first.Value);
+        Assert.Equal(1L, (int)first.Value);
 
-        Assert.Equal("bar", shim.Span.Activity.TagObjects.Last().Key);
-        Assert.Equal("baz", shim.Span.Activity.TagObjects.Last().Value);
+        var second = shim.Span.Activity.TagObjects.Last();
+        Assert.Equal("bar", second.Key);
+        Assert.Equal("baz", second.Value);
     }
 }
