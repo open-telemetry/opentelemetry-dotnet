@@ -64,8 +64,9 @@ public class TelemetrySpanTest
 
         // ParentId should be unset
         Assert.Equal(default, parentSpan.ParentSpanId);
+        Assert.NotNull(parentActivity.Id);
 
-        using var childActivity = new Activity("childOperation").SetParentId(parentActivity.Id!);
+        using var childActivity = new Activity("childOperation").SetParentId(parentActivity.Id);
         using var childSpan = new TelemetrySpan(childActivity);
 
         Assert.Equal(parentSpan.Context.SpanId, childSpan.ParentSpanId);
