@@ -158,7 +158,7 @@ public class GuardTest
 
 #if !NET
     /// <summary>
-    /// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
+    /// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System.Runtime.Tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
     /// </summary>
     public class CallerArgumentExpressionAttributeTests
     {
