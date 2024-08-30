@@ -16,7 +16,7 @@ internal sealed class NoopTextMapPropagator : TextMapPropagator
         return DefaultPropagationContext;
     }
 
-    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string>? setter)
+    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
     {
     }
 }

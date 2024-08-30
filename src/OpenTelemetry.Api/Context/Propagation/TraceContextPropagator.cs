@@ -123,6 +123,7 @@ public class TraceContextPropagator : TextMapPropagator
 #endif
 
         setter(carrier, TraceParent, traceparent);
+
         string? tracestateStr = context.ActivityContext.TraceState;
         if (tracestateStr?.Length > 0)
         {

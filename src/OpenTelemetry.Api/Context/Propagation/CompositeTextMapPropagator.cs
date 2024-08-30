@@ -20,7 +20,7 @@ public class CompositeTextMapPropagator : TextMapPropagator
     /// Initializes a new instance of the <see cref="CompositeTextMapPropagator"/> class.
     /// </summary>
     /// <param name="propagators">List of <see cref="TextMapPropagator"/> wire context propagator.</param>
-    public CompositeTextMapPropagator(IEnumerable<TextMapPropagator?> propagators)
+    public CompositeTextMapPropagator(IEnumerable<TextMapPropagator> propagators)
     {
         Guard.ThrowIfNull(propagators);
 

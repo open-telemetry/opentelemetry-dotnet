@@ -102,7 +102,7 @@ public sealed class B3Propagator : TextMapPropagator
     /// <inheritdoc/>
     [Obsolete("Use B3Propagator class from OpenTelemetry.Extensions.Propagators namespace, shipped as part of OpenTelemetry.Extensions.Propagators package.")]
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
-    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string>? setter)
+    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
     {
         if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
@@ -181,7 +181,6 @@ public sealed class B3Propagator : TextMapPropagator
             }
 
             var traceOptions = ActivityTraceFlags.None;
-
             var xb3Sampled = getter(carrier, XB3Sampled)?.FirstOrDefault();
             if ((xb3Sampled != null && SampledValues.Contains(xb3Sampled))
                 || FlagsValue.Equals(getter(carrier, XB3Flags)?.FirstOrDefault(), StringComparison.Ordinal))

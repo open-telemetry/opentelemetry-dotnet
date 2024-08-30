@@ -24,7 +24,7 @@ internal static class TraceStateUtilsNew
     /// <param name="traceStateString">String with comma separated tracestate key value pairs.</param>
     /// <param name="tracestate"><see cref="List{T}"/> to set tracestate pairs on.</param>
     /// <returns>True if string was parsed successfully and tracestate was recognized, false otherwise.</returns>
-    internal static bool AppendTraceState(string? traceStateString, List<KeyValuePair<string, string>> tracestate)
+    internal static bool AppendTraceState(string traceStateString, List<KeyValuePair<string, string>> tracestate)
     {
         Debug.Assert(tracestate != null, "tracestate list cannot be null");
 

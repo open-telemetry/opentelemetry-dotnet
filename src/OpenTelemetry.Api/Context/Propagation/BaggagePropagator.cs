@@ -71,7 +71,7 @@ public class BaggagePropagator : TextMapPropagator
     }
 
     /// <inheritdoc/>
-    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string>? setter)
+    public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
     {
         if (carrier == null)
         {
