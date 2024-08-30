@@ -41,12 +41,12 @@ public class RemotingRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeCont
     public object? Value
     {
         get => this.Get();
-        set => this.Set((T)value!);
+        set => this.Set((T?)value);
     }
 
     /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override T Get()
+    public override T? Get()
     {
         if (!(CallContext.LogicalGetData(this.Name) is BitArray wrapper))
         {
@@ -61,7 +61,7 @@ public class RemotingRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeCont
 
     /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override void Set(T value)
+    public override void Set(T? value)
     {
         var wrapper = new BitArray(0);
         WrapperField.SetValue(wrapper, value);

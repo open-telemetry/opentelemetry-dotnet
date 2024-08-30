@@ -27,13 +27,13 @@ public abstract class RuntimeContextSlot<T> : IDisposable
     /// Get the value from the context slot.
     /// </summary>
     /// <returns>The value retrieved from the context slot.</returns>
-    public abstract T Get();
+    public abstract T? Get();
 
     /// <summary>
     /// Set the value to the context slot.
     /// </summary>
     /// <param name="value">The value to be set.</param>
-    public abstract void Set(T value);
+    public abstract void Set(T? value);
 
     /// <inheritdoc/>
     public void Dispose()

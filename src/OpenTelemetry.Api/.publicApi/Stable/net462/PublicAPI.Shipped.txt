@@ -1,6 +1,6 @@
+OpenTelemetry.Context.RemotingRuntimeContextSlot<T>
 OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.RemotingRuntimeContextSlot(string! name) -> void
 OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Value.get -> object?
 OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Value.set -> void
-OpenTelemetry.Context.RemotingRuntimeContextSlot<T>
-override OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Get() -> T
-override OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Set(T value) -> void
+override OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Get() -> T?
+override OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Set(T? value) -> void

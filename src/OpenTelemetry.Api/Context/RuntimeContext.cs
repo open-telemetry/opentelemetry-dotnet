@@ -131,7 +131,7 @@ public static class RuntimeContext
     /// <param name="value">The value to be set.</param>
     /// <typeparam name="T">The type of the value.</typeparam>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void SetValue<T>(string slotName, T value)
+    public static void SetValue<T>(string slotName, T? value)
     {
         GetSlot<T>(slotName).Set(value);
     }
@@ -143,7 +143,7 @@ public static class RuntimeContext
     /// <typeparam name="T">The type of the value.</typeparam>
     /// <returns>The value retrieved from the context slot.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T GetValue<T>(string slotName)
+    public static T? GetValue<T>(string slotName)
     {
         return GetSlot<T>(slotName).Get();
     }
@@ -153,7 +153,7 @@ public static class RuntimeContext
     /// </summary>
     /// <param name="slotName">The name of the context slot.</param>
     /// <param name="value">The value to be set.</param>
-    public static void SetValue(string slotName, object value)
+    public static void SetValue(string slotName, object? value)
     {
         Guard.ThrowIfNullOrEmpty(slotName);
         var slot = GuardNotFound(slotName);

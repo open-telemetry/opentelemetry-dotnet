@@ -64,7 +64,8 @@ public class RuntimeContextTest : IDisposable
     {
         const string slotName = "testSlot";
         var slot = RuntimeContext.RegisterSlot<int>(slotName);
-        slot!.Set(100);
+        Assert.NotNull(slot);
+        slot.Set(100);
 
         // Create an object in another AppDomain and try to access the slot
         // value from it.
