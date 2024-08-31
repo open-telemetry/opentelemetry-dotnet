@@ -69,7 +69,7 @@ public class W3CTraceContextTests : IDisposable
             return result;
         });
 
-        app.RunAsync();
+        app.RunAsync("http://localhost:5000/");
 
         string result = RunCommand("python", "trace-context/test/test.py http://localhost:5000/");
 
@@ -87,10 +87,6 @@ public class W3CTraceContextTests : IDisposable
         if (AspNetCoreHostingVersion.Major <= 6)
         {
             Assert.StartsWith("FAILED (failures=3)", lastLine);
-        }
-        else if (AspNetCoreHostingVersion.Major == 8)
-        {
-            Assert.StartsWith("FAILED (failures=40)", lastLine);
         }
         else
         {
