@@ -111,7 +111,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Instrumentations added = \"{instrumentationFactoriesAdded}\".");
         }
 
-        var listener = new ActivityListener();
+        var activityListener = new ActivityListener();
 
         if (this.supportLegacyActivity)
         {
@@ -125,7 +125,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                 legacyActivityPredicate = activity => state.LegacyActivityOperationNames.Contains(activity.OperationName);
             }
 
-            listener.ActivityStarted = activity =>
+            activityListener.ActivityStarted = activity =>
             {
                 OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
@@ -163,7 +163,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                 }
             };
 
-            listener.ActivityStopped = activity =>
+            activityListener.ActivityStopped = activity =>
             {
                 OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
 
@@ -194,7 +194,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         }
         else
         {
-            listener.ActivityStarted = activity =>
+            activityListener.ActivityStarted = activity =>
             {
                 OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
@@ -204,7 +204,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                 }
             };
 
-            listener.ActivityStopped = activity =>
+            activityListener.ActivityStopped = activity =>
             {
                 OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
 
@@ -230,20 +230,20 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         if (this.sampler is AlwaysOnSampler)
         {
-            listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
+            activityListener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                 !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
             this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
         }
         else if (this.sampler is AlwaysOffSampler)
         {
-            listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
+            activityListener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                 !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent) : ActivitySamplingResult.None;
             this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
         }
         else
         {
             // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
-            listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
+            activityListener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                 !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(ref options, this.sampler) : ActivitySamplingResult.None;
             this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
         }
@@ -260,7 +260,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                 // or not.
-                listener.ShouldListenTo = (activitySource) =>
+                activityListener.ShouldListenTo = activitySource =>
                     this.supportLegacyActivity ?
                     string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
                     regex.IsMatch(activitySource.Name);
@@ -276,19 +276,19 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                 // or not.
-                listener.ShouldListenTo = (activitySource) => activitySources.Contains(activitySource.Name);
+                activityListener.ShouldListenTo = activitySource => activitySources.Contains(activitySource.Name);
             }
         }
         else
         {
             if (this.supportLegacyActivity)
             {
-                listener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name);
+                activityListener.ShouldListenTo = activitySource => string.IsNullOrEmpty(activitySource.Name);
             }
         }
 
-        ActivitySource.AddActivityListener(listener);
-        this.listener = listener;
+        ActivitySource.AddActivityListener(activityListener);
+        this.listener = activityListener;
         OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
     }
 
