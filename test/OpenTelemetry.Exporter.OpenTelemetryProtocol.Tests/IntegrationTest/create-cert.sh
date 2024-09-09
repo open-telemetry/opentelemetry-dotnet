@@ -35,8 +35,8 @@ openssl x509 -req -in /otel-client.csr \
 cp /otel-client.crt /otel-client.key /cfg
 chmod 644 /cfg/otel-client.key
 
-# Generate an self-signed certificate that is NOT included in the test runner's trust store
-# Generate self-signed certificate for the collector
+# Generate a self-signed certificate that is NOT included in the test runner's trust store
+# Generate self-signed certificate for the Collector
 openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
     -subj "/CN=otel-collector" \
     -keyout /otel-untrusted-collector.key  -out /otel-untrusted-collector.crt
