@@ -4,6 +4,25 @@
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
   </PropertyGroup>
 
+  <!-- Add MSBuild Task to Generate Certificates -->
+  <Target Name="GenerateTestCertificates" BeforeTargets="Build">
+    <Exec Condition="$(OS) == 'Unix'" 
+      Command="/bin/bash gen_test_cert.sh $(IntermediateOutputPath)" 
+      ConsoleToMsBuild="true" 
+      WorkingDirectory="$(ProjectDir)" />
+    
+    <Exec Condition="$(OS) == 'Windows_NT'"
+      Command="pwsh -NonInteractive -executionpolicy Unrestricted -command &quot;&amp; { ./gen_test_cert.ps1 -OutDir $(IntermediateOutputPath) } &quot;"
+      ConsoleToMsBuild="true"
+      WorkingDirectory="$(ProjectDir)" />
+
+    <ItemGroup>
+      <TestCertificates Include="$(IntermediateOutputPath)*.pem"/>
+    </ItemGroup>
+    
+    <Copy SourceFiles="@(TestCertificates)" DestinationFolder="$(OutputPath)\%(RecursiveDir)"/>
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore.Server" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />

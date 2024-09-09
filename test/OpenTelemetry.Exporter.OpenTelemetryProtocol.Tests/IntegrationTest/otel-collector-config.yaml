@@ -23,6 +23,32 @@ receivers:
         tls:
           cert_file: /cfg/otel-collector.crt
           key_file: /cfg/otel-collector.key
+  otlp/untrustedtls:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:6317
+        tls:
+          cert_file: /cfg/otel-untrusted-collector.crt
+          key_file: /cfg/otel-untrusted-collector.key
+      http:
+        endpoint: 0.0.0.0:6318
+        tls:
+          cert_file: /cfg/otel-untrusted-collector.crt
+          key_file: /cfg/otel-untrusted-collector.key
+  otlp/mtls:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:7317
+        tls:
+          cert_file: /cfg/otel-collector.crt
+          key_file: /cfg/otel-collector.key
+          client_ca_file: /cfg/otel-collector.crt
+      http:
+        endpoint: 0.0.0.0:7318
+        tls:
+          cert_file: /cfg/otel-collector.crt
+          key_file: /cfg/otel-collector.key
+          client_ca_file: /cfg/otel-collector.crt
 
 exporters:
   debug:
@@ -31,11 +57,11 @@ exporters:
 service:
   pipelines:
     traces:
-      receivers: [otlp, otlp/tls]
+      receivers: [otlp, otlp/tls, otlp/untrustedtls, otlp/mtls]
       exporters: [debug]
     metrics:
-      receivers: [otlp, otlp/tls]
+      receivers: [otlp, otlp/tls, otlp/untrustedtls, otlp/mtls]
       exporters: [debug]
     logs:
-      receivers: [otlp, otlp/tls]
+      receivers: [otlp, otlp/tls, otlp/untrustedtls, otlp/mtls]
       exporters: [debug]
