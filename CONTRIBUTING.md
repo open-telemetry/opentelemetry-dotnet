@@ -70,22 +70,28 @@ helper methods.
 
 #### How to enable and configure
 
-* Create a folder in your project called `.publicApi` with the frameworks that
+1. Create a folder in your project called `.publicApi` with the frameworks that
   as folders you target.
-* Create two files called `PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt`
+2. Create two files called `PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt`
    in each framework that you target.
-* Add the following lines to your csproj:
+3. Add the following lines to your csproj:
 
-```xml
-<ItemGroup>
-  <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
-  <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
-</ItemGroup>
-```
+    ```xml
+    <ItemGroup>
+    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
+    </ItemGroup>
+    ```
 
-* Use
+4. Use
    [IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)
-   to update the publicApi files.
+   to utomatically update the public API files. When making changes,
+   [IntelliSense will suggest modifications](https://github.com/dotnet/roslyn-analyzers/issues/3322#issuecomment-591031429)
+   to the PublicAPI.Unshipped.txt file. After reviewing these changes,
+   ensure they are reflected across all targeted frameworks by either:
+   * Manually copying the changes.
+   * Using Visual Studio's target framework dropdown (in the upper right corner)
+     to cycle through each framework and apply the IntelliSense suggestions.
 
 ## Pull Requests
 
