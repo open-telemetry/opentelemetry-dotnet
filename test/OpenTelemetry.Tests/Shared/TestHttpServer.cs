@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Net;
 
 namespace OpenTelemetry.Tests;
@@ -13,7 +15,7 @@ internal class TestHttpServer
     {
         host = "localhost";
         port = 0;
-        RunningServer server = null;
+        RunningServer? server = null;
 
         var retryCount = 5;
         while (retryCount > 0)

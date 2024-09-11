@@ -106,7 +106,7 @@ public class ZipkinActivityConversionTest
 
         if (expectedStatusCode == StatusCode.Error)
         {
-            Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == string.Empty);
+            Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string?)t.Value == string.Empty);
         }
         else
         {
@@ -149,7 +149,7 @@ public class ZipkinActivityConversionTest
             Assert.Contains(
                 zipkinSpan.Tags, t =>
                 t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
-                (string)t.Value == description);
+                (string?)t.Value == description);
         }
         else
         {
@@ -177,11 +177,11 @@ public class ZipkinActivityConversionTest
         // Assert.
         Assert.Equal("OK", zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
 
-        Assert.Contains(zipkinSpan.Tags, t => t.Key == "otel.status_code" && (string)t.Value == "OK");
-        Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "otel.status_code" && (string)t.Value == "ERROR");
+        Assert.Contains(zipkinSpan.Tags, t => t.Key == "otel.status_code" && (string?)t.Value == "OK");
+        Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "otel.status_code" && (string?)t.Value == "ERROR");
 
         // Ensure additional Activity tags were being converted.
-        Assert.Contains(zipkinSpan.Tags, t => t.Key == "myCustomTag" && (string)t.Value == "myCustomTagValue");
+        Assert.Contains(zipkinSpan.Tags, t => t.Key == "myCustomTag" && (string?)t.Value == "myCustomTagValue");
         Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName);
     }
 
@@ -211,14 +211,14 @@ public class ZipkinActivityConversionTest
         Assert.Contains(
             zipkinSpan.Tags, t =>
             t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
-            (string)t.Value == StatusDescriptionOnError);
+            (string?)t.Value == StatusDescriptionOnError);
         Assert.DoesNotContain(
             zipkinSpan.Tags, t =>
             t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
-            (string)t.Value == TagDescriptionOnError);
+            (string?)t.Value == TagDescriptionOnError);
 
         // Ensure additional Activity tags were being converted.
-        Assert.Contains(zipkinSpan.Tags, t => t.Key == "myCustomTag" && (string)t.Value == "myCustomTagValue");
+        Assert.Contains(zipkinSpan.Tags, t => t.Key == "myCustomTag" && (string?)t.Value == "myCustomTagValue");
     }
 
     [Fact]
@@ -247,13 +247,13 @@ public class ZipkinActivityConversionTest
         Assert.Contains(
             zipkinSpan.Tags, t =>
             t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
-            (string)t.Value == StatusDescriptionOnError);
+            (string?)t.Value == StatusDescriptionOnError);
         Assert.DoesNotContain(
             zipkinSpan.Tags, t =>
             t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
-            (string)t.Value == TagDescriptionOnError);
+            (string?)t.Value == TagDescriptionOnError);
 
         // Ensure additional Activity tags were being converted.
-        Assert.Contains(zipkinSpan.Tags, t => t.Key == "myCustomTag" && (string)t.Value == "myCustomTagValue");
+        Assert.Contains(zipkinSpan.Tags, t => t.Key == "myCustomTag" && (string?)t.Value == "myCustomTagValue");
     }
 }
