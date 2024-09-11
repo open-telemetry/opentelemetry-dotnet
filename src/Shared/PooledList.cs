@@ -5,6 +5,7 @@
 
 using System.Buffers;
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 
 namespace OpenTelemetry.Internal;
 
@@ -99,7 +100,8 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
         private readonly T[] buffer;
         private readonly int count;
         private int index;
-        private T? current;
+        [AllowNull]
+        private T current;
 
         public Enumerator(in PooledList<T> list)
         {
@@ -109,9 +111,9 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
             this.current = default;
         }
 
-        public T Current => this.current!;
+        public T Current => this.current;
 
-        object IEnumerator.Current => this.Current!;
+        object? IEnumerator.Current => this.Current;
 
         public void Dispose()
         {
@@ -126,14 +128,14 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
             }
 
             this.index = this.count + 1;
-            this.current = default!;
+            this.current = default;
             return false;
         }
 
         void IEnumerator.Reset()
         {
             this.index = 0;
-            this.current = default!;
+            this.current = default;
         }
     }
 }
