@@ -40,12 +40,12 @@ public sealed class ZipkinExporterOptions
         Debug.Assert(configuration != null, "configuration was null");
         Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
 
-        if (configuration.TryGetUriValue(ZipkinExporterEventSource.Log, ZipkinEndpointEnvVar, out var endpoint))
+        if (configuration!.TryGetUriValue(ZipkinExporterEventSource.Log, ZipkinEndpointEnvVar, out var endpoint))
         {
-            this.Endpoint = endpoint;
+            this.Endpoint = endpoint!;
         }
 
-        this.BatchExportProcessorOptions = defaultBatchOptions;
+        this.BatchExportProcessorOptions = defaultBatchOptions!;
     }
 
     /// <summary>

@@ -1,8 +1,9 @@
 <Project>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(Directory.Packages.props, $(MSBuildThisFileDirectory)..))" />
   <ItemGroup>
-    <PackageVersion Update="System.Text.Json" Version="8.0.4" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageVersion Include="Microsoft.Coyote" Version="1.7.10" />
+    <PackageVersion Update="System.Text.Json" Version="8.0.4" />
+    <PackageVersion Include="NuGet.Versioning" Version="6.11.0" />
+    <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
   </ItemGroup>
 </Project>
