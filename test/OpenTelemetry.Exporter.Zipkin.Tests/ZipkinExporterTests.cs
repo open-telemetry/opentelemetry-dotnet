@@ -452,7 +452,7 @@ public class ZipkinExporterTests : IDisposable
        Resource? resource = null,
        ActivityKind kind = ActivityKind.Client,
        ActivityStatusCode statusCode = ActivityStatusCode.Unset,
-       string statusDescription = null,
+       string? statusDescription = null,
        DateTime? dateTime = null)
     {
         var startTimestamp = DateTime.UtcNow;
