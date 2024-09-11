@@ -78,18 +78,20 @@ helper methods.
 
     ```xml
     <ItemGroup>
-    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
-    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
+      <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
+      <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
     </ItemGroup>
     ```
 
 4. Use
    [IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)
-   to utomatically update the public API files. When making changes,
+   to automatically update the public API files. When making changes,
    [IntelliSense will suggest modifications](https://github.com/dotnet/roslyn-analyzers/issues/3322#issuecomment-591031429)
-   to the PublicAPI.Unshipped.txt file. After reviewing these changes,
+   to the `PublicAPI.Unshipped.txt` file. After reviewing these changes,
    ensure they are reflected across all targeted frameworks by either:
-   * Manually copying the changes.
+   * Use the "Fix all occurrences in Project" Feature: Visual Studio's
+     IntelliSense offers a "Fix all occurrences in Project" option, making it easy
+     to apply changes across your project.
    * Using Visual Studio's target framework dropdown (in the upper right corner)
      to cycle through each framework and apply the IntelliSense suggestions.
 
