@@ -47,7 +47,9 @@ public class TelemetrySpan : IDisposable
     /// <param name="value">Status to be set.</param>
     public void SetStatus(Status value)
     {
-        this.Activity?.SetStatus(value);
+#pragma warning disable
+        this.Activity.SetStatus(value);
+#pragma warning restore
     }
 
     /// <summary>
