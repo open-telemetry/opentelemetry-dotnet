@@ -171,8 +171,8 @@ jobs:
 
   build-test:
     needs: [
-      lint-misspell-sanitycheck,
       detect-changes,
+      lint-misspell-sanitycheck,
       lint-md,
       lint-dotnet-format,
       build-test-solution,
@@ -186,7 +186,8 @@ jobs:
       verify-aot-compat,
       concurrency-tests
       ]
-    if: always() && !cancelled() && !contains(needs.*.result, 'failure')
-    runs-on: windows-latest
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
     steps:
-    - run: echo 'build complete'
+    - run: |
+          if ( ${{ contains(needs.*.result, 'failure') }} == true ); then echo 'build failed'; exit 1; else echo 'build complete'; fi

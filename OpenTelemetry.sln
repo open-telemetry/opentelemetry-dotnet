@@ -80,7 +80,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEM
 	ProjectSection(SolutionItems) = preProject
 		.github\ISSUE_TEMPLATE\bug_report.yml = .github\ISSUE_TEMPLATE\bug_report.yml
 		.github\ISSUE_TEMPLATE\feature_request.yml = .github\ISSUE_TEMPLATE\feature_request.yml
-		.github\ISSUE_TEMPLATE\question.yml = .github\ISSUE_TEMPLATE\question.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"

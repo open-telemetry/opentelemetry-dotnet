@@ -13,11 +13,11 @@ internal sealed class ZipkinEndpoint
     }
 
     public ZipkinEndpoint(
-        string serviceName,
-        string ipv4,
-        string ipv6,
+        string? serviceName,
+        string? ipv4,
+        string? ipv6,
         int? port,
-        Dictionary<string, object> tags)
+        Dictionary<string, object>? tags)
     {
         this.ServiceName = serviceName;
         this.Ipv4 = ipv4;
@@ -26,15 +26,15 @@ internal sealed class ZipkinEndpoint
         this.Tags = tags;
     }
 
-    public string ServiceName { get; }
+    public string? ServiceName { get; }
 
-    public string Ipv4 { get; }
+    public string? Ipv4 { get; }
 
-    public string Ipv6 { get; }
+    public string? Ipv6 { get; }
 
     public int? Port { get; }
 
-    public Dictionary<string, object> Tags { get; }
+    public Dictionary<string, object>? Tags { get; }
 
     public static ZipkinEndpoint Create(string serviceName)
     {
