@@ -16,8 +16,8 @@ receivers:
       grpc:
         endpoint: 0.0.0.0:5317
         tls:
-          cert_file: /obj/otel-test-server-cert.crt
-          key_file: /obj/otel-test-server-key.key
+          cert_file: /obj/otel-test-server-cert.pem
+          key_file: /obj/otel-test-server-key.pem
       http:
         endpoint: 0.0.0.0:5318
         tls:
