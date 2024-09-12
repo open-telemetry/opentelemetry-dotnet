@@ -26,7 +26,9 @@ COPY --from=w3c /w3c .
 RUN apt-get update \
   && apt-get install -y python3-pip python3-dev \
   && cd /usr/local/bin \
-  && ln -s /usr/bin/python3 python \
-  && pip3 install --upgrade pip \
-  && pip3 install aiohttp
+  && ln -s /usr/bin/python3 python
+
+# net6.0 image uses Python 3.9, which doesn't have `--break-system-packages` option.
+RUN pip3 install --upgrade pip --break-system-packages || pip3 install --upgrade pip
+RUN pip3 install aiohttp --break-system-packages
 ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll", "--logger:console;verbosity=detailed"]

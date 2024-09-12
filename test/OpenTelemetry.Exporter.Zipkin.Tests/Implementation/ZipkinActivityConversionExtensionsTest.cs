@@ -19,7 +19,7 @@ public class ZipkinActivityConversionExtensionsTest
     {
         var attributeEnumerationState = new TagEnumerationState
         {
-            Tags = PooledList<KeyValuePair<string, object>>.Create(),
+            Tags = PooledList<KeyValuePair<string, object?>>.Create(),
         };
 
         using var activity = new Activity("TestActivity");
@@ -36,11 +36,11 @@ public class ZipkinActivityConversionExtensionsTest
     [InlineData("string", null)]
     [InlineData("bool", null)]
     [InlineData("double", null)]
-    public void CheckNullValueProcessTag(string key, object value)
+    public void CheckNullValueProcessTag(string key, object? value)
     {
         var attributeEnumerationState = new TagEnumerationState
         {
-            Tags = PooledList<KeyValuePair<string, object>>.Create(),
+            Tags = PooledList<KeyValuePair<string, object?>>.Create(),
         };
 
         using var activity = new Activity("TestActivity");

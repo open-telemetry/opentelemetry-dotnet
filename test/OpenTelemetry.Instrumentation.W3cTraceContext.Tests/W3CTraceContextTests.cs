@@ -69,7 +69,7 @@ public class W3CTraceContextTests : IDisposable
             return result;
         });
 
-        app.RunAsync();
+        app.RunAsync("http://localhost:5000/");
 
         string result = RunCommand("python", "trace-context/test/test.py http://localhost:5000/");
 
