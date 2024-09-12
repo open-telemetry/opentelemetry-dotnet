@@ -82,12 +82,14 @@ to validate public APIs.
   previously released NuGet packages.
 
   This is performed automatically by the build/CI
-  [package-validation](./.github/workflows/package-validation.yml) workflow.
+  [package-validation](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/workflows/package-validation.yml)
+  workflow.
 
   By default package validation is **NOT** run for local builds. To enable
   package validation in local builds set the `EnablePackageValidation` property
-  to `true` in [Common.prod.props](./build/Common.prod.props) (please do not
-  check in this change).
+  to `true` in
+  [Common.prod.props](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/build/Common.prod.props)
+  (please do not check in this change).
 
 #### Working with Microsoft.CodeAnalysis.PublicApiAnalyzers
 
@@ -138,7 +140,7 @@ do this by:
      stable.
 
     Example folder structure can be found
-    [here](./src/OpenTelemetry/.publicApi).
+    [here](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api/.publicApi).
 
 ## Pull Requests
 
