@@ -38,7 +38,7 @@ public class PrometheusHttpListenerTests
     {
         Assert.Throws<ArgumentNullException>(() =>
         {
-            TestPrometheusHttpListenerUriPrefixOptions(null);
+            TestPrometheusHttpListenerUriPrefixOptions(null!);
         });
     }
 
@@ -183,7 +183,7 @@ public class PrometheusHttpListenerTests
         provider.Dispose();
     }
 
-    private static void TestPrometheusHttpListenerUriPrefixOptions(string[]? uriPrefixes)
+    private static void TestPrometheusHttpListenerUriPrefixOptions(string[] uriPrefixes)
     {
         using var exporter = new PrometheusExporter(new());
         using var listener = new PrometheusHttpListener(

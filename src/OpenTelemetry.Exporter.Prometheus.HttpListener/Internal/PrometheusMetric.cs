@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using OpenTelemetry.Metrics;
 
@@ -33,17 +34,15 @@ internal sealed class PrometheusMetric
         if (!string.IsNullOrEmpty(unit))
         {
             sanitizedUnit = GetUnit(unit);
-            if (sanitizedUnit != null)
+
+            // The resulting unit SHOULD be added to the metric as
+            // [OpenMetrics UNIT metadata](https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#metricfamily)
+            // and as a suffix to the metric name. The unit suffix comes before any type-specific suffixes.
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/3dfb383fe583e3b74a2365c5a1d90256b273ee76/specification/compatibility/prometheus_and_openmetrics.md#metric-metadata-1
+            if (!sanitizedName.EndsWith(sanitizedUnit))
             {
-                // The resulting unit SHOULD be added to the metric as
-                // [OpenMetrics UNIT metadata](https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#metricfamily)
-                // and as a suffix to the metric name. The unit suffix comes before any type-specific suffixes.
-                // https://github.com/open-telemetry/opentelemetry-specification/blob/3dfb383fe583e3b74a2365c5a1d90256b273ee76/specification/compatibility/prometheus_and_openmetrics.md#metric-metadata-1
-                if (!sanitizedName.EndsWith(sanitizedUnit))
-                {
-                    sanitizedName += $"_{sanitizedUnit}";
-                    openMetricsName += $"_{sanitizedUnit}";
-                }
+                sanitizedName += $"_{sanitizedUnit}";
+                openMetricsName += $"_{sanitizedUnit}";
             }
         }
 
@@ -76,11 +75,11 @@ internal sealed class PrometheusMetric
         this.Type = type;
     }
 
-    public string? Name { get; }
+    public string Name { get; }
 
-    public string? OpenMetricsName { get; }
+    public string OpenMetricsName { get; }
 
-    public string? OpenMetricsMetadataName { get; }
+    public string OpenMetricsMetadataName { get; }
 
     public string? Unit { get; }
 
@@ -185,7 +184,7 @@ internal sealed class PrometheusMetric
         return metricName;
     }
 
-    private static string? GetUnit(string unit)
+    private static string GetUnit(string unit)
     {
         // Dropping the portions of the Unit within brackets (e.g. {packet}). Brackets MUST NOT be included in the resulting unit. A "count of foo" is considered unitless in Prometheus.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L238
@@ -207,7 +206,7 @@ internal sealed class PrometheusMetric
         return updatedUnit;
     }
 
-    private static bool TryProcessRateUnits(string updatedUnit, out string? updatedPerUnit)
+    private static bool TryProcessRateUnits(string updatedUnit, [NotNullWhen(true)] out string? updatedPerUnit)
     {
         updatedPerUnit = null;
 

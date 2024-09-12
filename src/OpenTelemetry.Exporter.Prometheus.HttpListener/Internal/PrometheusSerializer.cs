@@ -173,7 +173,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabelValue(byte[] buffer, int cursor, string? value)
+    public static int WriteLabelValue(byte[] buffer, int cursor, string value)
     {
         Debug.Assert(value != null, $"{nameof(value)} should not be null.");
 
@@ -234,7 +234,8 @@ internal static partial class PrometheusSerializer
     {
         // Metric name has already been escaped.
         var name = openMetricsRequested ? metric.OpenMetricsName : metric.Name;
-        Guard.ThrowIfNullOrWhitespace(name, nameof(name));
+
+        Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
 
         for (int i = 0; i < name.Length; i++)
         {
@@ -250,7 +251,8 @@ internal static partial class PrometheusSerializer
     {
         // Metric name has already been escaped.
         var name = openMetricsRequested ? metric.OpenMetricsMetadataName : metric.Name;
-        Guard.ThrowIfNullOrWhitespace(name, nameof(name));
+
+        Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
 
         for (int i = 0; i < name.Length; i++)
         {

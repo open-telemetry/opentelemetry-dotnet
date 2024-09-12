@@ -12,7 +12,7 @@ internal sealed class PrometheusCollectionManager
 
     private readonly PrometheusExporter exporter;
     private readonly int scrapeResponseCacheDurationMilliseconds;
-    private readonly Func<Batch<Metric>, ExportResult> onCollectRef;
+    private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
     private readonly HashSet<string> scopes;
     private int metricsCacheCount;
@@ -195,7 +195,7 @@ internal sealed class PrometheusCollectionManager
         return result;
     }
 
-    private ExportResult OnCollect(Batch<Metric> metrics)
+    private ExportResult OnCollect(in Batch<Metric> metrics)
     {
         var cursor = 0;
         ref byte[] buffer = ref (this.exporter.OpenMetricsRequested ? ref this.openMetricsBuffer : ref this.plainTextBuffer);

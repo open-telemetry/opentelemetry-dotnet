@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -14,7 +15,7 @@ namespace OpenTelemetry.Exporter.Prometheus;
 internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
 {
     private Func<int, bool>? funcCollect;
-    private Func<Batch<Metric>, ExportResult>? funcExport;
+    private ExportFunc? funcExport;
     private Resource? resource;
     private bool disposed;
 
@@ -30,25 +31,23 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         this.DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters;
 
         this.CollectionManager = new PrometheusCollectionManager(this);
-
-        this.funcCollect = _ => true;
-        this.funcExport = _ => ExportResult.Success;
-        this.resource = null;
     }
+
+    public delegate ExportResult ExportFunc(in Batch<Metric> batch);
 
     /// <summary>
     /// Gets or sets the Collect delegate.
     /// </summary>
     public Func<int, bool>? Collect
     {
-        get => this.funcCollect ?? null;
-        set => this.funcCollect = value ?? null;
+        get => this.funcCollect;
+        set => this.funcCollect = value;
     }
 
-    internal Func<Batch<Metric>, ExportResult>? OnExport
+    internal ExportFunc? OnExport
     {
-        get => this.funcExport ?? null;
-        set => this.funcExport = value ?? null;
+        get => this.funcExport;
+        set => this.funcExport = value;
     }
 
     internal Action? OnDispose { get; set; }
@@ -66,7 +65,9 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     /// <inheritdoc/>
     public override ExportResult Export(in Batch<Metric> metrics)
     {
-        return this.OnExport?.Invoke(metrics) ?? ExportResult.Failure;
+        Debug.Assert(this.OnExport != null, "this.OnExport was null");
+
+        return this.OnExport!(in metrics);
     }
 
     /// <inheritdoc/>

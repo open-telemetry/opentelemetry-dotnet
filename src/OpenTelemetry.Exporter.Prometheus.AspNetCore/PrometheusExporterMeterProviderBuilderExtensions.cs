@@ -37,8 +37,8 @@ public static class PrometheusExporterMeterProviderBuilderExtensions
     /// Adds <see cref="PrometheusExporter"/> to the <see cref="MeterProviderBuilder"/>.
     /// </summary>
     /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-    /// <param name="name">Name which is used when retrieving options.</param>
-    /// <param name="configure">Callback action for configuring <see cref="PrometheusAspNetCoreOptions"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="configure">Optional callback action for configuring <see cref="PrometheusAspNetCoreOptions"/>.</param>
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddPrometheusExporter(
         this MeterProviderBuilder builder,

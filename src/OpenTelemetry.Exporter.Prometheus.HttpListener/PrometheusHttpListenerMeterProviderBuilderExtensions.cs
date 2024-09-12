@@ -30,15 +30,15 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
     /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
     public static MeterProviderBuilder AddPrometheusHttpListener(
         this MeterProviderBuilder builder,
-        Action<PrometheusHttpListenerOptions>? configure)
+        Action<PrometheusHttpListenerOptions> configure)
         => AddPrometheusHttpListener(builder, name: null, configure);
 
     /// <summary>
     /// Adds PrometheusHttpListener to MeterProviderBuilder.
     /// </summary>
     /// <param name="builder"><see cref="MeterProviderBuilder"/>builder to use.</param>
-    /// <param name="name">Name which is used when retrieving options.</param>
-    /// <param name="configure">Callback action for configuring <see cref="PrometheusHttpListenerOptions"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="configure">Optional callback action for configuring <see cref="PrometheusHttpListenerOptions"/>.</param>
     /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
     public static MeterProviderBuilder AddPrometheusHttpListener(
         this MeterProviderBuilder builder,

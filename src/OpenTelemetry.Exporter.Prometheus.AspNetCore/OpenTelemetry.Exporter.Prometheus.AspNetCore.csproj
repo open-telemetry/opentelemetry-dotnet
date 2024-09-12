@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusCollectionManager.cs" Link="Includes/PrometheusCollectionManager.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusExporter.cs" Link="Includes/PrometheusExporter.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusExporterEventSource.cs" Link="Includes/PrometheusExporterEventSource.cs" />
@@ -33,6 +32,8 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusMetric.cs" Link="Includes/PrometheusMetric.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusHeadersParser.cs" Link="Includes/PrometheusHeadersParser.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
   </ItemGroup>
 
 </Project>

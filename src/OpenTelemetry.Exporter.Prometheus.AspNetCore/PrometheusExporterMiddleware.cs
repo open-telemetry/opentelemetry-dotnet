@@ -22,22 +22,24 @@ internal sealed class PrometheusExporterMiddleware
     /// </summary>
     /// <param name="meterProvider"><see cref="MeterProvider"/>.</param>
     /// <param name="next"><see cref="RequestDelegate"/>.</param>
-    /// <exception cref="ArgumentException">Thrown when a <see cref="PrometheusExporter"/> could not be found on the provided <see cref="MeterProvider"/>.</exception>
-    public PrometheusExporterMiddleware(MeterProvider meterProvider, RequestDelegate? next)
+    public PrometheusExporterMiddleware(MeterProvider meterProvider, RequestDelegate next)
     {
         Guard.ThrowIfNull(meterProvider);
+        Guard.ThrowIfNull(next);
 
         if (!meterProvider.TryFindExporter(out PrometheusExporter? exporter))
         {
             throw new ArgumentException("A PrometheusExporter could not be found configured on the provided MeterProvider.");
         }
 
-        this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+        this.exporter = exporter;
     }
 
     internal PrometheusExporterMiddleware(PrometheusExporter exporter)
     {
-        this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+        Debug.Assert(exporter != null, "exporter was null");
+
+        this.exporter = exporter;
     }
 
     /// <summary>
@@ -72,7 +74,7 @@ internal sealed class PrometheusExporterMiddleware
                         ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
                         : "text/plain; charset=utf-8; version=0.0.4";
 
-                    await response.Body.WriteAsync(dataView.Array.AsMemory(0, dataView.Count)).ConfigureAwait(false);
+                    await response.Body.WriteAsync(dataView.Array!, 0, dataView.Count, httpContext.RequestAborted).ConfigureAwait(false);
                 }
                 else
                 {
@@ -94,8 +96,6 @@ internal sealed class PrometheusExporterMiddleware
                 response.StatusCode = 500;
             }
         }
-
-        this.exporter.OnExport = null;
     }
 
     private static bool AcceptsOpenMetrics(HttpRequest request)
@@ -109,12 +109,9 @@ internal sealed class PrometheusExporterMiddleware
 
         foreach (var header in acceptHeader)
         {
-            if (header != null)
+            if (PrometheusHeadersParser.AcceptsOpenMetrics(header))
             {
-                if (PrometheusHeadersParser.AcceptsOpenMetrics(header))
-                {
-                    return true;
-                }
+                return true;
             }
         }
 

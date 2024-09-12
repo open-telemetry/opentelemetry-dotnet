@@ -28,7 +28,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 
         this.exporter = exporter;
 
-        string path = options.ScrapeEndpointPath;
+        string path = options.ScrapeEndpointPath ?? PrometheusHttpListenerOptions.DefaultScrapeEndpointPath;
 
         if (!path.StartsWith("/"))
         {
@@ -40,7 +40,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             path = $"{path}/";
         }
 
-        foreach (string uriPrefix in options.UriPrefixes!)
+        foreach (string uriPrefix in options.UriPrefixes)
         {
             this.httpListener.Prefixes.Add($"{uriPrefix.TrimEnd('/')}{path}");
         }

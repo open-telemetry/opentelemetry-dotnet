@@ -1,4 +1,3 @@
-#nullable enable
 Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions
 Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions
