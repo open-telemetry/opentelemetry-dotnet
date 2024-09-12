@@ -99,7 +99,9 @@ modifications](https://github.com/dotnet/roslyn-analyzers/issues/3322#issuecomme
 to the `PublicAPI.Unshipped.txt` file when you make changes. After reviewing
 these changes, ensure they are reflected across all targeted frameworks. You can
 do this by:
+
 * Using the "Fix all occurrences in Project" feature in Visual Studio.
+
 * Manually cycling through each framework using Visual Studio's target framework
   dropdown (in the upper right corner) and applying the IntelliSense
   suggestions.
