@@ -21,13 +21,13 @@ internal static class ZipkinActivityConversionExtensions
     {
         var context = activity.Context;
 
-        string parentId = activity.ParentSpanId == default ?
+        string? parentId = activity.ParentSpanId == default ?
             null
             : EncodeSpanId(activity.ParentSpanId);
 
         var tagState = new TagEnumerationState
         {
-            Tags = PooledList<KeyValuePair<string, object>>.Create(),
+            Tags = PooledList<KeyValuePair<string, object?>>.Create(),
         };
 
         tagState.EnumerateTags(activity);
@@ -38,9 +38,9 @@ internal static class ZipkinActivityConversionExtensions
         {
             if (activity.Status == ActivityStatusCode.Ok)
             {
-                PooledList<KeyValuePair<string, object>>.Add(
+                PooledList<KeyValuePair<string, object?>>.Add(
                 ref tagState.Tags,
-                new KeyValuePair<string, object>(
+                new KeyValuePair<string, object?>(
                     SpanAttributeConstants.StatusCodeKey,
                     "OK"));
             }
@@ -48,16 +48,16 @@ internal static class ZipkinActivityConversionExtensions
             // activity.Status is Error
             else
             {
-                PooledList<KeyValuePair<string, object>>.Add(
+                PooledList<KeyValuePair<string, object?>>.Add(
                     ref tagState.Tags,
-                    new KeyValuePair<string, object>(
+                    new KeyValuePair<string, object?>(
                         SpanAttributeConstants.StatusCodeKey,
                         "ERROR"));
 
                 // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
-                PooledList<KeyValuePair<string, object>>.Add(
+                PooledList<KeyValuePair<string, object?>>.Add(
                     ref tagState.Tags,
-                    new KeyValuePair<string, object>(
+                    new KeyValuePair<string, object?>(
                         ZipkinErrorFlagTagName,
                         activity.StatusDescription ?? string.Empty));
             }
@@ -67,18 +67,18 @@ internal static class ZipkinActivityConversionExtensions
         // activity status takes precedence over status tag.
         else if (tagState.StatusCode.HasValue && tagState.StatusCode != StatusCode.Unset)
         {
-            PooledList<KeyValuePair<string, object>>.Add(
+            PooledList<KeyValuePair<string, object?>>.Add(
                 ref tagState.Tags,
-                new KeyValuePair<string, object>(
+                new KeyValuePair<string, object?>(
                     SpanAttributeConstants.StatusCodeKey,
                     StatusHelper.GetTagValueForStatusCode(tagState.StatusCode.Value)));
 
             // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
             if (tagState.StatusCode == StatusCode.Error)
             {
-                PooledList<KeyValuePair<string, object>>.Add(
+                PooledList<KeyValuePair<string, object?>>.Add(
                     ref tagState.Tags,
-                    new KeyValuePair<string, object>(
+                    new KeyValuePair<string, object?>(
                         ZipkinErrorFlagTagName,
                         tagState.StatusDescription ?? string.Empty));
             }
@@ -87,30 +87,30 @@ internal static class ZipkinActivityConversionExtensions
         var activitySource = activity.Source;
         if (!string.IsNullOrEmpty(activitySource.Name))
         {
-            PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>("otel.scope.name", activitySource.Name));
+            PooledList<KeyValuePair<string, object?>>.Add(ref tagState.Tags, new KeyValuePair<string, object?>("otel.scope.name", activitySource.Name));
 
             // otel.library.name is deprecated, but has to be propagated according to https://github.com/open-telemetry/opentelemetry-specification/blob/v1.31.0/specification/common/mapping-to-non-otlp.md#instrumentationscope
-            PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>("otel.library.name", activitySource.Name));
+            PooledList<KeyValuePair<string, object?>>.Add(ref tagState.Tags, new KeyValuePair<string, object?>("otel.library.name", activitySource.Name));
             if (!string.IsNullOrEmpty(activitySource.Version))
             {
-                PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>("otel.scope.version", activitySource.Version));
+                PooledList<KeyValuePair<string, object?>>.Add(ref tagState.Tags, new KeyValuePair<string, object?>("otel.scope.version", activitySource.Version));
 
                 // otel.library.version is deprecated, but has to be propagated according to https://github.com/open-telemetry/opentelemetry-specification/blob/v1.31.0/specification/common/mapping-to-non-otlp.md#instrumentationscope
-                PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>("otel.library.version", activitySource.Version));
+                PooledList<KeyValuePair<string, object?>>.Add(ref tagState.Tags, new KeyValuePair<string, object?>("otel.library.version", activitySource.Version));
             }
         }
 
-        ZipkinEndpoint remoteEndpoint = null;
+        ZipkinEndpoint? remoteEndpoint = null;
         if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
         {
-            PeerServiceResolver.Resolve(ref tagState, out string peerServiceName, out bool addAsTag);
+            PeerServiceResolver.Resolve(ref tagState, out string? peerServiceName, out bool addAsTag);
 
             if (peerServiceName != null)
             {
                 remoteEndpoint = RemoteEndpointCache.GetOrAdd((peerServiceName, default), ZipkinEndpoint.Create);
                 if (addAsTag)
                 {
-                    PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>(SemanticConventions.AttributePeerService, peerServiceName));
+                    PooledList<KeyValuePair<string, object?>>.Add(ref tagState.Tags, new KeyValuePair<string, object?>(SemanticConventions.AttributePeerService, peerServiceName));
                 }
             }
         }
@@ -172,7 +172,7 @@ internal static class ZipkinActivityConversionExtensions
         return id;
     }
 
-    private static string ToActivityKind(Activity activity)
+    private static string? ToActivityKind(Activity activity)
     {
         return activity.Kind switch
         {
@@ -186,15 +186,15 @@ internal static class ZipkinActivityConversionExtensions
 
     internal struct TagEnumerationState : PeerServiceResolver.IPeerServiceState
     {
-        public PooledList<KeyValuePair<string, object>> Tags;
+        public PooledList<KeyValuePair<string, object?>> Tags;
 
-        public string PeerService { get; set; }
+        public string? PeerService { get; set; }
 
         public int? PeerServicePriority { get; set; }
 
-        public string HostName { get; set; }
+        public string? HostName { get; set; }
 
-        public string IpAddress { get; set; }
+        public string? IpAddress { get; set; }
 
         public long Port { get; set; }
 
@@ -239,7 +239,7 @@ internal static class ZipkinActivityConversionExtensions
                     PeerServiceResolver.InspectTag(ref this, key, intVal);
                 }
 
-                PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, tag);
+                PooledList<KeyValuePair<string, object?>>.Add(ref this.Tags, tag);
             }
         }
     }
