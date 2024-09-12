@@ -42,13 +42,13 @@ receivers:
         tls:
           cert_file: /obj/otel-test-server-cert.pem
           key_file: /obj/otel-test-server-key.pem
-          client_ca_file: /obj/otel-collector.crt
+          client_ca_file: /obj/otel-test-ca-cert.pem
       http:
         endpoint: 0.0.0.0:7318
         tls:
           cert_file: /obj/otel-test-server-cert.pem
           key_file: /obj/otel-test-server-key.pem
-          client_ca_file: /obj/otel-collector.crt
+          client_ca_file: /obj/otel-test-ca-cert.pem
 
 exporters:
   debug:
