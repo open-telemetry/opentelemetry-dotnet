@@ -18,6 +18,7 @@ services:
       dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
     volumes:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
+      - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/obj:/obj
     command: /cfg/run-test.sh
     environment:
       - OTEL_COLLECTOR_HOSTNAME=otel-collector
