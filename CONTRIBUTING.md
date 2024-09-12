@@ -59,42 +59,76 @@ of Windows.
 * Visual Studio 2022+ or Visual Studio Code
 * .NET Framework 4.6.2+
 
-### Public API
+### Public API Validation
 
-It is critical to keep public API surface small and clean. This repository is
-using `Microsoft.CodeAnalysis.PublicApiAnalyzers` to validate the public APIs.
-This analyzer will check if you changed a public property/method so the change
-will be easily spotted in pull request. It will also ensure that OpenTelemetry
-doesn't expose APIs outside of the library primary concerns like a generic
-helper methods.
+It is critical to **NOT** make breaking changes to public APIs which have been
+released in stable builds. We also strive to keep a minimal public API surface.
+This repository is using
+[Microsoft.CodeAnalysis.PublicApiAnalyzers](https://github.com/dotnet/roslyn-analyzers/blob/main/src/PublicApiAnalyzers/PublicApiAnalyzers.Help.md)
+and [Package
+validation](https://learn.microsoft.com/dotnet/fundamentals/apicompat/package-validation/overview)
+to validate public APIs.
 
-#### How to Enable and Configure
+* `Microsoft.CodeAnalysis.PublicApiAnalyzers` will validate public API
+  changes/additions against a set of "public API files" which capture the
+  shipped/unshipped public APIs. These files must be maintained manually (not
+  recommended) or by using tooling/code fixes built into the package (see below
+  for details).
 
-1. If you **are not** using experimental APIs:
+  Public API files are also used to perform public API reviews by repo
+  approvers/maintainers before releasing stable builds.
+
+* `Package validation` will validate public API changes/additions against
+  previously released NuGet packages. This is performed automatically.
+
+#### Working with Microsoft.CodeAnalysis.PublicApiAnalyzers
+
+##### Update public API files when writing code
+
+[IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)
+will [suggest
+modifications](https://github.com/dotnet/roslyn-analyzers/issues/3322#issuecomment-591031429)
+to the `PublicAPI.Unshipped.txt` file when you make changes. After reviewing
+these changes, ensure they are reflected across all targeted frameworks. You can
+do this by:
+* Using the "Fix all occurrences in Project" feature in Visual Studio.
+* Manually cycling through each framework using Visual Studio's target framework
+  dropdown (in the upper right corner) and applying the IntelliSense
+  suggestions.
+
+> [!IMPORTANT]
+> Do **NOT** modify `PublicAPI.Shipped.txt` files. New features and bug fixes
+  **SHOULD** only require changes to `PublicAPI.Unshipped.txt` files. If you
+  have to modify a "shipped" file it likely means you made a mistake and broke a
+  stable API. Typically only maintainers modify the `PublicAPI.Shipped.txt` file
+  while performing stable releases. If you need help reach out to an approver or
+  maintainer on Slack or open a draft PR.
+
+##### Enable public API validation in new projects
+
+1. If you are **NOT** using experimental APIs:
    * If your API is the same across all target frameworks:
-     * You only need two files: `.publicApi/PublicAPI.Shipped.txt` and `.publicApi/PublicAPI.Unshipped.txt`.
+     * You only need two files: `.publicApi/PublicAPI.Shipped.txt` and
+       `.publicApi/PublicAPI.Unshipped.txt`.
    * If your APIs differ between target frameworks:
-     * Place the shared APIs in `.publicApi/PublicAPI.Shipped.txt` and `.publicApi/PublicAPI.Unshipped.txt`.
-     * Create framework-specific files for API differences
-       (e.g., `.publicApi/net462/PublicAPI.Shipped.txt` and `.publicApi/net462/PublicAPI.Unshipped.txt`).
+     * Place the shared APIs in `.publicApi/PublicAPI.Shipped.txt` and
+       `.publicApi/PublicAPI.Unshipped.txt`.
+     * Create framework-specific files for API differences (e.g.,
+       `.publicApi/net462/PublicAPI.Shipped.txt` and
+       `.publicApi/net462/PublicAPI.Unshipped.txt`).
 
-2. If you **are** using experimental APIs:
-   * Follow the rules above, but create an additional layer in your folder structure:
-     * For stable APIs: `.publicApi/Stable/*`
-     * For experimental APIs: `.publicApi/Experimental/*`
+2. If you are using experimental APIs:
+   * Follow the rules above, but create an additional layer in your folder
+     structure:
+     * For stable APIs: `.publicApi/Stable/*`.
+     * For experimental APIs: `.publicApi/Experimental/*`.
    * The `Experimental` folder should contain APIs that are public only in
-     pre-release builds.
+     pre-release builds. Typically the `Experimental` folder only contains
+     `PublicAPI.Unshipped.txt` files as experimental APIs are never shipped
+     stable.
 
-    Example folder structure can be found [here](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry/.publicApi).
-
-3. [IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)
-   will [suggest modifications](https://github.com/dotnet/roslyn-analyzers/issues/3322#issuecomment-591031429)
-   to the `PublicAPI.Unshipped.txt` file
-   when you make changes. After reviewing these changes, ensure they are reflected
-   across all targeted frameworks. You can do this by:
-   * Using the "Fix all occurrences in Project" feature in Visual Studio.
-   * Manually cycling through each framework using Visual Studio's target framework
-     dropdown (in the upper right corner) and applying the IntelliSense suggestions.
+    Example folder structure can be found
+    [here](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry/.publicApi).
 
 ## Pull Requests
 
