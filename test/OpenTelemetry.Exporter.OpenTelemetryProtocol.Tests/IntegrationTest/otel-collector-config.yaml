@@ -16,39 +16,39 @@ receivers:
       grpc:
         endpoint: 0.0.0.0:5317
         tls:
-          cert_file: /cfg/otel-collector.crt
-          key_file: /cfg/otel-collector.key
+          cert_file: /obj/otel-test-server-cert.crt
+          key_file: /obj/otel-test-server-key.key
       http:
         endpoint: 0.0.0.0:5318
         tls:
-          cert_file: /cfg/otel-collector.crt
-          key_file: /cfg/otel-collector.key
+          cert_file: /obj/otel-test-server-cert.pem
+          key_file: /obj/otel-test-server-key.pem
   otlp/untrustedtls:
     protocols:
       grpc:
         endpoint: 0.0.0.0:6317
         tls:
-          cert_file: /cfg/otel-untrusted-collector.crt
-          key_file: /cfg/otel-untrusted-collector.key
+          cert_file: /obj/otel-untrusted-collector.pem
+          key_file: /obj/otel-untrusted-collector.pem
       http:
         endpoint: 0.0.0.0:6318
         tls:
-          cert_file: /cfg/otel-untrusted-collector.crt
-          key_file: /cfg/otel-untrusted-collector.key
+          cert_file: /obj/otel-untrusted-collector.pem
+          key_file: /obj/otel-untrusted-collector.pem
   otlp/mtls:
     protocols:
       grpc:
         endpoint: 0.0.0.0:7317
         tls:
-          cert_file: /cfg/otel-collector.crt
-          key_file: /cfg/otel-collector.key
-          client_ca_file: /cfg/otel-collector.crt
+          cert_file: /obj/otel-test-server-cert.pem
+          key_file: /obj/otel-test-server-key.pem
+          client_ca_file: /obj/otel-collector.crt
       http:
         endpoint: 0.0.0.0:7318
         tls:
-          cert_file: /cfg/otel-collector.crt
-          key_file: /cfg/otel-collector.key
-          client_ca_file: /cfg/otel-collector.crt
+          cert_file: /obj/otel-test-server-cert.pem
+          key_file: /obj/otel-test-server-key.pem
+          client_ca_file: /obj/otel-collector.crt
 
 exporters:
   debug:
