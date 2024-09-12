@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using OpenTelemetry.Metrics;
@@ -169,8 +170,10 @@ internal sealed class PrometheusMetric
             return unit;
         }
 
-        sb ??= new StringBuilder();
-        sb.Append(unit, lastWriteIndex, unit.Length - lastWriteIndex);
+        Debug.Assert(sb != null, "sb was null");
+
+        sb!.Append(unit, lastWriteIndex, unit.Length - lastWriteIndex);
+
         return sb.ToString();
     }
 
