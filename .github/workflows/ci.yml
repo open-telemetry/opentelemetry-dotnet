@@ -190,4 +190,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - run: |
-          if ( ${{ contains(needs.*.result, 'failure') }} == true ); then echo 'build failed ✗'; exit 1; else echo 'build complete ✓'; fi
+          if ( ${{ contains(needs.*.result, 'failure') }} == true ); then echo 'build failed'; exit 1; else echo 'build complete'; fi
