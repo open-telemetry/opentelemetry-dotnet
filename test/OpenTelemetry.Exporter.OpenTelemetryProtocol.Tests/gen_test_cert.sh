@@ -44,3 +44,7 @@ openssl x509 -req -in $1/otel-test-client-csr.pem \
     -CA $1/otel-test-server-cert.pem -CAkey $1/otel-test-server-key.pem -CAcreateserial \
     -out $1/otel-test-client-cert.pem \
     -days 3650 -sha256
+
+openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
+    -subj "/CN=otel-untrusted-collector" \
+    -keyout $1/otel-untrusted-collector-key.pem  -out $1/otel-untrusted-collector-cert.pem
