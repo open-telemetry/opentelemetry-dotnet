@@ -24,6 +24,9 @@ public class ZipkinExporter : BaseExporter<Activity>
     private readonly ZipkinExporterOptions options;
     private readonly int maxPayloadSizeInBytes;
     private readonly HttpClient httpClient;
+#if NET
+    private readonly bool synchronousSendSupportedByCurrentPlatform;
+#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ZipkinExporter"/> class.
@@ -35,8 +38,18 @@ public class ZipkinExporter : BaseExporter<Activity>
         Guard.ThrowIfNull(options);
 
         this.options = options;
-        this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
+        this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0)
+            ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes
+            : options.MaxPayloadSizeInBytes.Value;
         this.httpClient = client ?? options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("ZipkinExporter was missing HttpClientFactory or it returned null.");
+
+#if NET
+        // See: https://github.com/dotnet/runtime/blob/280f2a0c60ce0378b8db49adc0eecc463d00fe5d/src/libraries/System.Net.Http/src/System/Net/Http/HttpClientHandler.AnyMobile.cs#L767
+        this.synchronousSendSupportedByCurrentPlatform = !OperatingSystem.IsAndroid()
+            && !OperatingSystem.IsIOS()
+            && !OperatingSystem.IsTvOS()
+            && !OperatingSystem.IsBrowser();
+#endif
     }
 
     internal ZipkinEndpoint? LocalEndpoint { get; private set; }
@@ -62,7 +75,9 @@ public class ZipkinExporter : BaseExporter<Activity>
             };
 
 #if NET
-            using var response = this.httpClient.Send(request, CancellationToken.None);
+            using var response = this.synchronousSendSupportedByCurrentPlatform
+            ? this.httpClient.Send(request, CancellationToken.None)
+            : this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
 #else
             using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
 #endif
