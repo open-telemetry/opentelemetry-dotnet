@@ -26,14 +26,14 @@
           these packages even during major version bumps, so compatibility is not a concern here.
     -->
 
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.1" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.0-rc.1.24431.7" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0-rc.1.24431.7" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0-rc.1.24431.7" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="9.0.0-rc.1.24431.7" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.0-rc.1.24431.7" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.0-rc.1.24431.7" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="9.0.0-rc.1.24431.7" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.0-rc.1.24431.7" />
 
     <PackageVersion Include="OpenTelemetry" Version="[$(OTelLatestStableVer),2.0)" />
     <PackageVersion Include="OpenTelemetry.Api" Version="[$(OTelLatestStableVer),2.0)" />
@@ -52,7 +52,7 @@
         3) The .NET runtime team provides extra backward compatibility guarantee to System.Diagnostics.DiagnosticSource
           even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="8.0.0" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="9.0.0-rc.1.24431.7" />
 
     <!-- A conservative version of System.Text.Encodings.Web must be used here since there is no backward compatibility guarantee during major version bumps. -->
     <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
@@ -77,11 +77,11 @@
     <PackageVersion Include="Grpc.Tools" Version="[2.59.0,3.0)" />
     <PackageVersion Include="Microsoft.CSharp" Version="[4.7.0]" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.11.0-beta1.23525.2]" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="[8.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="[8.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="[8.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[8.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="[8.8.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="[9.0.0-rc.1.24431.7,)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="[9.0.0-rc.1.24431.7,)" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="[9.0.0-rc.1.24431.7,)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[9.0.0-rc.1.24431.7,)" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="[9.0.0-preview.8.24460.1,)" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="[17.11.0,18.0.0)" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="[8.0.0,9.0)" />
