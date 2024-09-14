@@ -103,7 +103,7 @@ public static class InMemoryExporterMetricsExtensions
     /// </remarks>
     /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
     /// <param name="exportedItems">Collection which will be populated with the exported <see cref="Metric"/> represented as <see cref="MetricSnapshot"/>.</param>
-    /// <param name="configureMetricReader">Optional callback action for configuring <see cref="MetricReaderOptions"/>.</param>
+    /// <param name="configureMetricReader">Callback action for configuring <see cref="MetricReaderOptions"/>.</param>
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddInMemoryExporter(
         this MeterProviderBuilder builder,
