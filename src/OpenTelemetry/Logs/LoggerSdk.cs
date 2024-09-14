@@ -32,6 +32,7 @@ internal sealed class LoggerSdk : Logger
             var pool = provider.LogRecordPool;
 
             var logRecord = pool.Rent();
+            processor.OnStart(logRecord);
 
             logRecord.Data = data;
             logRecord.ILoggerData = default;
