@@ -58,6 +58,7 @@ internal sealed class OpenTelemetryLogger : ILogger
             var pool = this.provider.LogRecordPool;
 
             var record = pool.Rent();
+            processor.OnStart(record);
 
             ref LogRecord.LogRecordILoggerData iloggerData = ref record.ILoggerData;
 
