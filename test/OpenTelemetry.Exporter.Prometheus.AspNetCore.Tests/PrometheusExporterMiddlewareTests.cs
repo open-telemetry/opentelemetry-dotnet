@@ -254,19 +254,25 @@ public sealed class PrometheusExporterMiddlewareTests
         using var host = await StartTestHostAsync(
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
 
-        var tags = new KeyValuePair<string, object?>[]
+        var meterTags = new KeyValuePair<string, object?>[]
+        {
+            new("meterKey1", "value1"),
+            new("meterKey2", "value2"),
+        };
+
+        var counterTags = new KeyValuePair<string, object?>[]
         {
             new("key1", "value1"),
             new("key2", "value2"),
         };
 
-        using var meter = new Meter(MeterName, MeterVersion);
+        using var meter = new Meter(MeterName, MeterVersion, meterTags);
 
         var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
         var counter = meter.CreateCounter<double>("counter_double", unit: "By");
-        counter.Add(100.18D, tags);
-        counter.Add(0.99D, tags);
+        counter.Add(100.18D, counterTags);
+        counter.Add(0.99D, counterTags);
 
         var testCases = new bool[] { true, false, true, true, false };
 
@@ -326,21 +332,27 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var host = await StartTestHostAsync(configure, configureServices, registerMeterProvider, configureOptions);
 
-        var tags = new KeyValuePair<string, object?>[]
+        var meterTags = new KeyValuePair<string, object?>[]
+        {
+            new("meterKey1", "value1"),
+            new("meterKey2", "value2"),
+        };
+
+        var counterTags = new KeyValuePair<string, object?>[]
         {
             new("key1", "value1"),
             new("key2", "value2"),
         };
 
-        using var meter = new Meter(MeterName, MeterVersion);
+        using var meter = new Meter(MeterName, MeterVersion, meterTags);
 
         var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
         var counter = meter.CreateCounter<double>("counter_double", unit: "By");
         if (!skipMetrics)
         {
-            counter.Add(100.18D, tags);
-            counter.Add(0.99D, tags);
+            counter.Add(100.18D, counterTags);
+            counter.Add(0.99D, counterTags);
         }
 
         using var client = host.GetTestClient();
@@ -394,14 +406,14 @@ public sealed class PrometheusExporterMiddlewareTests
                     otel_scope_info{otel_scope_name="{{MeterName}}"} 1
                     # TYPE counter_double_bytes counter
                     # UNIT counter_double_bytes bytes
-                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101.17 (\d+\.\d{3})
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",meterKey1="value1",meterKey2="value2",key1="value1",key2="value2"} 101.17 (\d+\.\d{3})
                     # EOF
 
                     """.ReplaceLineEndings()
             : $$"""
                     # TYPE counter_double_bytes_total counter
                     # UNIT counter_double_bytes_total bytes
-                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101.17 (\d+)
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",meterKey1="value1",meterKey2="value2",key1="value1",key2="value2"} 101.17 (\d+)
                     # EOF
 
                     """.ReplaceLineEndings();

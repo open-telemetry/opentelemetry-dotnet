@@ -240,11 +240,16 @@ public class PrometheusHttpListenerTests
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
 
-        using var meter = new Meter(MeterName, MeterVersion);
+        var meterTags = new KeyValuePair<string, object?>[]
+        {
+            new("meterKey1", "value1"),
+            new("meterKey2", "value2"),
+        };
+        using var meter = new Meter(MeterName, MeterVersion, meterTags);
 
         var provider = BuildMeterProvider(meter, [], out var address);
 
-        var tags = new KeyValuePair<string, object?>[]
+        var counterTags = new KeyValuePair<string, object?>[]
         {
             new("key1", "value1"),
             new("key2", "value2"),
@@ -253,8 +258,8 @@ public class PrometheusHttpListenerTests
         var counter = meter.CreateCounter<double>("counter_double", unit: "By");
         if (!skipMetrics)
         {
-            counter.Add(100.18D, tags);
-            counter.Add(0.99D, tags);
+            counter.Add(100.18D, counterTags);
+            counter.Add(0.99D, counterTags);
         }
 
         using HttpClient client = new HttpClient();
@@ -291,11 +296,11 @@ public class PrometheusHttpListenerTests
                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
                   + "# TYPE counter_double_bytes counter\n"
                   + "# UNIT counter_double_bytes bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',meterKey1='value1',meterKey2='value2',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
                   + "# EOF\n"
                 : "# TYPE counter_double_bytes_total counter\n"
                   + "# UNIT counter_double_bytes_total bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',meterKey1='value1',meterKey2='value2',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
                   + "# EOF\n";
 
             Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);
