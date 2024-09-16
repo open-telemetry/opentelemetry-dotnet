@@ -205,7 +205,8 @@ internal sealed class SpanBuilderShim : ISpanBuilder
         else
         {
             // Keys must be non-null.
-            // Null values => string.Empty.
+            // Null values => string.Empty to ensure consistent behavior and prevent potential issues,
+            // to handle non-null string values. It's recommended to avoid passing null to maintain clarity and intention.
             if (key != null)
             {
                 this.attributes.Add(new KeyValuePair<string, object>(key, value ?? string.Empty));
