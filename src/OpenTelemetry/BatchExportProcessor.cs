@@ -291,6 +291,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
             catch (Exception e)
             {
                 newCurrentExportTaskCompletion.SetException(e);
+                throw;
             }
         }
     }
