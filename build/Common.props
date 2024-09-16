@@ -14,9 +14,9 @@
     <NuGetAuditLevel>low</NuGetAuditLevel>
     <!--
       SuppressTfmSupportBuildWarnings is set to true to ignore compatibility warnings
-      related to System.Diagnostics.DiagnosticSource version 9.0.0-preview.7.24405.7. 
+      related to System.Diagnostics.DiagnosticSource version 9.0.0-preview.7.24405.7.
       This version of the package does not officially support .NET 6.0, and upgrading
-      the TargetFramework to net8.0 or later is recommended. 
+      the TargetFramework to net8.0 or later is recommended.
 
       This property should be removed when we remove .NET 6.0 support, which is planned
       for the next stable release.

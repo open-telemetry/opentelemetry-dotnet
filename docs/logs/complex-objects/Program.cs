@@ -23,12 +23,15 @@ var foodRecallNotice = new FoodRecallNotice
     CompanyName = "Contoso Fresh Vegetables, Inc.",
 };
 
+#if !NET6_0
 logger.FoodRecallNotice(foodRecallNotice);
+#endif
 
 // Dispose logger factory before the application ends.
 // This will flush the remaining logs and shutdown the logging pipeline.
 loggerFactory.Dispose();
 
+#if !NET6_0
 internal static partial class LoggerExtensions
 {
     [LoggerMessage(LogLevel.Critical)]
@@ -36,3 +39,4 @@ internal static partial class LoggerExtensions
         this ILogger logger,
         [LogProperties(OmitReferenceName = true)] in FoodRecallNotice foodRecallNotice);
 }
+#endif
