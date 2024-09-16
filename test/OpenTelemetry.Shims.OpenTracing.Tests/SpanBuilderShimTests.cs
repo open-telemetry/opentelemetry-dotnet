@@ -256,20 +256,19 @@ public class SpanBuilderShimTests
     }
 
     [Fact]
-    public void WithTag_ValueIsNullStringValue()
+    public void WithTag_ValueIsIgnoredWhenNull()
     {
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanBuilderShim(tracer, "foo");
 
-        shim.WithTag("foo", null!);
+        shim.WithTag("foo", null);
 
         // build
         var spanShim = (SpanShim)shim.Start();
 
         // Null value was turned into string.empty
         Assert.NotNull(spanShim.Span.Activity);
-        Assert.Equal("foo", spanShim.Span.Activity.Tags.First().Key);
-        Assert.Equal(string.Empty, spanShim.Span.Activity.Tags.First().Value);
+        Assert.Empty(spanShim.Span.Activity.TagObjects);
     }
 
     [Fact]
@@ -316,7 +315,7 @@ public class SpanBuilderShimTests
 
         // Just verify the count
         Assert.NotNull(spanShim.Span.Activity);
-        Assert.Equal(7, spanShim.Span.Activity.Tags.Count());
+        Assert.Equal(7, spanShim.Span.Activity.TagObjects.Count());
     }
 
     [Fact]

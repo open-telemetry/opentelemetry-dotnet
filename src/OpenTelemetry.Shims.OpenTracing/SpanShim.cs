@@ -137,7 +137,7 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetBaggageItem(string key, string value)
+    public ISpan SetBaggageItem(string key, string? value)
     {
         Baggage.SetBaggage(key, value);
         return this;
@@ -153,7 +153,7 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(string key, string value)
+    public ISpan SetTag(string key, string? value)
     {
         Guard.ThrowIfNull(key);
 
@@ -207,11 +207,11 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
+    public ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag tag, string? value)
     {
         Guard.ThrowIfNull(tag);
 
-        if (int.TryParse(value, out var result))
+        if (value != null && int.TryParse(value, out var result))
         {
             return this.SetTag(tag.Key, result);
         }
@@ -228,7 +228,7 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.StringTag tag, string value)
+    public ISpan SetTag(global::OpenTracing.Tag.StringTag tag, string? value)
     {
         Guard.ThrowIfNull(tag);
 
