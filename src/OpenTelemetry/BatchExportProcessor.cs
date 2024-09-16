@@ -24,10 +24,9 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     internal readonly int ExporterTimeoutMilliseconds;
 
     private readonly CircularBuffer<T> circularBuffer;
-    private readonly Thread exporterThread;
-    private readonly AutoResetEvent exportTrigger = new(false);
-    private readonly ManualResetEvent dataExportedNotification = new(false);
-    private readonly ManualResetEvent shutdownTrigger = new(false);
+    private readonly CancellationTokenSource exporterTaskCancellation;
+    private readonly Task exporterTask;
+    private Task exportTask;
     private long shutdownDrainTarget = long.MaxValue;
     private long droppedCount;
     private bool disposed;
@@ -57,12 +56,9 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         this.ScheduledDelayMilliseconds = scheduledDelayMilliseconds;
         this.ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
         this.MaxExportBatchSize = maxExportBatchSize;
-        this.exporterThread = new Thread(this.ExporterProc)
-        {
-            IsBackground = true,
-            Name = $"OpenTelemetry-{nameof(BatchExportProcessor<T>)}-{exporter.GetType().Name}",
-        };
-        this.exporterThread.Start();
+        this.exportTask = Task.CompletedTask;
+        this.exporterTaskCancellation = new CancellationTokenSource();
+        this.exporterTask = Task.Run(this.ExporterProc);
     }
 
     /// <summary>
@@ -87,13 +83,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         {
             if (this.circularBuffer.Count >= this.MaxExportBatchSize)
             {
-                try
-                {
-                    this.exportTrigger.Set();
-                }
-                catch (ObjectDisposedException)
-                {
-                }
+                _ = this.ExportAsync();
             }
 
             return true; // enqueue succeeded
@@ -114,113 +104,13 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     /// <inheritdoc/>
     protected override bool OnForceFlush(int timeoutMilliseconds)
     {
-        var tail = this.circularBuffer.RemovedCount;
-        var head = this.circularBuffer.AddedCount;
-
-        if (head == tail)
-        {
-            return true; // nothing to flush
-        }
-
-        try
-        {
-            this.exportTrigger.Set();
-        }
-        catch (ObjectDisposedException)
-        {
-            return false;
-        }
-
-        if (timeoutMilliseconds == 0)
-        {
-            return false;
-        }
-
-        var triggers = new WaitHandle[] { this.dataExportedNotification, this.shutdownTrigger };
-
-        var sw = timeoutMilliseconds == Timeout.Infinite
-            ? null
-            : Stopwatch.StartNew();
-
-        // There is a chance that the export thread finished processing all the data from the queue,
-        // and signaled before we enter wait here, use polling to prevent being blocked indefinitely.
-        const int pollingMilliseconds = 1000;
-
-        while (true)
-        {
-            if (sw == null)
-            {
-                try
-                {
-                    WaitHandle.WaitAny(triggers, pollingMilliseconds);
-                }
-                catch (ObjectDisposedException)
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-
-                if (timeout <= 0)
-                {
-                    return this.circularBuffer.RemovedCount >= head;
-                }
-
-                try
-                {
-                    WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
-                }
-                catch (ObjectDisposedException)
-                {
-                    return false;
-                }
-            }
-
-            if (this.circularBuffer.RemovedCount >= head)
-            {
-                return true;
-            }
-
-            if (Volatile.Read(ref this.shutdownDrainTarget) != long.MaxValue)
-            {
-                return false;
-            }
-        }
+        return this.FlushAsync(TimeSpan.FromMilliseconds(timeoutMilliseconds)).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc/>
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        Volatile.Write(ref this.shutdownDrainTarget, this.circularBuffer.AddedCount);
-
-        try
-        {
-            this.shutdownTrigger.Set();
-        }
-        catch (ObjectDisposedException)
-        {
-            return false;
-        }
-
-        OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.GetType().Name, this.exporter.GetType().Name, this.DroppedCount);
-
-        if (timeoutMilliseconds == Timeout.Infinite)
-        {
-            this.exporterThread.Join();
-            return this.exporter.Shutdown();
-        }
-
-        if (timeoutMilliseconds == 0)
-        {
-            return this.exporter.Shutdown(0);
-        }
-
-        var sw = Stopwatch.StartNew();
-        this.exporterThread.Join(timeoutMilliseconds);
-        var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-        return this.exporter.Shutdown((int)Math.Max(timeout, 0));
+        return this.ShutdownAsync(TimeSpan.FromMilliseconds(timeoutMilliseconds)).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc/>
@@ -230,9 +120,8 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         {
             if (disposing)
             {
-                this.exportTrigger.Dispose();
-                this.dataExportedNotification.Dispose();
-                this.shutdownTrigger.Dispose();
+                this.exporterTaskCancellation.Cancel();
+                this.exporterTaskCancellation.Dispose();
             }
 
             this.disposed = true;
@@ -241,10 +130,98 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         base.Dispose(disposing);
     }
 
-    private void ExporterProc()
+    private async Task<bool> FlushAsync(TimeSpan timeout)
     {
-        var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
+        var tail = this.circularBuffer.RemovedCount;
+        var head = this.circularBuffer.AddedCount;
 
+        if (head == tail)
+        {
+            return true; // nothing to flush
+        }
+
+        _ = this.ExportAsync();
+
+        if (timeout == TimeSpan.Zero)
+        {
+            return false;
+        }
+
+        CancellationTokenSource timeoutCancellation;
+        try
+        {
+            timeoutCancellation = CancellationTokenSource.CreateLinkedTokenSource(this.exporterTaskCancellation.Token);
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+
+        var timeoutTask = Task.Delay(timeout, timeoutCancellation.Token);
+
+        while (true)
+        {
+            Task completedTask;
+            try
+            {
+                completedTask = await Task.WhenAny(timeoutTask, this.ExportAsync()).ConfigureAwait(false);
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
+
+            if (this.circularBuffer.RemovedCount >= head)
+            {
+                return true;
+            }
+
+            if (completedTask == timeoutTask)
+            {
+                return false;
+            }
+
+            if (Volatile.Read(ref this.shutdownDrainTarget) != long.MaxValue)
+            {
+                return false;
+            }
+        }
+    }
+
+    private async Task<bool> ShutdownAsync(TimeSpan timeout)
+    {
+        Volatile.Write(ref this.shutdownDrainTarget, this.circularBuffer.AddedCount);
+
+        try
+        {
+            this.exporterTaskCancellation.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+
+        OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.GetType().Name, this.exporter.GetType().Name, this.DroppedCount);
+
+        if (timeout == Timeout.InfiniteTimeSpan)
+        {
+            await this.exporterTask.ConfigureAwait(false);
+            return this.exporter.Shutdown();
+        }
+
+        if (timeout == TimeSpan.Zero)
+        {
+            return this.exporter.Shutdown(0);
+        }
+
+        var sw = Stopwatch.StartNew();
+        await Task.WhenAny(this.exporterTask, Task.Delay(timeout)).ConfigureAwait(false);
+        var remainingTimeout = timeout.TotalMilliseconds - sw.ElapsedMilliseconds;
+        return this.exporter.Shutdown((int)Math.Max(remainingTimeout, 0));
+    }
+
+    private async Task ExporterProc()
+    {
         while (true)
         {
             // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
@@ -252,7 +229,11 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
             {
                 try
                 {
-                    WaitHandle.WaitAny(triggers, this.ScheduledDelayMilliseconds);
+                    await Task.Delay(this.ScheduledDelayMilliseconds, this.exporterTaskCancellation.Token).ConfigureAwait(false);
+                }
+                catch (TaskCanceledException)
+                {
+                    // The delay was canceled for the exporter to shut down.
                 }
                 catch (ObjectDisposedException)
                 {
@@ -263,26 +244,53 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
 
             if (this.circularBuffer.Count > 0)
             {
-                using (var batch = new Batch<T>(this.circularBuffer, this.MaxExportBatchSize))
-                {
-                    this.exporter.Export(batch);
-                }
-
-                try
-                {
-                    this.dataExportedNotification.Set();
-                    this.dataExportedNotification.Reset();
-                }
-                catch (ObjectDisposedException)
-                {
-                    // the exporter is somehow disposed before the worker thread could finish its job
-                    return;
-                }
+                await this.ExportAsync().ConfigureAwait(false);
             }
 
             if (this.circularBuffer.RemovedCount >= Volatile.Read(ref this.shutdownDrainTarget))
             {
                 return;
+            }
+        }
+    }
+
+    private Task ExportAsync()
+    {
+        var optimisticExportTask = this.exportTask;
+        if (!optimisticExportTask.IsCompleted)
+        {
+            // An export is currently being processed.
+            return optimisticExportTask;
+        }
+
+        TaskCompletionSource<object?> newCurrentExportTaskCompletion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        var localExportTask = Interlocked.CompareExchange(
+            ref this.exportTask,
+            newCurrentExportTaskCompletion.Task,
+            optimisticExportTask);
+        if (!localExportTask.IsCompleted)
+        {
+            // An export is currently being processed.
+            return localExportTask;
+        }
+
+        // Use Task.Run to yield the execution as soon as possible.
+        return Task.Run(CoreAsync);
+
+        async Task CoreAsync()
+        {
+            try
+            {
+                using (var batch = new Batch<T>(this.circularBuffer, this.MaxExportBatchSize))
+                {
+                    await this.exporter.ExportAsync(batch).ConfigureAwait(false);
+                }
+
+                newCurrentExportTaskCompletion.SetResult(null);
+            }
+            catch (Exception e)
+            {
+                newCurrentExportTaskCompletion.SetException(e);
             }
         }
     }

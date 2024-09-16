@@ -43,6 +43,16 @@ public abstract class BaseExporter<T> : IDisposable
     public abstract ExportResult Export(in Batch<T> batch);
 
     /// <summary>
+    /// Exports a batch of telemetry objects.
+    /// </summary>
+    /// <param name="batch">Batch of telemetry objects to export.</param>
+    /// <returns>Result of the export operation.</returns>
+    public virtual Task<ExportResult> ExportAsync(Batch<T> batch)
+    {
+        return Task.FromResult(this.Export(batch));
+    }
+
+    /// <summary>
     /// Flushes the exporter, blocks the current thread until flush
     /// completed, shutdown signaled or timed out.
     /// </summary>
