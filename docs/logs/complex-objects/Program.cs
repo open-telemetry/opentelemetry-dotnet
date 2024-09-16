@@ -23,6 +23,7 @@ var foodRecallNotice = new FoodRecallNotice
     CompanyName = "Contoso Fresh Vegetables, Inc.",
 };
 
+// TODO: Remove this pre-processor directive with .NET 6.0 removal.
 #if !NET6_0
 logger.FoodRecallNotice(foodRecallNotice);
 #endif
