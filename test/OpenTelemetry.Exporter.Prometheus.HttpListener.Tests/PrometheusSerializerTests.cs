@@ -129,7 +129,7 @@ public sealed class PrometheusSerializerTests
 
         meter.CreateObservableGauge(
             "test_gauge",
-            () => new Measurement<long>(123, new KeyValuePair<string, object>("tagKey", "tagValue")));
+            () => new Measurement<long>(123, new KeyValuePair<string, object?>("tagKey", "tagValue")));
 
         provider.ForceFlush();
 
@@ -156,7 +156,7 @@ public sealed class PrometheusSerializerTests
 
         meter.CreateObservableGauge(
             "test_gauge",
-            () => new Measurement<long>(123, new KeyValuePair<string, object>("tagKey", true)));
+            () => new Measurement<long>(123, new KeyValuePair<string, object?>("tagKey", true)));
 
         provider.ForceFlush();
 
@@ -312,8 +312,8 @@ public sealed class PrometheusSerializerTests
             .Build();
 
         var histogram = meter.CreateHistogram<double>("test_histogram");
-        histogram.Record(18, new KeyValuePair<string, object>("x", "1"));
-        histogram.Record(100, new KeyValuePair<string, object>("x", "1"));
+        histogram.Record(18, new KeyValuePair<string, object?>("x", "1"));
+        histogram.Record(100, new KeyValuePair<string, object?>("x", "1"));
 
         provider.ForceFlush();
 
@@ -539,8 +539,8 @@ public sealed class PrometheusSerializerTests
             .Build();
 
         var histogram = meter.CreateHistogram<double>("test_histogram");
-        histogram.Record(18, new KeyValuePair<string, object>("x", "1"));
-        histogram.Record(100, new KeyValuePair<string, object>("x", "1"));
+        histogram.Record(18, new KeyValuePair<string, object?>("x", "1"));
+        histogram.Record(100, new KeyValuePair<string, object?>("x", "1"));
 
         provider.ForceFlush();
 
@@ -622,8 +622,8 @@ public sealed class PrometheusSerializerTests
             .Build();
 
         var histogram = meter.CreateHistogram<double>("test_histogram");
-        histogram.Record(18, new KeyValuePair<string, object>("x", "1"));
-        histogram.Record(100, new KeyValuePair<string, object>("x", "1"));
+        histogram.Record(18, new KeyValuePair<string, object?>("x", "1"));
+        histogram.Record(100, new KeyValuePair<string, object?>("x", "1"));
 
         provider.ForceFlush();
 
