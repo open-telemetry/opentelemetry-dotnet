@@ -18,6 +18,10 @@ Notes](../../RELEASENOTES.md).
   Grace, etc.).
   ([#5808](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5808))
 
+  * Fixed `PlatformNotSupportedException`s being thrown during export when running
+  on mobile platforms which caused telemetry to be dropped silently.
+  ([#5821](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/5821))
+
 ## 1.9.0
 
 Released 2024-Jun-14

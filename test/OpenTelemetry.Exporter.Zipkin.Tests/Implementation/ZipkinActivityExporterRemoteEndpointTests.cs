@@ -45,7 +45,7 @@ public class ZipkinActivityExporterRemoteEndpointTests
     public void GenerateActivity_RemoteEndpointResolutionPriority(RemoteEndpointPriorityTestCase testCase)
     {
         // Arrange
-        using var activity = ZipkinExporterTests.CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes);
+        using var activity = ZipkinExporterTests.CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes!);
 
         // Act & Assert
         var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);
@@ -56,11 +56,11 @@ public class ZipkinActivityExporterRemoteEndpointTests
 
     public class RemoteEndpointPriorityTestCase
     {
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
-        public string ExpectedResult { get; set; }
+        public string? ExpectedResult { get; set; }
 
-        public Dictionary<string, object> RemoteEndpointAttributes { get; set; }
+        public Dictionary<string, object>? RemoteEndpointAttributes { get; set; }
 
         public static IEnumerable<object[]> GetTestCases()
         {
@@ -174,7 +174,7 @@ public class ZipkinActivityExporterRemoteEndpointTests
             };
         }
 
-        public override string ToString()
+        public override string? ToString()
         {
             return this.Name;
         }

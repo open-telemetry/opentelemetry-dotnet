@@ -236,7 +236,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Equal(meterVersion, metric.MeterVersion);
 
         Assert.Single(metric.MeterTags.Where(kvp => kvp.Key == meterTags1[0].Key && kvp.Value == meterTags1[0].Value));
-        Assert.Empty(metric.MeterTags.Where(kvp => kvp.Key == meterTags2[0].Key && kvp.Value == meterTags2[0].Value));
+        Assert.DoesNotContain(metric.MeterTags, kvp => kvp.Key == meterTags2[0].Key && kvp.Value == meterTags2[0].Value);
 
         List<MetricPoint> metricPoints = new List<MetricPoint>();
         foreach (ref readonly var mp in metric.GetMetricPoints())
