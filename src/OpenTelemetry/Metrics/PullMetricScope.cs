@@ -7,7 +7,7 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class PullMetricScope : IDisposable
 {
-    private static readonly RuntimeContextSlot<bool> Slot = RuntimeContext.RegisterSlot<bool>("otel.pull_metric")!;
+    private static readonly RuntimeContextSlot<bool> Slot = RuntimeContext.RegisterSlot<bool>("otel.pull_metric");
 
     private readonly bool previousValue;
     private bool disposed;

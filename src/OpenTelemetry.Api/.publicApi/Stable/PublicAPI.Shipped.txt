@@ -205,7 +205,7 @@ static OpenTelemetry.Context.RuntimeContext.ContextSlotType.set -> void
 static OpenTelemetry.Context.RuntimeContext.GetSlot<T>(string! slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>!
 static OpenTelemetry.Context.RuntimeContext.GetValue(string! slotName) -> object?
 static OpenTelemetry.Context.RuntimeContext.GetValue<T>(string! slotName) -> T?
-static OpenTelemetry.Context.RuntimeContext.RegisterSlot<T>(string! slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>?
+static OpenTelemetry.Context.RuntimeContext.RegisterSlot<T>(string! slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>!
 static OpenTelemetry.Context.RuntimeContext.SetValue(string! slotName, object? value) -> void
 static OpenTelemetry.Context.RuntimeContext.SetValue<T>(string! slotName, T? value) -> void
 static OpenTelemetry.Trace.ActivityExtensions.GetStatus(this System.Diagnostics.Activity? activity) -> OpenTelemetry.Trace.Status

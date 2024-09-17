@@ -15,7 +15,7 @@ public sealed class SuppressInstrumentationScope : IDisposable
     // * null: instrumentation is not suppressed
     // * Depth = [int.MinValue, -1]: instrumentation is always suppressed
     // * Depth = [1, int.MaxValue]: instrumentation is suppressed in a reference-counting mode
-    private static readonly RuntimeContextSlot<SuppressInstrumentationScope?> Slot = RuntimeContext.RegisterSlot<SuppressInstrumentationScope?>("otel.suppress_instrumentation")!;
+    private static readonly RuntimeContextSlot<SuppressInstrumentationScope?> Slot = RuntimeContext.RegisterSlot<SuppressInstrumentationScope?>("otel.suppress_instrumentation");
 
     private readonly SuppressInstrumentationScope? previousScope;
     private bool disposed;
