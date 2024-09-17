@@ -17,10 +17,10 @@ public class TracerShimTests
     public void CtorArgumentValidation()
     {
         // null tracer provider and text format
-        Assert.Throws<ArgumentNullException>(() => new TracerShim(null, null));
+        Assert.Throws<ArgumentNullException>(() => new TracerShim(null!, null));
 
         // null tracer provider
-        Assert.Throws<ArgumentNullException>(() => new TracerShim(null, new TraceContextPropagator()));
+        Assert.Throws<ArgumentNullException>(() => new TracerShim(null!, new TraceContextPropagator()));
     }
 
     [Fact]
@@ -50,10 +50,10 @@ public class TracerShimTests
         var testFormat = new TestFormatTextMap();
         var testCarrier = new TestTextMap();
 
-        Assert.Throws<ArgumentNullException>(() => shim.Inject(null, testFormat, testCarrier));
+        Assert.Throws<ArgumentNullException>(() => shim.Inject(null!, testFormat, testCarrier));
         Assert.Throws<InvalidCastException>(() => shim.Inject(new TestSpanContext(), testFormat, testCarrier));
-        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, null, testCarrier));
-        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, testFormat, null));
+        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, null!, testCarrier));
+        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, testFormat!, null));
     }
 
     [Fact]
@@ -76,8 +76,8 @@ public class TracerShimTests
     {
         var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
-        Assert.Throws<ArgumentNullException>(() => shim.Extract(null, new TestTextMap()));
-        Assert.Throws<ArgumentNullException>(() => shim.Extract(new TestFormatTextMap(), null));
+        Assert.Throws<ArgumentNullException>(() => shim.Extract(null!, new TestTextMap()));
+        Assert.Throws<ArgumentNullException>(() => shim.Extract(new TestFormatTextMap()!, null));
     }
 
     [Fact]
@@ -129,7 +129,7 @@ public class TracerShimTests
         // then extract
         var extractedSpanContext = shim.Extract(BuiltinFormats.TextMap, carrier);
 
-        AssertOpenTracerSpanContextEqual(spanContextShim, extractedSpanContext);
+        AssertOpenTracerSpanContextEqual(spanContextShim, extractedSpanContext!);
     }
 
     private static void AssertOpenTracerSpanContextEqual(ISpanContext source, ISpanContext target)
