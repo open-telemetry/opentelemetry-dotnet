@@ -149,6 +149,15 @@ dotnet_diagnostic.IDE0002.severity = warning
 # IDE0005: Remove unnecessary import
 dotnet_diagnostic.IDE0005.severity = warning
 
+# IDE0058: Remove unnecessary expression value
+dotnet_diagnostic.IDE0058.severity = none
+
+# IDE0130: Namespace does not match folder structure
+dotnet_diagnostic.IDE0130.severity = none
+
+# IDE0290: Use primary constructor
+dotnet_diagnostic.IDE0290.severity = none
+
 # RS0041: Public members should not use oblivious types
 dotnet_diagnostic.RS0041.severity = suggestion
 

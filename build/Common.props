@@ -12,16 +12,6 @@
     <NuGetAudit>true</NuGetAudit>
     <NuGetAuditMode>all</NuGetAuditMode>
     <NuGetAuditLevel>low</NuGetAuditLevel>
-    <!--
-      SuppressTfmSupportBuildWarnings is set to true to ignore compatibility warnings
-      related to System.Diagnostics.DiagnosticSource version 9.0.0-preview.7.24405.7.
-      This version of the package does not officially support .NET 6.0, and upgrading
-      the TargetFramework to net8.0 or later is recommended.
-
-      This property should be removed when we remove .NET 6.0 support, which is planned
-      for the next stable release.
-      -->
-    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
     <!-- Suppress warnings for repo code using experimental features -->
     <NoWarn>$(NoWarn);OTEL1000;OTEL1001;OTEL1002;OTEL1003;OTEL1004</NoWarn>
     <!--temporarily disable. See 3958-->
@@ -38,18 +28,18 @@
     <NetFrameworkSupportedVersions>net481;net48;net472;net471;net47;net462</NetFrameworkSupportedVersions>
 
     <!-- production TFMs -->
-    <TargetFrameworksForLibraries>net8.0;net6.0;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibraries>
-    <TargetFrameworksForLibrariesExtended>net8.0;net6.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibrariesExtended>
-    <TargetFrameworksForPrometheusAspNetCore>net8.0;net6.0</TargetFrameworksForPrometheusAspNetCore>
+    <TargetFrameworksForLibraries>net9.0;net8.0;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibraries>
+    <TargetFrameworksForLibrariesExtended>net9.0;net8.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibrariesExtended>
+    <TargetFrameworksForPrometheusAspNetCore>net9.0;net8.0</TargetFrameworksForPrometheusAspNetCore>
 
     <!-- non-production TFMs -->
-    <TargetFrameworksForAspNetCoreTests>net8.0;net6.0</TargetFrameworksForAspNetCoreTests>
-    <TargetFrameworksForAotCompatibilityTests>net8.0</TargetFrameworksForAotCompatibilityTests>
-    <TargetFrameworksForDocs>net8.0;net6.0</TargetFrameworksForDocs>
+    <TargetFrameworksForAspNetCoreTests>net9.0;net8.0</TargetFrameworksForAspNetCoreTests>
+    <TargetFrameworksForAotCompatibilityTests>net9.0;net8.0</TargetFrameworksForAotCompatibilityTests>
+    <TargetFrameworksForDocs>net9.0;net8.0</TargetFrameworksForDocs>
     <TargetFrameworksForDocs Condition="$(OS) == 'Windows_NT' And '$(UsingMicrosoftNETSdkWeb)' != 'True'">
       $(TargetFrameworksForDocs);$(NetFrameworkSupportedVersions)
     </TargetFrameworksForDocs>
-    <TargetFrameworksForTests>net8.0;net6.0</TargetFrameworksForTests>
+    <TargetFrameworksForTests>net9.0;net8.0</TargetFrameworksForTests>
     <TargetFrameworksForTests Condition="$(OS) == 'Windows_NT'">
       $(TargetFrameworksForTests);$(NetFrameworkMinimumSupportedVersion)
     </TargetFrameworksForTests>
