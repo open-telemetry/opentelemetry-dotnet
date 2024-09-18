@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Obsoleted the `ActivityExtensions.RecordException`. Users should migrate to the
+  `System.Diagnostics.Activity.AddException`
+  [Activity.AddException](https://learn.microsoft.com/pl-pl/dotnet/api/system.diagnostics.activity.addexception)
+  ([]())
+* 
 * **Breaking change:** CompositeTextMapPropagator.Fields now returns a
   unioned set of fields from all combined propagators. Previously this always
   returned an empty set.

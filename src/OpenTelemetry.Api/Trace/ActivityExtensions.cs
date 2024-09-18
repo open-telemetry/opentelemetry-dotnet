@@ -97,6 +97,7 @@ public static class ActivityExtensions
     /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
     /// </remarks>
+    [Obsolete("Call Activity.AddException instead this method will be removed in a future version.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void RecordException(this Activity? activity, Exception? ex)
         => RecordException(activity, ex, default);
@@ -110,6 +111,7 @@ public static class ActivityExtensions
     /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
     /// </remarks>
+    [Obsolete("Call Activity.AddException instead this method will be removed in a future version.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void RecordException(this Activity? activity, Exception? ex, in TagList tags)
     {
@@ -119,10 +121,10 @@ public static class ActivityExtensions
         }
 
         var tagsCollection = new ActivityTagsCollection
-        {
-            { SemanticConventions.AttributeExceptionType, ex.GetType().FullName },
-            { SemanticConventions.AttributeExceptionStacktrace, ex.ToInvariantString() },
-        };
+    {
+        { SemanticConventions.AttributeExceptionType, ex.GetType().FullName },
+        { SemanticConventions.AttributeExceptionStacktrace, ex.ToInvariantString() },
+    };
 
         if (!string.IsNullOrWhiteSpace(ex.Message))
         {
