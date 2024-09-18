@@ -38,7 +38,7 @@ public class PrometheusHttpListenerTests
     {
         Assert.Throws<ArgumentNullException>(() =>
         {
-            TestPrometheusHttpListenerUriPrefixOptions(null);
+            TestPrometheusHttpListenerUriPrefixOptions(null!);
         });
     }
 
@@ -90,10 +90,10 @@ public class PrometheusHttpListenerTests
         Random random = new Random();
         int retryAttempts = 5;
         int port = 0;
-        string address = null;
+        string? address = null;
 
-        PrometheusExporter exporter = null;
-        PrometheusHttpListener listener = null;
+        PrometheusExporter? exporter = null;
+        PrometheusHttpListener? listener = null;
 
         // Step 1: Start a listener on a random port.
         while (retryAttempts-- != 0)
@@ -134,7 +134,7 @@ public class PrometheusHttpListenerTests
                 exporter,
                 new()
                 {
-                    UriPrefixes = new string[] { address },
+                    UriPrefixes = new string[] { address! },
                 });
 
             listener.Start();
@@ -199,8 +199,8 @@ public class PrometheusHttpListenerTests
         Random random = new Random();
         int retryAttempts = 5;
         int port = 0;
-        string generatedAddress = null;
-        MeterProvider provider = null;
+        string? generatedAddress = null;
+        MeterProvider? provider = null;
 
         while (retryAttempts-- != 0)
         {
@@ -226,7 +226,7 @@ public class PrometheusHttpListenerTests
             }
         }
 
-        address = generatedAddress;
+        address = generatedAddress!;
 
         if (provider == null)
         {
@@ -244,10 +244,10 @@ public class PrometheusHttpListenerTests
 
         var provider = BuildMeterProvider(meter, [], out var address);
 
-        var tags = new KeyValuePair<string, object>[]
+        var tags = new KeyValuePair<string, object?>[]
         {
-            new KeyValuePair<string, object>("key1", "value1"),
-            new KeyValuePair<string, object>("key2", "value2"),
+            new("key1", "value1"),
+            new("key2", "value2"),
         };
 
         var counter = meter.CreateCounter<double>("counter_double", unit: "By");
@@ -273,11 +273,11 @@ public class PrometheusHttpListenerTests
 
             if (requestOpenMetrics)
             {
-                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
+                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType!.ToString());
             }
             else
             {
-                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType!.ToString());
             }
 
             var content = await response.Content.ReadAsStringAsync();

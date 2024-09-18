@@ -76,7 +76,7 @@ public class IntegrationTests
             }
         }
 
-        var expectedExportedSpans = new string[]
+        var expectedExportedSpans = new string?[]
             {
                 childActivitySamplingDecision == SamplingDecision.RecordAndSample ? ChildActivityName : null,
                 shimSamplingDecision == SamplingDecision.RecordAndSample ? ShimActivityName : null,

@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Metrics;
 
@@ -12,7 +13,7 @@ internal sealed class PrometheusCollectionManager
 
     private readonly PrometheusExporter exporter;
     private readonly int scrapeResponseCacheDurationMilliseconds;
-    private readonly Func<Batch<Metric>, ExportResult> onCollectRef;
+    private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
     private readonly HashSet<string> scopes;
     private int metricsCacheCount;
@@ -26,7 +27,7 @@ internal sealed class PrometheusCollectionManager
     private DateTime? previousOpenMetricsDataViewGeneratedAtUtc;
     private int readerCount;
     private bool collectionRunning;
-    private TaskCompletionSource<CollectionResponse> collectionTcs;
+    private TaskCompletionSource<CollectionResponse>? collectionTcs;
 
     public PrometheusCollectionManager(PrometheusExporter exporter)
     {
@@ -115,7 +116,7 @@ internal sealed class PrometheusCollectionManager
                 ? this.previousOpenMetricsDataViewGeneratedAtUtc
                 : this.previousPlainTextDataViewGeneratedAtUtc;
 
-            response = new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: false);
+            response = new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc!.Value, fromCache: false);
         }
         else
         {
@@ -188,14 +189,16 @@ internal sealed class PrometheusCollectionManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ExecuteCollect(bool openMetricsRequested)
     {
+        Debug.Assert(this.exporter.Collect != null, "this.exporter.Collect was null");
+
         this.exporter.OnExport = this.onCollectRef;
         this.exporter.OpenMetricsRequested = openMetricsRequested;
-        var result = this.exporter.Collect(Timeout.Infinite);
+        var result = this.exporter.Collect!(Timeout.Infinite);
         this.exporter.OnExport = null;
         return result;
     }
 
-    private ExportResult OnCollect(Batch<Metric> metrics)
+    private ExportResult OnCollect(in Batch<Metric> metrics)
     {
         var cursor = 0;
         ref byte[] buffer = ref (this.exporter.OpenMetricsRequested ? ref this.openMetricsBuffer : ref this.plainTextBuffer);

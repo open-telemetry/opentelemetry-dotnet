@@ -93,11 +93,11 @@ public static class PrometheusExporterApplicationBuilderExtensions
     /// cref="IApplicationBuilder"/> for chaining calls.</returns>
     public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(
         this IApplicationBuilder app,
-        MeterProvider meterProvider,
-        Func<HttpContext, bool> predicate,
-        string path,
-        Action<IApplicationBuilder> configureBranchedPipeline,
-        string optionsName)
+        MeterProvider? meterProvider,
+        Func<HttpContext, bool>? predicate,
+        string? path,
+        Action<IApplicationBuilder>? configureBranchedPipeline,
+        string? optionsName)
     {
         // Note: Order is important here. MeterProvider is accessed before
         // GetOptions<PrometheusAspNetCoreOptions> so that any changes made to

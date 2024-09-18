@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using OpenTelemetry.Metrics;
 
@@ -29,7 +31,7 @@ internal sealed class PrometheusMetric
         var sanitizedName = SanitizeMetricName(name);
         var openMetricsName = SanitizeOpenMetricsName(sanitizedName);
 
-        string sanitizedUnit = null;
+        string? sanitizedUnit = null;
         if (!string.IsNullOrEmpty(unit))
         {
             sanitizedUnit = GetUnit(unit);
@@ -80,7 +82,7 @@ internal sealed class PrometheusMetric
 
     public string OpenMetricsMetadataName { get; }
 
-    public string Unit { get; }
+    public string? Unit { get; }
 
     public PrometheusType Type { get; }
 
@@ -91,7 +93,7 @@ internal sealed class PrometheusMetric
 
     internal static string SanitizeMetricName(string metricName)
     {
-        StringBuilder sb = null;
+        StringBuilder? sb = null;
         var lastCharUnderscore = false;
 
         for (var i = 0; i < metricName.Length; i++)
@@ -134,7 +136,7 @@ internal sealed class PrometheusMetric
         // https://ucum.org/ucum#section-Character-Set-and-Lexical-Rules
         // What should happen if they are nested isn't defined.
         // Right now the remove annotations code doesn't attempt to balance multiple start and end braces.
-        StringBuilder sb = null;
+        StringBuilder? sb = null;
 
         var hasOpenBrace = false;
         var startOpenBraceIndex = 0;
@@ -168,7 +170,10 @@ internal sealed class PrometheusMetric
             return unit;
         }
 
-        sb.Append(unit, lastWriteIndex, unit.Length - lastWriteIndex);
+        Debug.Assert(sb != null, "sb was null");
+
+        sb!.Append(unit, lastWriteIndex, unit.Length - lastWriteIndex);
+
         return sb.ToString();
     }
 
@@ -204,7 +209,7 @@ internal sealed class PrometheusMetric
         return updatedUnit;
     }
 
-    private static bool TryProcessRateUnits(string updatedUnit, out string updatedPerUnit)
+    private static bool TryProcessRateUnits(string updatedUnit, [NotNullWhen(true)] out string? updatedPerUnit)
     {
         updatedPerUnit = null;
 
