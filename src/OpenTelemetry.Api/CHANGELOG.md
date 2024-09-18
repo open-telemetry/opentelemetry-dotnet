@@ -8,7 +8,8 @@ Notes](../../RELEASENOTES.md).
 
 * Obsoleted the `ActivityExtensions.RecordException`. Users should migrate to the
   `System.Diagnostics.Activity.AddException`
-  [Activity.AddException](https://learn.microsoft.com/pl-pl/dotnet/api/system.diagnostics.activity.addexception)
+  [Activity.AddException](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.addexception)
+  API for adding exception.
   ([#5841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5841))
 
 * **Breaking change:** CompositeTextMapPropagator.Fields now returns a
