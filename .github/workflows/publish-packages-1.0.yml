@@ -64,7 +64,7 @@ jobs:
           Get-ChildItem -Path $path -File | ForEach-Object {
             $fileFullPath = $_.FullName
             Write-Host "Signing $fileFullPath"
-            cosign.exe sign-blob $fileFullPath --yes --output-signature $fileFullPath-keyless.sig --output-certificates $fileFullPath-keyless.pem
+            cosign.exe sign-blob $fileFullPath --yes --output-signature $fileFullPath-keyless.sig --output-certificate $fileFullPath-keyless.pem
           }
         }
 
