@@ -23,6 +23,13 @@ jobs:
 
   build-pack-publish:
     runs-on: windows-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      COSIGN_YES: "yes"
 
     outputs:
       artifact-url: ${{ steps.upload-artifacts.outputs.artifact-url }}
