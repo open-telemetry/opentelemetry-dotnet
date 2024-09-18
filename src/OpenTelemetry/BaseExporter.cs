@@ -46,8 +46,9 @@ public abstract class BaseExporter<T> : IDisposable
     /// Exports a batch of telemetry objects.
     /// </summary>
     /// <param name="batch">Batch of telemetry objects to export.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the export.</param>
     /// <returns>Result of the export operation.</returns>
-    public virtual Task<ExportResult> ExportAsync(Batch<T> batch)
+    public virtual Task<ExportResult> ExportAsync(Batch<T> batch, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(this.Export(batch));
     }
