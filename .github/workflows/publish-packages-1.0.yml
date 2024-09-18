@@ -39,11 +39,34 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
 
+    - name: Install Cosign
+      uses: sigstore/cosign/install@v3.6.0
+      with:
+        cosign-release: v2.4.0
+
     - name: dotnet restore
       run: dotnet restore ./build/OpenTelemetry.proj -p:RunningDotNetPack=true
 
     - name: dotnet build
       run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
+
+    - name: Sign DLLs with Cosign Keyless
+      run: |
+        # Define an array of paths for signing.
+        $dllPaths = @(
+          '.\src\OpenTelemetry.Api\bin\Release\**\OpenTelemetry.Api.dll'
+          '.\src\OpenTelemetry\bin\Release\**\OpenTelemetry.dll'
+          '.\src\OpenTelemetry.Api.ProviderBuilderExtensions\bin\Release\**\OpenTelemetry.Api.ProviderBuilderExtensions.dll'
+        )
+
+        foreach ($path in $dllPaths) {
+          Write-Host "Processing path: $path"
+          Get-ChildItem -Path $path -Recurse -File | ForEach-Object {
+            $fileFullPath = $_.FullName
+            Write-Host "Signing $fileFullPath"
+            cosign.exe sign-blob $fileFullPath --yes --output-signature $fileFullPath-keyless.sig --output-certificates $fileFullPath-keyless.pem
+          }
+        }
 
     - name: dotnet pack
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || '' }}
