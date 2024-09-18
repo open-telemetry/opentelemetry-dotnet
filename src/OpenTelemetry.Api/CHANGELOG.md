@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 * Obsoleted the `ActivityExtensions.RecordException`. Users should migrate to the
   `System.Diagnostics.Activity.AddException`
   [Activity.AddException](https://learn.microsoft.com/pl-pl/dotnet/api/system.diagnostics.activity.addexception)
-  ([]())
+  ([#5841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5841))
 * 
 * **Breaking change:** CompositeTextMapPropagator.Fields now returns a
   unioned set of fields from all combined propagators. Previously this always
