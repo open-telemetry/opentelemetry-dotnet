@@ -3,8 +3,6 @@
     <Description>Unit test project for OpenTelemetry.Shims.OpenTracing</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <DefineConstants Condition="'$(RunningDotNetPack)' != 'true'">$(DefineConstants);BUILDING_USING_PROJECTS</DefineConstants>
-    <!-- this is temporary. will remove in future PR. -->
-    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
