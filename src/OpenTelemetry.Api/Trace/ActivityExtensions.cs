@@ -121,10 +121,10 @@ public static class ActivityExtensions
         }
 
         var tagsCollection = new ActivityTagsCollection
-    {
-        { SemanticConventions.AttributeExceptionType, ex.GetType().FullName },
-        { SemanticConventions.AttributeExceptionStacktrace, ex.ToInvariantString() },
-    };
+        {
+            { SemanticConventions.AttributeExceptionType, ex.GetType().FullName },
+            { SemanticConventions.AttributeExceptionStacktrace, ex.ToInvariantString() },
+        };
 
         if (!string.IsNullOrWhiteSpace(ex.Message))
         {
