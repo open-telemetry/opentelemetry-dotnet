@@ -94,6 +94,7 @@ csharp_style_unused_value_expression_statement_preference = discard_variable:non
 
 # Expression-bodied members
 csharp_style_expression_bodied_methods = true:suggestion
+dotnet_diagnostic.IDE0022.severity = suggestion # dotnet format doesn't respect the suggestion in the line above
 csharp_style_expression_bodied_constructors = false:warning
 csharp_style_expression_bodied_operators = true:suggestion
 csharp_style_expression_bodied_properties = true:suggestion
