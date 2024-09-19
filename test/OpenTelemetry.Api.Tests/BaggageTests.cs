@@ -209,7 +209,7 @@ public class BaggageTests
             ["key2"] = "value2",
             ["KEY2"] = "VALUE2",
             ["KEY3"] = "VALUE3",
-            ["Key3"] = null!,
+            ["Key3"] = null!, // Note: This causes Key3 to be removed
         });
 
         Assert.Equal(2, baggage.Count);
