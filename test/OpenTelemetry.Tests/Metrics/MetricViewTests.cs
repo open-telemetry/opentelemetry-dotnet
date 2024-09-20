@@ -571,6 +571,130 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
+    public void AdviceToProduceCustomHistogramBound()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+        IReadOnlyList<long> boundaries = new List<long>() { 10, 20 };
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var histogram = meter.CreateHistogram<long>(
+            "MyHistogram",
+            unit: null,
+            description: null,
+            tags: null,
+            new()
+            {
+                HistogramBucketBoundaries = boundaries,
+            });
+        histogram.Record(-10);
+        histogram.Record(0);
+        histogram.Record(1);
+        histogram.Record(9);
+        histogram.Record(10);
+        histogram.Record(11);
+        histogram.Record(19);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metricCustom = exportedItems[0];
+
+        Assert.Equal("MyHistogram", metricCustom.Name);
+
+        List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
+        foreach (ref readonly var mp in metricCustom.GetMetricPoints())
+        {
+            metricPointsCustom.Add(mp);
+        }
+
+        Assert.Single(metricPointsCustom);
+        var histogramPoint = metricPointsCustom[0];
+
+        var count = histogramPoint.GetHistogramCount();
+        var sum = histogramPoint.GetHistogramSum();
+
+        Assert.Equal(40, sum);
+        Assert.Equal(7, count);
+
+        var index = 0;
+        var actualCount = 0;
+        var expectedBucketCounts = new long[] { 5, 2, 0 };
+        foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+        {
+            Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+            index++;
+            actualCount++;
+        }
+
+        Assert.Equal(boundaries.Count + 1, actualCount);
+    }
+
+    [Fact]
+    public void ViewTakesPrecedenceOverAdviceToProduceCustomHistogramBound()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+        IReadOnlyList<long> adviceBoundaries = new List<long>() { 5, 10, 20 };
+        var viewBoundaries = new double[] { 10, 20 };
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = viewBoundaries })
+            .AddInMemoryExporter(exportedItems));
+
+        var histogram = meter.CreateHistogram<long>(
+            "MyHistogram",
+            unit: null,
+            description: null,
+            tags: null,
+            new()
+            {
+                HistogramBucketBoundaries = adviceBoundaries,
+            });
+        histogram.Record(-10);
+        histogram.Record(0);
+        histogram.Record(1);
+        histogram.Record(9);
+        histogram.Record(10);
+        histogram.Record(11);
+        histogram.Record(19);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metricCustom = exportedItems[0];
+
+        Assert.Equal("MyHistogram", metricCustom.Name);
+
+        List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
+        foreach (ref readonly var mp in metricCustom.GetMetricPoints())
+        {
+            metricPointsCustom.Add(mp);
+        }
+
+        Assert.Single(metricPointsCustom);
+        var histogramPoint = metricPointsCustom[0];
+
+        var count = histogramPoint.GetHistogramCount();
+        var sum = histogramPoint.GetHistogramSum();
+
+        Assert.Equal(40, sum);
+        Assert.Equal(7, count);
+
+        var index = 0;
+        var actualCount = 0;
+        var expectedBucketCounts = new long[] { 5, 2, 0 };
+        foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+        {
+            Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+            index++;
+            actualCount++;
+        }
+
+        Assert.Equal(viewBoundaries.Length + 1, actualCount);
+    }
+
+    [Fact]
     public void ViewToProduceExponentialHistogram()
     {
         var valuesToRecord = new[] { -10, 0, 1, 9, 10, 11, 19 };
