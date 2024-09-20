@@ -25,8 +25,9 @@ internal sealed class PrometheusExporterMiddleware
     public PrometheusExporterMiddleware(MeterProvider meterProvider, RequestDelegate next)
     {
         Guard.ThrowIfNull(meterProvider);
+        Guard.ThrowIfNull(next);
 
-        if (!meterProvider.TryFindExporter(out PrometheusExporter exporter))
+        if (!meterProvider.TryFindExporter(out PrometheusExporter? exporter))
         {
             throw new ArgumentException("A PrometheusExporter could not be found configured on the provided MeterProvider.");
         }
@@ -36,6 +37,8 @@ internal sealed class PrometheusExporterMiddleware
 
     internal PrometheusExporterMiddleware(PrometheusExporter exporter)
     {
+        Debug.Assert(exporter != null, "exporter was null");
+
         this.exporter = exporter;
     }
 
@@ -71,7 +74,7 @@ internal sealed class PrometheusExporterMiddleware
                         ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
                         : "text/plain; charset=utf-8; version=0.0.4";
 
-                    await response.Body.WriteAsync(dataView.Array, 0, dataView.Count).ConfigureAwait(false);
+                    await response.Body.WriteAsync(dataView.Array!, 0, dataView.Count).ConfigureAwait(false);
                 }
                 else
                 {
@@ -93,8 +96,6 @@ internal sealed class PrometheusExporterMiddleware
                 response.StatusCode = 500;
             }
         }
-
-        this.exporter.OnExport = null;
     }
 
     private static bool AcceptsOpenMetrics(HttpRequest request)

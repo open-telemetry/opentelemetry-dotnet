@@ -11,16 +11,16 @@ internal readonly struct ZipkinSpan
 {
     public ZipkinSpan(
         string traceId,
-        string parentId,
+        string? parentId,
         string id,
-        string kind,
+        string? kind,
         string name,
         long? timestamp,
         long? duration,
         ZipkinEndpoint localEndpoint,
-        ZipkinEndpoint remoteEndpoint,
+        ZipkinEndpoint? remoteEndpoint,
         in PooledList<ZipkinAnnotation> annotations,
-        in PooledList<KeyValuePair<string, object>> tags,
+        in PooledList<KeyValuePair<string, object?>> tags,
         bool? debug,
         bool? shared)
     {
@@ -44,11 +44,11 @@ internal readonly struct ZipkinSpan
 
     public string TraceId { get; }
 
-    public string ParentId { get; }
+    public string? ParentId { get; }
 
     public string Id { get; }
 
-    public string Kind { get; }
+    public string? Kind { get; }
 
     public string Name { get; }
 
@@ -58,11 +58,11 @@ internal readonly struct ZipkinSpan
 
     public ZipkinEndpoint LocalEndpoint { get; }
 
-    public ZipkinEndpoint RemoteEndpoint { get; }
+    public ZipkinEndpoint? RemoteEndpoint { get; }
 
     public PooledList<ZipkinAnnotation> Annotations { get; }
 
-    public PooledList<KeyValuePair<string, object>> Tags { get; }
+    public PooledList<KeyValuePair<string, object?>> Tags { get; }
 
     public bool? Debug { get; }
 
@@ -148,7 +148,7 @@ internal readonly struct ZipkinSpan
             writer.WriteEndArray();
         }
 
-        if (!this.Tags.IsEmpty || this.LocalEndpoint.Tags != null)
+        if (!this.Tags.IsEmpty || this.LocalEndpoint!.Tags != null)
         {
             writer.WritePropertyName(ZipkinSpanJsonHelper.TagsPropertyName);
             writer.WriteStartObject();
@@ -161,7 +161,7 @@ internal readonly struct ZipkinSpan
 
             try
             {
-                foreach (var tag in this.LocalEndpoint.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
+                foreach (var tag in this.LocalEndpoint!.Tags! ?? Enumerable.Empty<KeyValuePair<string, object?>>())
                 {
                     ZipkinTagWriter.Instance.TryWriteTag(ref writer, tag);
                 }

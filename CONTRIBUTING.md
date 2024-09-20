@@ -44,7 +44,7 @@ You can contribute to this project from a Windows, macOS or Linux machine.
 On all platforms, the minimum requirements are:
 
 * Git client and command line tools.
-* .NET 8.0
+* .NET 9.0
 
 ### Linux or MacOS
 
@@ -59,33 +59,88 @@ of Windows.
 * Visual Studio 2022+ or Visual Studio Code
 * .NET Framework 4.6.2+
 
-### Public API
+### Public API Validation
 
-It is critical to keep public API surface small and clean. This repository is
-using `Microsoft.CodeAnalysis.PublicApiAnalyzers` to validate the public APIs.
-This analyzer will check if you changed a public property/method so the change
-will be easily spotted in pull request. It will also ensure that OpenTelemetry
-doesn't expose APIs outside of the library primary concerns like a generic
-helper methods.
+It is critical to **NOT** make breaking changes to public APIs which have been
+released in stable builds. We also strive to keep a minimal public API surface.
+This repository is using
+[Microsoft.CodeAnalysis.PublicApiAnalyzers](https://github.com/dotnet/roslyn-analyzers/blob/main/src/PublicApiAnalyzers/PublicApiAnalyzers.Help.md)
+and [Package
+validation](https://learn.microsoft.com/dotnet/fundamentals/apicompat/package-validation/overview)
+to validate public APIs.
 
-#### How to enable and configure
+* `Microsoft.CodeAnalysis.PublicApiAnalyzers` will validate public API
+  changes/additions against a set of "public API files" which capture the
+  shipped/unshipped public APIs. These files must be maintained manually (not
+  recommended) or by using tooling/code fixes built into the package (see below
+  for details).
 
-* Create a folder in your project called `.publicApi` with the frameworks that
-  as folders you target.
-* Create two files called `PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt`
-   in each framework that you target.
-* Add the following lines to your csproj:
+  Public API files are also used to perform public API reviews by repo
+  approvers/maintainers before releasing stable builds.
 
-```xml
-<ItemGroup>
-  <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
-  <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
-</ItemGroup>
-```
+* `Package validation` will validate public API changes/additions against
+  previously released NuGet packages.
 
-* Use
-   [IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)
-   to update the publicApi files.
+  This is performed automatically by the build/CI
+  [package-validation](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/workflows/package-validation.yml)
+  workflow.
+
+  By default package validation is **NOT** run for local builds. To enable
+  package validation in local builds set the `EnablePackageValidation` property
+  to `true` in
+  [Common.prod.props](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/build/Common.prod.props)
+  (please do not check in this change).
+
+#### Working with Microsoft.CodeAnalysis.PublicApiAnalyzers
+
+##### Update public API files when writing code
+
+[IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)
+will [suggest
+modifications](https://github.com/dotnet/roslyn-analyzers/issues/3322#issuecomment-591031429)
+to the `PublicAPI.Unshipped.txt` file when you make changes. After reviewing
+these changes, ensure they are reflected across all targeted frameworks. You can
+do this by:
+
+* Using the "Fix all occurrences in Project" feature in Visual Studio.
+
+* Manually cycling through each framework using Visual Studio's target framework
+  dropdown (in the upper right corner) and applying the IntelliSense
+  suggestions.
+
+> [!IMPORTANT]
+> Do **NOT** modify `PublicAPI.Shipped.txt` files. New features and bug fixes
+  **SHOULD** only require changes to `PublicAPI.Unshipped.txt` files. If you
+  have to modify a "shipped" file it likely means you made a mistake and broke a
+  stable API. Typically only maintainers modify the `PublicAPI.Shipped.txt` file
+  while performing stable releases. If you need help reach out to an approver or
+  maintainer on Slack or open a draft PR.
+
+##### Enable public API validation in new projects
+
+1. If you are **NOT** using experimental APIs:
+   * If your API is the same across all target frameworks:
+     * You only need two files: `.publicApi/PublicAPI.Shipped.txt` and
+       `.publicApi/PublicAPI.Unshipped.txt`.
+   * If your APIs differ between target frameworks:
+     * Place the shared APIs in `.publicApi/PublicAPI.Shipped.txt` and
+       `.publicApi/PublicAPI.Unshipped.txt`.
+     * Create framework-specific files for API differences (e.g.,
+       `.publicApi/net462/PublicAPI.Shipped.txt` and
+       `.publicApi/net462/PublicAPI.Unshipped.txt`).
+
+2. If you are using experimental APIs:
+   * Follow the rules above, but create an additional layer in your folder
+     structure:
+     * For stable APIs: `.publicApi/Stable/*`.
+     * For experimental APIs: `.publicApi/Experimental/*`.
+   * The `Experimental` folder should contain APIs that are public only in
+     pre-release builds. Typically the `Experimental` folder only contains
+     `PublicAPI.Unshipped.txt` files as experimental APIs are never shipped
+     stable.
+
+    Example folder structure can be found
+    [here](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api/.publicApi).
 
 ## Pull Requests
 

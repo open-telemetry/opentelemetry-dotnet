@@ -21,7 +21,7 @@ public class W3CTraceContextTests : IDisposable
         opentelemetry>docker compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
      */
     private const string W3cTraceContextEnvVarName = "OTEL_W3CTRACECONTEXT";
-    private static readonly Version AspNetCoreHostingVersion = typeof(Microsoft.AspNetCore.Hosting.Builder.IApplicationBuilderFactory).Assembly.GetName().Version;
+    private static readonly Version? AspNetCoreHostingVersion = typeof(Microsoft.AspNetCore.Hosting.Builder.IApplicationBuilderFactory).Assembly.GetName().Version;
     private readonly HttpClient httpClient = new();
     private readonly ITestOutputHelper output;
 
@@ -84,7 +84,7 @@ public class W3CTraceContextTests : IDisposable
         // run the tests with console logger (done automatically by the CI
         // jobs).
 
-        if (AspNetCoreHostingVersion.Major <= 6)
+        if (AspNetCoreHostingVersion!.Major <= 6)
         {
             Assert.StartsWith("FAILED (failures=3)", lastLine);
         }
@@ -137,9 +137,9 @@ public class W3CTraceContextTests : IDisposable
     public class Data
     {
         [JsonPropertyName("url")]
-        public string Url { get; set; }
+        public string? Url { get; set; }
 
         [JsonPropertyName("arguments")]
-        public Data[] Arguments { get; set; }
+        public Data[]? Arguments { get; set; }
     }
 }

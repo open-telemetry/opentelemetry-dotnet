@@ -124,7 +124,9 @@ public class SelfDiagnosticsEventListenerTest
 
         using FileStream file = File.Open(LOGFILEPATH, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         var buffer = new byte[256];
-        file.Read(buffer, 0, buffer.Length);
+
+        // Suppress CA2022 error: Avoid inexact read with 'System.IO.FileStream.Read(byte[], int, int)'
+        _ = file.Read(buffer, 0, buffer.Length);
         Assert.Equal('\0', (char)buffer[0]);
     }
 
@@ -256,7 +258,9 @@ public class SelfDiagnosticsEventListenerTest
     {
         using FileStream file = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         var buffer = new byte[256];
-        file.Read(buffer, 0, buffer.Length);
+
+        // Suppress CA2022 error: Avoid inexact read with 'System.IO.FileStream.Read(byte[], int, int)'
+        _ = file.Read(buffer, 0, buffer.Length);
         string logLine = Encoding.UTF8.GetString(buffer);
         string logMessage = ParseLogMessage(logLine);
         Assert.StartsWith(eventMessage, logMessage);

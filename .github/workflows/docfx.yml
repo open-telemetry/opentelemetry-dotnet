@@ -13,6 +13,9 @@ jobs:
     - name: check out code
       uses: actions/checkout@v4
 
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v4
+
     - name: install docfx
       run: dotnet tool install -g docfx
 
