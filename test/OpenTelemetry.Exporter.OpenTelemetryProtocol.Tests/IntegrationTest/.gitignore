@@ -5,3 +5,5 @@ otel-client.crt
 otel-client.key
 otel-untrusted-collector.crt
 otel-untrusted-collector.key
+certs/*
+certs

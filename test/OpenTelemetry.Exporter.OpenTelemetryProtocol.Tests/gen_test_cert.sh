@@ -1,10 +1,19 @@
-# ca
-openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
-    -subj "/CN=otel-test-ca" \
-    -keyout $1/otel-test-ca-key.pem  -out $1/otel-test-ca-cert.pem
+#!/bin/bash
 
-# server cert
-echo "\
+# Set output directory, default is the current directory
+OUT_DIR=${1:-"."}
+
+# Create output directory if it doesn't exist
+mkdir -p "$OUT_DIR"
+
+# Generate CA certificate (Certificate Authority)
+openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \
+    -subj "/CN=otel-test-ca" \
+    -keyout "$OUT_DIR/otel-test-ca-key.pem" -out "$OUT_DIR/otel-test-ca-cert.pem"
+
+# Create the extension configuration file for the server certificate
+cat > "$OUT_DIR/server_cert_ext.cnf" <<EOF
+[ v3_ca ]
 basicConstraints = CA:FALSE
 nsCertType = server
 nsComment = "OpenSSL Generated Server Certificate"
@@ -12,20 +21,27 @@ subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid,issuer:always
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
 extendedKeyUsage = serverAuth
-" > $1/server_cert_ext.cnf;
+subjectAltName = @alt_names
 
-openssl req -new -newkey rsa:2048 -sha256 \
-    -keyout $1/otel-test-server-key.pem -out $1/otel-test-server-csr.pem -nodes \
-    -subj "/CN=otel-test-server"
+[ alt_names ]
+DNS.1 = otel-collector
+EOF
 
-openssl x509 -req -in $1/otel-test-server-csr.pem \
-    -extfile $1/server_cert_ext.cnf \
-    -CA $1/otel-test-ca-cert.pem -CAkey $1/otel-test-ca-key.pem -CAcreateserial \
-    -out $1/otel-test-server-cert.pem \
+# Generate server certificate private key and CSR (Certificate Signing Request)
+openssl req -new -newkey rsa:2048 -sha256 -nodes \
+    -keyout "$OUT_DIR/otel-test-server-key.pem" -out "$OUT_DIR/otel-test-server-csr.pem" \
+    -subj "/CN=otel-collector"
+
+# Sign the server certificate using the CA certificate
+openssl x509 -req -in "$OUT_DIR/otel-test-server-csr.pem" \
+    -extfile "$OUT_DIR/server_cert_ext.cnf" -extensions v3_ca \
+    -CA "$OUT_DIR/otel-test-ca-cert.pem" -CAkey "$OUT_DIR/otel-test-ca-key.pem" -CAcreateserial \
+    -out "$OUT_DIR/otel-test-server-cert.pem" \
     -days 3650 -sha256
 
-# client cert
-echo "\
+# Create the extension configuration file for the client certificate
+cat > "$OUT_DIR/client_cert_ext.cnf" <<EOF
+[ v3_client ]
 basicConstraints = CA:FALSE
 nsCertType = client, email
 nsComment = "OpenSSL Generated Client Certificate"
@@ -33,18 +49,21 @@ subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid,issuer
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
 extendedKeyUsage = clientAuth, emailProtection
-" > $1/client_cert_ext.cnf;
+EOF
 
-openssl req -new -newkey rsa:2048 -sha256 \
-    -keyout $1/otel-test-client-key.pem -out $1/otel-test-client-csr.pem -nodes \
+# Generate client certificate private key and CSR
+openssl req -new -newkey rsa:2048 -sha256 -nodes \
+    -keyout "$OUT_DIR/otel-test-client-key.pem" -out "$OUT_DIR/otel-test-client-csr.pem" \
     -subj "/CN=otel-test-client"
 
-openssl x509 -req -in $1/otel-test-client-csr.pem \
-    -extfile $1/client_cert_ext.cnf \
-    -CA $1/otel-test-server-cert.pem -CAkey $1/otel-test-server-key.pem -CAcreateserial \
-    -out $1/otel-test-client-cert.pem \
+# Sign the client certificate using the CA certificate
+openssl x509 -req -in "$OUT_DIR/otel-test-client-csr.pem" \
+    -extfile "$OUT_DIR/client_cert_ext.cnf" -extensions v3_client \
+    -CA "$OUT_DIR/otel-test-ca-cert.pem" -CAkey "$OUT_DIR/otel-test-ca-key.pem" -CAcreateserial \
+    -out "$OUT_DIR/otel-test-client-cert.pem" \
     -days 3650 -sha256
 
+# Generate an untrusted self-signed certificate (not signed by the CA)
 openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
     -subj "/CN=otel-untrusted-collector" \
-    -keyout $1/otel-untrusted-collector-key.pem  -out $1/otel-untrusted-collector-cert.pem
+    -keyout "$OUT_DIR/otel-untrusted-collector-key.pem" -out "$OUT_DIR/otel-untrusted-collector-cert.pem"

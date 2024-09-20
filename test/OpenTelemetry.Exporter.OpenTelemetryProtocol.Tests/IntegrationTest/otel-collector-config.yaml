@@ -16,39 +16,39 @@ receivers:
       grpc:
         endpoint: 0.0.0.0:5317
         tls:
-          cert_file: /obj/Debug/otel-test-server-cert.pem
-          key_file: /obj/Debug/otel-test-server-key.pem
+          cert_file: /cfg/certs/otel-test-server-cert.pem
+          key_file: /cfg/certs/otel-test-server-key.pem
       http:
         endpoint: 0.0.0.0:5318
         tls:
-          cert_file: /obj/Debug/otel-test-server-cert.pem
-          key_file: /obj/Debug/otel-test-server-key.pem
+          cert_file: /cfg/certs/otel-test-server-cert.pem
+          key_file: /cfg/certs/otel-test-server-key.pem
   otlp/untrustedtls:
     protocols:
       grpc:
         endpoint: 0.0.0.0:6317
         tls:
-          cert_file: /obj/Debug/otel-untrusted-collector-cert.pem
-          key_file: /obj/Debug/otel-untrusted-collector-key.pem
+          cert_file: /cfg/certs/otel-untrusted-collector-cert.pem
+          key_file: /cfg/certs/otel-untrusted-collector-key.pem
       http:
         endpoint: 0.0.0.0:6318
         tls:
-          cert_file: /obj/Debug/otel-untrusted-collector-cert.pem
-          key_file: /obj/Debug/otel-untrusted-collector-key.pem
+          cert_file: /cfg/certs/otel-untrusted-collector-cert.pem
+          key_file: /cfg/certs/otel-untrusted-collector-key.pem
   otlp/mtls:
     protocols:
       grpc:
         endpoint: 0.0.0.0:7317
         tls:
-          cert_file: /obj/Debug/otel-test-server-cert.pem
-          key_file: /obj/Debug/otel-test-server-key.pem
-          client_ca_file: /obj/Debug/otel-test-ca-cert.pem
+          cert_file: /cfg/certs/otel-test-server-cert.pem
+          key_file: /cfg/certs/otel-test-server-key.pem
+          client_ca_file: /cfg/certs/otel-test-ca-cert.pem
       http:
         endpoint: 0.0.0.0:7318
         tls:
-          cert_file: /obj/Debug/otel-test-server-cert.pem
-          key_file: /obj/Debug/otel-test-server-key.pem
-          client_ca_file: /obj/Debug/otel-test-ca-cert.pem
+          cert_file: /cfg/certs/otel-test-server-cert.pem
+          key_file: /cfg/certs/otel-test-server-key.pem
+          client_ca_file: /cfg/certs/otel-test-ca-cert.pem
 
 exporters:
   debug:

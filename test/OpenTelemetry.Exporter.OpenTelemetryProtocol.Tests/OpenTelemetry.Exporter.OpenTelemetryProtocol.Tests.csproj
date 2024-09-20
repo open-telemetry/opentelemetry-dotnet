@@ -20,7 +20,7 @@
       <TestCertificates Include="$(IntermediateOutputPath)*.pem"/>
     </ItemGroup>
 
-    <Copy SourceFiles="@(TestCertificates)" DestinationFolder="$(OutputPath)\%(RecursiveDir)"/>
+    <Copy SourceFiles="@(TestCertificates)" DestinationFolder="IntegrationTest/certs/%(RecursiveDir)"/>
   </Target>
 
   <ItemGroup>
