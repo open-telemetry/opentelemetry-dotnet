@@ -12,6 +12,11 @@ Notes](../../RELEASENOTES.md).
   `IOpenTelemetryBuilder`.
   ([#5325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5325))
 
+* Updated the `Microsoft.Extensions.Logging.Configuration` and
+  `Microsoft.Extensions.Diagnostics.Abstractions` packages version to
+  `9.0.0-rc.1.24431.7`.
+  ([#](https://github.com/open-telemetry/opentelemetry-dotnet/pull/))
+
 ## 1.9.0
 
 Released 2024-Jun-14

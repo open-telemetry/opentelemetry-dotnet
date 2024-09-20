@@ -4,6 +4,15 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## Unreleased
+
+* Added `net9.0` targets to all the components.
+
+* Removed `net6.0` targets from all the components.
+
+* Bumped the package versions of `System.Diagnostic.DiagnosticSource` and other
+  `Microsoft.Extensions.*` packages to `9.0.0-rc.1.24431.7`.
+
 ## 1.9.0
 
 * `Exemplars` are now part of the stable API! For details see: [customizing

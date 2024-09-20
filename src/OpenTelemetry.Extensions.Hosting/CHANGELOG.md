@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Updated `Microsoft.Extensions.Hosting.Abstractions` package
+  version to `9.0.0-rc.1.24431.7`.
+  ([#](https://github.com/open-telemetry/opentelemetry-dotnet/pull/))
+
 ## 1.9.0
 
 Released 2024-Jun-14
