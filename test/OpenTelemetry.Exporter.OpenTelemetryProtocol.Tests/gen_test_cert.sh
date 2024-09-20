@@ -13,7 +13,7 @@ openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \
 
 # Create the extension configuration file for the server certificate
 cat > "$OUT_DIR/server_cert_ext.cnf" <<EOF
-[ v3_ca ]
+[ v3_req ]
 basicConstraints = CA:FALSE
 nsCertType = server
 nsComment = "OpenSSL Generated Server Certificate"
@@ -34,7 +34,7 @@ openssl req -new -newkey rsa:2048 -sha256 -nodes \
 
 # Sign the server certificate using the CA certificate
 openssl x509 -req -in "$OUT_DIR/otel-test-server-csr.pem" \
-    -extfile "$OUT_DIR/server_cert_ext.cnf" -extensions v3_ca \
+    -extfile "$OUT_DIR/server_cert_ext.cnf" -extensions v3_req \
     -CA "$OUT_DIR/otel-test-ca-cert.pem" -CAkey "$OUT_DIR/otel-test-ca-key.pem" -CAcreateserial \
     -out "$OUT_DIR/otel-test-server-cert.pem" \
     -days 3650 -sha256
