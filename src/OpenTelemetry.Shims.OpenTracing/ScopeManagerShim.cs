@@ -19,7 +19,7 @@ internal sealed class ScopeManagerShim : IScopeManager
 #endif
 
     /// <inheritdoc/>
-    public IScope Active
+    public IScope? Active
     {
         get
         {
@@ -56,7 +56,7 @@ internal sealed class ScopeManagerShim : IScopeManager
                     Interlocked.Decrement(ref this.spanScopeTableCount);
                 }
 #endif
-                scope.Dispose();
+                scope!.Dispose();
             });
 
         SpanScopeTable.Add(shim.Span, instrumentation);
@@ -69,9 +69,9 @@ internal sealed class ScopeManagerShim : IScopeManager
 
     private sealed class ScopeInstrumentation : IScope
     {
-        private readonly Action disposeAction;
+        private readonly Action? disposeAction;
 
-        public ScopeInstrumentation(TelemetrySpan span, Action disposeAction = null)
+        public ScopeInstrumentation(TelemetrySpan span, Action? disposeAction = null)
         {
             this.Span = new SpanShim(span);
             this.disposeAction = disposeAction;

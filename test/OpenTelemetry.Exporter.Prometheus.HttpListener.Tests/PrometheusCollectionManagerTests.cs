@@ -31,7 +31,7 @@ public sealed class PrometheusCollectionManagerTests
 #endif
             .Build())
         {
-            if (!provider.TryFindExporter(out PrometheusExporter exporter))
+            if (!provider.TryFindExporter(out PrometheusExporter? exporter))
             {
                 throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
             }
@@ -40,7 +40,7 @@ public sealed class PrometheusCollectionManagerTests
             var collectFunc = exporter.Collect;
             exporter.Collect = (timeout) =>
             {
-                bool result = collectFunc(timeout);
+                bool result = collectFunc!(timeout);
                 runningCollectCount++;
                 Thread.Sleep(5000);
                 return result;
@@ -156,6 +156,6 @@ public sealed class PrometheusCollectionManagerTests
     {
         public PrometheusCollectionManager.CollectionResponse CollectionResponse;
 
-        public byte[] ViewPayload;
+        public byte[]? ViewPayload;
     }
 }

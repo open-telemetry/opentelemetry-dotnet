@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Context;
 using OpenTelemetry.Internal;
@@ -87,7 +89,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </summary>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
     /// <returns><see cref="Baggage"/>.</returns>
-    public static Baggage Create(Dictionary<string, string> baggageItems = null)
+    public static Baggage Create(Dictionary<string, string>? baggageItems = null)
     {
         if (baggageItems == null)
         {
@@ -133,7 +135,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
-    public static string GetBaggage(string name, Baggage baggage = default)
+    public static string? GetBaggage(string name, Baggage baggage = default)
         => baggage == default ? Current.GetBaggage(name) : baggage.GetBaggage(name);
 
     /// <summary>
@@ -145,7 +147,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
-    public static Baggage SetBaggage(string name, string value, Baggage baggage = default)
+    public static Baggage SetBaggage(string name, string? value, Baggage baggage = default)
     {
         var baggageHolder = EnsureBaggageHolder();
         lock (baggageHolder)
@@ -164,7 +166,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>New <see cref="Baggage"/> containing the new key/value pairs.</returns>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
-    public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string>> baggageItems, Baggage baggage = default)
+    public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems, Baggage baggage = default)
     {
         var baggageHolder = EnsureBaggageHolder();
         lock (baggageHolder)
@@ -222,11 +224,11 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </summary>
     /// <param name="name">Baggage item name.</param>
     /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
-    public string GetBaggage(string name)
+    public string? GetBaggage(string name)
     {
         Guard.ThrowIfNullOrEmpty(name);
 
-        return this.baggage != null && this.baggage.TryGetValue(name, out string value)
+        return this.baggage != null && this.baggage.TryGetValue(name, out string? value)
             ? value
             : null;
     }
@@ -237,7 +239,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <param name="name">Baggage item name.</param>
     /// <param name="value">Baggage item value.</param>
     /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
-    public Baggage SetBaggage(string name, string value)
+    public Baggage SetBaggage(string name, string? value)
     {
         if (string.IsNullOrEmpty(value))
         {
@@ -247,7 +249,7 @@ public readonly struct Baggage : IEquatable<Baggage>
         return new Baggage(
             new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase)
             {
-                [name] = value,
+                [name] = value!,
             });
     }
 
@@ -256,15 +258,15 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </summary>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
     /// <returns>New <see cref="Baggage"/> containing the key/value pairs.</returns>
-    public Baggage SetBaggage(params KeyValuePair<string, string>[] baggageItems)
-        => this.SetBaggage((IEnumerable<KeyValuePair<string, string>>)baggageItems);
+    public Baggage SetBaggage(params KeyValuePair<string, string?>[] baggageItems)
+        => this.SetBaggage((IEnumerable<KeyValuePair<string, string?>>)baggageItems);
 
     /// <summary>
     /// Returns a new <see cref="Baggage"/> which contains the new key/value pairs.
     /// </summary>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
     /// <returns>New <see cref="Baggage"/> containing the key/value pairs.</returns>
-    public Baggage SetBaggage(IEnumerable<KeyValuePair<string, string>> baggageItems)
+    public Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems)
     {
         if (baggageItems?.Any() != true)
         {
@@ -281,7 +283,7 @@ public readonly struct Baggage : IEquatable<Baggage>
             }
             else
             {
-                newBaggage[item.Key] = item.Value;
+                newBaggage[item.Key] = item.Value!;
             }
         }
 
@@ -325,11 +327,11 @@ public readonly struct Baggage : IEquatable<Baggage>
             return false;
         }
 
-        return baggageIsNullOrEmpty || this.baggage.SequenceEqual(other.baggage);
+        return baggageIsNullOrEmpty || this.baggage!.SequenceEqual(other.baggage!);
     }
 
     /// <inheritdoc/>
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
         => (obj is Baggage baggage) && this.Equals(baggage);
 
     /// <inheritdoc/>
