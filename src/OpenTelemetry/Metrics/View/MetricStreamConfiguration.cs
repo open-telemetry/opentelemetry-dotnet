@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using OpenTelemetry.Internal;
@@ -116,7 +116,7 @@ public class MetricStreamConfiguration
     /// If not set the default
     /// MeterProvider cardinality limit of 2000 will apply.
     /// </remarks>
-#if NET8_0_OR_GREATER
+#if NET
     [Experimental(DiagnosticDefinitions.CardinalityLimitExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     public
@@ -151,7 +151,7 @@ public class MetricStreamConfiguration
     /// Specification: <see
     /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#stream-configuration"/>.
     /// </remarks>
-#if NET8_0_OR_GREATER
+#if NET
     [Experimental(DiagnosticDefinitions.ExemplarReservoirExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     public Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
