@@ -31,6 +31,10 @@ Notes](../../RELEASENOTES.md).
   APIs for reading the status of an `Activity` instance.
   ([#5781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5781))
 
+* Updated `System.Diagnostics.DiagnosticSource` package version to
+  `9.0.0-rc.1.24431.7`.
+  ([#5853](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5853))
+
 ## 1.9.0
 
 Released 2024-Jun-14
