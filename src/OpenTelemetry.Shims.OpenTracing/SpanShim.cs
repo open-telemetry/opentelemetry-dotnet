@@ -39,7 +39,7 @@ internal sealed class SpanShim : ISpan
     /// <inheritdoc/>
     public ISpanContext Context => this.spanContextShim;
 
-    public TelemetrySpan Span { get; private set; }
+    public TelemetrySpan Span { get; }
 
     /// <inheritdoc/>
     public void Finish()
@@ -54,7 +54,7 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public string GetBaggageItem(string key)
+    public string? GetBaggageItem(string key)
         => Baggage.GetBaggage(key);
 
     /// <inheritdoc/>
@@ -137,7 +137,7 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetBaggageItem(string key, string value)
+    public ISpan SetBaggageItem(string key, string? value)
     {
         Baggage.SetBaggage(key, value);
         return this;
@@ -153,7 +153,7 @@ internal sealed class SpanShim : ISpan
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(string key, string value)
+    public ISpan SetTag(string key, string? value)
     {
         Guard.ThrowIfNull(key);
 
@@ -201,30 +201,38 @@ internal sealed class SpanShim : ISpan
     /// <inheritdoc/>
     public ISpan SetTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
     {
-        return this.SetTag(tag?.Key, value);
+        Guard.ThrowIfNull(tag);
+
+        return this.SetTag(tag.Key, value);
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
+    public ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag tag, string? value)
     {
-        if (int.TryParse(value, out var result))
+        Guard.ThrowIfNull(tag);
+
+        if (value != null && int.TryParse(value, out var result))
         {
-            return this.SetTag(tag?.Key, result);
+            return this.SetTag(tag.Key, result);
         }
 
-        return this.SetTag(tag?.Key, value);
+        return this.SetTag(tag.Key, value);
     }
 
     /// <inheritdoc/>
     public ISpan SetTag(global::OpenTracing.Tag.IntTag tag, int value)
     {
-        return this.SetTag(tag?.Key, value);
+        Guard.ThrowIfNull(tag);
+
+        return this.SetTag(tag.Key, value);
     }
 
     /// <inheritdoc/>
-    public ISpan SetTag(global::OpenTracing.Tag.StringTag tag, string value)
+    public ISpan SetTag(global::OpenTracing.Tag.StringTag tag, string? value)
     {
-        return this.SetTag(tag?.Key, value);
+        Guard.ThrowIfNull(tag);
+
+        return this.SetTag(tag.Key, value);
     }
 
     /// <summary>
@@ -234,7 +242,7 @@ internal sealed class SpanShim : ISpan
     /// <returns>A 2-Tuple containing the event name and payload information.</returns>
     private static Tuple<string, IDictionary<string, object>> ConvertToEventPayload(IEnumerable<KeyValuePair<string, object>> fields)
     {
-        string eventName = null;
+        string? eventName = null;
         var attributes = new Dictionary<string, object>();
 
         foreach (var field in fields)
@@ -268,7 +276,7 @@ internal sealed class SpanShim : ISpan
             else
             {
                 // TODO should we completely ignore unsupported types?
-                attributes.Add(field.Key, field.Value.ToString());
+                attributes.Add(field.Key, field.Value.ToString()!);
             }
         }
 

@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an issue causing all tag values added via the `ISpanBuilder` API to be
+  converted to strings on the `ISpan` started from the builder.
+  ([#5797](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5797))
+
 ## 1.9.0-beta.2
 
 Released 2024-Jun-24
