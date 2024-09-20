@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
+#if EXPOSE_EXPERIMENTAL_FEATURES && NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Runtime.CompilerServices;
@@ -355,7 +355,7 @@ public sealed class LogRecord
     /// known at the source.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
-#if NET8_0_OR_GREATER
+#if NET
     [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     public
@@ -377,7 +377,7 @@ public sealed class LogRecord
     /// Gets or sets the log <see cref="LogRecordSeverity"/>.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
-#if NET8_0_OR_GREATER
+#if NET
     [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     public
@@ -405,7 +405,7 @@ public sealed class LogRecord
     /// typically the <see cref="Logs.Logger"/> which emitted the <see
     /// cref="LogRecord"/> however the value may be different if <see
     /// cref="CategoryName"/> is modified.</remarks>
-#if NET8_0_OR_GREATER
+#if NET
     [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
     public Logger Logger { get; internal set; } = InstrumentationScopeLogger.Default;
