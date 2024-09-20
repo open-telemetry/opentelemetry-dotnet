@@ -111,7 +111,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ net6.0, net8.0 ]
+        version: [ net8.0, net9.0 ]
     steps:
       - uses: actions/checkout@v4
       - name: Run OTLP Exporter docker compose
@@ -129,7 +129,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ net6.0, net8.0 ]
+        version: [ net8.0, net9.0 ]
     steps:
       - uses: actions/checkout@v4
       - name: Run W3C Trace Context docker compose
