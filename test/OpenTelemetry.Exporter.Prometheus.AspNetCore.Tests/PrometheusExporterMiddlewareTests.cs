@@ -249,16 +249,83 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
-    public async Task PrometheusExporterMiddlewareIntegration_CanServeOpenMetricsAndPlainFormats()
+    public Task PrometheusExporterMiddlewareIntegration_TextPlainResponse_WithMeterTags()
     {
-        using var host = await StartTestHostAsync(
-            app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
-
         var meterTags = new KeyValuePair<string, object?>[]
         {
             new("meterKey1", "value1"),
             new("meterKey2", "value2"),
         };
+
+        return RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            acceptHeader: "text/plain",
+            meterTags: meterTags);
+    }
+
+    [Fact]
+    public Task PrometheusExporterMiddlewareIntegration_UseOpenMetricsVersionHeader_WithMeterTags()
+    {
+        var meterTags = new KeyValuePair<string, object?>[]
+        {
+            new("meterKey1", "value1"),
+            new("meterKey2", "value2"),
+        };
+
+        return RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            acceptHeader: "application/openmetrics-text; version=1.0.0",
+            meterTags: meterTags);
+    }
+
+    [Fact]
+    public async Task PrometheusExporterMiddlewareIntegration_CanServeOpenMetricsAndPlainFormats_NoMeterTags()
+    {
+        await RunPrometheusExporterMiddlewareIntegrationTestWithBothFormats();
+    }
+
+    [Fact]
+    public async Task PrometheusExporterMiddlewareIntegration_CanServeOpenMetricsAndPlainFormats_WithMeterTags()
+    {
+        var meterTags = new KeyValuePair<string, object?>[]
+        {
+            new("meterKey1", "value1"),
+            new("meterKey2", "value2"),
+        };
+
+        await RunPrometheusExporterMiddlewareIntegrationTestWithBothFormats(meterTags);
+    }
+
+    [Fact]
+    public async Task PrometheusExporterMiddlewareIntegration_TestBufferSizeIncrease_With_LotOfMetrics()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        for (var x = 0; x < 1000; x++)
+        {
+            var counter = meter.CreateCounter<double>("counter_double_" + x, unit: "By");
+            counter.Add(1);
+        }
+
+        using var client = host.GetTestClient();
+
+        using var response = await client.GetAsync("/metrics");
+        var text = await response.Content.ReadAsStringAsync();
+
+        Assert.NotEmpty(text);
+
+        await host.StopAsync();
+    }
+
+    private static async Task RunPrometheusExporterMiddlewareIntegrationTestWithBothFormats(KeyValuePair<string, object?>[]? meterTags = null)
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
 
         var counterTags = new KeyValuePair<string, object?>[]
         {
@@ -288,32 +355,8 @@ public sealed class PrometheusExporterMiddlewareTests
             };
             using var response = await client.SendAsync(request);
             var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            await VerifyAsync(beginTimestamp, endTimestamp, response, testCase);
+            await VerifyAsync(beginTimestamp, endTimestamp, response, testCase, meterTags);
         }
-
-        await host.StopAsync();
-    }
-
-    [Fact]
-    public async Task PrometheusExporterMiddlewareIntegration_TestBufferSizeIncrease_With_LotOfMetrics()
-    {
-        using var host = await StartTestHostAsync(
-            app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
-
-        using var meter = new Meter(MeterName, MeterVersion);
-
-        for (var x = 0; x < 1000; x++)
-        {
-            var counter = meter.CreateCounter<double>("counter_double_" + x, unit: "By");
-            counter.Add(1);
-        }
-
-        using var client = host.GetTestClient();
-
-        using var response = await client.GetAsync("/metrics");
-        var text = await response.Content.ReadAsStringAsync();
-
-        Assert.NotEmpty(text);
 
         await host.StopAsync();
     }
@@ -326,17 +369,12 @@ public sealed class PrometheusExporterMiddlewareTests
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions>? configureOptions = null,
         bool skipMetrics = false,
-        string acceptHeader = "application/openmetrics-text")
+        string acceptHeader = "application/openmetrics-text",
+        KeyValuePair<string, object?>[]? meterTags = null)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
 
         using var host = await StartTestHostAsync(configure, configureServices, registerMeterProvider, configureOptions);
-
-        var meterTags = new KeyValuePair<string, object?>[]
-        {
-            new("meterKey1", "value1"),
-            new("meterKey2", "value2"),
-        };
 
         var counterTags = new KeyValuePair<string, object?>[]
         {
@@ -368,7 +406,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         if (!skipMetrics)
         {
-            await VerifyAsync(beginTimestamp, endTimestamp, response, requestOpenMetrics);
+            await VerifyAsync(beginTimestamp, endTimestamp, response, requestOpenMetrics, meterTags);
         }
         else
         {
@@ -380,7 +418,7 @@ public sealed class PrometheusExporterMiddlewareTests
         await host.StopAsync();
     }
 
-    private static async Task VerifyAsync(long beginTimestamp, long endTimestamp, HttpResponseMessage response, bool requestOpenMetrics)
+    private static async Task VerifyAsync(long beginTimestamp, long endTimestamp, HttpResponseMessage response, bool requestOpenMetrics, KeyValuePair<string, object?>[]? meterTags)
     {
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(response.Content.Headers.Contains("Last-Modified"));
@@ -394,6 +432,10 @@ public sealed class PrometheusExporterMiddlewareTests
             Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType!.ToString());
         }
 
+        var additionalTags = meterTags != null && meterTags.Any()
+            ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}=\"{x.Value}\""))},"
+            : string.Empty;
+
         string content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
 
         string expected = requestOpenMetrics
@@ -406,14 +448,14 @@ public sealed class PrometheusExporterMiddlewareTests
                     otel_scope_info{otel_scope_name="{{MeterName}}"} 1
                     # TYPE counter_double_bytes counter
                     # UNIT counter_double_bytes bytes
-                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",meterKey1="value1",meterKey2="value2",key1="value1",key2="value2"} 101.17 (\d+\.\d{3})
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17 (\d+\.\d{3})
                     # EOF
 
                     """.ReplaceLineEndings()
             : $$"""
                     # TYPE counter_double_bytes_total counter
                     # UNIT counter_double_bytes_total bytes
-                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",meterKey1="value1",meterKey2="value2",key1="value1",key2="value2"} 101.17 (\d+)
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17 (\d+)
                     # EOF
 
                     """.ReplaceLineEndings();

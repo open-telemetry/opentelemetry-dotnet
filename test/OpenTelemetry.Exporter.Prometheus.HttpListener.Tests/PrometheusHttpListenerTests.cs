@@ -85,6 +85,30 @@ public class PrometheusHttpListenerTests
     }
 
     [Fact]
+    public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics_WithMeterTags()
+    {
+        var tags = new KeyValuePair<string, object?>[]
+        {
+            new("meter1", "value1"),
+            new("meter2", "value2"),
+        };
+
+        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty, meterTags: tags);
+    }
+
+    [Fact]
+    public async Task PrometheusExporterHttpServerIntegration_OpenMetrics_WithMeterTags()
+    {
+        var tags = new KeyValuePair<string, object?>[]
+        {
+            new("meter1", "value1"),
+            new("meter2", "value2"),
+        };
+
+        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0", meterTags: tags);
+    }
+
+    [Fact]
     public void PrometheusHttpListenerThrowsOnStart()
     {
         Random random = new Random();
@@ -236,15 +260,10 @@ public class PrometheusHttpListenerTests
         return provider;
     }
 
-    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text")
+    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text", KeyValuePair<string, object?>[]? meterTags = null)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
 
-        var meterTags = new KeyValuePair<string, object?>[]
-        {
-            new("meterKey1", "value1"),
-            new("meterKey2", "value2"),
-        };
         using var meter = new Meter(MeterName, MeterVersion, meterTags);
 
         var provider = BuildMeterProvider(meter, [], out var address);
@@ -285,6 +304,10 @@ public class PrometheusHttpListenerTests
                 Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType!.ToString());
             }
 
+            var additionalTags = meterTags != null && meterTags.Any()
+                ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}='{x.Value}'"))},"
+                : string.Empty;
+
             var content = await response.Content.ReadAsStringAsync();
 
             var expected = requestOpenMetrics
@@ -296,11 +319,11 @@ public class PrometheusHttpListenerTests
                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
                   + "# TYPE counter_double_bytes counter\n"
                   + "# UNIT counter_double_bytes bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',meterKey1='value1',meterKey2='value2',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
                   + "# EOF\n"
                 : "# TYPE counter_double_bytes_total counter\n"
                   + "# UNIT counter_double_bytes_total bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',meterKey1='value1',meterKey2='value2',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17 (\\d+)\n"
                   + "# EOF\n";
 
             Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);
