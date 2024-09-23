@@ -18,7 +18,7 @@ Notes](../../RELEASENOTES.md).
   ([#5853](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5853))
   
 * Added support in metrics for histogram bucket boundaries set via the .NET 9
-  [InstrumentAdvice<T>](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.instrumentadvice-1)
+  [InstrumentAdvice&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.instrumentadvice-1)
   API. Explicit bucket histogram boundary resolution applies in the following
   order:
     1. View API
