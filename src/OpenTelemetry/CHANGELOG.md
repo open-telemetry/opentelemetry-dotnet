@@ -16,7 +16,6 @@ Notes](../../RELEASENOTES.md).
   `Microsoft.Extensions.Diagnostics.Abstractions` packages version to
   `9.0.0-rc.1.24431.7`.
   ([#5853](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5853))
-  
 * Added support in metrics for histogram bucket boundaries set via the .NET 9
   [InstrumentAdvice&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.instrumentadvice-1)
   API. Explicit bucket histogram boundary resolution applies in the following
