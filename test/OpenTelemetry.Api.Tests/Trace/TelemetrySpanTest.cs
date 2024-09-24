@@ -18,6 +18,7 @@ public class TelemetrySpanTest
         telemetrySpan.RecordException(new ArgumentNullException(message, new Exception("new-exception")));
         Assert.Single(activity.Events);
 
+        Assert.NotNull(telemetrySpan.Activity);
         var @event = telemetrySpan.Activity.Events.FirstOrDefault(q => q.Name == SemanticConventions.AttributeExceptionEventName);
         Assert.Equal(message, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
         Assert.Equal(typeof(ArgumentNullException).Name, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
@@ -35,6 +36,7 @@ public class TelemetrySpanTest
         telemetrySpan.RecordException(type, message, stack);
         Assert.Single(activity.Events);
 
+        Assert.NotNull(telemetrySpan.Activity);
         var @event = telemetrySpan.Activity.Events.FirstOrDefault(q => q.Name == SemanticConventions.AttributeExceptionEventName);
         Assert.Equal(message, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
         Assert.Equal(type, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
@@ -62,6 +64,7 @@ public class TelemetrySpanTest
 
         // ParentId should be unset
         Assert.Equal(default, parentSpan.ParentSpanId);
+        Assert.NotNull(parentActivity.Id);
 
         using var childActivity = new Activity("childOperation").SetParentId(parentActivity.Id);
         using var childSpan = new TelemetrySpan(childActivity);

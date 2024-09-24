@@ -37,7 +37,7 @@ public class SpanAttributesTest
     public void ValidateNullKey()
     {
         var spanAttribute = new SpanAttributes();
-        Assert.Throws<ArgumentNullException>(() => spanAttribute.Add(null, "null key"));
+        Assert.Throws<ArgumentNullException>(() => spanAttribute.Add(null!, "null key"));
     }
 
     [Fact]
@@ -53,17 +53,17 @@ public class SpanAttributesTest
     public void ValidateConstructorWithList()
     {
         var spanAttributes = new SpanAttributes(
-           new List<KeyValuePair<string, object>>()
-           {
-                new KeyValuePair<string, object>("Span attribute int", 1),
-                new KeyValuePair<string, object>("Span attribute string", "str"),
-           });
+            new List<KeyValuePair<string, object?>>
+            {
+            new("Span attribute int", 1),
+            new("Span attribute string", "str"),
+            });
         Assert.Equal(2, spanAttributes.Attributes.Count);
     }
 
     [Fact]
     public void ValidateConstructorWithNullList()
     {
-        Assert.Throws<ArgumentNullException>(() => new SpanAttributes(null));
+        Assert.Throws<ArgumentNullException>(() => new SpanAttributes(null!));
     }
 }
