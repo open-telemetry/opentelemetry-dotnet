@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Context;
@@ -24,15 +26,25 @@ public class AsyncLocalRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeCo
     }
 
     /// <inheritdoc/>
-    public object Value
+    public object? Value
     {
         get => this.slot.Value;
-        set => this.slot.Value = (T)value;
+        set
+        {
+            if (typeof(T).IsValueType && value is null)
+            {
+                this.slot.Value = default!;
+            }
+            else
+            {
+                this.slot.Value = (T)value!;
+            }
+        }
     }
 
     /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override T Get()
+    public override T? Get()
     {
         return this.slot.Value;
     }

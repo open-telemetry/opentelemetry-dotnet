@@ -1,6 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Context;
 
 /// <summary>
@@ -15,6 +19,8 @@ public abstract class RuntimeContextSlot<T> : IDisposable
     /// <param name="name">The name of the context slot.</param>
     protected RuntimeContextSlot(string name)
     {
+        Guard.ThrowIfNullOrEmpty(name);
+
         this.Name = name;
     }
 
@@ -27,7 +33,7 @@ public abstract class RuntimeContextSlot<T> : IDisposable
     /// Get the value from the context slot.
     /// </summary>
     /// <returns>The value retrieved from the context slot.</returns>
-    public abstract T Get();
+    public abstract T? Get();
 
     /// <summary>
     /// Set the value to the context slot.
