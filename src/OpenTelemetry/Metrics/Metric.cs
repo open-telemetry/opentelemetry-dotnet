@@ -117,10 +117,24 @@ public sealed class Metric
             aggType = AggregationType.DoubleGauge;
             this.MetricType = MetricType.DoubleGauge;
         }
+        else if (instrumentIdentity.InstrumentType == typeof(Gauge<double>)
+            || instrumentIdentity.InstrumentType == typeof(Gauge<float>))
+        {
+            aggType = AggregationType.DoubleGauge;
+            this.MetricType = MetricType.DoubleGauge;
+        }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<long>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<int>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<short>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<byte>))
+        {
+            aggType = AggregationType.LongGauge;
+            this.MetricType = MetricType.LongGauge;
+        }
+        else if (instrumentIdentity.InstrumentType == typeof(Gauge<long>)
+            || instrumentIdentity.InstrumentType == typeof(Gauge<int>)
+            || instrumentIdentity.InstrumentType == typeof(Gauge<short>)
+            || instrumentIdentity.InstrumentType == typeof(Gauge<byte>))
         {
             aggType = AggregationType.LongGauge;
             this.MetricType = MetricType.LongGauge;
