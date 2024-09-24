@@ -58,18 +58,18 @@ public class RemotingRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeCont
 
     /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override T Get()
+    public override T? Get()
     {
         if (CallContext.LogicalGetData(this.Name) is not BitArray wrapper)
         {
-            return default!;
+            return default;
         }
 
         var value = WrapperField.GetValue(wrapper);
 
         if (typeof(T).IsValueType && value is null)
         {
-            return default!;
+            return default;
         }
 
         return (T)value;

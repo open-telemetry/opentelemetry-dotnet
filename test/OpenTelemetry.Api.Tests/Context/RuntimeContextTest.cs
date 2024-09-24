@@ -63,7 +63,7 @@ public class RuntimeContextTest : IDisposable
     [Fact]
     public void ValueTypeSlotNullableTests()
     {
-        var expectedSlot = RuntimeContext.RegisterSlot<int>("testslot");
+        var expectedSlot = RuntimeContext.RegisterSlot<int>("testslot_valuetype");
         Assert.NotNull(expectedSlot);
 
         var slotValueAccessor = expectedSlot as IRuntimeContextSlotValueAccessor;
@@ -86,9 +86,34 @@ public class RuntimeContextTest : IDisposable
     }
 
     [Fact]
+    public void NullableValueTypeSlotNullableTests()
+    {
+        var expectedSlot = RuntimeContext.RegisterSlot<int?>("testslot_nullablevaluetype");
+        Assert.NotNull(expectedSlot);
+
+        var slotValueAccessor = expectedSlot as IRuntimeContextSlotValueAccessor;
+        Assert.NotNull(slotValueAccessor);
+
+        Assert.Null(expectedSlot.Get());
+        Assert.Null(slotValueAccessor.Value);
+
+        slotValueAccessor.Value = 100;
+
+        Assert.Equal(100, expectedSlot.Get());
+        Assert.Equal(100, slotValueAccessor.Value);
+
+        slotValueAccessor.Value = null;
+
+        Assert.Null(expectedSlot.Get());
+        Assert.Null(slotValueAccessor.Value);
+
+        Assert.Throws<InvalidCastException>(() => slotValueAccessor.Value = false);
+    }
+
+    [Fact]
     public void ReferenceTypeSlotNullableTests()
     {
-        var expectedSlot = RuntimeContext.RegisterSlot<RuntimeContextTest>("testslot");
+        var expectedSlot = RuntimeContext.RegisterSlot<RuntimeContextTest>("testslot_referencetype");
         Assert.NotNull(expectedSlot);
 
         var slotValueAccessor = expectedSlot as IRuntimeContextSlotValueAccessor;

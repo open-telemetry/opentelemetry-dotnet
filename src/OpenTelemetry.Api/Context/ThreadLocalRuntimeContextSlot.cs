@@ -3,9 +3,6 @@
 
 #nullable enable
 
-#if NET
-using System.Diagnostics.CodeAnalysis;
-#endif
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Context;
@@ -47,11 +44,8 @@ public class ThreadLocalRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeC
     }
 
     /// <inheritdoc/>
-#if NET
-    [return: MaybeNull]
-#endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override T Get()
+    public override T? Get()
     {
         return this.slot.Value;
     }

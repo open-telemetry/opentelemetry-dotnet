@@ -3,9 +3,6 @@
 
 #nullable enable
 
-#if NET
-using System.Diagnostics.CodeAnalysis;
-#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context;
@@ -36,10 +33,7 @@ public abstract class RuntimeContextSlot<T> : IDisposable
     /// Get the value from the context slot.
     /// </summary>
     /// <returns>The value retrieved from the context slot.</returns>
-#if NET
-    [return: MaybeNull]
-#endif
-    public abstract T Get();
+    public abstract T? Get();
 
     /// <summary>
     /// Set the value to the context slot.

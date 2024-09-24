@@ -4,9 +4,6 @@
 #nullable enable
 
 using System.Collections.Concurrent;
-#if NET
-using System.Diagnostics.CodeAnalysis;
-#endif
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -153,11 +150,8 @@ public static class RuntimeContext
     /// <param name="slotName">The name of the context slot.</param>
     /// <typeparam name="T">The type of the value.</typeparam>
     /// <returns>The value retrieved from the context slot.</returns>
-#if NET
-    [return: MaybeNull]
-#endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T GetValue<T>(string slotName)
+    public static T? GetValue<T>(string slotName)
     {
         return GetSlot<T>(slotName).Get();
     }
