@@ -175,12 +175,13 @@ public class GuardTest
         [Fact]
         public static void BasicTest()
         {
+            Assert.Equal("null", GetValue(null));
             Assert.Equal("\"hello\"", GetValue("hello"));
             Assert.Equal("3 + 2", GetValue(3 + 2));
             Assert.Equal("new object()", GetValue(new object()));
         }
 
-        private static string? GetValue(object argument, [CallerArgumentExpression("argument")] string? expr = null) => expr;
+        private static string? GetValue(object? argument, [CallerArgumentExpression(nameof(argument))] string? expr = null) => expr;
     }
 #endif
 }

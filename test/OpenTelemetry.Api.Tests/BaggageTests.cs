@@ -203,7 +203,7 @@ public class BaggageTests
 
         Assert.Equal(default, baggage);
 
-        baggage = Baggage.Create(new Dictionary<string, string?>
+        baggage = Baggage.Create(new Dictionary<string, string>
         {
             [K1] = V1,
             ["key2"] = "value2",
@@ -254,7 +254,7 @@ public class BaggageTests
 
         Assert.NotEqual(emptyBaggage.GetHashCode(), baggage.GetHashCode());
 
-        var expectedBaggage = Baggage.Create(new Dictionary<string, string?> { [K1] = V1 });
+        var expectedBaggage = Baggage.Create(new Dictionary<string, string> { [K1] = V1 });
 
         Assert.Equal(expectedBaggage.GetHashCode(), baggage.GetHashCode());
     }
