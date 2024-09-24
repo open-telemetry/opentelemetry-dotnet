@@ -120,6 +120,22 @@ public static class ActivityExtensions
             return;
         }
 
-        activity.AddException(ex, tags);
+        var tagsCollection = new ActivityTagsCollection
+        {
+            { SemanticConventions.AttributeExceptionType, ex.GetType().FullName },
+            { SemanticConventions.AttributeExceptionStacktrace, ex.ToInvariantString() },
+        };
+
+        if (!string.IsNullOrWhiteSpace(ex.Message))
+        {
+            tagsCollection.Add(SemanticConventions.AttributeExceptionMessage, ex.Message);
+        }
+
+        foreach (var tag in tags)
+        {
+            tagsCollection[tag.Key] = tag.Value;
+        }
+
+        activity.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
     }
 }
