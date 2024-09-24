@@ -37,7 +37,7 @@ public abstract class RuntimeContextSlot<T> : IDisposable
     /// Set the value to the context slot.
     /// </summary>
     /// <param name="value">The value to be set.</param>
-    public abstract void Set(T? value);
+    public abstract void Set(T value);
 
     /// <inheritdoc/>
     public void Dispose()
