@@ -404,6 +404,15 @@ internal static partial class PrometheusSerializer
             buffer[cursor++] = unchecked((byte)',');
         }
 
+        if (metric.MeterTags != null)
+        {
+            foreach (var tag in metric.MeterTags)
+            {
+                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+                buffer[cursor++] = unchecked((byte)',');
+            }
+        }
+
         foreach (var tag in tags)
         {
             cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);

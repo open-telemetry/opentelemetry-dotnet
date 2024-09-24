@@ -15,7 +15,7 @@ dotnet add package OpenTelemetry.Exporter.Zipkin
 
 ## Enable/Add Zipkin as a tracing exporter
 
-You can enable the the `ZipkinExporter` with the `AddZipkinExporter()` extension
+You can enable the `ZipkinExporter` with the `AddZipkinExporter()` extension
 method on `TracerProviderBuilder`.
 
 ## Configuration

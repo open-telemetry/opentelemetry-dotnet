@@ -12,6 +12,25 @@ Notes](../../RELEASENOTES.md).
   `IOpenTelemetryBuilder`.
   ([#5325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5325))
 
+* Updated the `Microsoft.Extensions.Logging.Configuration` and
+  `Microsoft.Extensions.Diagnostics.Abstractions` packages version to
+  `9.0.0-rc.1.24431.7`.
+  ([#5853](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5853))
+
+* Added support in metrics for histogram bucket boundaries set via the .NET 9
+  [InstrumentAdvice&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.instrumentadvice-1)
+  API.
+
+  Note: With this change explicit bucket histogram boundary resolution will
+  apply in the following order:
+
+    1. View API
+    2. Advice API
+    3. SDK defaults
+
+  See [#5854](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5854)
+  for details.
+
 ## 1.9.0
 
 Released 2024-Jun-14
