@@ -122,6 +122,6 @@ public static class ActivityExtensions
             return;
         }
 
-        activity.AddException(ex, tags);
+        activity.AddException(ex, in tags);
     }
 }

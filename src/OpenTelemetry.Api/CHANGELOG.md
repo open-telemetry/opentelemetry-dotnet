@@ -6,12 +6,6 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Obsoleted the `ActivityExtensions.RecordException`. Users should migrate to the
-  `System.Diagnostics.Activity.AddException`
-  [Activity.AddException](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.addexception)
-  API for adding exception.
-  ([#5841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5841))
-
 * **Breaking change:** CompositeTextMapPropagator.Fields now returns a
   unioned set of fields from all combined propagators. Previously this always
   returned an empty set.
@@ -34,6 +28,12 @@ Notes](../../RELEASENOTES.md).
 * Updated `System.Diagnostics.DiagnosticSource` package version to
   `9.0.0-rc.1.24431.7`.
   ([#5853](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5853))
+
+* Obsoleted the `ActivityExtensions.RecordException` extension method. Users
+  should migrate to the `System.Diagnostics.DiagnosticSource`
+  [Activity.AddException](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.addexception)
+  API for adding exceptions on an `Activity` instance.
+  ([#5841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5841))
 
 ## 1.9.0
 
