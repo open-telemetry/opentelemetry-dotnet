@@ -29,6 +29,12 @@ Notes](../../RELEASENOTES.md).
   `9.0.0-rc.1.24431.7`.
   ([#5853](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5853))
 
+* Obsoleted the `ActivityExtensions.RecordException` extension method. Users
+  should migrate to the `System.Diagnostics.DiagnosticSource`
+  [Activity.AddException](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.addexception)
+  API for adding exceptions on an `Activity` instance.
+  ([#5841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5841))
+
 ## 1.9.0
 
 Released 2024-Jun-14
