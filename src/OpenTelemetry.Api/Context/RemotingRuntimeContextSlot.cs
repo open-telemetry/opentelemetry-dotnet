@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #if NETFRAMEWORK
-#nullable enable
 
 using System.Collections;
 using System.Reflection;
