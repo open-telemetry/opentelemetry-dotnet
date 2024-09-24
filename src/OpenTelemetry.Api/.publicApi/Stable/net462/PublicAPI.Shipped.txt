@@ -3,4 +3,4 @@ OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.RemotingRuntimeContextSlot(s
 OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Value.get -> object?
 OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Value.set -> void
 override OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Get() -> T?
-override OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Set(T? value) -> void
+override OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Set(T value) -> void

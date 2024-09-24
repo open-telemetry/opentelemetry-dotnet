@@ -87,7 +87,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </summary>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
     /// <returns><see cref="Baggage"/>.</returns>
-    public static Baggage Create(Dictionary<string, string?>? baggageItems = null)
+    public static Baggage Create(Dictionary<string, string>? baggageItems = null)
     {
         if (baggageItems == null)
         {
@@ -95,7 +95,7 @@ public readonly struct Baggage : IEquatable<Baggage>
         }
 
         Dictionary<string, string> baggageCopy = new Dictionary<string, string>(baggageItems.Count, StringComparer.OrdinalIgnoreCase);
-        foreach (KeyValuePair<string, string?> baggageItem in baggageItems)
+        foreach (KeyValuePair<string, string> baggageItem in baggageItems)
         {
             if (string.IsNullOrEmpty(baggageItem.Value))
             {
@@ -103,7 +103,7 @@ public readonly struct Baggage : IEquatable<Baggage>
                 continue;
             }
 
-            baggageCopy[baggageItem.Key] = baggageItem.Value!;
+            baggageCopy[baggageItem.Key] = baggageItem.Value;
         }
 
         return new Baggage(baggageCopy);
@@ -164,7 +164,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>New <see cref="Baggage"/> containing the new key/value pairs.</returns>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
-    public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>>? baggageItems, Baggage baggage = default)
+    public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems, Baggage baggage = default)
     {
         var baggageHolder = EnsureBaggageHolder();
         lock (baggageHolder)
@@ -264,7 +264,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </summary>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
     /// <returns>New <see cref="Baggage"/> containing the key/value pairs.</returns>
-    public Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>>? baggageItems)
+    public Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems)
     {
         if (baggageItems?.Any() != true)
         {

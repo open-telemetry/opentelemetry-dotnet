@@ -66,7 +66,9 @@ internal sealed class SelfDiagnosticsConfigParser
                 this.configBuffer = buffer;
             }
 
-            file.Read(buffer, 0, buffer.Length);
+            // TODO: Fix CA2022 - Avoid inexact read with 'System.IO.FileStream.Read(byte[], int, int)'
+            // Added _ = as a workaround to suppress the warning
+            _ = file.Read(buffer, 0, buffer.Length);
             string configJson = Encoding.UTF8.GetString(buffer);
 
             if (!TryParseLogDirectory(configJson, out logDirectory))

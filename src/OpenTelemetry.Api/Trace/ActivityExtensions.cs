@@ -92,9 +92,12 @@ public static class ActivityExtensions
     /// </summary>
     /// <param name="activity">Activity instance.</param>
     /// <param name="ex">Exception to be recorded.</param>
-    /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
+    /// <remarks>
+    /// <para>Note: This method is obsolete. Please use <see cref="Activity.AddException"/> instead.</para>
+    /// The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
     /// </remarks>
+    [Obsolete("Call Activity.AddException instead this method will be removed in a future version.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void RecordException(this Activity? activity, Exception? ex)
         => RecordException(activity, ex, default);
@@ -105,9 +108,12 @@ public static class ActivityExtensions
     /// <param name="activity">Activity instance.</param>
     /// <param name="ex">Exception to be recorded.</param>
     /// <param name="tags">Additional tags to record on the event.</param>
-    /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
+    /// <remarks>
+    /// <para>Note: This method is obsolete. Please use <see cref="Activity.AddException"/> instead.</para>
+    /// The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
     /// </remarks>
+    [Obsolete("Call Activity.AddException instead this method will be removed in a future version.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void RecordException(this Activity? activity, Exception? ex, in TagList tags)
     {
@@ -116,22 +122,6 @@ public static class ActivityExtensions
             return;
         }
 
-        var tagsCollection = new ActivityTagsCollection
-        {
-            { SemanticConventions.AttributeExceptionType, ex.GetType().FullName },
-            { SemanticConventions.AttributeExceptionStacktrace, ex.ToInvariantString() },
-        };
-
-        if (!string.IsNullOrWhiteSpace(ex.Message))
-        {
-            tagsCollection.Add(SemanticConventions.AttributeExceptionMessage, ex.Message);
-        }
-
-        foreach (var tag in tags)
-        {
-            tagsCollection[tag.Key] = tag.Value;
-        }
-
-        activity.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
+        activity.AddException(ex, in tags);
     }
 }

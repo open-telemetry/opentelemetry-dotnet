@@ -56,6 +56,7 @@ public static class RuntimeContext
     public static RuntimeContextSlot<T> RegisterSlot<T>(string slotName)
     {
         Guard.ThrowIfNullOrEmpty(slotName);
+
         RuntimeContextSlot<T>? slot = null;
 
         lock (Slots)
@@ -80,9 +81,13 @@ public static class RuntimeContext
                 slot = new RemotingRuntimeContextSlot<T>(slotName);
             }
 #endif
+            else
+            {
+                throw new NotSupportedException($"ContextSlotType '{ContextSlotType}' is not supported");
+            }
 
-            Slots[slotName] = slot!;
-            return slot!;
+            Slots[slotName] = slot;
+            return slot;
         }
     }
 
@@ -95,9 +100,10 @@ public static class RuntimeContext
     public static RuntimeContextSlot<T> GetSlot<T>(string slotName)
     {
         Guard.ThrowIfNullOrEmpty(slotName);
+
         var slot = GuardNotFound(slotName);
-        var contextSlot = Guard.ThrowIfNotOfType<RuntimeContextSlot<T>>(slot);
-        return contextSlot;
+
+        return Guard.ThrowIfNotOfType<RuntimeContextSlot<T>>(slot);
     }
 
     /*
@@ -131,7 +137,7 @@ public static class RuntimeContext
     /// <param name="value">The value to be set.</param>
     /// <typeparam name="T">The type of the value.</typeparam>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void SetValue<T>(string slotName, T? value)
+    public static void SetValue<T>(string slotName, T value)
     {
         GetSlot<T>(slotName).Set(value);
     }
@@ -156,9 +162,10 @@ public static class RuntimeContext
     public static void SetValue(string slotName, object? value)
     {
         Guard.ThrowIfNullOrEmpty(slotName);
+
         var slot = GuardNotFound(slotName);
-        var runtimeContextSlotValueAccessor = Guard.ThrowIfNotOfType<IRuntimeContextSlotValueAccessor>(slot);
-        runtimeContextSlotValueAccessor.Value = value;
+
+        Guard.ThrowIfNotOfType<IRuntimeContextSlotValueAccessor>(slot).Value = value;
     }
 
     /// <summary>
@@ -169,9 +176,10 @@ public static class RuntimeContext
     public static object? GetValue(string slotName)
     {
         Guard.ThrowIfNullOrEmpty(slotName);
+
         var slot = GuardNotFound(slotName);
-        var runtimeContextSlotValueAccessor = Guard.ThrowIfNotOfType<IRuntimeContextSlotValueAccessor>(slot);
-        return runtimeContextSlotValueAccessor.Value;
+
+        return Guard.ThrowIfNotOfType<IRuntimeContextSlotValueAccessor>(slot).Value;
     }
 
     // For testing purpose
