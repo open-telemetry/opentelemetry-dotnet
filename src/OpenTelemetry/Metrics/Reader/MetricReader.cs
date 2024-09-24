@@ -36,8 +36,8 @@ public abstract partial class MetricReader : IDisposable
         };
     };
 
-    private readonly object newTaskLock = new();
-    private readonly object onCollectLock = new();
+    private readonly Lock newTaskLock = new();
+    private readonly Lock onCollectLock = new();
     private readonly TaskCompletionSource<bool> shutdownTcs = new();
     private MetricReaderTemporalityPreference temporalityPreference = MetricReaderTemporalityPreferenceUnspecified;
     private Func<Type, AggregationTemporality> temporalityFunc = CumulativeTemporalityPreferenceFunc;

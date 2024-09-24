@@ -16,7 +16,7 @@ public abstract partial class MetricReader
 {
     private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<MetricStreamIdentity, Metric> instrumentIdentityToMetric = new();
-    private readonly object instrumentCreationLock = new();
+    private readonly Lock instrumentCreationLock = new();
     private int metricLimit;
     private int cardinalityLimit;
     private Metric?[]? metrics;
