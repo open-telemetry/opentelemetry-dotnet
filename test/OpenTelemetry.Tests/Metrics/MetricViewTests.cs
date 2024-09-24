@@ -571,6 +571,177 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
+    public void HistogramWithAdviceBoundaries_HandlesAllTypes()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+        int counter = 0;
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        {
+            builder.AddMeter(meter.Name);
+            builder.AddInMemoryExporter(exportedItems);
+        });
+
+        // Test cases for different histogram types
+        var histograms = new Instrument[]
+        {
+            meter.CreateHistogram<long>("longHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = new List<long>() { 10, 20 } }),
+            meter.CreateHistogram<int>("intHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = new List<int>() { 10, 20 } }),
+            meter.CreateHistogram<short>("shortHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = new List<short>() { 10, 20 } }),
+            meter.CreateHistogram<float>("floatHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = new List<float>() { 10.0F, 20.0F } }),
+            meter.CreateHistogram<double>("doubleHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = new List<double>() { 10.0, 20.0 } }),
+        };
+
+        foreach (var histogram in histograms)
+        {
+            exportedItems.Clear();
+
+            if (histogram is Histogram<long> longHistogram)
+            {
+                longHistogram.Record(-10);
+                longHistogram.Record(9);
+                longHistogram.Record(19);
+            }
+            else if (histogram is Histogram<int> intHistogram)
+            {
+                intHistogram.Record(-10);
+                intHistogram.Record(9);
+                intHistogram.Record(19);
+                counter++;
+            }
+            else if (histogram is Histogram<short> shortHistogram)
+            {
+                shortHistogram.Record(-10);
+                shortHistogram.Record(9);
+                shortHistogram.Record(19);
+                counter++;
+            }
+            else if (histogram is Histogram<float> floatHistogram)
+            {
+                floatHistogram.Record(-10.0F);
+                floatHistogram.Record(9.0F);
+                floatHistogram.Record(19.0F);
+                counter++;
+            }
+            else if (histogram is Histogram<double> doubleHistogram)
+            {
+                doubleHistogram.Record(-10.0);
+                doubleHistogram.Record(9.0);
+                doubleHistogram.Record(19.0);
+                counter++;
+            }
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            var metricCustom = exportedItems[counter];
+
+            List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
+            foreach (ref readonly var mp in metricCustom.GetMetricPoints())
+            {
+                metricPointsCustom.Add(mp);
+            }
+
+            Assert.Single(metricPointsCustom);
+            var histogramPoint = metricPointsCustom[0];
+
+            var count = histogramPoint.GetHistogramCount();
+            var sum = histogramPoint.GetHistogramSum();
+
+            Assert.Equal(18, sum);
+            Assert.Equal(3, count);
+
+            var index = 0;
+            var actualCount = 0;
+            long[] expectedBucketCounts = new long[] { 2, 1, 0 };
+
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
+            }
+
+            Assert.Equal(3, actualCount);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void HistogramWithAdviceBoundariesSpecifiedTests(bool useViewToOverride)
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+        IReadOnlyList<long> adviceBoundaries = new List<long>() { 5, 10, 20 };
+        double[] viewBoundaries = new double[] { 10, 20 };
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        {
+            builder.AddMeter(meter.Name);
+
+            if (useViewToOverride)
+            {
+                builder.AddView("MyHistogram", new ExplicitBucketHistogramConfiguration { Boundaries = viewBoundaries });
+            }
+
+            builder.AddInMemoryExporter(exportedItems);
+        });
+
+        var histogram = meter.CreateHistogram<long>(
+            "MyHistogram",
+            unit: null,
+            description: null,
+            tags: null,
+            new()
+            {
+                HistogramBucketBoundaries = adviceBoundaries,
+            });
+
+        histogram.Record(-10);
+        histogram.Record(0);
+        histogram.Record(1);
+        histogram.Record(9);
+        histogram.Record(10);
+        histogram.Record(11);
+        histogram.Record(19);
+        histogram.Record(22);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metricCustom = exportedItems[0];
+
+        Assert.Equal("MyHistogram", metricCustom.Name);
+
+        List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
+        foreach (ref readonly var mp in metricCustom.GetMetricPoints())
+        {
+            metricPointsCustom.Add(mp);
+        }
+
+        Assert.Single(metricPointsCustom);
+        var histogramPoint = metricPointsCustom[0];
+
+        var count = histogramPoint.GetHistogramCount();
+        var sum = histogramPoint.GetHistogramSum();
+
+        Assert.Equal(62, sum);
+        Assert.Equal(8, count);
+
+        var index = 0;
+        var actualCount = 0;
+        long[] expectedBucketCounts = useViewToOverride ? new long[] { 5, 2, 1 } : new long[] { 3, 2, 2, 1 };
+
+        foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+        {
+            Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+            index++;
+            actualCount++;
+        }
+
+        Assert.Equal(useViewToOverride ? viewBoundaries.Length + 1 : adviceBoundaries.Count + 1, actualCount);
+    }
+
+    [Fact]
     public void ViewToProduceExponentialHistogram()
     {
         var valuesToRecord = new[] { -10, 0, 1, 9, 10, 11, 19 };
