@@ -203,7 +203,7 @@ used.
 By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75,
 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000}`](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.14.0/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation).
 Views can be used to provide custom boundaries for a Histogram. The measurements
-are then aggregated using the custom boundaries provided instead of the the
+are then aggregated using the custom boundaries provided instead of the
 default boundaries. This requires the use of
 `ExplicitBucketHistogramConfiguration`.
 
