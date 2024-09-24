@@ -94,9 +94,10 @@ public static class ActivityExtensions
     /// </summary>
     /// <param name="activity">Activity instance.</param>
     /// <param name="ex">Exception to be recorded.</param>
-    /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
+    /// <remarks>
+    /// <para>Note: This method is obsolete. Please use <see cref="Activity.AddException"/> instead.</para>
+    /// The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
-    /// <para>This method is obsolete. Please use <see cref="Activity.AddException"/> instead. The end result will be the same when using this alternative.</para>
     /// </remarks>
     [Obsolete("Call Activity.AddException instead this method will be removed in a future version.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -109,9 +110,10 @@ public static class ActivityExtensions
     /// <param name="activity">Activity instance.</param>
     /// <param name="ex">Exception to be recorded.</param>
     /// <param name="tags">Additional tags to record on the event.</param>
-    /// <remarks> The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
+    /// <remarks>
+    /// <para>Note: This method is obsolete. Please use <see cref="Activity.AddException"/> instead.</para>
+    /// The exception is recorded as per <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/exceptions.md">specification</a>.
     /// "exception.stacktrace" is represented using the value of <a href="https://learn.microsoft.com/dotnet/api/system.exception.tostring">Exception.ToString</a>.
-    /// <para>This method is obsolete. Please use <see cref="Activity.AddException"/> instead. The end result will be the same when using this alternative.</para>
     /// </remarks>
     [Obsolete("Call Activity.AddException instead this method will be removed in a future version.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
