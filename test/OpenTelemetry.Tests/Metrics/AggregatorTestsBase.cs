@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics.Metrics;
 using Xunit;
 
@@ -200,11 +202,11 @@ public abstract class AggregatorTestsBase
         };
 
         var numberOfThreads = 2;
-        var snapshotThread = new Thread(HistogramSnapshotThread);
+        var snapshotThread = new Thread(HistogramSnapshotThread!);
         Thread[] updateThreads = new Thread[numberOfThreads];
         for (int i = 0; i < numberOfThreads; ++i)
         {
-            updateThreads[i] = new Thread(HistogramUpdateThread);
+            updateThreads[i] = new Thread(HistogramUpdateThread!);
             updateThreads[i].Start(argsToThread);
         }
 
@@ -243,7 +245,7 @@ public abstract class AggregatorTestsBase
     [InlineData("System.Net.Http", "http.client.request.time_in_queue", "s", KnownHistogramBuckets.DefaultShortSeconds)]
     [InlineData("System.Net.NameResolution", "dns.lookup.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
     [InlineData("General.App", "simple.alternative.counter", "s", KnownHistogramBuckets.Default)]
-    public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName, string unit, KnownHistogramBuckets expectedHistogramBuckets)
+    public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName, string? unit, KnownHistogramBuckets expectedHistogramBuckets)
     {
         using var meter = new Meter(meterName);
 
@@ -341,7 +343,7 @@ public abstract class AggregatorTestsBase
 
         foreach (var value in valuesToRecord)
         {
-            aggregatorStore.Update(value, Array.Empty<KeyValuePair<string, object>>());
+            aggregatorStore.Update(value, Array.Empty<KeyValuePair<string, object?>>());
 
             if (value >= 0)
             {
@@ -446,7 +448,7 @@ public abstract class AggregatorTestsBase
             this.emitOverflowAttribute,
             this.shouldReclaimUnusedMetricPoints);
 
-        aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object>>());
+        aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object?>>());
 
         aggregatorStore.Snapshot();
 
@@ -469,7 +471,7 @@ public abstract class AggregatorTestsBase
     private static void HistogramSnapshotThread(object obj)
     {
         var args = obj as ThreadArguments;
-        var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
+        var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart!;
 
         if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
         {
@@ -490,7 +492,7 @@ public abstract class AggregatorTestsBase
     private static void HistogramUpdateThread(object obj)
     {
         var args = obj as ThreadArguments;
-        var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
+        var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart!;
 
         if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
         {
@@ -510,7 +512,7 @@ public abstract class AggregatorTestsBase
     private class ThreadArguments
     {
         public MetricPoint HistogramPoint;
-        public ManualResetEvent MreToEnsureAllThreadsStart;
+        public ManualResetEvent? MreToEnsureAllThreadsStart;
         public int ThreadStartedCount;
         public long ThreadsFinishedAllUpdatesCount;
         public double SumOfDelta;

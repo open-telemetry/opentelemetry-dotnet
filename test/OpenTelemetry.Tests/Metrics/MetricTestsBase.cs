@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 #if BUILDING_HOSTING_TESTS
 using System.Diagnostics;
 #endif
@@ -19,7 +21,7 @@ public class MetricTestsBase
     public const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
     public const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
 
-    protected readonly IConfiguration configuration;
+    protected readonly IConfiguration? configuration;
 
     protected MetricTestsBase()
     {
@@ -33,10 +35,10 @@ public class MetricTestsBase
 #if BUILDING_HOSTING_TESTS
     public static IHost BuildHost(
         bool useWithMetricsStyle,
-        Action<HostBuilderContext, IConfigurationBuilder> configureAppConfiguration = null,
-        Action<IServiceCollection> configureServices = null,
-        Action<IMetricsBuilder> configureMetricsBuilder = null,
-        Action<HostingMeterProviderBuilder> configureMeterProviderBuilder = null)
+        Action<HostBuilderContext, IConfigurationBuilder>? configureAppConfiguration = null,
+        Action<IServiceCollection>? configureServices = null,
+        Action<IMetricsBuilder>? configureMetricsBuilder = null,
+        Action<HostingMeterProviderBuilder>? configureMeterProviderBuilder = null)
     {
         var hostBuilder = new HostBuilder()
             .ConfigureDefaults(null)
@@ -54,7 +56,7 @@ public class MetricTestsBase
 
                     if (!useWithMetricsStyle)
                     {
-                        builder.UseOpenTelemetry(metricsBuilder => ConfigureBuilder(metricsBuilder, configureMeterProviderBuilder));
+                        builder.UseOpenTelemetry(metricsBuilder => ConfigureBuilder(metricsBuilder, configureMeterProviderBuilder!));
                     }
                 });
 
@@ -62,7 +64,7 @@ public class MetricTestsBase
                 {
                     services
                         .AddOpenTelemetry()
-                        .WithMetrics(metricsBuilder => ConfigureBuilder(metricsBuilder, configureMeterProviderBuilder));
+                        .WithMetrics(metricsBuilder => ConfigureBuilder(metricsBuilder, configureMeterProviderBuilder!));
                 }
 
                 services.AddHostedService<MetricsSubscriptionManagerCleanupHostedService>();
@@ -76,13 +78,13 @@ public class MetricTestsBase
 
         static void ConfigureBuilder(MeterProviderBuilder builder, Action<HostingMeterProviderBuilder> configureMeterProviderBuilder)
         {
-            IServiceCollection localServices = null;
+            IServiceCollection? localServices = null;
 
             builder.ConfigureServices(services => localServices = services);
 
             Debug.Assert(localServices != null, "localServices was null");
 
-            var testBuilder = new HostingMeterProviderBuilder(localServices);
+            var testBuilder = new HostingMeterProviderBuilder(localServices!);
             configureMeterProviderBuilder?.Invoke(testBuilder);
         }
     }
@@ -90,7 +92,7 @@ public class MetricTestsBase
 
     // This method relies on the assumption that MetricPoints are exported in the order in which they are emitted.
     // For Delta AggregationTemporality, this holds true only until the AggregatorStore has not begun recaliming the MetricPoints.
-    public static void ValidateMetricPointTags(List<KeyValuePair<string, object>> expectedTags, ReadOnlyTagCollection actualTags)
+    public static void ValidateMetricPointTags(List<KeyValuePair<string, object?>> expectedTags, ReadOnlyTagCollection actualTags)
     {
         int tagIndex = 0;
         foreach (var tag in actualTags)
@@ -175,7 +177,7 @@ public class MetricTestsBase
     // This method relies on the assumption that MetricPoints are exported in the order in which they are emitted.
     // For Delta AggregationTemporality, this holds true only until the AggregatorStore has not begun recaliming the MetricPoints.
     // Provide tags input sorted by Key
-    public static void CheckTagsForNthMetricPoint(List<Metric> metrics, List<KeyValuePair<string, object>> tags, int n)
+    public static void CheckTagsForNthMetricPoint(List<Metric> metrics, List<KeyValuePair<string, object?>> tags, int n)
     {
         var metric = metrics[0];
         var metricPointEnumerator = metric.GetMetricPoints().GetEnumerator();
@@ -216,7 +218,7 @@ public class MetricTestsBase
                 }
             });
 
-        meterProvider = host.Services.GetService<MeterProvider>();
+        meterProvider = host.Services.GetService<MeterProvider>()!;
 
         return host;
 #else
@@ -278,7 +280,7 @@ public class MetricTestsBase
         public MetricsSubscriptionManagerCleanupHostedService(IServiceProvider serviceProvider)
         {
             this.metricsSubscriptionManager = serviceProvider.GetService(
-                typeof(ConsoleMetrics).Assembly.GetType("Microsoft.Extensions.Diagnostics.Metrics.MetricsSubscriptionManager"));
+                typeof(ConsoleMetrics).Assembly.GetType("Microsoft.Extensions.Diagnostics.Metrics.MetricsSubscriptionManager")!)!;
 
             if (this.metricsSubscriptionManager == null)
             {
@@ -292,7 +294,7 @@ public class MetricTestsBase
             // be bugged in that it doesn't implement IDisposable. This hack
             // manually invokes Dispose so that tests don't clobber each other.
             // See: https://github.com/dotnet/runtime/issues/94434.
-            this.metricsSubscriptionManager.GetType().GetMethod("Dispose").Invoke(this.metricsSubscriptionManager, null);
+            this.metricsSubscriptionManager.GetType().GetMethod("Dispose")!.Invoke(this.metricsSubscriptionManager, null);
         }
 
         public Task StartAsync(CancellationToken cancellationToken)

@@ -23,7 +23,7 @@ internal sealed class SkipUnlessTrueTheoryAttribute : TheoryAttribute
             throw new InvalidOperationException($"Field '{testFieldName}' on '{typeContainingTest}' type should be defined as '{typeof(Func<bool>)}'.");
         }
 
-        var testFunc = (Func<bool>)field.GetValue(null);
+        var testFunc = (Func<bool>)field.GetValue(null)!;
 
         if (!testFunc())
         {
