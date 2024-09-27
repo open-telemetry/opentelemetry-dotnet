@@ -1636,7 +1636,6 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        var histogramPoint = metricPoints[0];
         var lastValue = metricPoints[0].GetGaugeLastValueLong();
         Assert.Equal(10, lastValue);
     }
