@@ -1681,6 +1681,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         {
             // For cumulative temporality, data points should still be collected
             // without any new measurements
+            Assert.Equal(2, exportedMetrics.Count);
             var secondMetric = exportedMetrics[1];
             var secondMetricPoints = new List<MetricPoint>();
             foreach (ref readonly var metricPoint in secondMetric.GetMetricPoints())
@@ -1695,13 +1696,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         else if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
         {
             // For delta temporality, no new metric should be collected
-            // Expect an exception if we try to access exportedMetrics[1]
-            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
-            {
-                var secondMetric = exportedMetrics[1];
-            });
-
-            Assert.Contains("Index was out of range. Must be non-negative and less than the size of the collection.", exception.Message);
+            Assert.Single(exportedMetrics);
         }
     }
 
