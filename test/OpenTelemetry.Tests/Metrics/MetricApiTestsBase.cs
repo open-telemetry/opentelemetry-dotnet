@@ -1613,6 +1613,34 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Empty(exportedItems);
     }
 
+    [Fact]
+    public void GaugeIsExportedCorrectly()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var gauge = meter.CreateGauge<long>(name: "NoiseLevel", unit: "dB", description: "Background Noise Level");
+        gauge.Record(10);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("Background Noise Level", metric.Description);
+        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        var histogramPoint = metricPoints[0];
+        var lastValue = metricPoints[0].GetGaugeLastValueLong();
+        Assert.Equal(10, lastValue);
+    }
+
     internal static IConfiguration BuildConfiguration(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
     {
         var configurationData = new Dictionary<string, string>();
