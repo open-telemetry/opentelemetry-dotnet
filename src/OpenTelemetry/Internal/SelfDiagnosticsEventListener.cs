@@ -16,7 +16,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     // Buffer size of the log line. A UTF-16 encoded character in C# can take up to 4 bytes if encoded in UTF-8.
     private const int BUFFERSIZE = 4 * 5120;
     private const string EventSourceNamePrefix = "OpenTelemetry-";
-    private readonly object lockObj = new();
+    private readonly Lock lockObj = new();
     private readonly EventLevel logLevel;
     private readonly SelfDiagnosticsConfigRefresher configRefresher;
     private readonly ThreadLocal<byte[]?> writeBuffer = new(() => null);

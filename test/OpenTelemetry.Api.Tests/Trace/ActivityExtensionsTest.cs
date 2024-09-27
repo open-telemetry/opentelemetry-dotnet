@@ -202,7 +202,7 @@ public class ActivityExtensionsTest
     [Theory]
     [InlineData("Key", "Value", true)]
     [InlineData("CustomTag", null, false)]
-    public void TryCheckFirstTag(string tagName, object expectedTagValue, bool expectedResult)
+    public void TryCheckFirstTag(string tagName, object? expectedTagValue, bool expectedResult)
     {
         using var activity = new Activity("Test");
         activity.SetTag("Key", "Value");

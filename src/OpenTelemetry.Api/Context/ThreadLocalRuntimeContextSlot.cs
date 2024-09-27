@@ -25,15 +25,25 @@ public class ThreadLocalRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeC
     }
 
     /// <inheritdoc/>
-    public object Value
+    public object? Value
     {
         get => this.slot.Value;
-        set => this.slot.Value = (T)value;
+        set
+        {
+            if (typeof(T).IsValueType && value is null)
+            {
+                this.slot.Value = default!;
+            }
+            else
+            {
+                this.slot.Value = (T)value!;
+            }
+        }
     }
 
     /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override T Get()
+    public override T? Get()
     {
         return this.slot.Value;
     }
