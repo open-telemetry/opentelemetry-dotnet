@@ -1641,6 +1641,71 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Equal(10, lastValue);
     }
 
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    public void GaugeHandlesNoNewMeasurementsCorrectlyWithTemporality(MetricReaderTemporalityPreference temporalityPreference)
+    {
+        var exportedMetrics = new List<Metric>();
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedMetrics, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = temporalityPreference;
+            }));
+
+        var noiseLevelGauge = meter.CreateGauge<long>(name: "NoiseLevel", unit: "dB", description: "Background Noise Level");
+        noiseLevelGauge.Record(10);
+
+        // Force a flush to export the recorded data
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Validate first export / flush
+        var firstMetric = exportedMetrics[0];
+        var firstMetricPoints = new List<MetricPoint>();
+        foreach (ref readonly var metricPoint in firstMetric.GetMetricPoints())
+        {
+            firstMetricPoints.Add(metricPoint);
+        }
+
+        Assert.Single(firstMetricPoints);
+        var firstMetricPoint = firstMetricPoints[0];
+        Assert.Equal(10, firstMetricPoint.GetGaugeLastValueLong());
+
+        // Flush the metrics again without recording any new measurements
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Validate second export / flush
+        if (temporalityPreference == MetricReaderTemporalityPreference.Cumulative)
+        {
+            // For cumulative temporality, data points should still be collected
+            // without any new measurements
+            var secondMetric = exportedMetrics[1];
+            var secondMetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var metricPoint in secondMetric.GetMetricPoints())
+            {
+                secondMetricPoints.Add(metricPoint);
+            }
+
+            Assert.Single(secondMetricPoints);
+            var secondMetricPoint = secondMetricPoints[0];
+            Assert.Equal(10, secondMetricPoint.GetGaugeLastValueLong());
+        }
+        else if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
+        {
+            // For delta temporality, no new metric should be collected
+            // Expect an exception if we try to access exportedMetrics[1]
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            {
+                var secondMetric = exportedMetrics[1];
+            });
+
+            Assert.Contains("Index was out of range. Must be non-negative and less than the size of the collection.", exception.Message);
+        }
+    }
+
     internal static IConfiguration BuildConfiguration(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
     {
         var configurationData = new Dictionary<string, string>();
