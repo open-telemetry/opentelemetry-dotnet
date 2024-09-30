@@ -200,13 +200,13 @@ regardless of your experience level. Whether you're a seasoned OpenTelemetry
 developer, just starting your journey, or simply curious about the work we do,
 you're more than welcome to participate!
 
-[Maintainers](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer)
+[Maintainers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer)
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
 * [Alan West](https://github.com/alanwest), New Relic
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 
-[Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
+[Approvers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver)
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
@@ -214,13 +214,14 @@ you're more than welcome to participate!
 * [Reiley Yang](https://github.com/reyang), Microsoft
 * [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
-[Triagers](https://github.com/open-telemetry/community/blob/main/community-membership.md#triager)
+[Triagers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager)
 ([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
 
 * [Martin Thwaites](https://github.com/martinjt), Honeycomb
+* [Timothy "Mothra" Lee](https://github.com/TimothyMothra), Microsoft
 
 [Emeritus
-Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):
+Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
 
 * [Bruno Garcia](https://github.com/bruno-garcia)
 * [Eddy Nakamura](https://github.com/eddynaka)
