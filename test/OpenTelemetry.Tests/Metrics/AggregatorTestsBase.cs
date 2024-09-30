@@ -202,11 +202,11 @@ public abstract class AggregatorTestsBase
         };
 
         var numberOfThreads = 2;
-        var snapshotThread = new Thread(HistogramSnapshotThread!);
+        var snapshotThread = new Thread(HistogramSnapshotThread);
         Thread[] updateThreads = new Thread[numberOfThreads];
         for (int i = 0; i < numberOfThreads; ++i)
         {
-            updateThreads[i] = new Thread(HistogramUpdateThread!);
+            updateThreads[i] = new Thread(HistogramUpdateThread);
             updateThreads[i].Start(argsToThread);
         }
 
@@ -468,7 +468,7 @@ public abstract class AggregatorTestsBase
         Assert.Equal(expectedScale, metricPoint.GetExponentialHistogramData().Scale);
     }
 
-    private static void HistogramSnapshotThread(object obj)
+    private static void HistogramSnapshotThread(object? obj)
     {
         var args = obj as ThreadArguments;
         var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart!;
@@ -489,7 +489,7 @@ public abstract class AggregatorTestsBase
         }
     }
 
-    private static void HistogramUpdateThread(object obj)
+    private static void HistogramUpdateThread(object? obj)
     {
         var args = obj as ThreadArguments;
         var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart!;
