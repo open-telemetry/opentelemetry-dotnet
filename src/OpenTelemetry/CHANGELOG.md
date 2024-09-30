@@ -31,9 +31,9 @@ Notes](../../RELEASENOTES.md).
   See [#5854](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5854)
   for details.
 
-* Add support for collecting metrics from
-  [Gauge](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.gauge-1)
-  API
+* Added support for collecting metrics emitted via the .NET 9
+  [Gauge&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.gauge-1)
+  API.
   ([#5867](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5867))
 
 ## 1.9.0
