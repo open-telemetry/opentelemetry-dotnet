@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0-beta.1
+
+Released 2024-Sep-30
+
 * Added `OpenTelemetrySdk.Create` API for configuring OpenTelemetry .NET signals
   (logging, tracing, and metrics) via a single builder. This new API simplifies
   bootstrap and teardown, and supports cross-cutting extensions targeting
