@@ -27,6 +27,7 @@ public abstract partial class MetricReader : IDisposable
 
             // Temporality is not defined for gauges, so this does not really affect anything.
             var type when type == typeof(ObservableGauge<>) => AggregationTemporality.Delta,
+            var type when type == typeof(Gauge<>) => AggregationTemporality.Delta,
 
             var type when type == typeof(UpDownCounter<>) => AggregationTemporality.Cumulative,
             var type when type == typeof(ObservableUpDownCounter<>) => AggregationTemporality.Cumulative,
