@@ -1761,7 +1761,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
 
         var mre = arguments.MreToBlockUpdateThread;
         var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
-        var histogram = arguments.Instrument as Histogram<T>;
+        var histogram = (arguments.Instrument as Histogram<T>)!;
 
         if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == NumberOfThreads)
         {
@@ -1773,9 +1773,9 @@ public abstract class MetricApiTestsBase : MetricTestsBase
 
         for (int i = 0; i < NumberOfMetricUpdateByEachThread; i++)
         {
-            for (int j = 0; j < arguments.ValuesToRecord!.Length; j++)
+            for (int j = 0; j < arguments.ValuesToRecord.Length; j++)
             {
-                histogram!.Record(arguments.ValuesToRecord[j]);
+                histogram.Record(arguments.ValuesToRecord[j]);
             }
         }
     }
