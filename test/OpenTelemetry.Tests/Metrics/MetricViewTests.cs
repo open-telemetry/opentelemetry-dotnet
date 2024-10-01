@@ -58,7 +58,7 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
-    public void AddViewWithNullMetricStreamConfigurationThrowsArgumentnullException()
+    public void AddViewWithNullMetricStreamConfigurationThrowsArgumentNullException()
     {
         var exportedItems = new List<Metric>();
 
