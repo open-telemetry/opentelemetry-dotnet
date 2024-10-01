@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0-beta.1
+
+Released 2024-Sep-30
+
 * Added `OpenTelemetrySdk.Create` API for configuring OpenTelemetry .NET signals
   (logging, tracing, and metrics) via a single builder. This new API simplifies
   bootstrap and teardown, and supports cross-cutting extensions targeting
@@ -30,6 +34,11 @@ Notes](../../RELEASENOTES.md).
 
   See [#5854](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5854)
   for details.
+
+* Added support for collecting metrics emitted via the .NET 9
+  [Gauge&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.gauge-1)
+  API.
+  ([#5867](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5867))
 
 ## 1.9.0
 
