@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#nullable enable
+
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
@@ -56,7 +58,7 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
-    public void AddViewWithNullMetricStreamConfigurationThrowsArgumentnullException()
+    public void AddViewWithNullMetricStreamConfigurationThrowsArgumentNullException()
     {
         var exportedItems = new List<Metric>();
 
@@ -64,7 +66,7 @@ public class MetricViewTests : MetricTestsBase
 
         Assert.Throws<ArgumentNullException>(() => this.BuildMeterProvider(out var meterProvider, builder => builder
            .AddMeter(meter1.Name)
-           .AddView("name1", (MetricStreamConfiguration)null)
+           .AddView("name1", (MetricStreamConfiguration)null!)
            .AddInMemoryExporter(exportedItems)));
     }
 
@@ -1233,7 +1235,7 @@ public class MetricViewTests : MetricTestsBase
         var instrument1 = meter.CreateCounter<long>("name");
         var instrument2 = meter.CreateCounter<long>("name");
 
-        var tags = new KeyValuePair<string, object>[]
+        var tags = new KeyValuePair<string, object?>[]
         {
             new("key1", "value"),
             new("key2", "value"),
@@ -1247,8 +1249,8 @@ public class MetricViewTests : MetricTestsBase
         Assert.Equal(2, exportedItems.Count);
         var metric1 = new List<Metric>() { exportedItems[0] };
         var metric2 = new List<Metric>() { exportedItems[1] };
-        var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
-        var tag2 = new List<KeyValuePair<string, object>> { tags[1] };
+        var tag1 = new List<KeyValuePair<string, object?>> { tags[0] };
+        var tag2 = new List<KeyValuePair<string, object?>> { tags[1] };
 
         Assert.Equal("name", exportedItems[0].Name);
         Assert.Equal("name", exportedItems[1].Name);
@@ -1280,7 +1282,7 @@ public class MetricViewTests : MetricTestsBase
         var instrument1 = meter.CreateCounter<long>("name");
         var instrument2 = meter.CreateCounter<long>("name");
 
-        var tags = new KeyValuePair<string, object>[]
+        var tags = new KeyValuePair<string, object?>[]
         {
             new("key1", "value"),
             new("key2", "value"),
@@ -1294,13 +1296,13 @@ public class MetricViewTests : MetricTestsBase
         Assert.Equal(2, exportedItems.Count);
 
         var metric1 = new List<Metric>() { exportedItems[0] };
-        var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
+        var tag1 = new List<KeyValuePair<string, object?>> { tags[0] };
         Assert.Equal("name", exportedItems[0].Name);
         Assert.Equal(20, GetLongSum(metric1));
         CheckTagsForNthMetricPoint(metric1, tag1, 1);
 
         var metric2 = new List<Metric>() { exportedItems[1] };
-        var tag2 = new List<KeyValuePair<string, object>> { tags[0] };
+        var tag2 = new List<KeyValuePair<string, object?>> { tags[0] };
         Assert.Equal("name", exportedItems[1].Name);
         Assert.Equal(20, GetLongSum(metric2));
         CheckTagsForNthMetricPoint(metric2, tag2, 1);
@@ -1408,7 +1410,7 @@ public class MetricViewTests : MetricTestsBase
         var instrument1 = meter.CreateCounter<long>("name");
         var instrument2 = meter.CreateCounter<long>("othername");
 
-        var tags = new KeyValuePair<string, object>[]
+        var tags = new KeyValuePair<string, object?>[]
         {
             new("key1", "value"),
             new("key2", "value"),
@@ -1423,8 +1425,8 @@ public class MetricViewTests : MetricTestsBase
         var metric1 = new List<Metric>() { exportedItems[0] };
         var metric2 = new List<Metric>() { exportedItems[1] };
 
-        var tags1 = new List<KeyValuePair<string, object>> { tags[0] };
-        var tags2 = new List<KeyValuePair<string, object>> { tags[0], tags[1] };
+        var tags1 = new List<KeyValuePair<string, object?>> { tags[0] };
+        var tags2 = new List<KeyValuePair<string, object?>> { tags[0], tags[1] };
 
         Assert.Equal("othername", exportedItems[0].Name);
         Assert.Equal("othername", exportedItems[1].Name);
