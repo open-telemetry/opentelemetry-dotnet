@@ -1733,7 +1733,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             throw new Exception("Invalid args");
         }
 
-        var mre = arguments.MreToBlockUpdateThread!;
+        var mre = arguments.MreToBlockUpdateThread;
         var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart!;
         var counter = arguments.Instrument as Counter<T>;
         var valueToUpdate = arguments.ValuesToRecord![0];
@@ -1759,8 +1759,8 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             throw new Exception("Invalid args");
         }
 
-        var mre = arguments.MreToBlockUpdateThread!;
-        var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart!;
+        var mre = arguments.MreToBlockUpdateThread;
+        var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
         var histogram = arguments.Instrument as Histogram<T>;
 
         if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == NumberOfThreads)
@@ -1791,13 +1791,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             .AddMeter(meter.Name)
             .AddInMemoryExporter(metricItems));
 
-        var argToThread = new UpdateThreadArguments<T>
-        {
-            ValuesToRecord = new T[] { deltaValueUpdatedByEachCall },
-            Instrument = meter.CreateCounter<T>("counter"),
-            MreToBlockUpdateThread = new ManualResetEvent(false),
-            MreToEnsureAllThreadsStart = new ManualResetEvent(false),
-        };
+        var argToThread = new UpdateThreadArguments<T>(new ManualResetEvent(false), new ManualResetEvent(false), meter.CreateCounter<T>("counter"), [deltaValueUpdatedByEachCall]);
 
         Thread[] t = new Thread[NumberOfThreads];
         for (int i = 0; i < NumberOfThreads; i++)
@@ -1847,13 +1841,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             .AddMeter(meter.Name)
             .AddReader(metricReader));
 
-        var argsToThread = new UpdateThreadArguments<T>
-        {
-            Instrument = meter.CreateHistogram<T>("histogram"),
-            MreToBlockUpdateThread = new ManualResetEvent(false),
-            MreToEnsureAllThreadsStart = new ManualResetEvent(false),
-            ValuesToRecord = values,
-        };
+        var argsToThread = new UpdateThreadArguments<T>(new ManualResetEvent(false), new ManualResetEvent(false), meter.CreateHistogram<T>("histogram"), values);
 
         Thread[] t = new Thread[NumberOfThreads];
         for (int i = 0; i < NumberOfThreads; i++)
@@ -1889,11 +1877,19 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     private class UpdateThreadArguments<T>
         where T : struct, IComparable
     {
-        public ManualResetEvent? MreToBlockUpdateThread;
-        public ManualResetEvent? MreToEnsureAllThreadsStart;
+        public ManualResetEvent MreToBlockUpdateThread;
+        public ManualResetEvent MreToEnsureAllThreadsStart;
         public int ThreadsStartedCount;
-        public Instrument<T>? Instrument;
-        public T[]? ValuesToRecord;
+        public Instrument<T> Instrument;
+        public T[] ValuesToRecord;
+
+        public UpdateThreadArguments(ManualResetEvent mreToBlockUpdateThread, ManualResetEvent mreToEnsureAllThreadsStart, Instrument<T> instrument, T[] valuesToRecord)
+        {
+            this.MreToBlockUpdateThread = mreToBlockUpdateThread;
+            this.MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
+            this.Instrument = instrument;
+            this.ValuesToRecord = valuesToRecord;
+        }
     }
 }
 

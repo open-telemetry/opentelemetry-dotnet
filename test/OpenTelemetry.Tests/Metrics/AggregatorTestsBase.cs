@@ -195,11 +195,7 @@ public abstract class AggregatorTestsBase
     {
         var boundaries = Array.Empty<double>();
         var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
-        var argsToThread = new ThreadArguments
-        {
-            HistogramPoint = histogramPoint,
-            MreToEnsureAllThreadsStart = new ManualResetEvent(false),
-        };
+        var argsToThread = new ThreadArguments(histogramPoint, new ManualResetEvent(false));
 
         var numberOfThreads = 2;
         var snapshotThread = new Thread(HistogramSnapshotThread);
@@ -471,7 +467,7 @@ public abstract class AggregatorTestsBase
     private static void HistogramSnapshotThread(object? obj)
     {
         var args = obj as ThreadArguments;
-        var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart!;
+        var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart;
 
         if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
         {
@@ -492,7 +488,7 @@ public abstract class AggregatorTestsBase
     private static void HistogramUpdateThread(object? obj)
     {
         var args = obj as ThreadArguments;
-        var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart!;
+        var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart;
 
         if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
         {
@@ -511,11 +507,17 @@ public abstract class AggregatorTestsBase
 
     private class ThreadArguments
     {
+        public readonly ManualResetEvent MreToEnsureAllThreadsStart;
         public MetricPoint HistogramPoint;
-        public ManualResetEvent? MreToEnsureAllThreadsStart;
         public int ThreadStartedCount;
         public long ThreadsFinishedAllUpdatesCount;
         public double SumOfDelta;
+
+        public ThreadArguments(MetricPoint histogramPoint, ManualResetEvent mreToEnsureAllThreadsStart)
+        {
+            this.HistogramPoint = histogramPoint;
+            this.MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
+        }
     }
 }
 
