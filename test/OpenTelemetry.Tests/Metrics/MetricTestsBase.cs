@@ -56,7 +56,7 @@ public class MetricTestsBase
 
                     if (!useWithMetricsStyle)
                     {
-                        builder.UseOpenTelemetry(metricsBuilder => ConfigureBuilder(metricsBuilder, configureMeterProviderBuilder!));
+                        builder.UseOpenTelemetry(metricsBuilder => ConfigureBuilder(metricsBuilder, configureMeterProviderBuilder));
                     }
                 });
 
@@ -64,7 +64,7 @@ public class MetricTestsBase
                 {
                     services
                         .AddOpenTelemetry()
-                        .WithMetrics(metricsBuilder => ConfigureBuilder(metricsBuilder, configureMeterProviderBuilder!));
+                        .WithMetrics(metricsBuilder => ConfigureBuilder(metricsBuilder, configureMeterProviderBuilder));
                 }
 
                 services.AddHostedService<MetricsSubscriptionManagerCleanupHostedService>();
@@ -76,7 +76,7 @@ public class MetricTestsBase
 
         return host;
 
-        static void ConfigureBuilder(MeterProviderBuilder builder, Action<HostingMeterProviderBuilder> configureMeterProviderBuilder)
+        static void ConfigureBuilder(MeterProviderBuilder builder, Action<HostingMeterProviderBuilder>? configureMeterProviderBuilder)
         {
             IServiceCollection? localServices = null;
 
@@ -218,7 +218,7 @@ public class MetricTestsBase
                 }
             });
 
-        meterProvider = host.Services.GetService<MeterProvider>()!;
+        meterProvider = host.Services.GetRequiredService<MeterProvider>();
 
         return host;
 #else
@@ -279,8 +279,8 @@ public class MetricTestsBase
 
         public MetricsSubscriptionManagerCleanupHostedService(IServiceProvider serviceProvider)
         {
-            this.metricsSubscriptionManager = serviceProvider.GetService(
-                typeof(ConsoleMetrics).Assembly.GetType("Microsoft.Extensions.Diagnostics.Metrics.MetricsSubscriptionManager")!)!;
+            this.metricsSubscriptionManager = serviceProvider.GetRequiredService(
+                typeof(ConsoleMetrics).Assembly.GetType("Microsoft.Extensions.Diagnostics.Metrics.MetricsSubscriptionManager")!);
 
             if (this.metricsSubscriptionManager == null)
             {

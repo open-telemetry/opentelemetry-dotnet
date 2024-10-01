@@ -147,7 +147,7 @@ public class OpenTelemetryServicesExtensionsTests
 
                                 var configuration = sp.GetRequiredService<IConfiguration>();
 
-                                var testKeyValue = configuration.GetValue<string>("TEST_KEY", null!);
+                                var testKeyValue = configuration.GetValue<string?>("TEST_KEY", null);
 
                                 Assert.Equal("TEST_KEY_VALUE", testKeyValue);
                             });
@@ -270,7 +270,7 @@ public class OpenTelemetryServicesExtensionsTests
 
                                 var configuration = sp.GetRequiredService<IConfiguration>();
 
-                                var testKeyValue = configuration.GetValue<string>("TEST_KEY", null!);
+                                var testKeyValue = configuration.GetValue<string?>("TEST_KEY", null);
 
                                 Assert.Equal("TEST_KEY_VALUE", testKeyValue);
                             });
@@ -393,7 +393,7 @@ public class OpenTelemetryServicesExtensionsTests
 
                                 var configuration = sp.GetRequiredService<IConfiguration>();
 
-                                var testKeyValue = configuration.GetValue<string>("TEST_KEY", null!);
+                                var testKeyValue = configuration.GetValue<string?>("TEST_KEY", null);
 
                                 Assert.Equal("TEST_KEY_VALUE", testKeyValue);
                             });

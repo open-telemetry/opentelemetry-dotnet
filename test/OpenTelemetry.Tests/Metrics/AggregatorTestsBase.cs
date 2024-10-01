@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Xunit;
 
@@ -467,6 +468,7 @@ public abstract class AggregatorTestsBase
     private static void HistogramSnapshotThread(object? obj)
     {
         var args = obj as ThreadArguments;
+        Debug.Assert(args != null, "args was null");
         var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart;
 
         if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
@@ -488,6 +490,7 @@ public abstract class AggregatorTestsBase
     private static void HistogramUpdateThread(object? obj)
     {
         var args = obj as ThreadArguments;
+        Debug.Assert(args != null, "args was null");
         var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart;
 
         if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)

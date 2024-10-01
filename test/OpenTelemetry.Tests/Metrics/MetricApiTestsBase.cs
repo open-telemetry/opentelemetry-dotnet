@@ -1728,15 +1728,16 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     private static void CounterUpdateThread<T>(object? obj)
         where T : struct, IComparable
     {
-        if (obj is not UpdateThreadArguments<T> arguments)
-        {
-            throw new Exception("Invalid args");
-        }
+        var arguments = obj as UpdateThreadArguments<T>;
+        Debug.Assert(arguments != null, "arguments was null");
 
-        var mre = arguments.MreToBlockUpdateThread;
-        var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart!;
+        var mre = arguments!.MreToBlockUpdateThread;
+        var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
+        var valueToUpdate = arguments.ValuesToRecord[0];
+
         var counter = arguments.Instrument as Counter<T>;
-        var valueToUpdate = arguments.ValuesToRecord![0];
+        Debug.Assert(counter != null, "counter was null");
+
         if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == NumberOfThreads)
         {
             mreToEnsureAllThreadsStart.Set();
@@ -1754,14 +1755,13 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     private static void HistogramUpdateThread<T>(object? obj)
         where T : struct, IComparable
     {
-        if (obj is not UpdateThreadArguments<T> arguments)
-        {
-            throw new Exception("Invalid args");
-        }
+        var arguments = obj as UpdateThreadArguments<T>;
+        Debug.Assert(arguments != null, "arguments was null");
 
-        var mre = arguments.MreToBlockUpdateThread;
+        var mre = arguments!.MreToBlockUpdateThread;
         var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
-        var histogram = (arguments.Instrument as Histogram<T>)!;
+        var histogram = arguments.Instrument as Histogram<T>;
+        Debug.Assert(histogram != null, "histogram was null");
 
         if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == NumberOfThreads)
         {
@@ -1775,7 +1775,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         {
             for (int j = 0; j < arguments.ValuesToRecord.Length; j++)
             {
-                histogram.Record(arguments.ValuesToRecord[j]);
+                histogram!.Record(arguments.ValuesToRecord[j]);
             }
         }
     }
