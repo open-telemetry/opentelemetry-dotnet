@@ -1,0 +1,8 @@
+<Project>
+
+  <ItemGroup Condition="'$(ReferenceSystemTextJsonPackages)' == 'true' AND $(TargetFrameworksRequiringSystemTextJsonDirectReference.Contains('$(TargetFramework)'))">
+    <PackageReference Include="System.Text.Encodings.Web" />
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+</Project>
