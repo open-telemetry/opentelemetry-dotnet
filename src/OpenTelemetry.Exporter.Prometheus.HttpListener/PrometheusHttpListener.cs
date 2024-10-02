@@ -11,7 +11,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 {
     private readonly PrometheusExporter exporter;
     private readonly HttpListener httpListener = new();
-    private readonly object syncObject = new();
+    private readonly Lock syncObject = new();
 
     private CancellationTokenSource? tokenSource;
     private Task? workerThread;

@@ -27,6 +27,7 @@ public abstract partial class MetricReader : IDisposable
 
             // Temporality is not defined for gauges, so this does not really affect anything.
             var type when type == typeof(ObservableGauge<>) => AggregationTemporality.Delta,
+            var type when type == typeof(Gauge<>) => AggregationTemporality.Delta,
 
             var type when type == typeof(UpDownCounter<>) => AggregationTemporality.Cumulative,
             var type when type == typeof(ObservableUpDownCounter<>) => AggregationTemporality.Cumulative,
@@ -36,8 +37,8 @@ public abstract partial class MetricReader : IDisposable
         };
     };
 
-    private readonly object newTaskLock = new();
-    private readonly object onCollectLock = new();
+    private readonly Lock newTaskLock = new();
+    private readonly Lock onCollectLock = new();
     private readonly TaskCompletionSource<bool> shutdownTcs = new();
     private MetricReaderTemporalityPreference temporalityPreference = MetricReaderTemporalityPreferenceUnspecified;
     private Func<Type, AggregationTemporality> temporalityFunc = CumulativeTemporalityPreferenceFunc;

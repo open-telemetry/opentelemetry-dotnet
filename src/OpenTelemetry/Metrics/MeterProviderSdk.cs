@@ -30,7 +30,7 @@ internal sealed class MeterProviderSdk : MeterProvider
 
     private readonly List<object> instrumentations = new();
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
-    private readonly object collectLock = new();
+    private readonly Lock collectLock = new();
     private readonly MeterListener listener;
     private readonly MetricReader? reader;
     private readonly CompositeMetricReader? compositeMetricReader;

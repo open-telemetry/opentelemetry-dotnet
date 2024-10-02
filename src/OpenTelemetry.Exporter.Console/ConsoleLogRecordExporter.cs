@@ -10,7 +10,7 @@ namespace OpenTelemetry.Exporter;
 public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
 {
     private const int RightPaddingLength = 35;
-    private readonly object syncObject = new();
+    private readonly Lock syncObject = new();
     private bool disposed;
     private string? disposedStackTrace;
     private bool isDisposeMessageSent;

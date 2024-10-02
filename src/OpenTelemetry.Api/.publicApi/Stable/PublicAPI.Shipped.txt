@@ -1,41 +1,16 @@
 #nullable enable
-~OpenTelemetry.Baggage.GetBaggage() -> System.Collections.Generic.IReadOnlyDictionary<string, string>
-~OpenTelemetry.Baggage.GetBaggage(string name) -> string
-~OpenTelemetry.Baggage.GetEnumerator() -> System.Collections.Generic.Dictionary<string, string>.Enumerator
-~OpenTelemetry.Baggage.RemoveBaggage(string name) -> OpenTelemetry.Baggage
-~OpenTelemetry.Baggage.SetBaggage(params System.Collections.Generic.KeyValuePair<string, string>[] baggageItems) -> OpenTelemetry.Baggage
-~OpenTelemetry.Baggage.SetBaggage(string name, string value) -> OpenTelemetry.Baggage
-~OpenTelemetry.Baggage.SetBaggage(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> baggageItems) -> OpenTelemetry.Baggage
-~OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.AsyncLocalRuntimeContextSlot(string name) -> void
-~OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.get -> object
-~OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.set -> void
-~OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.get -> object
-~OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.set -> void
-~OpenTelemetry.Context.RuntimeContextSlot<T>.Name.get -> string
-~OpenTelemetry.Context.RuntimeContextSlot<T>.RuntimeContextSlot(string name) -> void
-~OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.ThreadLocalRuntimeContextSlot(string name) -> void
-~OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.get -> object
-~OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.set -> void
-~override OpenTelemetry.Baggage.Equals(object obj) -> bool
-~static OpenTelemetry.Baggage.Create(System.Collections.Generic.Dictionary<string, string> baggageItems = null) -> OpenTelemetry.Baggage
-~static OpenTelemetry.Baggage.GetBaggage(OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> System.Collections.Generic.IReadOnlyDictionary<string, string>
-~static OpenTelemetry.Baggage.GetBaggage(string name, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> string
-~static OpenTelemetry.Baggage.GetEnumerator(OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> System.Collections.Generic.Dictionary<string, string>.Enumerator
-~static OpenTelemetry.Baggage.RemoveBaggage(string name, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
-~static OpenTelemetry.Baggage.SetBaggage(string name, string value, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
-~static OpenTelemetry.Baggage.SetBaggage(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> baggageItems, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
-~static OpenTelemetry.Context.RuntimeContext.ContextSlotType.get -> System.Type
-~static OpenTelemetry.Context.RuntimeContext.ContextSlotType.set -> void
-~static OpenTelemetry.Context.RuntimeContext.GetSlot<T>(string slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>
-~static OpenTelemetry.Context.RuntimeContext.GetValue(string slotName) -> object
-~static OpenTelemetry.Context.RuntimeContext.GetValue<T>(string slotName) -> T
-~static OpenTelemetry.Context.RuntimeContext.RegisterSlot<T>(string slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>
-~static OpenTelemetry.Context.RuntimeContext.SetValue(string slotName, object value) -> void
-~static OpenTelemetry.Context.RuntimeContext.SetValue<T>(string slotName, T value) -> void
+static OpenTelemetry.Context.RuntimeContext.ContextSlotType.get -> System.Type!
+static OpenTelemetry.Context.RuntimeContext.ContextSlotType.set -> void
+static OpenTelemetry.Context.RuntimeContext.GetSlot<T>(string! slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>!
+static OpenTelemetry.Context.RuntimeContext.GetValue(string! slotName) -> object?
+static OpenTelemetry.Context.RuntimeContext.GetValue<T>(string! slotName) -> T?
+static OpenTelemetry.Context.RuntimeContext.RegisterSlot<T>(string! slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>!
+static OpenTelemetry.Context.RuntimeContext.SetValue(string! slotName, object? value) -> void
+static OpenTelemetry.Context.RuntimeContext.SetValue<T>(string! slotName, T value) -> void
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string!, System.Collections.Generic.IEnumerable<string!>?>! getter) -> OpenTelemetry.Context.Propagation.PropagationContext
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Fields.get -> System.Collections.Generic.ISet<string!>?
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string!, string!>! setter) -> void
-abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Get() -> T
+abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Get() -> T?
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Set(T value) -> void
 abstract OpenTelemetry.Logs.LoggerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 abstract OpenTelemetry.Metrics.MeterProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
@@ -49,12 +24,24 @@ OpenTelemetry.Baggage.Baggage() -> void
 OpenTelemetry.Baggage.ClearBaggage() -> OpenTelemetry.Baggage
 OpenTelemetry.Baggage.Count.get -> int
 OpenTelemetry.Baggage.Equals(OpenTelemetry.Baggage other) -> bool
+OpenTelemetry.Baggage.GetBaggage() -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+OpenTelemetry.Baggage.GetBaggage(string! name) -> string?
+OpenTelemetry.Baggage.GetEnumerator() -> System.Collections.Generic.Dictionary<string!, string!>.Enumerator
+OpenTelemetry.Baggage.RemoveBaggage(string! name) -> OpenTelemetry.Baggage
+OpenTelemetry.Baggage.SetBaggage(params System.Collections.Generic.KeyValuePair<string!, string?>[]! baggageItems) -> OpenTelemetry.Baggage
+OpenTelemetry.Baggage.SetBaggage(string! name, string? value) -> OpenTelemetry.Baggage
+OpenTelemetry.Baggage.SetBaggage(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string?>>! baggageItems) -> OpenTelemetry.Baggage
 OpenTelemetry.BaseProvider
 OpenTelemetry.BaseProvider.~BaseProvider() -> void
 OpenTelemetry.BaseProvider.BaseProvider() -> void
 OpenTelemetry.BaseProvider.Dispose() -> void
 OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>
+OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.AsyncLocalRuntimeContextSlot(string! name) -> void
+OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.get -> object?
+OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.set -> void
 OpenTelemetry.Context.IRuntimeContextSlotValueAccessor
+OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.get -> object?
+OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.set -> void
 OpenTelemetry.Context.Propagation.B3Propagator
 OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator() -> void
 OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator(bool singleHeader) -> void
@@ -76,7 +63,12 @@ OpenTelemetry.Context.Propagation.TraceContextPropagator.TraceContextPropagator(
 OpenTelemetry.Context.RuntimeContext
 OpenTelemetry.Context.RuntimeContextSlot<T>
 OpenTelemetry.Context.RuntimeContextSlot<T>.Dispose() -> void
+OpenTelemetry.Context.RuntimeContextSlot<T>.Name.get -> string!
+OpenTelemetry.Context.RuntimeContextSlot<T>.RuntimeContextSlot(string! name) -> void
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>
+OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.ThreadLocalRuntimeContextSlot(string! name) -> void
+OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.get -> object?
+OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.set -> void
 OpenTelemetry.Logs.IDeferredLoggerProviderBuilder
 OpenTelemetry.Logs.IDeferredLoggerProviderBuilder.Configure(System.Action<System.IServiceProvider!, OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 OpenTelemetry.Logs.LoggerProvider
@@ -171,8 +163,9 @@ OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version = nul
 OpenTelemetry.Trace.TracerProvider.TracerProvider() -> void
 OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.Trace.TracerProviderBuilder.TracerProviderBuilder() -> void
+override OpenTelemetry.Baggage.Equals(object? obj) -> bool
 override OpenTelemetry.Baggage.GetHashCode() -> int
-override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Get() -> T
+override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Get() -> T?
 override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Set(T value) -> void
 override OpenTelemetry.Context.Propagation.B3Propagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string!, System.Collections.Generic.IEnumerable<string!>?>! getter) -> OpenTelemetry.Context.Propagation.PropagationContext
 override OpenTelemetry.Context.Propagation.B3Propagator.Fields.get -> System.Collections.Generic.ISet<string!>!
@@ -189,7 +182,7 @@ override OpenTelemetry.Context.Propagation.TraceContextPropagator.Extract<T>(Ope
 override OpenTelemetry.Context.Propagation.TraceContextPropagator.Fields.get -> System.Collections.Generic.ISet<string!>!
 override OpenTelemetry.Context.Propagation.TraceContextPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string!, string!>! setter) -> void
 override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Dispose(bool disposing) -> void
-override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Get() -> T
+override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Get() -> T?
 override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Set(T value) -> void
 override OpenTelemetry.Trace.Link.Equals(object? obj) -> bool
 override OpenTelemetry.Trace.Link.GetHashCode() -> int
@@ -201,10 +194,17 @@ override OpenTelemetry.Trace.Status.ToString() -> string!
 override OpenTelemetry.Trace.TracerProvider.Dispose(bool disposing) -> void
 static OpenTelemetry.ActivityContextExtensions.IsValid(this System.Diagnostics.ActivityContext ctx) -> bool
 static OpenTelemetry.Baggage.ClearBaggage(OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
+static OpenTelemetry.Baggage.Create(System.Collections.Generic.Dictionary<string!, string!>? baggageItems = null) -> OpenTelemetry.Baggage
 static OpenTelemetry.Baggage.Current.get -> OpenTelemetry.Baggage
 static OpenTelemetry.Baggage.Current.set -> void
+static OpenTelemetry.Baggage.GetBaggage(OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static OpenTelemetry.Baggage.GetBaggage(string! name, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> string?
+static OpenTelemetry.Baggage.GetEnumerator(OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> System.Collections.Generic.Dictionary<string!, string!>.Enumerator
 static OpenTelemetry.Baggage.operator !=(OpenTelemetry.Baggage left, OpenTelemetry.Baggage right) -> bool
 static OpenTelemetry.Baggage.operator ==(OpenTelemetry.Baggage left, OpenTelemetry.Baggage right) -> bool
+static OpenTelemetry.Baggage.RemoveBaggage(string! name, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
+static OpenTelemetry.Baggage.SetBaggage(string! name, string? value, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
+static OpenTelemetry.Baggage.SetBaggage(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string?>>! baggageItems, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
 static OpenTelemetry.Context.Propagation.PropagationContext.operator !=(OpenTelemetry.Context.Propagation.PropagationContext left, OpenTelemetry.Context.Propagation.PropagationContext right) -> bool
 static OpenTelemetry.Context.Propagation.PropagationContext.operator ==(OpenTelemetry.Context.Propagation.PropagationContext left, OpenTelemetry.Context.Propagation.PropagationContext right) -> bool
 static OpenTelemetry.Context.Propagation.Propagators.DefaultTextMapPropagator.get -> OpenTelemetry.Context.Propagation.TextMapPropagator!

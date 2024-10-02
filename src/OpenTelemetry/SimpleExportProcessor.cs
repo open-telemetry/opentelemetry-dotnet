@@ -12,7 +12,7 @@ namespace OpenTelemetry;
 public abstract class SimpleExportProcessor<T> : BaseExportProcessor<T>
     where T : class
 {
-    private readonly object syncObject = new();
+    private readonly Lock syncObject = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SimpleExportProcessor{T}"/> class.

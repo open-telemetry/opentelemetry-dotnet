@@ -41,7 +41,7 @@ csharp_indent_labels = flush_left
 
 # Modifier preferences
 csharp_preferred_modifier_order = public,private,protected,internal,file,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,required,volatile,async:suggestion
-dotnet_style_require_accessibility_modifiers = for_non_interface_members:silent
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:suggestion
 
 # this. preferences
 dotnet_style_qualification_for_field = true:suggestion
@@ -53,8 +53,8 @@ dotnet_style_qualification_for_event = true:suggestion
 csharp_style_var_for_built_in_types = true:silent
 csharp_style_var_when_type_is_apparent = true:silent
 csharp_style_var_elsewhere = true:silent
-dotnet_style_predefined_type_for_locals_parameters_members = true:silent
-dotnet_style_predefined_type_for_member_access = true:silent
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
+dotnet_style_predefined_type_for_member_access = true:suggestion
 
 # name all constant fields using PascalCase
 dotnet_naming_rule.constant_fields_should_be_pascal_case.severity = suggestion
@@ -75,6 +75,7 @@ dotnet_style_readonly_field = true:suggestion
 csharp_style_implicit_object_creation_when_type_is_apparent = true:suggestion
 dotnet_style_prefer_simplified_interpolation = true:suggestion
 dotnet_style_object_initializer = true:suggestion
+csharp_style_prefer_primary_constructors = false:none
 
 # Expression-level preferences
 dotnet_style_object_initializer = true:suggestion
@@ -82,21 +83,23 @@ dotnet_style_collection_initializer = true:suggestion
 dotnet_style_explicit_tuple_names = true:suggestion
 dotnet_style_coalesce_expression = true:suggestion
 dotnet_style_null_propagation = true:suggestion
-dotnet_style_prefer_is_null_check_over_reference_equality_method = true:silent
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
 dotnet_style_prefer_inferred_tuple_names = true:suggestion
 dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
-dotnet_style_prefer_auto_properties = true:silent
-dotnet_style_prefer_conditional_expression_over_assignment = true:silent
-dotnet_style_prefer_conditional_expression_over_return = true:silent
+dotnet_style_prefer_auto_properties = true:suggestion
+dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
+dotnet_style_prefer_conditional_expression_over_return = true:suggestion
 csharp_prefer_simple_default_expression = true:suggestion
+csharp_style_unused_value_expression_statement_preference = discard_variable:none
 
 # Expression-bodied members
-csharp_style_expression_bodied_methods = false:silent
-csharp_style_expression_bodied_constructors = false:silent
-csharp_style_expression_bodied_operators = false:silent
-csharp_style_expression_bodied_properties = true:silent
-csharp_style_expression_bodied_indexers = true:silent
-csharp_style_expression_bodied_accessors = true:silent
+csharp_style_expression_bodied_methods = true:suggestion
+dotnet_diagnostic.IDE0022.severity = suggestion # dotnet format doesn't respect the suggestion in the line above
+csharp_style_expression_bodied_constructors = false:warning
+csharp_style_expression_bodied_operators = true:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_expression_bodied_indexers = true:suggestion
+csharp_style_expression_bodied_accessors = true:suggestion
 
 # Pattern matching
 csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
@@ -113,6 +116,7 @@ csharp_style_prefer_range_operator = false:none
 csharp_style_pattern_local_over_anonymous_function = true:suggestion
 csharp_style_deconstructed_variable_declaration = true:suggestion
 csharp_style_namespace_declarations = file_scoped:warning
+dotnet_style_namespace_match_folder = false:none
 
 # Space preferences
 csharp_space_after_cast = false
@@ -128,10 +132,10 @@ csharp_space_between_method_declaration_parameter_list_parentheses = false
 csharp_space_between_parentheses = false
 
 # Parentheses preferences
-dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:silent
-dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:silent
-dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:silent
-dotnet_style_parentheses_in_other_operators = never_if_unnecessary:silent
+dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:suggestion
+dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:suggestion
+dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:suggestion
+dotnet_style_parentheses_in_other_operators = never_if_unnecessary:suggestion
 
 # Code analyzers
 # CA1031: Do not catch general exception types

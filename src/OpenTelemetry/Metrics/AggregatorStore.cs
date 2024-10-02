@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
-#if NET8_0_OR_GREATER
+#if NET
 using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
@@ -14,7 +14,7 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class AggregatorStore
 {
-#if NET8_0_OR_GREATER
+#if NET
     internal readonly FrozenSet<string>? TagKeysInteresting;
 #else
     internal readonly HashSet<string>? TagKeysInteresting;
@@ -31,8 +31,8 @@ internal sealed class AggregatorStore
     private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute by setting env variable OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE = true. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
     private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
 
-    private readonly object lockZeroTags = new();
-    private readonly object lockOverflowTag = new();
+    private readonly Lock lockZeroTags = new();
+    private readonly Lock lockOverflowTag = new();
     private readonly int tagsKeysInterestingCount;
 
     // This holds the reclaimed MetricPoints that are available for reuse.
@@ -96,7 +96,7 @@ internal sealed class AggregatorStore
         {
             this.updateLongCallback = this.UpdateLongCustomTags;
             this.updateDoubleCallback = this.UpdateDoubleCustomTags;
-#if NET8_0_OR_GREATER
+#if NET
             var hs = FrozenSet.ToFrozenSet(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
 #else
             var hs = new HashSet<string>(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
