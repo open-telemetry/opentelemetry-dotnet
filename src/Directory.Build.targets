@@ -16,6 +16,15 @@
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)"/>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)'=='$(NetFrameworkMinimumSupportedVersion)'">
+    <!--ImplicitUsings will add this namespace that is not available for NetFX.
+    https://github.com/dotnet/sdk/issues/24146
+    https://github.com/dotnet/runtime/issues/59163
+    https://github.com/dotnet/sdk/issues/22515
+    -->
+    <Using Remove="System.Net.Http" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(IsPackable)' == 'true'">
     <None Include="$(PackagePrimaryLicenseFile)"
           PackagePath="$([System.IO.Path]::GetFileName('$(PackagePrimaryLicenseFile)'))"
