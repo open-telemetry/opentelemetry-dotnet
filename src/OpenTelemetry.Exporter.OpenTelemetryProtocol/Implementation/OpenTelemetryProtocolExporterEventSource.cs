@@ -73,12 +73,6 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         this.WriteEvent(5, className, methodName);
     }
 
-    [Event(8, Message = "Unsupported value for protocol '{0}' is configured, default protocol 'grpc' will be used.", Level = EventLevel.Warning)]
-    public void UnsupportedProtocol(string protocol)
-    {
-        this.WriteEvent(8, protocol);
-    }
-
     [Event(9, Message = "Could not translate LogRecord due to Exception: '{0}'. Log will not be exported.", Level = EventLevel.Warning)]
     public void CouldNotTranslateLogRecord(string exceptionMessage)
     {
