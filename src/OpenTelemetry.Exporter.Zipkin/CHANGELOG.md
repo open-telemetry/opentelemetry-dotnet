@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added direct reference to `System.Text.Encodings.Web` and `System.Text.Json`
+  for the `net8.0` target with minimum version of `8.0.0` and `8.0.4`
+  (respectively) in response to
+  [CVE-2024-30105](https://github.com/advisories/GHSA-hh2w-p6rv-4g7w).
+  ([#5874](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5874))
+
 ## 1.10.0-beta.1
 
 Released 2024-Sep-30
