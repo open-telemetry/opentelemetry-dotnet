@@ -280,7 +280,7 @@ public sealed class LogRecordTest
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
             try
             {
-                Assert.Equal("[Name, truffle], [Price, 299,99]", exportedItems[0].FormattedMessage);
+                Assert.Equal("[Name, truffle], [Price, 299.99]", exportedItems[0].FormattedMessage);
             }
             finally
             {
