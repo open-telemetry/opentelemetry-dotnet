@@ -180,11 +180,11 @@ public class BaggageTests
     [Fact]
     public void EqualsTest()
     {
-        var bc1 = new Baggage(new Dictionary<string, string>() { [K1] = V1, [K2] = V2 });
-        var bc2 = new Baggage(new Dictionary<string, string>() { [K1] = V1, [K2] = V2 });
-        var bc3 = new Baggage(new Dictionary<string, string>() { [K2] = V2, [K1] = V1 });
-        var bc4 = new Baggage(new Dictionary<string, string>() { [K1] = V1, [K2] = V1 });
-        var bc5 = new Baggage(new Dictionary<string, string>() { [K1] = V2, [K2] = V1 });
+        var bc1 = new Baggage(new Dictionary<string, string> { [K1] = V1, [K2] = V2 });
+        var bc2 = new Baggage(new Dictionary<string, string> { [K1] = V1, [K2] = V2 });
+        var bc3 = new Baggage(new Dictionary<string, string> { [K2] = V2, [K1] = V1 });
+        var bc4 = new Baggage(new Dictionary<string, string> { [K1] = V1, [K2] = V1 });
+        var bc5 = new Baggage(new Dictionary<string, string> { [K1] = V2, [K2] = V1 });
 
         Assert.True(bc1.Equals(bc2));
 
