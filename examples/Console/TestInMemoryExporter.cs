@@ -15,7 +15,7 @@ internal class TestInMemoryExporter
     // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
     //
     // dotnet run inmemory
-    internal static object Run(InMemoryOptions options)
+    internal static object? Run(InMemoryOptions options)
     {
         // List that will be populated with the traces by InMemoryExporter
         var exportedItems = new List<Activity>();

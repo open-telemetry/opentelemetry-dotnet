@@ -15,7 +15,7 @@ internal class TestHttpClient
     // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
     //
     // dotnet run httpclient
-    internal static object Run()
+    internal static object? Run()
     {
         System.Console.WriteLine("Hello World!");
 

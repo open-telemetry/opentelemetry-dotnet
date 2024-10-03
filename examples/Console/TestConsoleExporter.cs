@@ -15,12 +15,12 @@ internal class TestConsoleExporter
     // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
     //
     // dotnet run console
-    internal static object Run(ConsoleOptions options)
+    internal static object? Run(ConsoleOptions options)
     {
         return RunWithActivitySource();
     }
 
-    private static object RunWithActivitySource()
+    private static object? RunWithActivitySource()
     {
         // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
         // and use Console exporter.

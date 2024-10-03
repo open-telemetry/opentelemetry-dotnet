@@ -12,10 +12,10 @@ namespace Examples.Console;
 
 internal class TestMetrics
 {
-    internal static object Run(MetricsOptions options)
+    internal static object? Run(MetricsOptions options)
     {
         var meterVersion = "1.0";
-        var meterTags = new List<KeyValuePair<string, object>>
+        var meterTags = new List<KeyValuePair<string, object?>>
         {
             new(
                 "MeterTagKey",
@@ -27,7 +27,7 @@ internal class TestMetrics
             .ConfigureResource(r => r.AddService("myservice"))
             .AddMeter(meter.Name); // All instruments from this meter are enabled.
 
-        if (options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrEmpty(options.UseExporter) || options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
         {
             /*
              * Prerequisite to run this example:
@@ -79,13 +79,13 @@ internal class TestMetrics
 
         using var provider = providerBuilder.Build();
 
-        Counter<int> counter = null;
+        Counter<int>? counter = null;
         if (options.FlagCounter ?? true)
         {
             counter = meter.CreateCounter<int>("counter", "things", "A count of things");
         }
 
-        Histogram<int> histogram = null;
+        Histogram<int>? histogram = null;
         if (options.FlagHistogram ?? false)
         {
             histogram = meter.CreateHistogram<int>("histogram");
@@ -99,7 +99,7 @@ internal class TestMetrics
                 {
                     new Measurement<int>(
                         (int)Process.GetCurrentProcess().PrivateMemorySize64,
-                        new KeyValuePair<string, object>("tag1", "value1")),
+                        new KeyValuePair<string, object?>("tag1", "value1")),
                 };
             });
         }
@@ -111,41 +111,41 @@ internal class TestMetrics
 
             histogram?.Record(
                 100,
-                new KeyValuePair<string, object>("tag1", "value1"));
+                new KeyValuePair<string, object?>("tag1", "value1"));
 
             histogram?.Record(
                 200,
-                new KeyValuePair<string, object>("tag1", "value2"),
-                new KeyValuePair<string, object>("tag2", "value2"));
+                new KeyValuePair<string, object?>("tag1", "value2"),
+                new KeyValuePair<string, object?>("tag2", "value2"));
 
             histogram?.Record(
                 100,
-                new KeyValuePair<string, object>("tag1", "value1"));
+                new KeyValuePair<string, object?>("tag1", "value1"));
 
             histogram?.Record(
                 200,
-                new KeyValuePair<string, object>("tag2", "value2"),
-                new KeyValuePair<string, object>("tag1", "value2"));
+                new KeyValuePair<string, object?>("tag2", "value2"),
+                new KeyValuePair<string, object?>("tag1", "value2"));
 
             counter?.Add(10);
 
             counter?.Add(
                 100,
-                new KeyValuePair<string, object>("tag1", "value1"));
+                new KeyValuePair<string, object?>("tag1", "value1"));
 
             counter?.Add(
                 200,
-                new KeyValuePair<string, object>("tag1", "value2"),
-                new KeyValuePair<string, object>("tag2", "value2"));
+                new KeyValuePair<string, object?>("tag1", "value2"),
+                new KeyValuePair<string, object?>("tag2", "value2"));
 
             counter?.Add(
                 100,
-                new KeyValuePair<string, object>("tag1", "value1"));
+                new KeyValuePair<string, object?>("tag1", "value1"));
 
             counter?.Add(
                 200,
-                new KeyValuePair<string, object>("tag2", "value2"),
-                new KeyValuePair<string, object>("tag1", "value2"));
+                new KeyValuePair<string, object?>("tag2", "value2"),
+                new KeyValuePair<string, object?>("tag1", "value2"));
 
             Task.Delay(500).Wait();
         }

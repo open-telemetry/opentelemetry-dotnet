@@ -12,7 +12,7 @@ namespace Examples.Console;
 
 internal class TestOpenTracingShim
 {
-    internal static object Run(OpenTracingShimOptions options)
+    internal static object? Run(OpenTracingShimOptions options)
     {
         // Enable OpenTelemetry for the source "opentracing-shim"
         // and use Console exporter.

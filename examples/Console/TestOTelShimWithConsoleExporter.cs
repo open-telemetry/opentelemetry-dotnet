@@ -9,7 +9,7 @@ namespace Examples.Console;
 
 internal class TestOTelShimWithConsoleExporter
 {
-    internal static object Run(OpenTelemetryShimOptions options)
+    internal static object? Run(OpenTelemetryShimOptions options)
     {
         // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
         // and use a single pipeline with a custom MyProcessor, and Console exporter.

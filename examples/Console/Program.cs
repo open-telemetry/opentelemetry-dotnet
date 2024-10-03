@@ -54,7 +54,7 @@ public class Program
 internal class ZipkinOptions
 {
     [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
-    public string Uri { get; set; }
+    public string? Uri { get; set; }
 }
 
 [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
@@ -83,10 +83,10 @@ internal class MetricsOptions
     public int DefaultCollectionPeriodMilliseconds { get; set; }
 
     [Option("useExporter", Default = "console", HelpText = "Options include otlp or console.", Required = false)]
-    public string UseExporter { get; set; }
+    public string? UseExporter { get; set; }
 
     [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send metrics (default value depends on protocol).", Default = null)]
-    public string Endpoint { get; set; }
+    public string? Endpoint { get; set; }
 
     [Option('p', "useGrpc", HelpText = "Use gRPC or HTTP when using the OTLP exporter", Required = false, Default = true)]
     public bool UseGrpc { get; set; }
@@ -121,26 +121,26 @@ internal class OpenTracingShimOptions
 internal class OtlpOptions
 {
     [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces (default value depends on protocol).", Default = null)]
-    public string Endpoint { get; set; }
+    public string? Endpoint { get; set; }
 
     [Option('p', "protocol", HelpText = "Transport protocol used by exporter. Supported values: grpc and http/protobuf.", Default = "grpc")]
-    public string Protocol { get; set; }
+    public string? Protocol { get; set; }
 }
 
 [Verb("logs", HelpText = "Specify the options required to test Logs")]
 internal class LogsOptions
 {
     [Option("useExporter", Default = "otlp", HelpText = "Options include otlp or console.", Required = false)]
-    public string UseExporter { get; set; }
+    public string? UseExporter { get; set; }
 
     [Option('e', "endpoint", HelpText = "Target to which the OTLP exporter is going to send logs (default value depends on protocol).", Default = null)]
-    public string Endpoint { get; set; }
+    public string? Endpoint { get; set; }
 
     [Option('p', "protocol", HelpText = "Transport protocol used by OTLP exporter. Supported values: grpc and http/protobuf. Only applicable if Exporter is OTLP", Default = "grpc")]
-    public string Protocol { get; set; }
+    public string? Protocol { get; set; }
 
     [Option("processorType", Default = "batch", HelpText = "export processor type. Supported values: simple and batch", Required = false)]
-    public string ProcessorType { get; set; }
+    public string? ProcessorType { get; set; }
 
     [Option("scheduledDelay", Default = 5000, HelpText = "The delay interval in milliseconds between two consecutive exports.", Required = false)]
     public int ScheduledDelayInMilliseconds { get; set; }
