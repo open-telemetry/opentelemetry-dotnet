@@ -52,7 +52,7 @@ public class LinkTest : IDisposable
 
         foreach (var attributemap in this.attributesMap)
         {
-            Assert.Equal(attributemap.Value, link.Attributes.FirstOrDefault(a => a.Key == attributemap.Key).Value);
+            Assert.Equal(attributemap.Value, link.Attributes!.FirstOrDefault(a => a.Key == attributemap.Key).Value);
         }
     }
 

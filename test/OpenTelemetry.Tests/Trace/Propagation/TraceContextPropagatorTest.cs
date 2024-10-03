@@ -313,7 +313,7 @@ public class TraceContextPropagatorTest
         };
         var f = new TraceContextPropagator();
         var ctx = f.Extract(default, headers, Getter);
-        return ctx.ActivityContext.TraceState;
+        return ctx.ActivityContext.TraceState!;
     }
 
     private static string CallTraceContextPropagator(string[] tracestate)
@@ -325,6 +325,6 @@ public class TraceContextPropagatorTest
         };
         var f = new TraceContextPropagator();
         var ctx = f.Extract(default, headers, ArrayGetter);
-        return ctx.ActivityContext.TraceState;
+        return ctx.ActivityContext.TraceState!;
     }
 }

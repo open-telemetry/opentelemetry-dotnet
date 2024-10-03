@@ -119,7 +119,7 @@ public class ParentBasedSamplerTests
     [Fact]
     public void DisallowNullRootSampler()
     {
-        Assert.Throws<ArgumentNullException>(() => new ParentBasedSampler(null));
+        Assert.Throws<ArgumentNullException>(() => new ParentBasedSampler(null!));
     }
 
     private static SamplingParameters MakeTestParameters(bool parentIsRemote, bool parentIsSampled)

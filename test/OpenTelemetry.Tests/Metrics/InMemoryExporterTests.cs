@@ -28,7 +28,7 @@ public class InMemoryExporterTests
         var counter = meter.CreateCounter<long>("meter");
 
         // TEST 1: Emit 10 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
-        counter.Add(10, new KeyValuePair<string, object>("tag1", "value1"));
+        counter.Add(10, new KeyValuePair<string, object?>("tag1", "value1"));
 
         meterProvider.ForceFlush();
 
@@ -38,7 +38,7 @@ public class InMemoryExporterTests
         Assert.Equal(10, metric1.MetricPoints[0].GetSumLong());
 
         // TEST 2: Emit 25 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
-        counter.Add(25, new KeyValuePair<string, object>("tag1", "value1"));
+        counter.Add(25, new KeyValuePair<string, object?>("tag1", "value1"));
 
         meterProvider.ForceFlush();
 

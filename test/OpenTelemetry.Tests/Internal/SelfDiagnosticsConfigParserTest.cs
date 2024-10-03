@@ -69,7 +69,7 @@ public class SelfDiagnosticsConfigParserTest
                     ""FileSize"": 1024,
                     ""LogLevel"": ""Error""
                     }";
-        Assert.True(SelfDiagnosticsConfigParser.TryParseLogLevel(configJson, out string logLevelString));
+        Assert.True(SelfDiagnosticsConfigParser.TryParseLogLevel(configJson, out string? logLevelString));
         Assert.Equal("Error", logLevelString);
     }
 }

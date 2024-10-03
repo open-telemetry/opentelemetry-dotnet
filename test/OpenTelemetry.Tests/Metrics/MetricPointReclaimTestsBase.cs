@@ -28,7 +28,7 @@ public abstract class MetricPointReclaimTestsBase
         }
 
         this.configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(this.configurationData)
+            .AddInMemoryCollection(this.configurationData!)
             .Build();
     }
 
@@ -57,6 +57,7 @@ public abstract class MetricPointReclaimTestsBase
             .Build();
 
         var meterProviderSdk = meterProvider as MeterProviderSdk;
+        Assert.NotNull(meterProviderSdk);
         Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ReclaimUnusedMetricPoints);
     }
 
@@ -77,7 +78,7 @@ public abstract class MetricPointReclaimTestsBase
             .ConfigureServices(services =>
             {
                 var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string> { [MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = value })
+                .AddInMemoryCollection(new Dictionary<string, string?> { [MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = value })
                 .Build();
 
                 services.AddSingleton<IConfiguration>(configuration);
@@ -87,6 +88,7 @@ public abstract class MetricPointReclaimTestsBase
             .Build();
 
         var meterProviderSdk = meterProvider as MeterProviderSdk;
+        Assert.NotNull(meterProviderSdk);
         Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ReclaimUnusedMetricPoints);
     }
 
@@ -134,11 +136,11 @@ public abstract class MetricPointReclaimTestsBase
                     // There are separate code paths for single dimension vs multiple dimensions
                     if (random.Next(2) == 0)
                     {
-                        counter.Add(100, new KeyValuePair<string, object>("key", $"value{i}"));
+                        counter.Add(100, new KeyValuePair<string, object?>("key", $"value{i}"));
                     }
                     else
                     {
-                        counter.Add(100, new KeyValuePair<string, object>("key", $"value{i}"), new KeyValuePair<string, object>("dimensionKey", "dimensionValue"));
+                        counter.Add(100, new KeyValuePair<string, object?>("key", $"value{i}"), new KeyValuePair<string, object?>("dimensionKey", "dimensionValue"));
                     }
 
                     Thread.Sleep(25);
@@ -217,7 +219,7 @@ public abstract class MetricPointReclaimTestsBase
         // aggregated later on when there are free MetricPoints available.
         for (int i = 0; i < 10; i++)
         {
-            counter.Add(100, new KeyValuePair<string, object>("key", $"value{i}"));
+            counter.Add(100, new KeyValuePair<string, object?>("key", $"value{i}"));
         }
 
         meterProvider.ForceFlush();
@@ -242,7 +244,7 @@ public abstract class MetricPointReclaimTestsBase
 
                     var index = random.Next(measurementValues.Length);
                     var measurement = measurementValues[index];
-                    counter.Add(measurement, new KeyValuePair<string, object>("key", $"value{index}"));
+                    counter.Add(measurement, new KeyValuePair<string, object?>("key", $"value{index}"));
                     Interlocked.Add(ref sum, measurement);
 
                     numberOfMeasurements++;
@@ -303,6 +305,7 @@ public abstract class MetricPointReclaimTestsBase
                 }
 
                 // This is to ensure that the lookup dictionary does not have unbounded growth
+                Assert.NotNull(metricPointLookupDictionary);
                 Assert.True(metricPointLookupDictionary.Count <= (MeterProviderBuilderSdk.DefaultCardinalityLimit * 2));
 
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
