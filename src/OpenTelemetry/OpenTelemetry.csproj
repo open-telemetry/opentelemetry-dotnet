@@ -4,6 +4,7 @@
     <TargetFrameworks>$(TargetFrameworksForLibrariesExtended)</TargetFrameworks>
     <Description>OpenTelemetry .NET SDK</Description>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
+    <IsPackable>true</IsPackable> <!-- Enable packaging for this project -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,10 +27,27 @@
     <Compile Include="$(RepoRoot)\src\Shared\ThreadSafeRandom.cs" Link="Includes\ThreadSafeRandom.cs" />
   </ItemGroup>
 
-  <PropertyGroup>
-  <PackageReadmeFile>README.md</PackageReadmeFile>
-  <PackageReleaseNotes>RELEASENOTES.md</PackageReleaseNotes>
-</PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="RELEASENOTES.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
+  <PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>RELEASENOTES.md</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <Target Name="UpdateReadmeLinks" BeforeTargets="Pack">
+    <ReadLinesFromFile File="README.md">
+      <Output TaskParameter="Lines" ItemName="ReadmeLines" />
+    </ReadLinesFromFile>
+
+    <Message Importance="high" Text="Updating relative links in README.md" />
+
+    <WriteLinesToFile
+      File="README.md"
+      Lines="@(ReadmeLines->'%(Identity.Replace('CONTRIBUTING.md','https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md'))')"
+      Overwrite="true" />
+  </Target>
 
 </Project>
