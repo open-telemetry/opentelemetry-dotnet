@@ -1,5 +1,7 @@
 <Project>
 
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\Common.targets" />
+
   <PropertyGroup>
     <!-- Note: PackageValidationBaselineVersion and IsPackable are defined in
     targets because $(MinVerTagPrefix) is not available in props files as they
