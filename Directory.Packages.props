@@ -3,6 +3,8 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <OTelLatestStableVer>1.9.0</OTelLatestStableVer>
+    <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>8.0.0</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
+    <SystemTextJsonOutOfBandMinimumCoreAppVer>8.0.4</SystemTextJsonOutOfBandMinimumCoreAppVer>
   </PropertyGroup>
 
   <!--
@@ -54,15 +56,19 @@
           even during major version bumps, so compatibility is not a concern here.
     -->
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="9.0.0-rc.1.24431.7" />
+  </ItemGroup>
 
-    <!--
-        We use conservative versions of the following because there is
-        concern/uncertainty that an upgrade might introduce breaking changes.
+  <ItemGroup>
+    <!-- We use conservative versions of these packages for older runtimes where
+    an upgrade might introduce breaking changes. For example see:
+    https://learn.microsoft.com/dotnet/core/compatibility/serialization/7.0/reflection-fallback#type-of-breaking-change.
     -->
+    <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
+    <PackageVersion Include="System.Text.Json" Version="4.7.2" />
 
-    <!-- Note: v8.0.4 is used for System.Text.Json to mitigate
-    https://github.com/advisories/GHSA-hh2w-p6rv-4g7w. -->
-    <PackageVersion Include="System.Text.Json" Version="8.0.4" />
+    <!-- Bump System.Text.Json on NETCoreApp targets to mitigate https://github.com/advisories/GHSA-hh2w-p6rv-4g7w. -->
+    <PackageVersion Update="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebOutOfBandMinimumCoreAppVer)" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
+    <PackageVersion Update="System.Text.Json" Version="$(SystemTextJsonOutOfBandMinimumCoreAppVer)" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
   </ItemGroup>
 
   <!--
