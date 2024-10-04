@@ -42,12 +42,12 @@ public class ExemplarBenchmarks
 {
     private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
     private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
-    private Histogram<double> histogramWithoutTagReduction;
-    private Histogram<double> histogramWithTagReduction;
-    private Counter<long> counterWithoutTagReduction;
-    private Counter<long> counterWithTagReduction;
-    private MeterProvider meterProvider;
-    private Meter meter;
+    private Histogram<double>? histogramWithoutTagReduction;
+    private Histogram<double>? histogramWithTagReduction;
+    private Counter<long>? counterWithoutTagReduction;
+    private Counter<long>? counterWithTagReduction;
+    private MeterProvider? meterProvider;
+    private Meter? meter;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1602:Enumeration items should be documented", Justification = "Test only.")]
     public enum ExemplarConfigurationType
@@ -104,7 +104,7 @@ public class ExemplarBenchmarks
             })
             .Build();
 
-        ExemplarReservoir CreateExemplarReservoir()
+        ExemplarReservoir? CreateExemplarReservoir()
         {
             return this.ExemplarConfiguration == ExemplarConfigurationType.AlwaysOnWithHighValueSampling
                 ? new HighValueExemplarReservoir(800D)
@@ -116,13 +116,13 @@ public class ExemplarBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.meterProvider.Dispose();
+        this.meterProvider?.Dispose();
     }
 
     [Benchmark]
     public void HistogramNoTagReduction()
     {
-        var random = ThreadLocalRandom.Value;
+        var random = ThreadLocalRandom.Value!;
         var tags = new TagList
         {
             { "DimName1", this.dimensionValues[random.Next(0, 2)] },
@@ -132,13 +132,13 @@ public class ExemplarBenchmarks
             { "DimName5", this.dimensionValues[random.Next(0, 10)] },
         };
 
-        this.histogramWithoutTagReduction.Record(random.NextDouble() * 1000D, tags);
+        this.histogramWithoutTagReduction!.Record(random.NextDouble() * 1000D, tags);
     }
 
     [Benchmark]
     public void HistogramWithTagReduction()
     {
-        var random = ThreadLocalRandom.Value;
+        var random = ThreadLocalRandom.Value!;
         var tags = new TagList
         {
             { "DimName1", this.dimensionValues[random.Next(0, 2)] },
@@ -148,13 +148,13 @@ public class ExemplarBenchmarks
             { "DimName5", this.dimensionValues[random.Next(0, 10)] },
         };
 
-        this.histogramWithTagReduction.Record(random.NextDouble() * 1000D, tags);
+        this.histogramWithTagReduction!.Record(random.NextDouble() * 1000D, tags);
     }
 
     [Benchmark]
     public void CounterNoTagReduction()
     {
-        var random = ThreadLocalRandom.Value;
+        var random = ThreadLocalRandom.Value!;
         var tags = new TagList
         {
             { "DimName1", this.dimensionValues[random.Next(0, 2)] },
@@ -164,13 +164,13 @@ public class ExemplarBenchmarks
             { "DimName5", this.dimensionValues[random.Next(0, 10)] },
         };
 
-        this.counterWithoutTagReduction.Add(random.Next(1000), tags);
+        this.counterWithoutTagReduction!.Add(random.Next(1000), tags);
     }
 
     [Benchmark]
     public void CounterWithTagReduction()
     {
-        var random = ThreadLocalRandom.Value;
+        var random = ThreadLocalRandom.Value!;
         var tags = new TagList
         {
             { "DimName1", this.dimensionValues[random.Next(0, 2)] },
@@ -180,7 +180,7 @@ public class ExemplarBenchmarks
             { "DimName5", this.dimensionValues[random.Next(0, 10)] },
         };
 
-        this.counterWithTagReduction.Add(random.Next(1000), tags);
+        this.counterWithTagReduction!.Add(random.Next(1000), tags);
     }
 
     private sealed class HighValueExemplarReservoir : FixedSizeExemplarReservoir

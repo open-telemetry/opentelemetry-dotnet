@@ -29,7 +29,7 @@ public class ActivityCreationBenchmarks
 {
     private readonly ActivitySource benchmarkSource = new("Benchmark");
     private readonly ActivityContext parentCtx = new(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-    private TracerProvider tracerProvider;
+    private TracerProvider? tracerProvider;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -43,8 +43,8 @@ public class ActivityCreationBenchmarks
     [GlobalCleanup]
     public void GlobalCleanup()
     {
-        this.tracerProvider.Dispose();
-        this.benchmarkSource.Dispose();
+        this.tracerProvider?.Dispose();
+        this.benchmarkSource?.Dispose();
     }
 
     [Benchmark]
