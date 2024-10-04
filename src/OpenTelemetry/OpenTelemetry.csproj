@@ -26,4 +26,10 @@
     <Compile Include="$(RepoRoot)\src\Shared\ThreadSafeRandom.cs" Link="Includes\ThreadSafeRandom.cs" />
   </ItemGroup>
 
+  <PropertyGroup>
+  <PackageReadmeFile>README.md</PackageReadmeFile>
+  <PackageReleaseNotes>RELEASENOTES.md</PackageReleaseNotes>
+</PropertyGroup>
+
+
 </Project>
