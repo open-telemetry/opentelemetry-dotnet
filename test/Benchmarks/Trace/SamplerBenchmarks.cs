@@ -92,7 +92,7 @@ public class SamplerBenchmarks
 
     internal class TestSampler : Sampler
     {
-        public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
+        public Func<SamplingParameters, SamplingResult>? SamplingAction { get; set; }
 
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
