@@ -59,9 +59,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- We use conservative versions of these packages for older runtimes where
-    an upgrade might introduce breaking changes. For example see:
-    https://learn.microsoft.com/dotnet/core/compatibility/serialization/7.0/reflection-fallback#type-of-breaking-change.
+    <!--
+        We use conservative versions of these packages for older runtimes where
+        an upgrade might introduce breaking changes. For example see:
+        https://devblogs.microsoft.com/dotnet/system-text-json-in-dotnet-7/#breaking-changes.
     -->
     <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
     <PackageVersion Include="System.Text.Json" Version="4.7.2" />
