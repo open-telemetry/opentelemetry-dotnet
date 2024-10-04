@@ -1,17 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
+    <ReferenceSystemTextJsonPackages>true</ReferenceSystemTextJsonPackages>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Condition="'$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'" />
-    <PackageReference Include="System.Text.Json" Condition="'$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj" />
   </ItemGroup>
+
 </Project>

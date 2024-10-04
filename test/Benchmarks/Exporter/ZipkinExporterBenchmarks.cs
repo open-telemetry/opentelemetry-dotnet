@@ -19,10 +19,10 @@ namespace Benchmarks.Exporter;
 public class ZipkinExporterBenchmarks
 {
     private readonly byte[] buffer = new byte[4096];
-    private Activity activity;
-    private CircularBuffer<Activity> activityBatch;
-    private IDisposable server;
-    private string serverHost;
+    private Activity? activity;
+    private CircularBuffer<Activity>? activityBatch;
+    private IDisposable? server;
+    private string? serverHost;
     private int serverPort;
 
     [Params(1, 10, 100)]
@@ -60,7 +60,7 @@ public class ZipkinExporterBenchmarks
     [GlobalCleanup]
     public void GlobalCleanup()
     {
-        this.server.Dispose();
+        this.server?.Dispose();
     }
 
     [Benchmark]
@@ -76,10 +76,10 @@ public class ZipkinExporterBenchmarks
         {
             for (int c = 0; c < this.NumberOfSpans; c++)
             {
-                this.activityBatch.Add(this.activity);
+                this.activityBatch!.Add(this.activity!);
             }
 
-            exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
+            exporter.Export(new Batch<Activity>(this.activityBatch!, this.NumberOfSpans));
         }
 
         exporter.Shutdown();

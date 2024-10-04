@@ -14,8 +14,8 @@ public class PrometheusSerializerBenchmarks
 {
     private readonly List<Metric> metrics = new();
     private readonly byte[] buffer = new byte[85000];
-    private Meter meter;
-    private MeterProvider meterProvider;
+    private Meter? meter;
+    private MeterProvider? meterProvider;
     private Dictionary<Metric, PrometheusMetric> cache = new Dictionary<Metric, PrometheusMetric>();
 
     [Params(1, 1000, 10000)]
@@ -45,7 +45,7 @@ public class PrometheusSerializerBenchmarks
     public void GlobalCleanup()
     {
         this.meter?.Dispose();
-        this.meterProvider.Dispose();
+        this.meterProvider?.Dispose();
     }
 
     // TODO: this has a dependency on https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361

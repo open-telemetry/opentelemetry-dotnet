@@ -36,6 +36,9 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>RELEASENOTES.md</PackageReleaseNotes>
   </PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>RELEASENOTES.md</PackageReleaseNotes>
+  </PropertyGroup>
 
   <Target Name="UpdateReadmeLinks" BeforeTargets="Pack">
     <ReadLinesFromFile File="README.md">

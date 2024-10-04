@@ -25,7 +25,7 @@ public class Base2ExponentialHistogramMapToIndexBenchmarks
 {
     private const int MaxValue = 10000;
     private readonly Random random = new();
-    private Base2ExponentialBucketHistogram exponentialHistogram;
+    private Base2ExponentialBucketHistogram? exponentialHistogram;
 
     [Params(-11, 3, 20)]
     public int Scale { get; set; }
@@ -39,6 +39,6 @@ public class Base2ExponentialHistogramMapToIndexBenchmarks
     [Benchmark]
     public void MapToIndex()
     {
-        this.exponentialHistogram.MapToIndex(this.random.Next(MaxValue));
+        this.exponentialHistogram!.MapToIndex(this.random.Next(MaxValue));
     }
 }

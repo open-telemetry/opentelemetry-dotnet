@@ -176,7 +176,6 @@ components in a release see:
 [Releases](https://github.com/open-telemetry/opentelemetry-dotnet/releases).
 
 ## Changelog
-
 For detailed changes and version history, see the [Changelog](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CHANGELOG.md).
 
 
