@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 using System.Text;
@@ -66,13 +67,9 @@ internal sealed class SelfDiagnosticsConfigParser
                 this.configBuffer = buffer;
             }
 
-            int bytesRead = file.Read(buffer, 0, buffer.Length);
-            if (bytesRead != buffer.Length)
-            {
-                return false;
-            }
-
-            string configJson = Encoding.UTF8.GetString(buffer);
+            var bytesRead = file.Read(buffer, 0, buffer.Length);
+            Debug.Assert(bytesRead <= buffer.Length, "Config file could not fit into buffer");
+            string configJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
             if (!TryParseLogDirectory(configJson, out logDirectory))
             {
