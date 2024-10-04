@@ -27,9 +27,9 @@
   </ItemGroup>
 
   <PropertyGroup>
-  <PackageReadmeFile>README.md</PackageReadmeFile>
-  <PackageReleaseNotes>RELEASENOTES.md</PackageReleaseNotes>
-</PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>RELEASENOTES.md</PackageReleaseNotes>
+  </PropertyGroup>
 
 
 </Project>
