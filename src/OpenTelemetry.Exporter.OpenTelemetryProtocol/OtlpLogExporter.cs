@@ -89,7 +89,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         {
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
 
-            OpenTelemetryProtocolExporterEvents.ExportMethodException(this.openTelemetryEventLogger, ex.ToInvariantString());
+            OpenTelemetryProtocolExporterEvents.ExportMethodException(this.openTelemetryEventLogger, ex);
 
             return ExportResult.Failure;
         }
