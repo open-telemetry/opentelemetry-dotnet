@@ -18,9 +18,9 @@ namespace Benchmarks.Exporter;
 
 public class OtlpGrpcExporterBenchmarks
 {
-    private OtlpTraceExporter exporter;
-    private Activity activity;
-    private CircularBuffer<Activity> activityBatch;
+    private OtlpTraceExporter? exporter;
+    private Activity? activity;
+    private CircularBuffer<Activity>? activityBatch;
 
     [Params(1, 10, 100)]
     public int NumberOfBatches { get; set; }
@@ -45,8 +45,8 @@ public class OtlpGrpcExporterBenchmarks
     [GlobalCleanup]
     public void GlobalCleanup()
     {
-        this.exporter.Shutdown();
-        this.exporter.Dispose();
+        this.exporter?.Shutdown();
+        this.exporter?.Dispose();
     }
 
     [Benchmark]
@@ -56,10 +56,10 @@ public class OtlpGrpcExporterBenchmarks
         {
             for (int c = 0; c < this.NumberOfSpans; c++)
             {
-                this.activityBatch.Add(this.activity);
+                this.activityBatch!.Add(this.activity!);
             }
 
-            this.exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
+            this.exporter!.Export(new Batch<Activity>(this.activityBatch!, this.NumberOfSpans));
         }
     }
 }
