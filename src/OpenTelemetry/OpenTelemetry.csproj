@@ -36,9 +36,6 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>RELEASENOTES.md</PackageReleaseNotes>
   </PropertyGroup>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>RELEASENOTES.md</PackageReleaseNotes>
-  </PropertyGroup>
 
   <Target Name="UpdateReadmeLinks" BeforeTargets="Pack">
     <ReadLinesFromFile File="README.md">
@@ -47,10 +44,10 @@
 
     <Message Importance="high" Text="Updating relative links in README.md" />
 
-    <WriteLinesToFile
-      File="README.md"
-      Lines="@(ReadmeLines->'%(Identity.Replace('CONTRIBUTING.md','https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md'))')"
-      Overwrite="true" />
-  </Target>
+    <WriteLinesToFile 
+    File="README.md" 
+    Lines="@(ReadmeLines->'%(Identity.Replace(&quot;CONTRIBUTING.md&quot;, &quot;https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md&quot;))')"
+    Overwrite="true" />
+</Target>
 
 </Project>
