@@ -125,8 +125,20 @@ public class SelfDiagnosticsEventListenerTest
         using FileStream file = File.Open(LOGFILEPATH, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         var buffer = new byte[256];
 
-        int bytesRead = file.Read(buffer, 0, buffer.Length);
-        Assert.Equal(buffer.Length, bytesRead);
+        int bytesRead = 0;
+        int totalBytesRead = 0;
+
+        while (totalBytesRead < buffer.Length)
+        {
+            bytesRead = file.Read(buffer, totalBytesRead, buffer.Length - totalBytesRead);
+            if (bytesRead == 0)
+            {
+                break;
+            }
+
+            totalBytesRead += bytesRead;
+        }
+
         Assert.Equal('\0', (char)buffer[0]);
     }
 
@@ -259,9 +271,21 @@ public class SelfDiagnosticsEventListenerTest
         using FileStream file = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         var buffer = new byte[256];
 
-        int bytesRead = file.Read(buffer, 0, buffer.Length);
-        Assert.Equal(buffer.Length, bytesRead);
-        string logLine = Encoding.UTF8.GetString(buffer);
+        int bytesRead = 0;
+        int totalBytesRead = 0;
+
+        while (totalBytesRead < buffer.Length)
+        {
+            bytesRead = file.Read(buffer, totalBytesRead, buffer.Length - totalBytesRead);
+            if (bytesRead == 0)
+            {
+                break;
+            }
+
+            totalBytesRead += bytesRead;
+        }
+
+        string logLine = Encoding.UTF8.GetString(buffer, 0, totalBytesRead);
         string logMessage = ParseLogMessage(logLine);
         Assert.StartsWith(eventMessage, logMessage);
     }

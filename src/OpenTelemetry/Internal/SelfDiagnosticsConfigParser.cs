@@ -67,9 +67,21 @@ internal sealed class SelfDiagnosticsConfigParser
                 this.configBuffer = buffer;
             }
 
-            var bytesRead = file.Read(buffer, 0, buffer.Length);
-            Debug.Assert(bytesRead <= buffer.Length, "Config file could not fit into buffer");
-            string configJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+            int bytesRead = 0;
+            int totalBytesRead = 0;
+
+            while (totalBytesRead < buffer.Length)
+            {
+                bytesRead = file.Read(buffer, totalBytesRead, buffer.Length - totalBytesRead);
+                if (bytesRead == 0)
+                {
+                    break;
+                }
+
+                totalBytesRead += bytesRead;
+            }
+
+            string configJson = Encoding.UTF8.GetString(buffer, 0, totalBytesRead);
 
             if (!TryParseLogDirectory(configJson, out logDirectory))
             {
