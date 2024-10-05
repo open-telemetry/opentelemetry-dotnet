@@ -75,6 +75,6 @@ public class LogScopeBenchmarks
     [Benchmark]
     public void ForEachScope()
     {
-        this.logRecord.ForEachScope(this.callback, null);
+        this.logRecord.ForEachScope(this.callback!, null);
     }
 }

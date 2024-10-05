@@ -36,13 +36,13 @@ namespace Benchmarks.Exporter;
 
 public class OtlpTraceExporterBenchmarks
 {
-    private OtlpTraceExporter exporter;
-    private Activity activity;
-    private CircularBuffer<Activity> activityBatch;
+    private OtlpTraceExporter? exporter;
+    private Activity? activity;
+    private CircularBuffer<Activity>? activityBatch;
 
-    private IHost host;
-    private IDisposable server;
-    private string serverHost;
+    private IHost? host;
+    private IDisposable? server;
+    private string? serverHost;
     private int serverPort;
 
     [GlobalSetup(Target = nameof(OtlpTraceExporter_Grpc))]
@@ -103,31 +103,31 @@ public class OtlpTraceExporterBenchmarks
     [GlobalCleanup(Target = nameof(OtlpTraceExporter_Grpc))]
     public void GlobalCleanupGrpc()
     {
-        this.exporter.Shutdown();
-        this.exporter.Dispose();
-        this.activity.Dispose();
-        this.host.Dispose();
+        this.exporter?.Shutdown();
+        this.exporter?.Dispose();
+        this.activity?.Dispose();
+        this.host?.Dispose();
     }
 
     [GlobalCleanup(Target = nameof(OtlpTraceExporter_Http))]
     public void GlobalCleanupHttp()
     {
-        this.exporter.Shutdown();
-        this.exporter.Dispose();
-        this.server.Dispose();
-        this.activity.Dispose();
+        this.exporter?.Shutdown();
+        this.exporter?.Dispose();
+        this.server?.Dispose();
+        this.activity?.Dispose();
     }
 
     [Benchmark]
     public void OtlpTraceExporter_Http()
     {
-        this.exporter.Export(new Batch<Activity>(this.activityBatch, 1));
+        this.exporter!.Export(new Batch<Activity>(this.activityBatch!, 1));
     }
 
     [Benchmark]
     public void OtlpTraceExporter_Grpc()
     {
-        this.exporter.Export(new Batch<Activity>(this.activityBatch, 1));
+        this.exporter!.Export(new Batch<Activity>(this.activityBatch!, 1));
     }
 
     private sealed class MockTraceService : OtlpCollector.TraceService.TraceServiceBase
