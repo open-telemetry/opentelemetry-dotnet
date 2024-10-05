@@ -10,7 +10,7 @@ namespace Benchmarks;
 
 internal class TestTraceServiceClient : TraceService.TraceServiceClient
 {
-    public override ExportTraceServiceResponse Export(ExportTraceServiceRequest request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
+    public override ExportTraceServiceResponse Export(ExportTraceServiceRequest request, Metadata? headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
     {
         return new ExportTraceServiceResponse();
     }

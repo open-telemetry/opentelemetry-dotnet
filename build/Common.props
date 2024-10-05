@@ -31,6 +31,7 @@
     <TargetFrameworksForLibraries>net9.0;net8.0;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibraries>
     <TargetFrameworksForLibrariesExtended>net9.0;net8.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibrariesExtended>
     <TargetFrameworksForPrometheusAspNetCore>net9.0;net8.0</TargetFrameworksForPrometheusAspNetCore>
+    <TargetFrameworksRequiringSystemTextJsonDirectReference>net8.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksRequiringSystemTextJsonDirectReference>
 
     <!-- non-production TFMs -->
     <TargetFrameworksForAspNetCoreTests>net9.0;net8.0</TargetFrameworksForAspNetCoreTests>

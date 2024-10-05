@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry.Shims.OpenTracing</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
@@ -10,8 +11,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
-    <!-- System.Text.Json is indirect reference. It is needed to upgrade it directly to avoid https://github.com/advisories/GHSA-hh2w-p6rv-4g7w -->
-    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,4 +24,5 @@
   <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
   </ItemGroup>
+
 </Project>
