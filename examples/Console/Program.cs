@@ -54,7 +54,7 @@ public class Program
 internal class ZipkinOptions
 {
     [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
-    public string? Uri { get; set; }
+    public required string Uri { get; set; }
 }
 
 [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
