@@ -28,9 +28,9 @@ public class Base2ExponentialHistogramScaleBenchmarks
 {
     private const int MaxValue = 10000;
     private readonly Random random = new();
-    private Histogram<long> histogram;
-    private MeterProvider meterProvider;
-    private Meter meter;
+    private Histogram<long>? histogram;
+    private MeterProvider? meterProvider;
+    private Meter? meter;
 
     // This is a simple benchmark that records values in the range [0, 10000].
     // The reason the following scales are benchmarked are as follows:
@@ -66,12 +66,12 @@ public class Base2ExponentialHistogramScaleBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.meterProvider.Dispose();
+        this.meterProvider?.Dispose();
     }
 
     [Benchmark]
     public void HistogramHotPath()
     {
-        this.histogram.Record(this.random.Next(MaxValue));
+        this.histogram!.Record(this.random.Next(MaxValue));
     }
 }

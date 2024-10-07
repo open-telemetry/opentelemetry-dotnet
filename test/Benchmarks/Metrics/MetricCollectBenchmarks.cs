@@ -29,12 +29,12 @@ public class MetricCollectBenchmarks
 
     // TODO: Confirm if this needs to be thread-safe
     private readonly Random random = new();
-    private Counter<double> counter;
-    private MeterProvider provider;
-    private Meter meter;
-    private CancellationTokenSource token;
-    private BaseExportingMetricReader reader;
-    private Task writeMetricTask;
+    private Counter<double>? counter;
+    private MeterProvider? provider;
+    private Meter? meter;
+    private CancellationTokenSource? token;
+    private BaseExportingMetricReader? reader;
+    private Task? writeMetricTask;
 
     [Params(false, true)]
     public bool UseWithRef { get; set; }
@@ -86,9 +86,9 @@ public class MetricCollectBenchmarks
         {
             while (!this.token.IsCancellationRequested)
             {
-                var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
-                var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
-                var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
+                var tag1 = new KeyValuePair<string, object?>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
+                var tag2 = new KeyValuePair<string, object?>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
+                var tag3 = new KeyValuePair<string, object?>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
                 this.counter.Add(100.00, tag1, tag2, tag3);
             }
         });
@@ -98,16 +98,16 @@ public class MetricCollectBenchmarks
     [GlobalCleanup]
     public void Cleanup()
     {
-        this.token.Cancel();
-        this.token.Dispose();
-        this.writeMetricTask.Wait();
-        this.meter.Dispose();
-        this.provider.Dispose();
+        this.token?.Cancel();
+        this.token?.Dispose();
+        this.writeMetricTask?.Wait();
+        this.meter?.Dispose();
+        this.provider?.Dispose();
     }
 
     [Benchmark]
     public void Collect()
     {
-        this.reader.Collect();
+        this.reader!.Collect();
     }
 }
