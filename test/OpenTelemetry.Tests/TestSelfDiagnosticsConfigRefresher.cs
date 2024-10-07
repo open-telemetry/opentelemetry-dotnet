@@ -12,11 +12,11 @@ internal class TestSelfDiagnosticsConfigRefresher(Stream? stream = null) : SelfD
 
     public bool TryGetLogStreamCalled { get; private set; }
 
-    public override bool TryGetLogStream(int byteCount, [NotNullWhen(true)] out Stream stream, out int availableByteCount)
+    public override bool TryGetLogStream(int byteCount, [NotNullWhen(true)] out Stream? stream, out int availableByteCount)
     {
         this.TryGetLogStreamCalled = true;
-        stream = this.stream!;
+        stream = this.stream;
         availableByteCount = 0;
-        return true;
+        return this.stream != null;
     }
 }

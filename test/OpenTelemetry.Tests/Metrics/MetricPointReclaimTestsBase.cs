@@ -13,7 +13,7 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public abstract class MetricPointReclaimTestsBase
 {
-    private readonly Dictionary<string, string> configurationData = new()
+    private readonly Dictionary<string, string?> configurationData = new()
     {
         [MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = "true",
     };
@@ -28,7 +28,7 @@ public abstract class MetricPointReclaimTestsBase
         }
 
         this.configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(this.configurationData!)
+            .AddInMemoryCollection(this.configurationData)
             .Build();
     }
 
