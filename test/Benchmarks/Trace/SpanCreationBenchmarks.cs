@@ -32,11 +32,11 @@ namespace Benchmarks.Trace;
 
 public class SpanCreationBenchmarks
 {
-    private Tracer alwaysSampleTracer;
-    private Tracer neverSampleTracer;
-    private Tracer noopTracer;
-    private TracerProvider tracerProviderAlwaysOnSample;
-    private TracerProvider tracerProviderAlwaysOffSample;
+    private Tracer? alwaysSampleTracer;
+    private Tracer? neverSampleTracer;
+    private Tracer? noopTracer;
+    private TracerProvider? tracerProviderAlwaysOnSample;
+    private TracerProvider? tracerProviderAlwaysOffSample;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -61,37 +61,37 @@ public class SpanCreationBenchmarks
     [GlobalCleanup]
     public void GlobalCleanup()
     {
-        this.tracerProviderAlwaysOffSample.Dispose();
-        this.tracerProviderAlwaysOnSample.Dispose();
+        this.tracerProviderAlwaysOffSample?.Dispose();
+        this.tracerProviderAlwaysOnSample?.Dispose();
     }
 
     [Benchmark]
-    public void CreateSpan_Sampled() => SpanCreationScenarios.CreateSpan(this.alwaysSampleTracer);
+    public void CreateSpan_Sampled() => SpanCreationScenarios.CreateSpan(this.alwaysSampleTracer!);
 
     [Benchmark]
-    public void CreateSpan_ParentContext() => SpanCreationScenarios.CreateSpan_ParentContext(this.alwaysSampleTracer);
+    public void CreateSpan_ParentContext() => SpanCreationScenarios.CreateSpan_ParentContext(this.alwaysSampleTracer!);
 
     [Benchmark]
-    public void CreateSpan_Attributes_Sampled() => SpanCreationScenarios.CreateSpan_Attributes(this.alwaysSampleTracer);
+    public void CreateSpan_Attributes_Sampled() => SpanCreationScenarios.CreateSpan_Attributes(this.alwaysSampleTracer!);
 
     [Benchmark]
-    public void CreateSpan_WithSpan() => SpanCreationScenarios.CreateSpan_Propagate(this.alwaysSampleTracer);
+    public void CreateSpan_WithSpan() => SpanCreationScenarios.CreateSpan_Propagate(this.alwaysSampleTracer!);
 
     [Benchmark]
-    public void CreateSpan_Active() => SpanCreationScenarios.CreateSpan_Active(this.alwaysSampleTracer);
+    public void CreateSpan_Active() => SpanCreationScenarios.CreateSpan_Active(this.alwaysSampleTracer!);
 
     [Benchmark]
-    public void CreateSpan_Active_GetCurrent() => SpanCreationScenarios.CreateSpan_Active_GetCurrent(this.alwaysSampleTracer);
+    public void CreateSpan_Active_GetCurrent() => SpanCreationScenarios.CreateSpan_Active_GetCurrent(this.alwaysSampleTracer!);
 
     [Benchmark]
-    public void CreateSpan_Attributes_NotSampled() => SpanCreationScenarios.CreateSpan_Attributes(this.neverSampleTracer);
+    public void CreateSpan_Attributes_NotSampled() => SpanCreationScenarios.CreateSpan_Attributes(this.neverSampleTracer!);
 
     [Benchmark(Baseline = true)]
-    public void CreateSpan_Noop() => SpanCreationScenarios.CreateSpan(this.noopTracer);
+    public void CreateSpan_Noop() => SpanCreationScenarios.CreateSpan(this.noopTracer!);
 
     [Benchmark]
-    public void CreateSpan_Attributes_Noop() => SpanCreationScenarios.CreateSpan_Attributes(this.noopTracer);
+    public void CreateSpan_Attributes_Noop() => SpanCreationScenarios.CreateSpan_Attributes(this.noopTracer!);
 
     [Benchmark]
-    public void CreateSpan_Propagate_Noop() => SpanCreationScenarios.CreateSpan_Propagate(this.noopTracer);
+    public void CreateSpan_Propagate_Noop() => SpanCreationScenarios.CreateSpan_Propagate(this.noopTracer!);
 }
