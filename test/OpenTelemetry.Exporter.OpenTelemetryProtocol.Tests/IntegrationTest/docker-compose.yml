@@ -16,7 +16,6 @@ services:
       sh -c "
       mkdir -p /cfg/certs;
       cp /test/*.pem /cfg/certs/;
-      sleep 1000;
       "
 
   otel-collector:
