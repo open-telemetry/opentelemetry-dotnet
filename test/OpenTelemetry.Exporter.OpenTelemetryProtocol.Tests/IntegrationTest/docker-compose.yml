@@ -5,21 +5,35 @@
 version: '3.7'
 
 services:
-  otel-collector:
-    image: otel/opentelemetry-collector
-    volumes:
-      - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
-    command: --config=/cfg/otel-collector-config.yaml
-
-  tests:
+  init-service:
+    image: otel-test-image
     build:
       context: .
       dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
     volumes:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
+    command: >
+      sh -c "
+      mkdir -p /cfg/certs;
+      cp /test/*.pem /cfg/certs/;
+      sleep 1000;
+      "
+
+  otel-collector:
+    image: otel/opentelemetry-collector
+    volumes:
+      - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
+    command: --config=/cfg/otel-collector-config.yaml
+    depends_on:
+      - init-service
+
+  tests:
+    image: otel-test-image
+    volumes:
+      - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: /cfg/run-test.sh
     environment:
-      - OTEL_COLLECTOR_HOSTNAME=otel-collector
-      - OTEL_MOCK_COLLECTOR_HOSTNAME=mock-otel-collector
+      OTEL_COLLECTOR_HOSTNAME: otel-collector
+      OTEL_MOCK_COLLECTOR_HOSTNAME: mock-otel-collector
     depends_on:
       - otel-collector
