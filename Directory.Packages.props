@@ -3,6 +3,8 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <OTelLatestStableVer>1.9.0</OTelLatestStableVer>
+
+    <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
     <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>8.0.0</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
     <SystemTextJsonOutOfBandMinimumCoreAppVer>8.0.5</SystemTextJsonOutOfBandMinimumCoreAppVer>
   </PropertyGroup>
@@ -60,6 +62,11 @@
 
   <ItemGroup>
     <!--
+        Note: See TargetFrameworksRequiringSystemTextJsonDirectReference for the
+        list of targets where System.Text.Json direct reference is applied.
+    -->
+
+    <!--
         We use conservative versions of these packages for older runtimes where
         an upgrade might introduce breaking changes. For example see:
         https://devblogs.microsoft.com/dotnet/system-text-json-in-dotnet-7/#breaking-changes.
@@ -67,7 +74,7 @@
     <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
     <PackageVersion Include="System.Text.Json" Version="4.7.2" />
 
-    <!-- Bump System.Text.Json on NETCoreApp targets to mitigate https://github.com/advisories/GHSA-hh2w-p6rv-4g7w. -->
+    <!-- Newer NETCoreApp runtimes need to be redirected to safe versions. -->
     <PackageVersion Update="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebOutOfBandMinimumCoreAppVer)" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <PackageVersion Update="System.Text.Json" Version="$(SystemTextJsonOutOfBandMinimumCoreAppVer)" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
   </ItemGroup>
