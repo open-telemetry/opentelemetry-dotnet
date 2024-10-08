@@ -4,7 +4,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <OTelLatestStableVer>1.9.0</OTelLatestStableVer>
     <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>8.0.0</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
-    <SystemTextJsonOutOfBandMinimumCoreAppVer>8.0.4</SystemTextJsonOutOfBandMinimumCoreAppVer>
+    <SystemTextJsonOutOfBandMinimumCoreAppVer>8.0.5</SystemTextJsonOutOfBandMinimumCoreAppVer>
   </PropertyGroup>
 
   <!--
