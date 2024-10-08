@@ -36,13 +36,13 @@ namespace Benchmarks.Exporter;
 
 public class OtlpLogExporterBenchmarks
 {
-    private OtlpLogExporter exporter;
-    private LogRecord logRecord;
-    private CircularBuffer<LogRecord> logRecordBatch;
+    private OtlpLogExporter? exporter;
+    private LogRecord? logRecord;
+    private CircularBuffer<LogRecord>? logRecordBatch;
 
-    private IHost host;
-    private IDisposable server;
-    private string serverHost;
+    private IHost? host;
+    private IDisposable? server;
+    private string? serverHost;
     private int serverPort;
 
     [GlobalSetup(Target = nameof(OtlpLogExporter_Grpc))]
@@ -103,29 +103,29 @@ public class OtlpLogExporterBenchmarks
     [GlobalCleanup(Target = nameof(OtlpLogExporter_Grpc))]
     public void GlobalCleanupGrpc()
     {
-        this.exporter.Shutdown();
-        this.exporter.Dispose();
-        this.host.Dispose();
+        this.exporter?.Shutdown();
+        this.exporter?.Dispose();
+        this.host?.Dispose();
     }
 
     [GlobalCleanup(Target = nameof(OtlpLogExporter_Http))]
     public void GlobalCleanupHttp()
     {
-        this.exporter.Shutdown();
-        this.exporter.Dispose();
-        this.server.Dispose();
+        this.exporter?.Shutdown();
+        this.exporter?.Dispose();
+        this.server?.Dispose();
     }
 
     [Benchmark]
     public void OtlpLogExporter_Http()
     {
-        this.exporter.Export(new Batch<LogRecord>(this.logRecordBatch, 1));
+        this.exporter!.Export(new Batch<LogRecord>(this.logRecordBatch!, 1));
     }
 
     [Benchmark]
     public void OtlpLogExporter_Grpc()
     {
-        this.exporter.Export(new Batch<LogRecord>(this.logRecordBatch, 1));
+        this.exporter!.Export(new Batch<LogRecord>(this.logRecordBatch!, 1));
     }
 
     private sealed class MockLogService : OtlpCollector.LogsService.LogsServiceBase
