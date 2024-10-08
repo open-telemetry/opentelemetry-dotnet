@@ -7,7 +7,7 @@ namespace OpenTelemetry.Tests;
 
 internal class TestSampler : Sampler
 {
-    public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
+    public Func<SamplingParameters, SamplingResult>? SamplingAction { get; set; }
 
     public SamplingParameters LatestSamplingParameters { get; private set; }
 

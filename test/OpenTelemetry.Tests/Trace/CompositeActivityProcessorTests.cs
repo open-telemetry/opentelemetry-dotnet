@@ -12,12 +12,12 @@ public class CompositeActivityProcessorTests
     [Fact]
     public void CompositeActivityProcessor_BadArgs()
     {
-        Assert.Throws<ArgumentNullException>(() => new CompositeProcessor<Activity>(null));
+        Assert.Throws<ArgumentNullException>(() => new CompositeProcessor<Activity>(null!));
         Assert.Throws<ArgumentException>(() => new CompositeProcessor<Activity>(Array.Empty<BaseProcessor<Activity>>()));
 
         using var p1 = new TestActivityProcessor(null, null);
         using var processor = new CompositeProcessor<Activity>(new[] { p1 });
-        Assert.Throws<ArgumentNullException>(() => processor.AddProcessor(null));
+        Assert.Throws<ArgumentNullException>(() => processor.AddProcessor(null!));
     }
 
     [Fact]

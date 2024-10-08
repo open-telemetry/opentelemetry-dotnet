@@ -29,7 +29,7 @@ public class TracerProviderBuilderExtensionsTest
             .SetErrorStatusOnException()
             .Build();
 
-        Activity activity = null;
+        Activity? activity = null;
 
         try
         {
@@ -42,6 +42,7 @@ public class TracerProviderBuilderExtensionsTest
         {
         }
 
+        Assert.NotNull(activity);
         Assert.Equal(StatusCode.Error, activity.GetStatus().StatusCode);
         Assert.Equal(ActivityStatusCode.Error, activity.Status);
     }
@@ -58,7 +59,7 @@ public class TracerProviderBuilderExtensionsTest
             .SetErrorStatusOnException(false)
             .Build();
 
-        Activity activity = null;
+        Activity? activity = null;
 
         try
         {
@@ -71,6 +72,7 @@ public class TracerProviderBuilderExtensionsTest
         {
         }
 
+        Assert.NotNull(activity);
         Assert.Equal(StatusCode.Unset, activity.GetStatus().StatusCode);
         Assert.Equal(ActivityStatusCode.Unset, activity.Status);
     }
@@ -85,7 +87,7 @@ public class TracerProviderBuilderExtensionsTest
             .SetSampler(new AlwaysOnSampler())
             .Build();
 
-        Activity activity = null;
+        Activity? activity = null;
 
         try
         {
@@ -98,6 +100,7 @@ public class TracerProviderBuilderExtensionsTest
         {
         }
 
+        Assert.NotNull(activity);
         Assert.Equal(StatusCode.Unset, activity.GetStatus().StatusCode);
     }
 
@@ -106,7 +109,7 @@ public class TracerProviderBuilderExtensionsTest
     {
         var builder = Sdk.CreateTracerProviderBuilder();
 
-        MyInstrumentation myInstrumentation = null;
+        MyInstrumentation? myInstrumentation = null;
 
         RunBuilderServiceLifecycleTest(
             builder,
@@ -310,6 +313,7 @@ public class TracerProviderBuilderExtensionsTest
         using var provider = builder.Build() as TracerProviderSdk;
 
         Assert.NotNull(provider);
+        Assert.NotNull(provider.OwnedServiceProvider);
 
         var processors = ((IServiceProvider)provider.OwnedServiceProvider).GetServices<MyProcessor>();
 
@@ -328,13 +332,13 @@ public class TracerProviderBuilderExtensionsTest
     [Fact]
     public void AddInstrumentationTest()
     {
-        List<object> instrumentation = null;
+        List<object>? instrumentation = null;
 
         using (var provider = Sdk.CreateTracerProviderBuilder()
             .AddInstrumentation<MyInstrumentation>()
             .AddInstrumentation((sp, provider) => new MyInstrumentation() { Provider = provider })
             .AddInstrumentation(new MyInstrumentation())
-            .AddInstrumentation(() => (object)null)
+            .AddInstrumentation(() => (object?)null)
             .Build() as TracerProviderSdk)
         {
             Assert.NotNull(provider);
@@ -399,7 +403,7 @@ public class TracerProviderBuilderExtensionsTest
 
         Assert.True(serviceProviderTestExecuted);
         Assert.Equal(2, configureInvocations);
-
+        Assert.NotNull(provider);
         Assert.Single(provider.Resource.Attributes);
         Assert.Contains(provider.Resource.Attributes, kvp => kvp.Key == "key2" && (string)kvp.Value == "value2");
     }
@@ -418,7 +422,7 @@ public class TracerProviderBuilderExtensionsTest
 
                 configureBuilderCalled = true;
 
-                var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+                var testKeyValue = configuration.GetValue<string?>("TEST_KEY", null);
 
                 Assert.Equal("TEST_KEY_VALUE", testKeyValue);
             })
@@ -438,7 +442,7 @@ public class TracerProviderBuilderExtensionsTest
             .ConfigureServices(services =>
             {
                 var configuration = new ConfigurationBuilder()
-                    .AddInMemoryCollection(new Dictionary<string, string> { ["TEST_KEY_2"] = "TEST_KEY_2_VALUE" })
+                    .AddInMemoryCollection(new Dictionary<string, string?> { ["TEST_KEY_2"] = "TEST_KEY_2_VALUE" })
                     .Build();
 
                 services.AddSingleton<IConfiguration>(configuration);
@@ -449,7 +453,7 @@ public class TracerProviderBuilderExtensionsTest
 
                 configureBuilderCalled = true;
 
-                var testKey2Value = configuration.GetValue<string>("TEST_KEY_2", null);
+                var testKey2Value = configuration.GetValue<string?>("TEST_KEY_2", null);
 
                 Assert.Equal("TEST_KEY_2_VALUE", testKey2Value);
             })
@@ -652,7 +656,7 @@ public class TracerProviderBuilderExtensionsTest
 
     private sealed class MyInstrumentation : IDisposable
     {
-        internal TracerProvider Provider;
+        internal TracerProvider? Provider;
         internal bool Disposed;
 
         public void Dispose()
@@ -663,7 +667,7 @@ public class TracerProviderBuilderExtensionsTest
 
     private sealed class MyProcessor : BaseProcessor<Activity>
     {
-        public string Name;
+        public string? Name;
         public bool Disposed;
 
         protected override void Dispose(bool disposing)

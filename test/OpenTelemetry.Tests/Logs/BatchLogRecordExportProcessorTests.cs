@@ -43,14 +43,14 @@ public sealed class BatchLogRecordExportProcessorTests
         Assert.NotNull(logRecord.AttributeStorage);
         Assert.NotNull(logRecord.ILoggerData.BufferedScopes);
 
-        KeyValuePair<string, object> actualState = logRecord.StateValues[0];
+        KeyValuePair<string, object?> actualState = logRecord.StateValues[0];
 
         Assert.Same("Value", actualState.Key);
         Assert.Same("Hello world", actualState.Value);
 
         bool foundScope = false;
 
-        logRecord.ForEachScope<object>(
+        logRecord.ForEachScope<object?>(
             (s, o) =>
             {
                 foundScope = ReferenceEquals(s.Scope, exportedItems);

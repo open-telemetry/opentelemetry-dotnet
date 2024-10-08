@@ -71,7 +71,7 @@ public class OtelEnvResourceDetectorTest : IDisposable
     [Fact]
     public void OtelEnvResource_UsingIConfiguration()
     {
-        var values = new Dictionary<string, string>()
+        var values = new Dictionary<string, string?>()
         {
             [OtelEnvResourceDetector.EnvVarKey] = "Key1=Val1,Key2=Val2",
         };

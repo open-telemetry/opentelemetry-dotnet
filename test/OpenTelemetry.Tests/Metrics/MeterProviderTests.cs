@@ -16,8 +16,8 @@ public class MeterProviderTests
             .AddInMemoryExporter(exportedItems)
             .Build();
 
-        Assert.True(meterProvider.TryFindExporter(out InMemoryExporter<Metric> inMemoryExporter));
-        Assert.False(meterProvider.TryFindExporter(out MyExporter myExporter));
+        Assert.True(meterProvider.TryFindExporter(out InMemoryExporter<Metric>? inMemoryExporter));
+        Assert.False(meterProvider.TryFindExporter(out MyExporter? myExporter));
     }
 
     private class MyExporter : BaseExporter<Metric>

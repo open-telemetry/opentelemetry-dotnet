@@ -49,7 +49,7 @@ public class BatchExportActivityProcessorOptionsTest : IDisposable
     [Fact]
     public void BatchExportProcessorOptions_UsingIConfiguration()
     {
-        var values = new Dictionary<string, string>()
+        var values = new Dictionary<string, string?>()
         {
             [BatchExportActivityProcessorOptions.MaxQueueSizeEnvVarKey] = "1",
             [BatchExportActivityProcessorOptions.MaxExportBatchSizeEnvVarKey] = "2",

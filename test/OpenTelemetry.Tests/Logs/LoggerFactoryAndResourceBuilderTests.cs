@@ -16,7 +16,7 @@ public sealed class LoggerFactoryAndResourceBuilderTests
         VerifyResourceBuilder(
             assert: (Resource resource) =>
             {
-                Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service"));
+                Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString()!.Contains("unknown_service"));
             });
     }
 

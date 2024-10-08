@@ -47,9 +47,9 @@ public class PooledListTest
         int GetLastAllocatedSize(PooledList<int> pooledList)
         {
             var value = typeof(PooledList<int>)
-                .GetField("lastAllocatedSize", BindingFlags.NonPublic | BindingFlags.Static)
+                .GetField("lastAllocatedSize", BindingFlags.NonPublic | BindingFlags.Static)!
                 .GetValue(pooledList);
-            return (int)value;
+            return (int)value!;
         }
 
         var pooledList = PooledList<int>.Create();

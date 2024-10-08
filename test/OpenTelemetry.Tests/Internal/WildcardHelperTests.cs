@@ -30,7 +30,7 @@ public class WildcardHelperTests
     [InlineData("a", false)]
     [InlineData("a.*", true)]
     [InlineData("a.?", true)]
-    public void Verify_ContainsWildcard(string pattern, bool expected)
+    public void Verify_ContainsWildcard(string? pattern, bool expected)
     {
         Assert.Equal(expected, WildcardHelper.ContainsWildcard(pattern));
     }

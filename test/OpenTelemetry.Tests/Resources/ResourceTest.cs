@@ -26,7 +26,7 @@ public class ResourceTest : IDisposable
     public void CreateResource_NullAttributeCollection()
     {
         // Act and Assert
-        var resource = new Resource(null);
+        var resource = new Resource(null!);
         Assert.Empty(resource.Attributes);
     }
 
@@ -34,10 +34,10 @@ public class ResourceTest : IDisposable
     public void CreateResource_NullAttributeValue()
     {
         // Arrange
-        var attributes = new Dictionary<string, object> { { "NullValue", null } };
+        var attributes = new Dictionary<string, object?> { { "NullValue", null } };
 
         // Act and Assert
-        Assert.Throws<ArgumentException>(() => new Resource(attributes));
+        Assert.Throws<ArgumentException>(() => new Resource(attributes!));
     }
 
     [Fact]

@@ -26,6 +26,7 @@ public class ExportProcessorTest
 
         using (var activity = activitySource.StartActivity("Activity"))
         {
+            Assert.NotNull(activity);
             Assert.False(activity.IsAllDataRequested);
             Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
         }
@@ -49,6 +50,7 @@ public class ExportProcessorTest
 
         using (var activity = activitySource.StartActivity("Activity"))
         {
+            Assert.NotNull(activity);
             Assert.True(activity.IsAllDataRequested);
             Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
         }
@@ -72,6 +74,7 @@ public class ExportProcessorTest
 
         using (var activity = activitySource.StartActivity("Activity"))
         {
+            Assert.NotNull(activity);
             Assert.True(activity.IsAllDataRequested);
             Assert.Equal(ActivityTraceFlags.Recorded, activity.ActivityTraceFlags);
         }
