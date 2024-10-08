@@ -4,16 +4,16 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <OTelLatestStableVer>1.9.0</OTelLatestStableVer>
 
-    <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
-    <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>8.0.0</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
-    <SystemTextJsonOutOfBandMinimumCoreAppVer>8.0.5</SystemTextJsonOutOfBandMinimumCoreAppVer>
-
     <!--
         This is typically the latest annual release of .NET. Use this wherever
         possible and only deviate (use a specific version) when a package has a
         more specific patch which must be reference directly.
     -->
     <LatestRuntimeOutOfBandVer>9.0.0-rc.1.24431.7</LatestRuntimeOutOfBandVer>
+
+    <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
+    <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>8.0.0</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
+    <SystemTextJsonOutOfBandMinimumCoreAppVer>8.0.5</SystemTextJsonOutOfBandMinimumCoreAppVer>
   </PropertyGroup>
 
   <!--
@@ -26,10 +26,10 @@
         Typically, for the Microsoft.Extensions.* packages relating to DI Abstractions, Hosting Abstractions, and Logging,
         the latest stable version should be used because:
         1) Each major version bump will have some new API capabilities (e.g.For Logging, .NET 6 introduced compile-time logging
-           source generation, .NET 8 introduced automatic event id generation).
+          source generation, .NET 8 introduced automatic event id generation).
         2) Each minor version bump is normally security hotfixes or critical bug fixes.
         3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
-           these packages even during major version bumps, so compatibility is not a concern here.
+          these packages even during major version bumps, so compatibility is not a concern here.
     -->
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="$(LatestRuntimeOutOfBandVer)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="$(LatestRuntimeOutOfBandVer)" />
@@ -54,11 +54,11 @@
     <!--
         Typically, the latest stable version of System.Diagnostics.DiagnosticSource should be used here because:
         1) Each major version bump will likely have some new OpenTelemetry capabilities (e.g. .NET 6 introduced Meter
-           API, .NET 7 added UpDownCounter, .NET 8 added Meter/Instrument level attributes support, .NET 9 added
-           Advice/Hint API, etc.).
+          API, .NET 7 added UpDownCounter, .NET 8 added Meter/Instrument level attributes support, .NET 9 added
+          Advice/Hint API, etc.).
         2) Each minor version bump is normally security hotfixes or critical bug fixes.
         3) The .NET runtime team provides extra backward compatibility guarantee to System.Diagnostics.DiagnosticSource
-           even during major version bumps, so compatibility is not a concern here.
+          even during major version bumps, so compatibility is not a concern here.
     -->
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(LatestRuntimeOutOfBandVer)" />
 
