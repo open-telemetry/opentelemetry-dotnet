@@ -20,12 +20,12 @@ namespace Benchmarks.Exporter;
 public class OtlpHttpExporterBenchmarks
 {
     private readonly byte[] buffer = new byte[1024 * 1024];
-    private IDisposable server;
-    private string serverHost;
+    private IDisposable? server;
+    private string? serverHost;
     private int serverPort;
-    private OtlpTraceExporter exporter;
-    private Activity activity;
-    private CircularBuffer<Activity> activityBatch;
+    private OtlpTraceExporter? exporter;
+    private Activity? activity;
+    private CircularBuffer<Activity>? activityBatch;
 
     [Params(1, 10, 100)]
     public int NumberOfBatches { get; set; }
@@ -73,9 +73,9 @@ public class OtlpHttpExporterBenchmarks
     [GlobalCleanup]
     public void GlobalCleanup()
     {
-        this.exporter.Shutdown();
-        this.exporter.Dispose();
-        this.server.Dispose();
+        this.exporter?.Shutdown();
+        this.exporter?.Dispose();
+        this.server?.Dispose();
     }
 
     [Benchmark]
@@ -85,10 +85,10 @@ public class OtlpHttpExporterBenchmarks
         {
             for (int c = 0; c < this.NumberOfSpans; c++)
             {
-                this.activityBatch.Add(this.activity);
+                this.activityBatch!.Add(this.activity!);
             }
 
-            this.exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
+            this.exporter!.Export(new Batch<Activity>(this.activityBatch!, this.NumberOfSpans));
         }
     }
 }
