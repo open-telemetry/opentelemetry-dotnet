@@ -175,11 +175,6 @@ To access packages, source code, and/or view a list of changes for all
 components in a release see:
 [Releases](https://github.com/open-telemetry/opentelemetry-dotnet/releases).
 
-## Changelog
-For detailed changes and version history, see the [Changelog](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CHANGELOG.md).
-
-
-
 Nightly builds from this repo are published to [MyGet](https://www.myget.org),
 and can be installed using the
 `https://www.myget.org/F/opentelemetry/api/v3/index.json` source.

@@ -1,189 +1,145 @@
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
-%(Identity.Replace("CONTRIBUTING.md", "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md"))
+# OpenTelemetry .NET SDK
+
+[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.svg)](https://www.nuget.org/packages/OpenTelemetry)
+[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.svg)](https://www.nuget.org/packages/OpenTelemetry)
+
+<details>
+<summary>Table of Contents</summary>
+
+* [Installation](#installation)
+* [Introduction](#introduction)
+* [Troubleshooting](#troubleshooting)
+  * [Self-diagnostics](#self-diagnostics)
+    * [Configuration Parameters](#configuration-parameters)
+    * [Remarks](#remarks)
+* [References](#references)
+
+</details>
+
+## Installation
+
+```shell
+dotnet add package OpenTelemetry
+```
+
+## Introduction
+
+OpenTelemetry SDK is a reference implementation of the OpenTelemetry API. It
+implements the Logging API, Metrics API, Tracing API, Resource API, and the
+Context API. Once a valid SDK is installed and configured all the OpenTelemetry
+API methods, which were no-ops without an SDK, will start emitting telemetry.
+This SDK also ships with
+[ILogger](https://learn.microsoft.com/dotnet/core/extensions/logging)
+integration to automatically capture and enrich logs emitted using
+`Microsoft.Extensions.Logging`.
+
+The SDK deals with concerns such as sampling, processing pipelines (exporting
+telemetry to a particular backend, etc.), metrics aggregation, and other
+concerns outlined in the [OpenTelemetry
+Specification](https://github.com/open-telemetry/opentelemetry-specification).
+In most cases, users indirectly install and enable the SDK when they install an
+exporter.
+
+To learn how to set up and configure the OpenTelemetry SDK see: [Getting
+started](../../README.md#getting-started). For additional details about
+initialization patterns see: [Initialize the
+SDK](../../docs/README.md#initialize-the-sdk).
+
+## Troubleshooting
+
+All the components shipped from this repo uses
+[EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
+for its internal logging. The name of the `EventSource` used by OpenTelemetry
+SDK is "OpenTelemetry-Sdk". To know the `EventSource` names used by other
+components, refer to the individual readme files.
+
+While it is possible to view these logs using tools such as
+[PerfView](https://github.com/microsoft/perfview),
+[dotnet-trace](https://docs.microsoft.com/dotnet/core/diagnostics/dotnet-trace)
+etc., this SDK also ships a [self-diagnostics](#self-diagnostics) feature, which
+helps with troubleshooting.
+
+### Self-diagnostics
+
+OpenTelemetry SDK ships with built-in self-diagnostics feature. This feature,
+when enabled, will listen to internal logs generated by all OpenTelemetry
+components (i.e EventSources whose name starts with "OpenTelemetry-") and writes
+them to a log file.
+
+The self-diagnostics feature can be enabled/changed/disabled while the process
+is running (without restarting the process). The SDK will attempt to read the
+configuration file every `10` seconds in non-exclusive read-only mode. The SDK
+will create or overwrite a file with new logs according to the configuration.
+This file will not exceed the configured max size and will be overwritten in a
+circular way.
+
+To enable self-diagnostics, go to the
+[current working directory](https://en.wikipedia.org/wiki/Working_directory) of
+your process and create a configuration file named `OTEL_DIAGNOSTICS.json` with
+the following content:
+
+```json
+{
+    "LogDirectory": ".",
+    "FileSize": 32768,
+    "LogLevel": "Warning"
+}
+```
+
+To disable self-diagnostics, delete the above file.
+
+Tip: In most cases, you could just drop the file along your application.
+On Windows, you can use [Process Explorer](https://docs.microsoft.com/sysinternals/downloads/process-explorer),
+double click on the process to pop up Properties dialog and find "Current
+directory" in "Image" tab.
+Internally, it looks for the configuration file located in
+[GetCurrentDirectory](https://docs.microsoft.com/dotnet/api/system.io.directory.getcurrentdirectory),
+and then [AppContext.BaseDirectory](https://docs.microsoft.com/dotnet/api/system.appcontext.basedirectory).
+You can also find the exact directory by calling these methods from your code.
+
+#### Configuration Parameters
+
+1. `LogDirectory` is the directory where the output log file will be stored. It
+   can be an absolute path or a relative path to the current directory.
+
+2. `FileSize` is a positive integer, which specifies the log file size in
+   [KiB](https://en.wikipedia.org/wiki/Kibibyte). This value must be within
+   range `[1024, 131072]` (1 MiB \<= size \<= 128 MiB), or it will be rounded to
+   the closest upper or lower limit. The log file will never exceed this
+   configured size, and will be overwritten in a circular way.
+
+3. `LogLevel` is the lowest level of the events to be captured. It has to be one
+   of the
+   [values](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlevel#fields)
+   of the [`EventLevel`
+   enum](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlevel).
+   The level signifies the severity of an event. Lower severity levels encompass
+   higher severity levels. For example, `Warning` includes the `Error` and
+   `Critical` levels.
+
+#### Remarks
+
+A `FileSize`-KiB log file named as `ExecutableName.ProcessId.log` (e.g.
+`foobar.exe.12345.log`) will be generated at the specified directory
+`LogDirectory`, into which logs are written to.
+
+If the SDK fails to parse the `LogDirectory`, `FileSize` or `LogLevel` fields as
+the specified format, the configuration file will be treated as invalid and no
+log file would be generated.
+
+When the `LogDirectory` or `FileSize` is found to be changed, the SDK will create
+or overwrite a file with new logs according to the new configuration. The
+configuration file has to be no more than 4 KiB. In case the file is larger than
+4 KiB, only the first 4 KiB of content will be read.
+
+The log file might not be a proper text file format to achieve the goal of having
+minimal overhead and bounded resource usage: it may have trailing `NUL`s if log
+text is less than configured size; once write operation reaches the end, it will
+start from beginning and overwrite existing text.
+
+## References
+
+* [OpenTelemetry Logging SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/sdk.md)
+* [OpenTelemetry Metrics SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md)
+* [OpenTelemetry Tracing SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md)
+* [OpenTelemetry Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
