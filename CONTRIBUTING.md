@@ -212,9 +212,10 @@ Open a pull request against the main `opentelemetry-dotnet` repo.
 * We are open to bot generated PRs or AI/LLM assisted PRs. Actually, we are
   using
   [dependabot](https://docs.github.com/en/code-security/dependabot/dependabot-security-updates/configuring-dependabot-security-updates)
-  to automate the security updates. However, if you use bots to generate spams,
-  we might close the PR right away with a warning, and if you keep doing so, we
-  might block your user account.
+  to automate the security updates. However, if you use bots to generate spam
+  PRs (e.g. incorrect, noisy, non-improvements, unintelligible, trying to sell
+  your product, etc.), we might close the PR right away with a warning, and if
+  you keep doing so, we might block your user account.
 
 ### How to get pull requests merged
 
