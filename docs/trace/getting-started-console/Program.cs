@@ -11,21 +11,27 @@ public class Program
 
     public static void Main()
     {
+        // Initialize the tracerProvider
         var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
 
-        using (var activity = MyActivitySource.StartActivity("SayHello"))
+        // Create a new activity using the ActivitySource
+        var activity = MyActivitySource.StartActivity("SayHello");
+
+        if (activity != null)
         {
-            activity?.SetTag("foo", 1);
-            activity?.SetTag("bar", "Hello, World!");
-            activity?.SetTag("baz", new int[] { 1, 2, 3 });
-            activity?.SetStatus(ActivityStatusCode.Ok);
+            activity.SetTag("foo", 1);
+            activity.SetTag("bar", "Hello, World!");
+            activity.SetTag("baz", new int[] { 1, 2, 3 });
+            activity.SetStatus(ActivityStatusCode.Ok);
+
+            // End the activity (implicitly done when activity goes out of scope)
         }
 
-        // Dispose tracer provider before the application ends.
-        // This will flush the remaining spans and shutdown the tracing pipeline.
+        // Dispose the tracerProvider explicitly to ensure cleanup
+        // and proper flushing of any telemetry data before the app exits
         tracerProvider.Dispose();
     }
 }
