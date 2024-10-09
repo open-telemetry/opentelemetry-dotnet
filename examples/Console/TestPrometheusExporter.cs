@@ -17,7 +17,7 @@ internal class TestPrometheusExporter
     private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
     private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
 
-    internal static object Run(int port)
+    internal static object? Run(int port)
     {
         /* prometheus.yml example. Adjust port as per actual.
 
@@ -57,7 +57,7 @@ internal class TestPrometheusExporter
             {
                 Counter.Add(9.9, new("name", "apple"), new("color", "red"));
                 Counter.Add(99.9, new("name", "lemon"), new("color", "yellow"));
-                MyHistogram.Record(ThreadLocalRandom.Value.Next(1, 1500), new("tag1", "value1"), new("tag2", "value2"));
+                MyHistogram.Record(ThreadLocalRandom.Value!.Next(1, 1500), new("tag1", "value1"), new("tag2", "value2"));
                 Task.Delay(10).Wait();
             }
         });

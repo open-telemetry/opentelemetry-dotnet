@@ -10,7 +10,7 @@ namespace Examples.Console;
 
 internal static class TestOtlpExporter
 {
-    internal static object Run(string endpoint, string protocol)
+    internal static object? Run(string? endpoint, string? protocol)
     {
         /*
          * Prerequisite to run this example:
@@ -39,7 +39,7 @@ internal static class TestOtlpExporter
         return RunWithActivitySource(endpoint, protocol);
     }
 
-    private static object RunWithActivitySource(string endpoint, string protocol)
+    private static object? RunWithActivitySource(string? endpoint, string? protocol)
     {
         var otlpExportProtocol = ToOtlpExportProtocol(protocol);
         if (!otlpExportProtocol.HasValue)
@@ -82,8 +82,8 @@ internal static class TestOtlpExporter
         return null;
     }
 
-    private static OtlpExportProtocol? ToOtlpExportProtocol(string protocol) =>
-        protocol.Trim().ToLower() switch
+    private static OtlpExportProtocol? ToOtlpExportProtocol(string? protocol) =>
+        protocol?.Trim().ToLower() switch
         {
             "grpc" => OtlpExportProtocol.Grpc,
             "http/protobuf" => OtlpExportProtocol.HttpProtobuf,

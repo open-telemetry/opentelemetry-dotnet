@@ -9,7 +9,7 @@ namespace Examples.Console;
 
 internal class TestLogs
 {
-    internal static object Run(LogsOptions options)
+    internal static object? Run(LogsOptions options)
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -17,7 +17,8 @@ internal class TestLogs
             {
                 opt.IncludeFormattedMessage = true;
                 opt.IncludeScopes = true;
-                if (options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
+
+                if (string.IsNullOrEmpty(options.UseExporter) || options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
                 {
                     /*
                      * Prerequisite to run this example:
@@ -43,31 +44,46 @@ internal class TestLogs
 
                     var protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
 
-                    if (options.Protocol.Trim().ToLower().Equals("grpc"))
+                    if (!string.IsNullOrEmpty(options.Protocol))
                     {
-                        protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
-                    }
-                    else if (options.Protocol.Trim().ToLower().Equals("http/protobuf"))
-                    {
-                        protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+                        switch (options.Protocol.Trim())
+                        {
+                            case "grpc":
+                                protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+                                break;
+                            case "http/protobuf":
+                                protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+                                break;
+                            default:
+                                System.Console.WriteLine($"Export protocol {options.Protocol} is not supported. Default protocol 'grpc' will be used.");
+                                break;
+                        }
                     }
                     else
                     {
-                        System.Console.WriteLine($"Export protocol {options.Protocol} is not supported. Default protocol 'grpc' will be used.");
+                        System.Console.WriteLine("Protocol is null or empty. Default protocol 'grpc' will be used.");
                     }
 
                     var processorType = ExportProcessorType.Batch;
-                    if (options.ProcessorType.Trim().ToLower().Equals("batch"))
+
+                    if (!string.IsNullOrEmpty(options.ProcessorType))
                     {
-                        processorType = ExportProcessorType.Batch;
-                    }
-                    else if (options.ProcessorType.Trim().ToLower().Equals("simple"))
-                    {
-                        processorType = ExportProcessorType.Simple;
+                        switch (options.ProcessorType.Trim())
+                        {
+                            case "batch":
+                                processorType = ExportProcessorType.Batch;
+                                break;
+                            case "simple":
+                                processorType = ExportProcessorType.Simple;
+                                break;
+                            default:
+                                System.Console.WriteLine($"Export processor type {options.ProcessorType} is not supported. Default processor type 'batch' will be used.");
+                                break;
+                        }
                     }
                     else
                     {
-                        System.Console.WriteLine($"Export processor type {options.ProcessorType} is not supported. Default processor type 'batch' will be used.");
+                        System.Console.WriteLine("Processor type is null or empty. Default processor type 'batch' will be used.");
                     }
 
                     opt.AddOtlpExporter((exporterOptions, processorOptions) =>

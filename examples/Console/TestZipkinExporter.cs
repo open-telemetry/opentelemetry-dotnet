@@ -9,7 +9,7 @@ namespace Examples.Console;
 
 internal class TestZipkinExporter
 {
-    internal static object Run(string zipkinUri)
+    internal static object? Run(string zipkinUri)
     {
         // Prerequisite for running this example.
         // Setup zipkin inside local docker using following command:
@@ -23,6 +23,7 @@ internal class TestZipkinExporter
 
         // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
         // and use the Zipkin exporter.
+
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource("Samples.SampleClient", "Samples.SampleServer")
                 .ConfigureResource(r => r.AddService("zipkin-test"))

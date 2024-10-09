@@ -12,7 +12,7 @@ namespace Examples.Console;
 
 internal class TestGrpcNetClient
 {
-    internal static object Run()
+    internal static object? Run()
     {
         // Prerequisite for running this example.
         // In a separate console window, start the example
