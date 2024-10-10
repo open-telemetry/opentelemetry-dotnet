@@ -32,6 +32,8 @@ internal static class ActivityExtensions
         };
         request.ResourceSpans.Add(resourceSpans);
 
+        var maxTags = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
+
         foreach (var activity in activityBatch)
         {
             Span? span = activity.ToOtlpSpan(sdkLimitOptions);
@@ -46,7 +48,7 @@ internal static class ActivityExtensions
             var activitySourceName = activity.Source.Name;
             if (!spansByLibrary.TryGetValue(activitySourceName, out var scopeSpans))
             {
-                scopeSpans = GetSpanListFromPool(sdkLimitOptions, activity.Source);
+                scopeSpans = GetSpanListFromPool(activity.Source, maxTags, sdkLimitOptions.AttributeValueLengthLimit);
 
                 spansByLibrary.Add(activitySourceName, scopeSpans);
                 resourceSpans.ScopeSpans.Add(scopeSpans);
@@ -73,7 +75,7 @@ internal static class ActivityExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static ScopeSpans GetSpanListFromPool(SdkLimitOptions sdkLimitOptions, ActivitySource activitySource)
+    internal static ScopeSpans GetSpanListFromPool(ActivitySource activitySource, int maxTags, int? attributeValueLengthLimit)
     {
         if (!SpanListPool.TryTake(out var scopeSpans))
         {
@@ -88,13 +90,19 @@ internal static class ActivityExtensions
 
             if (activitySource.Tags != null)
             {
-                ActivitySourceTagsEnumerationState scopeAttributes = new()
-                {
-                    SdkLimitOptions = sdkLimitOptions,
-                    InstrumentationScope = scopeSpans.Scope,
-                };
+                var scopeAttributes = scopeSpans.Scope.Attributes;
 
-                scopeAttributes.EnumeratTags(activitySource, sdkLimitOptions.AttributeCountLimit ?? int.MaxValue);
+                foreach (var tag in activitySource.Tags ?? [])
+                {
+                    if (scopeAttributes.Count < maxTags)
+                    {
+                        OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, tag, attributeValueLengthLimit);
+                    }
+                    else
+                    {
+                        scopeSpans.Scope.DroppedAttributesCount++;
+                    }
+                }
             }
         }
 
@@ -407,30 +415,6 @@ internal static class ActivityExtensions
                 else
                 {
                     this.Span.DroppedLinksCount++;
-                }
-            }
-        }
-    }
-
-    private struct ActivitySourceTagsEnumerationState
-    {
-        public SdkLimitOptions SdkLimitOptions;
-
-        public InstrumentationScope InstrumentationScope;
-
-        public void EnumeratTags(ActivitySource activitySource, int maxTags)
-        {
-            var scopeAttributes = this.InstrumentationScope.Attributes;
-
-            foreach (var tag in activitySource.Tags ?? [])
-            {
-                if (this.InstrumentationScope.Attributes.Count() < maxTags)
-                {
-                    OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, tag, this.SdkLimitOptions.AttributeValueLengthLimit);
-                }
-                else
-                {
-                    this.InstrumentationScope.DroppedAttributesCount++;
                 }
             }
         }
