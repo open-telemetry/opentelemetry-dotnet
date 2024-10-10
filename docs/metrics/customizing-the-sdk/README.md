@@ -258,13 +258,13 @@ aggregated using `ExplicitBucketHistogramConfiguration` and the other using
 `Base2ExponentialBucketHistogramConfiguration`.
 
 ```csharp
-    var histogram = meter.CreateHistogram<long>("MyHistogram");
+    var histogram = meter.CreateHistogram<long>("HistogramWithMultipleStream");
 
     // Configure the Explicit Bucket Histogram aggregation with custom boundaries and new name.
-    .AddView(instrumentName: "MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 }, Name = "MyHistogramWithExplicitHistogram" })
+    .AddView(instrumentName: "HistogramWithMultipleStream", new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 }, Name = "MyHistogramWithExplicitHistogram" })
 
     // Use Base2 Exponential Bucket Histogram aggregation and new name.
-    .AddView(instrumentName: "MyHistogram", new Base2ExponentialBucketHistogramConfiguration() { Name = "MyHistogramWithBase2ExponentialBucketHistogram" })
+    .AddView(instrumentName: "HistogramWithMultipleStream", new Base2ExponentialBucketHistogramConfiguration() { Name = "MyHistogramWithBase2ExponentialBucketHistogram" })
 
     // Both views rename the metric to avoid name conflicts. However, in this case,
     // renaming one would be sufficient.
