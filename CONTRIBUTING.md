@@ -203,13 +203,19 @@ Open a pull request against the main `opentelemetry-dotnet` repo.
 * If the PR is not ready for review, please mark it as
   [`draft`](https://github.blog/2019-02-14-introducing-draft-pull-requests/).
 * Make sure CLA is signed and all required CI checks are clear.
-* Submit small, focused PRs addressing a single
-  concern/issue.
+* Submit small, focused PRs addressing a single concern/issue.
 * Make sure the PR title reflects the contribution.
 * Write a summary that helps understand the change.
 * Include usage examples in the summary, where applicable.
 * Include benchmarks (before/after) in the summary, for contributions that are
   performance enhancements.
+* We are open to bot generated PRs or AI/LLM assisted PRs. Actually, we are
+  using
+  [dependabot](https://docs.github.com/en/code-security/dependabot/dependabot-security-updates/configuring-dependabot-security-updates)
+  to automate the security updates. However, if you use bots to generate spam
+  PRs (e.g. incorrect, noisy, non-improvements, unintelligible, trying to sell
+  your product, etc.), we might close the PR right away with a warning, and if
+  you keep doing so, we might block your user account.
 
 ### How to get pull requests merged
 
