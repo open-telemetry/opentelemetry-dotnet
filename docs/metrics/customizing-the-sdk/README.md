@@ -245,7 +245,7 @@ within the maximum number of buckets defined by `MaxSize`. The default
         new Base2ExponentialBucketHistogramConfiguration { MaxSize = 40 })
 ```
 
-#### Views are additive
+#### Produce multiple metric streams from single instrument
 
 When an instrument matches multiple views, it can generate multiple metric
 streams. For instance, if an instrument is matched by two different view
