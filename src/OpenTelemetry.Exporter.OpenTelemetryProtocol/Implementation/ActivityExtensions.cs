@@ -92,15 +92,32 @@ internal static class ActivityExtensions
             {
                 var scopeAttributes = scopeSpans.Scope.Attributes;
 
-                foreach (var tag in activitySource.Tags ?? [])
+                if (activitySource.Tags is IReadOnlyList<KeyValuePair<string, object?>> activitySourceTagsList)
                 {
-                    if (scopeAttributes.Count < maxTags)
+                    for (int i = 0; i < activitySourceTagsList.Count; i++)
                     {
-                        OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, tag, attributeValueLengthLimit);
+                        if (scopeAttributes.Count < maxTags)
+                        {
+                            OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, activitySourceTagsList[i], attributeValueLengthLimit);
+                        }
+                        else
+                        {
+                            scopeSpans.Scope.DroppedAttributesCount++;
+                        }
                     }
-                    else
+                }
+                else
+                {
+                    foreach (var tag in activitySource.Tags ?? [])
                     {
-                        scopeSpans.Scope.DroppedAttributesCount++;
+                        if (scopeAttributes.Count < maxTags)
+                        {
+                            OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, tag, attributeValueLengthLimit);
+                        }
+                        else
+                        {
+                            scopeSpans.Scope.DroppedAttributesCount++;
+                        }
                     }
                 }
             }
