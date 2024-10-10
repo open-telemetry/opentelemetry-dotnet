@@ -29,7 +29,8 @@ var histogramAggregation = appBuilder.Configuration.GetValue("HistogramAggregati
 appBuilder.Services.AddSingleton<Instrumentation>();
 
 // Clear default logging providers used by WebApplication host.
-appBuilder.Logging.ClearProviders();
+//appBuilder.Logging.ClearProviders();
+appBuilder.Logging.ClearProviders().AddConsole();
 
 // Configure OpenTelemetry logging, metrics, & tracing with auto-start using the
 // AddOpenTelemetry extension from OpenTelemetry.Extensions.Hosting.

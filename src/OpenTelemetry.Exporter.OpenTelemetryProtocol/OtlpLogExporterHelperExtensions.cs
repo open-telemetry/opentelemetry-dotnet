@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -306,6 +307,7 @@ public static class OtlpLogExporterHelperExtensions
          */
 
         BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
+            serviceProvider!.GetService<ILoggerFactory>()?.CreateLogger<OtlpLogExporter>() ?? new NullLogger<OtlpLogExporter>(),
             exporterOptions!,
             sdkLimitOptions!,
             experimentalOptions!);
