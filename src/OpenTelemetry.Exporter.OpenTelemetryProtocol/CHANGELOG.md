@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+*Added support for exporting instrumentation scope attributes from
+`ActivitySource.Tags`.
+([#](https://github.com/open-telemetry/opentelemetry-dotnet/pull/))
+
 ## 1.10.0-beta.1
 
 Released 2024-Sep-30

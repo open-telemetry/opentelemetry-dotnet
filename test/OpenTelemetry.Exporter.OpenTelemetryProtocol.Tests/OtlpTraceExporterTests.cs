@@ -222,6 +222,90 @@ public class OtlpTraceExporterTests
     }
 
     [Fact]
+    public void ScopeAttributesRemainConsistentAcrossMultipleBatches()
+    {
+        var activitySourceTags = new TagList
+        {
+            new("k0", "v0"),
+        };
+
+        using var activitySource = new ActivitySource(nameof(this.ScopeAttributesRemainConsistentAcrossMultipleBatches), "1.1.1.3", activitySourceTags);
+        using var rootActivity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext));
+        using var childActivity = activitySource.StartActivity("child", ActivityKind.Client);
+
+        Batch<Activity> batch = new Batch<Activity>(new[] { rootActivity!, childActivity! }, 2);
+
+        var request = new OtlpCollector.ExportTraceServiceRequest();
+        request.AddBatch(DefaultSdkLimitOptions, ResourceBuilder.CreateDefault().Build().ToOtlpResource(), batch);
+
+        var resourceSpans = request.ResourceSpans.First();
+        Assert.NotNull(request.ResourceSpans.First());
+
+        var scopeSpans = resourceSpans.ScopeSpans.First();
+        Assert.NotNull(scopeSpans);
+
+        var scope = scopeSpans.Scope;
+        Assert.Single(scope.Attributes);
+        Assert.Equal(nameof(this.ScopeAttributesRemainConsistentAcrossMultipleBatches), scope.Name);
+        Assert.Equal("1.1.1.3", scope.Version);
+        Assert.Contains(scope.Attributes, (kvp) => kvp.Key == "k0" && kvp.Value.StringValue == "v0");
+
+        // Return and re-add batch to simulate reuse
+        request.Return();
+        request.AddBatch(DefaultSdkLimitOptions, ResourceBuilder.CreateDefault().Build().ToOtlpResource(), batch);
+
+        resourceSpans = request.ResourceSpans.First();
+        scopeSpans = resourceSpans.ScopeSpans.First();
+        scope = scopeSpans.Scope;
+
+        Assert.Single(scope.Attributes);
+        Assert.Equal(nameof(this.ScopeAttributesRemainConsistentAcrossMultipleBatches), scope.Name);
+        Assert.Equal("1.1.1.3", scope.Version);
+        Assert.Contains(scope.Attributes, (kvp) => kvp.Key == "k0" && kvp.Value.StringValue == "v0");
+    }
+
+    [Fact]
+    public void ScopeAttributesLimitsTest()
+    {
+        var sdkOptions = new SdkLimitOptions()
+        {
+            AttributeValueLengthLimit = 4,
+            AttributeCountLimit = 3,
+        };
+
+        // ActivitySource Tags are sorted in .NET.
+        var activitySourceTags = new TagList
+        {
+            new("1_TruncatedSourceTag", "12345"),
+            new("2_TruncatedSourceStringArray", new string?[] { "12345", "1234", string.Empty, null }),
+            new("3_TruncatedSourceObjectTag", new object()),
+            new("4_OneSourceTagTooMany", 1),
+        };
+
+        using var activitySource = new ActivitySource(name: nameof(this.ScopeAttributesLimitsTest), tags: activitySourceTags);
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext));
+        Batch<Activity> batch = new Batch<Activity>(new[] { activity! }, 1);
+
+        var request = new OtlpCollector.ExportTraceServiceRequest();
+        request.AddBatch(sdkOptions, ResourceBuilder.CreateDefault().Build().ToOtlpResource(), batch);
+
+        var resourceSpans = request.ResourceSpans.First();
+        Assert.NotNull(request.ResourceSpans.First());
+
+        var scopeSpans = resourceSpans.ScopeSpans.First();
+        Assert.NotNull(scopeSpans);
+
+        var scope = scopeSpans.Scope;
+        Assert.NotNull(scope);
+
+        Assert.Equal(3, scope.Attributes.Count);
+        Assert.Equal(1u, scope.DroppedAttributesCount);
+        Assert.Equal("1234", scope.Attributes[0].Value.StringValue);
+        this.ArrayValueAsserts(scope.Attributes[1].Value.ArrayValue.Values);
+        Assert.Equal(new object().ToString()!.Substring(0, 4), scope.Attributes[2].Value.StringValue);
+    }
+
+    [Fact]
     public void SpanLimitsTest()
     {
         var sdkOptions = new SdkLimitOptions()
@@ -263,7 +347,7 @@ public class OtlpTraceExporterTests
         Assert.Equal(3, otlpSpan.Attributes.Count);
         Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
         Assert.Equal("1234", otlpSpan.Attributes[0].Value.StringValue);
-        ArrayValueAsserts(otlpSpan.Attributes[1].Value.ArrayValue.Values);
+        this.ArrayValueAsserts(otlpSpan.Attributes[1].Value.ArrayValue.Values);
         Assert.Equal(new object().ToString()!.Substring(0, 4), otlpSpan.Attributes[2].Value.StringValue);
 
         Assert.Single(otlpSpan.Events);
@@ -271,7 +355,7 @@ public class OtlpTraceExporterTests
         Assert.Equal(3, otlpSpan.Events[0].Attributes.Count);
         Assert.Equal(1u, otlpSpan.Events[0].DroppedAttributesCount);
         Assert.Equal("1234", otlpSpan.Events[0].Attributes[0].Value.StringValue);
-        ArrayValueAsserts(otlpSpan.Events[0].Attributes[1].Value.ArrayValue.Values);
+        this.ArrayValueAsserts(otlpSpan.Events[0].Attributes[1].Value.ArrayValue.Values);
         Assert.Equal(new object().ToString()!.Substring(0, 4), otlpSpan.Events[0].Attributes[2].Value.StringValue);
 
         Assert.Single(otlpSpan.Links);
@@ -279,27 +363,8 @@ public class OtlpTraceExporterTests
         Assert.Equal(3, otlpSpan.Links[0].Attributes.Count);
         Assert.Equal(1u, otlpSpan.Links[0].DroppedAttributesCount);
         Assert.Equal("1234", otlpSpan.Links[0].Attributes[0].Value.StringValue);
-        ArrayValueAsserts(otlpSpan.Links[0].Attributes[1].Value.ArrayValue.Values);
+        this.ArrayValueAsserts(otlpSpan.Links[0].Attributes[1].Value.ArrayValue.Values);
         Assert.Equal(new object().ToString()!.Substring(0, 4), otlpSpan.Links[0].Attributes[2].Value.StringValue);
-
-        void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)
-        {
-            var expectedStringArray = new string?[] { "1234", "1234", string.Empty, null };
-            for (var i = 0; i < expectedStringArray.Length; ++i)
-            {
-                var expectedValue = expectedStringArray[i];
-                var expectedValueCase = expectedValue != null
-                    ? OtlpCommon.AnyValue.ValueOneofCase.StringValue
-                    : OtlpCommon.AnyValue.ValueOneofCase.None;
-
-                var actual = values[i];
-                Assert.Equal(expectedValueCase, actual.ValueCase);
-                if (expectedValueCase != OtlpCommon.AnyValue.ValueOneofCase.None)
-                {
-                    Assert.Equal(expectedValue, actual.StringValue);
-                }
-            }
-        }
     }
 
     [Fact]
@@ -857,6 +922,25 @@ public class OtlpTraceExporterTests
         else
         {
             Assert.False(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
+        }
+    }
+
+    private void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)
+    {
+        var expectedStringArray = new string?[] { "1234", "1234", string.Empty, null };
+        for (var i = 0; i < expectedStringArray.Length; ++i)
+        {
+            var expectedValue = expectedStringArray[i];
+            var expectedValueCase = expectedValue != null
+                ? OtlpCommon.AnyValue.ValueOneofCase.StringValue
+                : OtlpCommon.AnyValue.ValueOneofCase.None;
+
+            var actual = values[i];
+            Assert.Equal(expectedValueCase, actual.ValueCase);
+            if (expectedValueCase != OtlpCommon.AnyValue.ValueOneofCase.None)
+            {
+                Assert.Equal(expectedValue, actual.StringValue);
+            }
         }
     }
 }
