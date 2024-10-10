@@ -284,22 +284,22 @@ for more details.
 ```csharp
     var histogram = meter.CreateHistogram<long>("MyHistogram");
 
-    // Configure a view to aggregate based only on the "name" tag.
+    // Configure a view to aggregate based only on the "location" tag.
     .AddView(instrumentName: "MyHistogram", metricStreamConfiguration: new MetricStreamConfiguration
         {
-            TagKeys = new string[] { "name" },
+            TagKeys = new string[] { "location" },
         })
 
-    // Configure another view to aggregate based only on the "age" tag.
+    // Configure another view to aggregate based only on the "status" tag.
     .AddView(instrumentName: "MyHistogram", metricStreamConfiguration: new MetricStreamConfiguration
         {
-            TagKeys = new string[] { "age" },
+            TagKeys = new string[] { "status" },
         })
 
     // The measurement below will be aggregated into two metric streams, but both will have the same name.
     // OpenTelemetry will issue a warning about this conflict and pass both streams to the exporter.
     // However, this may cause issues depending on the backend.
-    histogram.Record(10, new("name", "foo"), new("age", "20"));
+    histogram.Record(10, new("location", "seattle"), new("status", "OK"));
 ```
 
 > [!NOTE]
