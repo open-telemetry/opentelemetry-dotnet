@@ -273,11 +273,10 @@ other using `Base2ExponentialBucketHistogramConfiguration`.
 ```
 
 When using views that produce multiple metrics from single instrument, it's
-crucial to rename the metric to prevent conflicts. For example, the following
-code does not rename the metric, leading to a name conflict. OpenTelemetry will
-emit an internal warning but will still export both metrics. The impact of this
-behavior depends on the backend or receiver being used. You can refer to
-[OpenTelemetry's
+crucial to rename the metric to prevent conflicts. In the event of conflict,
+OpenTelemetry will emit an internal warning but will still export both metrics.
+The impact of this behavior depends on the backend or receiver being used. You
+can refer to [OpenTelemetry's
 specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#opentelemetry-protocol-data-model-consumer-recommendations)
 for more details.
 
@@ -301,6 +300,32 @@ Below example is showing the *BAD* practice. DO NOT FOLLOW it.
     // The measurement below will be aggregated into two metric streams, but both will have the same name.
     // OpenTelemetry will issue a warning about this conflict and pass both streams to the exporter.
     // However, this may cause issues depending on the backend.
+    histogram.Record(10, new("location", "seattle"), new("status", "OK"));
+```
+
+The modified version, avoiding name conflict is shown below:
+
+```csharp
+    var histogram = meter.CreateHistogram<long>("MyHistogram");
+
+    // Configure a view to aggregate based only on the "location" tag,
+    // and rename the metric.
+    .AddView(instrumentName: "MyHistogram", metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            Name = "MyHistogramWithLocation",
+            TagKeys = new string[] { "location" },
+        })
+
+    // Configure a view to aggregate based only on the "status" tag,
+    // and rename the metric.
+    .AddView(instrumentName: "MyHistogram", metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            Name = "MyHistogramWithStatus",
+            TagKeys = new string[] { "status" },
+        })
+
+    // The measurement below will be aggregated into two separate metrics, "MyHistogramWithLocation"
+    // and "MyHistogramWithStatus".
     histogram.Record(10, new("location", "seattle"), new("status", "OK"));
 ```
 
