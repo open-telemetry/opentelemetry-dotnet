@@ -253,7 +253,7 @@ will result in two separate metrics being produced from that single instrument.
 Below is an example demonstrating how to leverage this capability to create two
 independent metrics from a single instrument. In this example, a histogram
 instrument is used to report measurements, and views are configured to produce
-two metrics —one aggregated using `ExplicitBucketHistogramConfiguration` and the
+two metrics : one aggregated using `ExplicitBucketHistogramConfiguration` and the
 other using `Base2ExponentialBucketHistogramConfiguration`.
 
 ```csharp
@@ -272,13 +272,16 @@ other using `Base2ExponentialBucketHistogramConfiguration`.
     histogramWithMultipleAggregations.Record(10, new("tag1", "value1"), new("tag2", "value2"));
 ```
 
-When using additive views, it's crucial to rename the metric to prevent
-conflicts. For example, the following code does not rename the metric, leading
-to a name conflict. OpenTelemetry will emit an internal warning but will still
-export both metrics. The impact of this behavior depends on the backend or
-receiver being used. You can refer to [OpenTelemetry's
+When using views that produce multiple metrics from single instrument, it's
+crucial to rename the metric to prevent conflicts. For example, the following
+code does not rename the metric, leading to a name conflict. OpenTelemetry will
+emit an internal warning but will still export both metrics. The impact of this
+behavior depends on the backend or receiver being used. You can refer to
+[OpenTelemetry's
 specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#opentelemetry-protocol-data-model-consumer-recommendations)
 for more details.
+
+Below example is showing the *BAD* practice. DO NOT FOLLOW it.
 
 ```csharp
     var histogram = meter.CreateHistogram<long>("MyHistogram");
