@@ -44,15 +44,15 @@ internal static class ActivityExtensions
             }
 
             var activitySourceName = activity.Source.Name;
-            if (!spansByLibrary.TryGetValue(activitySourceName, out var spans))
+            if (!spansByLibrary.TryGetValue(activitySourceName, out var scopeSpans))
             {
-                spans = GetSpanListFromPool(activitySourceName, activity.Source.Version);
+                scopeSpans = GetSpanListFromPool(sdkLimitOptions, activity.Source);
 
-                spansByLibrary.Add(activitySourceName, spans);
-                resourceSpans.ScopeSpans.Add(spans);
+                spansByLibrary.Add(activitySourceName, scopeSpans);
+                resourceSpans.ScopeSpans.Add(scopeSpans);
             }
 
-            spans.Spans.Add(span);
+            scopeSpans.Spans.Add(span);
         }
     }
 
@@ -65,34 +65,40 @@ internal static class ActivityExtensions
             return;
         }
 
-        foreach (var scope in resourceSpans.ScopeSpans)
+        foreach (var scopeSpan in resourceSpans.ScopeSpans)
         {
-            scope.Spans.Clear();
-            SpanListPool.Add(scope);
+            scopeSpan.Spans.Clear();
+            SpanListPool.Add(scopeSpan);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static ScopeSpans GetSpanListFromPool(string name, string? version)
+    internal static ScopeSpans GetSpanListFromPool(SdkLimitOptions sdkLimitOptions, ActivitySource activitySource)
     {
-        if (!SpanListPool.TryTake(out var spans))
+        if (!SpanListPool.TryTake(out var scopeSpans))
         {
-            spans = new ScopeSpans
+            scopeSpans = new ScopeSpans
             {
                 Scope = new InstrumentationScope
                 {
-                    Name = name, // Name is enforced to not be null, but it can be empty.
-                    Version = version ?? string.Empty, // NRE throw by proto
+                    Name = activitySource.Name, // Name is enforced to not be null, but it can be empty.
+                    Version = activitySource.Version ?? string.Empty, // NRE throw by proto
                 },
             };
-        }
-        else
-        {
-            spans.Scope.Name = name;
-            spans.Scope.Version = version ?? string.Empty;
+
+            if (activitySource.Tags != null)
+            {
+                ActivitySourceTagsEnumerationState scopeAttributes = new()
+                {
+                    SdkLimitOptions = sdkLimitOptions,
+                    InstrumentationScope = scopeSpans.Scope,
+                };
+
+                scopeAttributes.EnumeratTags(activitySource, sdkLimitOptions.AttributeCountLimit ?? int.MaxValue);
+            }
         }
 
-        return spans;
+        return scopeSpans;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -401,6 +407,30 @@ internal static class ActivityExtensions
                 else
                 {
                     this.Span.DroppedLinksCount++;
+                }
+            }
+        }
+    }
+
+    private struct ActivitySourceTagsEnumerationState
+    {
+        public SdkLimitOptions SdkLimitOptions;
+
+        public InstrumentationScope InstrumentationScope;
+
+        public void EnumeratTags(ActivitySource activitySource, int maxTags)
+        {
+            var scopeAttributes = this.InstrumentationScope.Attributes;
+
+            foreach (var tag in activitySource.Tags ?? [])
+            {
+                if (this.InstrumentationScope.Attributes.Count() < maxTags)
+                {
+                    OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, tag, this.SdkLimitOptions.AttributeValueLengthLimit);
+                }
+                else
+                {
+                    this.InstrumentationScope.DroppedAttributesCount++;
                 }
             }
         }
