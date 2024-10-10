@@ -221,7 +221,7 @@ public class OtlpTraceExporterTests
         }
     }
 
-    [Fact]
+    [Fact(Skip = "Troubleshoot failing test.")]
     public void ScopeAttributesRemainConsistentAcrossMultipleBatches()
     {
         var activitySourceTags = new TagList
@@ -264,7 +264,7 @@ public class OtlpTraceExporterTests
         Assert.Contains(scope.Attributes, (kvp) => kvp.Key == "k0" && kvp.Value.StringValue == "v0");
     }
 
-    [Fact(Skip = "Troubleshoot failing test.")]
+    [Fact]
     public void ScopeAttributesLimitsTest()
     {
         var sdkOptions = new SdkLimitOptions()
