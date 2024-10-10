@@ -40,6 +40,12 @@ public class Program
             // Drop the instrument "MyCounterDrop".
             .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
 
+            // Configure the Explicit Bucket Histogram aggregation with custom boundaries and new name.
+            .AddView(instrumentName: "HistogramWithMultipleStream", new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 }, Name = "MyHistogramWithExplicitHistogram" })
+
+            // Use Base2 Exponential Bucket Histogram aggregation and new name.
+            .AddView(instrumentName: "HistogramWithMultipleStream", new Base2ExponentialBucketHistogramConfiguration() { Name = "MyHistogramWithBase2ExponentialBucketHistogram" })
+
             // An instrument which does not match any views
             // gets processed with default behavior. (SDK default)
             // Uncommenting the following line will
@@ -68,6 +74,12 @@ public class Program
         for (int i = 0; i < 20000; i++)
         {
             exponentialBucketHistogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
+        }
+
+        var histogramWithMultipleStream = Meter1.CreateHistogram<long>("HistogramWithMultipleStream");
+        for (int i = 0; i < 20000; i++)
+        {
+            histogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
         }
 
         var counterCustomTags = Meter1.CreateCounter<long>("MyCounterCustomTags");

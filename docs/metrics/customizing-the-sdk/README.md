@@ -245,6 +245,63 @@ within the maximum number of buckets defined by `MaxSize`. The default
         new Base2ExponentialBucketHistogramConfiguration { MaxSize = 40 })
 ```
 
+#### Views are additive
+
+When an instrument matches multiple views, it can generate multiple metric
+streams. For instance, if an instrument is matched by two different view
+configurations, it will result in two separate metric streams being produced
+from that single instrument. Below is an example demonstrating how to leverage
+this capability to create two independent metric streams from a single
+instrument. In this example, a histogram instrument is used to report
+measurements, and views are configured to produce two metric streams—one
+aggregated using `ExplicitBucketHistogramConfiguration` and the other using
+`Base2ExponentialBucketHistogramConfiguration`.
+
+```csharp
+    var histogram = meter.CreateHistogram<long>("MyHistogram");
+
+    // Configure the Explicit Bucket Histogram aggregation with custom boundaries and new name.
+    .AddView(instrumentName: "MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 }, Name = "MyHistogramWithExplicitHistogram" })
+
+    // Use Base2 Exponential Bucket Histogram aggregation and new name.
+    .AddView(instrumentName: "MyHistogram", new Base2ExponentialBucketHistogramConfiguration() { Name = "MyHistogramWithBase2ExponentialBucketHistogram" })
+
+    // Both views rename the metric to avoid name conflicts. However, in this case,
+    // renaming one would be sufficient.
+
+    // This measurement will be aggregated into two separate metric streams.
+    histogram.Record(10, new("tag1", "value1"), new("tag2", "value2"));
+```
+
+When using additive views, it's crucial to rename the metric streams to prevent
+conflicts. For example, the following code does not rename the streams, leading
+to a name conflict. OpenTelemetry will emit an internal warning but will still
+export both streams. The impact of this behavior depends on the backend or
+receiver being used. You can refer to [OpenTelemetry's
+specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#opentelemetry-protocol-data-model-consumer-recommendations)
+for more details.
+
+```csharp
+    var histogram = meter.CreateHistogram<long>("MyHistogram");
+
+    // Configure a view to aggregate based only on the "name" tag.
+    .AddView(instrumentName: "MyHistogram", metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            TagKeys = new string[] { "name" },
+        })
+
+    // Configure another view to aggregate based only on the "age" tag.
+    .AddView(instrumentName: "MyHistogram", metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            TagKeys = new string[] { "age" },
+        })
+
+    // The measurement below will be aggregated into two metric streams, but both will have the same name.
+    // OpenTelemetry will issue a warning about this conflict and pass both streams to the exporter.
+    // However, this may cause issues depending on the backend.
+    histogram.Record(10, new("name", "foo"), new("age", "20"));
+```
+
 > [!NOTE]
 > The SDK currently does not support any changes to `Aggregation` type
 by using Views.
