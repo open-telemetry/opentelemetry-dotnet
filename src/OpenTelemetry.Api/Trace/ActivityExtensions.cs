@@ -29,7 +29,7 @@ public static class ActivityExtensions
     /// <param name="activity">Activity instance.</param>
     /// <param name="status">Activity execution status.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [Obsolete("Call Activity.SetStatus instead this method will be removed in a future version.")]
+    [Obsolete("Call Activity.SetStatus(ActivityStatusCode code, string? description = null) instead. This method will be removed in a future version.")]
     public static void SetStatus(this Activity? activity, Status status)
     {
         if (activity != null)
