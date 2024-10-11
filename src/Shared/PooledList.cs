@@ -11,7 +11,7 @@ namespace OpenTelemetry.Internal;
 
 internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
 {
-    private static int lastAllocatedSize = 64;
+    public static int LastAllocatedSize = 64;
 
     private readonly T[] buffer;
 
@@ -36,7 +36,7 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
 
     public static PooledList<T> Create()
     {
-        return new PooledList<T>(ArrayPool<T>.Shared.Rent(lastAllocatedSize), 0);
+        return new PooledList<T>(ArrayPool<T>.Shared.Rent(LastAllocatedSize), 0);
     }
 
     public static void Add(ref PooledList<T> list, T item)
@@ -47,10 +47,10 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
 
         if (list.Count >= buffer.Length)
         {
-            lastAllocatedSize = buffer.Length * 2;
+            LastAllocatedSize = buffer.Length * 2;
             var previousBuffer = buffer;
 
-            buffer = ArrayPool<T>.Shared.Rent(lastAllocatedSize);
+            buffer = ArrayPool<T>.Shared.Rent(LastAllocatedSize);
 
             var span = previousBuffer.AsSpan();
             span.CopyTo(buffer);

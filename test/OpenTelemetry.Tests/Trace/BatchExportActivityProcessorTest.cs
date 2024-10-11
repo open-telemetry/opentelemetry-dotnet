@@ -12,7 +12,7 @@ public class BatchExportActivityProcessorTest
     [Fact]
     public void CheckNullExporter()
     {
-        Assert.Throws<ArgumentNullException>(() => new BatchActivityExportProcessor(null));
+        Assert.Throws<ArgumentNullException>(() => new BatchActivityExportProcessor(null!));
     }
 
     [Fact]
