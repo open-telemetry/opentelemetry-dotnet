@@ -6,6 +6,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added direct reference to `System.Text.Json` for the `net8.0` target with
+  minimum version of `8.0.5` in response to
+  [CVE-2024-30105](https://github.com/advisories/GHSA-hh2w-p6rv-4g7w) &
+  [CVE-2024-43485](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485).
+  ([#5874](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5874),
+  [#5891](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5891))
+
 ## 1.10.0-beta.1
 
 Released 2024-Sep-30

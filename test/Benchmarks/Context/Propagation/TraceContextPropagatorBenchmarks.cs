@@ -26,15 +26,13 @@ public class TraceContextPropagatorBenchmarks
         return [];
     };
 
-    private Dictionary<string, string> headers;
-
     [Params(true, false)]
     public bool LongListMember { get; set; }
 
     [Params(0, 4, 32)]
     public int MembersCount { get; set; }
 
-    public Dictionary<string, string> Headers => this.headers;
+    public Dictionary<string, string>? Headers { get; private set; }
 
     [GlobalSetup]
     public void Setup()
@@ -60,7 +58,7 @@ public class TraceContextPropagatorBenchmarks
             traceState += i < this.MembersCount - 1 ? $"{listMember}," : listMember;
         }
 
-        this.headers = new Dictionary<string, string>
+        this.Headers = new Dictionary<string, string>
         {
             { TraceParent, $"00-{TraceId}-{SpanId}-01" },
             { TraceState, traceState },
@@ -68,5 +66,5 @@ public class TraceContextPropagatorBenchmarks
     }
 
     [Benchmark(Baseline = true)]
-    public void Extract() => _ = TraceContextPropagator!.Extract(default, this.headers, Getter);
+    public void Extract() => _ = TraceContextPropagator!.Extract(default, this.Headers!, Getter);
 }

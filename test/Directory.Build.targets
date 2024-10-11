@@ -1,10 +1,15 @@
 <Project>
-  <ItemGroup Condition="'$(TargetFramework)'=='$(NetFrameworkMinimumSupportedVersion)'">
-    <!--ImplicitUsings will add this namespace that is not available for NetFX.
-    https://github.com/dotnet/sdk/issues/24146
-    https://github.com/dotnet/runtime/issues/59163
-    https://github.com/dotnet/sdk/issues/22515
-    -->
-    <Using Remove="System.Net.Http" />
+
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\Common.targets" />
+
+  <ItemGroup Condition="'$(ReferenceCoyotePackages)' == 'true'">
+    <PackageReference Include="Microsoft.Coyote" />
+
+    <!-- System.Text.Json is an indirect reference through Coyote. This
+    reference is needed to mitigate:
+    https://github.com/advisories/GHSA-hh2w-p6rv-4g7w. Remove this if Coyote
+    publishes a fixed version. -->
+    <PackageReference Include="System.Text.Json" VersionOverride="$(SystemTextJsonOutOfBandMinimumCoreAppVer)" />
   </ItemGroup>
+
 </Project>
