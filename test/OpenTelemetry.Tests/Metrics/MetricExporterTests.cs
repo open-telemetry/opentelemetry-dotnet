@@ -26,9 +26,11 @@ public class MetricExporterTests
             case ExportModes.Pull | ExportModes.Push:
                 exporter = new PushPullMetricExporter();
                 break;
+            default:
+                throw new NotSupportedException($"Export mode '{mode}' is not supported");
         }
 
-        var reader = new BaseExportingMetricReader(exporter!);
+        var reader = new BaseExportingMetricReader(exporter);
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddReader(reader)
             .Build();
@@ -42,7 +44,7 @@ public class MetricExporterTests
             case ExportModes.Pull:
                 Assert.False(reader.Collect());
                 Assert.False(meterProvider.ForceFlush());
-                Assert.True((exporter as IPullMetricExporter)?.Collect!(-1));
+                Assert.True((exporter as IPullMetricExporter)?.Collect?.Invoke(-1) ?? false);
                 break;
             case ExportModes.Pull | ExportModes.Push:
                 Assert.True(reader.Collect());

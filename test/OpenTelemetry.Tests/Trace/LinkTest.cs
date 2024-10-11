@@ -50,6 +50,7 @@ public class LinkTest : IDisposable
         Assert.Equal(this.spanContext.TraceId, link.Context.TraceId);
         Assert.Equal(this.spanContext.SpanId, link.Context.SpanId);
 
+        Assert.NotNull(link.Attributes);
         foreach (var attributemap in this.attributesMap)
         {
             Assert.Equal(attributemap.Value, link.Attributes!.FirstOrDefault(a => a.Key == attributemap.Key).Value);

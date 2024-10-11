@@ -179,9 +179,10 @@ public sealed class LogRecordTest
         // Check if state has food
         Assert.Contains(attributes, item => item.Key == "food");
 
-        var foodParameter = (Food)attributes.First(item => item.Key == "food").Value!;
-        Assert.Equal(food.Name, foodParameter.Name);
-        Assert.Equal(food.Price, foodParameter.Price);
+        var foodParameter = attributes.First(item => item.Key == "food").Value as Food?;
+        Assert.NotNull(foodParameter);
+        Assert.Equal(food.Name, foodParameter.Value.Name);
+        Assert.Equal(food.Price, foodParameter.Value.Price);
 
         // Check if state has OriginalFormat
         Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
@@ -221,6 +222,7 @@ public sealed class LogRecordTest
         Assert.Contains(attributes, item => item.Key == "food");
 
         var foodParameter = attributes.First(item => item.Key == "food").Value as dynamic;
+        Assert.NotNull(foodParameter);
         Assert.Equal(anonymousType.Name, foodParameter!.Name);
         Assert.Equal(anonymousType.Price, foodParameter!.Price);
 
@@ -307,9 +309,9 @@ public sealed class LogRecordTest
 
         Assert.NotNull(exportedItems[0].State);
 
-        var state = exportedItems[0].State;
+        var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object?>>;
         Assert.NotNull(state);
-        var itemCount = state.GetType().GetProperty("Count")!.GetValue(state);
+        var itemCount = state.Count;
 
         // state only has {OriginalFormat}
         Assert.Equal(1, itemCount);
@@ -420,7 +422,9 @@ public sealed class LogRecordTest
         logger.LogInformation("This does not matter.");
 
         var stateValue = exportedItems[0];
-        Assert.Equal(new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue"), stateValue.StateValues![0]!);
+        Assert.NotNull(stateValue.StateValues);
+        Assert.NotEmpty(stateValue.StateValues);
+        Assert.Equal(new KeyValuePair<string, object?>("newStateValueKey", "newStateValueValue"), stateValue.StateValues[0]);
     }
 
     [Fact]

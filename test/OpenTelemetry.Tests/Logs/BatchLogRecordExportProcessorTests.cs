@@ -48,15 +48,18 @@ public sealed class BatchLogRecordExportProcessorTests
         Assert.Same("Value", actualState.Key);
         Assert.Same("Hello world", actualState.Value);
 
+        int scopeCount = 0;
         bool foundScope = false;
 
         logRecord.ForEachScope<object?>(
             (s, o) =>
             {
                 foundScope = ReferenceEquals(s.Scope, exportedItems);
+                scopeCount++;
             },
             null);
 
+        Assert.Equal(1, scopeCount);
         Assert.True(foundScope);
 
         processor.Shutdown();

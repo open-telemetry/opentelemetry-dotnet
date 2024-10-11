@@ -14,7 +14,7 @@ namespace OpenTelemetry.Metrics.Tests;
 public abstract class MetricOverflowAttributeTestsBase
 {
     private readonly bool shouldReclaimUnusedMetricPoints;
-    private readonly Dictionary<string, string> configurationData = new()
+    private readonly Dictionary<string, string?> configurationData = new()
     {
         [MetricTestsBase.EmitOverFlowAttributeConfigKey] = "true",
     };
@@ -31,7 +31,7 @@ public abstract class MetricOverflowAttributeTestsBase
         }
 
         this.configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(this.configurationData!)
+            .AddInMemoryCollection(this.configurationData)
             .Build();
     }
 
