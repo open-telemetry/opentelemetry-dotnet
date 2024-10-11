@@ -12,7 +12,7 @@ namespace Examples.Console;
 
 internal class TestMetrics
 {
-    internal static object? Run(MetricsOptions options)
+    internal static int Run(MetricsOptions options)
     {
         var meterVersion = "1.0";
         var meterTags = new List<KeyValuePair<string, object?>>
@@ -27,7 +27,7 @@ internal class TestMetrics
             .ConfigureResource(r => r.AddService("myservice"))
             .AddMeter(meter.Name); // All instruments from this meter are enabled.
 
-        if (string.IsNullOrEmpty(options.UseExporter) || options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
+        if ("otlp".Equals(options.UseExporter, StringComparison.OrdinalIgnoreCase))
         {
             /*
              * Prerequisite to run this example:
@@ -150,6 +150,6 @@ internal class TestMetrics
             Task.Delay(500).Wait();
         }
 
-        return null;
+        return 0;
     }
 }

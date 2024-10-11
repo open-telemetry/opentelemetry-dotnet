@@ -9,7 +9,7 @@ namespace Examples.Console;
 
 internal class TestLogs
 {
-    internal static object? Run(LogsOptions options)
+    internal static int Run(LogsOptions options)
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -18,7 +18,7 @@ internal class TestLogs
                 opt.IncludeFormattedMessage = true;
                 opt.IncludeScopes = true;
 
-                if (string.IsNullOrEmpty(options.UseExporter) || options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
+                if ("otlp".Equals(options.UseExporter, StringComparison.OrdinalIgnoreCase))
                 {
                     /*
                      * Prerequisite to run this example:
@@ -119,6 +119,6 @@ internal class TestLogs
             logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
         }
 
-        return null;
+        return 0;
     }
 }

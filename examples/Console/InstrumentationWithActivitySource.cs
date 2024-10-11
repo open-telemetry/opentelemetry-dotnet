@@ -62,7 +62,7 @@ internal class InstrumentationWithActivitySource : IDisposable
                         using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
                         {
                             requestContent = reader.ReadToEnd();
-                            childSpan!.AddEvent(new ActivityEvent("StreamReader.ReadToEnd"));
+                            childSpan?.AddEvent(new ActivityEvent("StreamReader.ReadToEnd"));
                         }
 
                         activity?.SetTag("request.content", requestContent);

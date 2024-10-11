@@ -15,21 +15,21 @@ internal class TestConsoleExporter
     // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
     //
     // dotnet run console
-    internal static object? Run(ConsoleOptions options)
+    internal static int Run(ConsoleOptions options)
     {
         return RunWithActivitySource();
     }
 
-    private static object? RunWithActivitySource()
+    private static int RunWithActivitySource()
     {
         // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
         // and use Console exporter.
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                .ConfigureResource(res => res.AddService("console-test"))
-                .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
-                .AddConsoleExporter()
-                .Build();
+            .AddSource("Samples.SampleClient", "Samples.SampleServer")
+            .ConfigureResource(res => res.AddService("console-test"))
+            .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
+            .AddConsoleExporter()
+            .Build();
 
         // The above line is required only in applications
         // which decide to use OpenTelemetry.
@@ -43,7 +43,7 @@ internal class TestConsoleExporter
             System.Console.ReadLine();
         }
 
-        return null;
+        return 0;
     }
 
     /// <summary>

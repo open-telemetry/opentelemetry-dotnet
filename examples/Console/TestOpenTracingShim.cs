@@ -12,15 +12,15 @@ namespace Examples.Console;
 
 internal class TestOpenTracingShim
 {
-    internal static object? Run(OpenTracingShimOptions options)
+    internal static int Run(OpenTracingShimOptions options)
     {
         // Enable OpenTelemetry for the source "opentracing-shim"
         // and use Console exporter.
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource("opentracing-shim")
-                .ConfigureResource(r => r.AddService("MyServiceName"))
-                .AddConsoleExporter()
-                .Build();
+            .AddSource("opentracing-shim")
+            .ConfigureResource(r => r.AddService("MyServiceName"))
+            .AddConsoleExporter()
+            .Build();
 
         // Instantiate the OpenTracing shim. The underlying OpenTelemetry tracer will create
         // spans using the "opentracing-shim" source.
@@ -53,6 +53,6 @@ internal class TestOpenTracingShim
         System.Console.WriteLine("Press Enter key to exit.");
         System.Console.ReadLine();
 
-        return null;
+        return 0;
     }
 }

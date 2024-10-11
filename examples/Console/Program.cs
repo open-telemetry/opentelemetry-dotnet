@@ -33,16 +33,16 @@ public class Program
     {
         Parser.Default.ParseArguments<ZipkinOptions, PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
             .MapResult(
-                (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
-                (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port),
+                (ZipkinOptions options) => TestZipkinExporter.Run(options),
+                (PrometheusOptions options) => TestPrometheusExporter.Run(options),
                 (MetricsOptions options) => TestMetrics.Run(options),
                 (LogsOptions options) => TestLogs.Run(options),
-                (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
-                (HttpClientOptions options) => TestHttpClient.Run(),
+                (GrpcNetClientOptions options) => TestGrpcNetClient.Run(options),
+                (HttpClientOptions options) => TestHttpClient.Run(options),
                 (ConsoleOptions options) => TestConsoleExporter.Run(options),
                 (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(options),
                 (OpenTracingShimOptions options) => TestOpenTracingShim.Run(options),
-                (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint, options.Protocol),
+                (OtlpOptions options) => TestOtlpExporter.Run(options),
                 (InMemoryOptions options) => TestInMemoryExporter.Run(options),
                 errs => 1);
     }
