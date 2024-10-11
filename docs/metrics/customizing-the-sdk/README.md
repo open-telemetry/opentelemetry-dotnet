@@ -245,6 +245,90 @@ within the maximum number of buckets defined by `MaxSize`. The default
         new Base2ExponentialBucketHistogramConfiguration { MaxSize = 40 })
 ```
 
+#### Produce multiple metrics from single instrument
+
+When an instrument matches multiple views, it can generate multiple metrics. For
+instance, if an instrument is matched by two different view configurations, it
+will result in two separate metrics being produced from that single instrument.
+Below is an example demonstrating how to leverage this capability to create two
+independent metrics from a single instrument. In this example, a histogram
+instrument is used to report measurements, and views are configured to produce
+two metrics : one aggregated using `ExplicitBucketHistogramConfiguration` and the
+other using `Base2ExponentialBucketHistogramConfiguration`.
+
+```csharp
+    var histogramWithMultipleAggregations = meter.CreateHistogram<long>("HistogramWithMultipleAggregations");
+
+    // Configure the Explicit Bucket Histogram aggregation with custom boundaries and new name.
+    .AddView(instrumentName: "HistogramWithMultipleAggregations", new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 }, Name = "MyHistogramWithExplicitHistogram" })
+
+    // Use Base2 Exponential Bucket Histogram aggregation and new name.
+    .AddView(instrumentName: "HistogramWithMultipleAggregations", new Base2ExponentialBucketHistogramConfiguration() { Name = "MyHistogramWithBase2ExponentialBucketHistogram" })
+
+    // Both views rename the metric to avoid name conflicts. However, in this case,
+    // renaming one would be sufficient.
+
+    // This measurement will be aggregated into two separate metrics.
+    histogramWithMultipleAggregations.Record(10, new("tag1", "value1"), new("tag2", "value2"));
+```
+
+When using views that produce multiple metrics from single instrument, it's
+crucial to rename the metric to prevent conflicts. In the event of conflict,
+OpenTelemetry will emit an internal warning but will still export both metrics.
+The impact of this behavior depends on the backend or receiver being used. You
+can refer to [OpenTelemetry's
+specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#opentelemetry-protocol-data-model-consumer-recommendations)
+for more details.
+
+Below example is showing the *BAD* practice. DO NOT FOLLOW it.
+
+```csharp
+    var histogram = meter.CreateHistogram<long>("MyHistogram");
+
+    // Configure a view to aggregate based only on the "location" tag.
+    .AddView(instrumentName: "MyHistogram", metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            TagKeys = new string[] { "location" },
+        })
+
+    // Configure another view to aggregate based only on the "status" tag.
+    .AddView(instrumentName: "MyHistogram", metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            TagKeys = new string[] { "status" },
+        })
+
+    // The measurement below will be aggregated into two metric streams, but both will have the same name.
+    // OpenTelemetry will issue a warning about this conflict and pass both streams to the exporter.
+    // However, this may cause issues depending on the backend.
+    histogram.Record(10, new("location", "seattle"), new("status", "OK"));
+```
+
+The modified version, avoiding name conflict is shown below:
+
+```csharp
+    var histogram = meter.CreateHistogram<long>("MyHistogram");
+
+    // Configure a view to aggregate based only on the "location" tag,
+    // and rename the metric.
+    .AddView(instrumentName: "MyHistogram", metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            Name = "MyHistogramWithLocation",
+            TagKeys = new string[] { "location" },
+        })
+
+    // Configure a view to aggregate based only on the "status" tag,
+    // and rename the metric.
+    .AddView(instrumentName: "MyHistogram", metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            Name = "MyHistogramWithStatus",
+            TagKeys = new string[] { "status" },
+        })
+
+    // The measurement below will be aggregated into two separate metrics, "MyHistogramWithLocation"
+    // and "MyHistogramWithStatus".
+    histogram.Record(10, new("location", "seattle"), new("status", "OK"));
+```
+
 > [!NOTE]
 > The SDK currently does not support any changes to `Aggregation` type
 by using Views.
