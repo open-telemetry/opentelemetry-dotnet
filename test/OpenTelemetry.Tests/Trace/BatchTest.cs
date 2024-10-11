@@ -11,7 +11,7 @@ public class BatchTest
     [Fact]
     public void CheckConstructorExceptions()
     {
-        Assert.Throws<ArgumentNullException>(() => new Batch<string>((string[])null, 0));
+        Assert.Throws<ArgumentNullException>(() => new Batch<string>((string[]?)null!, 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Batch<string>(Array.Empty<string>(), -1));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Batch<string>(Array.Empty<string>(), 1));
     }
