@@ -41,9 +41,9 @@ public sealed class Metric
         ("System.Net.NameResolution", "dns.lookup.duration"),
     }
 #if NET
-        .ToFrozenSet()
+    .ToFrozenSet()
 #endif
-        ;
+    ;
 
     // Long default histogram bounds. Not based on a standard. May change in the future.
     internal static readonly double[] DefaultHistogramBoundsLongSeconds = new double[] { 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 30, 60, 120, 300 };
@@ -60,9 +60,9 @@ public sealed class Metric
         ("System.Net.Http", "http.client.connection.duration"),
     }
 #if NET
-        .ToFrozenSet()
+    .ToFrozenSet()
 #endif
-        ;
+    ;
 
     internal readonly AggregatorStore AggregatorStore;
 
