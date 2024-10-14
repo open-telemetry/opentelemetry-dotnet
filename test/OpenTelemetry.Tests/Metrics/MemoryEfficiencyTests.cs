@@ -28,7 +28,7 @@ public class MemoryEfficiencyTests
 
         var counter = meter.CreateCounter<long>("meter");
 
-        counter.Add(10, new KeyValuePair<string, object>("tag1", "value1"));
+        counter.Add(10, new KeyValuePair<string, object?>("tag1", "value1"));
         meterProvider.ForceFlush();
         Assert.Single(exportedItems);
 

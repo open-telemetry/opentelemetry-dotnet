@@ -12,7 +12,7 @@ public class SimpleExportActivityProcessorTest
     [Fact]
     public void CheckNullExporter()
     {
-        Assert.Throws<ArgumentNullException>(() => new SimpleActivityExportProcessor(null));
+        Assert.Throws<ArgumentNullException>(() => new SimpleActivityExportProcessor(null!));
     }
 
     [Fact]

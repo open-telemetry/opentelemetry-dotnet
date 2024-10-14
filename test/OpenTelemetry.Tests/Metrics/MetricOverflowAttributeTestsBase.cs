@@ -14,7 +14,7 @@ namespace OpenTelemetry.Metrics.Tests;
 public abstract class MetricOverflowAttributeTestsBase
 {
     private readonly bool shouldReclaimUnusedMetricPoints;
-    private readonly Dictionary<string, string> configurationData = new()
+    private readonly Dictionary<string, string?> configurationData = new()
     {
         [MetricTestsBase.EmitOverFlowAttributeConfigKey] = "true",
     };
@@ -86,7 +86,7 @@ public abstract class MetricOverflowAttributeTestsBase
             .ConfigureServices(services =>
             {
                 var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string> { [MetricTestsBase.EmitOverFlowAttributeConfigKey] = value })
+                .AddInMemoryCollection(new Dictionary<string, string?> { [MetricTestsBase.EmitOverFlowAttributeConfigKey] = value })
                 .Build();
 
                 services.AddSingleton<IConfiguration>(configuration);
@@ -164,7 +164,7 @@ public abstract class MetricOverflowAttributeTestsBase
         {
             // Emit unique key-value pairs to use up the available MetricPoints
             // Once this loop is run, we have used up all available MetricPoints for metrics emitted with tags
-            counter.Add(10, new KeyValuePair<string, object>("Key", i));
+            counter.Add(10, new KeyValuePair<string, object?>("Key", i));
         }
 
         meterProvider.ForceFlush();
@@ -186,7 +186,7 @@ public abstract class MetricOverflowAttributeTestsBase
         exportedItems.Clear();
         metricPoints.Clear();
 
-        counter.Add(5, new KeyValuePair<string, object>("Key", 2000)); // Emit a metric to exceed the max MetricPoint limit
+        counter.Add(5, new KeyValuePair<string, object?>("Key", 2000)); // Emit a metric to exceed the max MetricPoint limit
 
         meterProvider.ForceFlush();
         metric = exportedItems[0];
@@ -217,7 +217,7 @@ public abstract class MetricOverflowAttributeTestsBase
         // Emit 2500 more newer MetricPoints with distinct dimension combinations
         for (int i = 2001; i < 4501; i++)
         {
-            counter.Add(5, new KeyValuePair<string, object>("Key", i));
+            counter.Add(5, new KeyValuePair<string, object?>("Key", i));
         }
 
         meterProvider.ForceFlush();
@@ -315,7 +315,7 @@ public abstract class MetricOverflowAttributeTestsBase
         {
             // Emit unique key-value pairs to use up the available MetricPoints
             // Once this loop is run, we have used up all available MetricPoints for metrics emitted with tags
-            histogram.Record(10, new KeyValuePair<string, object>("Key", i));
+            histogram.Record(10, new KeyValuePair<string, object?>("Key", i));
         }
 
         meterProvider.ForceFlush();
@@ -337,7 +337,7 @@ public abstract class MetricOverflowAttributeTestsBase
         exportedItems.Clear();
         metricPoints.Clear();
 
-        histogram.Record(5, new KeyValuePair<string, object>("Key", 2000)); // Emit a metric to exceed the max MetricPoint limit
+        histogram.Record(5, new KeyValuePair<string, object?>("Key", 2000)); // Emit a metric to exceed the max MetricPoint limit
 
         meterProvider.ForceFlush();
         metric = exportedItems[0];
@@ -368,7 +368,7 @@ public abstract class MetricOverflowAttributeTestsBase
         // Emit 2500 more newer MetricPoints with distinct dimension combinations
         for (int i = 2001; i < 4501; i++)
         {
-            histogram.Record(5, new KeyValuePair<string, object>("Key", i));
+            histogram.Record(5, new KeyValuePair<string, object?>("Key", i));
         }
 
         meterProvider.ForceFlush();
