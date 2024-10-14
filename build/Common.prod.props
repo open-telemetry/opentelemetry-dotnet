@@ -26,7 +26,8 @@
     <PackagePrimaryLicenseFile>$(RepoRoot)\LICENSE.TXT</PackagePrimaryLicenseFile>
     <PackageThirdPartyNoticesFile>$(RepoRoot)\THIRD-PARTY-NOTICES.TXT</PackageThirdPartyNoticesFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>RELEASENOTES.md</PackageReleaseNotes>
+    <PackageChangelogFile>CHANGELOG.md</PackageChangelogFile>
+    <PackageReleaseNotesFile>$(RepoRoot)\RELEASENOTES.md</PackageReleaseNotesFile>
   </PropertyGroup>
 
   <PropertyGroup Label="SourceLinkProperties">
@@ -112,6 +113,7 @@
     </Exec>
 
     <PropertyGroup>
+      <MarkdownCommentRegex>\[([^]]+?)\]\(\.(.+?)\)</MarkdownCommentRegex>
       <GitHubPermalinkUrl>$(GitOriginConsoleOutput.Replace('.git',''))/blob/$(GitCommitConsoleOutput)</GitHubPermalinkUrl>
     </PropertyGroup>
 
@@ -119,7 +121,6 @@
 
     <ItemGroup>
       <PackageMarkdownFiles Include="README.md" />
-      <PackageMarkdownFiles Include="$(RepoRoot)\RELEASENOTES.md" />
     </ItemGroup>
 
     <ItemGroup>
@@ -128,9 +129,19 @@
 
     <WriteLinesToFile
         File="$(BaseIntermediateOutputPath)%(PackageMarkdownFiles.Filename)%(PackageMarkdownFiles.Extension)"
-        Lines="$([System.Text.RegularExpressions.Regex]::Replace($([System.IO.File]::ReadAllText(%(PackageMarkdownFiles.FullPath))), '\[([^]]+?)\]\(\.(.+?)\)', '[$1]($(GitHubPermalinkUrl)%(PackageMarkdownFiles.Path).$2)').Replace('/', '\'))"
+        Lines="$([System.Text.RegularExpressions.Regex]::Replace($([System.IO.File]::ReadAllText(%(PackageMarkdownFiles.FullPath))), '$(MarkdownCommentRegex)', '[$1]($(GitHubPermalinkUrl)%(PackageMarkdownFiles.Path).$2)').Replace('\', '/'))"
         Overwrite="true"
         Encoding="UTF-8"/>
+
+    <PropertyGroup>
+      <_PackageReleaseNotesFilePath>$([System.IO.Path]::GetFullPath('$(PackageReleaseNotesFile)').Replace('$(RepoRoot)', '').Replace('\', '/'))</_PackageReleaseNotesFilePath>
+      <_PackageChangelogFilePath>$([System.IO.Path]::GetFullPath('$(PackageChangelogFile)').Replace('$(RepoRoot)', '').Replace('\', '/'))</_PackageChangelogFilePath>
+      <PackageReleaseNotes>
+        For highlights and announcements see: $(GitHubPermalinkUrl)$(_PackageReleaseNotesFilePath).
+
+For detailed changes see: $(GitHubPermalinkUrl)$(_PackageChangelogFilePath).
+      </PackageReleaseNotes>
+    </PropertyGroup>
 
     <ItemGroup>
       <Content Include="$(BaseIntermediateOutputPath)*.md" PackagePath="/" />
