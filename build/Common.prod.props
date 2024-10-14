@@ -128,7 +128,7 @@
 
     <WriteLinesToFile
         File="$(BaseIntermediateOutputPath)%(PackageMarkdownFiles.Filename)%(PackageMarkdownFiles.Extension)"
-        Lines="$([System.Text.RegularExpressions.Regex]::Replace($([System.IO.File]::ReadAllText(%(PackageMarkdownFiles.FullPath))), '\[([^]]+?)\]\(\.(.+?)\)', '[$1]($(GitHubPermalinkUrl)%(PackageMarkdownFiles.Path).$2)'))"
+        Lines="$([System.Text.RegularExpressions.Regex]::Replace($([System.IO.File]::ReadAllText(%(PackageMarkdownFiles.FullPath))), '\[([^]]+?)\]\(\.(.+?)\)', '[$1]($(GitHubPermalinkUrl)%(PackageMarkdownFiles.Path).$2)').Replace('/', '\'))"
         Overwrite="true"
         Encoding="UTF-8"/>
 
