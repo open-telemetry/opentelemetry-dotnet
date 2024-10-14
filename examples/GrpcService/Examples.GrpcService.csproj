@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>$(DefaultTargetFrameworkForExampleApps)</TargetFramework>
-    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

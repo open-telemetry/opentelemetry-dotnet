@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>$(TargetFrameworksForAspNetCoreTests)</TargetFrameworks>
-    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
