@@ -203,13 +203,19 @@ Open a pull request against the main `opentelemetry-dotnet` repo.
 * If the PR is not ready for review, please mark it as
   [`draft`](https://github.blog/2019-02-14-introducing-draft-pull-requests/).
 * Make sure CLA is signed and all required CI checks are clear.
-* Submit small, focused PRs addressing a single
-  concern/issue.
+* Submit small, focused PRs addressing a single concern/issue.
 * Make sure the PR title reflects the contribution.
 * Write a summary that helps understand the change.
 * Include usage examples in the summary, where applicable.
 * Include benchmarks (before/after) in the summary, for contributions that are
   performance enhancements.
+* We are open to bot generated PRs or AI/LLM assisted PRs. Actually, we are
+  using
+  [dependabot](https://docs.github.com/en/code-security/dependabot/dependabot-security-updates/configuring-dependabot-security-updates)
+  to automate the security updates. However, if you use bots to generate spam
+  PRs (e.g. incorrect, noisy, non-improvements, unintelligible, trying to sell
+  your product, etc.), we might close the PR right away with a warning, and if
+  you keep doing so, we might block your user account.
 
 ### How to get pull requests merged
 
@@ -301,23 +307,6 @@ analysis](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/overview
 > There are other project-level features enabled automatically via
 [Common.props](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/build/Common.props)
 new projects must NOT manually override these settings.
-
-## New code
-
-New code files MUST enable [nullable reference
-types](https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/nullable-reference-types)
-manually in projects where it is not automatically enabled project-wide. This is
-done by specifying `#nullable enable` towards the top of the file (usually after
-the copyright header). We are currently working towards enabling nullable
-context in every project by updating code as it is worked on, this requirement
-is to make sure the surface area of code needing updates is shrinking and not
-expanding.
-
-> [!NOTE]
-> The first time a project is updated to use nullable context in public APIs
-some housekeeping needs to be done in public API definitions (`.publicApi`
-folder). This can be done automatically via a code fix offered by the public API
-analyzer.
 
 ## License requirements
 
