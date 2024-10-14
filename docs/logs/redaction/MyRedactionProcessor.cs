@@ -15,18 +15,18 @@ internal sealed class MyRedactionProcessor : BaseProcessor<LogRecord>
         }
     }
 
-    internal sealed class MyClassWithRedactionEnumerator : IReadOnlyList<KeyValuePair<string, object>>
+    internal sealed class MyClassWithRedactionEnumerator : IReadOnlyList<KeyValuePair<string, object?>>
     {
-        private readonly IReadOnlyList<KeyValuePair<string, object>> state;
+        private readonly IReadOnlyList<KeyValuePair<string, object?>> state;
 
-        public MyClassWithRedactionEnumerator(IReadOnlyList<KeyValuePair<string, object>> state)
+        public MyClassWithRedactionEnumerator(IReadOnlyList<KeyValuePair<string, object?>> state)
         {
             this.state = state;
         }
 
         public int Count => this.state.Count;
 
-        public KeyValuePair<string, object> this[int index]
+        public KeyValuePair<string, object?> this[int index]
         {
             get
             {
@@ -34,14 +34,14 @@ internal sealed class MyRedactionProcessor : BaseProcessor<LogRecord>
                 var entryVal = item.Value?.ToString();
                 if (entryVal != null && entryVal.Contains("<secret>"))
                 {
-                    return new KeyValuePair<string, object>(item.Key, "newRedactedValueHere");
+                    return new KeyValuePair<string, object?>(item.Key, "newRedactedValueHere");
                 }
 
                 return item;
             }
         }
 
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
         {
             for (var i = 0; i < this.Count; i++)
             {
