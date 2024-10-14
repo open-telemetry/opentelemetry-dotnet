@@ -308,23 +308,6 @@ analysis](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/overview
 [Common.props](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/build/Common.props)
 new projects must NOT manually override these settings.
 
-## New code
-
-New code files MUST enable [nullable reference
-types](https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/nullable-reference-types)
-manually in projects where it is not automatically enabled project-wide. This is
-done by specifying `#nullable enable` towards the top of the file (usually after
-the copyright header). We are currently working towards enabling nullable
-context in every project by updating code as it is worked on, this requirement
-is to make sure the surface area of code needing updates is shrinking and not
-expanding.
-
-> [!NOTE]
-> The first time a project is updated to use nullable context in public APIs
-some housekeeping needs to be done in public API definitions (`.publicApi`
-folder). This can be done automatically via a code fix offered by the public API
-analyzer.
-
 ## License requirements
 
 OpenTelemetry .NET is licensed under the [Apache License, Version
