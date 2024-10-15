@@ -221,7 +221,7 @@ public class OtlpTraceExporterTests
         }
     }
 
-    [Fact(Skip = "Troubleshoot failing test.")]
+    [Fact]
     public void ScopeAttributesRemainConsistentAcrossMultipleBatches()
     {
         var activitySourceTags = new TagList
@@ -232,6 +232,9 @@ public class OtlpTraceExporterTests
         using var activitySource = new ActivitySource(nameof(this.ScopeAttributesRemainConsistentAcrossMultipleBatches), "1.1.1.3", activitySourceTags);
         using var rootActivity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext));
         using var childActivity = activitySource.StartActivity("child", ActivityKind.Client);
+
+        Assert.Equal(1, rootActivity?.Source.Tags?.Count());
+        Assert.Equal(1, childActivity?.Source.Tags?.Count());
 
         Batch<Activity> batch = new Batch<Activity>(new[] { rootActivity!, childActivity! }, 2);
 
@@ -262,6 +265,7 @@ public class OtlpTraceExporterTests
         Assert.Equal(nameof(this.ScopeAttributesRemainConsistentAcrossMultipleBatches), scope.Name);
         Assert.Equal("1.1.1.3", scope.Version);
         Assert.Contains(scope.Attributes, (kvp) => kvp.Key == "k0" && kvp.Value.StringValue == "v0");
+        request = null;
     }
 
     [Fact]
@@ -284,8 +288,9 @@ public class OtlpTraceExporterTests
 
         using var activitySource = new ActivitySource(name: nameof(this.ScopeAttributesLimitsTest), tags: activitySourceTags);
         using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext));
-        Batch<Activity> batch = new Batch<Activity>(new[] { activity! }, 1);
+        Assert.Equal(4, activity?.Source.Tags?.Count());
 
+        Batch<Activity> batch = new Batch<Activity>(new[] { activity! }, 1);
         var request = new OtlpCollector.ExportTraceServiceRequest();
         request.AddBatch(sdkOptions, ResourceBuilder.CreateDefault().Build().ToOtlpResource(), batch);
 
@@ -303,6 +308,7 @@ public class OtlpTraceExporterTests
         Assert.Equal("1234", scope.Attributes[0].Value.StringValue);
         this.ArrayValueAsserts(scope.Attributes[1].Value.ArrayValue.Values);
         Assert.Equal(new object().ToString()!.Substring(0, 4), scope.Attributes[2].Value.StringValue);
+        request = null;
     }
 
     [Fact]

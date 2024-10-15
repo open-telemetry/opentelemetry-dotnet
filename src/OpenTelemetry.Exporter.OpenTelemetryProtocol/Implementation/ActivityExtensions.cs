@@ -108,7 +108,7 @@ internal static class ActivityExtensions
                 }
                 else
                 {
-                    foreach (var tag in activitySource.Tags ?? [])
+                    foreach (var tag in activitySource.Tags)
                     {
                         if (scopeAttributes.Count < maxTags)
                         {
