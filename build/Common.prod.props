@@ -25,6 +25,9 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackagePrimaryLicenseFile>$(RepoRoot)\LICENSE.TXT</PackagePrimaryLicenseFile>
     <PackageThirdPartyNoticesFile>$(RepoRoot)\THIRD-PARTY-NOTICES.TXT</PackageThirdPartyNoticesFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageChangelogFile>CHANGELOG.md</PackageChangelogFile>
+    <PackageReleaseNotesFile>$(RepoRoot)\RELEASENOTES.md</PackageReleaseNotesFile>
   </PropertyGroup>
 
   <PropertyGroup Label="SourceLinkProperties">
@@ -57,7 +60,7 @@
     <None Include=".publicApi\**\PublicAPI.*.txt" />
   </ItemGroup>
 
-  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)'!='' AND '$(BuildNumber)' != ''">
+  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)' != '' AND '$(BuildNumber)' != ''">
     <!-- Note: $(BuildNumber) is typically only set for builds initiated by the
     publish workflow. The goal here is to set the assembly FileVersion and
     resolve ExposeExperimentalFeatures based on the version MinVer resolved from
@@ -85,6 +88,66 @@
           BeforeTargets="RunPackageValidation"
           Condition="'$(DisablePackageBaselineValidation)' != 'true' AND '$(PackageValidationBaselineVersion)' == '' AND '$(MinVerTagPrefix)' != 'coreunstable-'">
     <Error Text="Cannot perform package validation without a baseline package version." />
+  </Target>
+
+  <Target Name="IncludeReadmeAndReleaseNotesInPackages" BeforeTargets="_GetTargetFrameworksOutput">
+    <!-- Note: This target runs during pack to convert relative links in
+    markdowns into github permalinks which will work when rendered on Nuget. -->
+
+    <Exec
+      Command="git rev-parse HEAD"
+      ConsoleToMsBuild="True"
+      IgnoreExitCode="True"
+      StandardOutputImportance="low">
+      <Output PropertyName="GitCommitConsoleOutput" TaskParameter="ConsoleOutput"/>
+      <Output PropertyName="GitCommitExitCode" TaskParameter="ExitCode"/>
+    </Exec>
+
+    <Exec
+      Command="git remote get-url origin"
+      ConsoleToMsBuild="True"
+      IgnoreExitCode="True"
+      StandardOutputImportance="low">
+      <Output PropertyName="GitOriginConsoleOutput" TaskParameter="ConsoleOutput"/>
+      <Output PropertyName="GitOriginExitCode" TaskParameter="ExitCode"/>
+    </Exec>
+
+    <PropertyGroup>
+      <MarkdownCommentRegex>\[([^]]+?)\]\(\.(.+?)\)</MarkdownCommentRegex>
+      <GitHubRepoUrl>$(GitOriginConsoleOutput.Replace('.git',''))</GitHubRepoUrl>
+      <GitHubPermalinkUrl Condition="'$(PackTag)' != ''">$(GitHubRepoUrl)/blob/$(PackTag)</GitHubPermalinkUrl>
+      <GitHubPermalinkUrl Condition="'$(PackTag)' == ''">$(GitHubRepoUrl)/blob/$(GitCommitConsoleOutput)</GitHubPermalinkUrl>
+    </PropertyGroup>
+
+    <Message Importance="high" Text="**GitInformationDebug** GitCommitConsoleOutput: $(GitCommitConsoleOutput), GitCommitExitCode: $(GitCommitExitCode), GitOriginConsoleOutput: $(GitOriginConsoleOutput), GitOriginExitCode: $(GitOriginExitCode), GitHubPermalinkUrl: $(GitHubPermalinkUrl)" />
+
+    <ItemGroup>
+      <PackageMarkdownFiles Include="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageMarkdownFiles Update="@(PackageMarkdownFiles)" Path="$([MSBuild]::ValueOrDefault('%(FullPath)','').Replace('$(RepoRoot)', '').Replace('%(FileName)%(Extension)', ''))" />
+    </ItemGroup>
+
+    <WriteLinesToFile
+        File="$(IntermediateOutputPath)%(PackageMarkdownFiles.Filename)%(PackageMarkdownFiles.Extension)"
+        Lines="$([System.Text.RegularExpressions.Regex]::Replace($([System.IO.File]::ReadAllText(%(PackageMarkdownFiles.FullPath))), '$(MarkdownCommentRegex)', '[$1]($(GitHubPermalinkUrl)%(PackageMarkdownFiles.Path).$2)').Replace('\', '/'))"
+        Overwrite="true"
+        Encoding="UTF-8"/>
+
+    <PropertyGroup>
+      <_PackageReleaseNotesFilePath>$([System.IO.Path]::GetFullPath('$(PackageReleaseNotesFile)').Replace('$(RepoRoot)', '').Replace('\', '/'))</_PackageReleaseNotesFilePath>
+      <_PackageChangelogFilePath>$([System.IO.Path]::GetFullPath('$(PackageChangelogFile)').Replace('$(RepoRoot)', '').Replace('\', '/'))</_PackageChangelogFilePath>
+      <PackageReleaseNotes>
+        For highlights and announcements see: $(GitHubPermalinkUrl)$(_PackageReleaseNotesFilePath).
+
+        For detailed changes see: $(GitHubPermalinkUrl)$(_PackageChangelogFilePath).
+      </PackageReleaseNotes>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Content Include="$(IntermediateOutputPath)*.md" PackagePath="/" />
+    </ItemGroup>
   </Target>
 
   <Target Name="ResolveExposeExperimentalFeatures" BeforeTargets="CoreCompile" DependsOnTargets="AssemblyVersionTarget">

@@ -7,9 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-*Added support for exporting instrumentation scope attributes from
-`ActivitySource.Tags`.
-([#5897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5897))
+* Added support for exporting instrumentation scope attributes from
+  `ActivitySource.Tags`.
+  ([#5897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5897))
 
 ## 1.10.0-beta.1
 
