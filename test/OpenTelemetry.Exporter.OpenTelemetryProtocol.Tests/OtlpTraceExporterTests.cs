@@ -229,27 +229,39 @@ public class OtlpTraceExporterTests
             new("k0", "v0"),
         };
 
-        using var activitySource = new ActivitySource(nameof(this.ScopeAttributesRemainConsistentAcrossMultipleBatches), "1.1.1.3", activitySourceTags);
+        using var activitySourceWithTags = new ActivitySource($"{nameof(this.ScopeAttributesRemainConsistentAcrossMultipleBatches)}_WithTags", "1.1.1.3", activitySourceTags);
+        using var activitySourceWithoutTags = new ActivitySource($"{nameof(this.ScopeAttributesRemainConsistentAcrossMultipleBatches)}_WithoutTags", "1.1.1.4");
+
         var resourceBuilder = ResourceBuilder.CreateDefault();
 
         var exportedItems = new List<Activity>();
         var builder = Sdk.CreateTracerProviderBuilder()
             .SetResourceBuilder(resourceBuilder)
-            .AddSource(activitySource.Name)
+            .AddSource(activitySourceWithTags.Name)
+            .AddSource(activitySourceWithoutTags.Name)
             .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
 
         using var openTelemetrySdk = builder.Build();
 
-        var parentActivity = activitySource.StartActivity("parent", ActivityKind.Server, default(ActivityContext));
-        var nestedChildActivity = activitySource.StartActivity("nested-child", ActivityKind.Client);
+        var parentActivity = activitySourceWithTags.StartActivity("parent", ActivityKind.Server, default(ActivityContext));
+        var nestedChildActivity = activitySourceWithTags.StartActivity("nested-child", ActivityKind.Client);
         parentActivity?.Dispose();
         nestedChildActivity?.Dispose();
 
         Assert.Equal(2, exportedItems.Count);
         var batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
-        RunTest(DefaultSdkLimitOptions, batch);
+        RunTest(DefaultSdkLimitOptions, batch, activitySourceWithTags);
 
-        void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
+        exportedItems.Clear();
+
+        var parentActivityNoTags = activitySourceWithoutTags.StartActivity("parent", ActivityKind.Server, default(ActivityContext));
+        parentActivityNoTags?.Dispose();
+
+        Assert.Single(exportedItems);
+        batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
+        RunTest(DefaultSdkLimitOptions, batch, activitySourceWithoutTags);
+
+        void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch, ActivitySource activitySource)
         {
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
@@ -264,10 +276,14 @@ public class OtlpTraceExporterTests
             var scope = scopeSpans.Scope;
             Assert.NotNull(scope);
 
-            Assert.Single(scope.Attributes);
-            Assert.Equal(nameof(this.ScopeAttributesRemainConsistentAcrossMultipleBatches), scope.Name);
-            Assert.Equal("1.1.1.3", scope.Version);
-            Assert.Contains(scope.Attributes, (kvp) => kvp.Key == "k0" && kvp.Value.StringValue == "v0");
+            Assert.Equal(activitySource.Name, scope.Name);
+            Assert.Equal(activitySource.Version, scope.Version);
+            Assert.Equal(activitySource.Tags?.Count() ?? 0, scope.Attributes.Count);
+
+            foreach (var tag in activitySource.Tags ?? [])
+            {
+                Assert.Contains(scope.Attributes, (kvp) => kvp.Key == tag.Key && kvp.Value.StringValue == (string?)tag.Value);
+            }
 
             // Return and re-add batch to simulate reuse
             request.Return();
@@ -277,10 +293,17 @@ public class OtlpTraceExporterTests
             scopeSpans = resourceSpans.ScopeSpans.First();
             scope = scopeSpans.Scope;
 
-            Assert.Single(scope.Attributes);
-            Assert.Equal(nameof(this.ScopeAttributesRemainConsistentAcrossMultipleBatches), scope.Name);
-            Assert.Equal("1.1.1.3", scope.Version);
-            Assert.Contains(scope.Attributes, (kvp) => kvp.Key == "k0" && kvp.Value.StringValue == "v0");
+            Assert.Equal(activitySource.Name, scope.Name);
+            Assert.Equal(activitySource.Version, scope.Version);
+            Assert.Equal(activitySource.Tags?.Count() ?? 0, scope.Attributes.Count);
+
+            foreach (var tag in activitySource.Tags ?? [])
+            {
+                Assert.Contains(scope.Attributes, (kvp) => kvp.Key == tag.Key && kvp.Value.StringValue == (string?)tag.Value);
+            }
+
+            // Return and re-add batch to simulate reuse
+            request.Return();
         }
     }
 
@@ -341,6 +364,9 @@ public class OtlpTraceExporterTests
             Assert.Equal("1234", scope.Attributes[0].Value.StringValue);
             this.ArrayValueAsserts(scope.Attributes[1].Value.ArrayValue.Values);
             Assert.Equal(new object().ToString()!.Substring(0, 4), scope.Attributes[2].Value.StringValue);
+
+            // Return and re-add batch to simulate reuse
+            request.Return();
         }
     }
 

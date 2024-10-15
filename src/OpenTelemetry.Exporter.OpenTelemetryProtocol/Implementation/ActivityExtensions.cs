@@ -70,6 +70,7 @@ internal static class ActivityExtensions
         foreach (var scopeSpan in resourceSpans.ScopeSpans)
         {
             scopeSpan.Spans.Clear();
+            scopeSpan.Scope.Attributes.Clear();
             SpanListPool.Add(scopeSpan);
         }
     }
@@ -87,37 +88,42 @@ internal static class ActivityExtensions
                     Version = activitySource.Version ?? string.Empty, // NRE throw by proto
                 },
             };
+        }
+        else
+        {
+            scopeSpans.Scope.Name = activitySource.Name; // Name is enforced to not be null, but it can be empty.
+            scopeSpans.Scope.Version = activitySource.Version ?? string.Empty; // NRE throw by proto
+        }
 
-            if (activitySource.Tags != null)
+        if (activitySource.Tags != null)
+        {
+            var scopeAttributes = scopeSpans.Scope.Attributes;
+
+            if (activitySource.Tags is IReadOnlyList<KeyValuePair<string, object?>> activitySourceTagsList)
             {
-                var scopeAttributes = scopeSpans.Scope.Attributes;
-
-                if (activitySource.Tags is IReadOnlyList<KeyValuePair<string, object?>> activitySourceTagsList)
+                for (int i = 0; i < activitySourceTagsList.Count; i++)
                 {
-                    for (int i = 0; i < activitySourceTagsList.Count; i++)
+                    if (scopeAttributes.Count < maxTags)
                     {
-                        if (scopeAttributes.Count < maxTags)
-                        {
-                            OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, activitySourceTagsList[i], attributeValueLengthLimit);
-                        }
-                        else
-                        {
-                            scopeSpans.Scope.DroppedAttributesCount++;
-                        }
+                        OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, activitySourceTagsList[i], attributeValueLengthLimit);
+                    }
+                    else
+                    {
+                        scopeSpans.Scope.DroppedAttributesCount++;
                     }
                 }
-                else
+            }
+            else
+            {
+                foreach (var tag in activitySource.Tags)
                 {
-                    foreach (var tag in activitySource.Tags)
+                    if (scopeAttributes.Count < maxTags)
                     {
-                        if (scopeAttributes.Count < maxTags)
-                        {
-                            OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, tag, attributeValueLengthLimit);
-                        }
-                        else
-                        {
-                            scopeSpans.Scope.DroppedAttributesCount++;
-                        }
+                        OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, tag, attributeValueLengthLimit);
+                    }
+                    else
+                    {
+                        scopeSpans.Scope.DroppedAttributesCount++;
                     }
                 }
             }
