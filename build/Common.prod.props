@@ -114,7 +114,9 @@
 
     <PropertyGroup>
       <MarkdownCommentRegex>\[([^]]+?)\]\(\.(.+?)\)</MarkdownCommentRegex>
-      <GitHubPermalinkUrl>$(GitOriginConsoleOutput.Replace('.git',''))/blob/$(GitCommitConsoleOutput)</GitHubPermalinkUrl>
+      <GitHubRepoUrl>$(GitOriginConsoleOutput.Replace('.git',''))</GitHubRepoUrl>
+      <GitHubPermalinkUrl Condition="'$(PackTag)' != ''">$(GitHubRepoUrl)/blob/$(PackTag)</GitHubPermalinkUrl>
+      <GitHubPermalinkUrl Condition="'$(PackTag)' == ''">$(GitHubRepoUrl)/blob/$(GitCommitConsoleOutput)</GitHubPermalinkUrl>
     </PropertyGroup>
 
     <Message Importance="high" Text="**GitInformationDebug** GitCommitConsoleOutput: $(GitCommitConsoleOutput), GitCommitExitCode: $(GitCommitExitCode), GitOriginConsoleOutput: $(GitOriginConsoleOutput), GitOriginExitCode: $(GitOriginExitCode), GitHubPermalinkUrl: $(GitHubPermalinkUrl)" />
@@ -128,7 +130,7 @@
     </ItemGroup>
 
     <WriteLinesToFile
-        File="$(BaseIntermediateOutputPath)%(PackageMarkdownFiles.Filename)%(PackageMarkdownFiles.Extension)"
+        File="$(IntermediateOutputPath)%(PackageMarkdownFiles.Filename)%(PackageMarkdownFiles.Extension)"
         Lines="$([System.Text.RegularExpressions.Regex]::Replace($([System.IO.File]::ReadAllText(%(PackageMarkdownFiles.FullPath))), '$(MarkdownCommentRegex)', '[$1]($(GitHubPermalinkUrl)%(PackageMarkdownFiles.Path).$2)').Replace('\', '/'))"
         Overwrite="true"
         Encoding="UTF-8"/>
@@ -139,12 +141,12 @@
       <PackageReleaseNotes>
         For highlights and announcements see: $(GitHubPermalinkUrl)$(_PackageReleaseNotesFilePath).
 
-For detailed changes see: $(GitHubPermalinkUrl)$(_PackageChangelogFilePath).
+        For detailed changes see: $(GitHubPermalinkUrl)$(_PackageChangelogFilePath).
       </PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Include="$(BaseIntermediateOutputPath)*.md" PackagePath="/" />
+      <Content Include="$(IntermediateOutputPath)*.md" PackagePath="/" />
     </ItemGroup>
   </Target>
 
