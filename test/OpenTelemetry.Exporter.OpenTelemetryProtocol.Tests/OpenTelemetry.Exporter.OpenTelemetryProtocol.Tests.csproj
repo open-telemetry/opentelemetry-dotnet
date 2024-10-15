@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <!-- Add MSBuild Task to Generate Certificates -->
-  <Target Name="GenerateTestCertificates" BeforeTargets="Build;Publish">
+  <Target Name="GenerateTestCertificates" BeforeTargets="Publish">
     <Exec Condition="$(OS) == 'Unix'"
       Command="/bin/bash gen_test_cert.sh $(IntermediateOutputPath)"
       ConsoleToMsBuild="true"
