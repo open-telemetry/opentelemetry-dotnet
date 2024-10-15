@@ -754,7 +754,7 @@ public class OtlpTraceExporterTests
         var exporterOptions = new OtlpExporterOptions();
         var transmissionHandler = new OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>(exportClientMock, exporterOptions.TimeoutMilliseconds);
 
-        var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
+        using var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
         exporter.Shutdown();
 
         Assert.True(exportClientMock.ShutdownCalled);
