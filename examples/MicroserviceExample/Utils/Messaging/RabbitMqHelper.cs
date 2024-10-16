@@ -54,7 +54,7 @@ public static class RabbitMqHelper
         channel.BasicConsume(queue: TestQueueName, autoAck: true, consumer: consumer);
     }
 
-    public static void AddMessagingTags(Activity activity)
+    public static void AddMessagingTags(Activity? activity)
     {
         // These tags are added demonstrating the semantic conventions of the OpenTelemetry messaging specification
         // See:

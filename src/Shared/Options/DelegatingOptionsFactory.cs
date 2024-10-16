@@ -13,8 +13,6 @@
  example of how that works.
 */
 
-#nullable enable
-
 using System.Diagnostics;
 #if NET
 using System.Diagnostics.CodeAnalysis;
