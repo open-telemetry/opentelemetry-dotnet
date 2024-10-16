@@ -26,4 +26,5 @@ static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTeleme
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static OpenTelemetry.Sdk.CreateLoggerProviderBuilder() -> OpenTelemetry.Logs.LoggerProviderBuilder!
+virtual OpenTelemetry.BaseExporter<T>.ExportAsync(OpenTelemetry.Batch<T!> batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<OpenTelemetry.ExportResult>!
 virtual OpenTelemetry.Metrics.FixedSizeExemplarReservoir.OnCollected() -> void
