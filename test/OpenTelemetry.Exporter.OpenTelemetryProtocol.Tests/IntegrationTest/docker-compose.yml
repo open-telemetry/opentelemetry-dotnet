@@ -15,6 +15,7 @@ services:
     command: >
       sh -c "
       mkdir -p /cfg/certs;
+      chmod 644 /cfg/certs/*;
       cp /test/*.pem /cfg/certs/;
       sleep 1000;
       "
