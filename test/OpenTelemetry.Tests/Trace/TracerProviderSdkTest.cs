@@ -128,8 +128,10 @@ public class TracerProviderSdkTest : IDisposable
 
         using (var parent = activitySource.StartActivity("parent", ActivityKind.Client))
         {
+            Assert.NotNull(parent);
             Assert.Equal(parent.TraceId, testSampler.LatestSamplingParameters.TraceId);
             using var child = activitySource.StartActivity("child");
+            Assert.NotNull(child);
             Assert.Equal(child.TraceId, testSampler.LatestSamplingParameters.TraceId);
             Assert.Null(testSampler.LatestSamplingParameters.Tags);
             Assert.Null(testSampler.LatestSamplingParameters.Links);
@@ -145,6 +147,7 @@ public class TracerProviderSdkTest : IDisposable
         using (var fromCustomContext =
             activitySource.StartActivity("customContext", ActivityKind.Client, customContext))
         {
+            Assert.NotNull(fromCustomContext);
             Assert.Equal(fromCustomContext.TraceId, testSampler.LatestSamplingParameters.TraceId);
             Assert.Null(testSampler.LatestSamplingParameters.Tags);
             Assert.Null(testSampler.LatestSamplingParameters.Links);
@@ -158,6 +161,7 @@ public class TracerProviderSdkTest : IDisposable
         initialTags["tagA"] = "tagAValue";
         using (var withInitialTags = activitySource.StartActivity("withInitialTags", ActivityKind.Client, default(ActivityContext), initialTags))
         {
+            Assert.NotNull(withInitialTags);
             Assert.Equal(withInitialTags.TraceId, testSampler.LatestSamplingParameters.TraceId);
             Assert.Equal(initialTags, testSampler.LatestSamplingParameters.Tags);
         }
@@ -173,6 +177,7 @@ public class TracerProviderSdkTest : IDisposable
 
         using (var withInitialTags = activitySource.StartActivity("withLinks", ActivityKind.Client, default(ActivityContext), links: links))
         {
+            Assert.NotNull(withInitialTags);
             Assert.Equal(withInitialTags.TraceId, testSampler.LatestSamplingParameters.TraceId);
             Assert.Null(testSampler.LatestSamplingParameters.Tags);
             Assert.Equal(links, testSampler.LatestSamplingParameters.Links);
@@ -189,6 +194,7 @@ public class TracerProviderSdkTest : IDisposable
         using (var fromCustomContextAsString =
             activitySource.StartActivity("customContext", ActivityKind.Client, customContextAsString))
         {
+            Assert.NotNull(fromCustomContextAsString);
             Assert.Equal(fromCustomContextAsString.TraceId, testSampler.LatestSamplingParameters.TraceId);
             Assert.Equal(expectedTraceId, fromCustomContextAsString.TraceId);
             Assert.Equal(expectedParentSpanId, fromCustomContextAsString.ParentSpanId);
@@ -237,7 +243,7 @@ public class TracerProviderSdkTest : IDisposable
         Assert.Equal(rootActivity.TraceId, testSampler.LatestSamplingParameters.TraceId);
         if (sampling != SamplingDecision.Drop)
         {
-            Assert.Contains(new KeyValuePair<string, object>("tagkeybysampler", "tagvalueaddedbysampler"), rootActivity.TagObjects);
+            Assert.Contains(new KeyValuePair<string, object?>("tagkeybysampler", "tagvalueaddedbysampler"), rootActivity.TagObjects);
         }
     }
 
@@ -421,6 +427,8 @@ public class TracerProviderSdkTest : IDisposable
 
         using ActivitySource source = new ActivitySource(activitySourceName);
         using var activity = source.StartActivity("somename");
+
+        Assert.NotNull(activity);
         activity.Stop();
 
         Assert.False(activity.IsAllDataRequested);
@@ -1054,11 +1062,11 @@ public class TracerProviderSdkTest : IDisposable
     [InlineData("parentbased_traceidratio", "0.111", "ParentBased{TraceIdRatioBasedSampler{0.111000}}")]
     [InlineData("parentbased_traceidratio", "not_a_double", "ParentBased{TraceIdRatioBasedSampler{1.000000}}")]
     [InlineData("ParentBased_TraceIdRatio", "0.000001", "ParentBased{TraceIdRatioBasedSampler{0.000001}}")]
-    public void TestSamplerSetFromConfiguration(string configValue, string argValue, string samplerDescription)
+    public void TestSamplerSetFromConfiguration(string? configValue, string? argValue, string samplerDescription)
     {
         var configBuilder = new ConfigurationBuilder();
 
-        configBuilder.AddInMemoryCollection(new Dictionary<string, string>
+        configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
         {
             [TracerProviderSdk.TracesSamplerConfigKey] = configValue,
             [TracerProviderSdk.TracesSamplerArgConfigKey] = argValue,
@@ -1078,7 +1086,7 @@ public class TracerProviderSdkTest : IDisposable
     public void TestSamplerConfigurationIgnoredWhenSetProgrammatically()
     {
         var configBuilder = new ConfigurationBuilder();
-        configBuilder.AddInMemoryCollection(new Dictionary<string, string>
+        configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
         {
             [TracerProviderSdk.TracesSamplerConfigKey] = "always_off",
         });
@@ -1098,7 +1106,7 @@ public class TracerProviderSdkTest : IDisposable
     [Fact]
     public void TracerProvideSdkCreatesAndDiposesInstrumentation()
     {
-        TestInstrumentation testInstrumentation = null;
+        TestInstrumentation? testInstrumentation = null;
         var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddInstrumentation(() =>
                     {
@@ -1132,10 +1140,10 @@ public class TracerProviderSdkTest : IDisposable
     [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
-    public void AddLegacyOperationName_BadArgs(string operationName)
+    public void AddLegacyOperationName_BadArgs(string? operationName)
     {
         var builder = Sdk.CreateTracerProviderBuilder();
-        Assert.Throws<ArgumentException>(() => builder.AddLegacySource(operationName));
+        Assert.Throws<ArgumentException>(() => builder.AddLegacySource(operationName!));
     }
 
     [Fact]
@@ -1254,6 +1262,8 @@ public class TracerProviderSdkTest : IDisposable
 
         // Ensure we can still process "normal" activities when in legacy wildcard mode.
         using var nonLegacyActivity = activitySource.StartActivity("TestActivity");
+
+        Assert.NotNull(nonLegacyActivity);
         nonLegacyActivity.Start();
         nonLegacyActivity.Stop();
 
@@ -1300,8 +1310,10 @@ public class TracerProviderSdkTest : IDisposable
 
     private static Action<Activity, ActivitySource> CreateActivitySourceSetter()
     {
-        return (Action<Activity, ActivitySource>)typeof(Activity).GetProperty("Source")
-            .SetMethod.CreateDelegate(typeof(Action<Activity, ActivitySource>));
+        var setMethod = typeof(Activity).GetProperty("Source")?.SetMethod
+            ?? throw new InvalidOperationException("Could not build Activity.Source setter delegate");
+
+        return (Action<Activity, ActivitySource>)setMethod.CreateDelegate(typeof(Action<Activity, ActivitySource>));
     }
 
     private sealed class TestTracerProviderBuilder : TracerProviderBuilderBase

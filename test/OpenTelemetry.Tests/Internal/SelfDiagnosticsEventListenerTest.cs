@@ -21,7 +21,7 @@ public class SelfDiagnosticsEventListenerTest
         // no configRefresher object
         Assert.Throws<ArgumentNullException>(() =>
         {
-            _ = new SelfDiagnosticsEventListener(EventLevel.Error, null);
+            _ = new SelfDiagnosticsEventListener(EventLevel.Error, null!);
         });
     }
 

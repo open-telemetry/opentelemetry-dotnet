@@ -25,7 +25,7 @@ public sealed class LogRecordTest
     [Fact]
     public void CheckCategoryNameForLog()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems);
         var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
         logger.LogInformation("Log");
@@ -179,9 +179,10 @@ public sealed class LogRecordTest
         // Check if state has food
         Assert.Contains(attributes, item => item.Key == "food");
 
-        var foodParameter = (Food)attributes.First(item => item.Key == "food").Value;
-        Assert.Equal(food.Name, foodParameter.Name);
-        Assert.Equal(food.Price, foodParameter.Price);
+        var foodParameter = attributes.First(item => item.Key == "food").Value as Food?;
+        Assert.NotNull(foodParameter);
+        Assert.Equal(food.Name, foodParameter.Value.Name);
+        Assert.Equal(food.Price, foodParameter.Value.Price);
 
         // Check if state has OriginalFormat
         Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
@@ -221,8 +222,9 @@ public sealed class LogRecordTest
         Assert.Contains(attributes, item => item.Key == "food");
 
         var foodParameter = attributes.First(item => item.Key == "food").Value as dynamic;
-        Assert.Equal(anonymousType.Name, foodParameter.Name);
-        Assert.Equal(anonymousType.Price, foodParameter.Price);
+        Assert.NotNull(foodParameter);
+        Assert.Equal(anonymousType.Name, foodParameter!.Name);
+        Assert.Equal(anonymousType.Price, foodParameter!.Price);
 
         // Check if state has OriginalFormat
         Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
@@ -266,6 +268,7 @@ public sealed class LogRecordTest
         Assert.Contains(attributes, item => item.Key == "food");
 
         var foodParameter = attributes.First(item => item.Key == "food").Value as Dictionary<string, object>;
+        Assert.NotNull(foodParameter);
         Assert.True(food.Count == foodParameter.Count && !food.Except(foodParameter).Any());
 
         // Check if state has OriginalFormat
@@ -306,8 +309,9 @@ public sealed class LogRecordTest
 
         Assert.NotNull(exportedItems[0].State);
 
-        var state = exportedItems[0].State;
-        var itemCount = state.GetType().GetProperty("Count").GetValue(state);
+        var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object?>>;
+        Assert.NotNull(state);
+        var itemCount = state.Count;
 
         // state only has {OriginalFormat}
         Assert.Equal(1, itemCount);
@@ -351,12 +355,12 @@ public sealed class LogRecordTest
         logger.Log(
             LogLevel.Information,
             0,
-            new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key1", "Value1") },
+            new List<KeyValuePair<string, object?>> { new KeyValuePair<string, object?>("Key1", "Value1") },
             null,
             (s, e) => "OpenTelemetry!");
 
         var logRecord = exportedItems[0];
-        var expectedStateValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key2", "Value2") };
+        var expectedStateValues = new List<KeyValuePair<string, object?>> { new KeyValuePair<string, object?>("Key2", "Value2") };
         logRecord.StateValues = expectedStateValues;
 
         Assert.Equal(expectedStateValues, logRecord.StateValues);
@@ -394,6 +398,7 @@ public sealed class LogRecordTest
         logger.LogInformation($"This does not matter.");
 
         var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+        Assert.NotNull(state);
         Assert.Equal("newStateKey", state[0].Key.ToString());
         Assert.Equal("newStateValue", state[0].Value.ToString());
     }
@@ -417,7 +422,9 @@ public sealed class LogRecordTest
         logger.LogInformation("This does not matter.");
 
         var stateValue = exportedItems[0];
-        Assert.Equal(new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue"), stateValue.StateValues[0]);
+        Assert.NotNull(stateValue.StateValues);
+        Assert.NotEmpty(stateValue.StateValues);
+        Assert.Equal(new KeyValuePair<string, object?>("newStateValueKey", "newStateValueValue"), stateValue.StateValues[0]);
     }
 
     [Fact]
@@ -476,13 +483,14 @@ public sealed class LogRecordTest
             .Build();
 
         using var activity = activitySource.StartActivity("Activity");
+        Assert.NotNull(activity);
         activity.TraceStateString = "key1=value1";
 
         logger.LogInformation("Log within activity marked as RecordOnly");
         var logRecord = exportedItems[0];
 
         var currentActivity = Activity.Current;
-        Assert.NotNull(Activity.Current);
+        Assert.NotNull(currentActivity);
         Assert.Equal(currentActivity.TraceId, logRecord.TraceId);
         Assert.Equal(currentActivity.SpanId, logRecord.SpanId);
         Assert.Equal(currentActivity.ActivityTraceFlags, logRecord.TraceFlags);
@@ -519,7 +527,7 @@ public sealed class LogRecordTest
         var logRecord = exportedItems[0];
 
         var currentActivity = Activity.Current;
-        Assert.NotNull(Activity.Current);
+        Assert.NotNull(currentActivity);
         Assert.Equal(currentActivity.TraceId, logRecord.TraceId);
         Assert.Equal(currentActivity.SpanId, logRecord.SpanId);
         Assert.Equal(currentActivity.ActivityTraceFlags, logRecord.TraceFlags);
@@ -557,12 +565,12 @@ public sealed class LogRecordTest
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
         var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-        logger.Log(LogLevel.Information, default, "Hello World!", null, null);
+        logger.Log(LogLevel.Information, default, "Hello World!", null, null!);
         var logRecord = exportedItems[0];
         Assert.Equal("Hello World!", logRecord.FormattedMessage);
         Assert.Equal("Hello World!", logRecord.Body);
 
-        logger.Log(LogLevel.Information, default, new CustomState(), null, null);
+        logger.Log(LogLevel.Information, default, new CustomState(), null, null!);
         logRecord = exportedItems[1];
         Assert.Equal(CustomState.ToStringValue, logRecord.FormattedMessage);
         Assert.Equal(CustomState.ToStringValue, logRecord.Body);
@@ -585,8 +593,8 @@ public sealed class LogRecordTest
         logger.LogInformation("OpenTelemetry!");
         var logRecord = exportedItems[0];
 
-        List<object> scopes = new List<object>();
-        logRecord.ForEachScope<object>((scope, state) => scopes.Add(scope.Scope), null);
+        List<object?> scopes = [];
+        logRecord.ForEachScope<object?>((scope, state) => scopes.Add(scope.Scope), null);
         Assert.Empty(scopes);
     }
 
@@ -601,18 +609,18 @@ public sealed class LogRecordTest
         logger.LogInformation("OpenTelemetry!");
         var logRecord = exportedItems[0];
 
-        List<object> scopes = new List<object>();
+        List<object?> scopes = [];
 
         logger.LogInformation("OpenTelemetry!");
         logRecord = exportedItems[1];
 
         int reachedDepth = -1;
-        logRecord.ForEachScope<object>(
+        logRecord.ForEachScope<object?>(
             (scope, state) =>
             {
                 reachedDepth++;
                 scopes.Add(scope.Scope);
-                foreach (KeyValuePair<string, object> item in scope)
+                foreach (KeyValuePair<string, object?> item in scope)
                 {
                     Assert.Equal(string.Empty, item.Key);
                     Assert.Equal("string_scope", item.Value);
@@ -625,24 +633,24 @@ public sealed class LogRecordTest
 
         scopes.Clear();
 
-        List<KeyValuePair<string, object>> expectedScope2 = new List<KeyValuePair<string, object>>
-        {
-            new KeyValuePair<string, object>("item1", "value1"),
-            new KeyValuePair<string, object>("item2", "value2"),
-        };
+        List<KeyValuePair<string, object?>> expectedScope2 =
+        [
+            new KeyValuePair<string, object?>("item1", "value1"),
+            new KeyValuePair<string, object?>("item2", "value2"),
+        ];
         using var scope2 = logger.BeginScope(expectedScope2);
 
         logger.LogInformation("OpenTelemetry!");
         logRecord = exportedItems[2];
 
         reachedDepth = -1;
-        logRecord.ForEachScope<object>(
+        logRecord.ForEachScope<object?>(
             (scope, state) =>
             {
                 scopes.Add(scope.Scope);
                 if (reachedDepth++ == 1)
                 {
-                    foreach (KeyValuePair<string, object> item in scope)
+                    foreach (KeyValuePair<string, object?> item in scope)
                     {
                         Assert.Contains(item, expectedScope2);
                     }
@@ -656,24 +664,24 @@ public sealed class LogRecordTest
 
         scopes.Clear();
 
-        KeyValuePair<string, object>[] expectedScope3 = new KeyValuePair<string, object>[]
-        {
-            new KeyValuePair<string, object>("item3", "value3"),
-            new KeyValuePair<string, object>("item4", "value4"),
-        };
+        KeyValuePair<string, object?>[] expectedScope3 =
+        [
+            new KeyValuePair<string, object?>("item3", "value3"),
+            new KeyValuePair<string, object?>("item4", "value4"),
+        ];
         using var scope3 = logger.BeginScope(expectedScope3);
 
         logger.LogInformation("OpenTelemetry!");
         logRecord = exportedItems[3];
 
         reachedDepth = -1;
-        logRecord.ForEachScope<object>(
+        logRecord.ForEachScope<object?>(
             (scope, state) =>
             {
                 scopes.Add(scope.Scope);
                 if (reachedDepth++ == 2)
                 {
-                    foreach (KeyValuePair<string, object> item in scope)
+                    foreach (KeyValuePair<string, object?> item in scope)
                     {
                         Assert.Contains(item, expectedScope3);
                     }
@@ -712,9 +720,9 @@ public sealed class LogRecordTest
 
         Assert.NotNull(logRecord.StateValues);
         Assert.Equal(3, logRecord.StateValues.Count);
-        Assert.Equal(new KeyValuePair<string, object>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
-        Assert.Equal(new KeyValuePair<string, object>("Year", 2021), logRecord.StateValues[1]);
-        Assert.Equal(new KeyValuePair<string, object>("{OriginalFormat}", "{Product} {Year}!"), logRecord.StateValues[2]);
+        Assert.Equal(new KeyValuePair<string, object?>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
+        Assert.Equal(new KeyValuePair<string, object?>("Year", 2021), logRecord.StateValues[1]);
+        Assert.Equal(new KeyValuePair<string, object?>("{OriginalFormat}", "{Product} {Year}!"), logRecord.StateValues[2]);
 
         var complex = new { Property = "Value" };
 
@@ -733,11 +741,11 @@ public sealed class LogRecordTest
 
         Assert.NotNull(logRecord.StateValues);
         Assert.Equal(4, logRecord.StateValues.Count);
-        Assert.Equal(new KeyValuePair<string, object>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
-        Assert.Equal(new KeyValuePair<string, object>("Year", 2021), logRecord.StateValues[1]);
-        Assert.Equal(new KeyValuePair<string, object>("{OriginalFormat}", "{Product} {Year} {Complex}!"), logRecord.StateValues[3]);
+        Assert.Equal(new KeyValuePair<string, object?>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
+        Assert.Equal(new KeyValuePair<string, object?>("Year", 2021), logRecord.StateValues[1]);
+        Assert.Equal(new KeyValuePair<string, object?>("{OriginalFormat}", "{Product} {Year} {Complex}!"), logRecord.StateValues[3]);
 
-        KeyValuePair<string, object> actualComplex = logRecord.StateValues[2];
+        KeyValuePair<string, object?> actualComplex = logRecord.StateValues[2];
         Assert.Equal("Complex", actualComplex.Key);
         Assert.Same(complex, actualComplex.Value);
     }
@@ -761,7 +769,7 @@ public sealed class LogRecordTest
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
         Assert.Single(logRecord.StateValues);
-        Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
+        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), logRecord.StateValues[0]);
     }
 
     [Fact]
@@ -783,7 +791,7 @@ public sealed class LogRecordTest
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
         Assert.Single(logRecord.StateValues);
-        Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
+        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), logRecord.StateValues[0]);
     }
 
     [Fact]
@@ -805,7 +813,7 @@ public sealed class LogRecordTest
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
         Assert.Single(logRecord.StateValues);
-        Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
+        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), logRecord.StateValues[0]);
     }
 
     [Fact]
@@ -860,7 +868,7 @@ public sealed class LogRecordTest
         Assert.NotNull(logRecord.StateValues);
         Assert.Single(logRecord.StateValues);
 
-        KeyValuePair<string, object> actualState = logRecord.StateValues[0];
+        KeyValuePair<string, object?> actualState = logRecord.StateValues[0];
 
         Assert.Same("Value", actualState.Key);
         Assert.Same("Hello world", actualState.Value);
@@ -1016,7 +1024,7 @@ public sealed class LogRecordTest
         Assert.Equal(exportedItems[0].CategoryName, exportedItems[0].Logger.Name);
     }
 
-    private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
+    private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions>? configure = null)
     {
         var items = exportedItems = new List<LogRecord>();
 
@@ -1062,19 +1070,19 @@ public sealed class LogRecordTest
         }
     }
 
-    internal sealed class DisposingState : IReadOnlyList<KeyValuePair<string, object>>, IDisposable
+    internal sealed class DisposingState : IReadOnlyList<KeyValuePair<string, object?>>, IDisposable
     {
-        private string value;
+        private string? value;
         private bool disposed;
 
-        public DisposingState(string value)
+        public DisposingState(string? value)
         {
             this.Value = value;
         }
 
         public int Count => 1;
 
-        public string Value
+        public string? Value
         {
             get
             {
@@ -1088,9 +1096,9 @@ public sealed class LogRecordTest
             private set => this.value = value;
         }
 
-        public KeyValuePair<string, object> this[int index] => index switch
+        public KeyValuePair<string, object?> this[int index] => index switch
         {
-            0 => new KeyValuePair<string, object>(nameof(this.Value), this.Value),
+            0 => new KeyValuePair<string, object?>(nameof(this.Value), this.Value),
             _ => throw new IndexOutOfRangeException(nameof(index)),
         };
 
@@ -1099,7 +1107,7 @@ public sealed class LogRecordTest
             this.disposed = true;
         }
 
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
         {
             for (var i = 0; i < this.Count; i++)
             {
@@ -1123,11 +1131,11 @@ public sealed class LogRecordTest
         {
             if (this.fieldToUpdate == Field.State)
             {
-                logRecord.State = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateKey", "newStateValue") };
+                logRecord.State = new List<KeyValuePair<string, object?>> { new KeyValuePair<string, object?>("newStateKey", "newStateValue") };
             }
             else if (this.fieldToUpdate == Field.StateValues)
             {
-                logRecord.StateValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue") };
+                logRecord.StateValues = new List<KeyValuePair<string, object?>> { new KeyValuePair<string, object?>("newStateValueKey", "newStateValueValue") };
             }
             else
             {
@@ -1160,7 +1168,7 @@ public sealed class LogRecordTest
     {
         public const string ToStringValue = "CustomState.ToString";
 
-        public string Property { get; set; }
+        public string? Property { get; set; }
 
         public override string ToString()
             => ToStringValue;
@@ -1175,11 +1183,11 @@ public sealed class LogRecordTest
             this.buffer = buffer;
         }
 
-        public List<object> Scopes { get; } = new();
+        public List<object?> Scopes { get; } = new();
 
         public override void OnEnd(LogRecord data)
         {
-            data.ForEachScope<object>(
+            data.ForEachScope<object?>(
                 (scope, state) =>
                 {
                     this.Scopes.Add(scope.Scope);
