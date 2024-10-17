@@ -15,7 +15,7 @@ namespace OpenTelemetry.Metrics;
 public abstract partial class MetricReader
 {
     private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<MetricStreamIdentity, Metric> instrumentIdentityToMetric = new();
+    private readonly ConcurrentDictionary<MetricStreamIdentity, Metric?> instrumentIdentityToMetric = new();
     private readonly Lock instrumentCreationLock = new();
     private int metricLimit;
     private int cardinalityLimit;
@@ -201,7 +201,7 @@ public abstract partial class MetricReader
 
     private bool TryGetExistingMetric(in MetricStreamIdentity metricStreamIdentity, [NotNullWhen(true)] out Metric? existingMetric)
         => this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out existingMetric)
-            && existingMetric.Active;
+            && existingMetric != null && existingMetric.Active;
 
     private void CreateOrUpdateMetricStreamRegistration(in MetricStreamIdentity metricStreamIdentity)
     {
@@ -268,8 +268,12 @@ public abstract partial class MetricReader
 
         OpenTelemetrySdkEventSource.Log.MetricInstrumentRemoved(metric!.Name, metric.MeterName);
 
-        var result = this.instrumentIdentityToMetric.TryRemove(metric.InstrumentIdentity, out var _);
-        Debug.Assert(result, "result was false");
+        // Note: This is using TryUpdate and NOT TryRemove because there is a
+        // race condition. If a metric is deactivated and then reactivated in
+        // the same collection cycle
+        // instrumentIdentityToMetric[metric.InstrumentIdentity] may already
+        // point to the new activated metric and not the old deactivated one.
+        this.instrumentIdentityToMetric.TryUpdate(metric.InstrumentIdentity, null, metric);
 
         // Note: metric is a reference to the array storage so
         // this clears the metric out of the array.
