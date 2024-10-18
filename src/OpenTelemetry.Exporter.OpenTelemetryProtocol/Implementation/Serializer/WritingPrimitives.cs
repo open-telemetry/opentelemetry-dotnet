@@ -3,12 +3,10 @@
 
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
-using System.Security;
 using System.Text;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
-[SecuritySafeCritical]
 internal static class WritingPrimitives
 {
     private const uint UInt128 = 0x80;
