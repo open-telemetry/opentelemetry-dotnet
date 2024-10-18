@@ -22,7 +22,6 @@ public abstract partial class MetricReader
     private Metric?[]? metrics;
     private Metric[]? metricsCurrentBatch;
     private int metricIndex = -1;
-    private bool emitOverflowAttribute;
     private bool reclaimUnusedMetricPoints;
     private ExemplarFilterType? exemplarFilter;
     private ExemplarFilterType? exemplarFilterForHistograms;
@@ -82,7 +81,6 @@ public abstract partial class MetricReader
                         metricStreamIdentity,
                         this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
                         this.cardinalityLimit,
-                        this.emitOverflowAttribute,
                         this.reclaimUnusedMetricPoints,
                         exemplarFilter);
                 }
@@ -164,7 +162,6 @@ public abstract partial class MetricReader
                         metricStreamIdentity,
                         this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
                         metricStreamConfig?.CardinalityLimit ?? this.cardinalityLimit,
-                        this.emitOverflowAttribute,
                         this.reclaimUnusedMetricPoints,
                         exemplarFilter,
                         metricStreamConfig?.ExemplarReservoirFactory);
@@ -184,7 +181,6 @@ public abstract partial class MetricReader
     internal void ApplyParentProviderSettings(
         int metricLimit,
         int cardinalityLimit,
-        bool emitOverflowAttribute,
         bool reclaimUnusedMetricPoints,
         ExemplarFilterType? exemplarFilter,
         ExemplarFilterType? exemplarFilterForHistograms)
@@ -193,7 +189,6 @@ public abstract partial class MetricReader
         this.metrics = new Metric[metricLimit];
         this.metricsCurrentBatch = new Metric[metricLimit];
         this.cardinalityLimit = cardinalityLimit;
-        this.emitOverflowAttribute = emitOverflowAttribute;
         this.reclaimUnusedMetricPoints = reclaimUnusedMetricPoints;
         this.exemplarFilter = exemplarFilter;
         this.exemplarFilterForHistograms = exemplarFilterForHistograms;

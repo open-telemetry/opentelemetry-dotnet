@@ -398,10 +398,10 @@ the first time an overflow is detected for a given metric.
 > Overflow attribute was introduced in OpenTelemetry .NET
   [1.6.0-rc.1](../../src/OpenTelemetry/CHANGELOG.md#160-rc1). It is currently an
   experimental feature which can be turned on by setting the environment
-  variable `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`. Once
+  variable `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`. After
   the [OpenTelemetry
   Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-  become stable, this feature will be turned on by default.
+  become stable, this feature has been turned on by default.
 
 When [Delta Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
@@ -413,10 +413,10 @@ SDK to reclaim unused metric points.
   [1.7.0-alpha.1](../../src/OpenTelemetry/CHANGELOG.md#170-alpha1). It is
   currently an experimental feature which can be turned on by setting the
   environment variable
-  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`. Once the
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`. After the
   [OpenTelemetry
   Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-  become stable, this feature will be turned on by default.
+  become stable, this feature has been turned on by default.
 
 ### Memory Preallocation
 
