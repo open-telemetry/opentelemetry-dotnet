@@ -10,11 +10,13 @@
   * [Instruments](#instruments)
 * [MeterProvider Management](#meterprovider-management)
 * [Memory Management](#memory-management)
+  * [Example](#example)
   * [Pre-Aggregation](#pre-aggregation)
   * [Cardinality Limits](#cardinality-limits)
   * [Memory Preallocation](#memory-preallocation)
 * [Metrics Correlation](#metrics-correlation)
 * [Metrics Enrichment](#metrics-enrichment)
+* [Common issues that lead to missing metrics](#common-issues-that-lead-to-missing-metrics)
 
 </details>
 
@@ -396,12 +398,13 @@ the first time an overflow is detected for a given metric.
 
 > [!NOTE]
 > Overflow attribute was introduced in OpenTelemetry .NET
-  [1.6.0-rc.1](../../src/OpenTelemetry/CHANGELOG.md#160-rc1). It is currently an
+  [1.6.0-rc.1](../../src/OpenTelemetry/CHANGELOG.md#160-rc1). It was an
   experimental feature which can be turned on by setting the environment
   variable `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`. After
   the [OpenTelemetry
   Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-  become stable, this feature has been turned on by default.
+  become stable, the environment variable is removed and this feature is enabled
+  by default.
 
 When [Delta Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
@@ -413,10 +416,10 @@ SDK to reclaim unused metric points.
   [1.7.0-alpha.1](../../src/OpenTelemetry/CHANGELOG.md#170-alpha1). It is
   currently an experimental feature which can be turned on by setting the
   environment variable
-  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`. After the
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`. Once the
   [OpenTelemetry
   Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-  become stable, this feature has been turned on by default.
+  become stable, this feature will be turned on by default.
 
 ### Memory Preallocation
 
