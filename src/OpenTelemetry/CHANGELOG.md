@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* The opt-in overflow attribute feature which can be enabled by setting the
+  environment variable `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE`
+  to `true` is now enabled by default and supported in stable builds.
+  ([#5909](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5909))
+
 ## 1.10.0-beta.1
 
 Released 2024-Sep-30

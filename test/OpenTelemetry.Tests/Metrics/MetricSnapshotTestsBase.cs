@@ -16,10 +16,9 @@ public abstract class MetricSnapshotTestsBase
 {
     private readonly IConfiguration configuration;
 
-    protected MetricSnapshotTestsBase(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
+    protected MetricSnapshotTestsBase(bool shouldReclaimUnusedMetricPoints)
     {
         this.configuration = MetricApiTestsBase.BuildConfiguration(
-            emitOverflowAttribute,
             shouldReclaimUnusedMetricPoints);
     }
 
@@ -298,15 +297,7 @@ public abstract class MetricSnapshotTestsBase
 public class MetricSnapshotTests : MetricSnapshotTestsBase
 {
     public MetricSnapshotTests()
-        : base(emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: false)
-    {
-    }
-}
-
-public class MetricSnapshotTestsWithOverflowAttribute : MetricSnapshotTestsBase
-{
-    public MetricSnapshotTestsWithOverflowAttribute()
-        : base(emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: false)
+        : base(shouldReclaimUnusedMetricPoints: false)
     {
     }
 }
@@ -314,15 +305,7 @@ public class MetricSnapshotTestsWithOverflowAttribute : MetricSnapshotTestsBase
 public class MetricSnapshotTestsWithReclaimAttribute : MetricSnapshotTestsBase
 {
     public MetricSnapshotTestsWithReclaimAttribute()
-        : base(emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: true)
-    {
-    }
-}
-
-public class MetricSnapshotTestsWithBothAttributes : MetricSnapshotTestsBase
-{
-    public MetricSnapshotTestsWithBothAttributes()
-        : base(emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: true)
+        : base(shouldReclaimUnusedMetricPoints: true)
     {
     }
 }

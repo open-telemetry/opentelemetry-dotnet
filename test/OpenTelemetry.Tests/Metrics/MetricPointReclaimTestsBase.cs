@@ -20,13 +20,8 @@ public abstract class MetricPointReclaimTestsBase
 
     private readonly IConfiguration configuration;
 
-    protected MetricPointReclaimTestsBase(bool emitOverflowAttribute)
+    protected MetricPointReclaimTestsBase()
     {
-        if (emitOverflowAttribute)
-        {
-            this.configurationData[MetricTestsBase.EmitOverFlowAttributeConfigKey] = "true";
-        }
-
         this.configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(this.configurationData)
             .Build();
@@ -333,15 +328,7 @@ public abstract class MetricPointReclaimTestsBase
 public class MetricPointReclaimTests : MetricPointReclaimTestsBase
 {
     public MetricPointReclaimTests()
-        : base(emitOverflowAttribute: false)
-    {
-    }
-}
-
-public class MetricPointReclaimTestsWithEmitOverflowAttribute : MetricPointReclaimTestsBase
-{
-    public MetricPointReclaimTestsWithEmitOverflowAttribute()
-        : base(emitOverflowAttribute: true)
+        : base()
     {
     }
 }
