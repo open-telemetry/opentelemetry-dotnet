@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -14,11 +15,7 @@ internal static class ProtobufSerializer
     private const int Fixed32Size = 4;
     private const int Fixed64Size = 8;
 
-#if NET
-    private static Encoding Utf8Encoding => Encoding.UTF8;
-#else
     private static readonly Encoding Utf8Encoding = Encoding.UTF8;
-#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static uint GetTagValue(int fieldNumber, ProtobufWireType wireType) => ((uint)(fieldNumber << 3)) | (uint)wireType;
@@ -201,29 +198,48 @@ internal static class ProtobufSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, string value)
     {
+        Debug.Assert(value != null, "value was null");
+
+        return WriteStringWithTag(buffer, writePosition, fieldNumber, value.AsSpan());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, ReadOnlySpan<char> value)
+    {
 #if NETFRAMEWORK || NETSTANDARD2_0
         int numberOfUtf8CharsInString;
         unsafe
         {
             fixed (char* strPtr = value)
             {
-                numberOfUtf8CharsInString = Encoding.UTF8.GetByteCount(strPtr, value.Length);
+                numberOfUtf8CharsInString = Utf8Encoding.GetByteCount(strPtr, value.Length);
             }
         }
 #else
-        int numberOfUtf8CharsInString = Encoding.UTF8.GetByteCount(value);
+        int numberOfUtf8CharsInString = Utf8Encoding.GetByteCount(value);
 #endif
 
         writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
         writePosition = WriteLength(buffer, writePosition, numberOfUtf8CharsInString);
 
 #if NETFRAMEWORK || NETSTANDARD2_0
-        _ = Utf8Encoding.GetBytes(value, 0, value.Length, buffer, writePosition);
+        unsafe
+        {
+            fixed (char* strPtr = value)
+            {
+                fixed (byte* bufferPtr = buffer)
+                {
+                    var bytesWritten = Utf8Encoding.GetBytes(strPtr, value.Length, bufferPtr + writePosition, numberOfUtf8CharsInString);
+                    Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
+                }
+            }
+        }
 #else
-        _ = Encoding.UTF8.GetBytes(value, buffer.AsSpan().Slice(writePosition));
+        var bytesWritten = Utf8Encoding.GetBytes(value, buffer.AsSpan().Slice(writePosition));
+        Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
 #endif
+
         writePosition += numberOfUtf8CharsInString;
         return writePosition;
     }
 }
-
