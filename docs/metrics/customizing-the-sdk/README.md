@@ -335,6 +335,61 @@ by using Views.
 
 See [Program.cs](./Program.cs) for a complete example.
 
+### Explicit Bucket Histogram Aggregation with .NET 9 Advice API
+
+With the introduction of the .NET 9 Advice API, developers can
+customize histogram metrics more effectively. The Advice API
+allows for explicit bucket boundaries when defining histograms,
+leading to more precise and informative metrics.
+
+#### Overview of the .NET 9 Advice API
+
+The .NET 9 Advice API provides enhancements for metrics collection,
+enabling developers to specify how histograms should behave.
+This feature is particularly useful when dealing with a known
+distribution of values, as it allows for tailored metrics
+collection that aligns with application requirements.
+
+#### Using Explicit Bucket Boundaries
+
+To use explicit bucket boundaries in your histograms, follow these steps:
+
+1. **Install Required Packages**: Ensure you have the latest version of the
+OpenTelemetry .NET SDK that supports the Advice API.
+2. **Define Histogram with Explicit Buckets**: When creating a histogram metric,
+specify the bucket boundaries explicitly using the new API.
+
+**Example**:
+
+```csharp
+using OpenTelemetry.Metrics;
+
+// Create a meter
+var meter = new Meter("MyApplication");
+
+// Define bucket boundaries
+double[] bucketBoundaries = { 0.0, 10.0, 20.0, 30.0, 40.0, double.MaxValue };
+
+// Create a histogram with explicit buckets
+var histogram = meter.CreateHistogram<double>("request_duration", "ms", "Measures the duration of requests", new HistogramOptions { BucketBoundaries = bucketBoundaries });
+
+// Record values
+histogram.Record(15.0);
+histogram.Record(25.0);
+```
+
+#### Best Practices
+
+- **Select Meaningful Bucket Boundaries**: When defining bucket
+ boundaries, consider the typical range of values that your application
+ processes. This helps to ensure that the histogram provides relevant
+ insights.
+- **Monitor and Adjust**: After implementing explicit bucket
+ boundaries, monitor the metrics collected and adjust the
+  boundaries as necessary to improve the accuracy and usefulness
+   of the histogram data.
+
+
 #### Change the ExemplarReservoir
 
 > [!NOTE]
