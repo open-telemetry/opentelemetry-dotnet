@@ -4,7 +4,9 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+#if NETFRAMEWORK || NETSTANDARD2_0
 using System.Runtime.InteropServices;
+#endif
 using System.Text;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
