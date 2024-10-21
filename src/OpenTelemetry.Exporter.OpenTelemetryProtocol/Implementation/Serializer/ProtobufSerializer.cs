@@ -4,6 +4,7 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
@@ -210,7 +211,7 @@ internal static class ProtobufSerializer
         int numberOfUtf8CharsInString;
         unsafe
         {
-            fixed (char* strPtr = value)
+            fixed (char* strPtr = &GetNonNullPinnableReference(value))
             {
                 numberOfUtf8CharsInString = Utf8Encoding.GetByteCount(strPtr, value.Length);
             }
@@ -225,7 +226,7 @@ internal static class ProtobufSerializer
 #if NETFRAMEWORK || NETSTANDARD2_0
         unsafe
         {
-            fixed (char* strPtr = value)
+            fixed (char* strPtr = &GetNonNullPinnableReference(value))
             {
                 fixed (byte* bufferPtr = buffer)
                 {
@@ -242,4 +243,10 @@ internal static class ProtobufSerializer
         writePosition += numberOfUtf8CharsInString;
         return writePosition;
     }
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe ref T GetNonNullPinnableReference<T>(ReadOnlySpan<T> span)
+        => ref (span.Length != 0) ? ref Unsafe.AsRef(in MemoryMarshal.GetReference(span)) : ref Unsafe.AsRef<T>((void*)1);
+#endif
 }
