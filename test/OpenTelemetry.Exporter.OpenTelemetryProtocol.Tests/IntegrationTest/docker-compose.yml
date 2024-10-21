@@ -5,11 +5,20 @@
 version: '3.7'
 
 services:
-  create-cert:
-    image: mcr.microsoft.com/dotnet/sdk:7.0
+  init-service:
+    image: otel-test-image
+    build:
+      context: .
+      dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
     volumes:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
-    command: /cfg/create-cert.sh
+    command: >
+      sh -c "
+      mkdir -p /cfg/certs;
+      cp /test/*.pem /cfg/certs/;
+      chmod 644 /cfg/certs/*;
+      sleep 1000;
+      "
 
   otel-collector:
     image: otel/opentelemetry-collector
@@ -17,9 +26,10 @@ services:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: --config=/cfg/otel-collector-config.yaml
     depends_on:
-      - create-cert
+      - init-service
 
   tests:
+    image: otel-test-image
     build:
       context: .
       dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
@@ -27,7 +37,7 @@ services:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: /cfg/run-test.sh
     environment:
-      - OTEL_COLLECTOR_HOSTNAME=otel-collector
-      - OTEL_MOCK_COLLECTOR_HOSTNAME=mock-otel-collector
+      OTEL_COLLECTOR_HOSTNAME: otel-collector
+      OTEL_MOCK_COLLECTOR_HOSTNAME: mock-otel-collector
     depends_on:
       - otel-collector
