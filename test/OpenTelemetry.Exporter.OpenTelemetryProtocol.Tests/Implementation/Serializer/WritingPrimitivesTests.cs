@@ -273,7 +273,7 @@ public class WritingPrimitivesTests
     public void WriteStringWithTag_UnicodeString_WritesCorrectly()
     {
         byte[] buffer = new byte[20];
-        string unicodeString = "こんにちは"; // "Hello" in Japanese
+        string unicodeString = "\u3053\u3093\u306b\u3061\u306f"; // "Hello" in Japanese
         int position = WritingPrimitives.WriteStringWithTag(ref buffer, 0, 1, unicodeString);
         Assert.Equal(17, position);
         Assert.Equal(10, buffer[0]); // Tag
@@ -306,11 +306,11 @@ public class WritingPrimitivesTests
     public void WriteStringWithTag_MixedEncodingString_WritesCorrectly()
     {
         byte[] buffer = new byte[30];
-        string mixedString = "Hello世界"; // "Hello World" with "World" in Chinese
+        string mixedString = "Hello\u4e16\u754c"; // "Hello World" with "World" in Chinese
         int position = WritingPrimitives.WriteStringWithTag(ref buffer, 0, 1, mixedString);
         Assert.Equal(13, position);
         Assert.Equal(10, buffer[0]); // Tag
-        Assert.Equal(11, buffer[1]); // Length (5 for "Hello" + 6 for "世界" in UTF-8)
+        Assert.Equal(11, buffer[1]); // Length (5 for "Hello" + 6 for Chinese "World" in UTF-8)
 
         byte[] expectedContent = Encoding.UTF8.GetBytes(mixedString);
         byte[] actualContent = new byte[11];
@@ -394,7 +394,7 @@ public class WritingPrimitivesTests
     public void WriteStringWithTag_SurrogatePairs_WritesCorrectly()
     {
         byte[] buffer = new byte[20];
-        string surrogatePairString = "📚"; // Books emoji
+        string surrogatePairString = "\uD83D\uDCD6"; // Books emoji
         int position = WritingPrimitives.WriteStringWithTag(ref buffer, 0, 1, surrogatePairString);
         Assert.Equal(6, position);
         Assert.Equal(10, buffer[0]); // Tag
