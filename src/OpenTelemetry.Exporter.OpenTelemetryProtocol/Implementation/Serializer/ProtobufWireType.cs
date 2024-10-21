@@ -7,7 +7,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 /// Wire types within protobuf encoding.
 /// https://protobuf.dev/programming-guides/encoding/#structure.
 /// </summary>
-internal enum WireType : uint
+internal enum ProtobufWireType : uint
 {
     /// <summary>
     /// Variable-length integer.

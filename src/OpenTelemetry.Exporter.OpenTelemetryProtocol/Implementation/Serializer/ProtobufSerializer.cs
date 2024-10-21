@@ -7,7 +7,7 @@ using System.Text;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
-internal static class WritingPrimitives
+internal static class ProtobufSerializer
 {
     private const uint UInt128 = 0x80;
     private const ulong ULong128 = 0x80;
@@ -22,16 +22,16 @@ internal static class WritingPrimitives
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static uint GetTagValue(int fieldNumber, WireType wireType) => ((uint)(fieldNumber << 3)) | (uint)wireType;
+    internal static uint GetTagValue(int fieldNumber, ProtobufWireType wireType) => ((uint)(fieldNumber << 3)) | (uint)wireType;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteTag(ref byte[] buffer, int writePosition, int fieldNumber, WireType type) => WriteVarInt32(ref buffer, writePosition, GetTagValue(fieldNumber, type));
+    internal static int WriteTag(ref byte[] buffer, int writePosition, int fieldNumber, ProtobufWireType type) => WriteVarInt32(ref buffer, writePosition, GetTagValue(fieldNumber, type));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteLength(ref byte[] buffer, int writePosition, int length) => WriteVarInt32(ref buffer, writePosition, (uint)length);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteTagAndLengthPrefix(ref byte[] buffer, int writePosition, int contentLength, int fieldNumber, WireType type)
+    internal static int WriteTagAndLengthPrefix(ref byte[] buffer, int writePosition, int contentLength, int fieldNumber, ProtobufWireType type)
     {
         writePosition = WriteTag(ref buffer, writePosition, fieldNumber, type);
         writePosition = WriteLength(ref buffer, writePosition, contentLength);
@@ -106,7 +106,7 @@ internal static class WritingPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteBoolWithTag(ref byte[] buffer, int writePosition, int fieldNumber, bool value)
     {
-        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, WireType.VARINT);
+        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, ProtobufWireType.VARINT);
         writePosition = WriteSingleByte(ref buffer, writePosition, value ? (byte)1 : (byte)0);
 
         return writePosition;
@@ -115,7 +115,7 @@ internal static class WritingPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteEnumWithTag(ref byte[] buffer, int writePosition, int fieldNumber, int value)
     {
-        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, WireType.VARINT);
+        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, ProtobufWireType.VARINT);
 
         // Assuming 1 byte which matches the intended use.
         writePosition = WriteSingleByte(ref buffer, writePosition, (byte)value);
@@ -148,7 +148,7 @@ internal static class WritingPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteFixed32WithTag(ref byte[] buffer, int writePosition, int fieldNumber, uint value)
     {
-        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, WireType.I32);
+        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, ProtobufWireType.I32);
         writePosition = WriteFixed32LittleEndianFormat(ref buffer, writePosition, value);
 
         return writePosition;
@@ -157,7 +157,7 @@ internal static class WritingPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteFixed64WithTag(ref byte[] buffer, int writePosition, int fieldNumber, ulong value)
     {
-        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, WireType.I64);
+        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, ProtobufWireType.I64);
         writePosition = WriteFixed64LittleEndianFormat(ref buffer, writePosition, value);
 
         return writePosition;
@@ -220,7 +220,7 @@ internal static class WritingPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteInt64WithTag(ref byte[] buffer, int writePosition, int fieldNumber, ulong value)
     {
-        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, WireType.VARINT);
+        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, ProtobufWireType.VARINT);
         writePosition = WriteVarInt64(ref buffer, writePosition, value);
 
         return writePosition;
@@ -229,7 +229,7 @@ internal static class WritingPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteDoubleWithTag(ref byte[] buffer, int writePosition, int fieldNumber, double value)
     {
-        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, WireType.I64);
+        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, ProtobufWireType.I64);
         writePosition = WriteFixed64LittleEndianFormat(ref buffer, writePosition, (ulong)BitConverter.DoubleToInt64Bits(value));
 
         return writePosition;
@@ -251,7 +251,7 @@ internal static class WritingPrimitives
         int numberOfUtf8CharsInString = Encoding.UTF8.GetByteCount(value);
 #endif
 
-        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, WireType.LEN);
+        writePosition = WriteTag(ref buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
         writePosition = WriteLength(ref buffer, writePosition, numberOfUtf8CharsInString);
         EnsureBufferCapacity(ref buffer, writePosition + numberOfUtf8CharsInString);
 
