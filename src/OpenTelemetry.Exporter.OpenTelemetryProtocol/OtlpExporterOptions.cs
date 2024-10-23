@@ -11,6 +11,9 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
+#if NET6_0_OR_GREATER
+using System.Security.Cryptography.X509Certificates;
+#endif
 
 namespace OpenTelemetry.Exporter;
 
@@ -27,6 +30,9 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal const string DefaultGrpcEndpoint = "http://localhost:4317";
     internal const string DefaultHttpEndpoint = "http://localhost:4318";
     internal const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
+    internal const string CertificateFileEnvVarName = "OTEL_EXPORTER_OTLP_CERTIFICATE";
+    internal const string ClientKeyFileEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_KEY";
+    internal const string ClientCertificateFileEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE";
 
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
@@ -75,6 +81,36 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         };
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;
+
+        // Load CertificateFile from environment variable
+        if (Environment.GetEnvironmentVariable(CertificateFileEnvVarName) is string certificateFile)
+        {
+            this.CertificateFile = certificateFile;
+        }
+        else
+        {
+            this.CertificateFile = string.Empty;
+        }
+
+        // Load ClientKeyFile from environment variable
+        if (Environment.GetEnvironmentVariable(ClientKeyFileEnvVarName) is string clientKeyFile)
+        {
+            this.ClientKeyFile = clientKeyFile;
+        }
+        else
+        {
+            this.ClientKeyFile = string.Empty;
+        }
+
+        // Load ClientCertificateFile from environment variable
+        if (Environment.GetEnvironmentVariable(ClientCertificateFileEnvVarName) is string clientCertificateFile)
+        {
+            this.ClientCertificateFile = clientCertificateFile;
+        }
+        else
+        {
+            this.ClientCertificateFile = string.Empty;
+        }
     }
 
     /// <inheritdoc/>
@@ -141,6 +177,21 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             this.httpClientFactory = value;
         }
     }
+
+    /// <summary>
+    /// Gets or sets the trusted certificate to use when verifying a server's TLS credentials.
+    /// </summary>
+    public string CertificateFile { get; set; }
+
+    /// <summary>
+    /// Gets or sets the path to the private key to use in mTLS communication in PEM format.
+    /// </summary>
+    public string ClientKeyFile { get; set; }
+
+    /// <summary>
+    /// Gets or sets the path to the certificate/chain trust for client's private key to use in mTLS communication in PEM format.
+    /// </summary>
+    public string ClientCertificateFile { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
@@ -218,6 +269,37 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         this.httpClientFactory ??= defaultExporterOptions.httpClientFactory;
 
         return this;
+    }
+
+    internal HttpMessageHandler CreateDefaultHttpMessageHandler()
+    {
+        var handler = new HttpClientHandler();
+
+#if NET6_0_OR_GREATER
+        if (!string.IsNullOrEmpty(this.CertificateFile))
+        {
+            var trustedCertificate = new X509Certificate2(this.CertificateFile);
+
+            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+            {
+                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
+                return chain.Build(cert);
+            };
+        }
+
+        if (!string.IsNullOrEmpty(this.ClientCertificateFile) && !string.IsNullOrEmpty(this.ClientKeyFile))
+        {
+            var clientCertificate = X509Certificate2.CreateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile);
+            handler.ClientCertificates.Add(clientCertificate);
+        }
+#else
+        // Implement alternative methods for earlier .NET versions
+        throw new PlatformNotSupportedException("mTLS support requires .NET 6.0 or later.");
+#endif
+
+#pragma warning disable CS0162 // Unreachable code detected
+        return handler;
     }
 
     private static string GetUserAgentString()
