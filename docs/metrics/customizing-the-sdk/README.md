@@ -224,6 +224,52 @@ default boundaries. This requires the use of
         new ExplicitBucketHistogramConfiguration { Boundaries = Array.Empty<double>() })
 ```
 
+### Customizing OpenTelemetry .NET SDK for Metrics
+
+#### Using Explicit Buckets in Histograms
+
+In OpenTelemetry .NET, histograms can be customized using the View API, and the Advice API allows additional flexibility for defining explicit bucket boundaries in instrumentation.
+
+
+##### View API vs. Advice API: Defining Histogram Buckets
+
+When both the View API and Advice API are used to define histogram bucket boundaries,
+ the following priority rules apply:
+
+1. **View API**: Always takes precedence if it explicitly specifies histogram buckets.
+2. **Advice API**: If no custom buckets are specified via the View API, the
+ Advice API-defined buckets will be applied.
+3. **SDK Defaults**: If neither the View API nor the Advice API specifies bucket
+ boundaries, the SDK will use its default configuration.
+
+Additionally, if an exponential histogram is specified via the View API, the
+ explicit bucket boundaries provided by the Advice API will be ignored,
+ as exponential histograms take precedence.
+
+##### Example: Using Explicit Buckets via the Advice API
+
+Here is an example of how to use the Advice API to specify explicit bucket
+boundaries for a histogram:
+
+```csharp
+using OpenTelemetry.Metrics;
+
+// Create a meter
+var meter = new Meter("MyApplication");
+
+// Define bucket boundaries
+double[] bucketBoundaries = { 0.0, 10.0, 20.0, 30.0, 40.0, double.MaxValue };
+
+// Create a histogram with explicit buckets using Advice API
+var histogram = meter.CreateHistogram<double>("request_duration",
+"ms", "Measures the duration of requests",
+new HistogramOptions { BucketBoundaries = bucketBoundaries });
+
+// Record values
+histogram.Record(15.0);
+histogram.Record(25.0);
+```
+
 ##### Base2 exponential bucket histogram aggregation
 
 By default, a Histogram is configured to use the
