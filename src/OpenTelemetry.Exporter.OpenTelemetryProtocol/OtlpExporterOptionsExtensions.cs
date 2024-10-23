@@ -17,6 +17,9 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 using TraceOtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
+#if NET6_0_OR_GREATER
+using System.Security.Cryptography.X509Certificates;
+#endif
 
 namespace OpenTelemetry.Exporter;
 
@@ -33,7 +36,36 @@ internal static class OtlpExporterOptionsExtensions
             throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
         }
 
-#if NETSTANDARD2_1 || NET
+#if NET6_0_OR_GREATER
+        var handler = new HttpClientHandler();
+
+        // Set up custom certificate validation if CertificateFile is provided
+        if (!string.IsNullOrEmpty(options.CertificateFile))
+        {
+            var trustedCertificate = new X509Certificate2(options.CertificateFile);
+            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+            {
+                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
+                return chain.Build(cert);
+            };
+        }
+
+        // Set up client certificate if provided
+        if (!string.IsNullOrEmpty(options.ClientCertificateFile) && !string.IsNullOrEmpty(options.ClientKeyFile))
+        {
+            var clientCertificate = X509Certificate2.CreateFromPemFile(options.ClientCertificateFile, options.ClientKeyFile);
+            handler.ClientCertificates.Add(clientCertificate);
+        }
+
+        var grpcChannelOptions = new GrpcChannelOptions
+        {
+            HttpHandler = handler,
+            DisposeHttpClient = true,
+        };
+
+        return GrpcChannel.ForAddress(options.Endpoint, grpcChannelOptions);
+#elif NETSTANDARD2_1 || NET
         return GrpcChannel.ForAddress(options.Endpoint);
 #else
         ChannelCredentials channelCredentials;
