@@ -42,7 +42,7 @@ public class ResourceProtoSerializerTests
 
         // Act
         var resource = ResourceBuilder.CreateEmpty().AddAttributes(attributes).Build();
-        var writePosition = ResourceProtoSerializer.WriteResource(buffer, 0, resource);
+        var writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, 0, resource);
         var otlpResource = resource.ToOtlpResource();
         var expectedResourceSpans = new ResourceSpans
         {
