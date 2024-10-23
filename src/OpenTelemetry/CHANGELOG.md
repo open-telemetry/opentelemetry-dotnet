@@ -6,9 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* The opt-in overflow attribute feature which can be enabled by setting the
-  environment variable `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE`
-  to `true` is now enabled by default and supported in stable builds.
+* Removed the `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE`
+  environment variable since the feature has moved from experimental to stable.
+  The overflow attribute feature is now enabled by default.
+  No internal logs will be emitted when the limit is hit, as the
+  `otel.metric.overflow` attribute indicates when a cardinality cap has occurred..
   ([#5909](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5909))
 
 ## 1.10.0-beta.1

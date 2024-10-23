@@ -388,23 +388,10 @@ and the `MetricStreamConfiguration.CardinalityLimit` setting. Refer to this
 [doc](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric)
 for more information.
 
-Given a metric, once the cardinality limit is reached, any new measurement which
-cannot be independently aggregated because of the limit will be dropped or
-aggregated using the [overflow
-attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-(if enabled). A warning is written to the [self-diagnostic
-log](../../src/OpenTelemetry/README.md#self-diagnostics) the first time an
-overflow is detected for a given metric.
-
-> [!NOTE]
-> Overflow attribute was introduced in OpenTelemetry .NET
-  [1.6.0-rc.1](../../src/OpenTelemetry/CHANGELOG.md#160-rc1). It was an
-  experimental feature which can be turned on by setting the environment
-  variable `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`. After
-  the [OpenTelemetry
-  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-  become stable, the environment variable is removed and this feature is enabled
-  by default.
+Starting with version 1.10.0, given a metric, once the cardinality limit is
+reached, any new measurement which cannot be independently aggregated because of
+the limit will be dropped or aggregated using the [overflow
+attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
 
 When [Delta Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
