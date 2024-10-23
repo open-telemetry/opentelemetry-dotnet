@@ -208,8 +208,7 @@ public abstract class MetricPointReclaimTestsBase
             .Build();
 
         // Add 10 distinct combinations of dimensions to surpass the max metric points limit of 10.
-        // Note that one MetricPoint is reserved for zero tags and one MetricPoint is optionally
-        // reserved for the overflow tag depending on the user's input.
+        // Note that one MetricPoint is reserved for zero tags and one MetricPoint is reserved for the overflow tag.
         // This would lead to dropping a few measurements. We want to make sure that they can still be
         // aggregated later on when there are free MetricPoints available.
         for (int i = 0; i < 10; i++)

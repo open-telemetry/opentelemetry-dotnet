@@ -1410,7 +1410,6 @@ public abstract class MetricApiTestsBase : MetricTestsBase
                 enumerator.MoveNext(); // Second element reserved for overflow attribute.
 
                 // Validate second element is overflow attribute.
-                // Overflow attribute is behind experimental flag. So, it is not guaranteed to be present.
                 var tagEnumerator = enumerator.Current.Tags.GetEnumerator();
                 tagEnumerator.MoveNext();
                 if (!tagEnumerator.Current.Key.Contains("otel.metric.overflow"))
