@@ -27,7 +27,6 @@ internal sealed class AggregatorStore
     internal long DroppedMeasurements = 0;
 
     private const ExemplarFilterType DefaultExemplarFilter = ExemplarFilterType.AlwaysOff;
-    private static readonly string MetricPointCapHitFixMessage = "The overflow attribute is set because the cardinality limit is reached. You could modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
     private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
 
     private readonly Lock lockZeroTags = new();
@@ -41,7 +40,6 @@ internal sealed class AggregatorStore
         new();
 
     private readonly string name;
-    private readonly string metricPointCapHitMessage;
     private readonly MetricPoint[] metricPoints;
     private readonly int[] currentMetricPointBatch;
     private readonly AggregationType aggType;
@@ -55,7 +53,6 @@ internal sealed class AggregatorStore
 
     private int metricPointIndex = 0;
     private int batchSize = 0;
-    private int metricCapHitMessageLogged;
     private bool zeroTagMetricPointInitialized;
     private bool overflowTagMetricPointInitialized;
 
@@ -75,7 +72,6 @@ internal sealed class AggregatorStore
         // Previously, these were included within the original cardinalityLimit, but now they are explicitly added to enhance clarity.
         this.NumberOfMetricPoints = cardinalityLimit + 2;
 
-        this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {cardinalityLimit}";
         this.metricPoints = new MetricPoint[this.NumberOfMetricPoints];
         this.currentMetricPointBatch = new int[this.NumberOfMetricPoints];
         this.aggType = aggType;
@@ -989,10 +985,6 @@ internal sealed class AggregatorStore
             Interlocked.Increment(ref this.DroppedMeasurements);
             this.InitializeOverflowTagPointIfNotInitialized();
             this.metricPoints[1].Update(value);
-            if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
-            {
-                OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
-            }
 
             return;
         }
@@ -1040,10 +1032,6 @@ internal sealed class AggregatorStore
             Interlocked.Increment(ref this.DroppedMeasurements);
             this.InitializeOverflowTagPointIfNotInitialized();
             this.metricPoints[1].Update(value);
-            if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
-            {
-                OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
-            }
 
             return;
         }
