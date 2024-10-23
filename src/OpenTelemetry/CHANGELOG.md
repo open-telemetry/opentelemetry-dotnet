@@ -6,7 +6,7 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Promote overflow attribute from experimental to stable and removed the
+* Promoted overflow attribute from experimental to stable and removed the
   `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE` environment variable.
   The overflow attribute feature is now enabled by default.
   No internal logs will be emitted when the cardinality limit is reached, as the
