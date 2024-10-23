@@ -390,7 +390,7 @@ for more information.
 
 Starting with version 1.10.0, given a metric, once the cardinality limit is
 reached, any new measurement which cannot be independently aggregated because of
-the limit will be dropped or aggregated using the [overflow
+the limit will be aggregated using the [overflow
 attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
 
 When [Delta Aggregation
