@@ -224,8 +224,6 @@ default boundaries. This requires the use of
         new ExplicitBucketHistogramConfiguration { Boundaries = Array.Empty<double>() })
 ```
 
-### Customizing OpenTelemetry .NET SDK for Metrics
-
 #### Determining Explicit Buckets for Histograms
 
 In OpenTelemetry .NET, histograms can be customized using both
@@ -436,7 +434,6 @@ histogram.Record(25.0);
   boundaries as necessary to improve the accuracy and usefulness
    of the histogram data.
 
-
 #### Change the ExemplarReservoir
 
 > [!NOTE]
@@ -581,11 +578,11 @@ recording of `Exemplar`s.
 OpenTelemetry SDK comes with the following `ExemplarFilter`s (defined on
 `ExemplarFilterType`):
 
-* (Default behavior) `AlwaysOff`: Makes no measurements eligible for becoming an
+- (Default behavior) `AlwaysOff`: Makes no measurements eligible for becoming an
   `Exemplar`. Using this disables `Exemplar` collection and avoids all
   performance costs associated with `Exemplar`s.
-* `AlwaysOn`: Makes all measurements eligible for becoming an `Exemplar`.
-* `TraceBased`: Makes those measurements eligible for becoming an `Exemplar`
+- `AlwaysOn`: Makes all measurements eligible for becoming an `Exemplar`.
+- `TraceBased`: Makes those measurements eligible for becoming an `Exemplar`
   which are recorded in the context of a sampled `Activity` (span).
 
 The `SetExemplarFilter` extension method on `MeterProviderBuilder` can be used
@@ -618,9 +615,9 @@ environmental variables:
 
 Allowed values:
 
-* `always_off`: Equivalent to `ExemplarFilterType.AlwaysOff`
-* `always_on`: Equivalent to `ExemplarFilterType.AlwaysOn`
-* `trace_based`: Equivalent to `ExemplarFilterType.TraceBased`
+- `always_off`: Equivalent to `ExemplarFilterType.AlwaysOff`
+- `always_on`: Equivalent to `ExemplarFilterType.AlwaysOn`
+- `trace_based`: Equivalent to `ExemplarFilterType.TraceBased`
 
 #### ExemplarReservoir
 
@@ -628,12 +625,12 @@ Allowed values:
 and is responsible for recording `Exemplar`s. The following are the default
 reservoirs:
 
-* `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
+- `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
 Histograms with buckets, and it stores at most one `Exemplar` per histogram
 bucket. The `Exemplar` stored is the last measurement recorded - i.e. any new
 measurement overwrites the previous one in that bucket.
 
-* `SimpleFixedSizeExemplarReservoir` is the default reservoir used for all
+- `SimpleFixedSizeExemplarReservoir` is the default reservoir used for all
 metrics except histograms with buckets. It has a fixed reservoir pool, and
 implements the equivalent of [naive
 reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
@@ -667,12 +664,12 @@ Though `MetricReader` can be added by using the `AddReader` method on
 
 Refer to the individual exporter docs to learn how to use them:
 
-* [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
-* [In-memory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
-* [OTLP](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+- [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
+- [In-memory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
+- [OTLP](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
-* [Prometheus HttpListener](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
-* [Prometheus AspNetCore](../../../src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
+- [Prometheus HttpListener](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
+- [Prometheus AspNetCore](../../../src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
 
 ### Resource
 
