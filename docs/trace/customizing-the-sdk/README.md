@@ -477,8 +477,7 @@ When using the `AddOpenTelemetry` & `WithTracing` extension methods the
 into an existing collection (typically the collection used is the one managed by
 the application host). The `TracerProviderBuilder` will be able to access all
 services registered into that collection. For lifecycle management, the
-`AddOpenTelemetry` registers an [IHostedService
-](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
+`AddOpenTelemetry` registers an [IHostedService](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
 which is used to automatically start the `TracerProvider` when the host starts
 and the host will automatically shutdown and dispose the `TracerProvider` when
 it is shutdown.

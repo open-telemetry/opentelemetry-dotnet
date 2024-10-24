@@ -224,6 +224,51 @@ default boundaries. This requires the use of
         new ExplicitBucketHistogramConfiguration { Boundaries = Array.Empty<double>() })
 ```
 
+#### Determining Explicit Buckets for Histograms
+
+In OpenTelemetry .NET, histograms can be customized using both
+the View API and the Advice API. The actual explicit buckets used by
+the SDK are determined based on the following factors:
+
+1. The explicit buckets provided by the instrumentation owner via the Advice API.
+2. The explicit buckets defined through the View API during SDK initialization.
+3. The default buckets provided by the SDK.
+
+Here’s how the SDK determines which explicit buckets to use:
+
+1. **View API**: If custom buckets are defined via the View API, these
+take precedence over any buckets provided by the Advice API or SDK defaults.
+2. **Advice API**: If the View API does not specify custom buckets, the SDK
+uses the explicit buckets provided by the Advice API.
+3. **SDK Defaults**: If neither the View API nor the Advice API specifies
+custom buckets, the SDK applies its default configuration.
+
+Additionally, if an exponential histogram is defined using the View API,
+the explicit bucket boundaries provided by the Advice API will be ignored,
+as exponential histograms take precedence.
+
+##### Example: Using Explicit Buckets via the Advice API
+
+Here is an example of how to use the Advice API to specify explicit bucket
+ boundaries for a histogram:
+
+```csharp
+using OpenTelemetry.Metrics;
+
+// Create a meter
+var meter = new Meter("MyApplication");
+
+// Define bucket boundaries
+double[] bucketBoundaries = { 0.0, 10.0, 20.0, 30.0, 40.0, double.MaxValue };
+
+// Create a histogram with explicit buckets using the Advice API
+var histogram = meter.CreateHistogram<double>("request_duration", "ms", "Measures the duration of requests", new HistogramOptions { BucketBoundaries = bucketBoundaries });
+
+// Record values
+histogram.Record(15.0);
+histogram.Record(25.0);
+```
+
 ##### Base2 exponential bucket histogram aggregation
 
 By default, a Histogram is configured to use the
@@ -334,6 +379,60 @@ The modified version, avoiding name conflict is shown below:
 by using Views.
 
 See [Program.cs](./Program.cs) for a complete example.
+
+### Explicit Bucket Histogram Aggregation with .NET 9 Advice API
+
+With the introduction of the .NET 9 Advice API, developers can
+customize histogram metrics more effectively. The Advice API
+allows for explicit bucket boundaries when defining histograms,
+leading to more precise and informative metrics.
+
+#### Overview of the .NET 9 Advice API
+
+The .NET 9 Advice API provides enhancements for metrics collection,
+enabling developers to specify how histograms should behave.
+This feature is particularly useful when dealing with a known
+distribution of values, as it allows for tailored metrics
+collection that aligns with application requirements.
+
+#### Using Explicit Bucket Boundaries
+
+To use explicit bucket boundaries in your histograms, follow these steps:
+
+1. **Install Required Packages**: Ensure you have the latest version of the
+OpenTelemetry .NET SDK that supports the Advice API.
+2. **Define Histogram with Explicit Buckets**: When creating a histogram metric,
+specify the bucket boundaries explicitly using the new API.
+
+**Example**:
+
+```csharp
+using OpenTelemetry.Metrics;
+
+// Create a meter
+var meter = new Meter("MyApplication");
+
+// Define bucket boundaries
+double[] bucketBoundaries = { 0.0, 10.0, 20.0, 30.0, 40.0, double.MaxValue };
+
+// Create a histogram with explicit buckets
+var histogram = meter.CreateHistogram<double>("request_duration", "ms", "Measures the duration of requests", new HistogramOptions { BucketBoundaries = bucketBoundaries });
+
+// Record values
+histogram.Record(15.0);
+histogram.Record(25.0);
+```
+
+#### Best Practices
+
+- **Select Meaningful Bucket Boundaries**: When defining bucket
+ boundaries, consider the typical range of values that your application
+ processes. This helps to ensure that the histogram provides relevant
+ insights.
+- **Monitor and Adjust**: After implementing explicit bucket
+ boundaries, monitor the metrics collected and adjust the
+  boundaries as necessary to improve the accuracy and usefulness
+   of the histogram data.
 
 #### Change the ExemplarReservoir
 
@@ -479,11 +578,11 @@ recording of `Exemplar`s.
 OpenTelemetry SDK comes with the following `ExemplarFilter`s (defined on
 `ExemplarFilterType`):
 
-* (Default behavior) `AlwaysOff`: Makes no measurements eligible for becoming an
+- (Default behavior) `AlwaysOff`: Makes no measurements eligible for becoming an
   `Exemplar`. Using this disables `Exemplar` collection and avoids all
   performance costs associated with `Exemplar`s.
-* `AlwaysOn`: Makes all measurements eligible for becoming an `Exemplar`.
-* `TraceBased`: Makes those measurements eligible for becoming an `Exemplar`
+- `AlwaysOn`: Makes all measurements eligible for becoming an `Exemplar`.
+- `TraceBased`: Makes those measurements eligible for becoming an `Exemplar`
   which are recorded in the context of a sampled `Activity` (span).
 
 The `SetExemplarFilter` extension method on `MeterProviderBuilder` can be used
@@ -516,9 +615,9 @@ environmental variables:
 
 Allowed values:
 
-* `always_off`: Equivalent to `ExemplarFilterType.AlwaysOff`
-* `always_on`: Equivalent to `ExemplarFilterType.AlwaysOn`
-* `trace_based`: Equivalent to `ExemplarFilterType.TraceBased`
+- `always_off`: Equivalent to `ExemplarFilterType.AlwaysOff`
+- `always_on`: Equivalent to `ExemplarFilterType.AlwaysOn`
+- `trace_based`: Equivalent to `ExemplarFilterType.TraceBased`
 
 #### ExemplarReservoir
 
@@ -526,12 +625,12 @@ Allowed values:
 and is responsible for recording `Exemplar`s. The following are the default
 reservoirs:
 
-* `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
+- `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
 Histograms with buckets, and it stores at most one `Exemplar` per histogram
 bucket. The `Exemplar` stored is the last measurement recorded - i.e. any new
 measurement overwrites the previous one in that bucket.
 
-* `SimpleFixedSizeExemplarReservoir` is the default reservoir used for all
+- `SimpleFixedSizeExemplarReservoir` is the default reservoir used for all
 metrics except histograms with buckets. It has a fixed reservoir pool, and
 implements the equivalent of [naive
 reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
@@ -565,12 +664,12 @@ Though `MetricReader` can be added by using the `AddReader` method on
 
 Refer to the individual exporter docs to learn how to use them:
 
-* [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
-* [In-memory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
-* [OTLP](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+- [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
+- [In-memory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
+- [OTLP](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
-* [Prometheus HttpListener](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
-* [Prometheus AspNetCore](../../../src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
+- [Prometheus HttpListener](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
+- [Prometheus AspNetCore](../../../src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
 
 ### Resource
 
