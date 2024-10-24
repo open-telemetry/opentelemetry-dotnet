@@ -23,8 +23,8 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     private static readonly int NumberOfMetricUpdateByEachThread = 100000;
     private readonly ITestOutputHelper output;
 
-    protected MetricApiTestsBase(ITestOutputHelper output, bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
-        : base(BuildConfiguration(emitOverflowAttribute, shouldReclaimUnusedMetricPoints))
+    protected MetricApiTestsBase(ITestOutputHelper output, bool shouldReclaimUnusedMetricPoints)
+        : base(BuildConfiguration(shouldReclaimUnusedMetricPoints))
     {
         this.output = output;
     }
@@ -1410,7 +1410,6 @@ public abstract class MetricApiTestsBase : MetricTestsBase
                 enumerator.MoveNext(); // Second element reserved for overflow attribute.
 
                 // Validate second element is overflow attribute.
-                // Overflow attribute is behind experimental flag. So, it is not guaranteed to be present.
                 var tagEnumerator = enumerator.Current.Tags.GetEnumerator();
                 tagEnumerator.MoveNext();
                 if (!tagEnumerator.Current.Key.Contains("otel.metric.overflow"))
@@ -1704,14 +1703,9 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         }
     }
 
-    internal static IConfiguration BuildConfiguration(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
+    internal static IConfiguration BuildConfiguration(bool shouldReclaimUnusedMetricPoints)
     {
         var configurationData = new Dictionary<string, string?>();
-
-        if (emitOverflowAttribute)
-        {
-            configurationData[EmitOverFlowAttributeConfigKey] = "true";
-        }
 
         if (shouldReclaimUnusedMetricPoints)
         {
@@ -1894,15 +1888,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
 public class MetricApiTest : MetricApiTestsBase
 {
     public MetricApiTest(ITestOutputHelper output)
-        : base(output, emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: false)
-    {
-    }
-}
-
-public class MetricApiTestWithOverflowAttribute : MetricApiTestsBase
-{
-    public MetricApiTestWithOverflowAttribute(ITestOutputHelper output)
-        : base(output, emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: false)
+        : base(output, shouldReclaimUnusedMetricPoints: false)
     {
     }
 }
@@ -1910,15 +1896,7 @@ public class MetricApiTestWithOverflowAttribute : MetricApiTestsBase
 public class MetricApiTestWithReclaimAttribute : MetricApiTestsBase
 {
     public MetricApiTestWithReclaimAttribute(ITestOutputHelper output)
-        : base(output, emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: true)
-    {
-    }
-}
-
-public class MetricApiTestWithBothOverflowAndReclaimAttributes : MetricApiTestsBase
-{
-    public MetricApiTestWithBothOverflowAndReclaimAttributes(ITestOutputHelper output)
-        : base(output, emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: true)
+        : base(output, shouldReclaimUnusedMetricPoints: true)
     {
     }
 }
