@@ -207,7 +207,7 @@ internal static class ProtobufSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, ReadOnlySpan<char> value)
+    internal static int GetNumberOfUtf8CharsInString(ReadOnlySpan<char> value)
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
         int numberOfUtf8CharsInString;
@@ -221,7 +221,19 @@ internal static class ProtobufSerializer
 #else
         int numberOfUtf8CharsInString = Utf8Encoding.GetByteCount(value);
 #endif
+        return numberOfUtf8CharsInString;
+    }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, ReadOnlySpan<char> value)
+    {
+        var numberOfUtf8CharsInString = GetNumberOfUtf8CharsInString(value);
+        return WriteStringWithTag(buffer, writePosition, fieldNumber, numberOfUtf8CharsInString, value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, int numberOfUtf8CharsInString, ReadOnlySpan<char> value)
+    {
         writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
         writePosition = WriteLength(buffer, writePosition, numberOfUtf8CharsInString);
 
