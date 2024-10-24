@@ -24,11 +24,9 @@ Notes](../../RELEASENOTES.md).
   approach of dropping measurements has been removed. No internal logs are
   emitted when the limit is hit.
 
-  The default cardinality limit remains 2000 per metric. To adjust this globally,
-  use the `SetMaxMetricPointsPerMetricStream()` API. However, we recommend
-  setting the limit on a per-metric basis for finer control. For details on
-  customizing limits per metric, refer to [changing cardinality
-  limit](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric).
+  The default cardinality limit remains 2000 per metric. To set the cardinality
+  limit for an individual metric, use the [changing cardinality limit for a
+  Metric](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric).
 
   There is NO ability to revert to old behavior.
   ([#5909](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5909))

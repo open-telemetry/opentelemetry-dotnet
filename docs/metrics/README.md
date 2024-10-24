@@ -389,14 +389,12 @@ and the `MetricStreamConfiguration.CardinalityLimit` setting. Refer to this
 for more information.
 
 Given a metric, once the cardinality limit is reached, any new measurement
-cannot be independently aggregated. Previously, new measurements were dropped
-unless users opt-in to experimental overflow attribute feature introduced in
-version [1.6.0-rc.1](../../src/OpenTelemetry/CHANGELOG.md#160-rc1).
-Starting with version 1.10.0, this experimental feature is promoted to stable
-and will be the default behavior. New measurements will be aggregated using the
-[overflow
-attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-when the limit is reached.
+that could not be independently aggregated will be aggregated using the
+[overflow attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
+In versions prior to 1.10.0, the default behavior when cardinality limit was
+reached was to drop the measurement. Users had the ability to opt-in to use
+overflow attribute instead, but this behavior is the default and the only
+allowed behavior starting with version 1.10.0.
 
 When [Delta Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
