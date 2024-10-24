@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Text;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
@@ -52,18 +51,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpFieldNumberConstants.KeyValue_Key, key);
 
         // Write KeyValue.Value tag, length and value.
-#if NETFRAMEWORK || NETSTANDARD2_0
-        int numberOfUtf8CharsInString;
-        unsafe
-        {
-            fixed (char* p = value)
-            {
-                numberOfUtf8CharsInString = Encoding.UTF8.GetByteCount(p, value.Length);
-            }
-        }
-#else
-        int numberOfUtf8CharsInString = Encoding.UTF8.GetByteCount(value);
-#endif
+        var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(value);
 
         // length = numberOfUtf8CharsInString + tagSize + length field size.
         state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, numberOfUtf8CharsInString + 2, ProtobufOtlpFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
@@ -216,22 +204,11 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         public override void WriteStringValue(ref OtlpTagWriterArrayState state, ReadOnlySpan<char> value)
         {
             // Write KeyValue.Value tag, length and value.
-#if NETFRAMEWORK || NETSTANDARD2_0
-            int numberOfUtf8CharsInString;
-            unsafe
-            {
-                fixed (char* p = value)
-                {
-                    numberOfUtf8CharsInString = Encoding.UTF8.GetByteCount(p, value.Length);
-                }
-            }
-#else
-            int numberOfUtf8CharsInString = Encoding.UTF8.GetByteCount(value);
-#endif
+            var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(value);
 
             // length = numberOfUtf8CharsInString + tagSize + length field size.
             state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, numberOfUtf8CharsInString + 2, ProtobufOtlpFieldNumberConstants.ArrayValue_Value, ProtobufWireType.LEN);
-            state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpFieldNumberConstants.AnyValue_String_Value, value);
+            state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpFieldNumberConstants.AnyValue_String_Value, numberOfUtf8CharsInString, value);
         }
 
         public override void EndWriteArray(ref OtlpTagWriterArrayState state)
