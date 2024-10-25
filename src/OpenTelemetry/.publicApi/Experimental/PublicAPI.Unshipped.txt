@@ -17,8 +17,6 @@ OpenTelemetry.Metrics.FixedSizeExemplarReservoir.Capacity.get -> int
 OpenTelemetry.Metrics.FixedSizeExemplarReservoir.FixedSizeExemplarReservoir(int capacity) -> void
 OpenTelemetry.Metrics.FixedSizeExemplarReservoir.UpdateExemplar(int exemplarIndex, in OpenTelemetry.Metrics.ExemplarMeasurement<double> measurement) -> void
 OpenTelemetry.Metrics.FixedSizeExemplarReservoir.UpdateExemplar(int exemplarIndex, in OpenTelemetry.Metrics.ExemplarMeasurement<long> measurement) -> void
-OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.get -> int?
-OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.get -> System.Func<OpenTelemetry.Metrics.ExemplarReservoir?>?
 OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.set -> void
 override sealed OpenTelemetry.Metrics.FixedSizeExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
