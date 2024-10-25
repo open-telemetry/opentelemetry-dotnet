@@ -27,12 +27,6 @@ Description: Logs Bridge API
 
 Details: [OTEL1001](./OTEL1001.md)
 
-### OTEL1003
-
-Description: MetricStreamConfiguration CardinalityLimit Support
-
-Details: [OTEL1003](./OTEL1003.md)
-
 ### OTEL1004
 
 Description: ExemplarReservoir Support
@@ -58,3 +52,11 @@ Description: Metrics Exemplar Support
 Details: [OTEL1002](https://github.com/open-telemetry/opentelemetry-dotnet/blob/b8ea807bae1a5d9b0f3d6d23b1e1e10f5e096a25/docs/diagnostics/experimental-apis/OTEL1002.md)
 
 Released stable: `1.9.0`
+
+### OTEL1003
+
+Description: MetricStreamConfiguration CardinalityLimit Support
+
+Details: [OTEL1003](./OTEL1003.md)
+
+Released stable: `1.10.0`
