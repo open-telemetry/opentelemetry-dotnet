@@ -9,6 +9,7 @@ Notes](../../RELEASENOTES.md).
 * The experimental APIs previously covered by `OTEL1003`
   (`MetricStreamConfiguration.CardinalityLimit`) will now be part of the public
   API and supported in stable builds.
+  ([#5926](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5926))
 
 * Promoted overflow attribute from experimental to stable and removed the
   `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE` environment variable.
