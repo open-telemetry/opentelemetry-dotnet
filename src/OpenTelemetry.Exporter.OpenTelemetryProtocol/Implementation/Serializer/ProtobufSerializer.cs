@@ -198,6 +198,77 @@ internal static class ProtobufSerializer
         return writePosition;
     }
 
+    /// <summary>
+    /// Computes the number of bytes required to encode a 64-bit unsigned integer in Protocol Buffers' varint format.
+    /// </summary>
+    /// <remarks>
+    /// Protocol Buffers uses variable-length encoding (varint) to serialize integers efficiently:
+    /// - Each byte uses 7 bits to encode the number and 1 bit (MSB) to indicate if more bytes follow
+    /// - The algorithm checks how many significant bits the number contains by shifting and masking
+    /// - Numbers are encoded in groups of 7 bits, from least to most significant
+    /// - Each group requires one byte, so the method returns the number of 7-bit groups needed
+    ///
+    /// Examples:
+    /// - Values 0-127 (7 bits) require 1 byte
+    /// - Values 128-16383 (14 bits) require 2 bytes
+    /// - Values 16384-2097151 (21 bits) require 3 bytes
+    /// And so on...
+    ///
+    /// For more details, see:
+    /// - Protocol Buffers encoding reference: https://developers.google.com/protocol-buffers/docs/encoding#varints.
+    /// </remarks>
+    /// <param name="value">The unsigned 64-bit integer to be encoded.</param>
+    /// <returns>Number of bytes needed to encode the value.</returns>
+    internal static int ComputeVarInt64Size(ulong value)
+    {
+        if ((value & (0xffffffffffffffffL << 7)) == 0)
+        {
+            return 1;
+        }
+
+        if ((value & (0xffffffffffffffffL << 14)) == 0)
+        {
+            return 2;
+        }
+
+        if ((value & (0xffffffffffffffffL << 21)) == 0)
+        {
+            return 3;
+        }
+
+        if ((value & (0xffffffffffffffffL << 28)) == 0)
+        {
+            return 4;
+        }
+
+        if ((value & (0xffffffffffffffffL << 35)) == 0)
+        {
+            return 5;
+        }
+
+        if ((value & (0xffffffffffffffffL << 42)) == 0)
+        {
+            return 6;
+        }
+
+        if ((value & (0xffffffffffffffffL << 49)) == 0)
+        {
+            return 7;
+        }
+
+        if ((value & (0xffffffffffffffffL << 56)) == 0)
+        {
+            return 8;
+        }
+
+        if ((value & (0xffffffffffffffffL << 63)) == 0)
+        {
+            return 9;
+        }
+
+        return 10;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, string value)
     {

@@ -18,12 +18,12 @@ internal static class ProtobufOtlpResourceSerializer
             WritePosition = writePosition,
         };
 
+        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpFieldNumberConstants.ResourceSpans_Resource, ProtobufWireType.LEN);
+        int resourceLengthPosition = otlpTagWriterState.WritePosition;
+        otlpTagWriterState.WritePosition += ReserveSizeForLength;
+
         if (resource != null && resource != Resource.Empty)
         {
-            otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpFieldNumberConstants.ResourceSpans_Resource, ProtobufWireType.LEN);
-            int resourceLengthPosition = otlpTagWriterState.WritePosition;
-            otlpTagWriterState.WritePosition += ReserveSizeForLength;
-
             if (resource.Attributes is IReadOnlyList<KeyValuePair<string, object>> resourceAttributesList)
             {
                 for (int i = 0; i < resourceAttributesList.Count; i++)
@@ -49,18 +49,18 @@ internal static class ProtobufOtlpResourceSerializer
                     otlpTagWriterState = ProcessResourceAttribute(ref otlpTagWriterState, attribute);
                 }
             }
-
-            if (!isServiceNamePresent)
-            {
-                var serviceName = (string)ResourceBuilder.CreateDefault().Build().Attributes.FirstOrDefault(
-                    kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName).Value;
-
-                otlpTagWriterState = ProcessResourceAttribute(ref otlpTagWriterState, new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, serviceName));
-            }
-
-            var resourceLength = otlpTagWriterState.WritePosition - (resourceLengthPosition + ReserveSizeForLength);
-            ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, resourceLengthPosition, resourceLength);
         }
+
+        if (!isServiceNamePresent)
+        {
+            var serviceName = (string)ResourceBuilder.CreateDefault().Build().Attributes.FirstOrDefault(
+                kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName).Value;
+
+            otlpTagWriterState = ProcessResourceAttribute(ref otlpTagWriterState, new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, serviceName));
+        }
+
+        var resourceLength = otlpTagWriterState.WritePosition - (resourceLengthPosition + ReserveSizeForLength);
+        ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, resourceLengthPosition, resourceLength);
 
         return otlpTagWriterState.WritePosition;
     }
