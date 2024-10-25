@@ -6,6 +6,31 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Promoted overflow attribute from experimental to stable and removed the
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE` environment variable.
+
+  **Previous Behavior:**
+  By default, when the cardinality limit was reached, measurements were dropped,
+  and an internal log was emitted the first time this occurred. Users could
+  opt-in to experimental overflow attribute feature with
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`.
+  With this setting, the SDK would use an overflow attribute
+  (`otel.metric.overflow = true`) to aggregate measurements instead of dropping
+  measurements. No internal log was emitted in this case.
+
+  **New Behavior:**
+  The SDK now always uses the overflow attribute (`otel.metric.overflow = true`)
+  to aggregate measurements when the cardinality limit is reached. The previous
+  approach of dropping measurements has been removed. No internal logs are
+  emitted when the limit is hit.
+
+  The default cardinality limit remains 2000 per metric. To set the cardinality
+  limit for an individual metric, use the [changing cardinality limit for a
+  Metric](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric).
+
+  There is NO ability to revert to old behavior.
+  ([#5909](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5909))
+
 ## 1.10.0-beta.1
 
 Released 2024-Sep-30
