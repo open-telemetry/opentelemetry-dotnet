@@ -238,7 +238,7 @@ public static class MeterProviderBuilderExtensions
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <param name="maxMetricPointsPerMetricStream">Maximum number of metric points allowed per metric stream.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    [Obsolete("Use MetricStreamConfiguration.CardinalityLimit via the AddView API instead. This method is removed in version 1.10.0.")]
+    [Obsolete("Use MetricStreamConfiguration.CardinalityLimit via the AddView API instead. This method is marked as obsolete in version 1.10.0 and will be removed in a future version.")]
     public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
     {
         Guard.ThrowIfOutOfRange(maxMetricPointsPerMetricStream, min: 1);
