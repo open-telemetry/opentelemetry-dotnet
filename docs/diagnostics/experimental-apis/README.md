@@ -57,6 +57,6 @@ Released stable: `1.9.0`
 
 Description: MetricStreamConfiguration CardinalityLimit Support
 
-Details: [OTEL1003](./OTEL1003.md)
+Details: [OTEL1003](https://github.com/open-telemetry/opentelemetry-dotnet/blob/9f41eadf03f3dcc5e76c686b61fb39849f046312/docs/diagnostics/experimental-apis/OTEL1003.md)
 
 Released stable: `1.10.0`
