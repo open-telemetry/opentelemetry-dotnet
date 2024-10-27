@@ -81,7 +81,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             // Load server certificate
             if (!string.IsNullOrEmpty(this.CertificateFile))
             {
-                var trustedCertificate = X509CertificateLoader.LoadFromFile(this.CertificateFile);
+                var trustedCertificate = X509Certificate2.CreateFromPemFile(this.CertificateFile);
 
                 handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
                 {

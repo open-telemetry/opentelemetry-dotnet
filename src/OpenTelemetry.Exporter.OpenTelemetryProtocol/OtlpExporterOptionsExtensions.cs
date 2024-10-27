@@ -42,7 +42,7 @@ internal static class OtlpExporterOptionsExtensions
         // Set up custom certificate validation if CertificateFile is provided
         if (!string.IsNullOrEmpty(options.CertificateFile))
         {
-            var trustedCertificate = new X509Certificate2(options.CertificateFile);
+            var trustedCertificate = X509Certificate2.CreateFromPemFile(options.CertificateFile);
             handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
             {
                 if (cert != null && chain != null)
