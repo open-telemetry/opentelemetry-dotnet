@@ -45,9 +45,14 @@ internal static class OtlpExporterOptionsExtensions
             var trustedCertificate = new X509Certificate2(options.CertificateFile);
             handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
             {
-                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
-                chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
-                return chain.Build(cert);
+                if (cert != null && chain != null)
+                {
+                    chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                    chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
+                    return chain.Build(cert);
+                }
+
+                return false;
             };
         }
 

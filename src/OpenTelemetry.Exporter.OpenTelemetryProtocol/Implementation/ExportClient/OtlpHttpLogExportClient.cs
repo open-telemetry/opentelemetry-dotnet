@@ -19,33 +19,13 @@ internal sealed class OtlpHttpLogExportClient : BaseOtlpHttpExportClient<OtlpCol
     private const string LogsExportPath = "v1/logs";
 
     public OtlpHttpLogExportClient(OtlpExporterOptions options, HttpClient httpClient)
-        : base(options, ModifyHttpClient(options, httpClient), LogsExportPath)
+        : base(options, httpClient, LogsExportPath)
     {
     }
 
     protected override HttpContent CreateHttpContent(OtlpCollector.ExportLogsServiceRequest exportRequest)
     {
         return new ExportRequestContent(exportRequest);
-    }
-
-    private static HttpClient ModifyHttpClient(OtlpExporterOptions options, HttpClient httpClient)
-    {
-        // Create a new handler using the existing method that configures mTLS
-        var handler = options.CreateDefaultHttpMessageHandler();
-
-        // Create a new HttpClient with the mTLS-enabled handler
-        var newHttpClient = new HttpClient(handler, disposeHandler: true);
-
-        // Copy existing headers from the original HttpClient
-        foreach (var header in httpClient.DefaultRequestHeaders)
-        {
-            newHttpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
-        }
-
-        // Copy other properties, such as timeout, if needed
-        newHttpClient.Timeout = httpClient.Timeout;
-
-        return newHttpClient;
     }
 
     internal sealed class ExportRequestContent : HttpContent

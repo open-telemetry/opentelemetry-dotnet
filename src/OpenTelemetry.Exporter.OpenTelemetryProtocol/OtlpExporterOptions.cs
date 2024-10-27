@@ -74,10 +74,46 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.DefaultHttpClientFactory = () =>
         {
+    #if NET6_0_OR_GREATER
+            // Create a new handler
+            var handler = new HttpClientHandler();
+
+            // Load server certificate
+            if (!string.IsNullOrEmpty(this.CertificateFile))
+            {
+                var trustedCertificate = X509CertificateLoader.LoadFromFile(this.CertificateFile);
+
+                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+                {
+                    if (cert != null && chain != null)
+                    {
+                        chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                        chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
+                        return chain.Build(cert);
+                    }
+                    return false;
+                };
+            }
+
+            // Load client certificate for mTLS
+            if (!string.IsNullOrEmpty(this.ClientCertificateFile) && !string.IsNullOrEmpty(this.ClientKeyFile))
+            {
+                var clientCertificate = X509Certificate2.CreateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile);
+                handler.ClientCertificates.Add(clientCertificate);
+            }
+
+            // Create and return the HttpClient
+            return new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
+            };
+    #else
+            // For earlier .NET versions
             return new HttpClient
             {
                 Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
             };
+    #endif
         };
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;
@@ -271,35 +307,42 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         return this;
     }
 
-    internal HttpMessageHandler CreateDefaultHttpMessageHandler()
+    internal HttpClient AddCertificatesToHttpClient(HttpClientHandler handler)
     {
-        var handler = new HttpClientHandler();
-
-#if NET6_0_OR_GREATER
+    #if NET6_0_OR_GREATER
+        // Set up server certificate validation if CertificateFile is provided
         if (!string.IsNullOrEmpty(this.CertificateFile))
         {
+            // Load the certificate from the file
             var trustedCertificate = new X509Certificate2(this.CertificateFile);
 
+            // Set custom server certificate validation callback
             handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
             {
-                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
-                chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
-                return chain.Build(cert);
+                if (cert != null && chain != null)
+                {
+                    chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                    chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
+                    return chain.Build(cert);
+                }
+                return false;
             };
         }
 
+        // Add client certificate if both files are provided
         if (!string.IsNullOrEmpty(this.ClientCertificateFile) && !string.IsNullOrEmpty(this.ClientKeyFile))
         {
+            // Load the client certificate from PEM files
             var clientCertificate = X509Certificate2.CreateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile);
             handler.ClientCertificates.Add(clientCertificate);
         }
-#else
-        // Implement alternative methods for earlier .NET versions
-        throw new PlatformNotSupportedException("mTLS support requires .NET 6.0 or later.");
-#endif
 
-#pragma warning disable CS0162 // Unreachable code detected
-        return handler;
+        // Create and return an HttpClient with the modified handler
+        return new HttpClient(handler);
+    #else
+        // Handle alternative methods for earlier .NET versions
+        throw new PlatformNotSupportedException("mTLS support requires .NET 6.0 or later.");
+    #endif
     }
 
     private static string GetUserAgentString()
