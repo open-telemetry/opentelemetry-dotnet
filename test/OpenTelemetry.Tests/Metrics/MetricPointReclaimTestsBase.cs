@@ -20,13 +20,8 @@ public abstract class MetricPointReclaimTestsBase
 
     private readonly IConfiguration configuration;
 
-    protected MetricPointReclaimTestsBase(bool emitOverflowAttribute)
+    protected MetricPointReclaimTestsBase()
     {
-        if (emitOverflowAttribute)
-        {
-            this.configurationData[MetricTestsBase.EmitOverFlowAttributeConfigKey] = "true";
-        }
-
         this.configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(this.configurationData)
             .Build();
@@ -213,8 +208,7 @@ public abstract class MetricPointReclaimTestsBase
             .Build();
 
         // Add 10 distinct combinations of dimensions to surpass the max metric points limit of 10.
-        // Note that one MetricPoint is reserved for zero tags and one MetricPoint is optionally
-        // reserved for the overflow tag depending on the user's input.
+        // Note that one MetricPoint is reserved for zero tags and one MetricPoint is reserved for the overflow tag.
         // This would lead to dropping a few measurements. We want to make sure that they can still be
         // aggregated later on when there are free MetricPoints available.
         for (int i = 0; i < 10; i++)
@@ -333,15 +327,7 @@ public abstract class MetricPointReclaimTestsBase
 public class MetricPointReclaimTests : MetricPointReclaimTestsBase
 {
     public MetricPointReclaimTests()
-        : base(emitOverflowAttribute: false)
-    {
-    }
-}
-
-public class MetricPointReclaimTestsWithEmitOverflowAttribute : MetricPointReclaimTestsBase
-{
-    public MetricPointReclaimTestsWithEmitOverflowAttribute()
-        : base(emitOverflowAttribute: true)
+        : base()
     {
     }
 }
