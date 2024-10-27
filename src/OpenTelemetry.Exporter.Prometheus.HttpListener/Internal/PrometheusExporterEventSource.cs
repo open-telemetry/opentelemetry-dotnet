@@ -64,4 +64,10 @@ internal sealed class PrometheusExporterEventSource : EventSource
     {
         this.WriteEvent(4);
     }
+
+    [Event(5, Message = "Ignoring exemplar tags that are too long for metric: '{0}'", Level = EventLevel.Warning)]
+    public void ExemplarTagsTooLong(string metricName)
+    {
+        this.WriteEvent(5);
+    }
 }

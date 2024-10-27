@@ -9,6 +9,7 @@ Notes](../../RELEASENOTES.md).
 
 * Added meter-level tags to Prometheus exporter
   ([#5837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5837))
+* Added exemplar support to Prometheus exporter ([#5929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5929))
 
 ## 1.9.0-beta.2
 
