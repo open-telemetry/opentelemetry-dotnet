@@ -74,7 +74,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.DefaultHttpClientFactory = () =>
         {
-    #if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER
             // Create a new handler
             var handler = new HttpClientHandler();
 
@@ -108,13 +108,13 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             {
                 Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
             };
-    #else
+#else
             // For earlier .NET versions
             return new HttpClient
             {
                 Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
             };
-    #endif
+#endif
         };
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;
@@ -310,7 +310,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     internal HttpClient AddCertificatesToHttpClient(HttpClientHandler handler)
     {
-    #if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER
         // Set up server certificate validation if CertificateFile is provided
         if (!string.IsNullOrEmpty(this.CertificateFile))
         {
@@ -341,10 +341,10 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         // Create and return an HttpClient with the modified handler
         return new HttpClient(handler);
-    #else
+#else
         // Handle alternative methods for earlier .NET versions
         throw new PlatformNotSupportedException("mTLS support requires .NET 6.0 or later.");
-    #endif
+#endif
     }
 
     private static string GetUserAgentString()
