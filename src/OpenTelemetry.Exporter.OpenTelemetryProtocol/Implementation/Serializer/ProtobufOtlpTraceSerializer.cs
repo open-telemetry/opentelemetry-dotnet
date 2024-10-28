@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
 
@@ -14,6 +15,158 @@ internal static class ProtobufOtlpTraceSerializer
     private const string ErrorStatusCodeTagValue = "ERROR";
     private const int TraceIdSize = 16;
     private const int SpanIdSize = 8;
+
+    private static readonly ConcurrentBag<List<Activity>> ActivityListPool = [];
+
+    internal static int WriteTraceData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource, Batch<Activity> batch)
+    {
+        var spansByLibrary = new Dictionary<string, List<Activity>>();
+        foreach (var activity in batch)
+        {
+            var sourceName = activity.Source.Name;
+            if (!spansByLibrary.TryGetValue(sourceName, out var activities))
+            {
+                activities = ActivityListPool.TryTake(out var list) ? list : new List<Activity>();
+                spansByLibrary[sourceName] = activities;
+            }
+
+            activities.Add(activity);
+        }
+
+        writePosition = WriteResourceSpans(buffer, writePosition, sdkLimitOptions, resource, spansByLibrary);
+        ReturnActivityListToPool(spansByLibrary);
+
+        return writePosition;
+    }
+
+    internal static void ReturnActivityListToPool(Dictionary<string, List<Activity>>? scopeTraces)
+    {
+        if (scopeTraces != null)
+        {
+            foreach (var entry in scopeTraces)
+            {
+                entry.Value.Clear();
+                ActivityListPool.Add(entry.Value);
+            }
+        }
+    }
+
+    internal static int WriteResourceSpans(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource, Dictionary<string, List<Activity>> scopeTraces)
+    {
+        int maxAttributeValueLength = sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
+
+        writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
+        writePosition = WriteScopeSpans(buffer, writePosition, sdkLimitOptions, scopeTraces);
+
+        return writePosition;
+    }
+
+    internal static int WriteScopeSpans(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Dictionary<string, List<Activity>> scopeTraces)
+    {
+        if (scopeTraces != null)
+        {
+            foreach (KeyValuePair<string, List<Activity>> entry in scopeTraces)
+            {
+                writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpFieldNumberConstants.ResourceSpans_Scope_Spans, ProtobufWireType.LEN);
+                int resourceSpansScopeSpansLengthPosition = writePosition;
+                writePosition += ReserveSizeForLength;
+
+                writePosition = WriteScopeSpan(buffer, writePosition, sdkLimitOptions, entry.Value[0].Source, entry.Value);
+                ProtobufSerializer.WriteReservedLength(buffer, resourceSpansScopeSpansLengthPosition, writePosition - (resourceSpansScopeSpansLengthPosition + ReserveSizeForLength));
+            }
+        }
+
+        return writePosition;
+    }
+
+    internal static int WriteScopeSpan(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ActivitySource activitySource, List<Activity> activities)
+    {
+        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpFieldNumberConstants.ScopeSpans_Scope, ProtobufWireType.LEN);
+        int instrumentationScopeLengthPosition = writePosition;
+        writePosition += ReserveSizeForLength;
+
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpFieldNumberConstants.InstrumentationScope_Name, activitySource.Name);
+        if (activitySource.Version != null)
+        {
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpFieldNumberConstants.InstrumentationScope_Version, activitySource.Version);
+        }
+
+        if (activitySource.Tags != null)
+        {
+            var maxAttributeCount = sdkLimitOptions.SpanAttributeCountLimit ?? int.MaxValue;
+            var maxAttributeValueLength = sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
+            var attributeCount = 0;
+            var droppedAttributeCount = 0;
+
+            ProtobufOtlpTagWriter.OtlpTagWriterState otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
+            {
+                Buffer = buffer,
+                WritePosition = writePosition,
+            };
+
+            if (activitySource.Tags is IReadOnlyList<KeyValuePair<string, object?>> activitySourceTagsList)
+            {
+                for (int i = 0; i < activitySourceTagsList.Count; i++)
+                {
+                    if (attributeCount < maxAttributeCount)
+                    {
+                        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpFieldNumberConstants.InstrumentationScope_Attributes, ProtobufWireType.LEN);
+                        int instrumentationScopeAttributesLengthPosition = otlpTagWriterState.WritePosition;
+                        otlpTagWriterState.WritePosition += ReserveSizeForLength;
+
+                        ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, activitySourceTagsList[i].Key, activitySourceTagsList[i].Value, maxAttributeValueLength);
+
+                        var instrumentationScopeAttributesLength = otlpTagWriterState.WritePosition - (instrumentationScopeAttributesLengthPosition + ReserveSizeForLength);
+                        ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, instrumentationScopeAttributesLengthPosition, instrumentationScopeAttributesLength);
+                        attributeCount++;
+                    }
+                    else
+                    {
+                        droppedAttributeCount++;
+                    }
+                }
+            }
+            else
+            {
+                foreach (var tag in activitySource.Tags)
+                {
+                    if (attributeCount < maxAttributeCount)
+                    {
+                        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpFieldNumberConstants.InstrumentationScope_Attributes, ProtobufWireType.LEN);
+                        int instrumentationScopeAttributesLengthPosition = otlpTagWriterState.WritePosition;
+                        otlpTagWriterState.WritePosition += ReserveSizeForLength;
+
+                        ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag.Key, tag.Value, maxAttributeValueLength);
+
+                        var instrumentationScopeAttributesLength = otlpTagWriterState.WritePosition - (instrumentationScopeAttributesLengthPosition + ReserveSizeForLength);
+                        ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, instrumentationScopeAttributesLengthPosition, instrumentationScopeAttributesLength);
+                        attributeCount++;
+                    }
+                    else
+                    {
+                        droppedAttributeCount++;
+                    }
+                }
+            }
+
+            if (droppedAttributeCount > 0)
+            {
+                otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(buffer, otlpTagWriterState.WritePosition, ProtobufOtlpFieldNumberConstants.InstrumentationScope_Dropped_Attributes_Count, ProtobufWireType.VARINT);
+                otlpTagWriterState.WritePosition = ProtobufSerializer.WriteVarInt32(buffer, otlpTagWriterState.WritePosition, (uint)droppedAttributeCount);
+            }
+
+            writePosition = otlpTagWriterState.WritePosition;
+        }
+
+        ProtobufSerializer.WriteReservedLength(buffer, instrumentationScopeLengthPosition, writePosition - (instrumentationScopeLengthPosition + ReserveSizeForLength));
+
+        for (int i = 0; i < activities.Count; i++)
+        {
+            writePosition = WriteSpan(buffer, writePosition, sdkLimitOptions, activities[i]);
+        }
+
+        return writePosition;
+    }
 
     internal static int WriteSpan(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Activity activity)
     {

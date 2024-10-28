@@ -70,6 +70,8 @@ internal static class ProtobufOtlpFieldNumberConstants
     // InstrumentationScope
     internal const int InstrumentationScope_Name = 1;
     internal const int InstrumentationScope_Version = 2;
+    internal const int InstrumentationScope_Attributes = 3;
+    internal const int InstrumentationScope_Dropped_Attributes_Count = 4;
 
     // KeyValue
     internal const int KeyValue_Key = 1;
