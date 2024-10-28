@@ -60,6 +60,19 @@
     <None Include=".publicApi\**\PublicAPI.*.txt" />
   </ItemGroup>
 
+  <Target Name="IncludeSigningSignaturesInPackages" BeforeTargets="_GetTargetFrameworksOutput">
+    <!-- Note: This target adds any signatures found to nuget packages -->
+    <ItemGroup>
+      <SignatureFiles Include="$(RepoRoot)\src\$(MSBuildProjectName)\bin\$(Configuration)\*\$(MSBuildProjectName).dll-keyless.sig" />
+      <Content Include="@(SignatureFiles)" Link="%(RecursiveDir)%(Filename)%(Extension)" PackagePath="lib" />
+      <CertificateFiles Include="$(RepoRoot)\src\$(MSBuildProjectName)\bin\$(Configuration)\*\$(MSBuildProjectName).dll-keyless.pem" />
+      <Content Include="@(CertificateFiles)" Link="%(RecursiveDir)%(Filename)%(Extension)" PackagePath="lib" />
+    </ItemGroup>
+
+    <Message Importance="high" Text="**IncludeSignaturesInPackagesDebug** SignatureFiles: @(SignatureFiles)" />
+    <Message Importance="high" Text="**IncludeCertificatesInPackagesDebug** SignatureFiles: @(CertificateFiles)" />
+  </Target>
+
   <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)' != '' AND '$(BuildNumber)' != ''">
     <!-- Note: $(BuildNumber) is typically only set for builds initiated by the
     publish workflow. The goal here is to set the assembly FileVersion and
