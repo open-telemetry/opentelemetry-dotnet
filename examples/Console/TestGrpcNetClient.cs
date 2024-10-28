@@ -12,8 +12,10 @@ namespace Examples.Console;
 
 internal class TestGrpcNetClient
 {
-    internal static object Run()
+    internal static int Run(GrpcNetClientOptions options)
     {
+        Debug.Assert(options != null, "options was null");
+
         // Prerequisite for running this example.
         // In a separate console window, start the example
         // ASP.NET Core gRPC service by running the following command
@@ -55,6 +57,6 @@ internal class TestGrpcNetClient
         System.Console.WriteLine("Press Enter key to exit.");
         System.Console.ReadLine();
 
-        return null;
+        return 0;
     }
 }

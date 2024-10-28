@@ -88,7 +88,7 @@ public class SamplersTest
         Assert.NotNull(activity);
         if (samplingDecision != SamplingDecision.Drop)
         {
-            Assert.Contains(new KeyValuePair<string, object>("tagkeybysampler", "tagvalueaddedbysampler"), activity.TagObjects);
+            Assert.Contains(new KeyValuePair<string, object?>("tagkeybysampler", "tagvalueaddedbysampler"), activity.TagObjects);
         }
 
         activity.Stop();
@@ -200,6 +200,7 @@ public class SamplersTest
         using var activity = activitySource.StartActivity("root", ActivityKind.Server, parentContext);
         if (sampling != SamplingDecision.Drop)
         {
+            Assert.NotNull(activity);
             Assert.Equal(newTraceState, activity.TraceStateString);
         }
     }
@@ -237,6 +238,7 @@ public class SamplersTest
         using var activity = activitySource.StartActivity("root", ActivityKind.Server, parentContext);
         if (sampling != SamplingDecision.Drop)
         {
+            Assert.NotNull(activity);
             Assert.Equal(parentTraceState, activity.TraceStateString);
         }
     }

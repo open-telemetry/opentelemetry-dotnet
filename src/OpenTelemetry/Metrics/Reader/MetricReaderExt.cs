@@ -15,14 +15,13 @@ namespace OpenTelemetry.Metrics;
 public abstract partial class MetricReader
 {
     private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<MetricStreamIdentity, Metric> instrumentIdentityToMetric = new();
+    private readonly ConcurrentDictionary<MetricStreamIdentity, Metric?> instrumentIdentityToMetric = new();
     private readonly Lock instrumentCreationLock = new();
     private int metricLimit;
     private int cardinalityLimit;
     private Metric?[]? metrics;
     private Metric[]? metricsCurrentBatch;
     private int metricIndex = -1;
-    private bool emitOverflowAttribute;
     private bool reclaimUnusedMetricPoints;
     private ExemplarFilterType? exemplarFilter;
     private ExemplarFilterType? exemplarFilterForHistograms;
@@ -82,7 +81,6 @@ public abstract partial class MetricReader
                         metricStreamIdentity,
                         this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
                         this.cardinalityLimit,
-                        this.emitOverflowAttribute,
                         this.reclaimUnusedMetricPoints,
                         exemplarFilter);
                 }
@@ -164,7 +162,6 @@ public abstract partial class MetricReader
                         metricStreamIdentity,
                         this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
                         metricStreamConfig?.CardinalityLimit ?? this.cardinalityLimit,
-                        this.emitOverflowAttribute,
                         this.reclaimUnusedMetricPoints,
                         exemplarFilter,
                         metricStreamConfig?.ExemplarReservoirFactory);
@@ -184,7 +181,6 @@ public abstract partial class MetricReader
     internal void ApplyParentProviderSettings(
         int metricLimit,
         int cardinalityLimit,
-        bool emitOverflowAttribute,
         bool reclaimUnusedMetricPoints,
         ExemplarFilterType? exemplarFilter,
         ExemplarFilterType? exemplarFilterForHistograms)
@@ -193,7 +189,6 @@ public abstract partial class MetricReader
         this.metrics = new Metric[metricLimit];
         this.metricsCurrentBatch = new Metric[metricLimit];
         this.cardinalityLimit = cardinalityLimit;
-        this.emitOverflowAttribute = emitOverflowAttribute;
         this.reclaimUnusedMetricPoints = reclaimUnusedMetricPoints;
         this.exemplarFilter = exemplarFilter;
         this.exemplarFilterForHistograms = exemplarFilterForHistograms;
@@ -201,7 +196,7 @@ public abstract partial class MetricReader
 
     private bool TryGetExistingMetric(in MetricStreamIdentity metricStreamIdentity, [NotNullWhen(true)] out Metric? existingMetric)
         => this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out existingMetric)
-            && existingMetric.Active;
+            && existingMetric != null && existingMetric.Active;
 
     private void CreateOrUpdateMetricStreamRegistration(in MetricStreamIdentity metricStreamIdentity)
     {
@@ -268,8 +263,12 @@ public abstract partial class MetricReader
 
         OpenTelemetrySdkEventSource.Log.MetricInstrumentRemoved(metric!.Name, metric.MeterName);
 
-        var result = this.instrumentIdentityToMetric.TryRemove(metric.InstrumentIdentity, out var _);
-        Debug.Assert(result, "result was false");
+        // Note: This is using TryUpdate and NOT TryRemove because there is a
+        // race condition. If a metric is deactivated and then reactivated in
+        // the same collection cycle
+        // instrumentIdentityToMetric[metric.InstrumentIdentity] may already
+        // point to the new activated metric and not the old deactivated one.
+        this.instrumentIdentityToMetric.TryUpdate(metric.InstrumentIdentity, null, metric);
 
         // Note: metric is a reference to the array storage so
         // this clears the metric out of the array.

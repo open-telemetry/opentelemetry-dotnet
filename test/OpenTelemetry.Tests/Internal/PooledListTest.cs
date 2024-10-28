@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections;
-using System.Reflection;
 
 using Xunit;
 
@@ -44,17 +43,9 @@ public class PooledListTest
     [Fact]
     public void Verify_AllocatedSize()
     {
-        int GetLastAllocatedSize(PooledList<int> pooledList)
-        {
-            var value = typeof(PooledList<int>)
-                .GetField("lastAllocatedSize", BindingFlags.NonPublic | BindingFlags.Static)
-                .GetValue(pooledList);
-            return (int)value;
-        }
-
         var pooledList = PooledList<int>.Create();
 
-        var size = GetLastAllocatedSize(pooledList);
+        var size = PooledList<int>.LastAllocatedSize;
         Assert.Equal(64, size);
 
         // The Add() method has a condition to double the size of the buffer
@@ -65,7 +56,7 @@ public class PooledListTest
             PooledList<int>.Add(ref pooledList, i);
         }
 
-        size = GetLastAllocatedSize(pooledList);
+        size = PooledList<int>.LastAllocatedSize;
         Assert.Equal(128, size);
     }
 

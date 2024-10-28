@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 #if BUILDING_HOSTING_TESTS
 using System.Diagnostics;
 #endif
@@ -18,7 +16,6 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public class MetricTestsBase
 {
-    public const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
     public const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
 
     protected readonly IConfiguration? configuration;
