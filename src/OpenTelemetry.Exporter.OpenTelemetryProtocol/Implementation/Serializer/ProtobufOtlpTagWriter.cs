@@ -111,6 +111,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
         public override void WriteNullValue(ref OtlpTagWriterArrayState state)
         {
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, 0, ProtobufOtlpFieldNumberConstants.ArrayValue_Value, ProtobufWireType.LEN);
         }
 
         public override void WriteIntegralValue(ref OtlpTagWriterArrayState state, long value)
