@@ -57,21 +57,19 @@ jobs:
       run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
 
     - name: Sign DLLs with Cosign Keyless
+      shell: pwsh
       run: |
-        # Define an array of paths for signing.
-        $dllPaths = @(
-          '.\src\OpenTelemetry.Api\bin\Release\**\OpenTelemetry.Api.dll'
-          '.\src\OpenTelemetry\bin\Release\**\OpenTelemetry.dll'
-          '.\src\OpenTelemetry.Api.ProviderBuilderExtensions\bin\Release\**\OpenTelemetry.Api.ProviderBuilderExtensions.dll'
-        )
+        $projectFiles = Get-ChildItem -Path src/*/*.csproj -File
 
-        foreach ($path in $dllPaths) {
-          Write-Host "Processing path: $path"
-          Get-ChildItem -Path $path -File | ForEach-Object {
-            $fileFullPath = $_.FullName
-            Write-Host "Signing $fileFullPath"
-            cosign.exe sign-blob $fileFullPath --yes --output-signature $fileFullPath-keyless.sig --output-certificate $fileFullPath-keyless.pem
-          }
+        foreach ($projectFile in $projectFiles) {
+            $projectName = [System.IO.Path]::GetFileNameWithoutExtension($projectFile)
+
+            Get-ChildItem -Path src/$projectName/bin/Release/*/$projectName.dll -File | ForEach-Object {
+                $fileFullPath = $_.FullName
+                Write-Host "Signing $fileFullPath"
+
+                cosign.exe sign-blob $fileFullPath --yes --output-signature $fileFullPath-keyless.sig --output-certificate $fileFullPath-keyless.pem
+            }
         }
 
     - name: dotnet pack
