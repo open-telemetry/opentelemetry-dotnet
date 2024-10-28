@@ -1093,7 +1093,7 @@ public class MetricViewTests : MetricTestsBase
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void CardinalityLimitofMatchingViewTakesPrecedenceOverMeterProvider(bool setDefault)
+    public void CardinalityLimitOfMatchingViewTakesPrecedenceOverMeterProvider(bool setDefault)
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();

@@ -13,7 +13,7 @@
     <NuGetAuditMode>all</NuGetAuditMode>
     <NuGetAuditLevel>low</NuGetAuditLevel>
     <!-- Suppress warnings for repo code using experimental features -->
-    <NoWarn>$(NoWarn);OTEL1000;OTEL1001;OTEL1002;OTEL1003;OTEL1004</NoWarn>
+    <NoWarn>$(NoWarn);OTEL1000;OTEL1001;OTEL1002;OTEL1004</NoWarn>
     <!--temporarily disable. See 3958-->
     <!--<AnalysisLevel>latest-All</AnalysisLevel>-->
   </PropertyGroup>
