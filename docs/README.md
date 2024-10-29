@@ -102,7 +102,7 @@ To obtain an `ILogger` instance for emitting logs when using the
 the returned `OpenTelemetrySdk` instance:
 
 ```csharp
-var logger = sdk.GetLoggerFactory().CreateLogger<Program>()
+var logger = sdk.GetLoggerFactory().CreateLogger<Program>();
 logger.LogInformation("Application started");
 ```
 
