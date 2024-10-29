@@ -502,9 +502,8 @@ metrics managed by a given `MeterProvider`, use the
 
 > [!CAUTION]
 > `MeterProviderBuilder.SetMaxMetricPointsPerMetricStream` is marked `Obsolete`
-  in pre-release builds and has been replaced by
-  `MetricStreamConfiguration.CardinalityLimit`. For details see:
-  [OTEL1003](../../diagnostics/experimental-apis/OTEL1003.md).
+  in stable builds since 1.10.0 and has been replaced by
+  `MetricStreamConfiguration.CardinalityLimit`.
 
 ```csharp
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -519,11 +518,6 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 To set the [cardinality limit](../README.md#cardinality-limits) for an
 individual metric, use the `MetricStreamConfiguration.CardinalityLimit` property
 on the View API:
-
-> [!NOTE]
-> `MetricStreamConfiguration.CardinalityLimit` is an experimental API only
-  available in pre-release builds. For details see:
-  [OTEL1003](../../diagnostics/experimental-apis/OTEL1003.md).
 
 ```csharp
 var meterProvider = Sdk.CreateMeterProviderBuilder()

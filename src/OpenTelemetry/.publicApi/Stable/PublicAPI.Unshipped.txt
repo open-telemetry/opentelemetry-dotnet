@@ -1,3 +1,5 @@
+OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.get -> int?
+OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void
 OpenTelemetry.OpenTelemetrySdk
 OpenTelemetry.OpenTelemetrySdk.Dispose() -> void
 OpenTelemetry.OpenTelemetrySdk.LoggerProvider.get -> OpenTelemetry.Logs.LoggerProvider!
