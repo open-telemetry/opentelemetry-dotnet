@@ -16,7 +16,7 @@ Notes](../../RELEASENOTES.md).
 * Added support for Instrumentation Scope Attributes (i.e
   [ActivitySource.Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource.tags))
   when writing traces to the console.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5935](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5935))
 
 ## 1.10.0-beta.1
 
