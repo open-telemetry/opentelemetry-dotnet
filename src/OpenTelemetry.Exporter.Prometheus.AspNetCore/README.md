@@ -18,6 +18,12 @@ to scrape.
   Grafana](../../docs/metrics/getting-started-prometheus-grafana/README.md)
   tutorial for more information.
 
+<!-- This comment is to make sure the two notes above and below are not merged -->
+
+> [!NOTE]
+> Exemplars are only exported when the OpenMetrics format is requested (e.g.
+> with a `Accept: application/openmetrics-text` header).
+
 ## Prerequisite
 
 * [Get Prometheus](https://prometheus.io/docs/introduction/first_steps/)
