@@ -31,10 +31,22 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
                 this.WriteLine($"Activity.ParentSpanId:       {activity.ParentSpanId}");
             }
 
-            this.WriteLine($"Activity.ActivitySourceName: {activity.Source.Name}");
+            this.WriteLine($"Activity.ActivitySource.Name: {activity.Source.Name}");
             if (!string.IsNullOrEmpty(activity.Source.Version))
             {
-                this.WriteLine($"Activity.ActivitySourceVersion: {activity.Source.Version}");
+                this.WriteLine($"Activity.ActivitySource.Version: {activity.Source.Version}");
+            }
+
+            if (activity.Source.Tags != null)
+            {
+                this.WriteLine("Activity.ActivitySource.Tags:");
+                foreach (var activitySourceTag in activity.Source.Tags ?? [])
+                {
+                    if (this.TagWriter.TryTransformTag(activitySourceTag, out var result))
+                    {
+                        this.WriteLine($"    {result.Key}: {result.Value}");
+                    }
+                }
             }
 
             this.WriteLine($"Activity.DisplayName:        {activity.DisplayName}");

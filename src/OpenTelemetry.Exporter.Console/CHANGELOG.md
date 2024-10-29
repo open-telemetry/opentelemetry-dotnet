@@ -13,6 +13,11 @@ Notes](../../RELEASENOTES.md).
   ([#5874](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5874),
   [#5891](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5891))
 
+* Added support for Instrumentation Scope Attributes (i.e
+  [ActivitySource.Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource.tags))
+  when writing traces to the console.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.10.0-beta.1
 
 Released 2024-Sep-30
@@ -61,9 +66,9 @@ Released 2023-Dec-08
 
 Released 2023-Nov-29
 
-* Add support for Instrumentation Scope Attributes (i.e [Meter
-  Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)),
-  fixing issue
+* Added support for Instrumentation Scope Attributes (i.e
+  [Meter.Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)),
+  when writing metrics to the console, fixing issue
   [#4563](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4563).
   ([#5089](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5089))
 
