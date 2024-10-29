@@ -227,7 +227,7 @@ default boundaries. This requires the use of
 #### Determining Explicit Buckets for Histograms
 
 In OpenTelemetry .NET, histograms can be customized using both
-the View API and the Advice API. The actual explicit buckets used by
+the Advice API and the View API. The actual explicit buckets used by
 the SDK are determined based on the following factors:
 
 1. The explicit buckets provided by the instrumentation owner via the Advice API.
