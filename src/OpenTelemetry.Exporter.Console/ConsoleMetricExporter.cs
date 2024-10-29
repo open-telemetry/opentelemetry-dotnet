@@ -62,7 +62,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 
             this.WriteLine(msg.ToString());
 
-            if (metric.MeterTags != null)
+            if (metric.MeterTags?.Any() == true)
             {
                 this.WriteLine("\tMeter Tags:");
                 foreach (var meterTag in metric.MeterTags)

@@ -37,10 +37,10 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
                 this.WriteLine($"Activity.ActivitySource.Version: {activity.Source.Version}");
             }
 
-            if (activity.Source.Tags != null)
+            if (activity.Source.Tags?.Any() == true)
             {
                 this.WriteLine("Activity.ActivitySource.Tags:");
-                foreach (var activitySourceTag in activity.Source.Tags ?? [])
+                foreach (var activitySourceTag in activity.Source.Tags)
                 {
                     if (this.TagWriter.TryTransformTag(activitySourceTag, out var result))
                     {
