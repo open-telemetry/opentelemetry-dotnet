@@ -179,7 +179,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                             {
                                 if (!appendedTagString)
                                 {
-                                    exemplarString.Append(" Filtered Tags : ");
+                                    exemplarString.Append(" Filtered Tags: ");
                                     appendedTagString = true;
                                 }
 
@@ -244,7 +244,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                     {
                         if (this.TagWriter.TryTransformTag(resourceAttribute.Key, resourceAttribute.Value, out var result))
                         {
-                            this.WriteLine($"    {result.Key}: {result.Value}");
+                            this.WriteLine($"\t{result.Key}: {result.Value}");
                         }
                     }
                 }
