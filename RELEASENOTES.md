@@ -20,7 +20,7 @@ directory of each individual package.
     (supported in OtlpExporter & ConsoleExporter)
 
 * Experimental features promoted to stable:
- 
+
   * `CardinalityLimit` can now be managed for individual metrics via the View
     API. For details see: [Changing cardinality limit for a
     Metric](./docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric).
