@@ -31,7 +31,7 @@ Released 2024-Jun-14
 Released 2024-Jun-07
 
 * The experimental APIs previously covered by `OTEL1000`
-  (`LoggerProviderBuilder.AddConsoleExporter` extension) will now be part of the
+  (`LoggerProviderBuilder.AddConsoleExporter` extension) are now part of the
   public API and supported in stable builds.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
