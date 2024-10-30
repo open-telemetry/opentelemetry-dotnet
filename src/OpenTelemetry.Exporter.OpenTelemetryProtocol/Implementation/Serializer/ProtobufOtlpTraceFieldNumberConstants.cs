@@ -3,7 +3,7 @@
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
-internal static class ProtobufOtlpFieldNumberConstants
+internal static class ProtobufOtlpTraceFieldNumberConstants
 {
     // Resource spans
 #pragma warning disable SA1310 // Field names should not contain underscore
