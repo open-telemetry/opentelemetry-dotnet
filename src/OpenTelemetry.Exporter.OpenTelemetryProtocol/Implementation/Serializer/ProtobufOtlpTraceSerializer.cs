@@ -16,37 +16,39 @@ internal static class ProtobufOtlpTraceSerializer
     private const int SpanIdSize = 8;
 
     private static readonly Stack<List<Activity>> ActivityListPool = [];
+    private static readonly Dictionary<string, List<Activity>> ScopeTracesList = [];
 
     internal static int WriteTraceData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource, Batch<Activity> batch)
     {
-        var spansByLibrary = new Dictionary<string, List<Activity>>();
         foreach (var activity in batch)
         {
             var sourceName = activity.Source.Name;
-            if (!spansByLibrary.TryGetValue(sourceName, out var activities))
+            if (!ScopeTracesList.TryGetValue(sourceName, out var activities))
             {
                 activities = ActivityListPool.Count > 0 ? ActivityListPool.Pop() : new List<Activity>();
-                spansByLibrary[sourceName] = activities;
+                ScopeTracesList[sourceName] = activities;
             }
 
             activities.Add(activity);
         }
 
-        writePosition = WriteResourceSpans(buffer, writePosition, sdkLimitOptions, resource, spansByLibrary);
-        ReturnActivityListToPool(spansByLibrary);
+        writePosition = WriteResourceSpans(buffer, writePosition, sdkLimitOptions, resource, ScopeTracesList);
+        ReturnActivityListToPool();
 
         return writePosition;
     }
 
-    internal static void ReturnActivityListToPool(Dictionary<string, List<Activity>>? scopeTraces)
+    internal static void ReturnActivityListToPool()
     {
-        if (scopeTraces != null)
+        if (ScopeTracesList.Count != 0)
         {
-            foreach (var entry in scopeTraces)
+            foreach (var entry in ScopeTracesList)
             {
                 entry.Value.Clear();
                 ActivityListPool.Push(entry.Value);
             }
+
+            ScopeTracesList.Clear();
         }
     }
 
