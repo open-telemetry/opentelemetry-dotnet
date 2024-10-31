@@ -1049,7 +1049,7 @@ public class OtlpTraceExporterTests
         return scopeSpans.Spans.FirstOrDefault();
     }
 
-    private static OtlpCollector.ExportTraceServiceRequest CreateTraceExportRequest(SdkLimitOptions sdkOptions, Batch<Activity> batch, Resource resource)
+    private static OtlpCollector.ExportTraceServiceRequest CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)
     {
         var buffer = new byte[4096];
         var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(buffer, 0, sdkOptions, resource, batch);

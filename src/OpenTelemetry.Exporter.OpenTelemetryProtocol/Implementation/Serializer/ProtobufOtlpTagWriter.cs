@@ -84,6 +84,8 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     internal struct OtlpTagWriterState
     {
         public byte[] Buffer;
+        public int DroppedTagCount;
+        public int TagCount;
         public int WritePosition;
     }
 
