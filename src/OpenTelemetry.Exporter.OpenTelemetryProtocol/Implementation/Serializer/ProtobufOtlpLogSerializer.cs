@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
-internal class ProtobufOtlpLogSerializer
+internal static class ProtobufOtlpLogSerializer
 {
     private const int ReserveSizeForLength = 4;
     private const int TraceIdSize = 16;
@@ -16,7 +16,7 @@ internal class ProtobufOtlpLogSerializer
     private static readonly Stack<List<LogRecord>> LogsListPool = [];
     private static readonly Dictionary<string, List<LogRecord>> ScopeLogsList = [];
 
-    internal static int WriteLogsData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Batch<LogRecord> logRecordBatch)
+    internal static int WriteLogsData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, in Batch<LogRecord> logRecordBatch)
     {
         foreach (var logRecord in logRecordBatch)
         {

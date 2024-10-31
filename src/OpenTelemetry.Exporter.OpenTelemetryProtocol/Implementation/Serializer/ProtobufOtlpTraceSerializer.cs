@@ -18,7 +18,7 @@ internal static class ProtobufOtlpTraceSerializer
     private static readonly Stack<List<Activity>> ActivityListPool = [];
     private static readonly Dictionary<string, List<Activity>> ScopeTracesList = [];
 
-    internal static int WriteTraceData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource, Batch<Activity> batch)
+    internal static int WriteTraceData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource, in Batch<Activity> batch)
     {
         foreach (var activity in batch)
         {
