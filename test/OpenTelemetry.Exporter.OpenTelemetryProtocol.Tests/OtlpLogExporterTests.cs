@@ -1176,7 +1176,6 @@ public class OtlpLogExporterTests
         var logRecord = logRecords.Single();
         var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new());
 
-
         var otlpLogRecord = useCustomSerializer
             ? ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord)
             : otlpLogRecordTransformer.ToOtlpLog(logRecord);
