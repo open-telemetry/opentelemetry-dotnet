@@ -49,6 +49,10 @@ public readonly struct LogRecordScope
             {
                 this.scope = new List<KeyValuePair<string, object?>>(scopeEnumerable);
             }
+            else if (scope is IEnumerable<KeyValuePair<string, string?>> otherScopeEnumerable)
+            {
+                this.scope = new List<KeyValuePair<string, object?>>(otherScopeEnumerable.Select(x => new KeyValuePair<string, object?>(x.Key, x.Value)));
+            }
             else
             {
                 this.scope = new List<KeyValuePair<string, object?>>
