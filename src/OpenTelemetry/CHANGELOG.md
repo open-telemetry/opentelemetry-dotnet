@@ -7,8 +7,8 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * The experimental APIs previously covered by `OTEL1003`
-  (`MetricStreamConfiguration.CardinalityLimit`) will now be part of the public
-  API and supported in stable builds.
+  (`MetricStreamConfiguration.CardinalityLimit`) are now part of the public API
+  and supported in stable builds.
   ([#5926](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5926))
 
 * Promoted overflow attribute from experimental to stable and removed the
@@ -80,7 +80,7 @@ Released 2024-Jun-07
 
 * The experimental APIs previously covered by `OTEL1000`
   (`LoggerProviderBuilder` `AddProcessor` & `ConfigureResource` extensions, and
-  `LoggerProvider` `ForceFlush` & `Shutdown` extensions) will now be part of the
+  `LoggerProvider` `ForceFlush` & `Shutdown` extensions) are now part of the
   public API and supported in stable builds.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
@@ -107,8 +107,8 @@ Released 2024-May-20
 * The experimental APIs previously covered by `OTEL1002` (`Exemplar`,
   `ExemplarFilterType`, `MeterProviderBuilder.SetExemplarFilter`,
   `ReadOnlyExemplarCollection`, `ReadOnlyFilteredTagCollection`, &
-  `MetricPoint.TryGetExemplars`) will now be part of the public API and
-  supported in stable builds.
+  `MetricPoint.TryGetExemplars`) are now part of the public API and supported in
+  stable builds.
   ([#5607](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5607))
 
 * Fixed the nullable annotations for the `SamplingResult` constructors

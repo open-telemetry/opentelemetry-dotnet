@@ -23,7 +23,7 @@ Released 2024-Jun-14
 Released 2024-Jun-07
 
 * The experimental APIs previously covered by `OTEL1000`
-  (`OpenTelemetryBuilder.WithLogging` method) will now be part of the public API
+  (`OpenTelemetryBuilder.WithLogging` method) are now be part of the public API
   and supported in stable builds.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
