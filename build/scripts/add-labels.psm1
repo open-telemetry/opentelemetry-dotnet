@@ -38,7 +38,7 @@ function AddLabelsOnPullRequestsBasedOnFilesChanged {
   # it automatically in order to also allow manual inclusion after reviewing files
   $managedLabels = 'infra', 'documentation', 'dependencies'
   $rootInfraFiles = 'global.json', 'NuGet.config', 'codeowners'
-  $documentationFiles = 'readme.md', 'contributing.md', 'releasing.md', 'versioning.md'
+  $documentationFiles = 'readme.md', 'contributing.md', 'releasing.md', 'versioning.md', 'releasenotes.md'
 
   foreach ($fileChanged in $filesChangedOnPullRequest)
   {
