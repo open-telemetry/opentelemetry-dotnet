@@ -1,0 +1,34 @@
+name: Resolve automation settings
+
+on:
+  workflow_call:
+    outputs:
+      enabled:
+        value: ${{ jobs.resolve-automation.outputs.enabled == 'true' }}
+      token-secret-name:
+        value: ${{ jobs.resolve-automation.outputs.token-secret-name }}
+      username:
+        value: ${{ vars.AUTOMATION_USERNAME }}
+      email:
+        value: ${{ vars.AUTOMATION_EMAIL }}
+    secrets:
+      OPENTELEMETRYBOT_GITHUB_TOKEN:
+        required: false
+
+jobs:
+  resolve-automation:
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      enabled: ${{ steps.evaluate.outputs.enabled }}
+      token-secret-name: ${{ steps.evaluate.outputs.token-secret-name }}
+
+    env:
+      OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
+
+    steps:
+    - id: evaluate
+      run: |
+        echo "enabled=${{ env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true' }}" >> "$GITHUB_OUTPUT"
+        echo "token-secret-name=OPENTELEMETRYBOT_GITHUB_TOKEN" >> "$GITHUB_OUTPUT"

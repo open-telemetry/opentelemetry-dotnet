@@ -1,9 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
+using System.Globalization;
 
 namespace OpenTelemetry.Internal;
 
@@ -26,24 +25,33 @@ internal abstract class TagWriter<TTagState, TArrayState>
         KeyValuePair<string, object?> tag,
         int? tagValueMaxLength = null)
     {
-        if (tag.Value == null)
+        return this.TryWriteTag(ref state, tag.Key, tag.Value, tagValueMaxLength);
+    }
+
+    public bool TryWriteTag(
+        ref TTagState state,
+        string key,
+        object? value,
+        int? tagValueMaxLength = null)
+    {
+        if (value == null)
         {
             return false;
         }
 
-        switch (tag.Value)
+        switch (value)
         {
             case char c:
-                this.WriteCharTag(ref state, tag.Key, c);
+                this.WriteCharTag(ref state, key, c);
                 break;
             case string s:
                 this.WriteStringTag(
                     ref state,
-                    tag.Key,
+                    key,
                     TruncateString(s.AsSpan(), tagValueMaxLength));
                 break;
             case bool b:
-                this.WriteBooleanTag(ref state, tag.Key, b);
+                this.WriteBooleanTag(ref state, key, b);
                 break;
             case byte:
             case sbyte:
@@ -52,23 +60,23 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case int:
             case uint:
             case long:
-                this.WriteIntegralTag(ref state, tag.Key, Convert.ToInt64(tag.Value));
+                this.WriteIntegralTag(ref state, key, Convert.ToInt64(value));
                 break;
             case float:
             case double:
-                this.WriteFloatingPointTag(ref state, tag.Key, Convert.ToDouble(tag.Value));
+                this.WriteFloatingPointTag(ref state, key, Convert.ToDouble(value));
                 break;
             case Array array:
                 try
                 {
-                    this.WriteArrayTagInternal(ref state, tag.Key, array, tagValueMaxLength);
+                    this.WriteArrayTagInternal(ref state, key, array, tagValueMaxLength);
                 }
                 catch
                 {
                     // If an exception is thrown when calling ToString
                     // on any element of the array, then the entire array value
                     // is ignored.
-                    return this.LogUnsupportedTagTypeAndReturnFalse(tag.Key, tag.Value);
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
                 }
 
                 break;
@@ -82,21 +90,21 @@ internal abstract class TagWriter<TTagState, TArrayState>
             default:
                 try
                 {
-                    var stringValue = Convert.ToString(tag.Value/*TODO: , CultureInfo.InvariantCulture*/);
+                    var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
                     if (stringValue == null)
                     {
-                        return this.LogUnsupportedTagTypeAndReturnFalse(tag.Key, tag.Value);
+                        return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
                     }
 
                     this.WriteStringTag(
                         ref state,
-                        tag.Key,
+                        key,
                         TruncateString(stringValue.AsSpan(), tagValueMaxLength));
                 }
                 catch
                 {
                     // If ToString throws an exception then the tag is ignored.
-                    return this.LogUnsupportedTagTypeAndReturnFalse(tag.Key, tag.Value);
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
                 }
 
                 break;
@@ -247,7 +255,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 // case ulong:   May throw an exception on overflow.
                 // case decimal: Converting to double produces rounding errors.
                 default:
-                    var stringValue = Convert.ToString(item/*TODO: , CultureInfo.InvariantCulture*/);
+                    var stringValue = Convert.ToString(item, CultureInfo.InvariantCulture);
                     if (stringValue == null)
                     {
                         this.arrayWriter.WriteNullValue(ref arrayState);

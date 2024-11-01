@@ -1,10 +1,92 @@
 # Changelog
 
+This file contains individual changes for the OpenTelemetry package. For
+highlights and announcements covering all components see: [Release
+Notes](../../RELEASENOTES.md).
+
 ## Unreleased
+
+* The experimental APIs previously covered by `OTEL1003`
+  (`MetricStreamConfiguration.CardinalityLimit`) are now part of the public API
+  and supported in stable builds.
+  ([#5926](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5926))
+
+* Promoted overflow attribute from experimental to stable and removed the
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE` environment variable.
+
+  **Previous Behavior:**
+  By default, when the cardinality limit was reached, measurements were dropped,
+  and an internal log was emitted the first time this occurred. Users could
+  opt-in to experimental overflow attribute feature with
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`.
+  With this setting, the SDK would use an overflow attribute
+  (`otel.metric.overflow = true`) to aggregate measurements instead of dropping
+  measurements. No internal log was emitted in this case.
+
+  **New Behavior:**
+  The SDK now always uses the overflow attribute (`otel.metric.overflow = true`)
+  to aggregate measurements when the cardinality limit is reached. The previous
+  approach of dropping measurements has been removed. No internal logs are
+  emitted when the limit is hit.
+
+  The default cardinality limit remains 2000 per metric. To set the cardinality
+  limit for an individual metric, use the [changing cardinality limit for a
+  Metric](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric).
+
+  There is NO ability to revert to old behavior.
+  ([#5909](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5909))
 
 * Exposed a `public` constructor on `Batch<T>` which accepts a single instance
   of `T` to be contained in the batch.
   ([#5642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5642))
+
+## 1.10.0-beta.1
+
+Released 2024-Sep-30
+
+* Added `OpenTelemetrySdk.Create` API for configuring OpenTelemetry .NET signals
+  (logging, tracing, and metrics) via a single builder. This new API simplifies
+  bootstrap and teardown, and supports cross-cutting extensions targeting
+  `IOpenTelemetryBuilder`.
+  ([#5325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5325))
+
+* Updated the `Microsoft.Extensions.Logging.Configuration` and
+  `Microsoft.Extensions.Diagnostics.Abstractions` packages version to
+  `9.0.0-rc.1.24431.7`.
+  ([#5853](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5853))
+
+* Added support in metrics for histogram bucket boundaries set via the .NET 9
+  [InstrumentAdvice&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.instrumentadvice-1)
+  API.
+
+  Note: With this change explicit bucket histogram boundary resolution will
+  apply in the following order:
+
+    1. View API
+    2. Advice API
+    3. SDK defaults
+
+  See [#5854](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5854)
+  for details.
+
+* Added support for collecting metrics emitted via the .NET 9
+  [Gauge&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.gauge-1)
+  API.
+  ([#5867](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5867))
+
+## 1.9.0
+
+Released 2024-Jun-14
+
+## 1.9.0-rc.1
+
+Released 2024-Jun-07
+
+* The experimental APIs previously covered by `OTEL1000`
+  (`LoggerProviderBuilder` `AddProcessor` & `ConfigureResource` extensions, and
+  `LoggerProvider` `ForceFlush` & `Shutdown` extensions) are now part of the
+  public API and supported in stable builds.
+  ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
 ## 1.9.0-alpha.1
 
@@ -29,8 +111,8 @@ Released 2024-May-20
 * The experimental APIs previously covered by `OTEL1002` (`Exemplar`,
   `ExemplarFilterType`, `MeterProviderBuilder.SetExemplarFilter`,
   `ReadOnlyExemplarCollection`, `ReadOnlyFilteredTagCollection`, &
-  `MetricPoint.TryGetExemplars`) will now be part of the public API and
-  supported in stable builds.
+  `MetricPoint.TryGetExemplars`) are now part of the public API and supported in
+  stable builds.
   ([#5607](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5607))
 
 * Fixed the nullable annotations for the `SamplingResult` constructors

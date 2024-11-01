@@ -11,10 +11,10 @@ internal sealed class PrometheusHttpListener : IDisposable
 {
     private readonly PrometheusExporter exporter;
     private readonly HttpListener httpListener = new();
-    private readonly object syncObject = new();
+    private readonly Lock syncObject = new();
 
-    private CancellationTokenSource tokenSource;
-    private Task workerThread;
+    private CancellationTokenSource? tokenSource;
+    private Task? workerThread;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PrometheusHttpListener"/> class.
@@ -28,7 +28,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 
         this.exporter = exporter;
 
-        string path = options.ScrapeEndpointPath;
+        string path = options.ScrapeEndpointPath ?? PrometheusHttpListenerOptions.DefaultScrapeEndpointPath;
 
         if (!path.StartsWith("/"))
         {
@@ -83,7 +83,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             }
 
             this.tokenSource.Cancel();
-            this.workerThread.Wait();
+            this.workerThread!.Wait();
             this.tokenSource = null;
         }
     }
@@ -116,7 +116,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         try
         {
             using var scope = SuppressInstrumentationScope.Begin();
-            while (!this.tokenSource.IsCancellationRequested)
+            while (!this.tokenSource!.IsCancellationRequested)
             {
                 var ctxTask = this.httpListener.GetContextAsync();
                 ctxTask.Wait(this.tokenSource.Token);
@@ -164,7 +164,7 @@ internal sealed class PrometheusHttpListener : IDisposable
                         ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
                         : "text/plain; charset=utf-8; version=0.0.4";
 
-                    await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count).ConfigureAwait(false);
+                    await context.Response.OutputStream.WriteAsync(dataView.Array!, 0, dataView.Count).ConfigureAwait(false);
                 }
                 else
                 {

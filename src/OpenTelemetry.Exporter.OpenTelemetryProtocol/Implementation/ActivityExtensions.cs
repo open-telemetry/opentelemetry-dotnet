@@ -32,9 +32,11 @@ internal static class ActivityExtensions
         };
         request.ResourceSpans.Add(resourceSpans);
 
+        var maxTags = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
+
         foreach (var activity in activityBatch)
         {
-            Span span = activity.ToOtlpSpan(sdkLimitOptions);
+            Span? span = activity.ToOtlpSpan(sdkLimitOptions);
             if (span == null)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateActivity(
@@ -44,15 +46,15 @@ internal static class ActivityExtensions
             }
 
             var activitySourceName = activity.Source.Name;
-            if (!spansByLibrary.TryGetValue(activitySourceName, out var spans))
+            if (!spansByLibrary.TryGetValue(activitySourceName, out var scopeSpans))
             {
-                spans = GetSpanListFromPool(activitySourceName, activity.Source.Version);
+                scopeSpans = GetSpanListFromPool(activity.Source, maxTags, sdkLimitOptions.AttributeValueLengthLimit);
 
-                spansByLibrary.Add(activitySourceName, spans);
-                resourceSpans.ScopeSpans.Add(spans);
+                spansByLibrary.Add(activitySourceName, scopeSpans);
+                resourceSpans.ScopeSpans.Add(scopeSpans);
             }
 
-            spans.Spans.Add(span);
+            scopeSpans.Spans.Add(span);
         }
     }
 
@@ -65,38 +67,73 @@ internal static class ActivityExtensions
             return;
         }
 
-        foreach (var scope in resourceSpans.ScopeSpans)
+        foreach (var scopeSpan in resourceSpans.ScopeSpans)
         {
-            scope.Spans.Clear();
-            SpanListPool.Add(scope);
+            scopeSpan.Spans.Clear();
+            scopeSpan.Scope.Attributes.Clear();
+            SpanListPool.Add(scopeSpan);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static ScopeSpans GetSpanListFromPool(string name, string version)
+    internal static ScopeSpans GetSpanListFromPool(ActivitySource activitySource, int maxTags, int? attributeValueLengthLimit)
     {
-        if (!SpanListPool.TryTake(out var spans))
+        if (!SpanListPool.TryTake(out var scopeSpans))
         {
-            spans = new ScopeSpans
+            scopeSpans = new ScopeSpans
             {
                 Scope = new InstrumentationScope
                 {
-                    Name = name, // Name is enforced to not be null, but it can be empty.
-                    Version = version ?? string.Empty, // NRE throw by proto
+                    Name = activitySource.Name, // Name is enforced to not be null, but it can be empty.
+                    Version = activitySource.Version ?? string.Empty, // NRE throw by proto
                 },
             };
         }
         else
         {
-            spans.Scope.Name = name;
-            spans.Scope.Version = version ?? string.Empty;
+            scopeSpans.Scope.Name = activitySource.Name; // Name is enforced to not be null, but it can be empty.
+            scopeSpans.Scope.Version = activitySource.Version ?? string.Empty; // NRE throw by proto
         }
 
-        return spans;
+        if (activitySource.Tags != null)
+        {
+            var scopeAttributes = scopeSpans.Scope.Attributes;
+
+            if (activitySource.Tags is IReadOnlyList<KeyValuePair<string, object?>> activitySourceTagsList)
+            {
+                for (int i = 0; i < activitySourceTagsList.Count; i++)
+                {
+                    if (scopeAttributes.Count < maxTags)
+                    {
+                        OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, activitySourceTagsList[i], attributeValueLengthLimit);
+                    }
+                    else
+                    {
+                        scopeSpans.Scope.DroppedAttributesCount++;
+                    }
+                }
+            }
+            else
+            {
+                foreach (var tag in activitySource.Tags)
+                {
+                    if (scopeAttributes.Count < maxTags)
+                    {
+                        OtlpTagWriter.Instance.TryWriteTag(ref scopeAttributes, tag, attributeValueLengthLimit);
+                    }
+                    else
+                    {
+                        scopeSpans.Scope.DroppedAttributesCount++;
+                    }
+                }
+            }
+        }
+
+        return scopeSpans;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static Span ToOtlpSpan(this Activity activity, SdkLimitOptions sdkLimitOptions)
+    internal static Span? ToOtlpSpan(this Activity activity, SdkLimitOptions sdkLimitOptions)
     {
         if (activity.IdFormat != ActivityIdFormat.W3C)
         {
@@ -145,7 +182,7 @@ internal static class ActivityExtensions
 
         if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
         {
-            PeerServiceResolver.Resolve(ref otlpTags, out string peerServiceName, out bool addAsTag);
+            PeerServiceResolver.Resolve(ref otlpTags, out string? peerServiceName, out bool addAsTag);
 
             if (peerServiceName != null && addAsTag)
             {
@@ -180,7 +217,7 @@ internal static class ActivityExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static OtlpTrace.Status ToOtlpStatus(this Activity activity, ref TagEnumerationState otlpTags)
+    private static OtlpTrace.Status? ToOtlpStatus(this Activity activity, ref TagEnumerationState otlpTags)
     {
         var statusCodeForTagValue = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
         if (activity.Status == ActivityStatusCode.Unset && statusCodeForTagValue == null)
@@ -189,7 +226,7 @@ internal static class ActivityExtensions
         }
 
         OtlpTrace.Status.Types.StatusCode otlpActivityStatusCode = OtlpTrace.Status.Types.StatusCode.Unset;
-        string otlpStatusDescription = null;
+        string? otlpStatusDescription = null;
         if (activity.Status != ActivityStatusCode.Unset)
         {
             // The numerical values of the two enumerations match, a simple cast is enough.
@@ -204,7 +241,7 @@ internal static class ActivityExtensions
             if (statusCodeForTagValue != StatusCode.Unset)
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
-                otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)statusCodeForTagValue;
+                otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)statusCodeForTagValue!;
                 if (statusCodeForTagValue == StatusCode.Error && !string.IsNullOrEmpty(otlpTags.StatusDescription))
                 {
                     otlpStatusDescription = otlpTags.StatusDescription;
@@ -304,17 +341,17 @@ internal static class ActivityExtensions
 
         public Span Span;
 
-        public string StatusCode;
+        public string? StatusCode;
 
-        public string StatusDescription;
+        public string? StatusDescription;
 
-        public string PeerService { get; set; }
+        public string? PeerService { get; set; }
 
         public int? PeerServicePriority { get; set; }
 
-        public string HostName { get; set; }
+        public string? HostName { get; set; }
 
-        public string IpAddress { get; set; }
+        public string? IpAddress { get; set; }
 
         public long Port { get; set; }
 

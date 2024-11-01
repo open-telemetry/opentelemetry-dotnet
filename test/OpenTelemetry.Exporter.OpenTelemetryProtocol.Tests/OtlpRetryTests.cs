@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Net;
 using System.Net.Http.Headers;
 #if NETFRAMEWORK
@@ -263,7 +261,7 @@ public class OtlpRetryTests
         {
             yield return new[] { new HttpRetryTestCase("NetworkError", [new(statusCode: null)]) };
             yield return new[] { new HttpRetryTestCase("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]) };
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET
             yield return new[] { new HttpRetryTestCase("ServiceUnavailable", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1))]) };
 #endif
 

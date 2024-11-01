@@ -10,8 +10,6 @@ namespace OpenTelemetry.Exporter;
 
 public class ConsoleMetricExporter : ConsoleExporter<Metric>
 {
-    private Resource resource;
-
     public ConsoleMetricExporter(ConsoleExporterOptions options)
         : base(options)
     {
@@ -19,30 +17,13 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 
     public override ExportResult Export(in Batch<Metric> batch)
     {
-        if (this.resource == null)
-        {
-            this.resource = this.ParentProvider.GetResource();
-            if (this.resource != Resource.Empty)
-            {
-                this.WriteLine("Resource associated with Metric:");
-                foreach (var resourceAttribute in this.resource.Attributes)
-                {
-                    if (this.TagWriter.TryTransformTag(resourceAttribute, out var result))
-                    {
-                        this.WriteLine($"    {result.Key}: {result.Value}");
-                    }
-                }
-            }
-        }
-
         foreach (var metric in batch)
         {
             var msg = new StringBuilder($"\n");
             msg.Append($"Metric Name: {metric.Name}");
             if (metric.Description != string.Empty)
             {
-                msg.Append(", ");
-                msg.Append(metric.Description);
+                msg.Append($", Description: {metric.Description}");
             }
 
             if (metric.Unit != string.Empty)
@@ -50,29 +31,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 msg.Append($", Unit: {metric.Unit}");
             }
 
-            if (!string.IsNullOrEmpty(metric.MeterName))
-            {
-                msg.Append($", Meter: {metric.MeterName}");
-
-                if (!string.IsNullOrEmpty(metric.MeterVersion))
-                {
-                    msg.Append($"/{metric.MeterVersion}");
-                }
-            }
-
             this.WriteLine(msg.ToString());
-
-            if (metric.MeterTags != null)
-            {
-                foreach (var meterTag in metric.MeterTags)
-                {
-                    this.WriteLine("\tMeter Tags:");
-                    if (this.TagWriter.TryTransformTag(meterTag, out var result))
-                    {
-                        this.WriteLine($"\t\t{result.Key}: {result.Value}");
-                    }
-                }
-            }
 
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
@@ -220,7 +179,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                             {
                                 if (!appendedTagString)
                                 {
-                                    exemplarString.Append(" Filtered Tags : ");
+                                    exemplarString.Append(" Filtered Tags: ");
                                     appendedTagString = true;
                                 }
 
@@ -257,6 +216,38 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 }
 
                 this.WriteLine(msg.ToString());
+
+                this.WriteLine("Instrumentation scope (Meter):");
+                this.WriteLine($"\tName: {metric.MeterName}");
+                if (!string.IsNullOrEmpty(metric.MeterVersion))
+                {
+                    this.WriteLine($"\tVersion: {metric.MeterVersion}");
+                }
+
+                if (metric.MeterTags?.Any() == true)
+                {
+                    this.WriteLine("\tTags:");
+                    foreach (var meterTag in metric.MeterTags)
+                    {
+                        if (this.TagWriter.TryTransformTag(meterTag, out var result))
+                        {
+                            this.WriteLine($"\t\t{result.Key}: {result.Value}");
+                        }
+                    }
+                }
+
+                var resource = this.ParentProvider.GetResource();
+                if (resource != Resource.Empty)
+                {
+                    this.WriteLine("Resource associated with Metric:");
+                    foreach (var resourceAttribute in resource.Attributes)
+                    {
+                        if (this.TagWriter.TryTransformTag(resourceAttribute.Key, resourceAttribute.Value, out var result))
+                        {
+                            this.WriteLine($"\t{result.Key}: {result.Value}");
+                        }
+                    }
+                }
             }
         }
 

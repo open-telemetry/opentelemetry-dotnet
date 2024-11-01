@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,7 +38,7 @@ internal sealed class OtlpExporterBuilder
 
         name ??= Options.DefaultName;
 
-        RegisterOtlpExporterServices(services!, name!);
+        RegisterOtlpExporterServices(services!, name);
 
         this.name = name;
         this.Services = services!;
@@ -176,9 +174,9 @@ internal sealed class OtlpExporterBuilder
         services!.AddOtlpExporterTracingServices();
 
         // Note: UseOtlpExporterRegistration is added to the service collection
-        // to detect repeated calls to "UseOtlpExporter" and to throw if
-        // "AddOtlpExporter" extensions are called
-        services!.AddSingleton<UseOtlpExporterRegistration>();
+        // for each invocation to detect repeated calls to "UseOtlpExporter" and
+        // to throw if "AddOtlpExporter" extensions are called
+        services!.AddSingleton(UseOtlpExporterRegistration.Instance);
 
         services!.RegisterOptionsFactory((sp, configuration, name) => new OtlpExporterBuilderOptions(
             configuration,

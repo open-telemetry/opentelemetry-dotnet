@@ -320,10 +320,10 @@ cases, it is recommended to use that option as it offers higher performance.
 
 OpenTelemetry .NET SDK has provided the following built-in samplers:
 
-* [AlwaysOffSampler](../../../src/OpenTelemetry/Trace/AlwaysOffSampler.cs)
-* [AlwaysOnSampler](../../../src/OpenTelemetry/Trace/AlwaysOnSampler.cs)
-* [ParentBasedSampler](../../../src/OpenTelemetry/Trace/ParentBasedSampler.cs)
-* [TraceIdRatioBasedSampler](../../../src/OpenTelemetry/Trace/TraceIdRatioBasedSampler.cs)
+* [AlwaysOffSampler](../../../src/OpenTelemetry/Trace/Sampler/AlwaysOffSampler.cs)
+* [AlwaysOnSampler](../../../src/OpenTelemetry/Trace/Sampler/AlwaysOnSampler.cs)
+* [ParentBasedSampler](../../../src/OpenTelemetry/Trace/Sampler/ParentBasedSampler.cs)
+* [TraceIdRatioBasedSampler](../../../src/OpenTelemetry/Trace/Sampler/TraceIdRatioBasedSampler.cs)
 
 Custom samplers can be implemented to cover more scenarios:
 
@@ -338,7 +338,7 @@ class MySampler : Sampler
 {
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
-        return new SamplingResult(SamplingDecision.RecordAndSampled);
+        return new SamplingResult(SamplingDecision.RecordAndSample);
     }
 }
 ```

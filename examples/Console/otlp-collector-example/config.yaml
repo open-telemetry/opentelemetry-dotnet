@@ -8,20 +8,22 @@ receivers:
   otlp:
     protocols:
       grpc:
+        endpoint: 0.0.0.0:4317
       http:
+        endpoint: 0.0.0.0:4318
 
 exporters:
-  logging:
+  debug:
     verbosity: detailed
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [logging]
+      exporters: [debug]
     metrics:
       receivers: [otlp]
-      exporters: [logging]
+      exporters: [debug]
     logs:
       receivers: [otlp]
-      exporters: [logging]
+      exporters: [debug]

@@ -23,14 +23,6 @@ public class CircularBufferTest
     }
 
     [Fact]
-    public void CheckNullValueWhenAdding()
-    {
-        int capacity = 1;
-        var circularBuffer = new CircularBuffer<string>(capacity);
-        Assert.Throws<ArgumentNullException>(() => circularBuffer.Add(null));
-    }
-
-    [Fact]
     public void CheckValueWhenAdding()
     {
         int capacity = 1;

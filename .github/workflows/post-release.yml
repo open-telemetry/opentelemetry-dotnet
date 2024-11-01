@@ -1,0 +1,122 @@
+name: Complete release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        description: 'Release tag'
+        type: string
+
+  release:
+    types:
+    - published
+
+  issue_comment:
+    types:
+    - created
+
+jobs:
+  automation:
+    uses: ./.github/workflows/automation.yml
+    secrets: inherit
+
+  push-packages-and-publish-release:
+    runs-on: ubuntu-latest
+
+    needs: automation
+
+    if: |
+      github.event_name == 'issue_comment'
+      && github.event.issue.pull_request
+      && github.event.issue.locked == true
+      && github.event.comment.user.login != needs.automation.outputs.username
+      && contains(github.event.comment.body, '/PushPackages')
+      && startsWith(github.event.issue.title, '[release] Prepare release ')
+      && github.event.issue.pull_request.merged_at
+      && needs.automation.outputs.enabled
+
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        ref: ${{ github.event.repository.default_branch }}
+
+    - name: Push packages and publish release
+      shell: pwsh
+      env:
+        NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
+      run: |
+        Import-Module .\build\scripts\post-release.psm1
+
+        PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest `
+          -gitRepository '${{ github.repository }}' `
+          -pullRequestNumber '${{ github.event.issue.number }}' `
+          -botUserName '${{ needs.automation.outputs.username }}' `
+          -commentUserName '${{ github.event.comment.user.login }}' `
+          -artifactDownloadPath '${{ github.workspace }}/artifacts' `
+          -pushToNuget '${{ secrets.NUGET_TOKEN != '' }}'
+
+  post-release-published:
+    runs-on: ubuntu-latest
+
+    needs:
+    - automation
+
+    if: |
+      needs.automation.outputs.enabled
+      && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
+
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # Note: By default GitHub only fetches 1 commit. We need all the tags
+        # for this work.
+        fetch-depth: 0
+        ref: ${{ github.event.repository.default_branch }}
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v4
+
+    - name: Create GitHub Pull Request to update stable build version in props
+      if: |
+          (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
+          || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\post-release.psm1
+
+        CreateStableVersionUpdatePullRequest `
+          -gitRepository '${{ github.repository }}' `
+          -tag '${{ inputs.tag || github.ref_name }}' `
+          -targetBranch '${{ github.event.repository.default_branch }}' `
+          -gitUserName '${{ needs.automation.outputs.username }}' `
+          -gitUserEmail '${{ needs.automation.outputs.email }}'
+
+    - name: Invoke core version update workflow in opentelemetry-dotnet-contrib repository
+      if: vars.CONTRIB_REPO
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\post-release.psm1
+
+        InvokeCoreVersionUpdateWorkflowInRemoteRepository `
+          -remoteGitRepository '${{ vars.CONTRIB_REPO }}' `
+          -tag '${{ inputs.tag || github.ref_name }}'
+
+    - name: Post notice when release is published
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\post-release.psm1
+
+        TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
+          -gitRepository '${{ github.repository }}' `
+          -botUserName '${{ needs.automation.outputs.username }}' `
+          -tag '${{ inputs.tag || github.ref_name }}'

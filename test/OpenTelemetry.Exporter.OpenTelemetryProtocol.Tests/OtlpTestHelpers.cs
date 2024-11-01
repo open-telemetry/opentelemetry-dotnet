@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using Google.Protobuf.Collections;
 using Xunit;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
@@ -10,7 +11,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 internal static class OtlpTestHelpers
 {
     public static void AssertOtlpAttributes(
-        IEnumerable<KeyValuePair<string, object>> expected,
+        IEnumerable<KeyValuePair<string, object?>> expected,
         RepeatedField<OtlpCommon.KeyValue> actual)
     {
         var expectedAttributes = expected.ToList();
@@ -19,6 +20,7 @@ internal static class OtlpTestHelpers
         {
             var current = expectedAttributes[i].Value;
             Assert.Equal(expectedAttributes[i].Key, actual[i].Key);
+            Assert.NotNull(current);
 
             if (current.GetType().IsArray)
             {
@@ -90,7 +92,7 @@ internal static class OtlpTestHelpers
         Assert.Equal(expectedSize, actual.Count);
     }
 
-    private static void AssertOtlpAttributeValue(object expected, OtlpCommon.AnyValue actual)
+    private static void AssertOtlpAttributeValue(object? expected, OtlpCommon.AnyValue actual)
     {
         switch (expected)
         {
@@ -110,7 +112,7 @@ internal static class OtlpTestHelpers
                 Assert.Equal(i, actual.IntValue);
                 break;
             default:
-                Assert.Equal(expected.ToString(), actual.StringValue);
+                Assert.Equal(Convert.ToString(expected, CultureInfo.InvariantCulture), actual.StringValue);
                 break;
         }
     }

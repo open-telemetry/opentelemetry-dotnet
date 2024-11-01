@@ -15,7 +15,7 @@ internal class TestInMemoryExporter
     // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
     //
     // dotnet run inmemory
-    internal static object Run(InMemoryOptions options)
+    internal static int Run(InMemoryOptions options)
     {
         // List that will be populated with the traces by InMemoryExporter
         var exportedItems = new List<Activity>();
@@ -28,7 +28,7 @@ internal class TestInMemoryExporter
             System.Console.WriteLine($"ActivitySource: {activity.Source.Name} logged the activity {activity.DisplayName}");
         }
 
-        return null;
+        return 0;
     }
 
     private static void RunWithActivitySource(ICollection<Activity> exportedItems)
@@ -36,10 +36,10 @@ internal class TestInMemoryExporter
         // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
         // and use InMemory exporter.
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                .ConfigureResource(r => r.AddService("inmemory-test"))
-                .AddInMemoryExporter(exportedItems)
-                .Build();
+            .AddSource("Samples.SampleClient", "Samples.SampleServer")
+            .ConfigureResource(r => r.AddService("inmemory-test"))
+            .AddInMemoryExporter(exportedItems)
+            .Build();
 
         // The above line is required only in applications
         // which decide to use OpenTelemetry.

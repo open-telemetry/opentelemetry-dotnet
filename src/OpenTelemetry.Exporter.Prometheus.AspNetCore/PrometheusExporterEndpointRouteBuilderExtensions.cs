@@ -64,10 +64,10 @@ public static class PrometheusExporterEndpointRouteBuilderExtensions
     /// <returns>A convention routes for the Prometheus scraping endpoint.</returns>
     public static IEndpointConventionBuilder MapPrometheusScrapingEndpoint(
         this IEndpointRouteBuilder endpoints,
-        string path,
-        MeterProvider meterProvider,
-        Action<IApplicationBuilder> configureBranchedPipeline,
-        string optionsName)
+        string? path,
+        MeterProvider? meterProvider,
+        Action<IApplicationBuilder>? configureBranchedPipeline,
+        string? optionsName)
     {
         var builder = endpoints.CreateApplicationBuilder();
 

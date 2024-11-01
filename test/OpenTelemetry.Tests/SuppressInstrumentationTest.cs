@@ -51,7 +51,7 @@ public class SuppressInstrumentationTest
     }
 
     [Fact]
-    public async void SuppressInstrumentationScopeEnterIsLocalToAsyncFlow()
+    public async Task SuppressInstrumentationScopeEnterIsLocalToAsyncFlow()
     {
         Assert.False(Sdk.SuppressInstrumentation);
 

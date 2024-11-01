@@ -18,8 +18,8 @@ public class SpanBuilderShimTests
     public void CtorArgumentValidation()
     {
         var tracer = TracerProvider.Default.GetTracer(TracerName);
-        Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(null, "foo"));
-        Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(tracer, null));
+        Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(null!, "foo"));
+        Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(tracer, null!));
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class SpanBuilderShimTests
 
         // build
         var spanShim = (SpanShim)shim.Start();
-
+        Assert.NotNull(spanShim.Span.Activity);
         Assert.Equal("foo", spanShim.Span.Activity.OperationName);
     }
 
@@ -51,7 +51,7 @@ public class SpanBuilderShimTests
 
         // build
         var spanShim = (SpanShim)shim.Start();
-
+        Assert.NotNull(spanShim.Span.Activity);
         Assert.Equal(startTimestamp, spanShim.Span.Activity.StartTimeUtc);
     }
 
@@ -62,11 +62,12 @@ public class SpanBuilderShimTests
         var shim = new SpanBuilderShim(tracer, "foo");
 
         // Add a null parent
-        shim.AsChildOf((global::OpenTracing.ISpan)null);
+        shim.AsChildOf((global::OpenTracing.ISpan?)null);
 
         // build
         var spanShim = (SpanShim)shim.Start();
 
+        Assert.NotNull(spanShim.Span.Activity);
         Assert.Equal("foo", spanShim.Span.Activity.OperationName);
         Assert.Null(spanShim.Span.Activity.Parent);
     }
@@ -84,6 +85,7 @@ public class SpanBuilderShimTests
         // build
         var spanShim = (SpanShim)shim.Start();
 
+        Assert.NotNull(spanShim.Span.Activity);
         Assert.Equal("foo", spanShim.Span.Activity.OperationName);
         Assert.NotNull(spanShim.Span.Activity.ParentId);
     }
@@ -101,12 +103,14 @@ public class SpanBuilderShimTests
         var shim = new SpanBuilderShim(tracer, "foo");
         var spanShim1 = (SpanShim)shim.Start();
 
+        Assert.NotNull(spanShim1.Span.Activity);
         Assert.Equal("foo", spanShim1.Span.Activity.OperationName);
 
         // mis-matched root operation name
         shim = new SpanBuilderShim(tracer, "foo");
         var spanShim2 = (SpanShim)shim.Start();
 
+        Assert.NotNull(spanShim2.Span.Activity);
         Assert.Equal("foo", spanShim2.Span.Activity.OperationName);
         Assert.Equal(spanShim1.Context.TraceId, spanShim2.Context.TraceId);
     }
@@ -126,6 +130,7 @@ public class SpanBuilderShimTests
         // build
         var spanShim = (SpanShim)shim.Start();
 
+        Assert.NotNull(spanShim.Span.Activity);
         Assert.Equal("foo", spanShim.Span.Activity.OperationName);
         Assert.Contains(spanShim.Context.TraceId, spanShim.Span.Activity.TraceId.ToHexString());
 
@@ -139,12 +144,13 @@ public class SpanBuilderShimTests
         var shim = new SpanBuilderShim(tracer, "foo");
 
         // Add a null parent
-        shim.AsChildOf((global::OpenTracing.ISpanContext)null);
+        shim.AsChildOf((global::OpenTracing.ISpanContext?)null);
 
         // build
         var spanShim = (SpanShim)shim.Start();
 
         // should be no parent.
+        Assert.NotNull(spanShim.Span.Activity);
         Assert.Null(spanShim.Span.Activity.Parent);
     }
 
@@ -161,6 +167,7 @@ public class SpanBuilderShimTests
         // build
         var spanShim = (SpanShim)shim.Start();
 
+        Assert.NotNull(spanShim.Span.Activity);
         Assert.NotNull(spanShim.Span.Activity.ParentId);
     }
 
@@ -182,7 +189,7 @@ public class SpanBuilderShimTests
 
         // build
         var spanShim = (SpanShim)shim.Start();
-
+        Assert.NotNull(spanShim.Span.Activity);
         Assert.Equal("foo", spanShim.Span.Activity.OperationName);
         Assert.Contains(spanContext1.TraceId, spanShim.Span.Activity.ParentId);
         Assert.Equal(spanContext2.SpanId, spanShim.Span.Activity.Links.First().Context.SpanId.ToHexString());
@@ -200,6 +207,7 @@ public class SpanBuilderShimTests
         var spanShim = (SpanShim)shim.Start();
 
         // Not an attribute
+        Assert.NotNull(spanShim.Span.Activity);
         Assert.Empty(spanShim.Span.Activity.Tags);
         Assert.Equal("foo", spanShim.Span.Activity.OperationName);
         Assert.Equal(ActivityKind.Client, spanShim.Span.Activity.Kind);
@@ -216,8 +224,19 @@ public class SpanBuilderShimTests
         // build
         var spanShim = (SpanShim)shim.Start();
 
-        // Span status should be set
-        Assert.Equal(Status.Error, spanShim.Span.Activity.GetStatus());
+        // Legacy span status tag should be set
+        Assert.NotNull(spanShim.Span.Activity);
+        Assert.Equal("ERROR", spanShim.Span.Activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+
+        if (VersionHelper.IsApiVersionGreaterThanOrEqualTo(1, 10))
+        {
+            // Activity status code should also be set
+            Assert.Equal(ActivityStatusCode.Error, spanShim.Span.Activity.Status);
+        }
+        else
+        {
+            Assert.Equal(ActivityStatusCode.Unset, spanShim.Span.Activity.Status);
+        }
     }
 
     [Fact]
@@ -226,17 +245,18 @@ public class SpanBuilderShimTests
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanBuilderShim(tracer, "foo");
 
-        shim.WithTag((string)null, "unused");
+        shim.WithTag((string)null!, "unused");
 
         // build
         var spanShim = (SpanShim)shim.Start();
 
         // Null key was ignored
+        Assert.NotNull(spanShim.Span.Activity);
         Assert.Empty(spanShim.Span.Activity.Tags);
     }
 
     [Fact]
-    public void WithTag_ValueIsNullStringValue()
+    public void WithTag_ValueIsIgnoredWhenNull()
     {
         var tracer = TracerProvider.Default.GetTracer(TracerName);
         var shim = new SpanBuilderShim(tracer, "foo");
@@ -247,8 +267,8 @@ public class SpanBuilderShimTests
         var spanShim = (SpanShim)shim.Start();
 
         // Null value was turned into string.empty
-        Assert.Equal("foo", spanShim.Span.Activity.Tags.First().Key);
-        Assert.Equal(string.Empty, spanShim.Span.Activity.Tags.First().Value);
+        Assert.NotNull(spanShim.Span.Activity);
+        Assert.Empty(spanShim.Span.Activity.TagObjects);
     }
 
     [Fact]
@@ -262,8 +282,18 @@ public class SpanBuilderShimTests
         // build
         var spanShim = (SpanShim)shim.Start();
 
-        // Span status should be set
-        Assert.Equal(Status.Error, spanShim.Span.Activity.GetStatus());
+        // Legacy span status tag should be set
+        Assert.NotNull(spanShim.Span.Activity);
+        Assert.Equal("ERROR", spanShim.Span.Activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+        if (VersionHelper.IsApiVersionGreaterThanOrEqualTo(1, 10))
+        {
+            // Activity status code should also be set
+            Assert.Equal(ActivityStatusCode.Error, spanShim.Span.Activity.Status);
+        }
+        else
+        {
+            Assert.Equal(ActivityStatusCode.Unset, spanShim.Span.Activity.Status);
+        }
     }
 
     [Fact]
@@ -284,7 +314,8 @@ public class SpanBuilderShimTests
         var spanShim = (SpanShim)shim.Start();
 
         // Just verify the count
-        Assert.Equal(7, spanShim.Span.Activity.Tags.Count());
+        Assert.NotNull(spanShim.Span.Activity);
+        Assert.Equal(7, spanShim.Span.Activity.TagObjects.Count());
     }
 
     [Fact]
@@ -299,6 +330,7 @@ public class SpanBuilderShimTests
         // Just check the return value is a SpanShim and that the underlying OpenTelemetry Span.
         // There is nothing left to verify because the rest of the tests were already calling .Start() prior to verification.
         Assert.NotNull(span);
+        Assert.NotNull(span.Span.Activity);
         Assert.Equal("foo", span.Span.Activity.OperationName);
     }
 
@@ -317,6 +349,7 @@ public class SpanBuilderShimTests
         Assert.NotNull(spanShim);
 
         var telemetrySpan = spanShim.Span;
+        Assert.NotNull(telemetrySpan.Activity);
         Assert.Same(telemetrySpan.Activity, Activity.Current);
         Assert.Same(parentSpan, telemetrySpan.Activity.Parent);
 

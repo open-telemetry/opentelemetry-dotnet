@@ -23,9 +23,9 @@ public static class Program
         {
             this.loggerFactory = LoggerFactory.Create(builder =>
             {
-                builder.AddOpenTelemetry(options =>
+                builder.AddOpenTelemetry(logging =>
                 {
-                    options.AddProcessor(new DummyProcessor());
+                    logging.AddProcessor(new DummyProcessor());
                 });
             });
 
@@ -34,12 +34,12 @@ public static class Program
 
         protected override void RunWorkItemInParallel()
         {
-            this.logger.Log(
-                logLevel: LogLevel.Information,
-                eventId: 2,
-                state: Payload,
-                exception: null,
-                formatter: (state, ex) => string.Empty);
+            this.logger.FoodRecallNotice(
+                brandName: "Contoso",
+                productDescription: "Salads",
+                productType: "Food & Beverages",
+                recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+                companyName: "Contoso Fresh Vegetables, Inc.");
         }
 
         protected override void Dispose(bool isDisposing)

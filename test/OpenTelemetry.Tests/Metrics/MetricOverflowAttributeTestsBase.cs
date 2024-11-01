@@ -14,9 +14,8 @@ namespace OpenTelemetry.Metrics.Tests;
 public abstract class MetricOverflowAttributeTestsBase
 {
     private readonly bool shouldReclaimUnusedMetricPoints;
-    private readonly Dictionary<string, string> configurationData = new()
+    private readonly Dictionary<string, string?> configurationData = new()
     {
-        [MetricTestsBase.EmitOverFlowAttributeConfigKey] = "true",
     };
 
     private readonly IConfiguration configuration;
@@ -33,103 +32,6 @@ public abstract class MetricOverflowAttributeTestsBase
         this.configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(this.configurationData)
             .Build();
-    }
-
-    [Theory]
-    [InlineData("false", false)]
-    [InlineData("False", false)]
-    [InlineData("FALSE", false)]
-    [InlineData("true", true)]
-    [InlineData("True", true)]
-    [InlineData("TRUE", true)]
-    public void TestEmitOverflowAttributeConfigWithEnvVar(string value, bool isEmitOverflowAttributeKeySet)
-    {
-        // Clear the environment variable value first
-        Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, null);
-
-        // Set the environment variable to the value provided in the test input
-        Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, value);
-
-        var exportedItems = new List<Metric>();
-
-        var meter = new Meter(Utils.GetCurrentMethodName());
-        var counter = meter.CreateCounter<long>("TestCounter");
-
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        counter.Add(10);
-
-        meterProvider.ForceFlush();
-
-        Assert.Single(exportedItems);
-        Assert.Equal(isEmitOverflowAttributeKeySet, exportedItems[0].AggregatorStore.EmitOverflowAttribute);
-    }
-
-    [Theory]
-    [InlineData("false", false)]
-    [InlineData("False", false)]
-    [InlineData("FALSE", false)]
-    [InlineData("true", true)]
-    [InlineData("True", true)]
-    [InlineData("TRUE", true)]
-    public void TestEmitOverflowAttributeConfigWithOtherConfigProvider(string value, bool isEmitOverflowAttributeKeySet)
-    {
-        var exportedItems = new List<Metric>();
-
-        var meter = new Meter(Utils.GetCurrentMethodName());
-        var counter = meter.CreateCounter<long>("TestCounter");
-
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string> { [MetricTestsBase.EmitOverFlowAttributeConfigKey] = value })
-                .Build();
-
-                services.AddSingleton<IConfiguration>(configuration);
-            })
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        counter.Add(10);
-
-        meterProvider.ForceFlush();
-
-        Assert.Single(exportedItems);
-        Assert.Equal(isEmitOverflowAttributeKeySet, exportedItems[0].AggregatorStore.EmitOverflowAttribute);
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(10)]
-    public void EmitOverflowAttributeIsNotDependentOnMaxMetricPoints(int maxMetricPoints)
-    {
-        var exportedItems = new List<Metric>();
-
-        var meter = new Meter(Utils.GetCurrentMethodName());
-        var counter = meter.CreateCounter<long>("TestCounter");
-
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
-            .SetMaxMetricPointsPerMetricStream(maxMetricPoints)
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        counter.Add(10);
-
-        meterProvider.ForceFlush();
-
-        Assert.Single(exportedItems);
-        Assert.True(exportedItems[0].AggregatorStore.EmitOverflowAttribute);
     }
 
     [Theory]
@@ -164,7 +66,7 @@ public abstract class MetricOverflowAttributeTestsBase
         {
             // Emit unique key-value pairs to use up the available MetricPoints
             // Once this loop is run, we have used up all available MetricPoints for metrics emitted with tags
-            counter.Add(10, new KeyValuePair<string, object>("Key", i));
+            counter.Add(10, new KeyValuePair<string, object?>("Key", i));
         }
 
         meterProvider.ForceFlush();
@@ -186,7 +88,7 @@ public abstract class MetricOverflowAttributeTestsBase
         exportedItems.Clear();
         metricPoints.Clear();
 
-        counter.Add(5, new KeyValuePair<string, object>("Key", 2000)); // Emit a metric to exceed the max MetricPoint limit
+        counter.Add(5, new KeyValuePair<string, object?>("Key", 2000)); // Emit a metric to exceed the max MetricPoint limit
 
         meterProvider.ForceFlush();
         metric = exportedItems[0];
@@ -217,7 +119,7 @@ public abstract class MetricOverflowAttributeTestsBase
         // Emit 2500 more newer MetricPoints with distinct dimension combinations
         for (int i = 2001; i < 4501; i++)
         {
-            counter.Add(5, new KeyValuePair<string, object>("Key", i));
+            counter.Add(5, new KeyValuePair<string, object?>("Key", i));
         }
 
         meterProvider.ForceFlush();
@@ -315,7 +217,7 @@ public abstract class MetricOverflowAttributeTestsBase
         {
             // Emit unique key-value pairs to use up the available MetricPoints
             // Once this loop is run, we have used up all available MetricPoints for metrics emitted with tags
-            histogram.Record(10, new KeyValuePair<string, object>("Key", i));
+            histogram.Record(10, new KeyValuePair<string, object?>("Key", i));
         }
 
         meterProvider.ForceFlush();
@@ -337,7 +239,7 @@ public abstract class MetricOverflowAttributeTestsBase
         exportedItems.Clear();
         metricPoints.Clear();
 
-        histogram.Record(5, new KeyValuePair<string, object>("Key", 2000)); // Emit a metric to exceed the max MetricPoint limit
+        histogram.Record(5, new KeyValuePair<string, object?>("Key", 2000)); // Emit a metric to exceed the max MetricPoint limit
 
         meterProvider.ForceFlush();
         metric = exportedItems[0];
@@ -368,7 +270,7 @@ public abstract class MetricOverflowAttributeTestsBase
         // Emit 2500 more newer MetricPoints with distinct dimension combinations
         for (int i = 2001; i < 4501; i++)
         {
-            histogram.Record(5, new KeyValuePair<string, object>("Key", i));
+            histogram.Record(5, new KeyValuePair<string, object?>("Key", i));
         }
 
         meterProvider.ForceFlush();

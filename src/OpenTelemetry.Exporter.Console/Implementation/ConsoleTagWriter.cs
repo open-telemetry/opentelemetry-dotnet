@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
 using System.Text;
 using OpenTelemetry.Internal;
@@ -22,8 +20,13 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
 
     public bool TryTransformTag(KeyValuePair<string, object?> tag, out KeyValuePair<string, string> result)
     {
+        return this.TryTransformTag(tag.Key, tag.Value, out result);
+    }
+
+    public bool TryTransformTag(string key, object? value, out KeyValuePair<string, string> result)
+    {
         ConsoleTag consoleTag = default;
-        if (this.TryWriteTag(ref consoleTag, tag))
+        if (this.TryWriteTag(ref consoleTag, key, value))
         {
             result = new KeyValuePair<string, string>(consoleTag.Key!, consoleTag.Value!);
             return true;

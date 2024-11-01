@@ -15,9 +15,9 @@ internal class SkipUnlessEnvVarFoundFactAttribute : FactAttribute
         }
     }
 
-    public static string GetEnvironmentVariable(string environmentVariableName)
+    public static string? GetEnvironmentVariable(string environmentVariableName)
     {
-        string environmentVariableValue = Environment.GetEnvironmentVariable(environmentVariableName, EnvironmentVariableTarget.Process);
+        string? environmentVariableValue = Environment.GetEnvironmentVariable(environmentVariableName, EnvironmentVariableTarget.Process);
 
         if (string.IsNullOrEmpty(environmentVariableValue))
         {

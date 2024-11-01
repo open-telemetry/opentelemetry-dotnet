@@ -27,6 +27,7 @@ jobs:
           build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props']
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
+          solution: ['OpenTelemetry.sln']
           packaged-code: ['src/**', '!**/*.md']
           api-code: ['*/OpenTelemetry.Api*/**', '!**/*.md']
           api-packages: ['src/OpenTelemetry.Api*/**', '!**/*.md']
@@ -50,19 +51,18 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'build')
     uses: ./.github/workflows/dotnet-format.yml
 
-  build-test-solution-stable:
+  build-test-solution:
     needs: detect-changes
     if: |
-      contains(needs.detect-changes.outputs.changes, 'code')
+      contains(needs.detect-changes.outputs.changes, 'solution')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/Component.BuildTest.yml
     with:
       project-name: 'OpenTelemetry.sln'
-      project-build-commands: '-p:ExposeExperimentalFeatures=false'
-      code-cov-name: 'Solution-Stable'
+      code-cov-name: 'Solution'
 
-  build-test-solution-experimental:
+  build-test-project-stable:
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'code')
@@ -70,9 +70,21 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/Component.BuildTest.yml
     with:
-      project-name: 'OpenTelemetry.sln'
+      project-name: './build/OpenTelemetry.proj'
+      project-build-commands: '-p:ExposeExperimentalFeatures=false'
+      code-cov-name: 'Project-Stable'
+
+  build-test-project-experimental:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/Component.BuildTest.yml
+    with:
+      project-name: './build/OpenTelemetry.proj'
       project-build-commands: '-p:ExposeExperimentalFeatures=true'
-      code-cov-name: 'Solution-Experimental'
+      code-cov-name: 'Project-Experimental'
 
   # Build unstable core libraries using stable packages released to NuGet
   build-test-unstable-core:
@@ -85,7 +97,7 @@ jobs:
     with:
       project-name: './build/UnstableCoreLibraries.proj'
       project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=true'
-      code-cov-name: 'Unstable-Core'
+      code-cov-name: 'UnstableCoreLibraries-Experimental'
 
   otlp-integration-test:
     needs: detect-changes
@@ -99,7 +111,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ net6.0, net7.0, net8.0 ]
+        version: [ net8.0, net9.0 ]
     steps:
       - uses: actions/checkout@v4
       - name: Run OTLP Exporter docker compose
@@ -117,7 +129,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ net6.0, net7.0 ]
+        version: [ net8.0, net9.0 ]
     steps:
       - uses: actions/checkout@v4
       - name: Run W3C Trace Context docker compose
@@ -159,12 +171,13 @@ jobs:
 
   build-test:
     needs: [
-      lint-misspell-sanitycheck,
       detect-changes,
+      lint-misspell-sanitycheck,
       lint-md,
       lint-dotnet-format,
-      build-test-solution-stable,
-      build-test-solution-experimental,
+      build-test-solution,
+      build-test-project-stable,
+      build-test-project-experimental,
       build-test-unstable-core,
       otlp-integration-test,
       w3c-trace-context-integration-test,
@@ -173,7 +186,8 @@ jobs:
       verify-aot-compat,
       concurrency-tests
       ]
-    if: always() && !cancelled() && !contains(needs.*.result, 'failure')
-    runs-on: windows-latest
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
     steps:
-    - run: echo 'build complete'
+    - run: |
+          if ( ${{ contains(needs.*.result, 'failure') }} == true ); then echo 'build failed'; exit 1; else echo 'build complete'; fi

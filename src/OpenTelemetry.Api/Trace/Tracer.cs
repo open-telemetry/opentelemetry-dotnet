@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -54,7 +52,7 @@ public class Tracer
     /// </summary>
     /// <param name="span">The span to be made current.</param>
     /// <returns>The supplied span for call chaining.</returns>
-#if NET6_0_OR_GREATER
+#if NET
     [return: NotNullIfNotNull(nameof(span))]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

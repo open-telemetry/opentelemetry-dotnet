@@ -3,6 +3,9 @@
 
   <PropertyGroup>
     <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)/OpenTelemetry.prod.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+
+  <PropertyGroup Label="BuildFlags">
     <ExposeExperimentalFeatures Condition="'$(ExposeExperimentalFeatures)' == ''">true</ExposeExperimentalFeatures>
     <EnablePackageValidation Condition="'$(EnablePackageValidation)' == ''">false</EnablePackageValidation>
   </PropertyGroup>
@@ -22,6 +25,9 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackagePrimaryLicenseFile>$(RepoRoot)\LICENSE.TXT</PackagePrimaryLicenseFile>
     <PackageThirdPartyNoticesFile>$(RepoRoot)\THIRD-PARTY-NOTICES.TXT</PackageThirdPartyNoticesFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageChangelogFile>CHANGELOG.md</PackageChangelogFile>
+    <PackageReleaseNotesFile>$(RepoRoot)\RELEASENOTES.md</PackageReleaseNotesFile>
   </PropertyGroup>
 
   <PropertyGroup Label="SourceLinkProperties">
@@ -29,6 +35,13 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <ContinuousIntegrationBuild Condition="'$(Deterministic)'=='true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Note: Disable net6.0 target for package validation because it has been
+    removed. It should be possible to remove this once a stable version has been
+    released to NuGet without net6.0. -->
+    <PackageValidationBaselineFrameworkToIgnore Include="net6.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MinVer" PrivateAssets="All" Condition="'$(IntegrationBuild)' != 'true'" />
@@ -39,11 +52,28 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)opentelemetry-icon-color.png" Pack="true" PackagePath="\" />
     <SourceRoot Condition="'$(Deterministic)'=='true'" Include="$(MSBuildThisFileDirectory)/" />
+    <None Include="$(IntermediateOutputPath)$(ProjectName).BuildFlags.txt"
+          Link="$(ProjectName).BuildFlags.txt"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
     <!-- Note: This includes all the PublicApiAnalyzers files in projects to make editing easier in the IDE -->
     <None Include=".publicApi\**\PublicAPI.*.txt" />
   </ItemGroup>
 
-  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)'!='' AND '$(BuildNumber)' != ''">
+  <Target Name="IncludeSigningSignaturesInPackages" BeforeTargets="_GetTargetFrameworksOutput">
+    <!-- Note: This target adds any signatures found to nuget packages -->
+    <ItemGroup>
+      <SignatureFiles Include="$(RepoRoot)\src\$(MSBuildProjectName)\bin\$(Configuration)\*\$(MSBuildProjectName).dll-keyless.sig" />
+      <Content Include="@(SignatureFiles)" Link="%(RecursiveDir)%(Filename)%(Extension)" PackagePath="lib" />
+      <CertificateFiles Include="$(RepoRoot)\src\$(MSBuildProjectName)\bin\$(Configuration)\*\$(MSBuildProjectName).dll-keyless.pem" />
+      <Content Include="@(CertificateFiles)" Link="%(RecursiveDir)%(Filename)%(Extension)" PackagePath="lib" />
+    </ItemGroup>
+
+    <Message Importance="high" Text="**IncludeSignaturesInPackagesDebug** SignatureFiles: @(SignatureFiles)" />
+    <Message Importance="high" Text="**IncludeCertificatesInPackagesDebug** SignatureFiles: @(CertificateFiles)" />
+  </Target>
+
+  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)' != '' AND '$(BuildNumber)' != ''">
     <!-- Note: $(BuildNumber) is typically only set for builds initiated by the
     publish workflow. The goal here is to set the assembly FileVersion and
     resolve ExposeExperimentalFeatures based on the version MinVer resolved from
@@ -73,6 +103,66 @@
     <Error Text="Cannot perform package validation without a baseline package version." />
   </Target>
 
+  <Target Name="IncludeReadmeAndReleaseNotesInPackages" BeforeTargets="_GetTargetFrameworksOutput">
+    <!-- Note: This target runs during pack to convert relative links in
+    markdowns into github permalinks which will work when rendered on Nuget. -->
+
+    <Exec
+      Command="git rev-parse HEAD"
+      ConsoleToMsBuild="True"
+      IgnoreExitCode="True"
+      StandardOutputImportance="low">
+      <Output PropertyName="GitCommitConsoleOutput" TaskParameter="ConsoleOutput"/>
+      <Output PropertyName="GitCommitExitCode" TaskParameter="ExitCode"/>
+    </Exec>
+
+    <Exec
+      Command="git remote get-url origin"
+      ConsoleToMsBuild="True"
+      IgnoreExitCode="True"
+      StandardOutputImportance="low">
+      <Output PropertyName="GitOriginConsoleOutput" TaskParameter="ConsoleOutput"/>
+      <Output PropertyName="GitOriginExitCode" TaskParameter="ExitCode"/>
+    </Exec>
+
+    <PropertyGroup>
+      <MarkdownCommentRegex>\[([^]]+?)\]\(\.(.+?)\)</MarkdownCommentRegex>
+      <GitHubRepoUrl>$(GitOriginConsoleOutput.Replace('.git',''))</GitHubRepoUrl>
+      <GitHubPermalinkUrl Condition="'$(PackTag)' != ''">$(GitHubRepoUrl)/blob/$(PackTag)</GitHubPermalinkUrl>
+      <GitHubPermalinkUrl Condition="'$(PackTag)' == ''">$(GitHubRepoUrl)/blob/$(GitCommitConsoleOutput)</GitHubPermalinkUrl>
+    </PropertyGroup>
+
+    <Message Importance="high" Text="**GitInformationDebug** GitCommitConsoleOutput: $(GitCommitConsoleOutput), GitCommitExitCode: $(GitCommitExitCode), GitOriginConsoleOutput: $(GitOriginConsoleOutput), GitOriginExitCode: $(GitOriginExitCode), GitHubPermalinkUrl: $(GitHubPermalinkUrl)" />
+
+    <ItemGroup>
+      <PackageMarkdownFiles Include="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageMarkdownFiles Update="@(PackageMarkdownFiles)" Path="$([MSBuild]::ValueOrDefault('%(FullPath)','').Replace('$(RepoRoot)', '').Replace('%(FileName)%(Extension)', ''))" />
+    </ItemGroup>
+
+    <WriteLinesToFile
+        File="$(IntermediateOutputPath)%(PackageMarkdownFiles.Filename)%(PackageMarkdownFiles.Extension)"
+        Lines="$([System.Text.RegularExpressions.Regex]::Replace($([System.IO.File]::ReadAllText(%(PackageMarkdownFiles.FullPath))), '$(MarkdownCommentRegex)', '[$1]($(GitHubPermalinkUrl)%(PackageMarkdownFiles.Path).$2)').Replace('\', '/'))"
+        Overwrite="true"
+        Encoding="UTF-8"/>
+
+    <PropertyGroup>
+      <_PackageReleaseNotesFilePath>$([System.IO.Path]::GetFullPath('$(PackageReleaseNotesFile)').Replace('$(RepoRoot)', '').Replace('\', '/'))</_PackageReleaseNotesFilePath>
+      <_PackageChangelogFilePath>$([System.IO.Path]::GetFullPath('$(PackageChangelogFile)').Replace('$(RepoRoot)', '').Replace('\', '/'))</_PackageChangelogFilePath>
+      <PackageReleaseNotes>
+        For highlights and announcements see: $(GitHubPermalinkUrl)$(_PackageReleaseNotesFilePath).
+
+        For detailed changes see: $(GitHubPermalinkUrl)$(_PackageChangelogFilePath).
+      </PackageReleaseNotes>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Content Include="$(IntermediateOutputPath)*.md" PackagePath="/" />
+    </ItemGroup>
+  </Target>
+
   <Target Name="ResolveExposeExperimentalFeatures" BeforeTargets="CoreCompile" DependsOnTargets="AssemblyVersionTarget">
     <!-- Note: This runs for all builds. The goal here is to set the
     EXPOSE_EXPERIMENTAL_FEATURES compiler constant if
@@ -81,6 +171,15 @@
     <PropertyGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
       <DefineConstants>$(DefineConstants);EXPOSE_EXPERIMENTAL_FEATURES</DefineConstants>
     </PropertyGroup>
+
+    <!-- Note: We write a file into the output dir which captures the state of
+    ExposeExperimentalFeatures for the current compilation. This is used by
+    consuming projects (tests, benchmarks, examples, etc) to add compiler
+    constants which can be used to detect experimental APIs -->
+    <WriteLinesToFile
+      File="$(IntermediateOutputPath)$(ProjectName).BuildFlags.txt"
+      Lines="ExposeExperimentalFeatures=$(ExposeExperimentalFeatures)"
+      Overwrite="true"/>
 
     <!-- Note: This selects the correct PublicApiAnalyzers files based on $(ExposeExperimentalFeatures) -->
     <ItemGroup>

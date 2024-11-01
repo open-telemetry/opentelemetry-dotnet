@@ -1,6 +1,7 @@
 # Release process
 
-**Only for Maintainers.**
+**Note: Approvers (collaborators) can perform much of the release process but
+Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
 
  1. Decide the component(s) and tag name (version name) to be released. We use
     [MinVer](https://github.com/adamralph/minver) to do versioning, which
@@ -40,15 +41,13 @@
            * `OpenTelemetry.Shims.OpenTracing` - Defined by spec (stable but
              incomplete implementation)
 
-       * As of the `1.9.0` release cycle instrumentation packages and core
-         unstable packages always depend on the stable versions of core
-         packages. Before releasing a non-core component ensure the
-         `OTelLatestStableVer` property in `Directory.Packages.props` has been
-         updated to the latest stable core version.
+       * As of the `1.9.0` release cycle core unstable packages always depend on
+         the stable versions of core packages. Before releasing a non-core
+         component ensure the `OTelLatestStableVer` property in
+         `Directory.Packages.props` has been updated to the latest stable core
+         version.
 
- 2. Prepare for release
-
-    Run the [Prepare for a
+ 2. Run the [Prepare for a
     release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
     workflow. Specify the `tag-prefix` and the `version` for the release. Make
     sure to run the workflow on the branch being released. This is typically
@@ -91,11 +90,10 @@
     comment and lock the PR. Post a comment with "/CreateReleaseTag" in the
     body. This will tell the [Prepare for a
     release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
-    workflow to push the tag for the merge commit of the PR and to call the
-    [Build, pack, and publish to
+    workflow to push the tag for the merge commit of the PR which will trigger
+    the [Build, pack, and publish to
     MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
-    workflow. Once packages are available a comment will be posted on the PR
-    opened in step 2 with a link to the artifacts.
+    workflow.
 
     <details>
     <summary>Instructions for pushing tags manually</summary>
@@ -127,56 +125,85 @@
 
  5. :stop_sign: Wait for the [Build, pack, and publish to
     MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
-    workflow to complete.
-
- 6. Validate locally everything works using the MyGet packages pushed from the
-    release. Basic sanity checks :)
-
- 7. Download the artifacts from the drop attached to the workflow run. The
-    artifacts archive (`.zip`) contains all the NuGet packages (`.nupkg`) and
-    symbols (`.snupkg`) from the build which were pushed to MyGet.
-
- 8. Extract the artifacts from the archive (`.zip`) into a local folder.
-
- 9. Download latest [nuget.exe](https://www.nuget.org/downloads) into the same
-    folder from Step 8.
-
-10. Create or regenerate an API key from nuget.org (only maintainers have
-    access). When creating API keys make sure it is set to expire in 1 day or
-    less.
-
-11. Run the following commands from PowerShell from local folder used in Step 8:
-
-    ```powershell
-    .\nuget.exe setApiKey <actual api key>
-
-    get-childitem -Recurse | where {$_.extension -eq ".nupkg"} | foreach ($_) {.\nuget.exe push $_.fullname -Source https://api.nuget.org/v3/index.json}
-    ```
-
-12. Validate that the package(s) are uploaded. Packages are available
-    immediately to maintainers on nuget.org but aren't publicly visible until
-    scanning completes. This process usually takes a few minutes.
-
-13. Open the
-    [Releases](https://github.com/open-telemetry/opentelemetry-dotnet/releases)
-    page on the GitHub repository. The [Build, pack, and publish to
+    workflow to complete. When complete a trigger will automatically add a
+    comment on the PR opened by [Prepare for a
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow in step 2. Use MyGet or download the packages using the provided
+    link to validate locally everything works. After validation has been
+    performed have a maintainer post a comment with "/PushPackages" in the body.
+    This will trigger the [Complete
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow to push the packages to NuGet and publish the draft release created
+    by the [Build, pack, and publish to
     MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
-    workflow creates a draft release for the tag which was pushed. Edit the
-    draft Release and click `Publish release`.
+    workflow. Comments will automatically be added on the PR opened by [Prepare
+    for a
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow in step 2 as the process is run and the PR will be unlocked.
 
-14. If a new stable version of the core packages was released, a draft PR should
-    have been automatically created by the [Build, pack, and publish to
-    MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+    <details>
+    <summary>Instructions for pushing packages to NuGet manually</summary>
+
+    1. The [Build, pack, and publish to
+       MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+       workflow pushes the packages to MyGet and attaches them as artifacts on
+       the workflow run.
+
+    2. Validate locally everything works using the packages pushed to MyGet or
+       downloaded from the drop attached to the workflow run. Basic sanity
+       checks :)
+
+    3. Download the artifacts from the drop attached to the workflow run. The
+       artifacts archive (`.zip`) contains all the NuGet packages (`.nupkg`) and
+       symbols (`.snupkg`) from the build which were pushed to MyGet.
+
+    4. Extract the artifacts from the archive (`.zip`) into a local folder.
+
+    5. Download latest [nuget.exe](https://www.nuget.org/downloads) into the
+       same folder from step 4.
+
+    6. Create or regenerate an API key from nuget.org (only maintainers have
+       access). When creating API keys make sure it is set to expire in 1 day or
+       less.
+
+    7. Run the following commands from PowerShell from local folder used in step
+       4:
+
+       ```powershell
+       .\nuget.exe setApiKey <actual api key>
+
+       get-childitem -Recurse | where {$_.extension -eq ".nupkg"} | foreach ($_) {.\nuget.exe push $_.fullname -Source https://api.nuget.org/v3/index.json}
+       ```
+
+    8. Validate that the package(s) are uploaded. Packages are available
+       immediately to maintainers on nuget.org but aren't publicly visible until
+       scanning completes. This process usually takes a few minutes.
+
+    9. Open the
+       [Releases](https://github.com/open-telemetry/opentelemetry-dotnet/releases)
+       page on the GitHub repository. The [Build, pack, and publish to
+       MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
+       workflow creates a draft release for the tag which was pushed. Edit the
+       draft Release and click `Publish release`.
+    </details>
+
+ 6. If a new stable version of the core packages was released, a PR should have
+    been automatically created by the [Complete
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/post-release.yml)
     workflow to update the `OTelLatestStableVer` property in
-    `Directory.Packages.props` to the just released stable version. Mark that PR
-    `Ready for review` and then merge it once the build passes (this requires
-    the packages be available on NuGet).
+    `Directory.Packages.props` to the just released stable version. Merge that
+    PR once the build passes (this requires the packages be available on NuGet).
 
-15. If a new stable version of the core packages was released, open an issue in
-    the
-    [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
-    repo to notify maintainers to begin upgrading dependencies.
+ 7. The [Complete
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/post-release.yml)
+    workflow should have invoked the [Core version
+    update](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/actions/workflows/core-version-update.yml)
+    workflow on the
+    [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/)
+    repository which opens a PR to update dependencies. Verify this PR was
+    opened successfully.
 
-16. Post an announcement in the [Slack
-    channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). Note any big
-    or interesting new features as part of the announcement.
+ 8. For stable releases, update [Release Notes](../RELEASENOTES.md) with any big
+    or interesting new features and then post an announcement in the [Slack
+    channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q) with the same
+    information.

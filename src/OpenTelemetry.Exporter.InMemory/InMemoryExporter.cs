@@ -6,10 +6,10 @@ namespace OpenTelemetry.Exporter;
 public class InMemoryExporter<T> : BaseExporter<T>
     where T : class
 {
-    private readonly ICollection<T> exportedItems;
+    private readonly ICollection<T>? exportedItems;
     private readonly ExportFunc onExport;
     private bool disposed;
-    private string disposedStackTrace;
+    private string? disposedStackTrace;
 
     public InMemoryExporter(ICollection<T> exportedItems)
     {

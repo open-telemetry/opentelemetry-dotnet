@@ -135,7 +135,7 @@ public sealed class SdkLimitOptionsTests : IDisposable
     [Fact]
     public void SdkLimitOptionsUsingIConfiguration()
     {
-        var values = new Dictionary<string, string>
+        var values = new Dictionary<string, string?>
         {
             ["OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT"] = "23",
             ["OTEL_ATTRIBUTE_COUNT_LIMIT"] = "24",

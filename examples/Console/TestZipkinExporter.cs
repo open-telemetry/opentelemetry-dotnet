@@ -9,7 +9,7 @@ namespace Examples.Console;
 
 internal class TestZipkinExporter
 {
-    internal static object Run(string zipkinUri)
+    internal static int Run(ZipkinOptions options)
     {
         // Prerequisite for running this example.
         // Setup zipkin inside local docker using following command:
@@ -23,14 +23,15 @@ internal class TestZipkinExporter
 
         // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
         // and use the Zipkin exporter.
+
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                .ConfigureResource(r => r.AddService("zipkin-test"))
-                .AddZipkinExporter(o =>
-                {
-                    o.Endpoint = new Uri(zipkinUri);
-                })
-                .Build();
+            .AddSource("Samples.SampleClient", "Samples.SampleServer")
+            .ConfigureResource(r => r.AddService("zipkin-test"))
+            .AddZipkinExporter(o =>
+            {
+                o.Endpoint = new Uri(options.Uri);
+            })
+            .Build();
 
         using (var sample = new InstrumentationWithActivitySource())
         {
@@ -42,6 +43,6 @@ internal class TestZipkinExporter
             System.Console.ReadLine();
         }
 
-        return null;
+        return 0;
     }
 }

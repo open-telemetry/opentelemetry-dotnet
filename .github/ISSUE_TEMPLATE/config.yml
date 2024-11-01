@@ -1,0 +1,7 @@
+# https://docs.github.com/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository#configuring-the-template-chooser
+
+blank_issues_enabled: false
+contact_links:
+  - name: Question
+    url: https://github.com/open-telemetry/opentelemetry-dotnet/discussions/new?category=q-a
+    about: Ask a question to help us improve our knowledge base and documentation.

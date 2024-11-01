@@ -1,0 +1,5 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\Common.targets" />
+
+</Project>

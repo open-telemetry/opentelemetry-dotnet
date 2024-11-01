@@ -23,8 +23,8 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     private static readonly int NumberOfMetricUpdateByEachThread = 100000;
     private readonly ITestOutputHelper output;
 
-    protected MetricApiTestsBase(ITestOutputHelper output, bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
-        : base(BuildConfiguration(emitOverflowAttribute, shouldReclaimUnusedMetricPoints))
+    protected MetricApiTestsBase(ITestOutputHelper output, bool shouldReclaimUnusedMetricPoints)
+        : base(BuildConfiguration(shouldReclaimUnusedMetricPoints))
     {
         this.output = output;
     }
@@ -40,7 +40,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             .AddInMemoryExporter(exportedItems));
 
         var counter = meter.CreateCounter<long>("myCounter");
-        counter.Add(100, new KeyValuePair<string, object>("tagWithNullValue", null));
+        counter.Add(100, new KeyValuePair<string, object?>("tagWithNullValue", null));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
@@ -125,7 +125,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     [InlineData("unit")]
     [InlineData("")]
     [InlineData(null)]
-    public void MetricUnitIsExportedCorrectly(string unit)
+    public void MetricUnitIsExportedCorrectly(string? unit)
     {
         var exportedItems = new List<Metric>();
 
@@ -147,7 +147,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     [InlineData("description")]
     [InlineData("")]
     [InlineData(null)]
-    public void MetricDescriptionIsExportedCorrectly(string description)
+    public void MetricDescriptionIsExportedCorrectly(string? description)
     {
         var exportedItems = new List<Metric>();
 
@@ -171,7 +171,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         var exportedItems = new List<Metric>();
         var meterName = Utils.GetCurrentMethodName();
         var meterVersion = "1.0";
-        var meterTags = new List<KeyValuePair<string, object>>
+        var meterTags = new List<KeyValuePair<string, object?>>
         {
             new(
                 "MeterTagKey",
@@ -190,6 +190,8 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
 
+        Assert.NotNull(metric.MeterTags);
+
         Assert.Single(metric.MeterTags.Where(kvp => kvp.Key == meterTags[0].Key && kvp.Value == meterTags[0].Value));
     }
 
@@ -202,13 +204,13 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         var exportedItems = new List<Metric>();
         var meterName = "MyMeter";
         var meterVersion = "1.0";
-        var meterTags1 = new List<KeyValuePair<string, object>>
+        var meterTags1 = new List<KeyValuePair<string, object?>>
         {
             new(
                 "Key1",
                 "Value1"),
         };
-        var meterTags2 = new List<KeyValuePair<string, object>>
+        var meterTags2 = new List<KeyValuePair<string, object?>>
         {
             new(
                 "Key2",
@@ -235,8 +237,10 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
 
+        Assert.NotNull(metric.MeterTags);
+
         Assert.Single(metric.MeterTags.Where(kvp => kvp.Key == meterTags1[0].Key && kvp.Value == meterTags1[0].Value));
-        Assert.Empty(metric.MeterTags.Where(kvp => kvp.Key == meterTags2[0].Key && kvp.Value == meterTags2[0].Value));
+        Assert.DoesNotContain(metric.MeterTags, kvp => kvp.Key == meterTags2[0].Key && kvp.Value == meterTags2[0].Value);
 
         List<MetricPoint> metricPoints = new List<MetricPoint>();
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -777,19 +781,19 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     public void ObservableCounterWithTagsAggregationTest(bool exportDelta)
     {
         var exportedItems = new List<Metric>();
-        var tags1 = new List<KeyValuePair<string, object>>
+        var tags1 = new List<KeyValuePair<string, object?>>
         {
             new("statusCode", 200),
             new("verb", "get"),
         };
 
-        var tags2 = new List<KeyValuePair<string, object>>
+        var tags2 = new List<KeyValuePair<string, object?>>
         {
             new("statusCode", 200),
             new("verb", "post"),
         };
 
-        var tags3 = new List<KeyValuePair<string, object>>
+        var tags3 = new List<KeyValuePair<string, object?>>
         {
             new("statusCode", 500),
             new("verb", "get"),
@@ -873,19 +877,19 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     public void ObservableCounterSpatialAggregationTest(bool exportDelta)
     {
         var exportedItems = new List<Metric>();
-        var tags1 = new List<KeyValuePair<string, object>>
+        var tags1 = new List<KeyValuePair<string, object?>>
         {
             new("statusCode", 200),
             new("verb", "get"),
         };
 
-        var tags2 = new List<KeyValuePair<string, object>>
+        var tags2 = new List<KeyValuePair<string, object?>>
         {
             new("statusCode", 200),
             new("verb", "post"),
         };
 
-        var tags3 = new List<KeyValuePair<string, object>>
+        var tags3 = new List<KeyValuePair<string, object?>>
         {
             new("statusCode", 500),
             new("verb", "get"),
@@ -924,7 +928,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
 
         Assert.Single(metricPoints);
 
-        var emptyTags = new List<KeyValuePair<string, object>>();
+        var emptyTags = new List<KeyValuePair<string, object?>>();
         var metricPoint1 = metricPoints[0];
         ValidateMetricPointTags(emptyTags, metricPoint1.Tags);
 
@@ -1058,19 +1062,19 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     public void ObservableUpDownCounterWithTagsAggregationTest(bool exportDelta)
     {
         var exportedItems = new List<Metric>();
-        var tags1 = new List<KeyValuePair<string, object>>
+        var tags1 = new List<KeyValuePair<string, object?>>
         {
             new("statusCode", 200),
             new("verb", "get"),
         };
 
-        var tags2 = new List<KeyValuePair<string, object>>
+        var tags2 = new List<KeyValuePair<string, object?>>
         {
             new("statusCode", 200),
             new("verb", "post"),
         };
 
-        var tags3 = new List<KeyValuePair<string, object>>
+        var tags3 = new List<KeyValuePair<string, object?>>
         {
             new("statusCode", 500),
             new("verb", "get"),
@@ -1177,33 +1181,33 @@ public abstract class MetricApiTestsBase : MetricTestsBase
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        List<KeyValuePair<string, object>> expectedTagsForFirstMetricPoint = new List<KeyValuePair<string, object>>()
-        {
+        List<KeyValuePair<string, object?>> expectedTagsForFirstMetricPoint =
+        [
             new("Key1", "Value1"),
             new("Key2", "Value2"),
             new("Key3", "Value3"),
-        };
+        ];
 
-        List<KeyValuePair<string, object>> expectedTagsForSecondMetricPoint = new List<KeyValuePair<string, object>>()
-        {
+        List<KeyValuePair<string, object?>> expectedTagsForSecondMetricPoint =
+        [
             new("Key1", "Value10"),
             new("Key2", "Value20"),
             new("Key3", "Value30"),
-        };
+        ];
 
-        List<KeyValuePair<string, object>> expectedTagsForThirdMetricPoint = new List<KeyValuePair<string, object>>()
-        {
+        List<KeyValuePair<string, object?>> expectedTagsForThirdMetricPoint =
+        [
             new("Key4", "Value1"),
             new("Key5", "Value3"),
             new("Key6", "Value2"),
-        };
+        ];
 
-        List<KeyValuePair<string, object>> expectedTagsForFourthMetricPoint = new List<KeyValuePair<string, object>>()
-        {
+        List<KeyValuePair<string, object?>> expectedTagsForFourthMetricPoint =
+        [
             new("Key4", "Value1"),
             new("Key5", "Value2"),
             new("Key6", "Value3"),
-        };
+        ];
 
         Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
@@ -1268,33 +1272,33 @@ public abstract class MetricApiTestsBase : MetricTestsBase
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        List<KeyValuePair<string, object>> expectedTagsForFirstMetricPoint = new List<KeyValuePair<string, object>>()
-        {
+        List<KeyValuePair<string, object?>> expectedTagsForFirstMetricPoint =
+        [
             new("Key1", "Value1"),
             new("Key2", "Value2"),
             new("Key3", "Value3"),
-        };
+        ];
 
-        List<KeyValuePair<string, object>> expectedTagsForSecondMetricPoint = new List<KeyValuePair<string, object>>()
-        {
+        List<KeyValuePair<string, object?>> expectedTagsForSecondMetricPoint =
+        [
             new("Key1", "Value10"),
             new("Key2", "Value20"),
             new("Key3", "Value30"),
-        };
+        ];
 
-        List<KeyValuePair<string, object>> expectedTagsForThirdMetricPoint = new List<KeyValuePair<string, object>>()
-        {
+        List<KeyValuePair<string, object?>> expectedTagsForThirdMetricPoint =
+        [
             new("Key4", "Value1"),
             new("Key5", "Value3"),
             new("Key6", "Value2"),
-        };
+        ];
 
-        List<KeyValuePair<string, object>> expectedTagsForFourthMetricPoint = new List<KeyValuePair<string, object>>()
-        {
+        List<KeyValuePair<string, object?>> expectedTagsForFourthMetricPoint =
+        [
             new("Key4", "Value1"),
             new("Key5", "Value2"),
             new("Key6", "Value3"),
-        };
+        ];
 
         Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
@@ -1351,37 +1355,37 @@ public abstract class MetricApiTestsBase : MetricTestsBase
                 metricReaderOptions.TemporalityPreference = temporality;
             }));
 
-        counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
-        counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
+        counter1.Add(10, new KeyValuePair<string, object?>("key", "value"));
+        counter2.Add(10, new KeyValuePair<string, object?>("key", "value"));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Equal(2, exportedItems.Count);
         exportedItems.Clear();
 
-        counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
-        counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
+        counter1.Add(10, new KeyValuePair<string, object?>("key", "value"));
+        counter2.Add(10, new KeyValuePair<string, object?>("key", "value"));
         meter1.Dispose();
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Equal(2, exportedItems.Count);
         exportedItems.Clear();
 
-        counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
-        counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
+        counter1.Add(10, new KeyValuePair<string, object?>("key", "value"));
+        counter2.Add(10, new KeyValuePair<string, object?>("key", "value"));
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
         exportedItems.Clear();
 
-        counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
-        counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
+        counter1.Add(10, new KeyValuePair<string, object?>("key", "value"));
+        counter2.Add(10, new KeyValuePair<string, object?>("key", "value"));
         meter2.Dispose();
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
         exportedItems.Clear();
 
-        counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
-        counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
+        counter1.Add(10, new KeyValuePair<string, object?>("key", "value"));
+        counter2.Add(10, new KeyValuePair<string, object?>("key", "value"));
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Empty(exportedItems);
     }
@@ -1406,7 +1410,6 @@ public abstract class MetricApiTestsBase : MetricTestsBase
                 enumerator.MoveNext(); // Second element reserved for overflow attribute.
 
                 // Validate second element is overflow attribute.
-                // Overflow attribute is behind experimental flag. So, it is not guaranteed to be present.
                 var tagEnumerator = enumerator.Current.Tags.GetEnumerator();
                 tagEnumerator.MoveNext();
                 if (!tagEnumerator.Current.Key.Contains("otel.metric.overflow"))
@@ -1440,7 +1443,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         counterLong.Add(10);
         for (int i = 0; i < MeterProviderBuilderSdk.DefaultCardinalityLimit + 1; i++)
         {
-            counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
+            counterLong.Add(10, new KeyValuePair<string, object?>("key", "value" + i));
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -1450,7 +1453,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         counterLong.Add(10);
         for (int i = 0; i < MeterProviderBuilderSdk.DefaultCardinalityLimit + 1; i++)
         {
-            counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
+            counterLong.Add(10, new KeyValuePair<string, object?>("key", "value" + i));
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -1459,13 +1462,13 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         counterLong.Add(10);
         for (int i = 0; i < MeterProviderBuilderSdk.DefaultCardinalityLimit + 1; i++)
         {
-            counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
+            counterLong.Add(10, new KeyValuePair<string, object?>("key", "value" + i));
         }
 
         // These updates would be dropped.
-        counterLong.Add(10, new KeyValuePair<string, object>("key", "valueA"));
-        counterLong.Add(10, new KeyValuePair<string, object>("key", "valueB"));
-        counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
+        counterLong.Add(10, new KeyValuePair<string, object?>("key", "valueA"));
+        counterLong.Add(10, new KeyValuePair<string, object?>("key", "valueB"));
+        counterLong.Add(10, new KeyValuePair<string, object?>("key", "valueC"));
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit, MetricPointCount());
@@ -1577,7 +1580,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
 
         var counter = meter.CreateCounter<long>("counter");
 
-        counter.Add(10, new KeyValuePair<string, object>("key", "value"));
+        counter.Add(10, new KeyValuePair<string, object?>("key", "value"));
     }
 
     [Fact]
@@ -1613,14 +1616,96 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Empty(exportedItems);
     }
 
-    internal static IConfiguration BuildConfiguration(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
+    [Fact]
+    public void GaugeIsExportedCorrectly()
     {
-        var configurationData = new Dictionary<string, string>();
+        var exportedItems = new List<Metric>();
 
-        if (emitOverflowAttribute)
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var gauge = meter.CreateGauge<long>(name: "NoiseLevel", unit: "dB", description: "Background Noise Level");
+        gauge.Record(10);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("Background Noise Level", metric.Description);
+        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
         {
-            configurationData[EmitOverFlowAttributeConfigKey] = "true";
+            metricPoints.Add(mp);
         }
+
+        var lastValue = metricPoints[0].GetGaugeLastValueLong();
+        Assert.Equal(10, lastValue);
+    }
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    public void GaugeHandlesNoNewMeasurementsCorrectlyWithTemporality(MetricReaderTemporalityPreference temporalityPreference)
+    {
+        var exportedMetrics = new List<Metric>();
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedMetrics, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = temporalityPreference;
+            }));
+
+        var noiseLevelGauge = meter.CreateGauge<long>(name: "NoiseLevel", unit: "dB", description: "Background Noise Level");
+        noiseLevelGauge.Record(10);
+
+        // Force a flush to export the recorded data
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Validate first export / flush
+        var firstMetric = exportedMetrics[0];
+        var firstMetricPoints = new List<MetricPoint>();
+        foreach (ref readonly var metricPoint in firstMetric.GetMetricPoints())
+        {
+            firstMetricPoints.Add(metricPoint);
+        }
+
+        Assert.Single(firstMetricPoints);
+        var firstMetricPoint = firstMetricPoints[0];
+        Assert.Equal(10, firstMetricPoint.GetGaugeLastValueLong());
+
+        // Flush the metrics again without recording any new measurements
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Validate second export / flush
+        if (temporalityPreference == MetricReaderTemporalityPreference.Cumulative)
+        {
+            // For cumulative temporality, data points should still be collected
+            // without any new measurements
+            Assert.Equal(2, exportedMetrics.Count);
+            var secondMetric = exportedMetrics[1];
+            var secondMetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var metricPoint in secondMetric.GetMetricPoints())
+            {
+                secondMetricPoints.Add(metricPoint);
+            }
+
+            Assert.Single(secondMetricPoints);
+            var secondMetricPoint = secondMetricPoints[0];
+            Assert.Equal(10, secondMetricPoint.GetGaugeLastValueLong());
+        }
+        else if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
+        {
+            // For delta temporality, no new metric should be collected
+            Assert.Single(exportedMetrics);
+        }
+    }
+
+    internal static IConfiguration BuildConfiguration(bool shouldReclaimUnusedMetricPoints)
+    {
+        var configurationData = new Dictionary<string, string?>();
 
         if (shouldReclaimUnusedMetricPoints)
         {
@@ -1632,18 +1717,19 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             .Build();
     }
 
-    private static void CounterUpdateThread<T>(object obj)
+    private static void CounterUpdateThread<T>(object? obj)
         where T : struct, IComparable
     {
-        if (obj is not UpdateThreadArguments<T> arguments)
-        {
-            throw new Exception("Invalid args");
-        }
+        var arguments = obj as UpdateThreadArguments<T>;
+        Debug.Assert(arguments != null, "arguments was null");
 
-        var mre = arguments.MreToBlockUpdateThread;
+        var mre = arguments!.MreToBlockUpdateThread;
         var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
-        var counter = arguments.Instrument as Counter<T>;
         var valueToUpdate = arguments.ValuesToRecord[0];
+
+        var counter = arguments.Instrument as Counter<T>;
+        Debug.Assert(counter != null, "counter was null");
+
         if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == NumberOfThreads)
         {
             mreToEnsureAllThreadsStart.Set();
@@ -1654,21 +1740,20 @@ public abstract class MetricApiTestsBase : MetricTestsBase
 
         for (int i = 0; i < NumberOfMetricUpdateByEachThread; i++)
         {
-            counter.Add(valueToUpdate, new KeyValuePair<string, object>("verb", "GET"));
+            counter!.Add(valueToUpdate, new KeyValuePair<string, object?>("verb", "GET"));
         }
     }
 
-    private static void HistogramUpdateThread<T>(object obj)
+    private static void HistogramUpdateThread<T>(object? obj)
         where T : struct, IComparable
     {
-        if (obj is not UpdateThreadArguments<T> arguments)
-        {
-            throw new Exception("Invalid args");
-        }
+        var arguments = obj as UpdateThreadArguments<T>;
+        Debug.Assert(arguments != null, "arguments was null");
 
-        var mre = arguments.MreToBlockUpdateThread;
+        var mre = arguments!.MreToBlockUpdateThread;
         var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
         var histogram = arguments.Instrument as Histogram<T>;
+        Debug.Assert(histogram != null, "histogram was null");
 
         if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == NumberOfThreads)
         {
@@ -1682,7 +1767,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         {
             for (int j = 0; j < arguments.ValuesToRecord.Length; j++)
             {
-                histogram.Record(arguments.ValuesToRecord[j]);
+                histogram!.Record(arguments.ValuesToRecord[j]);
             }
         }
     }
@@ -1698,13 +1783,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             .AddMeter(meter.Name)
             .AddInMemoryExporter(metricItems));
 
-        var argToThread = new UpdateThreadArguments<T>
-        {
-            ValuesToRecord = new T[] { deltaValueUpdatedByEachCall },
-            Instrument = meter.CreateCounter<T>("counter"),
-            MreToBlockUpdateThread = new ManualResetEvent(false),
-            MreToEnsureAllThreadsStart = new ManualResetEvent(false),
-        };
+        var argToThread = new UpdateThreadArguments<T>(new ManualResetEvent(false), new ManualResetEvent(false), meter.CreateCounter<T>("counter"), [deltaValueUpdatedByEachCall]);
 
         Thread[] t = new Thread[NumberOfThreads];
         for (int i = 0; i < NumberOfThreads; i++)
@@ -1754,13 +1833,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
             .AddMeter(meter.Name)
             .AddReader(metricReader));
 
-        var argsToThread = new UpdateThreadArguments<T>
-        {
-            Instrument = meter.CreateHistogram<T>("histogram"),
-            MreToBlockUpdateThread = new ManualResetEvent(false),
-            MreToEnsureAllThreadsStart = new ManualResetEvent(false),
-            ValuesToRecord = values,
-        };
+        var argsToThread = new UpdateThreadArguments<T>(new ManualResetEvent(false), new ManualResetEvent(false), meter.CreateHistogram<T>("histogram"), values);
 
         Thread[] t = new Thread[NumberOfThreads];
         for (int i = 0; i < NumberOfThreads; i++)
@@ -1801,21 +1874,21 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         public int ThreadsStartedCount;
         public Instrument<T> Instrument;
         public T[] ValuesToRecord;
+
+        public UpdateThreadArguments(ManualResetEvent mreToBlockUpdateThread, ManualResetEvent mreToEnsureAllThreadsStart, Instrument<T> instrument, T[] valuesToRecord)
+        {
+            this.MreToBlockUpdateThread = mreToBlockUpdateThread;
+            this.MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
+            this.Instrument = instrument;
+            this.ValuesToRecord = valuesToRecord;
+        }
     }
 }
 
 public class MetricApiTest : MetricApiTestsBase
 {
     public MetricApiTest(ITestOutputHelper output)
-        : base(output, emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: false)
-    {
-    }
-}
-
-public class MetricApiTestWithOverflowAttribute : MetricApiTestsBase
-{
-    public MetricApiTestWithOverflowAttribute(ITestOutputHelper output)
-        : base(output, emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: false)
+        : base(output, shouldReclaimUnusedMetricPoints: false)
     {
     }
 }
@@ -1823,15 +1896,7 @@ public class MetricApiTestWithOverflowAttribute : MetricApiTestsBase
 public class MetricApiTestWithReclaimAttribute : MetricApiTestsBase
 {
     public MetricApiTestWithReclaimAttribute(ITestOutputHelper output)
-        : base(output, emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: true)
-    {
-    }
-}
-
-public class MetricApiTestWithBothOverflowAndReclaimAttributes : MetricApiTestsBase
-{
-    public MetricApiTestWithBothOverflowAndReclaimAttributes(ITestOutputHelper output)
-        : base(output, emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: true)
+        : base(output, shouldReclaimUnusedMetricPoints: true)
     {
     }
 }

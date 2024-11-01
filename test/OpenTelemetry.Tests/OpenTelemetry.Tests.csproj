@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <NoWarn>$(NoWarn),CS0618</NoWarn>
-
-    <!-- this is temporary. will remove in future PR. -->
-    <Nullable>disable</Nullable>
+    <ReferenceCoyotePackages>true</ReferenceCoyotePackages>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +14,6 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'">
     <PackageReference Include="Microsoft.CSharp" />
-    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,9 +26,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Coyote" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
   </ItemGroup>
+
 </Project>

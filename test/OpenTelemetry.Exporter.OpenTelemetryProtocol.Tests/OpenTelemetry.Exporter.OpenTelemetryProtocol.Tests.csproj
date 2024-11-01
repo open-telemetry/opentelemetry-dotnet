@@ -2,9 +2,26 @@
 
   <PropertyGroup>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-    <!-- this is temporary. will remove in future PR. -->
-    <Nullable>disable</Nullable>
   </PropertyGroup>
+
+  <!-- Add MSBuild Task to Generate Certificates -->
+  <Target Name="GenerateTestCertificates" BeforeTargets="Publish">
+    <Exec Condition="$(OS) == 'Unix'"
+      Command="/bin/bash gen_test_cert.sh $(IntermediateOutputPath)"
+      ConsoleToMsBuild="true"
+      WorkingDirectory="$(ProjectDir)" />
+
+    <Exec Condition="$(OS) == 'Windows_NT'"
+      Command="pwsh -NonInteractive -executionpolicy Unrestricted -command &quot;&amp; { ./gen_test_cert.ps1 -OutDir $(IntermediateOutputPath) } &quot;"
+      ConsoleToMsBuild="true"
+      WorkingDirectory="$(ProjectDir)" />
+
+    <ItemGroup>
+      <TestCertificates Include="$(IntermediateOutputPath)*.pem"/>
+    </ItemGroup>
+
+    <Copy SourceFiles="@(TestCertificates)" DestinationFolder="$(PublishDir)/%(RecursiveDir)"/>
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore.Server" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
@@ -13,9 +30,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>

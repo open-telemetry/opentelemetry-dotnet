@@ -15,12 +15,12 @@ public abstract class TextMapPropagator
     ///   * allow pre-allocation of fields, especially in systems like gRPC Metadata
     ///   * allow a single-pass over an iterator (ex OpenTracing has no getter in TextMap).
     /// </summary>
-    public abstract ISet<string> Fields { get; }
+    public abstract ISet<string>? Fields { get; }
 
     /// <summary>
     /// Injects the context into a carrier.
     /// </summary>
-    /// <typeparam name="T">Type of an object to set context on. Typically HttpRequest or similar.</typeparam>
+    /// <typeparam name="T">Type of object to set context on. Typically,HttpRequest or similar.</typeparam>
     /// <param name="context">The default context to transmit over the wire.</param>
     /// <param name="carrier">Object to set context on. Instance of this object will be passed to setter.</param>
     /// <param name="setter">Action that will set name and value pair on the object.</param>
@@ -29,10 +29,10 @@ public abstract class TextMapPropagator
     /// <summary>
     /// Extracts the context from a carrier.
     /// </summary>
-    /// <typeparam name="T">Type of object to extract context from. Typically HttpRequest or similar.</typeparam>
+    /// <typeparam name="T">Type of object to extract context from. Typically, HttpRequest or similar.</typeparam>
     /// <param name="context">The default context to be used if Extract fails.</param>
     /// <param name="carrier">Object to extract context from. Instance of this object will be passed to the getter.</param>
     /// <param name="getter">Function that will return string value of a key with the specified name.</param>
-    /// <returns>Context from it's text representation.</returns>
-    public abstract PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter);
+    /// <returns>Context from its text representation.</returns>
+    public abstract PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter);
 }

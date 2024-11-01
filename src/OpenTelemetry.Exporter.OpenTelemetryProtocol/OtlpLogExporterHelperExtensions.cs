@@ -1,12 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
-#if EXPOSE_EXPERIMENTAL_FEATURES && NET8_0_OR_GREATER
-using System.Diagnostics.CodeAnalysis;
-#endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,6 +23,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <remarks><inheritdoc cref="AddOtlpExporter(OpenTelemetryLoggerOptions, Action{OtlpExporterOptions})" path="/remarks"/></remarks>
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+    // TODO: [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
     public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions)
         => AddOtlpExporter(loggerOptions, name: null, configure: null);
 
@@ -37,6 +33,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+    // TODO: [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
         Action<OtlpExporterOptions> configure)
@@ -49,6 +46,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="name">Optional name which is used when retrieving options.</param>
     /// <param name="configure">Optional callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+    // TODO: [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
         string? name,
@@ -81,6 +79,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <param name="configureExporterAndProcessor">Callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="LogRecordExportProcessorOptions"/>.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+    // TODO: [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
         Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
@@ -93,6 +92,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="name">Optional name which is used when retrieving options.</param>
     /// <param name="configureExporterAndProcessor">Optional callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="LogRecordExportProcessorOptions"/>.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+    // TODO: [Obsolete("Call LoggerProviderBuilder.AddOtlpExporter instead this method will be removed in a future version.")]
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
         string? name,
@@ -119,86 +119,34 @@ public static class OtlpLogExporterHelperExtensions
         });
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Adds an OTLP exporter to the LoggerProvider.
-    /// </summary>
-    /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
-    /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
-    /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-#if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-    public
-#else
     /// <summary>
     /// Adds an OTLP exporter to the LoggerProvider.
     /// </summary>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-    internal
-#endif
-        static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder)
+    public static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder)
         => AddOtlpExporter(builder, name: null, configureExporter: null);
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Adds an OTLP exporter to the LoggerProvider.
-    /// </summary>
-    /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
-    /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
-    /// <param name="configureExporter">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
-    /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-#if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-    public
-#else
     /// <summary>
     /// Adds an OTLP exporter to the LoggerProvider.
     /// </summary>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
     /// <param name="configureExporter">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-    internal
-#endif
-        static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions> configureExporter)
+    public static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions> configureExporter)
         => AddOtlpExporter(builder, name: null, configureExporter);
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Adds an OTLP exporter to the LoggerProvider.
     /// </summary>
-    /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
     /// <param name="configureExporterAndProcessor">Callback action for
     /// configuring <see cref="OtlpExporterOptions"/> and <see
     /// cref="LogRecordExportProcessorOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-#if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-    public
-#else
-    internal
-#endif
-        static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
+    public static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
         => AddOtlpExporter(builder, name: null, configureExporterAndProcessor);
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProvider.
-    /// </summary>
-    /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
-    /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
-    /// <param name="name">Optional name which is used when retrieving options.</param>
-    /// <param name="configureExporter">Optional callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
-    /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-#if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-    public
-#else
     /// <summary>
     /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProvider.
     /// </summary>
@@ -206,9 +154,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="name">Optional name which is used when retrieving options.</param>
     /// <param name="configureExporter">Optional callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-    internal
-#endif
-        static LoggerProviderBuilder AddOtlpExporter(
+    public static LoggerProviderBuilder AddOtlpExporter(
         this LoggerProviderBuilder builder,
         string? name,
         Action<OtlpExporterOptions>? configureExporter)
@@ -265,22 +211,6 @@ public static class OtlpLogExporterHelperExtensions
         });
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Adds an OTLP exporter to the LoggerProvider.
-    /// </summary>
-    /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
-    /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
-    /// <param name="name">Optional name which is used when retrieving options.</param>
-    /// <param name="configureExporterAndProcessor">Optional callback action for
-    /// configuring <see cref="OtlpExporterOptions"/> and <see
-    /// cref="LogRecordExportProcessorOptions"/>.</param>
-    /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-#if NET8_0_OR_GREATER
-    [Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
-    public
-#else
     /// <summary>
     /// Adds an OTLP exporter to the LoggerProvider.
     /// </summary>
@@ -290,9 +220,7 @@ public static class OtlpLogExporterHelperExtensions
     /// configuring <see cref="OtlpExporterOptions"/> and <see
     /// cref="LogRecordExportProcessorOptions"/>.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-    internal
-#endif
-        static LoggerProviderBuilder AddOtlpExporter(
+    public static LoggerProviderBuilder AddOtlpExporter(
         this LoggerProviderBuilder builder,
         string? name,
         Action<OtlpExporterOptions, LogRecordExportProcessorOptions>? configureExporterAndProcessor)
@@ -358,7 +286,7 @@ public static class OtlpLogExporterHelperExtensions
 
         if (!skipUseOtlpExporterRegistrationCheck)
         {
-            serviceProvider.EnsureNoUseOtlpExporterRegistrations();
+            serviceProvider!.EnsureNoUseOtlpExporterRegistrations();
         }
 
         /*

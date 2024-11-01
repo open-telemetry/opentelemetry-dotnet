@@ -4,9 +4,6 @@
     <Description>OpenTracing shim for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);distributed-tracing;OpenTracing</PackageTags>
     <MinVerTagPrefix>coreunstable-</MinVerTagPrefix>
-
-    <!-- this is temporary. will remove in future PR. -->
-    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\Shared\AssemblyVersionExtensions.cs" Link="Includes\AssemblyVersionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
   </ItemGroup>
 
 </Project>

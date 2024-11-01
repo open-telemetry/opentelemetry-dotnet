@@ -1,12 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
-#if NET8_0_OR_GREATER && EXPOSE_EXPERIMENTAL_FEATURES
+#if NET && EXPOSE_EXPERIMENTAL_FEATURES
 using System.Diagnostics.CodeAnalysis;
 #endif
 using OpenTelemetry.Internal;
@@ -19,7 +17,7 @@ namespace OpenTelemetry.Logs;
 /// Stores attributes to be added to a log message.
 /// </summary>
 /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
-#if NET8_0_OR_GREATER
+#if NET
 [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
 public

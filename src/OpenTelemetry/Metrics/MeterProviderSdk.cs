@@ -13,7 +13,6 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class MeterProviderSdk : MeterProvider
 {
-    internal const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
     internal const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
     internal const string ExemplarFilterConfigKey = "OTEL_METRICS_EXEMPLAR_FILTER";
     internal const string ExemplarFilterHistogramsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS";
@@ -22,7 +21,6 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal readonly IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
     internal bool Disposed;
-    internal bool EmitOverflowAttribute;
     internal bool ReclaimUnusedMetricPoints;
     internal ExemplarFilterType? ExemplarFilter;
     internal ExemplarFilterType? ExemplarFilterForHistograms;
@@ -30,7 +28,7 @@ internal sealed class MeterProviderSdk : MeterProvider
 
     private readonly List<object> instrumentations = new();
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
-    private readonly object collectLock = new();
+    private readonly Lock collectLock = new();
     private readonly MeterListener listener;
     private readonly MetricReader? reader;
     private readonly CompositeMetricReader? compositeMetricReader;
@@ -75,7 +73,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         this.viewConfigs = state.ViewConfigs;
 
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
-            $"MeterProvider configuration: {{MetricLimit={state.MetricLimit}, CardinalityLimit={state.CardinalityLimit}, EmitOverflowAttribute={this.EmitOverflowAttribute}, ReclaimUnusedMetricPoints={this.ReclaimUnusedMetricPoints}, ExemplarFilter={this.ExemplarFilter}, ExemplarFilterForHistograms={this.ExemplarFilterForHistograms}}}.");
+            $"MeterProvider configuration: {{MetricLimit={state.MetricLimit}, CardinalityLimit={state.CardinalityLimit}, ReclaimUnusedMetricPoints={this.ReclaimUnusedMetricPoints}, ExemplarFilter={this.ExemplarFilter}, ExemplarFilterForHistograms={this.ExemplarFilterForHistograms}}}.");
 
         foreach (var reader in state.Readers)
         {
@@ -86,7 +84,6 @@ internal sealed class MeterProviderSdk : MeterProvider
             reader.ApplyParentProviderSettings(
                 state.MetricLimit,
                 state.CardinalityLimit,
-                this.EmitOverflowAttribute,
                 this.ReclaimUnusedMetricPoints,
                 this.ExemplarFilter,
                 this.ExemplarFilterForHistograms);
@@ -486,11 +483,6 @@ internal sealed class MeterProviderSdk : MeterProvider
 
     private void ApplySpecificationConfigurationKeys(IConfiguration configuration)
     {
-        if (configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, EmitOverFlowAttributeConfigKey, out this.EmitOverflowAttribute))
-        {
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Overflow attribute feature enabled via configuration.");
-        }
-
         if (configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, ReclaimUnusedMetricPointsConfigKey, out this.ReclaimUnusedMetricPoints))
         {
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Reclaim unused metric point feature enabled via configuration.");

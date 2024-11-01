@@ -20,17 +20,17 @@ public class GuardTest
         Guard.ThrowIfNull("hello");
 
         // Invalid
-        object potato = null;
+        object? potato = null;
         var ex1 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(potato));
         Assert.Contains("Must not be null", ex1.Message);
         Assert.Equal("potato", ex1.ParamName);
 
-        object @event = null;
+        object? @event = null;
         var ex2 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(@event));
         Assert.Contains("Must not be null", ex2.Message);
         Assert.Equal("@event", ex2.ParamName);
 
-        Thing thing = null;
+        Thing? thing = null;
         var ex3 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(thing?.Bar));
         Assert.Contains("Must not be null", ex3.Message);
         Assert.Equal("thing?.Bar", ex3.ParamName);
@@ -153,12 +153,12 @@ public class GuardTest
 
     public class Thing
     {
-        public string Bar { get; set; }
+        public string? Bar { get; set; }
     }
 
-#if !NET6_0_OR_GREATER
+#if !NET
     /// <summary>
-    /// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
+    /// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System.Runtime.Tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
     /// </summary>
     public class CallerArgumentExpressionAttributeTests
     {
@@ -166,7 +166,7 @@ public class GuardTest
         [InlineData(null)]
         [InlineData("")]
         [InlineData("paramName")]
-        public static void Ctor_ParameterName_Roundtrip(string value)
+        public static void Ctor_ParameterName_Roundtrip(string? value)
         {
             var caea = new CallerArgumentExpressionAttribute(value);
             Assert.Equal(value, caea.ParameterName);
@@ -175,12 +175,13 @@ public class GuardTest
         [Fact]
         public static void BasicTest()
         {
+            Assert.Equal("null", GetValue(null));
             Assert.Equal("\"hello\"", GetValue("hello"));
             Assert.Equal("3 + 2", GetValue(3 + 2));
             Assert.Equal("new object()", GetValue(new object()));
         }
 
-        private static string GetValue(object argument, [CallerArgumentExpression("argument")] string expr = null) => expr;
+        private static string? GetValue(object? argument, [CallerArgumentExpression(nameof(argument))] string? expr = null) => expr;
     }
 #endif
 }

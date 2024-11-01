@@ -17,8 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		global.json = global.json
 		LICENSE.TXT = LICENSE.TXT
 		NuGet.config = NuGet.config
-		OpenTelemetry.proj = OpenTelemetry.proj
 		README.md = README.md
+		RELEASENOTES.md = RELEASENOTES.md
 		THIRD-PARTY-NOTICES.TXT = THIRD-PARTY-NOTICES.TXT
 		VERSIONING.md = VERSIONING.md
 	EndProjectSection
@@ -28,16 +28,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\Common.nonprod.props = build\Common.nonprod.props
 		build\Common.prod.props = build\Common.prod.props
 		build\Common.props = build\Common.props
+		build\Common.targets = build\Common.targets
 		build\debug.snk = build\debug.snk
 		Directory.Packages.props = Directory.Packages.props
 		build\docfx.cmd = build\docfx.cmd
-		build\docker-compose.net6.0.yml = build\docker-compose.net6.0.yml
-		build\docker-compose.net7.0.yml = build\docker-compose.net7.0.yml
 		build\docker-compose.net8.0.yml = build\docker-compose.net8.0.yml
+		build\docker-compose.net9.0.yml = build\docker-compose.net9.0.yml
 		build\GlobalAttrExclusions.txt = build\GlobalAttrExclusions.txt
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
 		build\OpenTelemetry.prod.loose.ruleset = build\OpenTelemetry.prod.loose.ruleset
 		build\OpenTelemetry.prod.ruleset = build\OpenTelemetry.prod.ruleset
+		build\OpenTelemetry.proj = build\OpenTelemetry.proj
 		build\OpenTelemetry.test.ruleset = build\OpenTelemetry.test.ruleset
 		build\RELEASING.md = build\RELEASING.md
 		build\stylecop.json = build\stylecop.json
@@ -80,12 +81,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEM
 	ProjectSection(SolutionItems) = preProject
 		.github\ISSUE_TEMPLATE\bug_report.yml = .github\ISSUE_TEMPLATE\bug_report.yml
 		.github\ISSUE_TEMPLATE\feature_request.yml = .github\ISSUE_TEMPLATE\feature_request.yml
-		.github\ISSUE_TEMPLATE\question.yml = .github\ISSUE_TEMPLATE\question.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\add-labels.yml = .github\workflows\add-labels.yml
+		.github\workflows\automation.yml = .github\workflows\automation.yml
 		.github\workflows\ci.yml = .github\workflows\ci.yml
 		.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
 		.github\workflows\Component.BuildTest.yml = .github\workflows\Component.BuildTest.yml
@@ -94,6 +95,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\dotnet-format.yml = .github\workflows\dotnet-format.yml
 		.github\workflows\markdownlint.yml = .github\workflows\markdownlint.yml
 		.github\workflows\package-validation.yml = .github\workflows\package-validation.yml
+		.github\workflows\post-release.yml = .github\workflows\post-release.yml
 		.github\workflows\prepare-release.yml = .github\workflows\prepare-release.yml
 		.github\workflows\publish-packages-1.0.yml = .github\workflows\publish-packages-1.0.yml
 		.github\workflows\sanitycheck.yml = .github\workflows\sanitycheck.yml
@@ -111,7 +113,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D2E73927-5
 	ProjectSection(SolutionItems) = preProject
 		test\Directory.Build.props = test\Directory.Build.props
 		test\Directory.Build.targets = test\Directory.Build.targets
-		test\Directory.Packages.props = test\Directory.Packages.props
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.Console", "examples\Console\Examples.Console.csproj", "{FF3E6E08-E8E4-4523-B526-847CD989279F}"
@@ -121,14 +122,20 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "test\Benchmarks\Benchmarks.csproj", "{DE9130A4-F30A-49D7-8834-41DE3021218B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}"
+	ProjectSection(SolutionItems) = preProject
+		docs\README.md = docs\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948}"
 	ProjectSection(SolutionItems) = preProject
 		examples\Directory.Build.props = examples\Directory.Build.props
-		examples\Directory.Packages.props = examples\Directory.Packages.props
+		examples\Directory.Build.targets = examples\Directory.Build.targets
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "trace", "trace", "{5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}"
+	ProjectSection(SolutionItems) = preProject
+		docs\trace\README.md = docs\trace\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "metrics", "metrics", "{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}"
 	ProjectSection(SolutionItems) = preProject
@@ -274,6 +281,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shims", "Shims", "{A0CB9A10-F22D-4E66-A449-74B3D0361A9C}"
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\Shims\IsExternalInit.cs = src\Shared\Shims\IsExternalInit.cs
+		src\Shared\Shims\Lock.cs = src\Shared\Shims\Lock.cs
 		src\Shared\Shims\NullableAttributes.cs = src\Shared\Shims\NullableAttributes.cs
 	EndProjectSection
 EndProject
@@ -297,7 +305,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "experimental-apis", "experi
 	ProjectSection(SolutionItems) = preProject
 		docs\diagnostics\experimental-apis\OTEL1000.md = docs\diagnostics\experimental-apis\OTEL1000.md
 		docs\diagnostics\experimental-apis\OTEL1001.md = docs\diagnostics\experimental-apis\OTEL1001.md
-		docs\diagnostics\experimental-apis\OTEL1003.md = docs\diagnostics\experimental-apis\OTEL1003.md
 		docs\diagnostics\experimental-apis\OTEL1004.md = docs\diagnostics\experimental-apis\OTEL1004.md
 		docs\diagnostics\experimental-apis\README.md = docs\diagnostics\experimental-apis\README.md
 	EndProjectSection
@@ -326,7 +333,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TagWriter", "TagWriter", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{44982E0D-C8C6-42DC-9F8F-714981F27CE6}"
 	ProjectSection(SolutionItems) = preProject
-		build\scripts\add-labels.ps1 = build\scripts\add-labels.ps1
+		build\scripts\add-labels.psm1 = build\scripts\add-labels.psm1
 		build\scripts\finalize-publicapi.ps1 = build\scripts\finalize-publicapi.ps1
 		build\scripts\post-release.psm1 = build\scripts\post-release.psm1
 		build\scripts\prepare-release.psm1 = build\scripts\prepare-release.psm1
@@ -335,6 +342,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{4498
 		build\scripts\test-threadSafety.ps1 = build\scripts\test-threadSafety.ps1
 		build\scripts\update-changelogs.ps1 = build\scripts\update-changelogs.ps1
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "exemplars", "docs\metrics\exemplars\exemplars.csproj", "{79C12C80-B27B-41FB-AE79-A3BB74CFA782}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -590,6 +599,10 @@ Global
 		{19545B37-8518-4BDD-AD49-00C031FB3C2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19545B37-8518-4BDD-AD49-00C031FB3C2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19545B37-8518-4BDD-AD49-00C031FB3C2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79C12C80-B27B-41FB-AE79-A3BB74CFA782}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79C12C80-B27B-41FB-AE79-A3BB74CFA782}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79C12C80-B27B-41FB-AE79-A3BB74CFA782}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79C12C80-B27B-41FB-AE79-A3BB74CFA782}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -647,6 +660,7 @@ Global
 		{87A20A76-D524-4AAC-AF92-8725BFED0415} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 		{993E65E5-E71B-40FD-871C-60A9EBD59724} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 		{44982E0D-C8C6-42DC-9F8F-714981F27CE6} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
+		{79C12C80-B27B-41FB-AE79-A3BB74CFA782} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

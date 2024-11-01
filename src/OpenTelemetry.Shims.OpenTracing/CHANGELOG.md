@@ -1,6 +1,26 @@
 # Changelog
 
+This file contains individual changes for the OpenTelemetry.Shims.OpenTracing
+package. For highlights and announcements covering all components see: [Release
+Notes](../../RELEASENOTES.md).
+
 ## Unreleased
+
+* Fixed an issue causing all tag values added via the `ISpanBuilder` API to be
+  converted to strings on the `ISpan` started from the builder.
+  ([#5797](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5797))
+
+## 1.9.0-beta.2
+
+Released 2024-Jun-24
+
+## 1.9.0-beta.1
+
+Released 2024-Jun-14
+
+## 1.9.0-alpha.2
+
+Released 2024-May-29
 
 ## 1.9.0-alpha.1
 

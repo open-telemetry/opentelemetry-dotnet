@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
@@ -24,6 +22,7 @@ internal static class ActivityHelperExtensions
     /// <param name="statusDescription">Status description.</param>
     /// <returns><see langword="true"/> if <see cref="Status"/> was found on the supplied Activity.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Obsolete]
     public static bool TryGetStatus(this Activity activity, out StatusCode statusCode, out string? statusDescription)
     {
         Debug.Assert(activity != null, "Activity should not be null");

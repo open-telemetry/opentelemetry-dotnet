@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Diagnostics;
 using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;

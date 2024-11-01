@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -16,7 +14,7 @@ namespace OpenTelemetry.Exporter;
 internal interface IOtlpExporterOptions
 {
     /// <summary>
-    /// Gets or sets the the OTLP transport protocol.
+    /// Gets or sets the OTLP transport protocol.
     /// </summary>
     OtlpExportProtocol Protocol { get; set; }
 

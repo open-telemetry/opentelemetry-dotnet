@@ -31,12 +31,6 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
                 this.WriteLine($"Activity.ParentSpanId:       {activity.ParentSpanId}");
             }
 
-            this.WriteLine($"Activity.ActivitySourceName: {activity.Source.Name}");
-            if (!string.IsNullOrEmpty(activity.Source.Version))
-            {
-                this.WriteLine($"Activity.ActivitySourceVersion: {activity.Source.Version}");
-            }
-
             this.WriteLine($"Activity.DisplayName:        {activity.DisplayName}");
             this.WriteLine($"Activity.Kind:               {activity.Kind}");
             this.WriteLine($"Activity.StartTime:          {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
@@ -117,13 +111,32 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
                 }
             }
 
+            this.WriteLine("Instrumentation scope (ActivitySource):");
+            this.WriteLine($"    Name: {activity.Source.Name}");
+            if (!string.IsNullOrEmpty(activity.Source.Version))
+            {
+                this.WriteLine($"    Version: {activity.Source.Version}");
+            }
+
+            if (activity.Source.Tags?.Any() == true)
+            {
+                this.WriteLine("    Tags:");
+                foreach (var activitySourceTag in activity.Source.Tags)
+                {
+                    if (this.TagWriter.TryTransformTag(activitySourceTag, out var result))
+                    {
+                        this.WriteLine($"        {result.Key}: {result.Value}");
+                    }
+                }
+            }
+
             var resource = this.ParentProvider.GetResource();
             if (resource != Resource.Empty)
             {
                 this.WriteLine("Resource associated with Activity:");
                 foreach (var resourceAttribute in resource.Attributes)
                 {
-                    if (this.TagWriter.TryTransformTag(resourceAttribute, out var result))
+                    if (this.TagWriter.TryTransformTag(resourceAttribute.Key, resourceAttribute.Value, out var result))
                     {
                         this.WriteLine($"    {result.Key}: {result.Value}");
                     }

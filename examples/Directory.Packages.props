@@ -1,6 +1,0 @@
-<Project>
-  <Import Project="$([MSBuild]::GetPathOfFileAbove(Directory.Packages.props, $(MSBuildThisFileDirectory)..))" />
-  <ItemGroup>
-    <PackageVersion Update="System.Text.Json" Version="6.0.5" />
-  </ItemGroup>
-</Project>

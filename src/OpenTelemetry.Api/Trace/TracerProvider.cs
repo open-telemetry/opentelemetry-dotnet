@@ -1,10 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#nullable enable
-
 using System.Collections.Concurrent;
-#if NET6_0_OR_GREATER
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 
@@ -36,7 +34,7 @@ public class TracerProvider : BaseProvider
     /// <param name="version">Version of the instrumentation library.</param>
     /// <returns>Tracer instance.</returns>
     public Tracer GetTracer(
-#if NET6_0_OR_GREATER
+#if NET
         [AllowNull]
 #endif
         string name,

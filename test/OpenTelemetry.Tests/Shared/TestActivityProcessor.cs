@@ -7,14 +7,14 @@ namespace OpenTelemetry.Tests;
 
 internal class TestActivityProcessor : BaseProcessor<Activity>
 {
-    public Action<Activity> StartAction;
-    public Action<Activity> EndAction;
+    public Action<Activity>? StartAction;
+    public Action<Activity>? EndAction;
 
     public TestActivityProcessor()
     {
     }
 
-    public TestActivityProcessor(Action<Activity> onStart, Action<Activity> onEnd)
+    public TestActivityProcessor(Action<Activity>? onStart, Action<Activity>? onEnd)
     {
         this.StartAction = onStart;
         this.EndAction = onEnd;

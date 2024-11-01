@@ -33,22 +33,22 @@ ignore:
   - "test"
 
 flags:
-  unittests-Solution-Stable:
+  unittests-Solution:
     carryforward: true
     paths:
       - src
 
-  unittests-Solution-Experimental:
+  unittests-Project-Stable:
     carryforward: true
     paths:
       - src
 
-  unittests-Instrumentation-Stable:
+  unittests-Project-Experimental:
     carryforward: true
     paths:
       - src
 
-  unittests-Instrumentation-Experimental:
+  unittests-UnstableCoreLibraries-Experimental:
     carryforward: true
     paths:
       - src

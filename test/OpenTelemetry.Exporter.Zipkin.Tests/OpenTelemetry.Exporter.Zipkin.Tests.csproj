@@ -1,9 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <Description>Unit test project for Zipkin Exporter for OpenTelemetry</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-    <!-- this is temporary. will remove in future PR. -->
-    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,9 +18,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>

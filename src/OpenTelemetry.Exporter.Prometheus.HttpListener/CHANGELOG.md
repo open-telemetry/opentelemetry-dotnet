@@ -1,6 +1,33 @@
 # Changelog
 
+This file contains individual changes for the
+OpenTelemetry.Exporter.Prometheus.HttpListener package. For highlights and
+announcements covering all components see: [Release
+Notes](../../RELEASENOTES.md).
+
 ## Unreleased
+
+* Added meter-level tags to Prometheus exporter
+  ([#5837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5837))
+
+## 1.9.0-beta.2
+
+Released 2024-Jun-24
+
+* Fixed a bug which lead to empty responses when the internal buffer is resized
+  processing a collection request
+  ([#5676](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5676))
+
+## 1.9.0-beta.1
+
+Released 2024-Jun-14
+
+## 1.9.0-alpha.2
+
+Released 2024-May-29
+
+* Fixed issue with OpenMetrics suffixes for Prometheus
+  ([#5646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5646))
 
 ## 1.9.0-alpha.1
 

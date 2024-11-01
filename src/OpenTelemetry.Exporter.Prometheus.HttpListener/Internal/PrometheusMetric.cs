@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using OpenTelemetry.Metrics;
 
@@ -27,47 +29,60 @@ internal sealed class PrometheusMetric
         // consecutive `_` characters MUST be replaced with a single `_` character.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L230-L233
         var sanitizedName = SanitizeMetricName(name);
+        var openMetricsName = SanitizeOpenMetricsName(sanitizedName);
 
-        string sanitizedUnit = null;
+        string? sanitizedUnit = null;
         if (!string.IsNullOrEmpty(unit))
         {
             sanitizedUnit = GetUnit(unit);
 
             // The resulting unit SHOULD be added to the metric as
             // [OpenMetrics UNIT metadata](https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#metricfamily)
-            // and as a suffix to the metric name unless the metric name already contains the
-            // unit, or the unit MUST be omitted. The unit suffix comes before any
-            // type-specific suffixes.
-            // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L242-L246
-            if (!sanitizedName.Contains(sanitizedUnit))
+            // and as a suffix to the metric name. The unit suffix comes before any type-specific suffixes.
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/3dfb383fe583e3b74a2365c5a1d90256b273ee76/specification/compatibility/prometheus_and_openmetrics.md#metric-metadata-1
+            if (!sanitizedName.EndsWith(sanitizedUnit))
             {
-                sanitizedName = sanitizedName + "_" + sanitizedUnit;
+                sanitizedName += $"_{sanitizedUnit}";
+                openMetricsName += $"_{sanitizedUnit}";
             }
         }
 
         // If the metric name for monotonic Sum metric points does not end in a suffix of `_total` a suffix of `_total` MUST be added by default, otherwise the name MUST remain unchanged.
         // Exporters SHOULD provide a configuration option to disable the addition of `_total` suffixes.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L286
+        // Note that we no longer append '_ratio' for units that are '1', see: https://github.com/open-telemetry/opentelemetry-specification/issues/4058
         if (type == PrometheusType.Counter && !sanitizedName.EndsWith("_total") && !disableTotalNameSuffixForCounters)
         {
             sanitizedName += "_total";
         }
 
-        // Special case: Converting "1" to "ratio".
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L239
-        if (type == PrometheusType.Gauge && unit == "1" && !sanitizedName.Contains("ratio"))
+        // For counters requested using OpenMetrics format, the MetricFamily name MUST be suffixed with '_total', regardless of the setting to disable the 'total' suffix.
+        // https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#counter-1
+        if (type == PrometheusType.Counter && !openMetricsName.EndsWith("_total"))
         {
-            sanitizedName += "_ratio";
+            openMetricsName += "_total";
         }
 
+        // In OpenMetrics format, the UNIT, TYPE and HELP metadata must be suffixed with the unit (handled above), and not the '_total' suffix, as in the case for counters.
+        // https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#unit
+        var openMetricsMetadataName = type == PrometheusType.Counter
+            ? SanitizeOpenMetricsName(openMetricsName)
+            : sanitizedName;
+
         this.Name = sanitizedName;
+        this.OpenMetricsName = openMetricsName;
+        this.OpenMetricsMetadataName = openMetricsMetadataName;
         this.Unit = sanitizedUnit;
         this.Type = type;
     }
 
     public string Name { get; }
 
-    public string Unit { get; }
+    public string OpenMetricsName { get; }
+
+    public string OpenMetricsMetadataName { get; }
+
+    public string? Unit { get; }
 
     public PrometheusType Type { get; }
 
@@ -78,7 +93,7 @@ internal sealed class PrometheusMetric
 
     internal static string SanitizeMetricName(string metricName)
     {
-        StringBuilder sb = null;
+        StringBuilder? sb = null;
         var lastCharUnderscore = false;
 
         for (var i = 0; i < metricName.Length; i++)
@@ -121,7 +136,7 @@ internal sealed class PrometheusMetric
         // https://ucum.org/ucum#section-Character-Set-and-Lexical-Rules
         // What should happen if they are nested isn't defined.
         // Right now the remove annotations code doesn't attempt to balance multiple start and end braces.
-        StringBuilder sb = null;
+        StringBuilder? sb = null;
 
         var hasOpenBrace = false;
         var startOpenBraceIndex = 0;
@@ -155,8 +170,21 @@ internal sealed class PrometheusMetric
             return unit;
         }
 
-        sb.Append(unit, lastWriteIndex, unit.Length - lastWriteIndex);
+        Debug.Assert(sb != null, "sb was null");
+
+        sb!.Append(unit, lastWriteIndex, unit.Length - lastWriteIndex);
+
         return sb.ToString();
+    }
+
+    private static string SanitizeOpenMetricsName(string metricName)
+    {
+        if (metricName.EndsWith("_total"))
+        {
+            return metricName.Substring(0, metricName.Length - 6);
+        }
+
+        return metricName;
     }
 
     private static string GetUnit(string unit)
@@ -181,7 +209,7 @@ internal sealed class PrometheusMetric
         return updatedUnit;
     }
 
-    private static bool TryProcessRateUnits(string updatedUnit, out string updatedPerUnit)
+    private static bool TryProcessRateUnits(string updatedUnit, [NotNullWhen(true)] out string? updatedPerUnit)
     {
         updatedPerUnit = null;
 

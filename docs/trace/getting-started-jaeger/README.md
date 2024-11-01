@@ -1,10 +1,15 @@
 # Getting Started with Jaeger
 
-- [Export traces from the application](#export-traces-from-the-application)
-  - [Check results in the console](#check-results-in-the-console)
-- [Collect and visualize traces using Jaeger](#collect-and-visualize-traces-using-jaeger)
-- [Final cleanup](#final-cleanup)
-- [Learn more](#learn-more)
+<details>
+<summary>Table of Contents</summary>
+
+* [Export traces from the application](#export-traces-from-the-application)
+  * [Check results in the console](#check-results-in-the-console)
+* [Collect and visualize traces using Jaeger](#collect-and-visualize-traces-using-jaeger)
+* [Final cleanup](#final-cleanup)
+* [Learn more](#learn-more)
+
+</details>
 
 ## Export traces from the application
 
@@ -42,25 +47,29 @@ Run the application again and we should see the trace output from the console:
 ```text
 > dotnet run
 
-Activity.TraceId:          a80c920e0aabb50b547e2bb7455cfd39
-Activity.SpanId:           4e45a1d51744f329
-Activity.TraceFlags:       Recorded
-Activity.ParentSpanId:     4f7e9b78c55dcfad
-Activity.ActivitySourceName: OpenTelemetry.Instrumentation.Http
-Activity.DisplayName: HTTP GET
-Activity.Kind:        Client
-Activity.StartTime:   2022-05-07T02:54:25.7840762Z
-Activity.Duration:    00:00:01.9615540
+Activity.TraceId:            693f1d15634bfe6ba3254d6f9d20df27
+Activity.SpanId:             429cc5a90a753fb3
+Activity.TraceFlags:         Recorded
+Activity.ParentSpanId:       0d64498b736c9a11
+Activity.ActivitySourceName: System.Net.Http
+Activity.DisplayName:        GET
+Activity.Kind:               Client
+Activity.StartTime:          2024-07-04T13:18:12.2408786Z
+Activity.Duration:           00:00:02.1028562
 Activity.Tags:
-    http.method: GET
-    http.host: httpstat.us
-    http.url: https://httpstat.us/200?sleep=1000
-    http.status_code: 200
+    http.request.method: GET
+    server.address: httpstat.us
+    server.port: 443
+    url.full: https://httpstat.us/200?sleep=Redacted
+    network.protocol.version: 1.1
+    http.response.status_code: 200
 Resource associated with Activity:
     service.name: DemoApp
     service.version: 1.0.0
-    service.instance.id: 1b3b3a6f-be43-46b0-819a-4db1200c633d
-
+    service.instance.id: 03ccafab-e9a7-440a-a9cd-9a0163e0d06c
+    telemetry.sdk.name: opentelemetry
+    telemetry.sdk.language: dotnet
+    telemetry.sdk.version: 1.9.0
 ...
 ```
 
@@ -178,6 +187,6 @@ BatchExportProcessor --> | Batch | OtlpExporter
 
 ## Learn more
 
-- [Jaeger Tracing](https://www.jaegertracing.io/)
-- [OTLP Exporter for OpenTelemetry
+* [Jaeger Tracing](https://www.jaegertracing.io/)
+* [OTLP Exporter for OpenTelemetry
   .NET](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)

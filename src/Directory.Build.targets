@@ -1,5 +1,7 @@
 <Project>
 
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\Common.targets" />
+
   <PropertyGroup>
     <!-- Note: PackageValidationBaselineVersion and IsPackable are defined in
     targets because $(MinVerTagPrefix) is not available in props files as they
@@ -12,15 +14,6 @@
 
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)"/>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)'=='net462'">
-    <!--ImplicitUsings will add this namespace that is not available for NetFX.
-    https://github.com/dotnet/sdk/issues/24146
-    https://github.com/dotnet/runtime/issues/59163
-    https://github.com/dotnet/sdk/issues/22515
-    -->
-    <Using Remove="System.Net.Http" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsPackable)' == 'true'">

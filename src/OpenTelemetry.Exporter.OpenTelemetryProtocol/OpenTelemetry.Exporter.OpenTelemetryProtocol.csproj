@@ -5,8 +5,6 @@
     <PackageTags>$(PackageTags);OTLP</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
 
-    <!-- this is temporary. will remove in future PR. -->
-    <Nullable>disable</Nullable>
     <DefineConstants>BUILDING_INTERNAL_PERSISTENT_STORAGE;$(DefineConstants)</DefineConstants>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
 
@@ -18,6 +16,7 @@
     https://github.com/open-telemetry/opentelemetry-dotnet/pull/5520#discussion_r1556221048
     and https://github.com/dotnet/runtime/issues/92509 -->
     <NoWarn>$(NoWarn);SYSLIB1100;SYSLIB1101</NoWarn>
+    <AllowUnsafeBlocks Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'">true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.Net.Client" Condition="'$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="Grpc.Net.Client" Condition="'$(TargetFramework)' != 'netstandard2.0' AND '$(TargetFramework)' != '$(NetFrameworkMinimumSupportedVersion)'" />
     <PackageReference Include="Grpc" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'" />
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="All" />

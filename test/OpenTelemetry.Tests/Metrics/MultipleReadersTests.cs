@@ -71,7 +71,7 @@ public class MultipleReadersTests
         Assert.True(defaultNamedOptionsConfigureCalled);
         Assert.True(namedOptionsConfigureCalled);
 
-        counter.Add(10, new KeyValuePair<string, object>("key", "value"));
+        counter.Add(10, new KeyValuePair<string, object?>("key", "value"));
 
         meterProvider.ForceFlush();
 
@@ -123,7 +123,7 @@ public class MultipleReadersTests
         exportedItems1.Clear();
         exportedItems2.Clear();
 
-        counter.Add(15, new KeyValuePair<string, object>("key", "value"));
+        counter.Add(15, new KeyValuePair<string, object?>("key", "value"));
 
         meterProvider.ForceFlush();
 

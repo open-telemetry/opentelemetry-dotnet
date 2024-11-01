@@ -6,7 +6,7 @@ namespace OpenTelemetry.Internal;
 // Note: Inspired by https://devblogs.microsoft.com/pfxteam/getting-random-numbers-in-a-thread-safe-way/
 internal static class ThreadSafeRandom
 {
-#if NET6_0_OR_GREATER
+#if NET
     public static int Next(int min, int max)
     {
         return Random.Shared.Next(min, max);

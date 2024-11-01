@@ -1,6 +1,39 @@
 # Changelog
 
+This file contains individual changes for the OpenTelemetry.Exporter.Console
+package. For highlights and announcements covering all components see: [Release
+Notes](../../RELEASENOTES.md).
+
 ## Unreleased
+
+* Added direct reference to `System.Text.Json` for the `net8.0` target with
+  minimum version of `8.0.5` in response to
+  [CVE-2024-30105](https://github.com/advisories/GHSA-hh2w-p6rv-4g7w) &
+  [CVE-2024-43485](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485).
+  ([#5874](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5874),
+  [#5891](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5891))
+
+* Added support for Instrumentation Scope Attributes (i.e
+  [ActivitySource.Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource.tags))
+  when writing traces to the console.
+  ([#5935](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5935))
+
+## 1.10.0-beta.1
+
+Released 2024-Sep-30
+
+## 1.9.0
+
+Released 2024-Jun-14
+
+## 1.9.0-rc.1
+
+Released 2024-Jun-07
+
+* The experimental APIs previously covered by `OTEL1000`
+  (`LoggerProviderBuilder.AddConsoleExporter` extension) are now part of the
+  public API and supported in stable builds.
+  ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
 ## 1.9.0-alpha.1
 
@@ -33,9 +66,9 @@ Released 2023-Dec-08
 
 Released 2023-Nov-29
 
-* Add support for Instrumentation Scope Attributes (i.e [Meter
-  Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)),
-  fixing issue
+* Added support for Instrumentation Scope Attributes (i.e
+  [Meter.Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)),
+  when writing metrics to the console, fixing issue
   [#4563](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4563).
   ([#5089](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5089))
 
@@ -93,7 +126,8 @@ Released 2023-May-25
   ([#4507](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4507))
 
 * Added direct reference to `System.Text.Encodings.Web` with minimum version of
-`4.7.2` in response to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
+  `4.7.2` in response to
+  [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
   ([#4390](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4390))
 
 * Updated `LogRecord` console output: `Body` is now shown (if set),

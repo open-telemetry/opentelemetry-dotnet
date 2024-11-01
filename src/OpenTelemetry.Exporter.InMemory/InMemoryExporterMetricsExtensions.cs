@@ -51,15 +51,15 @@ public static class InMemoryExporterMetricsExtensions
     /// Be aware that <see cref="Metric"/> may continue to be updated after export.
     /// </remarks>
     /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-    /// <param name="name">Name which is used when retrieving options.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
     /// <param name="exportedItems">Collection which will be populated with the exported <see cref="Metric"/>.</param>
-    /// <param name="configureMetricReader">Callback action for configuring <see cref="MetricReaderOptions"/>.</param>
+    /// <param name="configureMetricReader">Optional callback action for configuring <see cref="MetricReaderOptions"/>.</param>
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddInMemoryExporter(
         this MeterProviderBuilder builder,
-        string name,
+        string? name,
         ICollection<Metric> exportedItems,
-        Action<MetricReaderOptions> configureMetricReader)
+        Action<MetricReaderOptions>? configureMetricReader)
     {
         Guard.ThrowIfNull(builder);
         Guard.ThrowIfNull(exportedItems);
@@ -119,15 +119,15 @@ public static class InMemoryExporterMetricsExtensions
     /// Use this if you need a copy of <see cref="Metric"/> that will not be updated after export.
     /// </remarks>
     /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-    /// <param name="name">Name which is used when retrieving options.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
     /// <param name="exportedItems">Collection which will be populated with the exported <see cref="Metric"/> represented as <see cref="MetricSnapshot"/>.</param>
-    /// <param name="configureMetricReader">Callback action for configuring <see cref="MetricReaderOptions"/>.</param>
+    /// <param name="configureMetricReader">Optional callback action for configuring <see cref="MetricReaderOptions"/>.</param>
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddInMemoryExporter(
         this MeterProviderBuilder builder,
-        string name,
+        string? name,
         ICollection<MetricSnapshot> exportedItems,
-        Action<MetricReaderOptions> configureMetricReader)
+        Action<MetricReaderOptions>? configureMetricReader)
     {
         Guard.ThrowIfNull(builder);
         Guard.ThrowIfNull(exportedItems);

@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET6_0_OR_GREATER
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Diagnostics.Metrics;
@@ -50,7 +50,7 @@ public static class MeterProviderBuilderExtensions
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder AddReader<
-#if NET6_0_OR_GREATER
+#if NET
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
     T>(this MeterProviderBuilder meterProviderBuilder)
@@ -238,9 +238,7 @@ public static class MeterProviderBuilderExtensions
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <param name="maxMetricPointsPerMetricStream">Maximum number of metric points allowed per metric stream.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    [Obsolete("Use MetricStreamConfiguration.CardinalityLimit via the AddView API instead. This method will be removed in a future version.")]
-#endif
+    [Obsolete("Use MetricStreamConfiguration.CardinalityLimit via the AddView API instead. This method is marked as obsolete in version 1.10.0 and will be removed in a future version.")]
     public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
     {
         Guard.ThrowIfOutOfRange(maxMetricPointsPerMetricStream, min: 1);

@@ -1,0 +1,32 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  debug:
+    verbosity: detailed
+  prometheus:
+    endpoint: ":9201"
+    send_timestamps: true
+    metric_expiration: 180m
+    enable_open_metrics: true
+  otlp:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [debug, otlp]
+    metrics:
+      receivers: [otlp]
+      exporters: [debug, prometheus]
+    logs:
+      receivers: [otlp]
+      exporters: [debug]
