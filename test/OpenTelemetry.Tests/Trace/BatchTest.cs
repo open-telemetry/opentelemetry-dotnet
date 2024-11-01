@@ -15,7 +15,7 @@ public class BatchTest
         Assert.Throws<ArgumentOutOfRangeException>(() => new Batch<string>(Array.Empty<string>(), -1));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Batch<string>(Array.Empty<string>(), 1));
 
-        Assert.Throws<ArgumentNullException>(() => new Batch<string>(null));
+        Assert.Throws<ArgumentNullException>(() => new Batch<string>(null!));
     }
 
     [Fact]
