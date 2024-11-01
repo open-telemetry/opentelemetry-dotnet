@@ -37,7 +37,7 @@ internal static class ProtobufOtlpResourceSerializer
                         isServiceNamePresent = true;
                     }
 
-                    otlpTagWriterState = ProcessResourceAttribute(ref otlpTagWriterState, attribute);
+                    ProcessResourceAttribute(ref otlpTagWriterState, attribute);
                 }
             }
             else
@@ -49,14 +49,14 @@ internal static class ProtobufOtlpResourceSerializer
                         isServiceNamePresent = true;
                     }
 
-                    otlpTagWriterState = ProcessResourceAttribute(ref otlpTagWriterState, attribute);
+                    ProcessResourceAttribute(ref otlpTagWriterState, attribute);
                 }
             }
         }
 
         if (!isServiceNamePresent)
         {
-            otlpTagWriterState = ProcessResourceAttribute(ref otlpTagWriterState, new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, DefaultServiceName));
+            ProcessResourceAttribute(ref otlpTagWriterState, new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, DefaultServiceName));
         }
 
         var resourceLength = otlpTagWriterState.WritePosition - (resourceLengthPosition + ReserveSizeForLength);
@@ -65,7 +65,7 @@ internal static class ProtobufOtlpResourceSerializer
         return otlpTagWriterState.WritePosition;
     }
 
-    private static ProtobufOtlpTagWriter.OtlpTagWriterState ProcessResourceAttribute(ref ProtobufOtlpTagWriter.OtlpTagWriterState otlpTagWriterState, KeyValuePair<string, object> attribute)
+    private static void ProcessResourceAttribute(ref ProtobufOtlpTagWriter.OtlpTagWriterState otlpTagWriterState, KeyValuePair<string, object> attribute)
     {
         otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpTraceFieldNumberConstants.Resource_Attributes, ProtobufWireType.LEN);
         int resourceAttributesLengthPosition = otlpTagWriterState.WritePosition;
@@ -75,6 +75,5 @@ internal static class ProtobufOtlpResourceSerializer
 
         var resourceAttributesLength = otlpTagWriterState.WritePosition - (resourceAttributesLengthPosition + ReserveSizeForLength);
         ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, resourceAttributesLengthPosition, resourceAttributesLength);
-        return otlpTagWriterState;
     }
 }
