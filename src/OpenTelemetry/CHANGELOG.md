@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0-rc.1
+
+Released 2024-Nov-01
+
 * The experimental APIs previously covered by `OTEL1003`
   (`MetricStreamConfiguration.CardinalityLimit`) are now part of the public API
   and supported in stable builds.
