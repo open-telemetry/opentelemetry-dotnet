@@ -1703,6 +1703,91 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         }
     }
 
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    public void ObservableGaugeHandlesNoNewMeasurementsCorrectlyWithTemporality(MetricReaderTemporalityPreference temporalityPreference)
+    {
+        var exportedMetrics = new List<Metric>();
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedMetrics, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = temporalityPreference;
+            }));
+
+        var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
+        meter.CreateObservableGauge("NoiseLevel", () => measurement);
+
+        // Force a flush to export the recorded data
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Validate first export / flush
+        var firstMetric = exportedMetrics[0];
+        Assert.Equal("NoiseLevel", firstMetric.Name);
+        var firstMetricPoints = new List<MetricPoint>();
+        foreach (ref readonly var metricPoint in firstMetric.GetMetricPoints())
+        {
+            firstMetricPoints.Add(metricPoint);
+        }
+
+        Assert.Single(firstMetricPoints);
+        var firstMetricPoint = firstMetricPoints[0];
+        Assert.Equal(100, firstMetricPoint.GetGaugeLastValueLong());
+
+        // Flush the metrics again without recording any new measurements
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Validate second export / flush
+        // For observable gauge no new metric should be collected.
+        Assert.Single(exportedMetrics);
+    }
+
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    public void ObservableCounterHandlesNoNewMeasurementsCorrectlyWithTemporality(MetricReaderTemporalityPreference temporalityPreference)
+    {
+        var exportedMetrics = new List<Metric>();
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedMetrics, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = temporalityPreference;
+            }));
+
+        var measurement = new Measurement<int>(100, new KeyValuePair<string, object?>("gen", 0));
+        meter.CreateObservableCounter("AllocationCount", () => measurement);
+
+        // Force a flush to export the recorded data
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Validate first export / flush
+        var firstMetric = exportedMetrics[0];
+        Assert.Equal("AllocationCount", firstMetric.Name);
+        var firstMetricPoints = new List<MetricPoint>();
+        foreach (ref readonly var metricPoint in firstMetric.GetMetricPoints())
+        {
+            firstMetricPoints.Add(metricPoint);
+        }
+
+        Assert.Single(firstMetricPoints);
+        var firstMetricPoint = firstMetricPoints[0];
+        Assert.Equal(100, firstMetricPoint.GetGaugeLastValueLong());
+
+        // Flush the metrics again without recording any new measurements
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Validate second export / flush
+        // For observable gauge no new metric should be collected.
+        Assert.Single(exportedMetrics);
+    }
+
     internal static IConfiguration BuildConfiguration(bool shouldReclaimUnusedMetricPoints)
     {
         var configurationData = new Dictionary<string, string?>();
