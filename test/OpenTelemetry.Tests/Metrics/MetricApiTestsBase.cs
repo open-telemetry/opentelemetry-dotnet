@@ -1778,7 +1778,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
 
         Assert.Single(firstMetricPoints);
         var firstMetricPoint = firstMetricPoints[0];
-        Assert.Equal(100, firstMetricPoint.GetGaugeLastValueLong());
+        Assert.Equal(100, firstMetricPoint.GetSumLong());
         exportedMetrics.Clear();
 
         // Flush the metrics again without recording any new measurements
