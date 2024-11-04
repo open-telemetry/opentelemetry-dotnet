@@ -211,6 +211,7 @@ you're more than welcome to participate!
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
+* [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 * [Reiley Yang](https://github.com/reyang), Microsoft
 * [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
