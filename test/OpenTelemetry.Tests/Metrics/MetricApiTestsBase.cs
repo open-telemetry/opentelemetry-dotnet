@@ -1736,13 +1736,14 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Single(firstMetricPoints);
         var firstMetricPoint = firstMetricPoints[0];
         Assert.Equal(100, firstMetricPoint.GetGaugeLastValueLong());
+        exportedMetrics.Clear();
 
         // Flush the metrics again without recording any new measurements
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         // Validate second export / flush
-        // For observable gauge no new metric should be collected.
-        Assert.Single(exportedMetrics);
+        // For observable instruments no new metric should be collected.
+        Assert.Empty(exportedMetrics);
     }
 
     [Theory]
@@ -1778,13 +1779,14 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Single(firstMetricPoints);
         var firstMetricPoint = firstMetricPoints[0];
         Assert.Equal(100, firstMetricPoint.GetGaugeLastValueLong());
+        exportedMetrics.Clear();
 
         // Flush the metrics again without recording any new measurements
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         // Validate second export / flush
-        // For observable gauge no new metric should be collected.
-        Assert.Single(exportedMetrics);
+        // For observable instruments no new metric should be collected.
+        Assert.Empty(exportedMetrics);
     }
 
     internal static IConfiguration BuildConfiguration(bool shouldReclaimUnusedMetricPoints)
