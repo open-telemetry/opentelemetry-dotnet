@@ -1745,7 +1745,6 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Single(exportedMetrics);
     }
 
-
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
