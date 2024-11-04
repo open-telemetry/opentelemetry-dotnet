@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0-rc.1
+
+Released 2024-Nov-01
+
 * Added direct reference to `System.Text.Json` for the `net8.0` target with
   minimum version of `8.0.5` in response to
   [CVE-2024-30105](https://github.com/advisories/GHSA-hh2w-p6rv-4g7w) &

@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0-rc.1
+
+Released 2024-Nov-01
+
 * The experimental APIs previously covered by `OTEL1003`
   (`MetricStreamConfiguration.CardinalityLimit`) are now part of the public API
   and supported in stable builds.
@@ -35,6 +39,10 @@ Notes](../../RELEASENOTES.md).
 
   There is NO ability to revert to old behavior.
   ([#5909](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5909))
+
+* Exposed a `public` constructor on `Batch<T>` which accepts a single instance
+  of `T` to be contained in the batch.
+  ([#5642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5642))
 
 ## 1.10.0-beta.1
 
