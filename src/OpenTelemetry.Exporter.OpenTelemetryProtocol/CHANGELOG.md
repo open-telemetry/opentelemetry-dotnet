@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Removed the direct dependency on `Microsoft.Extensions.Configuration.Binder`.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.10.0-rc.1
 
 Released 2024-Nov-01
