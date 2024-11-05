@@ -6,12 +6,21 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0-rc.1
+
+Released 2024-Nov-01
+
 * Added direct reference to `System.Text.Json` for the `net8.0` target with
   minimum version of `8.0.5` in response to
   [CVE-2024-30105](https://github.com/advisories/GHSA-hh2w-p6rv-4g7w) &
   [CVE-2024-43485](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485).
   ([#5874](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5874),
   [#5891](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5891))
+
+* Added support for Instrumentation Scope Attributes (i.e
+  [ActivitySource.Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource.tags))
+  when writing traces to the console.
+  ([#5935](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5935))
 
 ## 1.10.0-beta.1
 
@@ -26,7 +35,7 @@ Released 2024-Jun-14
 Released 2024-Jun-07
 
 * The experimental APIs previously covered by `OTEL1000`
-  (`LoggerProviderBuilder.AddConsoleExporter` extension) will now be part of the
+  (`LoggerProviderBuilder.AddConsoleExporter` extension) are now part of the
   public API and supported in stable builds.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
@@ -61,9 +70,9 @@ Released 2023-Dec-08
 
 Released 2023-Nov-29
 
-* Add support for Instrumentation Scope Attributes (i.e [Meter
-  Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)),
-  fixing issue
+* Added support for Instrumentation Scope Attributes (i.e
+  [Meter.Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)),
+  when writing metrics to the console, fixing issue
   [#4563](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4563).
   ([#5089](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5089))
 

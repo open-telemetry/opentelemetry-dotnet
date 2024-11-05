@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Google.Protobuf.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -127,9 +128,11 @@ public class OtlpTraceExporterTests
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void ToOtlpResourceSpansTest(bool includeServiceNameInResource)
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    public void ToOtlpResourceSpansTest(bool includeServiceNameInResource, bool useCustomSerializer)
     {
         var evenTags = new[] { new KeyValuePair<string, object?>("k0", "v0") };
         var oddTags = new[] { new KeyValuePair<string, object?>("k1", "v1") };
@@ -174,7 +177,14 @@ public class OtlpTraceExporterTests
         {
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
-            request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            if (useCustomSerializer)
+            {
+                request = CreateTraceExportRequest(sdkOptions, batch, resourceBuilder.Build());
+            }
+            else
+            {
+                request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            }
 
             Assert.Single(request.ResourceSpans);
             var otlpResource = request.ResourceSpans.First().Resource;
@@ -221,8 +231,10 @@ public class OtlpTraceExporterTests
         }
     }
 
-    [Fact]
-    public void ScopeAttributesRemainConsistentAcrossMultipleBatches()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ScopeAttributesRemainConsistentAcrossMultipleBatches(bool useCustomSerializer)
     {
         var activitySourceTags = new TagList
         {
@@ -265,7 +277,14 @@ public class OtlpTraceExporterTests
         {
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
-            request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            if (useCustomSerializer)
+            {
+                request = CreateTraceExportRequest(sdkOptions, batch, resourceBuilder.Build());
+            }
+            else
+            {
+                request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            }
 
             var resourceSpans = request.ResourceSpans.First();
             Assert.NotNull(request.ResourceSpans.First());
@@ -307,8 +326,10 @@ public class OtlpTraceExporterTests
         }
     }
 
-    [Fact]
-    public void ScopeAttributesLimitsTest()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ScopeAttributesLimitsTest(bool useCustomSerializer)
     {
         var sdkOptions = new SdkLimitOptions()
         {
@@ -348,7 +369,14 @@ public class OtlpTraceExporterTests
         {
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
-            request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            if (useCustomSerializer)
+            {
+                request = CreateTraceExportRequest(sdkOptions, batch, resourceBuilder.Build());
+            }
+            else
+            {
+                request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            }
 
             var resourceSpans = request.ResourceSpans.First();
             Assert.NotNull(request.ResourceSpans.First());
@@ -366,12 +394,17 @@ public class OtlpTraceExporterTests
             Assert.Equal(new object().ToString()!.Substring(0, 4), scope.Attributes[2].Value.StringValue);
 
             // Return and re-add batch to simulate reuse
-            request.Return();
+            if (!useCustomSerializer)
+            {
+                request.Return();
+            }
         }
     }
 
-    [Fact]
-    public void SpanLimitsTest()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SpanLimitsTest(bool useCustomSerializer)
     {
         var sdkOptions = new SdkLimitOptions()
         {
@@ -406,7 +439,7 @@ public class OtlpTraceExporterTests
         activity.AddEvent(event1);
         activity.AddEvent(event2);
 
-        var otlpSpan = activity.ToOtlpSpan(sdkOptions);
+        var otlpSpan = useCustomSerializer ? ToOtlpSpan(sdkOptions, activity) : activity.ToOtlpSpan(sdkOptions);
 
         Assert.NotNull(otlpSpan);
         Assert.Equal(3, otlpSpan.Attributes.Count);
@@ -432,8 +465,10 @@ public class OtlpTraceExporterTests
         Assert.Equal(new object().ToString()!.Substring(0, 4), otlpSpan.Links[0].Attributes[2].Value.StringValue);
     }
 
-    [Fact]
-    public void ToOtlpSpanTest()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ToOtlpSpanTest(bool useCustomSerializer)
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
 
@@ -475,7 +510,7 @@ public class OtlpTraceExporterTests
         rootActivity.TraceId.CopyTo(traceIdSpan);
         var traceId = traceIdSpan.ToArray();
 
-        var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
+        var otlpSpan = useCustomSerializer ? ToOtlpSpan(DefaultSdkLimitOptions, rootActivity) : rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
 
         Assert.NotNull(otlpSpan);
         Assert.Equal("root", otlpSpan.Name);
@@ -511,7 +546,7 @@ public class OtlpTraceExporterTests
         rootActivity.Context.SpanId.CopyTo(parentIdSpan);
         var parentId = parentIdSpan.ToArray();
 
-        otlpSpan = childActivity.ToOtlpSpan(DefaultSdkLimitOptions);
+        otlpSpan = useCustomSerializer ? ToOtlpSpan(DefaultSdkLimitOptions, childActivity) : childActivity.ToOtlpSpan(DefaultSdkLimitOptions);
 
         Assert.NotNull(otlpSpan);
         Assert.Equal("child", otlpSpan.Name);
@@ -546,8 +581,10 @@ public class OtlpTraceExporterTests
         Assert.False(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
     }
 
-    [Fact]
-    public void ToOtlpSpanActivitiesWithNullArrayTest()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ToOtlpSpanActivitiesWithNullArrayTest(bool useCustomSerializer)
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
 
@@ -557,7 +594,7 @@ public class OtlpTraceExporterTests
         var stringArr = new string?[] { "test", string.Empty, null };
         rootActivity.SetTag("stringArray", stringArr);
 
-        var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
+        var otlpSpan = useCustomSerializer ? ToOtlpSpan(DefaultSdkLimitOptions, rootActivity) : rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
 
         Assert.NotNull(otlpSpan);
 
@@ -570,17 +607,20 @@ public class OtlpTraceExporterTests
     }
 
     [Theory]
-    [InlineData(ActivityStatusCode.Unset, "Description will be ignored if status is Unset.")]
-    [InlineData(ActivityStatusCode.Ok, "Description will be ignored if status is Okay.")]
-    [InlineData(ActivityStatusCode.Error, "Description will be kept if status is Error.")]
-    public void ToOtlpSpanNativeActivityStatusTest(ActivityStatusCode expectedStatusCode, string statusDescription)
+    [InlineData(ActivityStatusCode.Unset, "Description will be ignored if status is Unset.", true)]
+    [InlineData(ActivityStatusCode.Ok, "Description will be ignored if status is Okay.", true)]
+    [InlineData(ActivityStatusCode.Error, "Description will be kept if status is Error.", true)]
+    [InlineData(ActivityStatusCode.Unset, "Description will be ignored if status is Unset.", false)]
+    [InlineData(ActivityStatusCode.Ok, "Description will be ignored if status is Okay.", false)]
+    [InlineData(ActivityStatusCode.Error, "Description will be kept if status is Error.", false)]
+    public void ToOtlpSpanNativeActivityStatusTest(ActivityStatusCode expectedStatusCode, string statusDescription, bool useCustomSerializer)
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
         using var activity = activitySource.StartActivity("Name");
         Assert.NotNull(activity);
         activity.SetStatus(expectedStatusCode, statusDescription);
 
-        var otlpSpan = activity.ToOtlpSpan(DefaultSdkLimitOptions);
+        var otlpSpan = useCustomSerializer ? ToOtlpSpan(DefaultSdkLimitOptions, activity) : activity.ToOtlpSpan(DefaultSdkLimitOptions);
         Assert.NotNull(otlpSpan);
         if (expectedStatusCode == ActivityStatusCode.Unset)
         {
@@ -690,9 +730,11 @@ public class OtlpTraceExporterTests
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void ToOtlpSpanTraceStateTest(bool traceStateWasSet)
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    public void ToOtlpSpanTraceStateTest(bool traceStateWasSet, bool useCustomSerializer)
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
         using var activity = activitySource.StartActivity("Name");
@@ -703,7 +745,7 @@ public class OtlpTraceExporterTests
             activity.TraceStateString = tracestate;
         }
 
-        var otlpSpan = activity.ToOtlpSpan(DefaultSdkLimitOptions);
+        var otlpSpan = useCustomSerializer ? ToOtlpSpan(DefaultSdkLimitOptions, activity) : activity.ToOtlpSpan(DefaultSdkLimitOptions);
         Assert.NotNull(otlpSpan);
 
         if (traceStateWasSet)
@@ -892,11 +934,15 @@ public class OtlpTraceExporterTests
     }
 
     [Theory]
-    [InlineData(true, true)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(false, false)]
-    public void SpanFlagsTest(bool isRecorded, bool isRemote)
+    [InlineData(true, true, true)]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, true)]
+    [InlineData(false, false, true)]
+    [InlineData(true, true, false)]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(false, false, false)]
+    public void SpanFlagsTest(bool isRecorded, bool isRemote, bool useCustomSerializer)
     {
         using var activitySource = new ActivitySource(nameof(this.SpanFlagsTest));
 
@@ -909,7 +955,7 @@ public class OtlpTraceExporterTests
         using var rootActivity = activitySource.StartActivity("root", ActivityKind.Server, ctx);
         Assert.NotNull(rootActivity);
 
-        var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
+        var otlpSpan = useCustomSerializer ? ToOtlpSpan(DefaultSdkLimitOptions, rootActivity) : rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
 
         Assert.NotNull(otlpSpan);
         var flags = (OtlpTrace.SpanFlags)otlpSpan.Flags;
@@ -938,11 +984,15 @@ public class OtlpTraceExporterTests
     }
 
     [Theory]
-    [InlineData(true, true)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(false, false)]
-    public void SpanLinkFlagsTest(bool isRecorded, bool isRemote)
+    [InlineData(true, true, true)]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, true)]
+    [InlineData(false, false, true)]
+    [InlineData(true, true, false)]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(false, false, false)]
+    public void SpanLinkFlagsTest(bool isRecorded, bool isRemote, bool useCustomSerializer)
     {
         using var activitySource = new ActivitySource(nameof(this.SpanLinkFlagsTest));
 
@@ -960,7 +1010,7 @@ public class OtlpTraceExporterTests
         using var rootActivity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), links: links);
         Assert.NotNull(rootActivity);
 
-        var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
+        var otlpSpan = useCustomSerializer ? ToOtlpSpan(DefaultSdkLimitOptions, rootActivity) : rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
 
         Assert.NotNull(otlpSpan);
         var spanLink = Assert.Single(otlpSpan.Links);
@@ -988,6 +1038,26 @@ public class OtlpTraceExporterTests
         {
             Assert.False(flags.HasFlag(OtlpTrace.SpanFlags.ContextIsRemoteMask));
         }
+    }
+
+    private static OtlpTrace.Span? ToOtlpSpan(SdkLimitOptions sdkOptions, Activity activity)
+    {
+        var buffer = new byte[4096];
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity);
+        using var stream = new MemoryStream(buffer, 0, writePosition);
+        var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
+        return scopeSpans.Spans.FirstOrDefault();
+    }
+
+    private static OtlpCollector.ExportTraceServiceRequest CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)
+    {
+        var buffer = new byte[4096];
+        var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(buffer, 0, sdkOptions, resource, batch);
+        using var stream = new MemoryStream(buffer, 0, writePosition);
+        var tracesData = OtlpTrace.ResourceSpans.Parser.ParseFrom(stream);
+        var request = new OtlpCollector.ExportTraceServiceRequest();
+        request.ResourceSpans.Add(tracesData);
+        return request;
     }
 
     private void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)
