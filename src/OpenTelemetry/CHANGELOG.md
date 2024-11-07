@@ -6,6 +6,17 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Promote MetricPoint reclaim feature for delta aggregation from experimental to
+  stable.
+  Previously, it is an experimental feature which can be turned on by setting
+  the environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`.
+  Now that the [OpenTelemetry
+  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
+  has become stable. The feature is the default and the only allowed behavior
+  without the need to set an environment variable.
+  ([#5956](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5956))
+
 ## 1.10.0-rc.1
 
 Released 2024-Nov-01
