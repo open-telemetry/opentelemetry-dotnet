@@ -402,14 +402,10 @@ is used, it is possible to choose a smaller cardinality limit by allowing the
 SDK to reclaim unused metric points.
 
 > [!NOTE]
-> Reclaim unused metric points feature was introduced in OpenTelemetry .NET
-  [1.7.0-alpha.1](../../src/OpenTelemetry/CHANGELOG.md#170-alpha1). It is
-  currently an experimental feature which can be turned on by setting the
-  environment variable
-  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`. Once the
-  [OpenTelemetry
-  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-  become stable, this feature will be turned on by default.
+> Metric points reclaim is the default and only behavior for Delta Aggregation
+  Temporality starting with version 1.10.0. In version 1.7.0 - 1.9.0, it was an
+  experimental feature that could be enabled by setting the environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`.
 
 ### Memory Preallocation
 

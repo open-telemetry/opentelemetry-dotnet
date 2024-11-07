@@ -16,8 +16,6 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public class MetricTestsBase
 {
-    public const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
-
     protected readonly IConfiguration? configuration;
 
     protected MetricTestsBase()

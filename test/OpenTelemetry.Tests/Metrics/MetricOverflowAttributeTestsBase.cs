@@ -13,22 +13,14 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public abstract class MetricOverflowAttributeTestsBase
 {
-    private readonly bool shouldReclaimUnusedMetricPoints;
     private readonly Dictionary<string, string?> configurationData = new()
     {
     };
 
     private readonly IConfiguration configuration;
 
-    public MetricOverflowAttributeTestsBase(bool shouldReclaimUnusedMetricPoints)
+    public MetricOverflowAttributeTestsBase()
     {
-        this.shouldReclaimUnusedMetricPoints = shouldReclaimUnusedMetricPoints;
-
-        if (shouldReclaimUnusedMetricPoints)
-        {
-            this.configurationData[MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = "true";
-        }
-
         this.configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(this.configurationData)
             .Build();
@@ -139,15 +131,8 @@ public abstract class MetricOverflowAttributeTestsBase
             int expectedSum;
 
             // Number of metric points that were available before the 2500 measurements were made = 2000 (max MetricPoints)
-            if (this.shouldReclaimUnusedMetricPoints)
-            {
-                // If unused metric points are reclaimed, then number of metric points dropped = 2500 - 2000 = 500
-                expectedSum = 2500; // 500 * 5
-            }
-            else
-            {
-                expectedSum = 12500; // 2500 * 5
-            }
+            // Because unused metric points are reclaimed, number of metric points dropped = 2500 - 2000 = 500
+            expectedSum = 2500; // 500 * 5
 
             Assert.Equal(expectedSum, overflowMetricPoint.GetSumLong());
         }
@@ -291,17 +276,9 @@ public abstract class MetricOverflowAttributeTestsBase
             int expectedSum;
 
             // Number of metric points that were available before the 2500 measurements were made = 2000 (max MetricPoints)
-            if (this.shouldReclaimUnusedMetricPoints)
-            {
-                // If unused metric points are reclaimed, then number of metric points dropped = 2500 - 2000 = 500
-                expectedCount = 500;
-                expectedSum = 2500; // 500 * 5
-            }
-            else
-            {
-                expectedCount = 2500;
-                expectedSum = 12500; // 2500 * 5
-            }
+            // Because unused metric points are reclaimed, number of metric points dropped = 2500 - 2000 = 500
+            expectedCount = 500;
+            expectedSum = 2500; // 500 * 5
 
             Assert.Equal(expectedCount, overflowMetricPoint.GetHistogramCount());
             Assert.Equal(expectedSum, overflowMetricPoint.GetHistogramSum());
@@ -345,15 +322,7 @@ public abstract class MetricOverflowAttributeTestsBase
 public class MetricOverflowAttributeTests : MetricOverflowAttributeTestsBase
 {
     public MetricOverflowAttributeTests()
-        : base(false)
-    {
-    }
-}
-
-public class MetricOverflowAttributeTestsWithReclaimAttribute : MetricOverflowAttributeTestsBase
-{
-    public MetricOverflowAttributeTestsWithReclaimAttribute()
-        : base(true)
+        : base()
     {
     }
 }
