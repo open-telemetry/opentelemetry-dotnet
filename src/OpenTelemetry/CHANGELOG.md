@@ -6,16 +6,21 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Promote MetricPoint reclaim feature for delta aggregation from experimental to
-  stable.
-  Previously, it is an experimental feature which can be turned on by setting
-  the environment variable
-  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`.
-  Now that the [OpenTelemetry
-  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-  has become stable. The feature is the default and the only allowed behavior
-  without the need to set an environment variable.
+* Promoted the MetricPoint reclaim feature for Delta aggregation temporality
+  from experimental to stable.
   ([#5956](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5956))
+
+  **Previous Behavior:**
+  The SDK maintained a fixed set of MetricPoints which were assigned on a
+  first-come basis based on the tags. MetricPoint reclaim was an experimental
+  feature users could opt-into setting the environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`.
+
+  **New Behavior:**
+  MetricPoint reclaim is now enabled by default when Delta aggregation
+  temporality is used without the need to set an environment variable. Unused
+  MetricPoints will automatically be reclaimed and reused for future
+  measurements. There is NO ability to revert to the old behavior.
 
 ## 1.10.0-rc.1
 
@@ -27,16 +32,18 @@ Released 2024-Nov-01
   ([#5926](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5926))
 
 * Promoted overflow attribute from experimental to stable and removed the
-  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE` environment variable.
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE` environment
+  variable.
+  ([#5909](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5909))
 
   **Previous Behavior:**
   By default, when the cardinality limit was reached, measurements were dropped,
   and an internal log was emitted the first time this occurred. Users could
-  opt-in to experimental overflow attribute feature with
-  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`.
-  With this setting, the SDK would use an overflow attribute
-  (`otel.metric.overflow = true`) to aggregate measurements instead of dropping
-  measurements. No internal log was emitted in this case.
+  opt-into experimental overflow attribute feature with
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`. With this
+  setting, the SDK would use an overflow attribute (`otel.metric.overflow =
+  true`) to aggregate measurements instead of dropping measurements. No internal
+  log was emitted in this case.
 
   **New Behavior:**
   The SDK now always uses the overflow attribute (`otel.metric.overflow = true`)
@@ -49,7 +56,6 @@ Released 2024-Nov-01
   Metric](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric).
 
   There is NO ability to revert to old behavior.
-  ([#5909](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5909))
 
 * Exposed a `public` constructor on `Batch<T>` which accepts a single instance
   of `T` to be contained in the batch.

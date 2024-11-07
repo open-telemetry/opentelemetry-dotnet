@@ -32,6 +32,12 @@ directory of each individual package.
     variable is no longer required. For details see: [Cardinality
     Limits](./docs/metrics/README.md#cardinality-limits).
 
+  * The MetricPoint reclaim behavior is now enabled by default when Delta
+    aggregation temporality is used. The
+    `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS` environment
+    variable is no longer required. For details see: [Cardinality
+    Limits](./docs/metrics/README.md#cardinality-limits).
+
 * Added `OpenTelemetrySdk.Create` API for configuring OpenTelemetry .NET signals
   (logging, tracing, and metrics) via a single builder. This new API simplifies
   bootstrap and teardown, and supports cross-cutting extensions targeting
