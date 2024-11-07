@@ -16,10 +16,9 @@ public abstract class MetricSnapshotTestsBase
 {
     private readonly IConfiguration configuration;
 
-    protected MetricSnapshotTestsBase(bool shouldReclaimUnusedMetricPoints)
+    protected MetricSnapshotTestsBase()
     {
-        this.configuration = MetricApiTestsBase.BuildConfiguration(
-            shouldReclaimUnusedMetricPoints);
+        this.configuration = MetricApiTestsBase.BuildConfiguration();
     }
 
     [Fact]
@@ -297,15 +296,7 @@ public abstract class MetricSnapshotTestsBase
 public class MetricSnapshotTests : MetricSnapshotTestsBase
 {
     public MetricSnapshotTests()
-        : base(shouldReclaimUnusedMetricPoints: false)
-    {
-    }
-}
-
-public class MetricSnapshotTestsWithReclaimAttribute : MetricSnapshotTestsBase
-{
-    public MetricSnapshotTestsWithReclaimAttribute()
-        : base(shouldReclaimUnusedMetricPoints: true)
+        : base()
     {
     }
 }

@@ -23,8 +23,8 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     private static readonly int NumberOfMetricUpdateByEachThread = 100000;
     private readonly ITestOutputHelper output;
 
-    protected MetricApiTestsBase(ITestOutputHelper output, bool shouldReclaimUnusedMetricPoints)
-        : base(BuildConfiguration(shouldReclaimUnusedMetricPoints))
+    protected MetricApiTestsBase(ITestOutputHelper output)
+        : base(BuildConfiguration())
     {
         this.output = output;
     }
@@ -1703,15 +1703,9 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         }
     }
 
-    internal static IConfiguration BuildConfiguration(bool shouldReclaimUnusedMetricPoints)
+    internal static IConfiguration BuildConfiguration()
     {
         var configurationData = new Dictionary<string, string?>();
-
-        if (shouldReclaimUnusedMetricPoints)
-        {
-            configurationData[ReclaimUnusedMetricPointsConfigKey] = "true";
-        }
-
         return new ConfigurationBuilder()
             .AddInMemoryCollection(configurationData)
             .Build();
@@ -1888,15 +1882,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
 public class MetricApiTest : MetricApiTestsBase
 {
     public MetricApiTest(ITestOutputHelper output)
-        : base(output, shouldReclaimUnusedMetricPoints: false)
-    {
-    }
-}
-
-public class MetricApiTestWithReclaimAttribute : MetricApiTestsBase
-{
-    public MetricApiTestWithReclaimAttribute(ITestOutputHelper output)
-        : base(output, shouldReclaimUnusedMetricPoints: true)
+        : base(output)
     {
     }
 }

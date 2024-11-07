@@ -15,7 +15,6 @@ public abstract class MetricPointReclaimTestsBase
 {
     private readonly Dictionary<string, string?> configurationData = new()
     {
-        [MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = "true",
     };
 
     private readonly IConfiguration configuration;
@@ -25,66 +24,6 @@ public abstract class MetricPointReclaimTestsBase
         this.configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(this.configurationData)
             .Build();
-    }
-
-    [Theory]
-    [InlineData("false", false)]
-    [InlineData("False", false)]
-    [InlineData("FALSE", false)]
-    [InlineData("true", true)]
-    [InlineData("True", true)]
-    [InlineData("TRUE", true)]
-    public void TestReclaimAttributeConfigWithEnvVar(string value, bool isReclaimAttributeKeySet)
-    {
-        // Clear the environment variable value first
-        Environment.SetEnvironmentVariable(MetricTestsBase.ReclaimUnusedMetricPointsConfigKey, null);
-
-        // Set the environment variable to the value provided in the test input
-        Environment.SetEnvironmentVariable(MetricTestsBase.ReclaimUnusedMetricPointsConfigKey, value);
-
-        var exportedItems = new List<Metric>();
-
-        var meter = new Meter(Utils.GetCurrentMethodName());
-
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        var meterProviderSdk = meterProvider as MeterProviderSdk;
-        Assert.NotNull(meterProviderSdk);
-        Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ReclaimUnusedMetricPoints);
-    }
-
-    [Theory]
-    [InlineData("false", false)]
-    [InlineData("False", false)]
-    [InlineData("FALSE", false)]
-    [InlineData("true", true)]
-    [InlineData("True", true)]
-    [InlineData("TRUE", true)]
-    public void TestReclaimAttributeConfigWithOtherConfigProvider(string value, bool isReclaimAttributeKeySet)
-    {
-        var exportedItems = new List<Metric>();
-
-        var meter = new Meter(Utils.GetCurrentMethodName());
-
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string?> { [MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = value })
-                .Build();
-
-                services.AddSingleton<IConfiguration>(configuration);
-            })
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        var meterProviderSdk = meterProvider as MeterProviderSdk;
-        Assert.NotNull(meterProviderSdk);
-        Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ReclaimUnusedMetricPoints);
     }
 
     [Theory]
