@@ -130,7 +130,7 @@ internal static class ProtobufOtlpMetricFieldNumberConstants
     internal const int Exemplar_Trace_Id = 5;
 
     // ---------- COMMON FIELDS BELOW THIS LINE ----------
-    // TODO: THESE SHOULD BE MOVED TO A SEPARATE FILE. These are currenty copied in each Constants file.
+    // TODO: THESE SHOULD BE MOVED TO A SEPARATE FILE. These are currently copied in each Constants file.
 
     // InstrumentationScope
     internal const int InstrumentationScope_Name = 1;
@@ -152,40 +152,4 @@ internal static class ProtobufOtlpMetricFieldNumberConstants
     internal const int AnyValue_Bytes_Value = 7;
 
     internal const int ArrayValue_Value = 1;
-
-    // ---------- HELPER METHODS ----------
-
-    // TODO: REMOVE THIS. USE Metric_Data_ INSTEAD
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int GetMetricTypeFieldNumber(MetricType metricType)
-    {
-        switch (metricType)
-        {
-            case MetricType.LongSum:
-            case MetricType.LongSumNonMonotonic:
-            case MetricType.DoubleSum:
-            case MetricType.DoubleSumNonMonotonic:
-                {
-                    return 7;
-                }
-
-            case MetricType.DoubleGauge:
-            case MetricType.LongGauge:
-                {
-                    return 5;
-                }
-
-            case MetricType.Histogram:
-                {
-                    return 9;
-                }
-
-            case MetricType.ExponentialHistogram:
-                {
-                    return 10;
-                }
-        }
-
-        return 0;
-    }
 }
