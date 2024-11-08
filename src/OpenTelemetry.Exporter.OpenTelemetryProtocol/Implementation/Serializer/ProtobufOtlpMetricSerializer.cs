@@ -145,85 +145,85 @@ internal static class ProtobufOtlpMetricSerializer
         {
             case MetricType.LongSum:
             case MetricType.LongSumNonMonotonic:
-            {
-                writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Sum, ProtobufWireType.LEN);
-                int metricTypeLengthPosition = writePosition;
-                writePosition += ReserveSizeForLength;
-
-                writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.LongSum);
-                writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, metric.Temporality == AggregationTemporality.Cumulative ? 2 : 1);
-
-                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
-                    var sum = metricPoint.GetSumLong();
-                    writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, metricPoint, sum);
-                }
+                    writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Sum, ProtobufWireType.LEN);
+                    int metricTypeLengthPosition = writePosition;
+                    writePosition += ReserveSizeForLength;
 
-                ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
-                break;
-            }
+                    writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.LongSum);
+                    writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, metric.Temporality == AggregationTemporality.Cumulative ? 2 : 1);
+
+                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    {
+                        var sum = metricPoint.GetSumLong();
+                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, metricPoint, sum);
+                    }
+
+                    ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
+                    break;
+                }
 
             case MetricType.DoubleSum:
             case MetricType.DoubleSumNonMonotonic:
-            {
-                writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Sum, ProtobufWireType.LEN);
-                int metricTypeLengthPosition = writePosition;
-                writePosition += ReserveSizeForLength;
-
-                writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.DoubleSum);
-                writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, metric.Temporality == AggregationTemporality.Cumulative ? 2 : 1);
-
-                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
-                    var sum = metricPoint.GetSumDouble();
-                    writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, metricPoint, sum);
-                }
+                    writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Sum, ProtobufWireType.LEN);
+                    int metricTypeLengthPosition = writePosition;
+                    writePosition += ReserveSizeForLength;
 
-                ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
-                break;
-            }
+                    writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.DoubleSum);
+                    writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, metric.Temporality == AggregationTemporality.Cumulative ? 2 : 1);
+
+                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    {
+                        var sum = metricPoint.GetSumDouble();
+                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, metricPoint, sum);
+                    }
+
+                    ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
+                    break;
+                }
 
             case MetricType.LongGauge:
-            {
-                writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Gauge, ProtobufWireType.LEN);
-                int metricTypeLengthPosition = writePosition;
-                writePosition += ReserveSizeForLength;
-
-                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
-                    var lastValue = metricPoint.GetGaugeLastValueLong();
-                    writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, metricPoint, lastValue);
-                }
+                    writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Gauge, ProtobufWireType.LEN);
+                    int metricTypeLengthPosition = writePosition;
+                    writePosition += ReserveSizeForLength;
 
-                ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
-                break;
-            }
+                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    {
+                        var lastValue = metricPoint.GetGaugeLastValueLong();
+                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, metricPoint, lastValue);
+                    }
+
+                    ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
+                    break;
+                }
 
             case MetricType.DoubleGauge:
-            {
-                writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Gauge, ProtobufWireType.LEN);
-                int metricTypeLengthPosition = writePosition;
-                writePosition += ReserveSizeForLength;
-
-                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
-                    var lastValue = metricPoint.GetGaugeLastValueDouble();
-                    writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, metricPoint, lastValue);
+                    writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Gauge, ProtobufWireType.LEN);
+                    int metricTypeLengthPosition = writePosition;
+                    writePosition += ReserveSizeForLength;
+
+                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    {
+                        var lastValue = metricPoint.GetGaugeLastValueDouble();
+                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, metricPoint, lastValue);
+                    }
+
+                    ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
+                    break;
                 }
 
-                ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
-                break;
-            }
-
             case MetricType.Histogram:
-            {
-                break;
-            }
+                {
+                    break;
+                }
 
             case MetricType.ExponentialHistogram:
-            {
-                break;
-            }
+                {
+                    break;
+                }
         }
 
         ProtobufSerializer.WriteReservedLength(buffer, metricLengthPosition, writePosition - (metricLengthPosition + ReserveSizeForLength));
