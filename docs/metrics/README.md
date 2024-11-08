@@ -388,23 +388,24 @@ and the `MetricStreamConfiguration.CardinalityLimit` setting. Refer to this
 [doc](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric)
 for more information.
 
-Given a metric, once the cardinality limit is reached, any new measurement
-that could not be independently aggregated will be aggregated using the
-[overflow attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
-In versions prior to 1.10.0, the default behavior when cardinality limit was
-reached was to drop the measurement. Users had the ability to opt-in to use
-overflow attribute instead, but this behavior is the default and the only
-allowed behavior starting with version 1.10.0.
-
-When [Delta Aggregation
-Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
-is used, it is possible to choose a smaller cardinality limit by allowing the
-SDK to reclaim unused metric points.
+As of `1.10.0` once a metric has reached the cardinality limit, any new
+measurement that could not be independently aggregated will be automatically
+aggregated using the [overflow
+attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
 
 > [!NOTE]
-> Metric points reclaim is the default and only behavior for Delta Aggregation
-  Temporality starting with version 1.10.0. In version 1.7.0 - 1.9.0, it was an
-  experimental feature that could be enabled by setting the environment variable
+> In SDK versions `1.6.0` - `1.9.0` the overflow attribute was an experimental
+  feature that could be enabled by setting the environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`.
+
+As of `1.10.0` when [Delta Aggregation
+Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
+is used, it is possible to choose a smaller cardinality limit because the SDK
+will reclaim unused metric points.
+
+> [!NOTE]
+> In SDK versions `1.7.0` - `1.9.0`, metric point reclaim was an experimental
+  feature that could be enabled by setting the environment variable
   `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`.
 
 ### Memory Preallocation
