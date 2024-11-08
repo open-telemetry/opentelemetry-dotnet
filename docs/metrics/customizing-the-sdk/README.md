@@ -250,7 +250,7 @@ as exponential histograms take precedence.
 ##### Example: Using Explicit Buckets via the Advice API
 
 Here is an example of how to use the Advice API to specify explicit bucket
- boundaries for a histogram:
+boundaries for a histogram:
 
 ```csharp
 using OpenTelemetry.Metrics;
