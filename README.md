@@ -181,9 +181,9 @@ and can be installed using the
 
 ### Digital signing
 
-Starting with
+Starting with release
 [core-1.10.0-rc.1](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.10.0-rc.1),
-all DLLs included in the NuGet packages from this repository are digitally
+the DLLs included in the NuGet packages from this repository are digitally
 signed using [Sigstore](https://www.sigstore.dev/). Within each NuGet package,
 the digital signature and its corresponding certificate file are placed
 alongside the DLL, sharing the same name prefix, which ensures easy
