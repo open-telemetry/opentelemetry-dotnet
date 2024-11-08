@@ -234,7 +234,7 @@ the SDK are determined based on the following factors:
 2. The explicit buckets defined through the View API during SDK initialization.
 3. The default buckets provided by the SDK.
 
-Here’s how the SDK determines which explicit buckets to use:
+Here's how the SDK determines which explicit buckets to use:
 
 1. **View API**: If custom buckets are defined via the View API, these
 take precedence over any buckets provided by the Advice API or SDK defaults.
