@@ -4,8 +4,6 @@
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using OpenTelemetry.Metrics;
 
 /// <summary>
 /// Defines field number constants for fields defined in
