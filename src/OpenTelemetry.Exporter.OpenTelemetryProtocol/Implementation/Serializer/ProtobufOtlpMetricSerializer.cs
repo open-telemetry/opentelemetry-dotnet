@@ -67,7 +67,7 @@ internal static class ProtobufOtlpMetricSerializer
                 int resourceMetricsScopeMetricsLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeMetric(buffer, writePosition, entry.Value);
+                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key, entry.Value);
 
                 ProtobufSerializer.WriteReservedLength(buffer, resourceMetricsScopeMetricsLengthPosition, writePosition - (resourceMetricsScopeMetricsLengthPosition + ReserveSizeForLength));
             }
@@ -76,14 +76,13 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    private static int WriteScopeMetric(byte[] buffer, int writePosition, List<Metric> metrics)
+    private static int WriteScopeMetric(byte[] buffer, int writePosition, string meterName, List<Metric> metrics)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ScopeMetrics_Scope, ProtobufWireType.LEN);
         int instrumentationScopeLengthPosition = writePosition;
         writePosition += ReserveSizeForLength;
 
         Debug.Assert(metrics.Any(), "Metrics collection is not expected to be empty.");
-        var meterName = metrics[0].MeterName;
         var meterVersion = metrics[0].MeterVersion;
         var meterTags = metrics[0].MeterTags;
 
