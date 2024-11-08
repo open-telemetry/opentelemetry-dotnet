@@ -1007,7 +1007,7 @@ public class OtlpMetricsExporterTests : IDisposable
     private static OtlpCollector.ExportMetricsServiceRequest CreateMetricExportRequest(in Batch<Metric> batch, Resource resource)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(buffer, 0, resource, batch);
+        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(buffer, 0, resource, in batch);
         using var stream = new MemoryStream(buffer, 0, writePosition);
 
         var metricsData = OtlpMetrics.ResourceMetrics.Parser.ParseFrom(stream);

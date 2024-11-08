@@ -156,7 +156,7 @@ internal static class ProtobufOtlpMetricSerializer
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
                         var sum = metricPoint.GetSumLong();
-                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, metricPoint, sum);
+                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, in metricPoint, sum);
                     }
 
                     ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
@@ -176,7 +176,7 @@ internal static class ProtobufOtlpMetricSerializer
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
                         var sum = metricPoint.GetSumDouble();
-                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, metricPoint, sum);
+                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, in metricPoint, sum);
                     }
 
                     ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
@@ -192,7 +192,7 @@ internal static class ProtobufOtlpMetricSerializer
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
                         var lastValue = metricPoint.GetGaugeLastValueLong();
-                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, metricPoint, lastValue);
+                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, in metricPoint, lastValue);
                     }
 
                     ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
@@ -208,7 +208,7 @@ internal static class ProtobufOtlpMetricSerializer
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
                         var lastValue = metricPoint.GetGaugeLastValueDouble();
-                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, metricPoint, lastValue);
+                        writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, in metricPoint, lastValue);
                     }
 
                     ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
@@ -295,7 +295,7 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    private static int WriteTag(byte[] buffer, int writePosition, in KeyValuePair<string, object?> tag, int fieldNumber)
+    private static int WriteTag(byte[] buffer, int writePosition, KeyValuePair<string, object?> tag, int fieldNumber)
     {
         ProtobufOtlpTagWriter.OtlpTagWriterState otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
