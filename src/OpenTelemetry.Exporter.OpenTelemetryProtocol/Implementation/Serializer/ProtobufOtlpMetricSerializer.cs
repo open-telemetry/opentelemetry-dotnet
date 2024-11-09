@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Metrics;
-using static Google.Protobuf.WireFormat;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
