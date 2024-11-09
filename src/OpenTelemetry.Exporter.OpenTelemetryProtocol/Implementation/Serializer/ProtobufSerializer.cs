@@ -155,6 +155,17 @@ internal static class ProtobufSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteSInt32WithTag(byte[] buffer, int writePosition, int fieldNumber, int value)
+    {
+        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.VARINT);
+
+        // https://protobuf.dev/programming-guides/encoding/#signed-ints
+        writePosition = WriteVarInt32(buffer, writePosition, (uint)((value << 1) ^ (value >> 31)));
+
+        return writePosition;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteVarInt32(byte[] buffer, int writePosition, uint value)
     {
         while (value >= UInt128)

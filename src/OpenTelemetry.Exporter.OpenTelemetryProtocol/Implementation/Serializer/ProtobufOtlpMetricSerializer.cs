@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Metrics;
+using static Google.Protobuf.WireFormat;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
@@ -150,7 +151,9 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition += ReserveSizeForLength;
 
                     writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.LongSum);
-                    writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, metric.Temporality == AggregationTemporality.Cumulative ? 2 : 1);
+
+                    var aggregationValue = metric.Temporality == AggregationTemporality.Cumulative ? ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Cumulative : ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Delta;
+                    writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, aggregationValue);
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
@@ -170,7 +173,9 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition += ReserveSizeForLength;
 
                     writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.DoubleSum);
-                    writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, metric.Temporality == AggregationTemporality.Cumulative ? 2 : 1);
+
+                    var aggregationValue = metric.Temporality == AggregationTemporality.Cumulative ? ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Cumulative : ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Delta;
+                    writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, aggregationValue);
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
@@ -216,11 +221,136 @@ internal static class ProtobufOtlpMetricSerializer
 
             case MetricType.Histogram:
                 {
+                    writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Histogram, ProtobufWireType.LEN);
+                    int metricTypeLengthPosition = writePosition;
+                    writePosition += ReserveSizeForLength;
+
+                    var aggregationValue = metric.Temporality == AggregationTemporality.Cumulative ? ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Cumulative : ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Delta;
+                    writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Histogram_Aggregation_Temporality, aggregationValue);
+
+                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    {
+                        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Histogram_Data_Points, ProtobufWireType.LEN);
+                        int dataPointLengthPosition = writePosition;
+                        writePosition += ReserveSizeForLength;
+
+                        var startTime = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds();
+                        writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Start_Time_Unix_Nano, startTime);
+
+                        var endTime = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds();
+                        writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Time_Unix_Nano, endTime);
+
+                        foreach (var tag in metricPoint.Tags)
+                        {
+                            writePosition = WriteTag(buffer, writePosition, tag, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Attributes);
+                        }
+
+                        var count = (ulong)metricPoint.GetHistogramCount();
+                        writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Count, count);
+
+                        var sum = metricPoint.GetHistogramSum();
+                        writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Sum, sum);
+
+                        if (metricPoint.TryGetHistogramMinMaxValues(out double min, out double max))
+                        {
+                            writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Min, min);
+                            writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Max, max);
+                        }
+
+                        foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+                        {
+                            var bucketCount = (ulong)histogramMeasurement.BucketCount;
+                            writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Bucket_Counts, bucketCount);
+
+                            if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                            {
+                                writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Explicit_Bounds, histogramMeasurement.ExplicitBound);
+                            }
+                        }
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                writePosition = WriteExemplar(buffer, writePosition, in exemplar, exemplar.DoubleValue, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Exemplars);
+                            }
+                        }
+
+                        ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
+                    }
+
+                    ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
                     break;
                 }
 
             case MetricType.ExponentialHistogram:
                 {
+                    writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Exponential_Histogram, ProtobufWireType.LEN);
+                    int metricTypeLengthPosition = writePosition;
+                    writePosition += ReserveSizeForLength;
+
+                    var aggregationValue = metric.Temporality == AggregationTemporality.Cumulative ? ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Cumulative : ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Delta;
+                    writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogram_Aggregation_Temporality, aggregationValue);
+
+                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    {
+                        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogram_Data_Points, ProtobufWireType.LEN);
+                        int dataPointLengthPosition = writePosition;
+                        writePosition += ReserveSizeForLength;
+
+                        var startTime = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds();
+                        writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Start_Time_Unix_Nano, startTime);
+
+                        var endTime = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds();
+                        writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Time_Unix_Nano, endTime);
+
+                        foreach (var tag in metricPoint.Tags)
+                        {
+                            writePosition = WriteTag(buffer, writePosition, tag, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Attributes);
+                        }
+
+                        var sum = metricPoint.GetHistogramSum();
+                        writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Sum, sum);
+
+                        var count = (ulong)metricPoint.GetHistogramCount();
+                        writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Count, count);
+
+                        if (metricPoint.TryGetHistogramMinMaxValues(out double min, out double max))
+                        {
+                            writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Min, min);
+                            writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Max, max);
+                        }
+
+                        var exponentialHistogramData = metricPoint.GetExponentialHistogramData();
+
+                        writePosition = ProtobufSerializer.WriteSInt32WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Scale, exponentialHistogramData.Scale);
+                        writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Zero_Count, (ulong)exponentialHistogramData.ZeroCount);
+
+                        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Positive, ProtobufWireType.LEN);
+                        int positiveBucketsLengthPosition = writePosition;
+                        writePosition += ReserveSizeForLength;
+
+                        writePosition = ProtobufSerializer.WriteSInt32WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Buckets_Offset, exponentialHistogramData.PositiveBuckets.Offset);
+
+                        foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
+                        {
+                            writePosition = ProtobufSerializer.WriteInt64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Buckets_Bucket_Counts, (ulong)bucketCount);
+                        }
+
+                        ProtobufSerializer.WriteReservedLength(buffer, positiveBucketsLengthPosition, writePosition - (positiveBucketsLengthPosition + ReserveSizeForLength));
+
+                        if (metricPoint.TryGetExemplars(out var exemplars))
+                        {
+                            foreach (ref readonly var exemplar in exemplars)
+                            {
+                                writePosition = WriteExemplar(buffer, writePosition, in exemplar, exemplar.DoubleValue, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Exemplars);
+                            }
+                        }
+
+                        ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
+                    }
+
+                    ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
                     break;
                 }
         }
