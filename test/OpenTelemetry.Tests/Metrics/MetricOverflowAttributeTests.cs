@@ -2,30 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-#pragma warning disable SA1402
-
-public abstract class MetricOverflowAttributeTestsBase
+public class MetricOverflowAttributeTests
 {
-    private readonly Dictionary<string, string?> configurationData = new()
-    {
-    };
-
-    private readonly IConfiguration configuration;
-
-    public MetricOverflowAttributeTestsBase()
-    {
-        this.configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(this.configurationData)
-            .Build();
-    }
-
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
@@ -37,10 +20,6 @@ public abstract class MetricOverflowAttributeTestsBase
         var counter = meter.CreateCounter<long>("TestCounter");
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = temporalityPreference)
             .Build();
@@ -181,10 +160,6 @@ public abstract class MetricOverflowAttributeTestsBase
         var histogram = meter.CreateHistogram<long>("TestHistogram");
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = temporalityPreference)
             .Build();
@@ -316,13 +291,5 @@ public abstract class MetricOverflowAttributeTestsBase
             Assert.Equal(50, zeroTagsMetricPoint.GetHistogramSum());
             Assert.Equal(12505, overflowMetricPoint.GetHistogramSum());
         }
-    }
-}
-
-public class MetricOverflowAttributeTests : MetricOverflowAttributeTestsBase
-{
-    public MetricOverflowAttributeTests()
-        : base()
-    {
     }
 }
