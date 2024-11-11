@@ -282,6 +282,7 @@ internal static class OtlpExporterOptionsExtensions
                             binder: null,
                             new Type[] { typeof(string) },
                             modifiers: null);
+
                         if (createClientMethod != null)
                         {
                             HttpClient? client = (HttpClient?)createClientMethod.Invoke(httpClientFactory, new object[] { httpClientName });
@@ -290,7 +291,38 @@ internal static class OtlpExporterOptionsExtensions
                             {
                                 client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
 
-                                return client;
+                                // Set up a new HttpClientHandler to configure certificates and callbacks
+                                var handler = new HttpClientHandler();
+
+    #if NET6_0_OR_GREATER
+                                // Add server certificate validation
+                                if (!string.IsNullOrEmpty(options.CertificateFile))
+                                {
+                                    var trustedCertificate = X509Certificate2.CreateFromPemFile(options.CertificateFile);
+                                    handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+                                    {
+                                        if (cert != null && chain != null)
+                                        {
+                                            chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                                            chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
+                                            return chain.Build(cert);
+                                        }
+                                        return false;
+                                    };
+                                }
+
+                                // Add client certificate
+                                if (!string.IsNullOrEmpty(options.ClientCertificateFile) && !string.IsNullOrEmpty(options.ClientKeyFile))
+                                {
+                                    var clientCertificate = X509Certificate2.CreateFromPemFile(options.ClientCertificateFile, options.ClientKeyFile);
+                                    handler.ClientCertificates.Add(clientCertificate);
+                                }
+    #else
+                                throw new PlatformNotSupportedException("mTLS support requires .NET 6.0 or later.");
+    #endif
+
+                                // Re-create HttpClient using the custom handler
+                                return new HttpClient(handler) { Timeout = client.Timeout };
                             }
                         }
                     }
