@@ -319,11 +319,12 @@ internal static class OtlpExporterOptionsExtensions
                                     handler.ClientCertificates.Add(clientCertificate);
                                 }
 
+#else
+                                Debug.WriteLine("Warning: mTLS support requires .NET 6.0 or later. Defaulting to insecure HttpClient.");
+#endif
+
                                 // Re-create HttpClient using the custom handler
                                 return new HttpClient(handler) { Timeout = client.Timeout };
-#else
-                                throw new PlatformNotSupportedException("mTLS support requires .NET 6.0 or later.");
-#endif
                             }
                         }
                     }
