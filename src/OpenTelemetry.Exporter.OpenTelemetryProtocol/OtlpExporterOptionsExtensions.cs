@@ -295,7 +295,7 @@ internal static class OtlpExporterOptionsExtensions
                                 var handler = new HttpClientHandler();
 
 #if NET6_0_OR_GREATER
-                                // Add server certificate validation
+                                // Add server certificate validation if CertificateFile is specified
                                 if (!string.IsNullOrEmpty(options.CertificateFile))
                                 {
                                     var trustedCertificate = X509Certificate2.CreateFromPemFile(options.CertificateFile);
@@ -312,19 +312,24 @@ internal static class OtlpExporterOptionsExtensions
                                     };
                                 }
 
-                                // Add client certificate
+                                // Add client certificate if ClientCertificateFile and ClientKeyFile are specified
                                 if (!string.IsNullOrEmpty(options.ClientCertificateFile) && !string.IsNullOrEmpty(options.ClientKeyFile))
                                 {
                                     var clientCertificate = X509Certificate2.CreateFromPemFile(options.ClientCertificateFile, options.ClientKeyFile);
                                     handler.ClientCertificates.Add(clientCertificate);
                                 }
 
-#else
-                                Console.WriteLine("Warning: mTLS support requires .NET 6.0 or later. Defaulting to insecure HttpClient.");
-#endif
-
                                 // Re-create HttpClient using the custom handler
                                 return new HttpClient(handler) { Timeout = client.Timeout };
+
+#else
+                                // Throw only if certificates are required but the environment is unsupported
+                                if (!string.IsNullOrEmpty(options.CertificateFile) ||
+                                    (!string.IsNullOrEmpty(options.ClientCertificateFile) && !string.IsNullOrEmpty(options.ClientKeyFile)))
+                                {
+                                    throw new PlatformNotSupportedException("mTLS support requires .NET 6.0 or later.");
+                                }
+#endif
                             }
                         }
                     }
