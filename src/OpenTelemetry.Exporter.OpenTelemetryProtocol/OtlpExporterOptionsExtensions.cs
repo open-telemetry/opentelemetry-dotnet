@@ -307,6 +307,7 @@ internal static class OtlpExporterOptionsExtensions
                                             chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
                                             return chain.Build(cert);
                                         }
+
                                         return false;
                                     };
                                 }
