@@ -190,7 +190,9 @@ alongside the DLL, sharing the same name prefix, which ensures easy
 identification and association. This setup simplifies the process of signature
 verification, which can be carried out using the
 [cosign](https://github.com/sigstore/cosign) tool from Sigstore, as demonstrated
-in the example below, where a successful verification outputs "Verify OK".
+in the example below, where a successful verification outputs "Verify OK". For
+more verification options, please refer to the Please check the [Cosign
+documentation](https://github.com/sigstore/cosign/blob/main/doc/cosign_verify-blob.md).
 
 ```bash
 cosign verify-blob --signature OpenTelemetry.dll-keyless.sig --certificate OpenTelemetry.dll-keyless.pem.cer OpenTelemetry.dll --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/core-1.10.0-rc.1" --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
