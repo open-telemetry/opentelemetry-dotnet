@@ -214,9 +214,9 @@ There are two mechanisms available to configure explicit buckets when using hist
   starting with version `9.0.0`.
 
 > [!IMPORTANT]
-> When both the View API and Advice API are used, the View API takes
-  precendence. If explicit buckets are not provided by either the View API or
-  the Advice API than the SDK defaults apply.
+> When both the View API and Advice API are used, the View API takes precedence.
+  If explicit buckets are not provided by either the View API or the Advice API
+  than the SDK defaults apply.
 
 **View API**
 
