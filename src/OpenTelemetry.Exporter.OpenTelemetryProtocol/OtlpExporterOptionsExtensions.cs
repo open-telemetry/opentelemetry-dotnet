@@ -294,7 +294,7 @@ internal static class OtlpExporterOptionsExtensions
                                 // Set up a new HttpClientHandler to configure certificates and callbacks
                                 var handler = new HttpClientHandler();
 
-    #if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER
                                 // Add server certificate validation
                                 if (!string.IsNullOrEmpty(options.CertificateFile))
                                 {
@@ -317,12 +317,12 @@ internal static class OtlpExporterOptionsExtensions
                                     var clientCertificate = X509Certificate2.CreateFromPemFile(options.ClientCertificateFile, options.ClientKeyFile);
                                     handler.ClientCertificates.Add(clientCertificate);
                                 }
-    #else
-                                throw new PlatformNotSupportedException("mTLS support requires .NET 6.0 or later.");
-    #endif
 
                                 // Re-create HttpClient using the custom handler
                                 return new HttpClient(handler) { Timeout = client.Timeout };
+#else
+                                throw new PlatformNotSupportedException("mTLS support requires .NET 6.0 or later.");
+#endif
                             }
                         }
                     }
