@@ -320,7 +320,7 @@ internal static class OtlpExporterOptionsExtensions
                                 }
 
 #else
-                                Debug.WriteLine("Warning: mTLS support requires .NET 6.0 or later. Defaulting to insecure HttpClient.");
+                                Console.WriteLine("Warning: mTLS support requires .NET 6.0 or later. Defaulting to insecure HttpClient.");
 #endif
 
                                 // Re-create HttpClient using the custom handler
