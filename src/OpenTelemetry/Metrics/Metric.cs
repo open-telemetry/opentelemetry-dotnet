@@ -70,7 +70,6 @@ public sealed class Metric
         MetricStreamIdentity instrumentIdentity,
         AggregationTemporality temporality,
         int cardinalityLimit,
-        bool shouldReclaimUnusedMetricPoints,
         ExemplarFilterType? exemplarFilter = null,
         Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
     {
@@ -192,7 +191,6 @@ public sealed class Metric
             aggType,
             temporality,
             cardinalityLimit,
-            shouldReclaimUnusedMetricPoints,
             exemplarFilter,
             exemplarReservoirFactory);
         this.Temporality = temporality;

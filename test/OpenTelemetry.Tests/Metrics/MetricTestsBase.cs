@@ -4,9 +4,9 @@
 #if BUILDING_HOSTING_TESTS
 using System.Diagnostics;
 #endif
+#if BUILDING_HOSTING_TESTS
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-#if BUILDING_HOSTING_TESTS
 using Microsoft.Extensions.Diagnostics.Metrics;
 using Microsoft.Extensions.Hosting;
 #endif
@@ -14,19 +14,10 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public class MetricTestsBase
+public abstract class MetricTestsBase
 {
-    public const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
-
-    protected readonly IConfiguration? configuration;
-
     protected MetricTestsBase()
     {
-    }
-
-    protected MetricTestsBase(IConfiguration configuration)
-    {
-        this.configuration = configuration;
     }
 
 #if BUILDING_HOSTING_TESTS
@@ -206,25 +197,13 @@ public class MetricTestsBase
 #if BUILDING_HOSTING_TESTS
         var host = BuildHost(
             useWithMetricsStyle: false,
-            configureMeterProviderBuilder: configure,
-            configureServices: services =>
-            {
-                if (this.configuration != null)
-                {
-                    services.AddSingleton(this.configuration);
-                }
-            });
+            configureMeterProviderBuilder: configure);
 
         meterProvider = host.Services.GetRequiredService<MeterProvider>();
 
         return host;
 #else
         var builder = Sdk.CreateMeterProviderBuilder();
-
-        if (this.configuration != null)
-        {
-            builder.ConfigureServices(services => services.AddSingleton(this.configuration));
-        }
 
         configure(builder);
 

@@ -22,7 +22,6 @@ public abstract partial class MetricReader
     private Metric?[]? metrics;
     private Metric[]? metricsCurrentBatch;
     private int metricIndex = -1;
-    private bool reclaimUnusedMetricPoints;
     private ExemplarFilterType? exemplarFilter;
     private ExemplarFilterType? exemplarFilterForHistograms;
 
@@ -81,7 +80,6 @@ public abstract partial class MetricReader
                         metricStreamIdentity,
                         this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
                         this.cardinalityLimit,
-                        this.reclaimUnusedMetricPoints,
                         exemplarFilter);
                 }
                 catch (NotSupportedException nse)
@@ -162,7 +160,6 @@ public abstract partial class MetricReader
                         metricStreamIdentity,
                         this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
                         metricStreamConfig?.CardinalityLimit ?? this.cardinalityLimit,
-                        this.reclaimUnusedMetricPoints,
                         exemplarFilter,
                         metricStreamConfig?.ExemplarReservoirFactory);
 
@@ -181,7 +178,6 @@ public abstract partial class MetricReader
     internal void ApplyParentProviderSettings(
         int metricLimit,
         int cardinalityLimit,
-        bool reclaimUnusedMetricPoints,
         ExemplarFilterType? exemplarFilter,
         ExemplarFilterType? exemplarFilterForHistograms)
     {
@@ -189,7 +185,6 @@ public abstract partial class MetricReader
         this.metrics = new Metric[metricLimit];
         this.metricsCurrentBatch = new Metric[metricLimit];
         this.cardinalityLimit = cardinalityLimit;
-        this.reclaimUnusedMetricPoints = reclaimUnusedMetricPoints;
         this.exemplarFilter = exemplarFilter;
         this.exemplarFilterForHistograms = exemplarFilterForHistograms;
     }

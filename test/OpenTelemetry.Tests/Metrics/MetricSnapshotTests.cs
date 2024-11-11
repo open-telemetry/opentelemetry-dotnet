@@ -2,26 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-#pragma warning disable SA1402
-
-public abstract class MetricSnapshotTestsBase
+public class MetricSnapshotTests
 {
-    private readonly IConfiguration configuration;
-
-    protected MetricSnapshotTestsBase(bool shouldReclaimUnusedMetricPoints)
-    {
-        this.configuration = MetricApiTestsBase.BuildConfiguration(
-            shouldReclaimUnusedMetricPoints);
-    }
-
     [Fact]
     public void VerifySnapshot_Counter()
     {
@@ -31,10 +19,6 @@ public abstract class MetricSnapshotTestsBase
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var counter = meter.CreateCounter<long>("meter");
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedMetrics)
             .AddInMemoryExporter(exportedSnapshots)
@@ -104,10 +88,6 @@ public abstract class MetricSnapshotTestsBase
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var histogram = meter.CreateHistogram<int>("histogram");
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedMetrics)
             .AddInMemoryExporter(exportedSnapshots)
@@ -200,10 +180,6 @@ public abstract class MetricSnapshotTestsBase
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var histogram = meter.CreateHistogram<int>("histogram");
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(meter.Name)
             .AddView("histogram", new Base2ExponentialBucketHistogramConfiguration())
             .AddInMemoryExporter(exportedMetrics)
@@ -226,7 +202,7 @@ public abstract class MetricSnapshotTestsBase
         metricPoint1.TryGetHistogramMinMaxValues(out var min, out var max);
         Assert.Equal(10, min);
         Assert.Equal(10, max);
-        AggregatorTestsBase.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint1.GetExponentialHistogramData());
+        AggregatorTests.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint1.GetExponentialHistogramData());
 
         // Verify Snapshot 1
         Assert.Single(exportedSnapshots);
@@ -237,7 +213,7 @@ public abstract class MetricSnapshotTestsBase
         snapshot1.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(10, min);
         Assert.Equal(10, max);
-        AggregatorTestsBase.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot1.MetricPoints[0].GetExponentialHistogramData());
+        AggregatorTests.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot1.MetricPoints[0].GetExponentialHistogramData());
 
         // Verify Metric == Snapshot
         Assert.Equal(metric1.Name, snapshot1.Name);
@@ -271,7 +247,7 @@ public abstract class MetricSnapshotTestsBase
         metricPoint1.TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(5, min);
         Assert.Equal(10, max);
-        AggregatorTestsBase.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint2.GetExponentialHistogramData());
+        AggregatorTests.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint2.GetExponentialHistogramData());
 
         // Verify Snapshot 1 after second export
         // This value is expected to be unchanged.
@@ -290,22 +266,6 @@ public abstract class MetricSnapshotTestsBase
         snapshot2.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(5, min);
         Assert.Equal(10, max);
-        AggregatorTestsBase.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot2.MetricPoints[0].GetExponentialHistogramData());
-    }
-}
-
-public class MetricSnapshotTests : MetricSnapshotTestsBase
-{
-    public MetricSnapshotTests()
-        : base(shouldReclaimUnusedMetricPoints: false)
-    {
-    }
-}
-
-public class MetricSnapshotTestsWithReclaimAttribute : MetricSnapshotTestsBase
-{
-    public MetricSnapshotTestsWithReclaimAttribute()
-        : base(shouldReclaimUnusedMetricPoints: true)
-    {
+        AggregatorTests.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot2.MetricPoints[0].GetExponentialHistogramData());
     }
 }
