@@ -223,7 +223,7 @@ histogram aggregation:
 
   Views can be used to provide custom explicit buckets for a Histogram. This
   requires the use of `ExplicitBucketHistogramConfiguration`.
-  
+
   ```csharp
    // Change Histogram boundaries to count measurements under the following buckets:
    // (-inf, 10]
@@ -232,7 +232,7 @@ histogram aggregation:
    .AddView(
        instrumentName: "MyHistogram",
        new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { 10, 20 } })
-  
+
    // If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
    // the SDK will only export the sum, count, min and max for the measurements.
    // There are no buckets exported in this case.
@@ -247,7 +247,7 @@ histogram aggregation:
   by instrumentation authors when the instrument is created. This is generally
   recommended to be used by library authors when the SDK defaults don't match the
   required granularity for the histogram being emitted.
-  
+
   See:
   [InstrumentAdvice&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.instrumentadvice-1).
 
