@@ -2,30 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-#pragma warning disable SA1402
-
-public abstract class MetricPointReclaimTestsBase
+public class MetricPointReclaimTests
 {
-    private readonly Dictionary<string, string?> configurationData = new()
-    {
-    };
-
-    private readonly IConfiguration configuration;
-
-    protected MetricPointReclaimTestsBase()
-    {
-        this.configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(this.configurationData)
-            .Build();
-    }
-
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -44,10 +27,6 @@ public abstract class MetricPointReclaimTestsBase
         };
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(Utils.GetCurrentMethodName())
             .AddReader(metricReader)
             .Build();
@@ -137,10 +116,6 @@ public abstract class MetricPointReclaimTestsBase
         };
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(Utils.GetCurrentMethodName())
             .SetMaxMetricPointsPerMetricStream(10) // Set max MetricPoints limit to 10
             .AddReader(metricReader)
@@ -260,13 +235,5 @@ public abstract class MetricPointReclaimTestsBase
 
             return ExportResult.Success;
         }
-    }
-}
-
-public class MetricPointReclaimTests : MetricPointReclaimTestsBase
-{
-    public MetricPointReclaimTests()
-        : base()
-    {
     }
 }

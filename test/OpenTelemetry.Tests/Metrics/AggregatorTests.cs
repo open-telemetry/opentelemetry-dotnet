@@ -7,9 +7,7 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-#pragma warning disable SA1402
-
-public abstract class AggregatorTestsBase
+public class AggregatorTests
 {
     private static readonly Meter Meter = new("testMeter");
     private static readonly Instrument Instrument = Meter.CreateHistogram<long>("testInstrument");
@@ -18,7 +16,7 @@ public abstract class AggregatorTestsBase
 
     private readonly AggregatorStore aggregatorStore;
 
-    protected AggregatorTestsBase()
+    public AggregatorTests()
     {
         this.aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024);
     }
@@ -508,13 +506,5 @@ public abstract class AggregatorTestsBase
             this.HistogramPoint = histogramPoint;
             this.MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
         }
-    }
-}
-
-public class AggregatorTests : AggregatorTestsBase
-{
-    public AggregatorTests()
-        : base()
-    {
     }
 }
