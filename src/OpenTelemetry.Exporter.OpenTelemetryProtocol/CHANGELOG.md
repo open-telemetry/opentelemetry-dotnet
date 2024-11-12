@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0
+
+Released 2024-Nov-12
+
 ## 1.10.0-rc.1
 
 Released 2024-Nov-01
@@ -33,10 +37,6 @@ Released 2024-Sep-30
   * Fixed `PlatformNotSupportedException`s being thrown during export when running
   on mobile platforms which caused telemetry to be dropped silently.
   ([#5821](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/5821))
-
-* Updated `Microsoft.Extensions.Hosting.Abstractions` package
-  version to `9.0.0-rc.1.24431.7`.
-  ([#5853](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5853))
 
 ## 1.9.0
 

@@ -200,29 +200,56 @@ used.
 
 ##### Explicit bucket histogram aggregation
 
-By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75,
-100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000}`](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.14.0/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation).
-Views can be used to provide custom boundaries for a Histogram. The measurements
-are then aggregated using the custom boundaries provided instead of the
-default boundaries. This requires the use of
-`ExplicitBucketHistogramConfiguration`.
+By default, the [OpenTelemetry
+Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.14.0/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation)
+defines explicit buckets (aka boundaries) for Histograms as: `[ 0, 5, 10, 25,
+50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000 ]`.
 
-```csharp
-    // Change Histogram boundaries to count measurements under the following buckets:
-    // (-inf, 10]
-    // (10, 20]
-    // (20, +inf)
-    .AddView(
-        instrumentName: "MyHistogram",
-        new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { 10, 20 } })
+###### Customizing explicit buckets when using histogram aggregation
 
-    // If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
-    // the SDK will only export the sum, count, min and max for the measurements.
-    // There are no buckets exported in this case.
-    .AddView(
-        instrumentName: "MyHistogram",
-        new ExplicitBucketHistogramConfiguration { Boundaries = Array.Empty<double>() })
-```
+There are two mechanisms available to configure explicit buckets when using
+histogram aggregation:
+
+* View API - Part of the OpenTelemetry .NET SDK.
+* Advice API - Part of the `System.Diagnostics.DiagnosticSource` package
+  starting with version `9.0.0`.
+
+> [!IMPORTANT]
+> When both the View API and Advice API are used, the View API takes precedence.
+  If explicit buckets are not provided by either the View API or the Advice API
+  then the SDK defaults apply.
+
+* View API
+
+  Views can be used to provide custom explicit buckets for a Histogram. This
+  requires the use of `ExplicitBucketHistogramConfiguration`.
+
+  ```csharp
+   // Change Histogram boundaries to count measurements under the following buckets:
+   // (-inf, 10]
+   // (10, 20]
+   // (20, +inf)
+   .AddView(
+       instrumentName: "MyHistogram",
+       new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { 10, 20 } })
+
+   // If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
+   // the SDK will only export the sum, count, min and max for the measurements.
+   // There are no buckets exported in this case.
+   .AddView(
+       instrumentName: "MyHistogram",
+       new ExplicitBucketHistogramConfiguration { Boundaries = Array.Empty<double>() })
+  ```
+
+* Advice API
+
+  Starting with the `1.10.0` SDK, explicit buckets for a Histogram may be provided
+  by instrumentation authors when the instrument is created. This is generally
+  recommended to be used by library authors when the SDK defaults don't match the
+  required granularity for the histogram being emitted.
+
+  See:
+  [InstrumentAdvice&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.instrumentadvice-1).
 
 ##### Base2 exponential bucket histogram aggregation
 
