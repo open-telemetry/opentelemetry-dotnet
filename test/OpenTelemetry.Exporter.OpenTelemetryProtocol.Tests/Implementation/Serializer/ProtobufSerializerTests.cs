@@ -173,6 +173,24 @@ public class ProtobufSerializerTests
     }
 
     [Fact]
+    public void WriteSignedInt32_WritesCorrectly()
+    {
+        byte[] buffer = new byte[10];
+        int position = ProtobufSerializer.WriteSInt32WithTag(buffer, 0, 1, 300);
+        Assert.Equal(3, position);
+        Assert.Equal(8, buffer[0]); // Tag
+        Assert.Equal(0xD8, buffer[1]);
+        Assert.Equal(0x04, buffer[2]);
+
+        buffer = new byte[10];
+        position = ProtobufSerializer.WriteSInt32WithTag(buffer, 0, 1, -300);
+        Assert.Equal(3, position);
+        Assert.Equal(8, buffer[0]); // Tag
+        Assert.Equal(0xD7, buffer[1]);
+        Assert.Equal(0x04, buffer[2]);
+    }
+
+    [Fact]
     public void WriteVarInt32_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
