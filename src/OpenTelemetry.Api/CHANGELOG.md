@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0
+
+Released 2024-Nov-12
+
 * Updated `System.Diagnostics.DiagnosticSource` package version to
   `9.0.0`.
   ([#5967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5967))
