@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0-beta.1
+
+Released 2024-Nov-12
+
 * Added meter-level tags to Prometheus exporter
   ([#5837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5837))
 
