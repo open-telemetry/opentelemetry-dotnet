@@ -5,8 +5,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 
 internal static class ProtobufOtlpTraceFieldNumberConstants
 {
-    // Resource spans
 #pragma warning disable SA1310 // Field names should not contain underscore
+
+    // Traces data
+    internal const int TracesData_Resource_Spans = 1;
+
+    // Resource spans
     internal const int ResourceSpans_Resource = 1;
     internal const int ResourceSpans_Scope_Spans = 2;
     internal const int ResourceSpans_Schema_Url = 3;

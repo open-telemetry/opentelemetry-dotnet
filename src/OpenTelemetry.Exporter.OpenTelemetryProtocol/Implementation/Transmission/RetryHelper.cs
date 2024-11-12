@@ -27,4 +27,25 @@ internal static class RetryHelper
         retryResult = default;
         return false;
     }
+
+    internal static bool ShouldRetryRequest(ExportClientResponse response, int retryDelayMilliseconds, out OtlpRetry.RetryResult retryResult)
+    {
+        if (response is ExportClientGrpcResponse grpcResponse)
+        {
+            if (OtlpRetry.TryGetGrpcRetryResult(grpcResponse, retryDelayMilliseconds, out retryResult))
+            {
+                return true;
+            }
+        }
+        else if (response is ExportClientHttpResponse httpResponse)
+        {
+            if (OtlpRetry.TryGetHttpRetryResult(httpResponse, retryDelayMilliseconds, out retryResult))
+            {
+                return true;
+            }
+        }
+
+        retryResult = default;
+        return false;
+    }
 }
