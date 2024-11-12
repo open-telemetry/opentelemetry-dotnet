@@ -207,7 +207,7 @@ cosign verify-blob \
 > [!NOTE]
 > A successful verification outputs `Verify OK`.
 
-For more verification options please refer to the [Cosign
+For more verification options please refer to the [cosign
 documentation](https://github.com/sigstore/cosign/blob/main/doc/cosign_verify-blob.md).
 
 ## Contributing
