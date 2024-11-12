@@ -22,6 +22,11 @@ Notes](../../RELEASENOTES.md).
   MetricPoints will automatically be reclaimed and reused for future
   measurements. There is NO ability to revert to the old behavior.
 
+* Updated the `Microsoft.Extensions.Logging.Configuration` and
+  `Microsoft.Extensions.Diagnostics.Abstractions` package versions to
+  `9.0.0`.
+  ([#5967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5967))
+
 ## 1.10.0-rc.1
 
 Released 2024-Nov-01
