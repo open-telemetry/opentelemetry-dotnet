@@ -181,22 +181,34 @@ and can be installed using the
 
 ### Digital signing
 
-Starting with release
-[core-1.10.0-rc.1](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.10.0-rc.1),
-the DLLs included in the NuGet packages from this repository are digitally
-signed using [Sigstore](https://www.sigstore.dev/). Within each NuGet package,
-the digital signature and its corresponding certificate file are placed
-alongside the DLL, sharing the same name prefix, which ensures easy
-identification and association. This setup simplifies the process of signature
-verification, which can be carried out using the
-[cosign](https://github.com/sigstore/cosign) tool from Sigstore, as demonstrated
-in the example below, where a successful verification outputs "Verify OK". For
-more verification options, please refer to the Please check the [Cosign
-documentation](https://github.com/sigstore/cosign/blob/main/doc/cosign_verify-blob.md).
+Starting with the `1.10.0` release the DLLs included in the packages pushed to
+NuGet are digitally signed using [Sigstore](https://www.sigstore.dev/). Within
+each NuGet package the digital signature and its corresponding certificate file
+are placed alongside the shipped DLL(s) in the `/lib` folder. When a project
+targets multiple frameworks each target outputs a dedicated DLL and signing
+artifacts into a sub folder based on the
+[TFM](https://learn.microsoft.com/dotnet/standard/frameworks).
+
+The digitial signature and certificate files share the same name prefix as the
+DLL to ensure easy identification and association.
+
+To verify the integrity of a DLL inside a NuGet package use the
+[cosign](https://github.com/sigstore/cosign) tool from Sigstore:
 
 ```bash
-cosign verify-blob --signature OpenTelemetry.dll-keyless.sig --certificate OpenTelemetry.dll-keyless.pem.cer OpenTelemetry.dll --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/core-1.10.0-rc.1" --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+cosign verify-blob \
+    --signature OpenTelemetry.dll-keyless.sig \
+    --certificate OpenTelemetry.dll-keyless.pem.cer \
+    --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/core-1.10.0-rc.1" \
+    --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+    OpenTelemetry.dll
 ```
+
+> [!NOTE]
+> A successful verification outputs `Verify OK`.
+
+For more verification options please refer to the [Cosign
+documentation](https://github.com/sigstore/cosign/blob/main/doc/cosign_verify-blob.md).
 
 ## Contributing
 
