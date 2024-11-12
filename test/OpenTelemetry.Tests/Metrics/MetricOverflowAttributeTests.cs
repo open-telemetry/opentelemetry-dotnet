@@ -2,38 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-#pragma warning disable SA1402
-
-public abstract class MetricOverflowAttributeTestsBase
+public class MetricOverflowAttributeTests
 {
-    private readonly bool shouldReclaimUnusedMetricPoints;
-    private readonly Dictionary<string, string?> configurationData = new()
-    {
-    };
-
-    private readonly IConfiguration configuration;
-
-    public MetricOverflowAttributeTestsBase(bool shouldReclaimUnusedMetricPoints)
-    {
-        this.shouldReclaimUnusedMetricPoints = shouldReclaimUnusedMetricPoints;
-
-        if (shouldReclaimUnusedMetricPoints)
-        {
-            this.configurationData[MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = "true";
-        }
-
-        this.configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(this.configurationData)
-            .Build();
-    }
-
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
@@ -45,10 +20,6 @@ public abstract class MetricOverflowAttributeTestsBase
         var counter = meter.CreateCounter<long>("TestCounter");
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = temporalityPreference)
             .Build();
@@ -139,15 +110,8 @@ public abstract class MetricOverflowAttributeTestsBase
             int expectedSum;
 
             // Number of metric points that were available before the 2500 measurements were made = 2000 (max MetricPoints)
-            if (this.shouldReclaimUnusedMetricPoints)
-            {
-                // If unused metric points are reclaimed, then number of metric points dropped = 2500 - 2000 = 500
-                expectedSum = 2500; // 500 * 5
-            }
-            else
-            {
-                expectedSum = 12500; // 2500 * 5
-            }
+            // Because unused metric points are reclaimed, number of metric points dropped = 2500 - 2000 = 500
+            expectedSum = 2500; // 500 * 5
 
             Assert.Equal(expectedSum, overflowMetricPoint.GetSumLong());
         }
@@ -196,10 +160,6 @@ public abstract class MetricOverflowAttributeTestsBase
         var histogram = meter.CreateHistogram<long>("TestHistogram");
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = temporalityPreference)
             .Build();
@@ -291,17 +251,9 @@ public abstract class MetricOverflowAttributeTestsBase
             int expectedSum;
 
             // Number of metric points that were available before the 2500 measurements were made = 2000 (max MetricPoints)
-            if (this.shouldReclaimUnusedMetricPoints)
-            {
-                // If unused metric points are reclaimed, then number of metric points dropped = 2500 - 2000 = 500
-                expectedCount = 500;
-                expectedSum = 2500; // 500 * 5
-            }
-            else
-            {
-                expectedCount = 2500;
-                expectedSum = 12500; // 2500 * 5
-            }
+            // Because unused metric points are reclaimed, number of metric points dropped = 2500 - 2000 = 500
+            expectedCount = 500;
+            expectedSum = 2500; // 500 * 5
 
             Assert.Equal(expectedCount, overflowMetricPoint.GetHistogramCount());
             Assert.Equal(expectedSum, overflowMetricPoint.GetHistogramSum());
@@ -339,21 +291,5 @@ public abstract class MetricOverflowAttributeTestsBase
             Assert.Equal(50, zeroTagsMetricPoint.GetHistogramSum());
             Assert.Equal(12505, overflowMetricPoint.GetHistogramSum());
         }
-    }
-}
-
-public class MetricOverflowAttributeTests : MetricOverflowAttributeTestsBase
-{
-    public MetricOverflowAttributeTests()
-        : base(false)
-    {
-    }
-}
-
-public class MetricOverflowAttributeTestsWithReclaimAttribute : MetricOverflowAttributeTestsBase
-{
-    public MetricOverflowAttributeTestsWithReclaimAttribute()
-        : base(true)
-    {
     }
 }

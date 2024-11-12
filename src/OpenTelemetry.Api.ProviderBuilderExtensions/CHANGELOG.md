@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0-rc.1
+
+Released 2024-Nov-01
+
 ## 1.10.0-beta.1
 
 Released 2024-Sep-30
@@ -25,8 +29,8 @@ Released 2024-Jun-07
 
 * The experimental APIs previously covered by `OTEL1000`
   (`LoggerProviderBuilder` `AddInstrumentation` & `ConfigureServices` extensions
-  and `IServiceCollection.ConfigureOpenTelemetryLoggerProvider` extension) will
-  now be part of the public API and supported in stable builds.
+  and `IServiceCollection.ConfigureOpenTelemetryLoggerProvider` extension) are
+  now part of the public API and supported in stable builds.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
 ## 1.9.0-alpha.1

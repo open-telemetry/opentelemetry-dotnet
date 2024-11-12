@@ -128,9 +128,11 @@ public class OtlpTraceExporterTests
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void ToOtlpResourceSpansTest(bool includeServiceNameInResource)
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    public void ToOtlpResourceSpansTest(bool includeServiceNameInResource, bool useCustomSerializer)
     {
         var evenTags = new[] { new KeyValuePair<string, object?>("k0", "v0") };
         var oddTags = new[] { new KeyValuePair<string, object?>("k1", "v1") };
@@ -175,7 +177,14 @@ public class OtlpTraceExporterTests
         {
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
-            request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            if (useCustomSerializer)
+            {
+                request = CreateTraceExportRequest(sdkOptions, batch, resourceBuilder.Build());
+            }
+            else
+            {
+                request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            }
 
             Assert.Single(request.ResourceSpans);
             var otlpResource = request.ResourceSpans.First().Resource;
@@ -222,8 +231,10 @@ public class OtlpTraceExporterTests
         }
     }
 
-    [Fact]
-    public void ScopeAttributesRemainConsistentAcrossMultipleBatches()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ScopeAttributesRemainConsistentAcrossMultipleBatches(bool useCustomSerializer)
     {
         var activitySourceTags = new TagList
         {
@@ -266,7 +277,14 @@ public class OtlpTraceExporterTests
         {
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
-            request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            if (useCustomSerializer)
+            {
+                request = CreateTraceExportRequest(sdkOptions, batch, resourceBuilder.Build());
+            }
+            else
+            {
+                request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            }
 
             var resourceSpans = request.ResourceSpans.First();
             Assert.NotNull(request.ResourceSpans.First());
@@ -308,8 +326,10 @@ public class OtlpTraceExporterTests
         }
     }
 
-    [Fact]
-    public void ScopeAttributesLimitsTest()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ScopeAttributesLimitsTest(bool useCustomSerializer)
     {
         var sdkOptions = new SdkLimitOptions()
         {
@@ -349,7 +369,14 @@ public class OtlpTraceExporterTests
         {
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
-            request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            if (useCustomSerializer)
+            {
+                request = CreateTraceExportRequest(sdkOptions, batch, resourceBuilder.Build());
+            }
+            else
+            {
+                request.AddBatch(sdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            }
 
             var resourceSpans = request.ResourceSpans.First();
             Assert.NotNull(request.ResourceSpans.First());
@@ -367,7 +394,10 @@ public class OtlpTraceExporterTests
             Assert.Equal(new object().ToString()!.Substring(0, 4), scope.Attributes[2].Value.StringValue);
 
             // Return and re-add batch to simulate reuse
-            request.Return();
+            if (!useCustomSerializer)
+            {
+                request.Return();
+            }
         }
     }
 
@@ -1017,6 +1047,17 @@ public class OtlpTraceExporterTests
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();
+    }
+
+    private static OtlpCollector.ExportTraceServiceRequest CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)
+    {
+        var buffer = new byte[4096];
+        var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(buffer, 0, sdkOptions, resource, batch);
+        using var stream = new MemoryStream(buffer, 0, writePosition);
+        var tracesData = OtlpTrace.ResourceSpans.Parser.ParseFrom(stream);
+        var request = new OtlpCollector.ExportTraceServiceRequest();
+        request.ResourceSpans.Add(tracesData);
+        return request;
     }
 
     private void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)

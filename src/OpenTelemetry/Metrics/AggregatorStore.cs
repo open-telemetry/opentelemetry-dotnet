@@ -20,7 +20,6 @@ internal sealed class AggregatorStore
     internal readonly HashSet<string>? TagKeysInteresting;
 #endif
     internal readonly bool OutputDelta;
-    internal readonly bool OutputDeltaWithUnusedMetricPointReclaimEnabled;
     internal readonly int NumberOfMetricPoints;
     internal readonly ConcurrentDictionary<Tags, LookupData>? TagsToMetricPointIndexDictionaryDelta;
     internal readonly Func<ExemplarReservoir?>? ExemplarReservoirFactory;
@@ -61,7 +60,6 @@ internal sealed class AggregatorStore
         AggregationType aggType,
         AggregationTemporality temporality,
         int cardinalityLimit,
-        bool shouldReclaimUnusedMetricPoints,
         ExemplarFilterType? exemplarFilter = null,
         Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
     {
@@ -110,9 +108,8 @@ internal sealed class AggregatorStore
         // Newer attributes should be added starting at the index: 2
         this.metricPointIndex = 1;
 
-        this.OutputDeltaWithUnusedMetricPointReclaimEnabled = shouldReclaimUnusedMetricPoints && this.OutputDelta;
-
-        if (this.OutputDeltaWithUnusedMetricPointReclaimEnabled)
+        // Always reclaim unused MetricPoints for Delta aggregation temporality
+        if (this.OutputDelta)
         {
             this.availableMetricPoints = new Queue<int>(cardinalityLimit);
 
@@ -184,14 +181,9 @@ internal sealed class AggregatorStore
     internal int Snapshot()
     {
         this.batchSize = 0;
-        if (this.OutputDeltaWithUnusedMetricPointReclaimEnabled)
+        if (this.OutputDelta)
         {
             this.SnapshotDeltaWithMetricPointReclaim();
-        }
-        else if (this.OutputDelta)
-        {
-            var indexSnapshot = Math.Min(this.metricPointIndex, this.NumberOfMetricPoints - 1);
-            this.SnapshotDelta(indexSnapshot);
         }
         else
         {
@@ -201,28 +193,6 @@ internal sealed class AggregatorStore
 
         this.EndTimeInclusive = DateTimeOffset.UtcNow;
         return this.batchSize;
-    }
-
-    internal void SnapshotDelta(int indexSnapshot)
-    {
-        for (int i = 0; i <= indexSnapshot; i++)
-        {
-            ref var metricPoint = ref this.metricPoints[i];
-            if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
-            {
-                continue;
-            }
-
-            this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
-
-            this.currentMetricPointBatch[this.batchSize] = i;
-            this.batchSize++;
-        }
-
-        if (this.EndTimeInclusive != default)
-        {
-            this.StartTimeExclusive = this.EndTimeInclusive;
-        }
     }
 
     internal void SnapshotDeltaWithMetricPointReclaim()

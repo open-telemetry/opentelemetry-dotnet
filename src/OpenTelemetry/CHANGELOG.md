@@ -6,22 +6,44 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Promoted the MetricPoint reclaim feature for Delta aggregation temporality
+  from experimental to stable.
+  ([#5956](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5956))
+
+  **Previous Behavior:**
+  The SDK maintained a fixed set of MetricPoints which were assigned on a
+  first-come basis based on the tags. MetricPoint reclaim was an experimental
+  feature users could opt-into setting the environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`.
+
+  **New Behavior:**
+  MetricPoint reclaim is now enabled by default when Delta aggregation
+  temporality is used without the need to set an environment variable. Unused
+  MetricPoints will automatically be reclaimed and reused for future
+  measurements. There is NO ability to revert to the old behavior.
+
+## 1.10.0-rc.1
+
+Released 2024-Nov-01
+
 * The experimental APIs previously covered by `OTEL1003`
-  (`MetricStreamConfiguration.CardinalityLimit`) will now be part of the public
-  API and supported in stable builds.
+  (`MetricStreamConfiguration.CardinalityLimit`) are now part of the public API
+  and supported in stable builds.
   ([#5926](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5926))
 
 * Promoted overflow attribute from experimental to stable and removed the
-  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE` environment variable.
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE` environment
+  variable.
+  ([#5909](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5909))
 
   **Previous Behavior:**
   By default, when the cardinality limit was reached, measurements were dropped,
   and an internal log was emitted the first time this occurred. Users could
-  opt-in to experimental overflow attribute feature with
-  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`.
-  With this setting, the SDK would use an overflow attribute
-  (`otel.metric.overflow = true`) to aggregate measurements instead of dropping
-  measurements. No internal log was emitted in this case.
+  opt-into experimental overflow attribute feature with
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`. With this
+  setting, the SDK would use an overflow attribute (`otel.metric.overflow =
+  true`) to aggregate measurements instead of dropping measurements. No internal
+  log was emitted in this case.
 
   **New Behavior:**
   The SDK now always uses the overflow attribute (`otel.metric.overflow = true`)
@@ -34,7 +56,10 @@ Notes](../../RELEASENOTES.md).
   Metric](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric).
 
   There is NO ability to revert to old behavior.
-  ([#5909](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5909))
+
+* Exposed a `public` constructor on `Batch<T>` which accepts a single instance
+  of `T` to be contained in the batch.
+  ([#5642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5642))
 
 ## 1.10.0-beta.1
 
@@ -80,7 +105,7 @@ Released 2024-Jun-07
 
 * The experimental APIs previously covered by `OTEL1000`
   (`LoggerProviderBuilder` `AddProcessor` & `ConfigureResource` extensions, and
-  `LoggerProvider` `ForceFlush` & `Shutdown` extensions) will now be part of the
+  `LoggerProvider` `ForceFlush` & `Shutdown` extensions) are now part of the
   public API and supported in stable builds.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
@@ -107,8 +132,8 @@ Released 2024-May-20
 * The experimental APIs previously covered by `OTEL1002` (`Exemplar`,
   `ExemplarFilterType`, `MeterProviderBuilder.SetExemplarFilter`,
   `ReadOnlyExemplarCollection`, `ReadOnlyFilteredTagCollection`, &
-  `MetricPoint.TryGetExemplars`) will now be part of the public API and
-  supported in stable builds.
+  `MetricPoint.TryGetExemplars`) are now part of the public API and supported in
+  stable builds.
   ([#5607](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5607))
 
 * Fixed the nullable annotations for the `SamplingResult` constructors

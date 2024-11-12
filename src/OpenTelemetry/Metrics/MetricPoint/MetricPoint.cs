@@ -46,7 +46,7 @@ public struct MetricPoint
     {
         Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
         Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
-        Debug.Assert(!aggregatorStore!.OutputDeltaWithUnusedMetricPointReclaimEnabled || lookupData != null, "LookupData was null.");
+        Debug.Assert(!aggregatorStore!.OutputDelta || lookupData != null, "LookupData was null.");
 
         this.aggType = aggType;
         this.Tags = new ReadOnlyTagCollection(tagKeysAndValues);
@@ -1086,7 +1086,7 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CompleteUpdateWithoutMeasurement()
     {
-        if (this.aggregatorStore.OutputDeltaWithUnusedMetricPointReclaimEnabled)
+        if (this.aggregatorStore.OutputDelta)
         {
             Interlocked.Decrement(ref this.ReferenceCount);
         }

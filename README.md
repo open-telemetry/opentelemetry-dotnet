@@ -211,7 +211,7 @@ you're more than welcome to participate!
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
-* [Reiley Yang](https://github.com/reyang), Microsoft
+* [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 * [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 [Triagers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager)
@@ -228,6 +228,7 @@ Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/ma
 * [Liudmila Molkova](https://github.com/lmolkova)
 * [Mike Goldsmith](https://github.com/MikeGoldsmith)
 * [Paulo Janotti](https://github.com/pjanotti)
+* [Reiley Yang](https://github.com/reyang)
 * [Robert Paj&#x105;k](https://github.com/pellared)
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev)
 * [Victor Lu](https://github.com/victlu)

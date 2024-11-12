@@ -7,23 +7,18 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-#pragma warning disable SA1402
-
-public abstract class AggregatorTestsBase
+public class AggregatorTests
 {
     private static readonly Meter Meter = new("testMeter");
     private static readonly Instrument Instrument = Meter.CreateHistogram<long>("testInstrument");
     private static readonly ExplicitBucketHistogramConfiguration HistogramConfiguration = new() { Boundaries = Metric.DefaultHistogramBounds };
     private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
 
-    private readonly bool shouldReclaimUnusedMetricPoints;
     private readonly AggregatorStore aggregatorStore;
 
-    protected AggregatorTestsBase(bool shouldReclaimUnusedMetricPoints)
+    public AggregatorTests()
     {
-        this.shouldReclaimUnusedMetricPoints = shouldReclaimUnusedMetricPoints;
-
-        this.aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, this.shouldReclaimUnusedMetricPoints);
+        this.aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024);
     }
 
     [Fact]
@@ -250,8 +245,7 @@ public abstract class AggregatorTestsBase
             metricStreamIdentity,
             AggregationType.Histogram,
             AggregationTemporality.Cumulative,
-            cardinalityLimit: 1024,
-            this.shouldReclaimUnusedMetricPoints);
+            cardinalityLimit: 1024);
 
         KnownHistogramBuckets actualHistogramBounds = KnownHistogramBuckets.Default;
         if (aggregatorStore.HistogramBounds == Metric.DefaultHistogramBoundsShortSeconds)
@@ -327,7 +321,6 @@ public abstract class AggregatorTestsBase
             aggregationType,
             aggregationTemporality,
             cardinalityLimit: 1024,
-            this.shouldReclaimUnusedMetricPoints,
             exemplarsEnabled ? ExemplarFilterType.AlwaysOn : null);
 
         var expectedHistogram = new Base2ExponentialBucketHistogram();
@@ -435,8 +428,7 @@ public abstract class AggregatorTestsBase
             metricStreamIdentity,
             AggregationType.Base2ExponentialHistogram,
             AggregationTemporality.Cumulative,
-            cardinalityLimit: 1024,
-            this.shouldReclaimUnusedMetricPoints);
+            cardinalityLimit: 1024);
 
         aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object?>>());
 
@@ -514,21 +506,5 @@ public abstract class AggregatorTestsBase
             this.HistogramPoint = histogramPoint;
             this.MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
         }
-    }
-}
-
-public class AggregatorTests : AggregatorTestsBase
-{
-    public AggregatorTests()
-        : base(shouldReclaimUnusedMetricPoints: false)
-    {
-    }
-}
-
-public class AggregatorTestsWithReclaimAttribute : AggregatorTestsBase
-{
-    public AggregatorTestsWithReclaimAttribute()
-        : base(shouldReclaimUnusedMetricPoints: true)
-    {
     }
 }

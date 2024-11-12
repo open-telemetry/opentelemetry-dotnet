@@ -2,91 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-#pragma warning disable SA1402
-
-public abstract class MetricPointReclaimTestsBase
+public class MetricPointReclaimTests
 {
-    private readonly Dictionary<string, string?> configurationData = new()
-    {
-        [MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = "true",
-    };
-
-    private readonly IConfiguration configuration;
-
-    protected MetricPointReclaimTestsBase()
-    {
-        this.configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(this.configurationData)
-            .Build();
-    }
-
-    [Theory]
-    [InlineData("false", false)]
-    [InlineData("False", false)]
-    [InlineData("FALSE", false)]
-    [InlineData("true", true)]
-    [InlineData("True", true)]
-    [InlineData("TRUE", true)]
-    public void TestReclaimAttributeConfigWithEnvVar(string value, bool isReclaimAttributeKeySet)
-    {
-        // Clear the environment variable value first
-        Environment.SetEnvironmentVariable(MetricTestsBase.ReclaimUnusedMetricPointsConfigKey, null);
-
-        // Set the environment variable to the value provided in the test input
-        Environment.SetEnvironmentVariable(MetricTestsBase.ReclaimUnusedMetricPointsConfigKey, value);
-
-        var exportedItems = new List<Metric>();
-
-        var meter = new Meter(Utils.GetCurrentMethodName());
-
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        var meterProviderSdk = meterProvider as MeterProviderSdk;
-        Assert.NotNull(meterProviderSdk);
-        Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ReclaimUnusedMetricPoints);
-    }
-
-    [Theory]
-    [InlineData("false", false)]
-    [InlineData("False", false)]
-    [InlineData("FALSE", false)]
-    [InlineData("true", true)]
-    [InlineData("True", true)]
-    [InlineData("TRUE", true)]
-    public void TestReclaimAttributeConfigWithOtherConfigProvider(string value, bool isReclaimAttributeKeySet)
-    {
-        var exportedItems = new List<Metric>();
-
-        var meter = new Meter(Utils.GetCurrentMethodName());
-
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string?> { [MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = value })
-                .Build();
-
-                services.AddSingleton<IConfiguration>(configuration);
-            })
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        var meterProviderSdk = meterProvider as MeterProviderSdk;
-        Assert.NotNull(meterProviderSdk);
-        Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ReclaimUnusedMetricPoints);
-    }
-
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -105,10 +27,6 @@ public abstract class MetricPointReclaimTestsBase
         };
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(Utils.GetCurrentMethodName())
             .AddReader(metricReader)
             .Build();
@@ -198,10 +116,6 @@ public abstract class MetricPointReclaimTestsBase
         };
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(Utils.GetCurrentMethodName())
             .SetMaxMetricPointsPerMetricStream(10) // Set max MetricPoints limit to 10
             .AddReader(metricReader)
@@ -321,13 +235,5 @@ public abstract class MetricPointReclaimTestsBase
 
             return ExportResult.Success;
         }
-    }
-}
-
-public class MetricPointReclaimTests : MetricPointReclaimTestsBase
-{
-    public MetricPointReclaimTests()
-        : base()
-    {
     }
 }
