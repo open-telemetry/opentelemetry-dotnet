@@ -22,9 +22,9 @@
     <!-- Note: These are SDK tests which we link and run here using the
     IMetricsBuilder/IMetricsListener API added at the host level in .NET 8
     instead of the direct lower-level MeterListener API added in .NET 6. -->
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\AggregatorTestsBase.cs" Link="Includes\Metrics\AggregatorTestsBase.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\AggregatorTests.cs" Link="Includes\Metrics\AggregatorTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\KnownHistogramBuckets.cs" Link="Includes\Metrics\KnownHistogramBuckets.cs" />
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricApiTestsBase.cs" Link="Includes\Metrics\MetricApiTestsBase.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricApiTests.cs" Link="Includes\Metrics\MetricApiTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricExemplarTests.cs" Link="Includes\Metrics\MetricExemplarTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricTestData.cs" Link="Includes\Metrics\MetricTestData.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricTestsBase.cs" Link="Includes\Metrics\MetricTestsBase.cs" />

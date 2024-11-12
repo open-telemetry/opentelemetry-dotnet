@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0
+
+Released 2024-Nov-12
+
 * Promoted the MetricPoint reclaim feature for Delta aggregation temporality
   from experimental to stable.
   ([#5956](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5956))
@@ -21,6 +25,11 @@ Notes](../../RELEASENOTES.md).
   temporality is used without the need to set an environment variable. Unused
   MetricPoints will automatically be reclaimed and reused for future
   measurements. There is NO ability to revert to the old behavior.
+
+* Updated the `Microsoft.Extensions.Logging.Configuration` and
+  `Microsoft.Extensions.Diagnostics.Abstractions` package versions to
+  `9.0.0`.
+  ([#5967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5967))
 
 ## 1.10.0-rc.1
 
