@@ -332,13 +332,13 @@ chose not to sample this activity.
 
 4. Activity Links
 
-   Apart from the parent-child relation, activities can be linked using
-   `ActivityLinks` which represent the OpenTelemetry
-   [Links](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#links-between-spans).
-   The linked activities are recommended to be provided during the creation
-   time, though links may be added after activity creation as well.
-   Only links provided during the creation time are accessible to samplers to
-   make sampling decision.
+   In addition to parent-child relationships, activities can also be linked
+   using `ActivityLinks`, which represent
+   [Links](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#links-between-spans)
+   in OpenTelemetry. Providing activity links during creation is recommended, as
+   this allows samplers to consider them when deciding whether to sample an
+   activity. However, starting with `System.Diagnostics.DiagnosticSource` 9.0.0,
+   links can also be added after an activity is created.
 
     ```csharp
     var activityLinks = new List<ActivityLink>();
@@ -365,15 +365,15 @@ chose not to sample this activity.
 
     // One may add links after activity is created too.
     var linkedContext3 = new ActivityContext(
-    ActivityTraceId.CreateFromString("01260a70a81e1fa3ad5a8acfeaa0f711"),
-    ActivitySpanId.CreateFromString("34739aa9e2239da1"),
-    ActivityTraceFlags.None);
+        ActivityTraceId.CreateFromString("01260a70a81e1fa3ad5a8acfeaa0f711"),
+        ActivitySpanId.CreateFromString("34739aa9e2239da1"),
+        ActivityTraceFlags.None);
     activity?.AddLink(linkedContext3);
     ```
 
-    Note that `Activity` above is created with `default(ActivityContext)`
-    parent, which makes it child of implicit `Activity.Current` or orphan if
-    there is no `Current`.
+   Note that `Activity` above is created with `default(ActivityContext)`
+   parent, which makes it child of implicit `Activity.Current` or orphan if
+   there is no `Current`.
 
 ### Adding Events
 
