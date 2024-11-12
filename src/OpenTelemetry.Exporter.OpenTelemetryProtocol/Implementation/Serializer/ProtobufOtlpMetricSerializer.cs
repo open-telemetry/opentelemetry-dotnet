@@ -140,6 +140,8 @@ internal static class ProtobufOtlpMetricSerializer
             writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Unit, metric.Unit);
         }
 
+        var aggregationValue = metric.Temporality == AggregationTemporality.Cumulative ? ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Cumulative : ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Delta;
+
         switch (metric.MetricType)
         {
             case MetricType.LongSum:
