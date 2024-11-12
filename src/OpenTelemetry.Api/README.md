@@ -336,7 +336,7 @@ chose not to sample this activity.
    `ActivityLinks` which represent the OpenTelemetry
    [Links](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#links-between-spans).
    The linked activities are recommended to be provided during the creation
-   time,though links may be added after activity creation time.
+   time, though links may be added after activity creation as well.
    Only links provided during the creation time are accessible to samplers to
    make sampling decision.
 
