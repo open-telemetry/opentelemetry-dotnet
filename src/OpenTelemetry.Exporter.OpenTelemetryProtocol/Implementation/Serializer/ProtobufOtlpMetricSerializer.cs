@@ -154,8 +154,6 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition += ReserveSizeForLength;
 
                     writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.LongSum);
-
-                    var aggregationValue = metric.Temporality == AggregationTemporality.Cumulative ? ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Cumulative : ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Delta;
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, aggregationValue);
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
@@ -176,8 +174,6 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition += ReserveSizeForLength;
 
                     writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.DoubleSum);
-
-                    var aggregationValue = metric.Temporality == AggregationTemporality.Cumulative ? ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Cumulative : ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Delta;
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, aggregationValue);
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
@@ -228,7 +224,6 @@ internal static class ProtobufOtlpMetricSerializer
                     int metricTypeLengthPosition = writePosition;
                     writePosition += ReserveSizeForLength;
 
-                    var aggregationValue = metric.Temporality == AggregationTemporality.Cumulative ? ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Cumulative : ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Delta;
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Histogram_Aggregation_Temporality, aggregationValue);
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
@@ -292,7 +287,6 @@ internal static class ProtobufOtlpMetricSerializer
                     int metricTypeLengthPosition = writePosition;
                     writePosition += ReserveSizeForLength;
 
-                    var aggregationValue = metric.Temporality == AggregationTemporality.Cumulative ? ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Cumulative : ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Delta;
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogram_Aggregation_Temporality, aggregationValue);
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
