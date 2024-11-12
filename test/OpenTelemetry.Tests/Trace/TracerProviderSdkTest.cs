@@ -1303,6 +1303,31 @@ public class TracerProviderSdkTest : IDisposable
         Assert.NotNull(provider);
     }
 
+    [Fact]
+    public void CheckActivityLinksAddedAfterActivityCreation()
+    {
+        var exportedItems = new List<Activity>();
+        using var source = new ActivitySource($"{Utils.GetCurrentMethodName()}.1");
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .SetSampler(new AlwaysOnSampler())
+                .AddInMemoryExporter(exportedItems)
+                .AddSource(source.Name)
+                .Build();
+
+        var link1 = new ActivityLink(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
+        var link2 = new ActivityLink(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
+
+        using (var activity = source.StartActivity("root"))
+        {
+            activity?.AddLink(link1);
+            activity?.AddLink(link1);
+        }
+
+        Assert.Single(exportedItems);
+        var exportedActivity = exportedItems[0];
+        Assert.Equal(2, exportedActivity.Links.Count());
+    }
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);

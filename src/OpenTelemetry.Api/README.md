@@ -335,8 +335,10 @@ chose not to sample this activity.
    Apart from the parent-child relation, activities can be linked using
    `ActivityLinks` which represent the OpenTelemetry
    [Links](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#links-between-spans).
-   The linked activities must be provided during the creation time, as shown
-   below.
+   The linked activities are recommended to be provided during the creation
+   time,though links may be added after activity creation time.
+   Only links provided during the creation time are accessible to samplers to
+   make sampling decision.
 
     ```csharp
     var activityLinks = new List<ActivityLink>();
@@ -359,7 +361,14 @@ chose not to sample this activity.
         ActivityKind.Server,
         default(ActivityContext),
         initialTags,
-        activityLinks);
+        activityLinks); // links provided at creation time.
+
+    // One may add links after activity is created too.
+    var linkedContext3 = new ActivityContext(
+    ActivityTraceId.CreateFromString("01260a70a81e1fa3ad5a8acfeaa0f711"),
+    ActivitySpanId.CreateFromString("34739aa9e2239da1"),
+    ActivityTraceFlags.None);
+    activity?.AddLink(linkedContext3);
     ```
 
     Note that `Activity` above is created with `default(ActivityContext)`
