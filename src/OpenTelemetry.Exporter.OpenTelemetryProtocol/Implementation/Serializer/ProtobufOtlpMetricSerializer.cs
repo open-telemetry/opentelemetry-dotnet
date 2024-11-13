@@ -94,8 +94,6 @@ internal static class ProtobufOtlpMetricSerializer
 
         if (meterTags != null)
         {
-            // TODO: Need to add unit tests for Instrumentation Scope Attributes (MeterTags)
-
             if (meterTags is IReadOnlyList<KeyValuePair<string, object?>> readonlyMeterTags)
             {
                 for (int i = 0; i < readonlyMeterTags.Count; i++)
@@ -445,7 +443,10 @@ internal static class ProtobufOtlpMetricSerializer
         int exemplarLengthPosition = writePosition;
         writePosition += ReserveSizeForLength;
 
-        // TODO: Need to serialize exemplar.FilteredTags and add unit tests.
+        foreach (var tag in exemplar.FilteredTags)
+        {
+            writePosition = WriteTag(buffer, writePosition, tag, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Filtered_Attributes);
+        }
 
         // Casting to ulong is ok here as the bit representation for long versus ulong will be the same
         // The difference would in the way the bit representation is interpreted on decoding side (signed versus unsigned)
@@ -454,7 +455,18 @@ internal static class ProtobufOtlpMetricSerializer
         var time = (ulong)exemplar.Timestamp.ToUnixTimeNanoseconds();
         writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Time_Unix_Nano, time);
 
-        // TODO: Need to serialize exemplar.SpanID and exemplar.TraceId and add unit tests.
+        if (exemplar.SpanId != default)
+        {
+            writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, SpanIdSize, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Span_Id, ProtobufWireType.LEN);
+            var spanIdBytes = new Span<byte>(buffer, writePosition, SpanIdSize);
+            exemplar.SpanId.CopyTo(spanIdBytes);
+            writePosition += SpanIdSize;
+
+            writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, TraceIdSize, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Trace_Id, ProtobufWireType.LEN);
+            var traceIdBytes = new Span<byte>(buffer, writePosition, TraceIdSize);
+            exemplar.TraceId.CopyTo(traceIdBytes);
+            writePosition += TraceIdSize;
+        }
 
         ProtobufSerializer.WriteReservedLength(buffer, exemplarLengthPosition, writePosition - (exemplarLengthPosition + ReserveSizeForLength));
         return writePosition;
@@ -466,14 +478,28 @@ internal static class ProtobufOtlpMetricSerializer
         int exemplarLengthPosition = writePosition;
         writePosition += ReserveSizeForLength;
 
-        // TODO: Need to serialize exemplar.FilteredTags and add unit tests.
+        foreach (var tag in exemplar.FilteredTags)
+        {
+            writePosition = WriteTag(buffer, writePosition, tag, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Filtered_Attributes);
+        }
 
         writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Value_As_Double, value);
 
         var time = (ulong)exemplar.Timestamp.ToUnixTimeNanoseconds();
         writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Time_Unix_Nano, time);
 
-        // TODO: Need to serialize exemplar.SpanID and exemplar.TraceId and add unit tests.
+        if (exemplar.SpanId != default)
+        {
+            writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, SpanIdSize, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Span_Id, ProtobufWireType.LEN);
+            var spanIdBytes = new Span<byte>(buffer, writePosition, SpanIdSize);
+            exemplar.SpanId.CopyTo(spanIdBytes);
+            writePosition += SpanIdSize;
+
+            writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, TraceIdSize, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Trace_Id, ProtobufWireType.LEN);
+            var traceIdBytes = new Span<byte>(buffer, writePosition, TraceIdSize);
+            exemplar.TraceId.CopyTo(traceIdBytes);
+            writePosition += TraceIdSize;
+        }
 
         ProtobufSerializer.WriteReservedLength(buffer, exemplarLengthPosition, writePosition - (exemplarLengthPosition + ReserveSizeForLength));
         return writePosition;
