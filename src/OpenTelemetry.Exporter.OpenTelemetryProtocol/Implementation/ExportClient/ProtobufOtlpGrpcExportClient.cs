@@ -16,9 +16,6 @@ internal sealed class ProtobufOtlpGrpcExportClient : IProtobufExportClient
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
     private static readonly MediaTypeHeaderValue MediaHeaderValue = new("application/grpc");
     private static readonly Version Http2RequestVersion = new(2, 0);
-#if NET
-    private readonly bool synchronousSendSupportedByCurrentPlatform;
-#endif
 
     public ProtobufOtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
@@ -31,14 +28,6 @@ internal sealed class ProtobufOtlpGrpcExportClient : IProtobufExportClient
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
         this.HttpClient = httpClient;
-
-#if NET
-        // See: https://github.com/dotnet/runtime/blob/280f2a0c60ce0378b8db49adc0eecc463d00fe5d/src/libraries/System.Net.Http/src/System/Net/Http/HttpClientHandler.AnyMobile.cs#L767
-        this.synchronousSendSupportedByCurrentPlatform = !OperatingSystem.IsAndroid()
-            && !OperatingSystem.IsIOS()
-            && !OperatingSystem.IsTvOS()
-            && !OperatingSystem.IsBrowser();
-#endif
     }
 
     internal HttpClient HttpClient { get; }
