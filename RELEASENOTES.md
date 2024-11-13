@@ -14,6 +14,9 @@ directory of each individual package.
 
   * [InstrumentAdvice&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.instrumentadvice-1)
 
+    For details see: [Explicit bucket histogram
+    aggregation](./docs/metrics/customizing-the-sdk/README.md#explicit-bucket-histogram-aggregation).
+
   * [Gauge&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.gauge-1)
 
   * [ActivitySource.Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource.tags)

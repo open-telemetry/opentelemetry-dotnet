@@ -179,6 +179,37 @@ Nightly builds from this repo are published to [MyGet](https://www.myget.org),
 and can be installed using the
 `https://www.myget.org/F/opentelemetry/api/v3/index.json` source.
 
+### Digital signing
+
+Starting with the `1.10.0` release the DLLs included in the packages pushed to
+NuGet are digitally signed using [Sigstore](https://www.sigstore.dev/). Within
+each NuGet package the digital signature and its corresponding certificate file
+are placed alongside the shipped DLL(s) in the `/lib` folder. When a project
+targets multiple frameworks each target outputs a dedicated DLL and signing
+artifacts into a sub folder based on the
+[TFM](https://learn.microsoft.com/dotnet/standard/frameworks).
+
+The digitial signature and certificate files share the same name prefix as the
+DLL to ensure easy identification and association.
+
+To verify the integrity of a DLL inside a NuGet package use the
+[cosign](https://github.com/sigstore/cosign) tool from Sigstore:
+
+```bash
+cosign verify-blob \
+    --signature OpenTelemetry.dll-keyless.sig \
+    --certificate OpenTelemetry.dll-keyless.pem.cer \
+    --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/core-1.10.0-rc.1" \
+    --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+    OpenTelemetry.dll
+```
+
+> [!NOTE]
+> A successful verification outputs `Verify OK`.
+
+For more verification options please refer to the [cosign
+documentation](https://github.com/sigstore/cosign/blob/main/doc/cosign_verify-blob.md).
+
 ## Contributing
 
 For information about contributing to the project see:

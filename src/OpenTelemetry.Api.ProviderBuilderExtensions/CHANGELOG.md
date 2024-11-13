@@ -7,6 +7,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0
+
+Released 2024-Nov-12
+
+* Updated `Microsoft.Extensions.DependencyInjection.Abstractions` package
+  version to `9.0.0`.
+  ([#5967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5967))
+
 ## 1.10.0-rc.1
 
 Released 2024-Nov-01

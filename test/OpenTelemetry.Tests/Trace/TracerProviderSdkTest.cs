@@ -1303,6 +1303,35 @@ public class TracerProviderSdkTest : IDisposable
         Assert.NotNull(provider);
     }
 
+    [Fact]
+    public void CheckActivityLinksAddedAfterActivityCreation()
+    {
+        var exportedItems = new List<Activity>();
+        using var source = new ActivitySource($"{Utils.GetCurrentMethodName()}.1");
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .SetSampler(new AlwaysOnSampler())
+                .AddInMemoryExporter(exportedItems)
+                .AddSource(source.Name)
+                .Build();
+
+        var link1 = new ActivityLink(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
+        var link2 = new ActivityLink(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
+
+        using (var activity = source.StartActivity("root"))
+        {
+            activity?.AddLink(link1);
+            activity?.AddLink(link2);
+        }
+
+        Assert.Single(exportedItems);
+        var exportedActivity = exportedItems[0];
+        Assert.Equal(2, exportedActivity.Links.Count());
+
+        // verify that the links retain the order as they were added.
+        Assert.Equal(link1.Context, exportedActivity.Links.ElementAt(0).Context);
+        Assert.Equal(link2.Context, exportedActivity.Links.ElementAt(1).Context);
+    }
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);
