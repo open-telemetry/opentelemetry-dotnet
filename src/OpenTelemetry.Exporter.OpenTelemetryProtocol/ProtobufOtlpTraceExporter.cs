@@ -54,7 +54,7 @@ internal class ProtobufOtlpTraceExporter : BaseExporter<Activity>
 
         this.sdkLimitOptions = sdkLimitOptions!;
         this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? 5 : 0;
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufTraceExportTransmissionHandler(experimentalOptions);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions);
     }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
@@ -96,9 +96,6 @@ internal class ProtobufOtlpTraceExporter : BaseExporter<Activity>
         {
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             return ExportResult.Failure;
-        }
-        finally
-        {
         }
 
         return ExportResult.Success;

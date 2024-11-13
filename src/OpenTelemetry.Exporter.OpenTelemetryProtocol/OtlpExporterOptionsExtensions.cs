@@ -127,9 +127,9 @@ internal static class OtlpExporterOptionsExtensions
         }
     }
 
-    public static ProtobufOtlpExporterTransmissionHandler GetProtobufTraceExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
+    public static ProtobufOtlpExporterTransmissionHandler GetProtobufExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
     {
-        var exportClient = GetProtobufTraceExportClient(options);
+        var exportClient = GetProtobufExportClient(options);
 
         // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
         // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
@@ -157,7 +157,7 @@ internal static class OtlpExporterOptionsExtensions
         }
     }
 
-    public static IProtobufExportClient GetProtobufTraceExportClient(this OtlpExporterOptions options)
+    public static IProtobufExportClient GetProtobufExportClient(this OtlpExporterOptions options)
     {
         var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
 
