@@ -56,7 +56,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
 
     protected override bool OnSubmitRequestFailure(TRequest request, ExportClientResponse response)
     {
-        if (RetryHelper.ShouldRetryRequest(request, response, OtlpRetry.InitialBackoffMilliseconds, out _))
+        if (RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out _))
         {
             byte[]? data = null;
             if (request is ExportTraceServiceRequest traceRequest)
@@ -158,7 +158,8 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler<TRequest>
                     {
                         var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
                         var request = this.requestFactory.Invoke(data);
-                        if (this.TryRetryRequest(request, deadlineUtc, out var response) || !RetryHelper.ShouldRetryRequest(request, response, OtlpRetry.InitialBackoffMilliseconds, out var retryInfo))
+                        if (this.TryRetryRequest(request, deadlineUtc, out var response)
+                            || !RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out var retryInfo))
                         {
                             blob.TryDelete();
                         }

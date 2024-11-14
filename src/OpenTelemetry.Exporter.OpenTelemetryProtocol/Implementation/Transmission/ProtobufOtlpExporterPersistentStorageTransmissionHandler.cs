@@ -48,7 +48,7 @@ internal sealed class ProtobufOtlpExporterPersistentStorageTransmissionHandler :
 
     protected override bool OnSubmitRequestFailure(byte[] request, int contentLength, ExportClientResponse response)
     {
-        if (RetryHelper.ShouldRetryRequest(request, response, OtlpRetry.InitialBackoffMilliseconds, out _))
+        if (RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out _))
         {
             byte[]? data = null;
 

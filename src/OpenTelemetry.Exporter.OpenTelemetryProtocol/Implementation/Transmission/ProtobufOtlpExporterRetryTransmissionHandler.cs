@@ -15,7 +15,7 @@ internal sealed class ProtobufOtlpExporterRetryTransmissionHandler : ProtobufOtl
     protected override bool OnSubmitRequestFailure(byte[] request, int contentLength, ExportClientResponse response)
     {
         var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
-        while (RetryHelper.ShouldRetryRequest(request, response, nextRetryDelayMilliseconds, out var retryResult))
+        while (RetryHelper.ShouldRetryRequest(response, nextRetryDelayMilliseconds, out var retryResult))
         {
             // Note: This delay cannot exceed the configured timeout period for otlp exporter.
             // If the backend responds with `RetryAfter` duration that would result in exceeding the configured timeout period
