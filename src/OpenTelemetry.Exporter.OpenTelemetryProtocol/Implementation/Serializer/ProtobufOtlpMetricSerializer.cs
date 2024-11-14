@@ -19,6 +19,10 @@ internal static class ProtobufOtlpMetricSerializer
 
     internal static int WriteMetricsData(byte[] buffer, int writePosition, Resources.Resource? resource, in Batch<Metric> batch)
     {
+        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.MetricsData_Resource_Metrics, ProtobufWireType.LEN);
+        int mericsDataLengthPosition = writePosition;
+        writePosition += ReserveSizeForLength;
+
         foreach (var metric in batch)
         {
             var metricName = metric.MeterName;
@@ -32,6 +36,7 @@ internal static class ProtobufOtlpMetricSerializer
         }
 
         writePosition = WriteResourceMetrics(buffer, writePosition, resource, ScopeMetricsList);
+        ProtobufSerializer.WriteReservedLength(buffer, mericsDataLengthPosition, writePosition - (mericsDataLengthPosition + ReserveSizeForLength));
         ReturnMetricListToPool();
 
         return writePosition;
