@@ -15,6 +15,8 @@ internal static class ProtobufOtlpMetricSerializer
     private static readonly Stack<List<Metric>> MetricListPool = [];
     private static readonly Dictionary<string, List<Metric>> ScopeMetricsList = [];
 
+    private delegate int WriteExemplarFunc(byte[] buffer, int writePosition, in Exemplar exemplar);
+
     internal static int WriteMetricsData(byte[] buffer, int writePosition, Resources.Resource? resource, in Batch<Metric> batch)
     {
         foreach (var metric in batch)
@@ -264,13 +266,7 @@ internal static class ProtobufOtlpMetricSerializer
                             }
                         }
 
-                        if (metricPoint.TryGetExemplars(out var exemplars))
-                        {
-                            foreach (ref readonly var exemplar in exemplars)
-                            {
-                                writePosition = WriteExemplar(buffer, writePosition, in exemplar, exemplar.DoubleValue, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Exemplars);
-                            }
-                        }
+                        writePosition = WriteDoubleExemplars(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Exemplars, in metricPoint);
 
                         ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
                     }
@@ -334,13 +330,7 @@ internal static class ProtobufOtlpMetricSerializer
 
                         ProtobufSerializer.WriteReservedLength(buffer, positiveBucketsLengthPosition, writePosition - (positiveBucketsLengthPosition + ReserveSizeForLength));
 
-                        if (metricPoint.TryGetExemplars(out var exemplars))
-                        {
-                            foreach (ref readonly var exemplar in exemplars)
-                            {
-                                writePosition = WriteExemplar(buffer, writePosition, in exemplar, exemplar.DoubleValue, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Exemplars);
-                            }
-                        }
+                        writePosition = WriteDoubleExemplars(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Exemplars, in metricPoint);
 
                         ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
                     }
@@ -379,7 +369,12 @@ internal static class ProtobufOtlpMetricSerializer
         {
             foreach (ref readonly var exemplar in exemplars)
             {
-                writePosition = WriteExemplar(buffer, writePosition, in exemplar, exemplar.LongValue, ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Exemplars);
+                writePosition = WriteExemplar(
+                    buffer,
+                    writePosition,
+                    in exemplar,
+                    ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Exemplars,
+                    static (byte[] buffer, int writePosition, in Exemplar exemplar) => ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Value_As_Int, (ulong)exemplar.LongValue));
             }
         }
 
@@ -407,13 +402,7 @@ internal static class ProtobufOtlpMetricSerializer
             writePosition = WriteTag(buffer, writePosition, tag, ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Attributes);
         }
 
-        if (metricPoint.TryGetExemplars(out var exemplars))
-        {
-            foreach (ref readonly var exemplar in exemplars)
-            {
-                writePosition = WriteExemplar(buffer, writePosition, in exemplar, exemplar.DoubleValue, ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Exemplars);
-            }
-        }
+        writePosition = WriteDoubleExemplars(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Exemplars, in metricPoint);
 
         ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
         return writePosition;
@@ -437,29 +426,25 @@ internal static class ProtobufOtlpMetricSerializer
         return otlpTagWriterState.WritePosition;
     }
 
-    private static int WriteExemplar(byte[] buffer, int writePosition, in Exemplar exemplar, long value, int fieldNumber)
+    private static int WriteDoubleExemplars(byte[] buffer, int writePosition, int fieldNumber, in MetricPoint metricPoint)
     {
-        // Casting to ulong is ok here as the bit representation for long versus ulong will be the same
-        // The difference would in the way the bit representation is interpreted on decoding side (signed versus unsigned)
-        return WriteExemplar(
-            buffer: buffer,
-            writePosition: writePosition,
-            exemplar: exemplar,
-            fieldNumber: fieldNumber,
-            writeValueFunc: (byte[] buffer, int writePosition) => ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Value_As_Int, (ulong)value));
+        if (metricPoint.TryGetExemplars(out var exemplars))
+        {
+            foreach (ref readonly var exemplar in exemplars)
+            {
+                writePosition = WriteExemplar(
+                    buffer,
+                    writePosition,
+                    in exemplar,
+                    fieldNumber,
+                    static (byte[] buffer, int writePosition, in Exemplar exemplar) => ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Value_As_Double, exemplar.DoubleValue));
+            }
+        }
+
+        return writePosition;
     }
 
-    private static int WriteExemplar(byte[] buffer, int writePosition, in Exemplar exemplar, double value, int fieldNumber)
-    {
-        return WriteExemplar(
-            buffer: buffer,
-            writePosition: writePosition,
-            exemplar: exemplar,
-            fieldNumber: fieldNumber,
-            writeValueFunc: (byte[] buffer, int writePosition) => ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Value_As_Double, value));
-    }
-
-    private static int WriteExemplar(byte[] buffer, int writePosition, in Exemplar exemplar, int fieldNumber, Func<byte[], int, int> writeValueFunc)
+    private static int WriteExemplar(byte[] buffer, int writePosition, in Exemplar exemplar, int fieldNumber, WriteExemplarFunc writeValueFunc)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
         int exemplarLengthPosition = writePosition;
@@ -470,7 +455,7 @@ internal static class ProtobufOtlpMetricSerializer
             writePosition = WriteTag(buffer, writePosition, tag, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Filtered_Attributes);
         }
 
-        writePosition = writeValueFunc(buffer, writePosition);
+        writePosition = writeValueFunc(buffer, writePosition, in exemplar);
 
         var time = (ulong)exemplar.Timestamp.ToUnixTimeNanoseconds();
         writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Time_Unix_Nano, time);
