@@ -5,7 +5,7 @@ using System.Text;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
-internal class GrpcStatusDeserializer
+internal static class GrpcStatusDeserializer
 {
 #pragma warning disable SA1310 // Field names should not contain underscore
     // Wire types in protocol buffers
