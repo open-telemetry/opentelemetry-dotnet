@@ -20,12 +20,16 @@ internal static class ProtobufOtlpTraceSerializer
 
     internal static int WriteTraceData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource, in Batch<Activity> batch)
     {
+        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.TracesData_Resource_Spans, ProtobufWireType.LEN);
+        int resourceSpansScopeSpansLengthPosition = writePosition;
+        writePosition += ReserveSizeForLength;
+
         foreach (var activity in batch)
         {
             var sourceName = activity.Source.Name;
             if (!ScopeTracesList.TryGetValue(sourceName, out var activities))
             {
-                activities = ActivityListPool.Count > 0 ? ActivityListPool.Pop() : new List<Activity>();
+                activities = ActivityListPool.Count > 0 ? ActivityListPool.Pop() : [];
                 ScopeTracesList[sourceName] = activities;
             }
 
@@ -34,6 +38,7 @@ internal static class ProtobufOtlpTraceSerializer
 
         writePosition = WriteResourceSpans(buffer, writePosition, sdkLimitOptions, resource, ScopeTracesList);
         ReturnActivityListToPool();
+        ProtobufSerializer.WriteReservedLength(buffer, resourceSpansScopeSpansLengthPosition, writePosition - (resourceSpansScopeSpansLengthPosition + ReserveSizeForLength));
 
         return writePosition;
     }
