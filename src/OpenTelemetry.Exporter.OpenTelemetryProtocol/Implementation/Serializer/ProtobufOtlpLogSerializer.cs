@@ -21,6 +21,10 @@ internal static class ProtobufOtlpLogSerializer
 
     internal static int WriteLogsData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, in Batch<LogRecord> logRecordBatch)
     {
+        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.LogsData_Resource_Logs, ProtobufWireType.LEN);
+        int logsDataLengthPosition = writePosition;
+        writePosition += ReserveSizeForLength;
+
         foreach (var logRecord in logRecordBatch)
         {
             var scopeName = logRecord.Logger.Name;
@@ -34,6 +38,7 @@ internal static class ProtobufOtlpLogSerializer
         }
 
         writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, ScopeLogsList);
+        ProtobufSerializer.WriteReservedLength(buffer, logsDataLengthPosition, writePosition - (logsDataLengthPosition + ReserveSizeForLength));
         ReturnLogRecordListToPool();
 
         return writePosition;

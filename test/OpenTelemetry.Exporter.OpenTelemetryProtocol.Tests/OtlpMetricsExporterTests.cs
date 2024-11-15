@@ -1070,10 +1070,10 @@ public class OtlpMetricsExporterTests : IDisposable
         var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(buffer, 0, resource, in batch);
         using var stream = new MemoryStream(buffer, 0, writePosition);
 
-        var metricsData = OtlpMetrics.ResourceMetrics.Parser.ParseFrom(stream);
+        var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);
 
         var request = new OtlpCollector.ExportMetricsServiceRequest();
-        request.ResourceMetrics.Add(metricsData);
+        request.ResourceMetrics.Add(metricsData.ResourceMetrics);
         return request;
     }
 }
