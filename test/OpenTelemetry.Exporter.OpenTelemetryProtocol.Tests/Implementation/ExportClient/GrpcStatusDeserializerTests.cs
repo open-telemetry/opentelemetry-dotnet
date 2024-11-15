@@ -316,4 +316,24 @@ public class GrpcStatusDeserializerTests
         Assert.NotNull(result);
         Assert.Equal(TimeSpan.FromSeconds(0.5), result);
     }
+
+    [Fact]
+    public void DeserializeStatus_TruncatedStream_ThrowsEndOfStreamException()
+    {
+        // Arrange: Create valid Base64 data and truncate it
+        var status = new Google.Rpc.Status
+        {
+            Code = 3,
+            Message = "Truncated stream test",
+        };
+
+        byte[] fullData = status.ToByteArray();
+        byte[] truncatedData = fullData.Take(fullData.Length / 2).ToArray(); // Truncate the data
+
+        string grpcStatusDetailsBin = Convert.ToBase64String(truncatedData);
+
+        // Act & Assert: Attempt to deserialize and expect an EndOfStreamException
+        Assert.Throws<EndOfStreamException>(() =>
+            GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
+    }
 }
