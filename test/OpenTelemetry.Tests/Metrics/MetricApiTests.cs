@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Threading.Tasks;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
@@ -192,11 +193,10 @@ public class MetricApiTests : MetricTestsBase
     }
 
     [Fact]
-    public void MetricInstrumentationScopeAttributesAreNotTreatedAsIdentifyingProperty()
+    public void MetricInstrumentationScopeAttributesAreTreatedAsIdentifyingProperty()
     {
         // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#get-a-meter
-        // Meters are identified by name, version, and schema_url fields
-        // and not with tags.
+        // Meters are identified by name, version, meter tags and schema_url fields.
         var exportedItems = new List<Metric>();
         var meterName = "MyMeter";
         var meterVersion = "1.0";
@@ -228,15 +228,12 @@ public class MetricApiTests : MetricTestsBase
         // The first instrument's Meter.Tags is exported.
         // It is considered a user-error to create Meters with same name,version but with
         // different tags. TODO: See if we can emit an internal log about this.
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        Assert.Equal(2, exportedItems.Count);
+
+        var meterTagHashed = Tags.ComputeHashCode(meterTags1.ToArray());
+        var metric = exportedItems.First(m => Tags.ComputeHashCode(m.MeterTags?.ToArray() ?? Array.Empty<KeyValuePair<string, object?>>()) == meterTagHashed);
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
-
-        Assert.NotNull(metric.MeterTags);
-
-        Assert.Single(metric.MeterTags.Where(kvp => kvp.Key == meterTags1[0].Key && kvp.Value == meterTags1[0].Value));
-        Assert.DoesNotContain(metric.MeterTags, kvp => kvp.Key == meterTags2[0].Key && kvp.Value == meterTags2[0].Value);
 
         List<MetricPoint> metricPoints = new List<MetricPoint>();
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -246,7 +243,22 @@ public class MetricApiTests : MetricTestsBase
 
         Assert.Single(metricPoints);
         var metricPoint1 = metricPoints[0];
-        Assert.Equal(25, metricPoint1.GetSumLong());
+        Assert.Equal(10, metricPoint1.GetSumLong());
+
+        meterTagHashed = Tags.ComputeHashCode(meterTags2.ToArray());
+        metric = exportedItems.First(m => Tags.ComputeHashCode(m.MeterTags?.ToArray() ?? Array.Empty<KeyValuePair<string, object?>>()) == meterTagHashed);
+        Assert.Equal(meterName, metric.MeterName);
+        Assert.Equal(meterVersion, metric.MeterVersion);
+
+        metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        metricPoint1 = metricPoints[0];
+        Assert.Equal(15, metricPoint1.GetSumLong());
     }
 
     [Fact]

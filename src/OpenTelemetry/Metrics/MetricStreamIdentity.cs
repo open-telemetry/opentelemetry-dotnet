@@ -14,7 +14,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
     {
         this.MeterName = instrument.Meter.Name;
         this.MeterVersion = instrument.Meter.Version ?? string.Empty;
-        this.MeterTags = instrument.Meter.Tags;
+        this.MeterTags = instrument.Meter.Tags != null ? new Tags(instrument.Meter.Tags.ToArray()) : null;
         this.InstrumentName = metricStreamConfiguration?.Name ?? instrument.Name;
         this.Unit = instrument.Unit ?? string.Empty;
         this.Description = metricStreamConfiguration?.Description ?? instrument.Description ?? string.Empty;
@@ -32,6 +32,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         hashCode.Add(this.InstrumentType);
         hashCode.Add(this.MeterName);
         hashCode.Add(this.MeterVersion);
+        hashCode.Add(this.MeterTags);
         hashCode.Add(this.InstrumentName);
         hashCode.Add(this.HistogramRecordMinMax);
         hashCode.Add(this.Unit);
@@ -91,7 +92,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
     public string MeterVersion { get; }
 
-    public IEnumerable<KeyValuePair<string, object?>>? MeterTags { get; }
+    public Tags? MeterTags { get; }
 
     public string InstrumentName { get; }
 
@@ -141,6 +142,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             && this.Unit == other.Unit
             && this.Description == other.Description
             && this.ViewId == other.ViewId
+            && this.MeterTags == other.MeterTags
             && this.HistogramRecordMinMax == other.HistogramRecordMinMax
             && this.ExponentialHistogramMaxSize == other.ExponentialHistogramMaxSize
             && this.ExponentialHistogramMaxScale == other.ExponentialHistogramMaxScale
