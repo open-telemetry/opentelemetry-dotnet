@@ -224,10 +224,6 @@ public class MetricApiTests : MetricTestsBase
         counter2.Add(15);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        // The instruments differ only in the Meter.Tags, which is not an identifying property.
-        // The first instrument's Meter.Tags is exported.
-        // It is considered a user-error to create Meters with same name,version but with
-        // different tags. TODO: See if we can emit an internal log about this.
         Assert.Equal(2, exportedItems.Count);
 
         var meterTagHashed = Tags.ComputeHashCode(meterTags1.ToArray());
