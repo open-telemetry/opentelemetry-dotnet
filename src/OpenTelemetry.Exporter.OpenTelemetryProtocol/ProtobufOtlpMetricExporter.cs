@@ -15,7 +15,7 @@ namespace OpenTelemetry.Exporter;
 /// Exporter consuming <see cref="Metric"/> and exporting the data using
 /// the OpenTelemetry protocol (OTLP).
 /// </summary>
-internal class ProtobufOtlpMetricExporter : BaseExporter<Metric>
+internal sealed class ProtobufOtlpMetricExporter : BaseExporter<Metric>
 {
     private readonly ProtobufOtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
