@@ -49,6 +49,15 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         }
     }
 
+    [NonEvent]
+    public void BufferResizeFailedDueToMemory(OtlpSignalType signalType, Exception exception)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.BufferResizeFailedDueToMemory(signalType.ToString(), exception.ToInvariantString());
+        }
+    }
+
     [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
     public void FailedToReachCollector(string rawCollectorUri, string ex)
     {
@@ -107,6 +116,18 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     public void RetryStoredRequestException(string ex)
     {
         this.WriteEvent(13, ex);
+    }
+
+    [Event(14, Message = "{0} buffer exceeded the maximum allowed size. Current size: {1} bytes.", Level = EventLevel.Error)]
+    public void BufferExceededMaxSize(OtlpSignalType signalType, int length)
+    {
+        this.WriteEvent(14, signalType.ToString(), length);
+    }
+
+    [Event(15, Message = "{0} buffer resizing failed due to insufficient memory. Exception: {1}", Level = EventLevel.Error)]
+    public void BufferResizeFailedDueToMemory(string signalType, string exceptionMessage)
+    {
+        this.WriteEvent(15, signalType, exceptionMessage);
     }
 
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)

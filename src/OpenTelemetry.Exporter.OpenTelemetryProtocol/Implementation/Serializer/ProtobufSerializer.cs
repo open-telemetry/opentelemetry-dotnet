@@ -13,6 +13,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 
 internal static class ProtobufSerializer
 {
+    private const int MaxBufferSize = 100 * 1024 * 1024;
     private const uint UInt128 = 0x80;
     private const ulong ULong128 = 0x80;
     private const int Fixed32Size = 4;
@@ -338,6 +339,29 @@ internal static class ProtobufSerializer
 
         writePosition += numberOfUtf8CharsInString;
         return writePosition;
+    }
+
+    internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
+    {
+        if (buffer.Length >= MaxBufferSize)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.BufferExceededMaxSize(otlpSignalType, buffer.Length);
+            return false;
+        }
+
+        try
+        {
+            var newBufferSize = buffer.Length * 2;
+            var newBuffer = new byte[newBufferSize];
+            buffer.CopyTo(newBuffer, 0);
+            buffer = newBuffer;
+            return true;
+        }
+        catch (OutOfMemoryException ex)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.BufferResizeFailedDueToMemory(otlpSignalType, ex);
+            return false;
+        }
     }
 
 #if NETFRAMEWORK || NETSTANDARD2_0

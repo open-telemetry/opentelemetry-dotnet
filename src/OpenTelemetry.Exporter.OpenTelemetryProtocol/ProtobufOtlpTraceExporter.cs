@@ -54,7 +54,7 @@ internal sealed class ProtobufOtlpTraceExporter : BaseExporter<Activity>
 
         this.sdkLimitOptions = sdkLimitOptions!;
         this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? 5 : 0;
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
     }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
@@ -64,7 +64,14 @@ internal sealed class ProtobufOtlpTraceExporter : BaseExporter<Activity>
     {
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
+        return this.TryExport(in activityBatch);
+    }
 
+    /// <inheritdoc />
+    protected override bool OnShutdown(int timeoutMilliseconds) => this.transmissionHandler.Shutdown(timeoutMilliseconds);
+
+    private ExportResult TryExport(in Batch<Activity> activityBatch)
+    {
         try
         {
             int writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(this.buffer, this.startWritePosition, this.sdkLimitOptions, this.Resource, activityBatch);
@@ -87,10 +94,17 @@ internal sealed class ProtobufOtlpTraceExporter : BaseExporter<Activity>
         }
         catch (IndexOutOfRangeException)
         {
-            if (!this.IncreaseBufferSize())
+            // Attempt to increase the buffer size
+            if (!ProtobufSerializer.IncreaseBufferSize(ref this.buffer, OtlpSignalType.Traces))
             {
-                throw;
+                return ExportResult.Failure;
             }
+
+            // Retry serialization after increasing the buffer size.
+            // The recursion depth is limited to a maximum of 7 calls, as the buffer size starts at ~732 KB
+            // and doubles until it reaches the maximum size of 100 MB. This ensures the recursion remains safe
+            // and avoids stack overflow.
+            return this.TryExport(activityBatch);
         }
         catch (Exception ex)
         {
@@ -99,27 +113,5 @@ internal sealed class ProtobufOtlpTraceExporter : BaseExporter<Activity>
         }
 
         return ExportResult.Success;
-    }
-
-    /// <inheritdoc />
-    protected override bool OnShutdown(int timeoutMilliseconds)
-    {
-        return this.transmissionHandler.Shutdown(timeoutMilliseconds);
-    }
-
-    private bool IncreaseBufferSize()
-    {
-        var newBufferSize = this.buffer.Length * 2;
-
-        if (newBufferSize > 100 * 1024 * 1024)
-        {
-            return false;
-        }
-
-        var newBuffer = new byte[newBufferSize];
-        this.buffer.CopyTo(newBuffer, 0);
-        this.buffer = newBuffer;
-
-        return true;
     }
 }

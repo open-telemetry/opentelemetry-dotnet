@@ -25,9 +25,7 @@ internal sealed class ProtobufOtlpHttpExportClient : IProtobufExportClient
         Guard.ThrowIfNull(signalPath);
         Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
 
-        Uri exporterEndpoint = options.AppendSignalPathToEndpoint
-            ? options.Endpoint.AppendPathIfNotPresent(signalPath)
-            : options.Endpoint;
+        Uri exporterEndpoint = options.Endpoint.AppendPathIfNotPresent(signalPath);
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
         this.HttpClient = httpClient;
