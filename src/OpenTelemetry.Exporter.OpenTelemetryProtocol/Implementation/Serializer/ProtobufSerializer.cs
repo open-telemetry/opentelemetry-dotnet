@@ -345,7 +345,7 @@ internal static class ProtobufSerializer
     {
         if (buffer.Length >= MaxBufferSize)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.BufferExceededMaxSize(otlpSignalType, buffer.Length);
+            OpenTelemetryProtocolExporterEventSource.Log.BufferExceededMaxSize(otlpSignalType.ToString(), buffer.Length);
             return false;
         }
 

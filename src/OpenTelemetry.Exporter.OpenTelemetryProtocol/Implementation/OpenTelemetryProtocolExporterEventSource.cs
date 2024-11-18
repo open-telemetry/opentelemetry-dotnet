@@ -119,9 +119,9 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(14, Message = "{0} buffer exceeded the maximum allowed size. Current size: {1} bytes.", Level = EventLevel.Error)]
-    public void BufferExceededMaxSize(OtlpSignalType signalType, int length)
+    public void BufferExceededMaxSize(string signalType, int length)
     {
-        this.WriteEvent(14, signalType.ToString(), length);
+        this.WriteEvent(14, signalType, length);
     }
 
     [Event(15, Message = "{0} buffer resizing failed due to insufficient memory. Exception: {1}", Level = EventLevel.Error)]
