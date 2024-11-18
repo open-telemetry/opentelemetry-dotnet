@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Threading.Tasks;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
