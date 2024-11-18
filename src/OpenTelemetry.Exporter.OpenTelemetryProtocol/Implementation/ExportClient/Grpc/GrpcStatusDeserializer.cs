@@ -94,9 +94,9 @@ internal static class GrpcStatusDeserializer
         return null;
     }
 
-    private static RetryInfo DeserializeRetryInfo(byte[] data)
+    private static RetryInfo? DeserializeRetryInfo(byte[] data)
     {
-        RetryInfo retryInfo = default;
+        RetryInfo? retryInfo = null;
         using (var stream = new MemoryStream(data))
         {
             while (stream.Position < stream.Length)
@@ -108,7 +108,7 @@ internal static class GrpcStatusDeserializer
                 switch (fieldNumber)
                 {
                     case 1: // retry_delay
-                        retryInfo.RetryDelay = DecodeDuration(stream);
+                        retryInfo = new RetryInfo(DecodeDuration(stream));
                         break;
                     default:
                         SkipField(stream, wireType);
@@ -124,7 +124,8 @@ internal static class GrpcStatusDeserializer
     {
         var length = DecodeVarint(stream);
         var endPosition = stream.Position + length;
-        Duration duration = default;
+        long seconds = 0;
+        int nanos = 0;
 
         while (stream.Position < endPosition)
         {
@@ -135,10 +136,10 @@ internal static class GrpcStatusDeserializer
             switch (fieldNumber)
             {
                 case 1: // seconds
-                    duration.Seconds = DecodeInt64(stream);
+                    seconds = DecodeInt64(stream);
                     break;
                 case 2: // nanos
-                    duration.Nanos = DecodeInt32(stream);
+                    nanos = DecodeInt32(stream);
                     break;
                 default:
                     SkipField(stream, wireType);
@@ -146,14 +147,16 @@ internal static class GrpcStatusDeserializer
             }
         }
 
-        return duration;
+        return new Duration(seconds, nanos);
     }
 
     private static Any DecodeAny(Stream stream)
     {
         var length = DecodeVarint(stream);
         var endPosition = stream.Position + length;
-        Any any = default;
+
+        string? typeUrl = null;
+        byte[]? value = null;
 
         while (stream.Position < endPosition)
         {
@@ -164,10 +167,10 @@ internal static class GrpcStatusDeserializer
             switch (fieldNumber)
             {
                 case 1: // type_url
-                    any.TypeUrl = DecodeString(stream);
+                    typeUrl = DecodeString(stream);
                     break;
                 case 2: // value
-                    any.Value = DecodeBytes(stream);
+                    value = DecodeBytes(stream);
                     break;
                 default:
                     SkipField(stream, wireType);
@@ -175,7 +178,7 @@ internal static class GrpcStatusDeserializer
             }
         }
 
-        return any;
+        return new Any(typeUrl, value);
     }
 
     private static uint DecodeTag(Stream stream)
@@ -255,23 +258,40 @@ internal static class GrpcStatusDeserializer
         }
     }
 
-    internal struct Duration
+    internal readonly struct Duration
     {
-        public long Seconds { get; set; }
+        internal Duration(long seconds, int nanos)
+        {
+            this.Seconds = seconds;
+            this.Nanos = nanos;
+        }
 
-        public int Nanos { get; set; }
+        public long Seconds { get; }
+
+        public int Nanos { get; }
     }
 
-    internal struct RetryInfo
+    internal readonly struct RetryInfo
     {
-        public Duration? RetryDelay { get; set; }
+        public RetryInfo(Duration? retryDelay)
+        {
+            this.RetryDelay = retryDelay;
+        }
+
+        public Duration? RetryDelay { get; }
     }
 
-    internal struct Any
+    internal readonly struct Any
     {
-        public string? TypeUrl { get; set; }
+        public Any(string? typeUrl, byte[]? value)
+        {
+            this.TypeUrl = typeUrl;
+            this.Value = value;
+        }
 
-        public byte[]? Value { get; set; }
+        public string? TypeUrl { get; }
+
+        public byte[]? Value { get; }
     }
 
     internal struct Status
