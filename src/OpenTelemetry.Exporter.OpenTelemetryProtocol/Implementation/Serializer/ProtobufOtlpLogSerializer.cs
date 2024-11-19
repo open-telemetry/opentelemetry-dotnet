@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
@@ -21,6 +22,10 @@ internal static class ProtobufOtlpLogSerializer
 
     internal static int WriteLogsData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, in Batch<LogRecord> logRecordBatch)
     {
+        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.LogsData_Resource_Logs, ProtobufWireType.LEN);
+        int logsDataLengthPosition = writePosition;
+        writePosition += ReserveSizeForLength;
+
         foreach (var logRecord in logRecordBatch)
         {
             var scopeName = logRecord.Logger.Name;
@@ -30,10 +35,20 @@ internal static class ProtobufOtlpLogSerializer
                 ScopeLogsList[scopeName] = logRecords;
             }
 
+            if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
+            {
+                Debug.Assert(logRecord.PoolReferenceCount > 0, "logRecord PoolReferenceCount value was unexpected");
+
+                // Note: AddReference call here prevents the LogRecord from
+                // being given back to the pool by Batch<LogRecord>.
+                logRecord.AddReference();
+            }
+
             logRecords.Add(logRecord);
         }
 
         writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, ScopeLogsList);
+        ProtobufSerializer.WriteReservedLength(buffer, logsDataLengthPosition, writePosition - (logsDataLengthPosition + ReserveSizeForLength));
         ReturnLogRecordListToPool();
 
         return writePosition;
@@ -45,6 +60,18 @@ internal static class ProtobufOtlpLogSerializer
         {
             foreach (var entry in ScopeLogsList)
             {
+                foreach (var logRecord in entry.Value)
+                {
+                    if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
+                    {
+                        Debug.Assert(logRecord.PoolReferenceCount > 0, "logRecord PoolReferenceCount value was unexpected");
+
+                        // Note: Try to return the LogRecord to the shared pool
+                        // now that work is done.
+                        LogRecordSharedPool.Current.Return(logRecord);
+                    }
+                }
+
                 entry.Value.Clear();
                 LogsListPool.Push(entry.Value);
             }
