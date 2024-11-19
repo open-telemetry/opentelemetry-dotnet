@@ -50,11 +50,9 @@ internal sealed class ProtobufOtlpExporterPersistentStorageTransmissionHandler :
     {
         if (RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out _))
         {
-            byte[]? data = null;
-
-            if (data != null)
+            if (request != null)
             {
-                return this.persistentBlobProvider.TryCreateBlob(data, out _);
+                return this.persistentBlobProvider.TryCreateBlob(request, out _);
             }
         }
 
