@@ -74,7 +74,7 @@ public abstract class StressTest<T> : IDisposable
             .AddPrometheusHttpListener(o => o.UriPrefixes = new string[] { $"http://localhost:{options.PrometheusInternalMetricsPort}/" })
             .Build() : null;
 
-        var statistics = new long[options.Concurrency];
+        var statistics = new MeasurementData[options.Concurrency];
         var watchForTotal = Stopwatch.StartNew();
 
         TimeSpan? duration = options.DurationSeconds > 0
@@ -133,14 +133,14 @@ public abstract class StressTest<T> : IDisposable
                         Console.SetCursorPosition(tempCursorLeft, tempCursorTop);
                     }
 
-                    var cntLoopsOld = (ulong)statistics.Sum();
+                    var cntLoopsOld = (ulong)statistics.Select(data => data.Count).Sum();
                     var cntCpuCyclesOld = StressTestNativeMethods.GetCpuCycles();
 
                     watch.Restart();
                     Thread.Sleep(200);
                     watch.Stop();
 
-                    cntLoopsTotal = (ulong)statistics.Sum();
+                    cntLoopsTotal = (ulong)statistics.Select(data => data.Count).Sum();
                     var cntCpuCyclesNew = StressTestNativeMethods.GetCpuCycles();
 
                     var nLoops = cntLoopsTotal - cntLoopsOld;
@@ -172,18 +172,18 @@ public abstract class StressTest<T> : IDisposable
             {
                 Parallel.For(0, options.Concurrency, (i) =>
                 {
-                    ref var count = ref statistics[i];
+                    ref var item = ref statistics[i];
 
                     while (this.bContinue)
                     {
                         this.RunWorkItemInParallel();
-                        count++;
+                        item.Count++;
                     }
                 });
             });
 
         watchForTotal.Stop();
-        cntLoopsTotal = (ulong)statistics.Sum();
+        cntLoopsTotal = (ulong)statistics.Select(data => data.Count).Sum();
         var totalLoopsPerSecond = (double)cntLoopsTotal / ((double)watchForTotal.ElapsedMilliseconds / 1000.0);
         var cntCpuCyclesTotal = StressTestNativeMethods.GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
@@ -205,5 +205,28 @@ public abstract class StressTest<T> : IDisposable
 
     protected virtual void Dispose(bool isDisposing)
     {
+    }
+
+    // Padding to avoid false sharing.
+    // For most systems, the cache line size should be less than or equal to 128 bytes.
+    private struct MeasurementData
+    {
+        public long Count;
+
+        public long Padding1;
+        public long Padding2;
+        public long Padding3;
+        public long Padding4;
+        public long Padding5;
+        public long Padding6;
+        public long Padding7;
+        public long Padding8;
+        public long Padding9;
+        public long Padding10;
+        public long Padding11;
+        public long Padding12;
+        public long Padding13;
+        public long Padding14;
+        public long Padding15;
     }
 }

@@ -1054,9 +1054,9 @@ public class OtlpTraceExporterTests
         var buffer = new byte[4096];
         var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(buffer, 0, sdkOptions, resource, batch);
         using var stream = new MemoryStream(buffer, 0, writePosition);
-        var tracesData = OtlpTrace.ResourceSpans.Parser.ParseFrom(stream);
+        var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
         var request = new OtlpCollector.ExportTraceServiceRequest();
-        request.ResourceSpans.Add(tracesData);
+        request.ResourceSpans.Add(tracesData.ResourceSpans);
         return request;
     }
 

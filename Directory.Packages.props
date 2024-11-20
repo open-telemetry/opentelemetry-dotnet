@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <OTelLatestStableVer>1.9.0</OTelLatestStableVer>
+    <OTelLatestStableVer>1.10.0</OTelLatestStableVer>
 
     <!--
         This is typically the latest annual release of .NET. Use this wherever
         possible and only deviate (use a specific version) when a package has a
         more specific patch which must be reference directly.
     -->
-    <LatestRuntimeOutOfBandVer>9.0.0-rc.1.24431.7</LatestRuntimeOutOfBandVer>
+    <LatestRuntimeOutOfBandVer>9.0.0</LatestRuntimeOutOfBandVer>
 
     <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
     <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>8.0.0</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
@@ -106,7 +106,7 @@
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(LatestRuntimeOutOfBandVer)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(LatestRuntimeOutOfBandVer)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="[9.0.0-preview.8.24460.1,)" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="[9.0.0,)" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="[17.11.0,18.0.0)" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="[8.0.0,9.0)" />
@@ -129,7 +129,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="9.0.0-rc.1.24452.1" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="9.0.0" />
   </ItemGroup>
 
 </Project>

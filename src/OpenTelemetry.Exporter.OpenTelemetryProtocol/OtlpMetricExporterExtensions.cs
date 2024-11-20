@@ -175,7 +175,16 @@ public static class OtlpMetricExporterExtensions
 
         exporterOptions!.TryEnableIHttpClientFactoryIntegration(serviceProvider!, "OtlpMetricExporter");
 
-        BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions!, experimentalOptions!);
+        BaseExporter<Metric> metricExporter;
+
+        if (experimentalOptions != null && experimentalOptions.UseCustomProtobufSerializer)
+        {
+            metricExporter = new ProtobufOtlpMetricExporter(exporterOptions!, experimentalOptions!);
+        }
+        else
+        {
+            metricExporter = new OtlpMetricExporter(exporterOptions!, experimentalOptions!);
+        }
 
         if (configureExporterInstance != null)
         {

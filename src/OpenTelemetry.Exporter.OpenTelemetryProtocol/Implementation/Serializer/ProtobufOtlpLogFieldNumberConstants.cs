@@ -5,8 +5,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 
 internal static class ProtobufOtlpLogFieldNumberConstants
 {
-    // Resource Logs
 #pragma warning disable SA1310 // Field names should not contain underscore
+
+    // Logs data
+    internal const int LogsData_Resource_Logs = 1;
+
+    // Resource Logs
     internal const int ResourceLogs_Resource = 1;
     internal const int ResourceLogs_Scope_Logs = 2;
     internal const int ResourceLogs_Schema_Url = 3;

@@ -20,6 +20,7 @@ OpenTelemetry.BaseProcessor<T>.ParentProvider.get -> OpenTelemetry.BaseProvider?
 OpenTelemetry.BaseProcessor<T>.Shutdown(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>
 OpenTelemetry.Batch<T>.Batch() -> void
+OpenTelemetry.Batch<T>.Batch(T! item) -> void
 OpenTelemetry.Batch<T>.Batch(T![]! items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
 OpenTelemetry.Batch<T>.Dispose() -> void
@@ -235,6 +236,8 @@ OpenTelemetry.Metrics.MetricReaderTemporalityPreference
 OpenTelemetry.Metrics.MetricReaderTemporalityPreference.Cumulative = 1 -> OpenTelemetry.Metrics.MetricReaderTemporalityPreference
 OpenTelemetry.Metrics.MetricReaderTemporalityPreference.Delta = 2 -> OpenTelemetry.Metrics.MetricReaderTemporalityPreference
 OpenTelemetry.Metrics.MetricStreamConfiguration
+OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.get -> int?
+OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration.Description.get -> string?
 OpenTelemetry.Metrics.MetricStreamConfiguration.Description.set -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration.MetricStreamConfiguration() -> void
@@ -268,6 +271,12 @@ OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator.MoveNext() -> bool
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.GetEnumerator() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.ReadOnlyExemplarCollection() -> void
 OpenTelemetry.OpenTelemetryBuilderSdkExtensions
+OpenTelemetry.OpenTelemetrySdk
+OpenTelemetry.OpenTelemetrySdk.Dispose() -> void
+OpenTelemetry.OpenTelemetrySdk.LoggerProvider.get -> OpenTelemetry.Logs.LoggerProvider!
+OpenTelemetry.OpenTelemetrySdk.MeterProvider.get -> OpenTelemetry.Metrics.MeterProvider!
+OpenTelemetry.OpenTelemetrySdk.TracerProvider.get -> OpenTelemetry.Trace.TracerProvider!
+OpenTelemetry.OpenTelemetrySdkExtensions
 OpenTelemetry.ProviderExtensions
 OpenTelemetry.ReadOnlyFilteredTagCollection
 OpenTelemetry.ReadOnlyFilteredTagCollection.Enumerator
@@ -434,6 +443,8 @@ static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithMetrics(this OpenTele
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithMetrics(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithTracing(this OpenTelemetry.IOpenTelemetryBuilder! builder, System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderSdkExtensions.WithTracing(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
+static OpenTelemetry.OpenTelemetrySdk.Create(System.Action<OpenTelemetry.IOpenTelemetryBuilder!>! configure) -> OpenTelemetry.OpenTelemetrySdk!
+static OpenTelemetry.OpenTelemetrySdkExtensions.GetLoggerFactory(this OpenTelemetry.OpenTelemetrySdk! sdk) -> Microsoft.Extensions.Logging.ILoggerFactory!
 static OpenTelemetry.ProviderExtensions.GetDefaultResource(this OpenTelemetry.BaseProvider! baseProvider) -> OpenTelemetry.Resources.Resource!
 static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider! baseProvider) -> OpenTelemetry.Resources.Resource!
 static OpenTelemetry.Resources.Resource.Empty.get -> OpenTelemetry.Resources.Resource!
