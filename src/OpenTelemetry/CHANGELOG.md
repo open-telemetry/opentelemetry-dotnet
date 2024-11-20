@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change** The `public` constructor on `Batch<T>` which accepts a
+  single instance of `T` to be contained in the batch introduced in
+  `1.10.0-rc.1` has been set back to `internal` because this change broke
+  released components calling the `internal` ctor via reflection. Instead a
+  static method `Batch<T>.Create(T item)` is being introduced which offers the
+  same functionality.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.10.0
 
 Released 2024-Nov-12

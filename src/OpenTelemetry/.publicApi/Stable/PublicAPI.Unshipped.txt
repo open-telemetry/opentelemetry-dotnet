@@ -1,0 +1,2 @@
+static OpenTelemetry.Batch<T>.Create(T! item) -> OpenTelemetry.Batch<T!>
+*REMOVED*OpenTelemetry.Batch<T>.Batch(T! item) -> void

@@ -4,6 +4,7 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
@@ -35,13 +36,11 @@ public readonly struct Batch<T> : IDisposable
         this.Count = this.targetCount = count;
     }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Batch{T}"/> struct.
-    /// </summary>
-    /// <param name="item">The item to store in the batch.</param>
-    public Batch(T item)
+    // Note: Some components call this ctor via reflection. Do not change or
+    // remove to be nice.
+    internal Batch(T item)
     {
-        Guard.ThrowIfNull(item);
+        Debug.Assert(item != null, "item was null");
 
         this.item = item;
         this.Count = this.targetCount = 1;
@@ -63,6 +62,19 @@ public readonly struct Batch<T> : IDisposable
     /// Gets the count of items in the batch.
     /// </summary>
     public long Count { get; }
+
+    /// <summary>
+    /// Create an instance of <see cref="Batch{T}"/> containing a single item.
+    /// </summary>
+    /// <param name="item">Item to store in the batch.</param>
+    /// <returns><see cref="Batch{T}"/> containing the supplied item.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Batch<T> Create(T item)
+    {
+        Guard.ThrowIfNull(item);
+
+        return new Batch<T>(item);
+    }
 
     /// <inheritdoc/>
     public void Dispose()
