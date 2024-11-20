@@ -12,7 +12,7 @@ Notes](../../RELEASENOTES.md).
   released components calling the `internal` ctor via reflection. Instead a
   static method `Batch<T>.Create(T item)` is being introduced which offers the
   same functionality.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#5994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5994))
 
 ## 1.10.0
 
