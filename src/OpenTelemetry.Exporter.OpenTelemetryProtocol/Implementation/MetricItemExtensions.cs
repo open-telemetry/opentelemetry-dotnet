@@ -169,6 +169,11 @@ internal static class MetricItemExtensions
                         }
 
                         sum.DataPoints.Add(dataPoint);
+
+                        if (metric.NoRecordedValueNeeded)
+                        {
+                            sum.DataPoints.Add(CreateNoRecordedValueNumberDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
+                        }
                     }
 
                     otlpMetric.Sum = sum;
@@ -206,6 +211,11 @@ internal static class MetricItemExtensions
                         }
 
                         sum.DataPoints.Add(dataPoint);
+
+                        if (metric.NoRecordedValueNeeded)
+                        {
+                            sum.DataPoints.Add(CreateNoRecordedValueNumberDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
+                        }
                     }
 
                     otlpMetric.Sum = sum;
@@ -237,6 +247,11 @@ internal static class MetricItemExtensions
                         }
 
                         gauge.DataPoints.Add(dataPoint);
+
+                        if (metric.NoRecordedValueNeeded)
+                        {
+                            gauge.DataPoints.Add(CreateNoRecordedValueNumberDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
+                        }
                     }
 
                     otlpMetric.Gauge = gauge;
@@ -268,6 +283,11 @@ internal static class MetricItemExtensions
                         }
 
                         gauge.DataPoints.Add(dataPoint);
+
+                        if (metric.NoRecordedValueNeeded)
+                        {
+                            gauge.DataPoints.Add(CreateNoRecordedValueNumberDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
+                        }
                     }
 
                     otlpMetric.Gauge = gauge;
@@ -318,6 +338,11 @@ internal static class MetricItemExtensions
                         }
 
                         histogram.DataPoints.Add(dataPoint);
+
+                        if (metric.NoRecordedValueNeeded)
+                        {
+                            histogram.DataPoints.Add(CreateNoRecordedValueHistogramDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
+                        }
                     }
 
                     otlpMetric.Histogram = histogram;
@@ -370,6 +395,11 @@ internal static class MetricItemExtensions
                         }
 
                         histogram.DataPoints.Add(dataPoint);
+
+                        if (metric.NoRecordedValueNeeded)
+                        {
+                            histogram.DataPoints.Add(CreateNoRecordedValueExponentialHistogramDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
+                        }
                     }
 
                     otlpMetric.ExponentialHistogram = histogram;
@@ -422,6 +452,45 @@ internal static class MetricItemExtensions
         }
 
         return otlpExemplar;
+    }
+
+    private static NumberDataPoint CreateNoRecordedValueNumberDataPoint(ulong timestamp, ReadOnlyTagCollection tags)
+    {
+        var lastDataPoint = new NumberDataPoint
+        {
+            StartTimeUnixNano = timestamp,
+            TimeUnixNano = timestamp,
+            Flags = (uint)DataPointFlags.NoRecordedValueMask,
+        };
+
+        AddAttributes(tags, lastDataPoint.Attributes);
+        return lastDataPoint;
+    }
+
+    private static HistogramDataPoint CreateNoRecordedValueHistogramDataPoint(ulong timestamp, ReadOnlyTagCollection tags)
+    {
+        var lastDataPoint = new HistogramDataPoint
+        {
+            StartTimeUnixNano = timestamp,
+            TimeUnixNano = timestamp,
+            Flags = (uint)DataPointFlags.NoRecordedValueMask,
+        };
+
+        AddAttributes(tags, lastDataPoint.Attributes);
+        return lastDataPoint;
+    }
+
+    private static ExponentialHistogramDataPoint CreateNoRecordedValueExponentialHistogramDataPoint(ulong timestamp, ReadOnlyTagCollection tags)
+    {
+        var lastDataPoint = new ExponentialHistogramDataPoint()
+        {
+            StartTimeUnixNano = timestamp,
+            TimeUnixNano = timestamp,
+            Flags = (uint)DataPointFlags.NoRecordedValueMask,
+        };
+
+        AddAttributes(tags, lastDataPoint.Attributes);
+        return lastDataPoint;
     }
 
     private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<OtlpCommon.KeyValue> attributes)

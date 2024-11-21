@@ -197,8 +197,6 @@ public abstract partial class MetricReader
     {
         if (!this.metricStreamNames.Add(metricStreamIdentity.MetricStreamName))
         {
-            // TODO: If a metric is deactivated and then reactivated we log the
-            // same warning as if it was a duplicate.
             OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
                 metricStreamIdentity.InstrumentName,
                 metricStreamIdentity.MeterName,
@@ -231,7 +229,33 @@ public abstract partial class MetricReader
 
                     if (!metric.Active)
                     {
-                        this.RemoveMetric(ref metric);
+                        // Inactive metrics are sent one last time so the remaining data points and
+                        // NoRecordedValue data points can be sent. The Active property might be
+                        // set to false between collection cycles, so a separate property must be
+                        // used to avoid duplicate staleness markers.
+                        metric.NoRecordedValueNeeded = true;
+
+                        lock (this.instrumentCreationLock)
+                        {
+                            OpenTelemetrySdkEventSource.Log.MetricInstrumentRemoved(metric.Name, metric.MeterName);
+
+                            // Note: This is using TryUpdate and NOT TryRemove because there is a
+                            // race condition. If a metric is deactivated and then reactivated in
+                            // the same collection cycle
+                            // instrumentIdentityToMetric[metric.InstrumentIdentity] may already
+                            // point to the new activated metric and not the old deactivated one.
+                            this.instrumentIdentityToMetric.TryUpdate(metric.InstrumentIdentity, null, metric);
+
+                            this.metricStreamNames.Remove(metric.InstrumentIdentity.MetricStreamName);
+
+                            // Defragment metrics list so storage can be reused on future metrics.
+                            for (int j = i + 1; j < target; j++)
+                            {
+                                this.metrics[j - 1] = this.metrics[j];
+                            }
+
+                            this.metricIndex--;
+                        }
                     }
                 }
             }
@@ -243,30 +267,5 @@ public abstract partial class MetricReader
             OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.GetMetricsBatch), ex);
             return default;
         }
-    }
-
-    private void RemoveMetric(ref Metric? metric)
-    {
-        Debug.Assert(metric != null, "metric was null");
-
-        // TODO: This logic removes the metric. If the same
-        // metric is published again we will create a new metric
-        // for it. If this happens often we will run out of
-        // storage. Instead, should we keep the metric around
-        // and set a new start time + reset its data if it comes
-        // back?
-
-        OpenTelemetrySdkEventSource.Log.MetricInstrumentRemoved(metric!.Name, metric.MeterName);
-
-        // Note: This is using TryUpdate and NOT TryRemove because there is a
-        // race condition. If a metric is deactivated and then reactivated in
-        // the same collection cycle
-        // instrumentIdentityToMetric[metric.InstrumentIdentity] may already
-        // point to the new activated metric and not the old deactivated one.
-        this.instrumentIdentityToMetric.TryUpdate(metric.InstrumentIdentity, null, metric);
-
-        // Note: metric is a reference to the array storage so
-        // this clears the metric out of the array.
-        metric = null;
     }
 }

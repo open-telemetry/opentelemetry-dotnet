@@ -243,6 +243,8 @@ public sealed class Metric
 
     internal bool Active { get; set; } = true;
 
+    internal bool NoRecordedValueNeeded { get; set; }
+
     /// <summary>
     /// Get the metric points for the metric stream.
     /// </summary>
