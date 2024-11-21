@@ -1,9 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry .NET Core hosting library</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-    <!-- this is temporary. will remove in future PR. -->
-    <Nullable>disable</Nullable>
     <DefineConstants>$(DefineConstants);BUILDING_HOSTING_TESTS</DefineConstants>
   </PropertyGroup>
 
@@ -23,9 +22,9 @@
     <!-- Note: These are SDK tests which we link and run here using the
     IMetricsBuilder/IMetricsListener API added at the host level in .NET 8
     instead of the direct lower-level MeterListener API added in .NET 6. -->
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\AggregatorTestsBase.cs" Link="Includes\Metrics\AggregatorTestsBase.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\AggregatorTests.cs" Link="Includes\Metrics\AggregatorTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\KnownHistogramBuckets.cs" Link="Includes\Metrics\KnownHistogramBuckets.cs" />
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricApiTestsBase.cs" Link="Includes\Metrics\MetricApiTestsBase.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricApiTests.cs" Link="Includes\Metrics\MetricApiTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricExemplarTests.cs" Link="Includes\Metrics\MetricExemplarTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricTestData.cs" Link="Includes\Metrics\MetricTestData.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricTestsBase.cs" Link="Includes\Metrics\MetricTestsBase.cs" />
@@ -38,10 +37,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-    <!-- System.Text.Json is indirect reference. It is needed to upgrade it directly to avoid https://github.com/advisories/GHSA-hh2w-p6rv-4g7w -->
-    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
   </ItemGroup>
+
 </Project>

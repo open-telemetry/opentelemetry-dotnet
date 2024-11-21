@@ -32,10 +32,10 @@ public class MetricsViewBenchmarks
     private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
     private static readonly string[] DimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
     private static readonly int DimensionsValuesLength = DimensionValues.Length;
-    private List<Metric> metrics;
-    private Counter<long> counter;
-    private MeterProvider meterProvider;
-    private Meter meter;
+    private List<Metric>? metrics;
+    private Counter<long>? counter;
+    private MeterProvider? meterProvider;
+    private Meter? meter;
 
     public enum ViewConfiguration
     {
@@ -130,13 +130,13 @@ public class MetricsViewBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.meterProvider.Dispose();
+        this.meterProvider?.Dispose();
     }
 
     [Benchmark]
     public void CounterHotPath()
     {
-        var random = ThreadLocalRandom.Value;
+        var random = ThreadLocalRandom.Value!;
         var tags = new TagList
         {
             { "DimName1", DimensionValues[random.Next(0, 2)] },

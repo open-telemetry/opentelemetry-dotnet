@@ -11,5 +11,5 @@ public interface IRuntimeContextSlotValueAccessor
     /// <summary>
     /// Gets or sets the value of the slot as an <see cref="object"/>.
     /// </summary>
-    object Value { get; set; }
+    object? Value { get; set; }
 }

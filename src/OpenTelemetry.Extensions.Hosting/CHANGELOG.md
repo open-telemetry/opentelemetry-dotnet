@@ -6,6 +6,26 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0
+
+Released 2024-Nov-12
+
+* Updated `Microsoft.Extensions.Hosting.Abstractions` package
+  version to `9.0.0`.
+  ([#5967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5967))
+
+## 1.10.0-rc.1
+
+Released 2024-Nov-01
+
+## 1.10.0-beta.1
+
+Released 2024-Sep-30
+
+* Updated `Microsoft.Extensions.Hosting.Abstractions` package
+  version to `9.0.0-rc.1.24431.7`.
+  ([#5853](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5853))
+
 ## 1.9.0
 
 Released 2024-Jun-14
@@ -15,7 +35,7 @@ Released 2024-Jun-14
 Released 2024-Jun-07
 
 * The experimental APIs previously covered by `OTEL1000`
-  (`OpenTelemetryBuilder.WithLogging` method) will now be part of the public API
+  (`OpenTelemetryBuilder.WithLogging` method) are now be part of the public API
   and supported in stable builds.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 

@@ -2,94 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-#pragma warning disable SA1402
-
-public abstract class MetricPointReclaimTestsBase
+public class MetricPointReclaimTests
 {
-    private readonly Dictionary<string, string> configurationData = new()
-    {
-        [MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = "true",
-    };
-
-    private readonly IConfiguration configuration;
-
-    protected MetricPointReclaimTestsBase(bool emitOverflowAttribute)
-    {
-        if (emitOverflowAttribute)
-        {
-            this.configurationData[MetricTestsBase.EmitOverFlowAttributeConfigKey] = "true";
-        }
-
-        this.configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(this.configurationData)
-            .Build();
-    }
-
-    [Theory]
-    [InlineData("false", false)]
-    [InlineData("False", false)]
-    [InlineData("FALSE", false)]
-    [InlineData("true", true)]
-    [InlineData("True", true)]
-    [InlineData("TRUE", true)]
-    public void TestReclaimAttributeConfigWithEnvVar(string value, bool isReclaimAttributeKeySet)
-    {
-        // Clear the environment variable value first
-        Environment.SetEnvironmentVariable(MetricTestsBase.ReclaimUnusedMetricPointsConfigKey, null);
-
-        // Set the environment variable to the value provided in the test input
-        Environment.SetEnvironmentVariable(MetricTestsBase.ReclaimUnusedMetricPointsConfigKey, value);
-
-        var exportedItems = new List<Metric>();
-
-        var meter = new Meter(Utils.GetCurrentMethodName());
-
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        var meterProviderSdk = meterProvider as MeterProviderSdk;
-        Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ReclaimUnusedMetricPoints);
-    }
-
-    [Theory]
-    [InlineData("false", false)]
-    [InlineData("False", false)]
-    [InlineData("FALSE", false)]
-    [InlineData("true", true)]
-    [InlineData("True", true)]
-    [InlineData("TRUE", true)]
-    public void TestReclaimAttributeConfigWithOtherConfigProvider(string value, bool isReclaimAttributeKeySet)
-    {
-        var exportedItems = new List<Metric>();
-
-        var meter = new Meter(Utils.GetCurrentMethodName());
-
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string> { [MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = value })
-                .Build();
-
-                services.AddSingleton<IConfiguration>(configuration);
-            })
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        var meterProviderSdk = meterProvider as MeterProviderSdk;
-        Assert.Equal(isReclaimAttributeKeySet, meterProviderSdk.ReclaimUnusedMetricPoints);
-    }
-
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -108,10 +27,6 @@ public abstract class MetricPointReclaimTestsBase
         };
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(Utils.GetCurrentMethodName())
             .AddReader(metricReader)
             .Build();
@@ -134,11 +49,11 @@ public abstract class MetricPointReclaimTestsBase
                     // There are separate code paths for single dimension vs multiple dimensions
                     if (random.Next(2) == 0)
                     {
-                        counter.Add(100, new KeyValuePair<string, object>("key", $"value{i}"));
+                        counter.Add(100, new KeyValuePair<string, object?>("key", $"value{i}"));
                     }
                     else
                     {
-                        counter.Add(100, new KeyValuePair<string, object>("key", $"value{i}"), new KeyValuePair<string, object>("dimensionKey", "dimensionValue"));
+                        counter.Add(100, new KeyValuePair<string, object?>("key", $"value{i}"), new KeyValuePair<string, object?>("dimensionKey", "dimensionValue"));
                     }
 
                     Thread.Sleep(25);
@@ -201,23 +116,18 @@ public abstract class MetricPointReclaimTestsBase
         };
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
             .AddMeter(Utils.GetCurrentMethodName())
             .SetMaxMetricPointsPerMetricStream(10) // Set max MetricPoints limit to 10
             .AddReader(metricReader)
             .Build();
 
         // Add 10 distinct combinations of dimensions to surpass the max metric points limit of 10.
-        // Note that one MetricPoint is reserved for zero tags and one MetricPoint is optionally
-        // reserved for the overflow tag depending on the user's input.
+        // Note that one MetricPoint is reserved for zero tags and one MetricPoint is reserved for the overflow tag.
         // This would lead to dropping a few measurements. We want to make sure that they can still be
         // aggregated later on when there are free MetricPoints available.
         for (int i = 0; i < 10; i++)
         {
-            counter.Add(100, new KeyValuePair<string, object>("key", $"value{i}"));
+            counter.Add(100, new KeyValuePair<string, object?>("key", $"value{i}"));
         }
 
         meterProvider.ForceFlush();
@@ -242,7 +152,7 @@ public abstract class MetricPointReclaimTestsBase
 
                     var index = random.Next(measurementValues.Length);
                     var measurement = measurementValues[index];
-                    counter.Add(measurement, new KeyValuePair<string, object>("key", $"value{index}"));
+                    counter.Add(measurement, new KeyValuePair<string, object?>("key", $"value{index}"));
                     Interlocked.Add(ref sum, measurement);
 
                     numberOfMeasurements++;
@@ -303,6 +213,7 @@ public abstract class MetricPointReclaimTestsBase
                 }
 
                 // This is to ensure that the lookup dictionary does not have unbounded growth
+                Assert.NotNull(metricPointLookupDictionary);
                 Assert.True(metricPointLookupDictionary.Count <= (MeterProviderBuilderSdk.DefaultCardinalityLimit * 2));
 
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
@@ -324,21 +235,5 @@ public abstract class MetricPointReclaimTestsBase
 
             return ExportResult.Success;
         }
-    }
-}
-
-public class MetricPointReclaimTests : MetricPointReclaimTestsBase
-{
-    public MetricPointReclaimTests()
-        : base(emitOverflowAttribute: false)
-    {
-    }
-}
-
-public class MetricPointReclaimTestsWithEmitOverflowAttribute : MetricPointReclaimTestsBase
-{
-    public MetricPointReclaimTestsWithEmitOverflowAttribute()
-        : base(emitOverflowAttribute: true)
-    {
     }
 }

@@ -1,0 +1,12 @@
+<Project>
+
+  <ItemGroup Condition="'$(ReferenceSystemTextJsonPackages)' == 'true' AND $(TargetFrameworksRequiringSystemTextJsonDirectReference.Contains('$(TargetFramework)'))">
+    <!-- Note: System.Text.Encodings.Web is referenced on NET Framework & NET
+    Standard targets because System.Text.Json v4.7.2 uses
+    System.Text.Encodings.Web >= v4.7.1 but System.Text.Encodings.Web needs to
+    be at v4.7.2 to be safe. -->
+    <PackageReference Include="System.Text.Encodings.Web" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+</Project>

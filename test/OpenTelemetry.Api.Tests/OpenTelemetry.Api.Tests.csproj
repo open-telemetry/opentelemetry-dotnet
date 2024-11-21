@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry.Api</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <NoWarn>$(NoWarn),CS0618</NoWarn>
-
-    <!-- this is temporary. will remove in future PR. -->
-    <Nullable>disable</Nullable>
+    <ReferenceCoyotePackages>true</ReferenceCoyotePackages>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,11 +22,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Coyote" />
-    <!-- System.Text.Json is indirect reference. It is needed to upgrade it directly to avoid https://github.com/advisories/GHSA-hh2w-p6rv-4g7w -->
-    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
   </ItemGroup>
+
 </Project>

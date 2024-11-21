@@ -7,6 +7,22 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0
+
+Released 2024-Nov-12
+
+## 1.10.0-rc.1
+
+Released 2024-Nov-01
+
+* Added support for exporting instrumentation scope attributes from
+  `ActivitySource.Tags`.
+  ([#5897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5897))
+
+## 1.10.0-beta.1
+
+Released 2024-Sep-30
+
 * **Breaking change**: Non-primitive attribute (logs) and tag (traces) values
   converted using `Convert.ToString` will now format using
   `CultureInfo.InvariantCulture`.
@@ -31,8 +47,8 @@ Released 2024-Jun-14
 Released 2024-Jun-07
 
 * The experimental APIs previously covered by `OTEL1000`
-  (`LoggerProviderBuilder.AddOtlpExporter` extension) will now be part of the
-  public API and supported in stable builds.
+  (`LoggerProviderBuilder.AddOtlpExporter` extension) are now part of the public
+  API and supported in stable builds.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
 ## 1.9.0-alpha.1

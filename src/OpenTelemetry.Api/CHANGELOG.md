@@ -6,6 +6,22 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.10.0
+
+Released 2024-Nov-12
+
+* Updated `System.Diagnostics.DiagnosticSource` package version to
+  `9.0.0`.
+  ([#5967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5967))
+
+## 1.10.0-rc.1
+
+Released 2024-Nov-01
+
+## 1.10.0-beta.1
+
+Released 2024-Sep-30
+
 * **Breaking change:** CompositeTextMapPropagator.Fields now returns a
   unioned set of fields from all combined propagators. Previously this always
   returned an empty set.
@@ -25,6 +41,16 @@ Notes](../../RELEASENOTES.md).
   APIs for reading the status of an `Activity` instance.
   ([#5781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5781))
 
+* Updated `System.Diagnostics.DiagnosticSource` package version to
+  `9.0.0-rc.1.24431.7`.
+  ([#5853](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5853))
+
+* Obsoleted the `ActivityExtensions.RecordException` extension method. Users
+  should migrate to the `System.Diagnostics.DiagnosticSource`
+  [Activity.AddException](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.addexception)
+  API for adding exceptions on an `Activity` instance.
+  ([#5841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5841))
+
 ## 1.9.0
 
 Released 2024-Jun-14
@@ -38,8 +64,8 @@ Released 2024-Jun-14
 Released 2024-Jun-07
 
 * The experimental APIs previously covered by `OTEL1000` (`LoggerProvider`,
-  `LoggerProviderBuilder`, & `IDeferredLoggerProviderBuilder`) will now be part
-  of the public API and supported in stable builds.
+  `LoggerProviderBuilder`, & `IDeferredLoggerProviderBuilder`) are now part of
+  the public API and supported in stable builds.
   ([#5648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5648))
 
 ## 1.9.0-alpha.1

@@ -1,30 +1,24 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-#pragma warning disable SA1402
-
-public abstract class AggregatorTestsBase
+public class AggregatorTests
 {
     private static readonly Meter Meter = new("testMeter");
     private static readonly Instrument Instrument = Meter.CreateHistogram<long>("testInstrument");
     private static readonly ExplicitBucketHistogramConfiguration HistogramConfiguration = new() { Boundaries = Metric.DefaultHistogramBounds };
     private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
 
-    private readonly bool emitOverflowAttribute;
-    private readonly bool shouldReclaimUnusedMetricPoints;
     private readonly AggregatorStore aggregatorStore;
 
-    protected AggregatorTestsBase(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
+    public AggregatorTests()
     {
-        this.emitOverflowAttribute = emitOverflowAttribute;
-        this.shouldReclaimUnusedMetricPoints = shouldReclaimUnusedMetricPoints;
-
-        this.aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, emitOverflowAttribute, this.shouldReclaimUnusedMetricPoints);
+        this.aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024);
     }
 
     [Fact]
@@ -193,11 +187,7 @@ public abstract class AggregatorTestsBase
     {
         var boundaries = Array.Empty<double>();
         var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
-        var argsToThread = new ThreadArguments
-        {
-            HistogramPoint = histogramPoint,
-            MreToEnsureAllThreadsStart = new ManualResetEvent(false),
-        };
+        var argsToThread = new ThreadArguments(histogramPoint, new ManualResetEvent(false));
 
         var numberOfThreads = 2;
         var snapshotThread = new Thread(HistogramSnapshotThread);
@@ -243,7 +233,7 @@ public abstract class AggregatorTestsBase
     [InlineData("System.Net.Http", "http.client.request.time_in_queue", "s", KnownHistogramBuckets.DefaultShortSeconds)]
     [InlineData("System.Net.NameResolution", "dns.lookup.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
     [InlineData("General.App", "simple.alternative.counter", "s", KnownHistogramBuckets.Default)]
-    public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName, string unit, KnownHistogramBuckets expectedHistogramBuckets)
+    public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName, string? unit, KnownHistogramBuckets expectedHistogramBuckets)
     {
         using var meter = new Meter(meterName);
 
@@ -255,9 +245,7 @@ public abstract class AggregatorTestsBase
             metricStreamIdentity,
             AggregationType.Histogram,
             AggregationTemporality.Cumulative,
-            cardinalityLimit: 1024,
-            this.emitOverflowAttribute,
-            this.shouldReclaimUnusedMetricPoints);
+            cardinalityLimit: 1024);
 
         KnownHistogramBuckets actualHistogramBounds = KnownHistogramBuckets.Default;
         if (aggregatorStore.HistogramBounds == Metric.DefaultHistogramBoundsShortSeconds)
@@ -333,15 +321,13 @@ public abstract class AggregatorTestsBase
             aggregationType,
             aggregationTemporality,
             cardinalityLimit: 1024,
-            this.emitOverflowAttribute,
-            this.shouldReclaimUnusedMetricPoints,
             exemplarsEnabled ? ExemplarFilterType.AlwaysOn : null);
 
         var expectedHistogram = new Base2ExponentialBucketHistogram();
 
         foreach (var value in valuesToRecord)
         {
-            aggregatorStore.Update(value, Array.Empty<KeyValuePair<string, object>>());
+            aggregatorStore.Update(value, Array.Empty<KeyValuePair<string, object?>>());
 
             if (value >= 0)
             {
@@ -442,11 +428,9 @@ public abstract class AggregatorTestsBase
             metricStreamIdentity,
             AggregationType.Base2ExponentialHistogram,
             AggregationTemporality.Cumulative,
-            cardinalityLimit: 1024,
-            this.emitOverflowAttribute,
-            this.shouldReclaimUnusedMetricPoints);
+            cardinalityLimit: 1024);
 
-        aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object>>());
+        aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object?>>());
 
         aggregatorStore.Snapshot();
 
@@ -466,10 +450,11 @@ public abstract class AggregatorTestsBase
         Assert.Equal(expectedScale, metricPoint.GetExponentialHistogramData().Scale);
     }
 
-    private static void HistogramSnapshotThread(object obj)
+    private static void HistogramSnapshotThread(object? obj)
     {
         var args = obj as ThreadArguments;
-        var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
+        Debug.Assert(args != null, "args was null");
+        var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart;
 
         if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
         {
@@ -487,10 +472,11 @@ public abstract class AggregatorTestsBase
         }
     }
 
-    private static void HistogramUpdateThread(object obj)
+    private static void HistogramUpdateThread(object? obj)
     {
         var args = obj as ThreadArguments;
-        var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
+        Debug.Assert(args != null, "args was null");
+        var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart;
 
         if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
         {
@@ -509,42 +495,16 @@ public abstract class AggregatorTestsBase
 
     private class ThreadArguments
     {
+        public readonly ManualResetEvent MreToEnsureAllThreadsStart;
         public MetricPoint HistogramPoint;
-        public ManualResetEvent MreToEnsureAllThreadsStart;
         public int ThreadStartedCount;
         public long ThreadsFinishedAllUpdatesCount;
         public double SumOfDelta;
-    }
-}
 
-public class AggregatorTests : AggregatorTestsBase
-{
-    public AggregatorTests()
-        : base(emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: false)
-    {
-    }
-}
-
-public class AggregatorTestsWithOverflowAttribute : AggregatorTestsBase
-{
-    public AggregatorTestsWithOverflowAttribute()
-        : base(emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: false)
-    {
-    }
-}
-
-public class AggregatorTestsWithReclaimAttribute : AggregatorTestsBase
-{
-    public AggregatorTestsWithReclaimAttribute()
-        : base(emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: true)
-    {
-    }
-}
-
-public class AggregatorTestsWithBothReclaimAndOverflowAttributes : AggregatorTestsBase
-{
-    public AggregatorTestsWithBothReclaimAndOverflowAttributes()
-        : base(emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: true)
-    {
+        public ThreadArguments(MetricPoint histogramPoint, ManualResetEvent mreToEnsureAllThreadsStart)
+        {
+            this.HistogramPoint = histogramPoint;
+            this.MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
+        }
     }
 }

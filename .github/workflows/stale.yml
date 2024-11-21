@@ -18,7 +18,7 @@ jobs:
           close-pr-message: 'Closed as inactive. Feel free to reopen if this PR is still being worked on.'
           operations-per-run: 400
           days-before-pr-stale: 7
-          days-before-issue-stale: 900
+          days-before-issue-stale: 300
           days-before-pr-close: 7
           days-before-issue-close: 7
           exempt-all-issue-milestones: true

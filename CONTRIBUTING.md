@@ -10,8 +10,8 @@ for a summary description of past meetings. To request edit access, join the
 meeting or get in touch on
 [Slack](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
 
-Even though, anybody can contribute, there are benefits of being a member of our
-community. See to the [community membership
+Anyone may contribute but there are benefits of being a member of our community.
+See the [community membership
 document](https://github.com/open-telemetry/community/blob/main/community-membership.md)
 on how to become a
 [**Member**](https://github.com/open-telemetry/community/blob/main/community-membership.md#member),
@@ -19,7 +19,7 @@ on how to become a
 and
 [**Maintainer**](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).
 
-## Find a Buddy and Get Started Quickly
+## Find a buddy and get started quickly
 
 If you are looking for someone to help you find a starting point and be a
 resource for your first contribution, join our Slack channel and find a buddy!
@@ -34,17 +34,24 @@ resource for your first contribution, join our Slack channel and find a buddy!
 
 Your OpenTelemetry buddy is your resource to talk to directly on all aspects of
 contributing to OpenTelemetry: providing context, reviewing PRs, and helping
-those get merged. Buddies will not be available 24/7, but is committed to
-responding during their normal contribution hours.
+those get merged. Buddies will not be available 24/7, but are committed to
+responding during their normal working hours.
 
 ## Development Environment
 
-You can contribute to this project from a Windows, macOS or Linux machine.
+You can contribute to this project from a Windows, macOS, or Linux machine.
 
 On all platforms, the minimum requirements are:
 
-* Git client and command line tools.
-* .NET 8.0
+* Git client and command line tools
+
+* [.NET SDK (latest stable version)](https://dotnet.microsoft.com/download)
+
+  > [!NOTE]
+  > At times a pre-release version of the .NET SDK may be required to build code
+    in this repository. Check
+    [global.json](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/global.json)
+    to verify the current required version.
 
 ### Linux or MacOS
 
@@ -59,7 +66,7 @@ of Windows.
 * Visual Studio 2022+ or Visual Studio Code
 * .NET Framework 4.6.2+
 
-### Public API Validation
+## Public API validation
 
 It is critical to **NOT** make breaking changes to public APIs which have been
 released in stable builds. We also strive to keep a minimal public API surface.
@@ -91,9 +98,9 @@ to validate public APIs.
   [Common.prod.props](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/build/Common.prod.props)
   (please do not check in this change).
 
-#### Working with Microsoft.CodeAnalysis.PublicApiAnalyzers
+### Working with Microsoft.CodeAnalysis.PublicApiAnalyzers
 
-##### Update public API files when writing code
+#### Update public API files when writing code
 
 [IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)
 will [suggest
@@ -116,7 +123,7 @@ do this by:
   while performing stable releases. If you need help reach out to an approver or
   maintainer on Slack or open a draft PR.
 
-##### Enable public API validation in new projects
+#### Enable public API validation in new projects
 
 1. If you are **NOT** using experimental APIs:
    * If your API is the same across all target frameworks:
@@ -144,12 +151,12 @@ do this by:
 
 ## Pull Requests
 
-### How to Send Pull Requests
+### How to create pull requests
 
 Everyone is welcome to contribute code to `opentelemetry-dotnet` via GitHub pull
 requests (PRs).
 
-To create a new PR, fork the project in GitHub and clone the upstream repo:
+To create a new PR, fork the project on GitHub and clone the upstream repo:
 
 ```sh
 git clone https://github.com/open-telemetry/opentelemetry-dotnet.git
@@ -180,7 +187,7 @@ If you made changes to the Markdown documents (`*.md` files), install the latest
 markdownlint .
 ```
 
-Check out a new branch, make modifications and push the branch to your fork:
+Check out a new branch, make modifications, and push the branch to your fork:
 
 ```sh
 $ git checkout -b feature
@@ -191,20 +198,26 @@ $ git push fork feature
 
 Open a pull request against the main `opentelemetry-dotnet` repo.
 
-### How to Receive Comments
+#### Tips and best practices for pull requests
 
 * If the PR is not ready for review, please mark it as
   [`draft`](https://github.blog/2019-02-14-introducing-draft-pull-requests/).
 * Make sure CLA is signed and all required CI checks are clear.
-* Submit small, focused PRs addressing a single
-  concern/issue.
+* Submit small, focused PRs addressing a single concern/issue.
 * Make sure the PR title reflects the contribution.
 * Write a summary that helps understand the change.
 * Include usage examples in the summary, where applicable.
 * Include benchmarks (before/after) in the summary, for contributions that are
   performance enhancements.
+* We are open to bot generated PRs or AI/LLM assisted PRs. Actually, we are
+  using
+  [dependabot](https://docs.github.com/en/code-security/dependabot/dependabot-security-updates/configuring-dependabot-security-updates)
+  to automate the security updates. However, if you use bots to generate spam
+  PRs (e.g. incorrect, noisy, non-improvements, unintelligible, trying to sell
+  your product, etc.), we might close the PR right away with a warning, and if
+  you keep doing so, we might block your user account.
 
-### How to Get PRs Merged
+### How to get pull requests merged
 
 A PR is considered to be **ready to merge** when:
 
@@ -212,18 +225,21 @@ A PR is considered to be **ready to merge** when:
   [Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).
   /
   [Maintainers](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).
-* Major feedbacks are resolved.
+* Major feedback/comments are resolved.
 * It has been open for review for at least one working day. This gives people
   reasonable time to review.
-* Trivial change (typo, cosmetic, doc, etc.) doesn't have to wait for one day.
-* Urgent fix can take exception as long as it has been actively communicated.
+  * Trivial change (typo, cosmetic, doc, etc.) doesn't have to wait for one day.
+  * Urgent fix can take exception as long as it has been actively communicated.
 
-Any Maintainer can merge the PR once it is **ready to merge**. Note, that some
-PRs may not be merged immediately if the repo is in the process of a release and
-the maintainers decided to defer the PR to the next release train.
+Any maintainer can merge PRs once they are **ready to merge** however
+maintainers might decide to wait on merging changes until there are more
+approvals and/or dicussion, or based on other factors such as release timing and
+risk to users. For example if a stable release is planned and a new change is
+introduced adding public API(s) or behavioral changes it might be held until the
+next alpha/beta release.
 
-If a PR has been stuck (e.g. there are lots of debates and people couldn't agree
-on each other), the owner should try to get people aligned by:
+If a PR has become stuck (e.g. there is a lot of debate and people couldn't
+agree on the direction), the owner should try to get people aligned by:
 
 * Consolidating the perspectives and putting a summary in the PR. It is
   recommended to add a link into the PR description, which points to a comment
@@ -238,7 +254,7 @@ on each other), the owner should try to get people aligned by:
   the owner should bring it to the OpenTelemetry .NET SIG
   [meeting](README.md#contributing).
 
-## Design Choices
+## Design choices
 
 As with other OpenTelemetry clients, opentelemetry-dotnet follows the
 [opentelemetry-specification](https://github.com/open-telemetry/opentelemetry-specification).
@@ -246,7 +262,7 @@ As with other OpenTelemetry clients, opentelemetry-dotnet follows the
 It's especially valuable to read through the [library
 guidelines](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/library-guidelines.md).
 
-### Focus on Capabilities, Not Structure Compliance
+### Focus on capabilities not structural compliance
 
 OpenTelemetry is an evolving specification, one where the desires and use cases
 are clear, but the method to satisfy those uses cases are not.
@@ -260,10 +276,10 @@ than conform to specific API names or argument patterns in the spec.
 For a deeper discussion, see [this spec
 issue](https://github.com/open-telemetry/opentelemetry-specification/issues/165).
 
-## Style Guide
+## Style guide
 
 This project includes a [`.editorconfig`](./.editorconfig) file which is
-supported by all the IDEs/editor mentioned above. It works with the IDE/editor
+supported by all the IDEs/editors mentioned above. It works with the IDE/editor
 only and does not affect the actual build of the project.
 
 This repository also includes StyleCop ruleset files under the `./build` folder.
@@ -291,23 +307,6 @@ analysis](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/overview
 > There are other project-level features enabled automatically via
 [Common.props](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/build/Common.props)
 new projects must NOT manually override these settings.
-
-## New code
-
-New code files MUST enable [nullable reference
-types](https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/nullable-reference-types)
-manually in projects where it is not automatically enabled project-wide. This is
-done by specifying `#nullable enable` towards the top of the file (usually after
-the copyright header). We are currently working towards enabling nullable
-context in every project by updating code as it is worked on, this requirement
-is to make sure the surface area of code needing updates is shrinking and not
-expanding.
-
-> [!NOTE]
-> The first time a project is updated to use nullable context in public APIs
-some housekeeping needs to be done in public API definitions (`.publicApi`
-folder). This can be done automatically via a code fix offered by the public API
-analyzer.
 
 ## License requirements
 

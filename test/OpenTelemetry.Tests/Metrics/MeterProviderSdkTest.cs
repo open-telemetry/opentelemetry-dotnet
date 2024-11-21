@@ -83,7 +83,7 @@ public class MeterProviderSdkTest
             Assert.Single(exportedItems);
         }
 
-        var metricInstrumentIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 33 && e.Payload[1] as string == meterName);
+        var metricInstrumentIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 33 && (e.Payload?.Count ?? 0) >= 2 && e.Payload![1] as string == meterName);
 
         Assert.Single(metricInstrumentIgnoredEvents);
 

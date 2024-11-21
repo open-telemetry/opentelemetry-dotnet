@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
-#if NET8_0_OR_GREATER
+#if NET
 using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
@@ -14,25 +14,22 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class AggregatorStore
 {
-#if NET8_0_OR_GREATER
+#if NET
     internal readonly FrozenSet<string>? TagKeysInteresting;
 #else
     internal readonly HashSet<string>? TagKeysInteresting;
 #endif
     internal readonly bool OutputDelta;
-    internal readonly bool OutputDeltaWithUnusedMetricPointReclaimEnabled;
     internal readonly int NumberOfMetricPoints;
-    internal readonly bool EmitOverflowAttribute;
     internal readonly ConcurrentDictionary<Tags, LookupData>? TagsToMetricPointIndexDictionaryDelta;
     internal readonly Func<ExemplarReservoir?>? ExemplarReservoirFactory;
     internal long DroppedMeasurements = 0;
 
     private const ExemplarFilterType DefaultExemplarFilter = ExemplarFilterType.AlwaysOff;
-    private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute by setting env variable OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE = true. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
     private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
 
-    private readonly object lockZeroTags = new();
-    private readonly object lockOverflowTag = new();
+    private readonly Lock lockZeroTags = new();
+    private readonly Lock lockOverflowTag = new();
     private readonly int tagsKeysInterestingCount;
 
     // This holds the reclaimed MetricPoints that are available for reuse.
@@ -42,7 +39,6 @@ internal sealed class AggregatorStore
         new();
 
     private readonly string name;
-    private readonly string metricPointCapHitMessage;
     private readonly MetricPoint[] metricPoints;
     private readonly int[] currentMetricPointBatch;
     private readonly AggregationType aggType;
@@ -56,7 +52,6 @@ internal sealed class AggregatorStore
 
     private int metricPointIndex = 0;
     private int batchSize = 0;
-    private int metricCapHitMessageLogged;
     private bool zeroTagMetricPointInitialized;
     private bool overflowTagMetricPointInitialized;
 
@@ -65,8 +60,6 @@ internal sealed class AggregatorStore
         AggregationType aggType,
         AggregationTemporality temporality,
         int cardinalityLimit,
-        bool emitOverflowAttribute,
-        bool shouldReclaimUnusedMetricPoints,
         ExemplarFilterType? exemplarFilter = null,
         Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
     {
@@ -77,7 +70,6 @@ internal sealed class AggregatorStore
         // Previously, these were included within the original cardinalityLimit, but now they are explicitly added to enhance clarity.
         this.NumberOfMetricPoints = cardinalityLimit + 2;
 
-        this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {cardinalityLimit}";
         this.metricPoints = new MetricPoint[this.NumberOfMetricPoints];
         this.currentMetricPointBatch = new int[this.NumberOfMetricPoints];
         this.aggType = aggType;
@@ -96,7 +88,7 @@ internal sealed class AggregatorStore
         {
             this.updateLongCallback = this.UpdateLongCustomTags;
             this.updateDoubleCallback = this.UpdateDoubleCustomTags;
-#if NET8_0_OR_GREATER
+#if NET
             var hs = FrozenSet.ToFrozenSet(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
 #else
             var hs = new HashSet<string>(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
@@ -104,8 +96,6 @@ internal sealed class AggregatorStore
             this.TagKeysInteresting = hs;
             this.tagsKeysInterestingCount = hs.Count;
         }
-
-        this.EmitOverflowAttribute = emitOverflowAttribute;
 
         this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
         Debug.Assert(
@@ -118,9 +108,8 @@ internal sealed class AggregatorStore
         // Newer attributes should be added starting at the index: 2
         this.metricPointIndex = 1;
 
-        this.OutputDeltaWithUnusedMetricPointReclaimEnabled = shouldReclaimUnusedMetricPoints && this.OutputDelta;
-
-        if (this.OutputDeltaWithUnusedMetricPointReclaimEnabled)
+        // Always reclaim unused MetricPoints for Delta aggregation temporality
+        if (this.OutputDelta)
         {
             this.availableMetricPoints = new Queue<int>(cardinalityLimit);
 
@@ -192,14 +181,9 @@ internal sealed class AggregatorStore
     internal int Snapshot()
     {
         this.batchSize = 0;
-        if (this.OutputDeltaWithUnusedMetricPointReclaimEnabled)
+        if (this.OutputDelta)
         {
             this.SnapshotDeltaWithMetricPointReclaim();
-        }
-        else if (this.OutputDelta)
-        {
-            var indexSnapshot = Math.Min(this.metricPointIndex, this.NumberOfMetricPoints - 1);
-            this.SnapshotDelta(indexSnapshot);
         }
         else
         {
@@ -209,28 +193,6 @@ internal sealed class AggregatorStore
 
         this.EndTimeInclusive = DateTimeOffset.UtcNow;
         return this.batchSize;
-    }
-
-    internal void SnapshotDelta(int indexSnapshot)
-    {
-        for (int i = 0; i <= indexSnapshot; i++)
-        {
-            ref var metricPoint = ref this.metricPoints[i];
-            if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
-            {
-                continue;
-            }
-
-            this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
-
-            this.currentMetricPointBatch[this.batchSize] = i;
-            this.batchSize++;
-        }
-
-        if (this.EndTimeInclusive != default)
-        {
-            this.StartTimeExclusive = this.EndTimeInclusive;
-        }
     }
 
     internal void SnapshotDeltaWithMetricPointReclaim()
@@ -245,17 +207,14 @@ internal sealed class AggregatorStore
             this.batchSize++;
         }
 
-        if (this.EmitOverflowAttribute)
+        // TakeSnapshot for the MetricPoint for overflow
+        ref var metricPointForOverflow = ref this.metricPoints[1];
+        if (metricPointForOverflow.MetricPointStatus != MetricPointStatus.NoCollectPending)
         {
-            // TakeSnapshot for the MetricPoint for overflow
-            ref var metricPointForOverflow = ref this.metricPoints[1];
-            if (metricPointForOverflow.MetricPointStatus != MetricPointStatus.NoCollectPending)
-            {
-                this.TakeMetricPointSnapshot(ref metricPointForOverflow, outputDelta: true);
+            this.TakeMetricPointSnapshot(ref metricPointForOverflow, outputDelta: true);
 
-                this.currentMetricPointBatch[this.batchSize] = 1;
-                this.batchSize++;
-            }
+            this.currentMetricPointBatch[this.batchSize] = 1;
+            this.batchSize++;
         }
 
         // Index 0 and 1 are reserved for no tags and overflow
@@ -994,16 +953,8 @@ internal sealed class AggregatorStore
         if (metricPointIndex < 0)
         {
             Interlocked.Increment(ref this.DroppedMeasurements);
-
-            if (this.EmitOverflowAttribute)
-            {
-                this.InitializeOverflowTagPointIfNotInitialized();
-                this.metricPoints[1].Update(value);
-            }
-            else if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
-            {
-                OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
-            }
+            this.InitializeOverflowTagPointIfNotInitialized();
+            this.metricPoints[1].Update(value);
 
             return;
         }
@@ -1049,16 +1000,8 @@ internal sealed class AggregatorStore
         if (metricPointIndex < 0)
         {
             Interlocked.Increment(ref this.DroppedMeasurements);
-
-            if (this.EmitOverflowAttribute)
-            {
-                this.InitializeOverflowTagPointIfNotInitialized();
-                this.metricPoints[1].Update(value);
-            }
-            else if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
-            {
-                OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
-            }
+            this.InitializeOverflowTagPointIfNotInitialized();
+            this.metricPoints[1].Update(value);
 
             return;
         }

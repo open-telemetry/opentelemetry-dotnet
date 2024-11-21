@@ -28,11 +28,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\Common.nonprod.props = build\Common.nonprod.props
 		build\Common.prod.props = build\Common.prod.props
 		build\Common.props = build\Common.props
+		build\Common.targets = build\Common.targets
 		build\debug.snk = build\debug.snk
 		Directory.Packages.props = Directory.Packages.props
 		build\docfx.cmd = build\docfx.cmd
-		build\docker-compose.net6.0.yml = build\docker-compose.net6.0.yml
 		build\docker-compose.net8.0.yml = build\docker-compose.net8.0.yml
+		build\docker-compose.net9.0.yml = build\docker-compose.net9.0.yml
 		build\GlobalAttrExclusions.txt = build\GlobalAttrExclusions.txt
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
 		build\OpenTelemetry.prod.loose.ruleset = build\OpenTelemetry.prod.loose.ruleset
@@ -112,7 +113,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D2E73927-5
 	ProjectSection(SolutionItems) = preProject
 		test\Directory.Build.props = test\Directory.Build.props
 		test\Directory.Build.targets = test\Directory.Build.targets
-		test\Directory.Packages.props = test\Directory.Packages.props
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.Console", "examples\Console\Examples.Console.csproj", "{FF3E6E08-E8E4-4523-B526-847CD989279F}"
@@ -129,7 +129,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948}"
 	ProjectSection(SolutionItems) = preProject
 		examples\Directory.Build.props = examples\Directory.Build.props
-		examples\Directory.Packages.props = examples\Directory.Packages.props
+		examples\Directory.Build.targets = examples\Directory.Build.targets
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "trace", "trace", "{5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}"
@@ -281,6 +281,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shims", "Shims", "{A0CB9A10-F22D-4E66-A449-74B3D0361A9C}"
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\Shims\IsExternalInit.cs = src\Shared\Shims\IsExternalInit.cs
+		src\Shared\Shims\Lock.cs = src\Shared\Shims\Lock.cs
 		src\Shared\Shims\NullableAttributes.cs = src\Shared\Shims\NullableAttributes.cs
 	EndProjectSection
 EndProject
@@ -304,7 +305,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "experimental-apis", "experi
 	ProjectSection(SolutionItems) = preProject
 		docs\diagnostics\experimental-apis\OTEL1000.md = docs\diagnostics\experimental-apis\OTEL1000.md
 		docs\diagnostics\experimental-apis\OTEL1001.md = docs\diagnostics\experimental-apis\OTEL1001.md
-		docs\diagnostics\experimental-apis\OTEL1003.md = docs\diagnostics\experimental-apis\OTEL1003.md
 		docs\diagnostics\experimental-apis\OTEL1004.md = docs\diagnostics\experimental-apis\OTEL1004.md
 		docs\diagnostics\experimental-apis\README.md = docs\diagnostics\experimental-apis\README.md
 	EndProjectSection

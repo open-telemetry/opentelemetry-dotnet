@@ -66,8 +66,21 @@ internal sealed class SelfDiagnosticsConfigParser
                 this.configBuffer = buffer;
             }
 
-            file.Read(buffer, 0, buffer.Length);
-            string configJson = Encoding.UTF8.GetString(buffer);
+            int bytesRead = 0;
+            int totalBytesRead = 0;
+
+            while (totalBytesRead < buffer.Length)
+            {
+                bytesRead = file.Read(buffer, totalBytesRead, buffer.Length - totalBytesRead);
+                if (bytesRead == 0)
+                {
+                    break;
+                }
+
+                totalBytesRead += bytesRead;
+            }
+
+            string configJson = Encoding.UTF8.GetString(buffer, 0, totalBytesRead);
 
             if (!TryParseLogDirectory(configJson, out logDirectory))
             {

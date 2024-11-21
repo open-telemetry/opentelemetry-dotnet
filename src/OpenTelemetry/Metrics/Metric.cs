@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Collections.Frozen;
+#endif
 using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics;
@@ -18,7 +21,13 @@ public sealed class Metric
 
     // Short default histogram bounds. Based on the recommended semantic convention values for http.server.request.duration.
     internal static readonly double[] DefaultHistogramBoundsShortSeconds = new double[] { 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 };
-    internal static readonly HashSet<(string, string)> DefaultHistogramBoundShortMappings = new()
+    internal static readonly
+#if NET
+    FrozenSet<(string, string)>
+#else
+    HashSet<(string, string)>
+#endif
+    DefaultHistogramBoundShortMappings = new HashSet<(string, string)>
     {
         ("Microsoft.AspNetCore.Hosting", "http.server.request.duration"),
         ("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue"),
@@ -30,16 +39,30 @@ public sealed class Metric
         ("System.Net.Http", "http.client.request.duration"),
         ("System.Net.Http", "http.client.request.time_in_queue"),
         ("System.Net.NameResolution", "dns.lookup.duration"),
-    };
+    }
+#if NET
+    .ToFrozenSet()
+#endif
+    ;
 
     // Long default histogram bounds. Not based on a standard. May change in the future.
     internal static readonly double[] DefaultHistogramBoundsLongSeconds = new double[] { 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 30, 60, 120, 300 };
-    internal static readonly HashSet<(string, string)> DefaultHistogramBoundLongMappings = new()
+    internal static readonly
+#if NET
+    FrozenSet<(string, string)>
+#else
+    HashSet<(string, string)>
+#endif
+    DefaultHistogramBoundLongMappings = new HashSet<(string, string)>
     {
         ("Microsoft.AspNetCore.Http.Connections", "signalr.server.connection.duration"),
         ("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration"),
         ("System.Net.Http", "http.client.connection.duration"),
-    };
+    }
+#if NET
+    .ToFrozenSet()
+#endif
+    ;
 
     internal readonly AggregatorStore AggregatorStore;
 
@@ -47,8 +70,6 @@ public sealed class Metric
         MetricStreamIdentity instrumentIdentity,
         AggregationTemporality temporality,
         int cardinalityLimit,
-        bool emitOverflowAttribute,
-        bool shouldReclaimUnusedMetricPoints,
         ExemplarFilterType? exemplarFilter = null,
         Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
     {
@@ -117,10 +138,24 @@ public sealed class Metric
             aggType = AggregationType.DoubleGauge;
             this.MetricType = MetricType.DoubleGauge;
         }
+        else if (instrumentIdentity.InstrumentType == typeof(Gauge<double>)
+            || instrumentIdentity.InstrumentType == typeof(Gauge<float>))
+        {
+            aggType = AggregationType.DoubleGauge;
+            this.MetricType = MetricType.DoubleGauge;
+        }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<long>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<int>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<short>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<byte>))
+        {
+            aggType = AggregationType.LongGauge;
+            this.MetricType = MetricType.LongGauge;
+        }
+        else if (instrumentIdentity.InstrumentType == typeof(Gauge<long>)
+            || instrumentIdentity.InstrumentType == typeof(Gauge<int>)
+            || instrumentIdentity.InstrumentType == typeof(Gauge<short>)
+            || instrumentIdentity.InstrumentType == typeof(Gauge<byte>))
         {
             aggType = AggregationType.LongGauge;
             this.MetricType = MetricType.LongGauge;
@@ -156,8 +191,6 @@ public sealed class Metric
             aggType,
             temporality,
             cardinalityLimit,
-            emitOverflowAttribute,
-            shouldReclaimUnusedMetricPoints,
             exemplarFilter,
             exemplarReservoirFactory);
         this.Temporality = temporality;

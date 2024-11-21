@@ -10,11 +10,13 @@
   * [Instruments](#instruments)
 * [MeterProvider Management](#meterprovider-management)
 * [Memory Management](#memory-management)
+  * [Example](#example)
   * [Pre-Aggregation](#pre-aggregation)
   * [Cardinality Limits](#cardinality-limits)
   * [Memory Preallocation](#memory-preallocation)
 * [Metrics Correlation](#metrics-correlation)
 * [Metrics Enrichment](#metrics-enrichment)
+* [Common issues that lead to missing metrics](#common-issues-that-lead-to-missing-metrics)
 
 </details>
 
@@ -86,7 +88,7 @@ static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");
   | [Asynchronous Gauge](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-gauge) | [`ObservableGauge<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.observablegauge-1) |
   | [Asynchronous UpDownCounter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-updowncounter) | [`ObservableUpDownCounter<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.observableupdowncounter-1) |
   | [Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter) | [`Counter<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1) |
-  | [Gauge](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#gauge) (experimental) | N/A |
+  | [Gauge](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#gauge) | [`Gauge<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.gauge-1) |
   | [Histogram](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#histogram) | [`Histogram<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.histogram-1) |
   | [UpDownCounter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#updowncounter) | [`UpDownCounter<T>`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.updowncounter-1) |
 
@@ -386,37 +388,25 @@ and the `MetricStreamConfiguration.CardinalityLimit` setting. Refer to this
 [doc](../../docs/metrics/customizing-the-sdk/README.md#changing-the-cardinality-limit-for-a-metric)
 for more information.
 
-Given a metric, once the cardinality limit is reached, any new measurement which
-cannot be independently aggregated because of the limit will be dropped or
+As of `1.10.0` once a metric has reached the cardinality limit, any new
+measurement that could not be independently aggregated will be automatically
 aggregated using the [overflow
-attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-(if enabled). When NOT using the overflow attribute feature a warning is written
-to the [self-diagnostic log](../../src/OpenTelemetry/README.md#self-diagnostics)
-the first time an overflow is detected for a given metric.
+attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
 
 > [!NOTE]
-> Overflow attribute was introduced in OpenTelemetry .NET
-  [1.6.0-rc.1](../../src/OpenTelemetry/CHANGELOG.md#160-rc1). It is currently an
-  experimental feature which can be turned on by setting the environment
-  variable `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`. Once
-  the [OpenTelemetry
-  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-  become stable, this feature will be turned on by default.
+> In SDK versions `1.6.0` - `1.9.0` the overflow attribute was an experimental
+  feature that could be enabled by setting the environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE=true`.
 
-When [Delta Aggregation
+As of `1.10.0` when [Delta Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
-is used, it is possible to choose a smaller cardinality limit by allowing the
-SDK to reclaim unused metric points.
+is used, it is possible to choose a smaller cardinality limit because the SDK
+will reclaim unused metric points.
 
 > [!NOTE]
-> Reclaim unused metric points feature was introduced in OpenTelemetry .NET
-  [1.7.0-alpha.1](../../src/OpenTelemetry/CHANGELOG.md#170-alpha1). It is
-  currently an experimental feature which can be turned on by setting the
-  environment variable
-  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`. Once the
-  [OpenTelemetry
-  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute)
-  become stable, this feature will be turned on by default.
+> In SDK versions `1.7.0` - `1.9.0`, metric point reclaim was an experimental
+  feature that could be enabled by setting the environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS=true`.
 
 ### Memory Preallocation
 

@@ -127,6 +127,50 @@ internal static class OtlpExporterOptionsExtensions
         }
     }
 
+    public static ProtobufOtlpExporterTransmissionHandler GetProtobufExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
+    {
+        var exportClient = GetProtobufExportClient(options);
+
+        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
+        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
+        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
+        double timeoutMilliseconds = exportClient is ProtobufOtlpHttpExportClient httpTraceExportClient
+            ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
+            : options.TimeoutMilliseconds;
+
+        if (experimentalOptions.EnableInMemoryRetry)
+        {
+            return new ProtobufOtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds);
+        }
+        else if (experimentalOptions.EnableDiskRetry)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
+
+            return new ProtobufOtlpExporterPersistentStorageTransmissionHandler(
+                exportClient,
+                timeoutMilliseconds,
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "traces"));
+        }
+        else
+        {
+            return new ProtobufOtlpExporterTransmissionHandler(exportClient, timeoutMilliseconds);
+        }
+    }
+
+    public static IProtobufExportClient GetProtobufExportClient(this OtlpExporterOptions options)
+    {
+        var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
+
+        if (options.Protocol == OtlpExportProtocol.Grpc)
+        {
+            return new ProtobufOtlpGrpcExportClient(options, httpClient, "opentelemetry.proto.collector.trace.v1.TraceService/Export");
+        }
+        else
+        {
+            return new ProtobufOtlpHttpExportClient(options, httpClient, "v1/traces");
+        }
+    }
+
     public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
     {
         var exportClient = GetMetricsExportClient(options);

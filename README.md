@@ -179,6 +179,37 @@ Nightly builds from this repo are published to [MyGet](https://www.myget.org),
 and can be installed using the
 `https://www.myget.org/F/opentelemetry/api/v3/index.json` source.
 
+### Digital signing
+
+Starting with the `1.10.0` release the DLLs included in the packages pushed to
+NuGet are digitally signed using [Sigstore](https://www.sigstore.dev/). Within
+each NuGet package the digital signature and its corresponding certificate file
+are placed alongside the shipped DLL(s) in the `/lib` folder. When a project
+targets multiple frameworks each target outputs a dedicated DLL and signing
+artifacts into a sub folder based on the
+[TFM](https://learn.microsoft.com/dotnet/standard/frameworks).
+
+The digitial signature and certificate files share the same name prefix as the
+DLL to ensure easy identification and association.
+
+To verify the integrity of a DLL inside a NuGet package use the
+[cosign](https://github.com/sigstore/cosign) tool from Sigstore:
+
+```bash
+cosign verify-blob \
+    --signature OpenTelemetry.dll-keyless.sig \
+    --certificate OpenTelemetry.dll-keyless.pem.cer \
+    --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/core-1.10.0-rc.1" \
+    --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+    OpenTelemetry.dll
+```
+
+> [!NOTE]
+> A successful verification outputs `Verify OK`.
+
+For more verification options please refer to the [cosign
+documentation](https://github.com/sigstore/cosign/blob/main/doc/cosign_verify-blob.md).
+
 ## Contributing
 
 For information about contributing to the project see:
@@ -200,33 +231,35 @@ regardless of your experience level. Whether you're a seasoned OpenTelemetry
 developer, just starting your journey, or simply curious about the work we do,
 you're more than welcome to participate!
 
-[Maintainers](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer)
+[Maintainers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer)
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
 * [Alan West](https://github.com/alanwest), New Relic
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 
-[Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
+[Approvers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver)
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
-* [Reiley Yang](https://github.com/reyang), Microsoft
+* [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 * [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
-[Triagers](https://github.com/open-telemetry/community/blob/main/community-membership.md#triager)
+[Triagers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager)
 ([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
 
 * [Martin Thwaites](https://github.com/martinjt), Honeycomb
+* [Timothy "Mothra" Lee](https://github.com/TimothyMothra), Microsoft
 
 [Emeritus
-Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):
+Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
 
 * [Bruno Garcia](https://github.com/bruno-garcia)
 * [Eddy Nakamura](https://github.com/eddynaka)
 * [Liudmila Molkova](https://github.com/lmolkova)
 * [Mike Goldsmith](https://github.com/MikeGoldsmith)
 * [Paulo Janotti](https://github.com/pjanotti)
+* [Reiley Yang](https://github.com/reyang)
 * [Robert Paj&#x105;k](https://github.com/pellared)
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev)
 * [Victor Lu](https://github.com/victlu)

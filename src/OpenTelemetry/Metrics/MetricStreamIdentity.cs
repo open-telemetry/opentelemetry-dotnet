@@ -22,7 +22,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         this.ViewId = metricStreamConfiguration?.ViewId;
         this.MetricStreamName = $"{this.MeterName}.{this.MeterVersion}.{this.InstrumentName}";
         this.TagKeys = metricStreamConfiguration?.CopiedTagKeys;
-        this.HistogramBucketBounds = (metricStreamConfiguration as ExplicitBucketHistogramConfiguration)?.CopiedBoundaries;
+        this.HistogramBucketBounds = GetExplicitBucketHistogramBounds(instrument, metricStreamConfiguration);
         this.ExponentialHistogramMaxSize = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxSize ?? 0;
         this.ExponentialHistogramMaxScale = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxScale ?? 0;
         this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
@@ -149,6 +149,52 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
     }
 
     public override readonly int GetHashCode() => this.hashCode;
+
+    private static double[]? GetExplicitBucketHistogramBounds(Instrument instrument, MetricStreamConfiguration? metricStreamConfiguration)
+    {
+        if (metricStreamConfiguration is ExplicitBucketHistogramConfiguration explicitBucketHistogramConfiguration
+            && explicitBucketHistogramConfiguration.CopiedBoundaries != null)
+        {
+            return explicitBucketHistogramConfiguration.CopiedBoundaries;
+        }
+
+        return instrument switch
+        {
+            Histogram<long> longHistogram => GetExplicitBucketHistogramBoundsFromAdvice(longHistogram),
+            Histogram<int> intHistogram => GetExplicitBucketHistogramBoundsFromAdvice(intHistogram),
+            Histogram<short> shortHistogram => GetExplicitBucketHistogramBoundsFromAdvice(shortHistogram),
+            Histogram<byte> byteHistogram => GetExplicitBucketHistogramBoundsFromAdvice(byteHistogram),
+            Histogram<float> floatHistogram => GetExplicitBucketHistogramBoundsFromAdvice(floatHistogram),
+            Histogram<double> doubleHistogram => GetExplicitBucketHistogramBoundsFromAdvice(doubleHistogram),
+            _ => null,
+        };
+    }
+
+    private static double[]? GetExplicitBucketHistogramBoundsFromAdvice<T>(Histogram<T> histogram)
+        where T : struct
+    {
+        var adviceExplicitBucketBoundaries = histogram.Advice?.HistogramBucketBoundaries;
+        if (adviceExplicitBucketBoundaries == null)
+        {
+            return null;
+        }
+
+        if (typeof(T) == typeof(double))
+        {
+            return ((IReadOnlyList<double>)adviceExplicitBucketBoundaries).ToArray();
+        }
+        else
+        {
+            double[] explicitBucketBoundaries = new double[adviceExplicitBucketBoundaries.Count];
+
+            for (int i = 0; i < adviceExplicitBucketBoundaries.Count; i++)
+            {
+                explicitBucketBoundaries[i] = Convert.ToDouble(adviceExplicitBucketBoundaries[i]);
+            }
+
+            return explicitBucketBoundaries;
+        }
+    }
 
     private static bool HistogramBoundsEqual(double[]? bounds1, double[]? bounds2)
     {

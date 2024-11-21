@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET8_0_OR_GREATER
+#if NET
 using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
@@ -17,7 +17,7 @@ namespace OpenTelemetry.Metrics;
 /// </remarks>
 public struct Exemplar
 {
-#if NET8_0_OR_GREATER
+#if NET
     internal FrozenSet<string>? ViewDefinedTagKeys;
 #else
     internal HashSet<string>? ViewDefinedTagKeys;
