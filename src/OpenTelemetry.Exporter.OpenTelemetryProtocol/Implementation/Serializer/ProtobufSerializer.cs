@@ -357,9 +357,9 @@ internal static class ProtobufSerializer
             buffer = newBuffer;
             return true;
         }
-        catch (OutOfMemoryException ex)
+        catch (OutOfMemoryException)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.BufferResizeFailedDueToMemory(otlpSignalType, ex);
+            OpenTelemetryProtocolExporterEventSource.Log.BufferResizeFailedDueToMemory(otlpSignalType.ToString());
             return false;
         }
     }
