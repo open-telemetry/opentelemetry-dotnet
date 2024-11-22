@@ -140,8 +140,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         var duplicateMetricInstrumentEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 38);
 
-        // Note: We currently log a duplicate warning anytime a metric is reactivated.
-        Assert.Single(duplicateMetricInstrumentEvents);
+        Assert.Empty(duplicateMetricInstrumentEvents);
 
         var metricInstrumentDeactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 52);
 
@@ -211,7 +210,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         var duplicateMetricInstrumentEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 38);
 
-        // Note: We currently log a duplicate warning anytime a metric is reactivated.
+        // Note: The old metric is only removed after a flush, so both duplicates lived for one collection cycle.
         Assert.Single(duplicateMetricInstrumentEvents);
 
         var metricInstrumentDeactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 52);

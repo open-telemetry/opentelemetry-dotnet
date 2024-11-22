@@ -41,7 +41,7 @@ public class MeterProviderSdkTest
     [InlineData(true, true)]
     [InlineData(false, false)]
     [InlineData(true, false)]
-    public void TransientMeterExhaustsMetricStorageTest(bool withView, bool forceFlushAfterEachTest)
+    public void TransientMeterBetweenCollectionsExhaustsMetricStorageTest(bool withView, bool forceFlushAfterEachTest)
     {
         using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
 
@@ -74,7 +74,7 @@ public class MeterProviderSdkTest
 
         if (forceFlushAfterEachTest)
         {
-            Assert.Empty(exportedItems);
+            Assert.Single(exportedItems);
         }
         else
         {
@@ -85,7 +85,14 @@ public class MeterProviderSdkTest
 
         var metricInstrumentIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 33 && (e.Payload?.Count ?? 0) >= 2 && e.Payload![1] as string == meterName);
 
-        Assert.Single(metricInstrumentIgnoredEvents);
+        if (forceFlushAfterEachTest)
+        {
+            Assert.Empty(metricInstrumentIgnoredEvents);
+        }
+        else
+        {
+            Assert.Single(metricInstrumentIgnoredEvents);
+        }
 
         void RunTest()
         {

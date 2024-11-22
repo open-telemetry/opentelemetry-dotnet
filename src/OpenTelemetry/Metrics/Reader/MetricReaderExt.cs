@@ -254,7 +254,9 @@ public abstract partial class MetricReader
                                 this.metrics[j - 1] = this.metrics[j];
                             }
 
+                            this.metrics[target - 1] = null;
                             this.metricIndex--;
+                            i--;
                         }
                     }
                 }
