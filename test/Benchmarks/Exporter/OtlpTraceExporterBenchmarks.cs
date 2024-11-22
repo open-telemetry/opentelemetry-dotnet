@@ -18,25 +18,13 @@ using OpenTelemetry.Tests;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OtlpCollector = OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Trace.V1;
 
-/*
-BenchmarkDotNet v0.13.6, Windows 11 (10.0.22621.2134/22H2/2022Update/SunValley2) (Hyper-V)
-AMD EPYC 7763, 1 CPU, 16 logical and 8 physical cores
-.NET SDK 7.0.400
-  [Host]     : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
-
-
-|                 Method |     Mean |   Error |  StdDev |   Gen0 |   Gen1 | Allocated |
-|----------------------- |---------:|--------:|--------:|-------:|-------:|----------:|
-| OtlpTraceExporter_Http | 139.4 us | 1.41 us | 1.32 us | 0.4883 | 0.2441 |    9.8 KB |
-| OtlpTraceExporter_Grpc | 263.0 us | 3.47 us | 3.24 us | 0.4883 |      - |   9.34 KB |
-*/
-
 namespace Benchmarks.Exporter;
 
+[MemoryDiagnoser]
 public class OtlpTraceExporterBenchmarks
 {
     private OtlpTraceExporter? exporter;
+    private ProtobufOtlpTraceExporter? protobufOtlpTraceExporter;
     private Activity? activity;
     private CircularBuffer<Activity>? activityBatch;
 
@@ -100,6 +88,61 @@ public class OtlpTraceExporterBenchmarks
         this.activityBatch.Add(this.activity);
     }
 
+    [GlobalSetup(Target = nameof(ProtobufOtlpTraceExporter_Grpc))]
+    public void GlobalSetupProtobufGrpc()
+    {
+        this.host = new HostBuilder()
+          .ConfigureWebHostDefaults(webBuilder => webBuilder
+               .ConfigureKestrel(options =>
+               {
+                   options.ListenLocalhost(4317, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+               })
+              .ConfigureServices(services =>
+              {
+                  services.AddGrpc();
+              })
+              .Configure(app =>
+              {
+                  app.UseRouting();
+                  app.UseEndpoints(endpoints =>
+                  {
+                      endpoints.MapGrpcService<MockTraceService>();
+                  });
+              }))
+          .Start();
+
+        var options = new OtlpExporterOptions();
+        this.protobufOtlpTraceExporter = new ProtobufOtlpTraceExporter(options);
+
+        this.activity = ActivityHelper.CreateTestActivity();
+        this.activityBatch = new CircularBuffer<Activity>(1);
+        this.activityBatch.Add(this.activity);
+    }
+
+    [GlobalSetup(Target = nameof(ProtobufOtlpTraceExporter_Http))]
+    public void GlobalSetupProtobufHttp()
+    {
+        this.server = TestHttpServer.RunServer(
+            (ctx) =>
+            {
+                ctx.Response.StatusCode = 200;
+                ctx.Response.OutputStream.Close();
+            },
+            out this.serverHost,
+            out this.serverPort);
+
+        var options = new OtlpExporterOptions
+        {
+            Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+        };
+        this.protobufOtlpTraceExporter = new ProtobufOtlpTraceExporter(options);
+
+        this.activity = ActivityHelper.CreateTestActivity();
+        this.activityBatch = new CircularBuffer<Activity>(1);
+        this.activityBatch.Add(this.activity);
+    }
+
     [GlobalCleanup(Target = nameof(OtlpTraceExporter_Grpc))]
     public void GlobalCleanupGrpc()
     {
@@ -118,6 +161,24 @@ public class OtlpTraceExporterBenchmarks
         this.activity?.Dispose();
     }
 
+    [GlobalCleanup(Target = nameof(ProtobufOtlpTraceExporter_Grpc))]
+    public void GlobalCleanupProtobufGrpc()
+    {
+        this.protobufOtlpTraceExporter?.Shutdown();
+        this.protobufOtlpTraceExporter?.Dispose();
+        this.activity?.Dispose();
+        this.host?.Dispose();
+    }
+
+    [GlobalCleanup(Target = nameof(ProtobufOtlpTraceExporter_Http))]
+    public void GlobalCleanupProtobufHttp()
+    {
+        this.protobufOtlpTraceExporter?.Shutdown();
+        this.protobufOtlpTraceExporter?.Dispose();
+        this.server?.Dispose();
+        this.activity?.Dispose();
+    }
+
     [Benchmark]
     public void OtlpTraceExporter_Http()
     {
@@ -128,6 +189,18 @@ public class OtlpTraceExporterBenchmarks
     public void OtlpTraceExporter_Grpc()
     {
         this.exporter!.Export(new Batch<Activity>(this.activityBatch!, 1));
+    }
+
+    [Benchmark]
+    public void ProtobufOtlpTraceExporter_Http()
+    {
+        this.protobufOtlpTraceExporter!.Export(new Batch<Activity>(this.activityBatch!, 1));
+    }
+
+    [Benchmark]
+    public void ProtobufOtlpTraceExporter_Grpc()
+    {
+        this.protobufOtlpTraceExporter!.Export(new Batch<Activity>(this.activityBatch!, 1));
     }
 
     private sealed class MockTraceService : OtlpCollector.TraceService.TraceServiceBase

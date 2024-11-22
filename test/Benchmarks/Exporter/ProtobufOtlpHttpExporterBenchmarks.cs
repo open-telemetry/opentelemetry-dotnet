@@ -8,18 +8,22 @@ using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Tests;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-using OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace Benchmarks.Exporter;
 
 [MemoryDiagnoser]
-public class OtlpGrpcExporterBenchmarks
+public class ProtobufOtlpHttpExporterBenchmarks
 {
-    private OtlpTraceExporter? exporter;
+    private readonly byte[] buffer = new byte[1024 * 1024];
+    private IDisposable? server;
+    private string? serverHost;
+    private int serverPort;
+    private ProtobufOtlpTraceExporter? exporter;
     private Activity? activity;
     private CircularBuffer<Activity>? activityBatch;
 
@@ -32,12 +36,35 @@ public class OtlpGrpcExporterBenchmarks
     [GlobalSetup]
     public void GlobalSetup()
     {
-        var options = new OtlpExporterOptions();
-        this.exporter = new OtlpTraceExporter(
+        this.server = TestHttpServer.RunServer(
+            (ctx) =>
+            {
+                using (Stream receiveStream = ctx.Request.InputStream)
+                {
+                    while (true)
+                    {
+                        if (receiveStream.Read(this.buffer, 0, this.buffer.Length) == 0)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                ctx.Response.StatusCode = 200;
+                ctx.Response.OutputStream.Close();
+            },
+            out this.serverHost,
+            out this.serverPort);
+
+        var options = new OtlpExporterOptions
+        {
+            Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
+        };
+        this.exporter = new ProtobufOtlpTraceExporter(
             options,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            new OtlpExporterTransmissionHandler<ExportTraceServiceRequest>(new OtlpGrpcTraceExportClient(options, new TestTraceServiceClient()), options.TimeoutMilliseconds));
+            new ProtobufOtlpExporterTransmissionHandler(new ProtobufOtlpHttpExportClient(options, options.HttpClientFactory(), "v1/traces"), options.TimeoutMilliseconds));
 
         this.activity = ActivityHelper.CreateTestActivity();
         this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
@@ -48,6 +75,7 @@ public class OtlpGrpcExporterBenchmarks
     {
         this.exporter?.Shutdown();
         this.exporter?.Dispose();
+        this.server?.Dispose();
     }
 
     [Benchmark]

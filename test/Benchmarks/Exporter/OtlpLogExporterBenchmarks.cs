@@ -18,25 +18,13 @@ using OpenTelemetry.Tests;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OtlpCollector = OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Logs.V1;
 
-/*
-BenchmarkDotNet v0.13.6, Windows 11 (10.0.22621.2134/22H2/2022Update/SunValley2) (Hyper-V)
-AMD EPYC 7763, 1 CPU, 16 logical and 8 physical cores
-.NET SDK 7.0.400
-  [Host]     : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
-
-
-|               Method |     Mean |   Error |  StdDev |   Gen0 |   Gen1 | Allocated |
-|--------------------- |---------:|--------:|--------:|-------:|-------:|----------:|
-| OtlpLogExporter_Http | 138.7 us | 2.08 us | 1.95 us | 0.4883 | 0.2441 |   9.85 KB |
-| OtlpLogExporter_Grpc | 268.3 us | 2.57 us | 2.28 us | 0.4883 |      - |   9.54 KB |
-*/
-
 namespace Benchmarks.Exporter;
 
+[MemoryDiagnoser]
 public class OtlpLogExporterBenchmarks
 {
     private OtlpLogExporter? exporter;
+    private ProtobufOtlpLogExporter? protobufOtlpLogExporter;
     private LogRecord? logRecord;
     private CircularBuffer<LogRecord>? logRecordBatch;
 
@@ -100,6 +88,61 @@ public class OtlpLogExporterBenchmarks
         this.logRecordBatch.Add(this.logRecord);
     }
 
+    [GlobalSetup(Target = nameof(ProtobufOtlpLogExporter_Grpc))]
+    public void GlobalSetupProtobufGrpc()
+    {
+        this.host = new HostBuilder()
+          .ConfigureWebHostDefaults(webBuilder => webBuilder
+               .ConfigureKestrel(options =>
+               {
+                   options.ListenLocalhost(4317, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+               })
+              .ConfigureServices(services =>
+              {
+                  services.AddGrpc();
+              })
+              .Configure(app =>
+              {
+                  app.UseRouting();
+                  app.UseEndpoints(endpoints =>
+                  {
+                      endpoints.MapGrpcService<MockLogService>();
+                  });
+              }))
+          .Start();
+
+        var options = new OtlpExporterOptions();
+        this.protobufOtlpLogExporter = new ProtobufOtlpLogExporter(options);
+
+        this.logRecord = LogRecordHelper.CreateTestLogRecord();
+        this.logRecordBatch = new CircularBuffer<LogRecord>(1);
+        this.logRecordBatch.Add(this.logRecord);
+    }
+
+    [GlobalSetup(Target = nameof(ProtobufOtlpLogExporter_Http))]
+    public void GlobalSetupProtobufHttp()
+    {
+        this.server = TestHttpServer.RunServer(
+            (ctx) =>
+            {
+                ctx.Response.StatusCode = 200;
+                ctx.Response.OutputStream.Close();
+            },
+            out this.serverHost,
+            out this.serverPort);
+
+        var options = new OtlpExporterOptions
+        {
+            Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+        };
+        this.protobufOtlpLogExporter = new ProtobufOtlpLogExporter(options);
+
+        this.logRecord = LogRecordHelper.CreateTestLogRecord();
+        this.logRecordBatch = new CircularBuffer<LogRecord>(1);
+        this.logRecordBatch.Add(this.logRecord);
+    }
+
     [GlobalCleanup(Target = nameof(OtlpLogExporter_Grpc))]
     public void GlobalCleanupGrpc()
     {
@@ -116,6 +159,22 @@ public class OtlpLogExporterBenchmarks
         this.server?.Dispose();
     }
 
+    [GlobalCleanup(Target = nameof(ProtobufOtlpLogExporter_Grpc))]
+    public void GlobalCleanupProtobufGrpc()
+    {
+        this.protobufOtlpLogExporter?.Shutdown();
+        this.protobufOtlpLogExporter?.Dispose();
+        this.host?.Dispose();
+    }
+
+    [GlobalCleanup(Target = nameof(ProtobufOtlpLogExporter_Http))]
+    public void GlobalCleanupProtobufHttp()
+    {
+        this.protobufOtlpLogExporter?.Shutdown();
+        this.protobufOtlpLogExporter?.Dispose();
+        this.server?.Dispose();
+    }
+
     [Benchmark]
     public void OtlpLogExporter_Http()
     {
@@ -126,6 +185,18 @@ public class OtlpLogExporterBenchmarks
     public void OtlpLogExporter_Grpc()
     {
         this.exporter!.Export(new Batch<LogRecord>(this.logRecordBatch!, 1));
+    }
+
+    [Benchmark]
+    public void ProtobufOtlpLogExporter_Http()
+    {
+        this.protobufOtlpLogExporter!.Export(new Batch<LogRecord>(this.logRecordBatch!, 1));
+    }
+
+    [Benchmark]
+    public void ProtobufOtlpLogExporter_Grpc()
+    {
+        this.protobufOtlpLogExporter!.Export(new Batch<LogRecord>(this.logRecordBatch!, 1));
     }
 
     private sealed class MockLogService : OtlpCollector.LogsService.LogsServiceBase

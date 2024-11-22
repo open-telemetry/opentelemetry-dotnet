@@ -12,14 +12,13 @@ using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-using OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace Benchmarks.Exporter;
 
 [MemoryDiagnoser]
-public class OtlpGrpcExporterBenchmarks
+public class ProtobufOtlpGrpcExporterBenchmarks
 {
-    private OtlpTraceExporter? exporter;
+    private ProtobufOtlpTraceExporter? exporter;
     private Activity? activity;
     private CircularBuffer<Activity>? activityBatch;
 
@@ -33,11 +32,11 @@ public class OtlpGrpcExporterBenchmarks
     public void GlobalSetup()
     {
         var options = new OtlpExporterOptions();
-        this.exporter = new OtlpTraceExporter(
+        this.exporter = new ProtobufOtlpTraceExporter(
             options,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            new OtlpExporterTransmissionHandler<ExportTraceServiceRequest>(new OtlpGrpcTraceExportClient(options, new TestTraceServiceClient()), options.TimeoutMilliseconds));
+            new ProtobufOtlpExporterTransmissionHandler(new ProtobufOtlpGrpcExportClient(options, options.HttpClientFactory(), "opentelemetry.proto.collector.trace.v1.TraceService/Export"), options.TimeoutMilliseconds));
 
         this.activity = ActivityHelper.CreateTestActivity();
         this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
