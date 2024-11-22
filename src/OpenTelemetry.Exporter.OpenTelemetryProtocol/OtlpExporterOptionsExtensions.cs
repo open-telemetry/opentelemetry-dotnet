@@ -22,6 +22,14 @@ namespace OpenTelemetry.Exporter;
 
 internal static class OtlpExporterOptionsExtensions
 {
+    private const string TraceGrpcServicePath = "opentelemetry.proto.collector.trace.v1.TraceService/Export";
+    private const string MetricsGrpcServicePath = "opentelemetry.proto.collector.metrics.v1.MetricsService/Export";
+    private const string LogsGrpcServicePath = "opentelemetry.proto.collector.logs.v1.LogsService/Export";
+
+    private const string TraceHttpServicePath = "v1/traces";
+    private const string MetricsHttpServicePath = "v1/metrics";
+    private const string LogsHttpServicePath = "v1/logs";
+
 #if NETSTANDARD2_1 || NET
     public static GrpcChannel CreateChannel(this OtlpExporterOptions options)
 #else
@@ -127,9 +135,9 @@ internal static class OtlpExporterOptionsExtensions
         }
     }
 
-    public static ProtobufOtlpExporterTransmissionHandler GetProtobufExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
+    public static ProtobufOtlpExporterTransmissionHandler GetProtobufExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions, OtlpSignalType otlpSignalType)
     {
-        var exportClient = GetProtobufExportClient(options);
+        var exportClient = GetProtobufExportClient(options, otlpSignalType);
 
         // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
         // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
@@ -157,18 +165,26 @@ internal static class OtlpExporterOptionsExtensions
         }
     }
 
-    public static IProtobufExportClient GetProtobufExportClient(this OtlpExporterOptions options)
+    public static IProtobufExportClient GetProtobufExportClient(this OtlpExporterOptions options, OtlpSignalType otlpSignalType)
     {
         var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
 
-        if (options.Protocol == OtlpExportProtocol.Grpc)
+        return otlpSignalType switch
         {
-            return new ProtobufOtlpGrpcExportClient(options, httpClient, "opentelemetry.proto.collector.trace.v1.TraceService/Export");
-        }
-        else
-        {
-            return new ProtobufOtlpHttpExportClient(options, httpClient, "v1/traces");
-        }
+            OtlpSignalType.Traces => options.Protocol == OtlpExportProtocol.Grpc
+                ? new ProtobufOtlpGrpcExportClient(options, httpClient, TraceGrpcServicePath)
+                : new ProtobufOtlpHttpExportClient(options, httpClient, TraceHttpServicePath),
+
+            OtlpSignalType.Metrics => options.Protocol == OtlpExportProtocol.Grpc
+                ? new ProtobufOtlpGrpcExportClient(options, httpClient, MetricsGrpcServicePath)
+                : new ProtobufOtlpHttpExportClient(options, httpClient, MetricsHttpServicePath),
+
+            OtlpSignalType.Logs => options.Protocol == OtlpExportProtocol.Grpc
+                ? new ProtobufOtlpGrpcExportClient(options, httpClient, LogsGrpcServicePath)
+                : new ProtobufOtlpHttpExportClient(options, httpClient, LogsHttpServicePath),
+
+            _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
+        };
     }
 
     public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
