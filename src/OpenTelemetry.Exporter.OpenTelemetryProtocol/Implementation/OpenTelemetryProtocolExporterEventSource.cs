@@ -49,6 +49,42 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         }
     }
 
+    [NonEvent]
+    public void TransientHttpError(Uri endpoint, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.TransientHttpError(endpoint.ToString(), ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void HttpRequestFailed(Uri endpoint, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.HttpRequestFailed(endpoint.ToString(), ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void OperationUnexpectedlyCanceled(Uri endpoint, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.OperationUnexpectedlyCanceled(endpoint.ToString(), ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void RequestTimedOut(Uri endpoint, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.RequestTimedOut(endpoint.ToString(), ex.ToInvariantString());
+        }
+    }
+
     [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
     public void FailedToReachCollector(string rawCollectorUri, string ex)
     {
@@ -119,6 +155,54 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     public void BufferResizeFailedDueToMemory(string signalType)
     {
         this.WriteEvent(15, signalType);
+    }
+
+    [Event(16, Message = "Transient HTTP error occurred when communicating with {0}. Exception: {1}", Level = EventLevel.Warning)]
+    public void TransientHttpError(string endpoint, string exceptionMessage)
+    {
+        this.WriteEvent(16, endpoint, exceptionMessage);
+    }
+
+    [Event(17, Message = "HTTP request to {0} failed. Exception: {1}", Level = EventLevel.Error)]
+    public void HttpRequestFailed(string endpoint, string exceptionMessage)
+    {
+        this.WriteEvent(17, endpoint, exceptionMessage);
+    }
+
+    [Event(18, Message = "Operation unexpectedly canceled for endpoint {0}. Exception: {1}", Level = EventLevel.Warning)]
+    public void OperationUnexpectedlyCanceled(string endpoint, string exceptionMessage)
+    {
+        this.WriteEvent(18, endpoint, exceptionMessage);
+    }
+
+    [Event(19, Message = "Request to endpoint {0} timed out. Exception: {1}", Level = EventLevel.Warning)]
+    public void RequestTimedOut(string endpoint, string exceptionMessage)
+    {
+        this.WriteEvent(19, endpoint, exceptionMessage);
+    }
+
+    [Event(20, Message = "Failed to deserialize response from {0}.", Level = EventLevel.Error)]
+    public void ResponseDeserializationFailed(string endpoint)
+    {
+        this.WriteEvent(20, endpoint);
+    }
+
+    [Event(21, Message = "Export succeeded for {0}. Message: {1}", Level = EventLevel.Informational)]
+    public void ExportSuccess(string endpoint, string message)
+    {
+        this.WriteEvent(21, endpoint, message);
+    }
+
+    [Event(22, Message = "Export encountered GRPC status warning for {0}. Status code: {1}", Level = EventLevel.Warning)]
+    public void GrpcStatusWarning(string endpoint, string statusCode)
+    {
+        this.WriteEvent(22, endpoint, statusCode);
+    }
+
+    [Event(23, Message = "Export failed for {0}. Message: {1}", Level = EventLevel.Error)]
+    public void ExportFailure(string endpoint, string message)
+    {
+        this.WriteEvent(23, endpoint, message);
     }
 
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)

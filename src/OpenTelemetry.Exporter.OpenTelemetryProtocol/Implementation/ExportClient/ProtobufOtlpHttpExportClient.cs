@@ -51,7 +51,6 @@ internal sealed class ProtobufOtlpHttpExportClient : IProtobufExportClient
         try
         {
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
-
             using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
             try
@@ -60,6 +59,7 @@ internal sealed class ProtobufOtlpHttpExportClient : IProtobufExportClient
             }
             catch (HttpRequestException ex)
             {
+                OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, ex);
                 return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: httpResponse, ex);
             }
 

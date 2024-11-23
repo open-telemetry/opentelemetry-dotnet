@@ -29,7 +29,7 @@ internal static class GrpcProtocolHelpers
     internal const string MessageTrailer = "grpc-message";
     internal const string CancelledDetail = "No grpc-status found on response.";
 
-    public static Status? GetResponseStatus(HttpHeaders trailingHeaders, HttpResponseMessage httpResponse)
+    public static Status? GetResponseStatus(HttpResponseMessage httpResponse, HttpHeaders trailingHeaders)
     {
         Status? status;
         try
