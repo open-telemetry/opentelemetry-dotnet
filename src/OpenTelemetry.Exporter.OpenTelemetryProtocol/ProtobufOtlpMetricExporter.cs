@@ -51,7 +51,7 @@ internal sealed class ProtobufOtlpMetricExporter : BaseExporter<Metric>
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
         this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? 5 : 0;
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions!);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Metrics);
     }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
