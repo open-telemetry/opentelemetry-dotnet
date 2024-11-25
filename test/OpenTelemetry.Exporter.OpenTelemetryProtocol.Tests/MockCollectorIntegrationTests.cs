@@ -179,12 +179,12 @@ public sealed class MockCollectorIntegrationTests
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000, Protocol = OtlpExportProtocol.Grpc };
 
         var configuration = new ConfigurationBuilder()
-         .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                 [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null,
-                 [ExperimentalOptions.OtlpUseCustomSerializer] = "true",
-            })
-         .Build();
+                                 .AddInMemoryCollection(new Dictionary<string, string?>
+                                 {
+                                     [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null,
+                                     [ExperimentalOptions.OtlpUseCustomSerializer] = "true",
+                                 })
+                                 .Build();
 
         using var otlpExporter = new ProtobufOtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
 
