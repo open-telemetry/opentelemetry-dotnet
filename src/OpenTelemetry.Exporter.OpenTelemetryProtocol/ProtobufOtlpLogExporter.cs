@@ -58,7 +58,7 @@ internal sealed class ProtobufOtlpLogExporter : BaseExporter<LogRecord>
         this.experimentalOptions = experimentalOptions!;
         this.sdkLimitOptions = sdkLimitOptions!;
         this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? 5 : 0;
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions!);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Logs);
     }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();

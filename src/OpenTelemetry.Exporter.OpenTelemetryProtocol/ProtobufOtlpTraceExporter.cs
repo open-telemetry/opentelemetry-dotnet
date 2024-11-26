@@ -54,7 +54,7 @@ internal sealed class ProtobufOtlpTraceExporter : BaseExporter<Activity>
 
         this.sdkLimitOptions = sdkLimitOptions!;
         this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? 5 : 0;
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
     }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
@@ -85,13 +85,6 @@ internal sealed class ProtobufOtlpTraceExporter : BaseExporter<Activity>
                 return ExportResult.Failure;
             }
         }
-        catch (IndexOutOfRangeException)
-        {
-            if (!this.IncreaseBufferSize())
-            {
-                throw;
-            }
-        }
         catch (Exception ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
@@ -105,21 +98,5 @@ internal sealed class ProtobufOtlpTraceExporter : BaseExporter<Activity>
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
         return this.transmissionHandler.Shutdown(timeoutMilliseconds);
-    }
-
-    private bool IncreaseBufferSize()
-    {
-        var newBufferSize = this.buffer.Length * 2;
-
-        if (newBufferSize > 100 * 1024 * 1024)
-        {
-            return false;
-        }
-
-        var newBuffer = new byte[newBufferSize];
-        this.buffer.CopyTo(newBuffer, 0);
-        this.buffer = newBuffer;
-
-        return true;
     }
 }
