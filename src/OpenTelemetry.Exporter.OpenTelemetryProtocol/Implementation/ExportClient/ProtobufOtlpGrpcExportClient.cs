@@ -64,16 +64,16 @@ internal sealed class ProtobufOtlpGrpcExportClient : IProtobufExportClient
             }
 
             var trailingHeaders = httpResponse.TrailingHeaders();
-            Status? status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
+            Status status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
 
-            if (status == null)
+            if (status.Detail.Equals(Status.NoReplyDetailMessage))
             {
                 using var responseStream = httpResponse.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
                 int firstByte = responseStream.ReadByte();
 
                 if (firstByte == -1)
                 {
-                    if (status?.StatusCode == StatusCode.OK)
+                    if (status.StatusCode == StatusCode.OK)
                     {
                         status = new Status(StatusCode.Internal, "Failed to deserialize response message.");
                     }
@@ -92,14 +92,14 @@ internal sealed class ProtobufOtlpGrpcExportClient : IProtobufExportClient
                 status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
             }
 
-            if (status?.StatusCode == StatusCode.OK)
+            if (status.StatusCode == StatusCode.OK)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint.ToString(), "Export completed successfully.");
                 return SuccessExportResponse;
             }
 
             string? grpcStatusDetailsHeader = null;
-            if (status?.StatusCode == StatusCode.ResourceExhausted || status?.StatusCode == StatusCode.Unavailable)
+            if (status.StatusCode == StatusCode.ResourceExhausted || status.StatusCode == StatusCode.Unavailable)
             {
                 grpcStatusDetailsHeader = GrpcProtocolHelpers.GetHeaderValue(trailingHeaders, GrpcStatusDetailsHeader);
             }

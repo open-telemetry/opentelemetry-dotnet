@@ -15,7 +15,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Diagnostics.CodeAnalysis;
 #if NET462
 using System.Net.Http;
 #endif
@@ -27,38 +26,30 @@ internal static class GrpcProtocolHelpers
 {
     internal const string StatusTrailer = "grpc-status";
     internal const string MessageTrailer = "grpc-message";
-    internal const string CancelledDetail = "No grpc-status found on response.";
 
-    public static Status? GetResponseStatus(HttpResponseMessage httpResponse, HttpHeaders trailingHeaders)
+    public static Status GetResponseStatus(HttpResponseMessage httpResponse, HttpHeaders trailingHeaders)
     {
-        Status? status;
         try
         {
-            var result = trailingHeaders.Any() ? TryGetStatusCore(trailingHeaders, out status) : TryGetStatusCore(httpResponse.Headers, out status);
-
-            if (!result)
-            {
-                status = new Status(StatusCode.Cancelled, CancelledDetail);
-            }
+            return trailingHeaders.Any()
+                ? GetStatusCore(trailingHeaders)
+                : GetStatusCore(httpResponse.Headers);
         }
         catch (Exception ex)
         {
             // Handle error from parsing badly formed status
-            status = new Status(StatusCode.Cancelled, ex.Message, ex);
+            return new Status(StatusCode.Internal, ex.Message, ex);
         }
-
-        return status;
     }
 
-    public static bool TryGetStatusCore(HttpHeaders headers, [NotNullWhen(true)] out Status? status)
+    public static Status GetStatusCore(HttpHeaders headers)
     {
         var grpcStatus = GetHeaderValue(headers, StatusTrailer);
 
         // grpc-status is a required trailer
         if (grpcStatus == null)
         {
-            status = null;
-            return false;
+            return Status.NoReply;
         }
 
         int statusValue;
@@ -79,8 +70,7 @@ internal static class GrpcProtocolHelpers
             grpcMessage = Uri.UnescapeDataString(grpcMessage);
         }
 
-        status = new Status((StatusCode)statusValue, grpcMessage ?? string.Empty);
-        return true;
+        return new Status((StatusCode)statusValue, grpcMessage ?? string.Empty);
     }
 
     public static string? GetHeaderValue(HttpHeaders? headers, string name, bool first = false)
