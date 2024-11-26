@@ -18,12 +18,13 @@ internal sealed class ProtobufOtlpGrpcExportClient : IProtobufExportClient
     private static readonly MediaTypeHeaderValue MediaHeaderValue = new("application/grpc");
     private static readonly Version Http2RequestVersion = new(2, 0);
 
-    private static readonly ExportClientGrpcResponse DefaultExceptionExportClientGrpcResponse = new(
-                                                                                                success: false,
-                                                                                                deadlineUtc: default,
-                                                                                                exception: null,
-                                                                                                status: null,
-                                                                                                grpcStatusDetailsHeader: null);
+    private static readonly ExportClientGrpcResponse DefaultExceptionExportClientGrpcResponse
+        = new(
+            success: false,
+            deadlineUtc: default,
+            exception: null,
+            status: null,
+            grpcStatusDetailsHeader: null);
 
     public ProtobufOtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
@@ -88,6 +89,11 @@ internal sealed class ProtobufOtlpGrpcExportClient : IProtobufExportClient
                         grpcStatusDetailsHeader: null);
                 }
 
+                // Note: Trailing headers might not be fully available until the
+                // response stream is consumed. gRPC often sends critical
+                // information like error details or final statuses in trailing
+                // headers which can only be reliably accessed after reading
+                // the response body.
                 trailingHeaders = httpResponse.TrailingHeaders();
                 status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
             }
