@@ -28,7 +28,7 @@ internal abstract class ProtobufOtlpExportClient : IProtobufExportClient
     }
 #endif
 
-    public ProtobufOtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
+    protected ProtobufOtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
         Guard.ThrowIfNull(options);
         Guard.ThrowIfNull(httpClient);
