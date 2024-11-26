@@ -121,7 +121,7 @@ internal class OtlpExporterTransmissionHandler<TRequest> : IDisposable
         response = this.ExportClient.SendExportRequest(request, deadlineUtc);
         if (!response.Success)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(response.Exception, isRetry: true);
+            OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(response.Exception!, isRetry: true);
             return false;
         }
 

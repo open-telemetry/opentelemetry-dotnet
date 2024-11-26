@@ -39,7 +39,7 @@ internal sealed class OtlpGrpcLogExportClient : BaseOtlpGrpcExportClient<OtlpCol
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
-            return new ExportClientGrpcResponse(success: false, deadlineUtc: deadlineUtc, exception: ex);
+            return new ExportClientGrpcResponse(success: false, deadlineUtc, ex, null, null);
         }
     }
 }

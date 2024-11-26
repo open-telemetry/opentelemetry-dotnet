@@ -119,13 +119,7 @@ internal class ProtobufOtlpExporterTransmissionHandler : IDisposable
     protected bool TryRetryRequest(byte[] request, int contentLength, DateTime deadlineUtc, out ExportClientResponse response)
     {
         response = this.ExportClient.SendExportRequest(request, contentLength, deadlineUtc);
-        if (!response.Success)
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(response.Exception, isRetry: true);
-            return false;
-        }
-
-        return true;
+        return response.Success;
     }
 
     /// <summary>
