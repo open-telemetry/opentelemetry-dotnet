@@ -74,7 +74,7 @@ public sealed class MockCollectorIntegrationTests
         await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
 
         var exportResults = new List<ExportResult>();
-        using var otlpExporter = new ProtobufOtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri($"http://localhost:{testGrpcPort}") });
+        using var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri($"http://localhost:{testGrpcPort}") });
         var delegatingExporter = new DelegatingExporter<Activity>
         {
             OnExportFunc = (batch) =>
@@ -186,7 +186,7 @@ public sealed class MockCollectorIntegrationTests
                                  })
                                  .Build();
 
-        using var otlpExporter = new ProtobufOtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
+        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
 
         var activitySourceName = "otel.grpc.retry.test";
         using var source = new ActivitySource(activitySourceName);
@@ -275,7 +275,7 @@ public sealed class MockCollectorIntegrationTests
                                  })
                                  .Build();
 
-        using var otlpExporter = new ProtobufOtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
+        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
 
         var activitySourceName = "otel.http.retry.test";
         using var source = new ActivitySource(activitySourceName);
@@ -379,7 +379,7 @@ public sealed class MockCollectorIntegrationTests
                          })
                          .Build();
 
-        using var otlpExporter = new ProtobufOtlpTraceExporter(exporterOptions, new(), new(configuration), transmissionHandler);
+        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new(), new(configuration), transmissionHandler);
 
         var activitySourceName = "otel.http.persistent.storage.retry.test";
         using var source = new ActivitySource(activitySourceName);
@@ -519,7 +519,7 @@ public sealed class MockCollectorIntegrationTests
                                  })
                                  .Build();
 
-        using var otlpExporter = new ProtobufOtlpTraceExporter(exporterOptions, new(), new(configuration), transmissionHandler);
+        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new(), new(configuration), transmissionHandler);
 
         var activitySourceName = "otel.grpc.persistent.storage.retry.test";
         using var source = new ActivitySource(activitySourceName);

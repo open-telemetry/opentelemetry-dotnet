@@ -32,7 +32,6 @@ override OpenTelemetry.Exporter.OtlpLogExporter.Export(in OpenTelemetry.Batch<Op
 override OpenTelemetry.Exporter.OtlpMetricExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric!> metrics) -> OpenTelemetry.ExportResult
 override OpenTelemetry.Exporter.OtlpMetricExporter.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.Exporter.OtlpTraceExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity!> activityBatch) -> OpenTelemetry.ExportResult
-override OpenTelemetry.Exporter.OtlpTraceExporter.OnShutdown(int timeoutMilliseconds) -> bool
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.LoggerProviderBuilder! builder, string? name, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions!, OpenTelemetry.Logs.LogRecordExportProcessorOptions!>? configureExporterAndProcessor) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.LoggerProviderBuilder! builder, string? name, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions!>? configureExporter) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.LoggerProviderBuilder! builder, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions!, OpenTelemetry.Logs.LogRecordExportProcessorOptions!>! configureExporterAndProcessor) -> OpenTelemetry.Logs.LoggerProviderBuilder!
