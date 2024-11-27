@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Updated `OpenTelemetry.Metrics.MetricStreamIdentity` Metric tags are now considered identifiers,
+  contributing to metric scope uniqueness.
+  ([#5982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5982))
+
 ## 1.10.0
 
 Released 2024-Nov-12

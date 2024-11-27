@@ -64,8 +64,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             hash = (hash * 31) + this.InstrumentType.GetHashCode();
             hash = (hash * 31) + this.MeterName.GetHashCode();
             hash = (hash * 31) + this.MeterVersion.GetHashCode();
-
-            // MeterTags is not part of identity, so not included here.
+            hash = (hash * 31) + this.MeterTags?.GetHashCode() ?? 0;
             hash = (hash * 31) + this.InstrumentName.GetHashCode();
             hash = (hash * 31) + this.HistogramRecordMinMax.GetHashCode();
             hash = (hash * 31) + this.ExponentialHistogramMaxSize.GetHashCode();

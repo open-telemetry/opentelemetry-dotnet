@@ -27,39 +27,6 @@ internal readonly struct Tags : IEquatable<Tags>
 
     public static bool operator !=(Tags tag1, Tags tag2) => !tag1.Equals(tag2);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int ComputeHashCode(KeyValuePair<string, object?>[] keyValuePairs)
-    {
-        Debug.Assert(keyValuePairs != null, "keyValuePairs was null");
-
-#if NET
-        HashCode hashCode = default;
-
-        for (int i = 0; i < keyValuePairs.Length; i++)
-        {
-            ref var item = ref keyValuePairs[i];
-            hashCode.Add(item.Key.GetHashCode());
-            hashCode.Add(item.Value);
-        }
-
-        return hashCode.ToHashCode();
-#else
-        var hash = 17;
-
-        for (int i = 0; i < keyValuePairs!.Length; i++)
-        {
-            ref var item = ref keyValuePairs[i];
-            unchecked
-            {
-                hash = (hash * 31) + item.Key.GetHashCode();
-                hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
-            }
-        }
-
-        return hash;
-#endif
-    }
-
     public override readonly bool Equals(object? obj)
     {
         return obj is Tags other && this.Equals(other);
@@ -131,4 +98,37 @@ internal readonly struct Tags : IEquatable<Tags>
     }
 
     public override readonly int GetHashCode() => this.hashCode;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int ComputeHashCode(KeyValuePair<string, object?>[] keyValuePairs)
+    {
+        Debug.Assert(keyValuePairs != null, "keyValuePairs was null");
+
+#if NET
+        HashCode hashCode = default;
+
+        for (int i = 0; i < keyValuePairs.Length; i++)
+        {
+            ref var item = ref keyValuePairs[i];
+            hashCode.Add(item.Key.GetHashCode());
+            hashCode.Add(item.Value);
+        }
+
+        return hashCode.ToHashCode();
+#else
+        var hash = 17;
+
+        for (int i = 0; i < keyValuePairs!.Length; i++)
+        {
+            ref var item = ref keyValuePairs[i];
+            unchecked
+            {
+                hash = (hash * 31) + item.Key.GetHashCode();
+                hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
+            }
+        }
+
+        return hash;
+#endif
+    }
 }

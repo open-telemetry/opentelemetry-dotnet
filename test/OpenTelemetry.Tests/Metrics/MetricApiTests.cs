@@ -225,8 +225,12 @@ public class MetricApiTests : MetricTestsBase
 
         Assert.Equal(2, exportedItems.Count);
 
-        var meterTagHashed = Tags.ComputeHashCode(meterTags1.ToArray());
-        var metric = exportedItems.First(m => Tags.ComputeHashCode(m.MeterTags?.ToArray() ?? Array.Empty<KeyValuePair<string, object?>>()) == meterTagHashed);
+        bool TagComparator(KeyValuePair<string, object?> lhs, KeyValuePair<string, object?> rhs)
+        {
+            return lhs.Key.Equals(rhs.Key) && lhs.Value!.GetHashCode().Equals(rhs.Value!.GetHashCode());
+        }
+
+        var metric = exportedItems.First(m => TagComparator(m.MeterTags!.First(), meterTags1!.First()));
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
 
@@ -240,8 +244,7 @@ public class MetricApiTests : MetricTestsBase
         var metricPoint1 = metricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
-        meterTagHashed = Tags.ComputeHashCode(meterTags2.ToArray());
-        metric = exportedItems.First(m => Tags.ComputeHashCode(m.MeterTags?.ToArray() ?? Array.Empty<KeyValuePair<string, object?>>()) == meterTagHashed);
+        metric = exportedItems.First(m => TagComparator(m.MeterTags!.First(), meterTags2!.First()));
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
 
