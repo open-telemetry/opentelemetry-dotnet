@@ -11,7 +11,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 /// <summary>Class for sending OTLP trace export request over HTTP.</summary>
 internal sealed class ProtobufOtlpHttpExportClient : ProtobufOtlpExportClient
 {
-    private static readonly MediaTypeHeaderValue MediaHeaderValue = new("application/x-protobuf");
+    internal static readonly MediaTypeHeaderValue MediaHeaderValue = new("application/x-protobuf");
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
 
     internal ProtobufOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
