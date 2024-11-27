@@ -14,7 +14,7 @@ namespace OpenTelemetry.Exporter;
 /// Exporter consuming <see cref="Activity"/> and exporting the data using
 /// the OpenTelemetry protocol (OTLP).
 /// </summary>
-public sealed class OtlpTraceExporter : BaseExporter<Activity>
+public class OtlpTraceExporter : BaseExporter<Activity>
 {
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ProtobufOtlpExporterTransmissionHandler transmissionHandler;
