@@ -67,9 +67,9 @@ internal abstract class ProtobufOtlpExportClient : IProtobufExportClient
         {
             request.Version = Http2RequestVersion;
 
-    #if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER
             request.VersionPolicy = HttpVersionPolicy.RequestVersionExact;
-    #endif
+#endif
         }
 
         foreach (var header in this.Headers)
