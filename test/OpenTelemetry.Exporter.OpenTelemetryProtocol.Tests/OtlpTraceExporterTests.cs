@@ -743,10 +743,10 @@ public class OtlpTraceExporterTests
     [Fact]
     public void Shutdown_ClientShutdownIsCalled()
     {
-        var exportClientMock = new TestProtobufExportClient();
+        var exportClientMock = new TestExportClient();
 
         var exporterOptions = new OtlpExporterOptions();
-        var transmissionHandler = new ProtobufOtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+        var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
 
         using var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
         exporter.Shutdown();

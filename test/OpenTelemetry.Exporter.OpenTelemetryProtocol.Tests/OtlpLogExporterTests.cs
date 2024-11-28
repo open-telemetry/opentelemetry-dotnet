@@ -12,6 +12,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Proto.Trace.V1;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -685,9 +686,9 @@ public class OtlpLogExporterTests
     public void Export_WhenExportClientIsProvidedInCtor_UsesProvidedExportClient()
     {
         // Arrange.
-        var testExportClient = new TestProtobufExportClient();
+        var testExportClient = new TestExportClient();
         var exporterOptions = new OtlpExporterOptions();
-        var transmissionHandler = new ProtobufOtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
+        var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
@@ -707,9 +708,9 @@ public class OtlpLogExporterTests
     public void Export_WhenExportClientThrowsException_ReturnsExportResultFailure()
     {
         // Arrange.
-        var testExportClient = new TestProtobufExportClient(throwException: true);
+        var testExportClient = new TestExportClient(throwException: true);
         var exporterOptions = new OtlpExporterOptions();
-        var transmissionHandler = new ProtobufOtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
+        var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
@@ -729,9 +730,9 @@ public class OtlpLogExporterTests
     public void Export_WhenExportIsSuccessful_ReturnsExportResultSuccess()
     {
         // Arrange.
-        var testExportClient = new TestProtobufExportClient();
+        var testExportClient = new TestExportClient();
         var exporterOptions = new OtlpExporterOptions();
-        var transmissionHandler = new ProtobufOtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
+        var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
@@ -1344,7 +1345,7 @@ public class OtlpLogExporterTests
 
         var batch = new Batch<LogRecord>(logRecords.ToArray(), logRecords.Count);
         var resourceBuilder = ResourceBuilder.CreateEmpty();
-        var processResource = resourceBuilder.Build().ToOtlpResource();
+        var processResource = CreateResourceSpans(resourceBuilder.Build());
 
         OtlpCollector.ExportLogsServiceRequest request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, resourceBuilder.Build());
 
@@ -1613,5 +1614,19 @@ public class OtlpLogExporterTests
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeLogs = OtlpLogs.ScopeLogs.Parser.ParseFrom(stream);
         return scopeLogs.LogRecords.FirstOrDefault();
+    }
+
+    private static ResourceSpans CreateResourceSpans(Resource resource)
+    {
+        byte[] buffer = new byte[1024];
+        var writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, 0, resource);
+
+        ResourceSpans? resourceSpans;
+        using (var stream = new MemoryStream(buffer, 0, writePosition))
+        {
+            resourceSpans = ResourceSpans.Parser.ParseFrom(stream);
+        }
+
+        return resourceSpans;
     }
 }
