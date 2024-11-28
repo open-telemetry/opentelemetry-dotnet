@@ -25,6 +25,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 [DebuggerDisplay("{DebuggerToString(),nq}")]
 internal struct Status
 {
+    public const string NoReplyDetailMessage = "No grpc-status found on response.";
+
     /// <summary>
     /// Default result of a successful RPC. StatusCode=OK, empty details message.
     /// </summary>
@@ -34,6 +36,11 @@ internal struct Status
     /// Default result of a cancelled RPC. StatusCode=Cancelled, empty details message.
     /// </summary>
     public static readonly Status DefaultCancelled = new Status(StatusCode.Cancelled, string.Empty);
+
+    /// <summary>
+    /// Default result of a cancelled RPC with no grpc-status found on response.
+    /// </summary>
+    public static readonly Status NoReply = new Status(StatusCode.Internal, NoReplyDetailMessage);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Status"/> struct.
