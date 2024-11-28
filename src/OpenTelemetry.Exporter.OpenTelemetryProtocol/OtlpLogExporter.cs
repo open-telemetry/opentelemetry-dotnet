@@ -19,7 +19,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 {
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
-    private readonly ProtobufOtlpExporterTransmissionHandler transmissionHandler;
+    private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
 
     private Resource? resource;
@@ -44,12 +44,12 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
     /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
-    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
+    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler"/>.</param>
     internal OtlpLogExporter(
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
-        ProtobufOtlpExporterTransmissionHandler? transmissionHandler = null)
+        OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");

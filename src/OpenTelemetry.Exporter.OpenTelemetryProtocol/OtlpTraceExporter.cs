@@ -17,7 +17,7 @@ namespace OpenTelemetry.Exporter;
 public class OtlpTraceExporter : BaseExporter<Activity>
 {
     private readonly SdkLimitOptions sdkLimitOptions;
-    private readonly ProtobufOtlpExporterTransmissionHandler transmissionHandler;
+    private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
 
     private Resource? resource;
@@ -42,12 +42,12 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
     /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
-    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
+    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler"/>.</param>
     internal OtlpTraceExporter(
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
-        ProtobufOtlpExporterTransmissionHandler? transmissionHandler = null)
+        OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
