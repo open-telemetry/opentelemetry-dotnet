@@ -137,27 +137,18 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcMetricsExportClient), false, 10000, null)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), false, 10000, null)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), true, 8000, null)]
-    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogExportClient), false, 10000, null)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), false, 10000, null)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), true, 8000, null)]
     [InlineData(OtlpExportProtocol.Grpc, typeof(ProtobufOtlpGrpcExportClient), false, 10000, "in_memory")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(ProtobufOtlpHttpExportClient), false, 10000, "in_memory")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(ProtobufOtlpHttpExportClient), true, 8000, "in_memory")]
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcMetricsExportClient), false, 10000, "in_memory")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), false, 10000, "in_memory")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), true, 8000, "in_memory")]
-    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogExportClient), false, 10000, "in_memory")]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), false, 10000, "in_memory")]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), true, 8000, "in_memory")]
     [InlineData(OtlpExportProtocol.Grpc, typeof(ProtobufOtlpGrpcExportClient), false, 10000, "disk")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(ProtobufOtlpHttpExportClient), false, 10000, "disk")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(ProtobufOtlpHttpExportClient), true, 8000, "disk")]
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcMetricsExportClient), false, 10000, "disk")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), false, 10000, "disk")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpMetricsExportClient), true, 8000, "disk")]
-    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogExportClient), false, 10000, "disk")]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), false, 10000, "disk")]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogExportClient), true, 8000, "disk")]
     public void GetTransmissionHandler_InitializesCorrectHandlerExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient, int expectedTimeoutMilliseconds, string? retryStrategy)
     {
         var exporterOptions = new OtlpExporterOptions() { Protocol = protocol };
@@ -187,7 +178,7 @@ public class OtlpExporterOptionsExtensionsTests
         }
         else
         {
-            var transmissionHandler = exporterOptions.GetLogsExportTransmissionHandler(new ExperimentalOptions(configuration));
+            var transmissionHandler = exporterOptions.GetProtobufExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Logs);
 
             AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
         }

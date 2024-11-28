@@ -14,7 +14,6 @@ using Grpc.Net.Client;
 using System.Diagnostics;
 using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 
 namespace OpenTelemetry.Exporter;
@@ -191,53 +190,11 @@ internal static class OtlpExporterOptionsExtensions
         }
     }
 
-    public static OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest> GetLogsExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
-    {
-        var exportClient = GetLogExportClient(options);
-        double timeoutMilliseconds = exportClient is OtlpHttpLogExportClient httpLogExportClient
-            ? httpLogExportClient.HttpClient.Timeout.TotalMilliseconds
-            : options.TimeoutMilliseconds;
-
-        if (experimentalOptions.EnableInMemoryRetry)
-        {
-            return new OtlpExporterRetryTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
-        }
-        else if (experimentalOptions.EnableDiskRetry)
-        {
-            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
-
-            return new OtlpExporterPersistentStorageTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(
-                exportClient,
-                timeoutMilliseconds,
-                (byte[] data) =>
-                {
-                    var request = new LogOtlpCollector.ExportLogsServiceRequest();
-                    request.MergeFrom(data);
-                    return request;
-                },
-                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "logs"));
-        }
-        else
-        {
-            return new OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
-        }
-    }
-
     public static IExportClient<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportClient(this OtlpExporterOptions options) =>
         options.Protocol switch
         {
             OtlpExportProtocol.Grpc => new OtlpGrpcMetricsExportClient(options),
             OtlpExportProtocol.HttpProtobuf => new OtlpHttpMetricsExportClient(
-                options,
-                options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
-            _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
-        };
-
-    public static IExportClient<LogOtlpCollector.ExportLogsServiceRequest> GetLogExportClient(this OtlpExporterOptions options) =>
-        options.Protocol switch
-        {
-            OtlpExportProtocol.Grpc => new OtlpGrpcLogExportClient(options),
-            OtlpExportProtocol.HttpProtobuf => new OtlpHttpLogExportClient(
                 options,
                 options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
             _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
