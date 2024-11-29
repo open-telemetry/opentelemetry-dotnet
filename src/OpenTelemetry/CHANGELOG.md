@@ -6,6 +6,25 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed storage exhaustion when disposing and recreating Meters.
+  **Previous Behavior:** Disposing a meter set the associated metric to null
+  in an array of default size 1000 allocated at creation time. Disposing and
+  recreating meters could exhaust the storage available in that list, leading
+  to an inability to collect the data points from newly created meters.
+
+  **New Behavior:** Disposing a meter now marks the associated metrics for
+  deletion and they are cleaned up after the next collection cycle.
+
+  **Limitation:** This means that quickly recreating meters within the same
+  collection cycle will still exhaust the storage limit.
+
+* Added an experimental flag
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_METRICS_EMIT_NO_RECORDED_VALUE`. When set to
+  `true`, after disposing a meter, a DataPoint with the flag NoRecordedValue
+  will be sent on the next collection cycle for all associated metrics as per
+  the
+  [OTLP data model](https://opentelemetry.io/docs/specs/otel/metrics/data-model/#no-recorded-value).
+
 ## 1.10.0
 
 Released 2024-Nov-12
