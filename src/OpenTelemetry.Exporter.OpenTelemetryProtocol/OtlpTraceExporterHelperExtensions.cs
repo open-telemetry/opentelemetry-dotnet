@@ -136,16 +136,7 @@ public static class OtlpTraceExporterHelperExtensions
 
         exporterOptions!.TryEnableIHttpClientFactoryIntegration(serviceProvider!, "OtlpTraceExporter");
 
-        BaseExporter<Activity> otlpExporter;
-
-        if (experimentalOptions != null && experimentalOptions.UseCustomProtobufSerializer)
-        {
-            otlpExporter = new ProtobufOtlpTraceExporter(exporterOptions!, sdkLimitOptions!, experimentalOptions!);
-        }
-        else
-        {
-            otlpExporter = new OtlpTraceExporter(exporterOptions!, sdkLimitOptions!, experimentalOptions!);
-        }
+        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions!, sdkLimitOptions!, experimentalOptions!);
 
         if (configureExporterInstance != null)
         {
