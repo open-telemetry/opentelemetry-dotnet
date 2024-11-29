@@ -24,7 +24,8 @@ internal static class MetricItemExtensions
     internal static void AddMetrics(
         this OtlpCollector.ExportMetricsServiceRequest request,
         OtlpResource.Resource processResource,
-        in Batch<Metric> metrics)
+        in Batch<Metric> metrics,
+        bool experimentalEmitNoRecordedValueNeededDataPoints = false)
     {
         var metricsByLibrary = new Dictionary<string, ScopeMetrics>();
         var resourceMetrics = new ResourceMetrics
@@ -35,7 +36,7 @@ internal static class MetricItemExtensions
 
         foreach (var metric in metrics)
         {
-            var otlpMetric = metric.ToOtlpMetric();
+            var otlpMetric = metric.ToOtlpMetric(experimentalEmitNoRecordedValueNeededDataPoints);
 
             // TODO: Replace null check with exception handling.
             if (otlpMetric == null)
@@ -109,7 +110,7 @@ internal static class MetricItemExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static OtlpMetrics.Metric ToOtlpMetric(this Metric metric)
+    internal static OtlpMetrics.Metric ToOtlpMetric(this Metric metric, bool experimentalEmitNoRecordedValueNeededDataPoints)
     {
         var otlpMetric = new OtlpMetrics.Metric
         {
@@ -170,7 +171,7 @@ internal static class MetricItemExtensions
 
                         sum.DataPoints.Add(dataPoint);
 
-                        if (metric.NoRecordedValueNeeded)
+                        if (experimentalEmitNoRecordedValueNeededDataPoints && metric.NoRecordedValueNeeded)
                         {
                             sum.DataPoints.Add(CreateNoRecordedValueNumberDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
                         }
@@ -212,7 +213,7 @@ internal static class MetricItemExtensions
 
                         sum.DataPoints.Add(dataPoint);
 
-                        if (metric.NoRecordedValueNeeded)
+                        if (experimentalEmitNoRecordedValueNeededDataPoints && metric.NoRecordedValueNeeded)
                         {
                             sum.DataPoints.Add(CreateNoRecordedValueNumberDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
                         }
@@ -248,7 +249,7 @@ internal static class MetricItemExtensions
 
                         gauge.DataPoints.Add(dataPoint);
 
-                        if (metric.NoRecordedValueNeeded)
+                        if (experimentalEmitNoRecordedValueNeededDataPoints && metric.NoRecordedValueNeeded)
                         {
                             gauge.DataPoints.Add(CreateNoRecordedValueNumberDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
                         }
@@ -284,7 +285,7 @@ internal static class MetricItemExtensions
 
                         gauge.DataPoints.Add(dataPoint);
 
-                        if (metric.NoRecordedValueNeeded)
+                        if (experimentalEmitNoRecordedValueNeededDataPoints && metric.NoRecordedValueNeeded)
                         {
                             gauge.DataPoints.Add(CreateNoRecordedValueNumberDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
                         }
@@ -339,7 +340,7 @@ internal static class MetricItemExtensions
 
                         histogram.DataPoints.Add(dataPoint);
 
-                        if (metric.NoRecordedValueNeeded)
+                        if (experimentalEmitNoRecordedValueNeededDataPoints && metric.NoRecordedValueNeeded)
                         {
                             histogram.DataPoints.Add(CreateNoRecordedValueHistogramDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
                         }
@@ -396,7 +397,7 @@ internal static class MetricItemExtensions
 
                         histogram.DataPoints.Add(dataPoint);
 
-                        if (metric.NoRecordedValueNeeded)
+                        if (experimentalEmitNoRecordedValueNeededDataPoints && metric.NoRecordedValueNeeded)
                         {
                             histogram.DataPoints.Add(CreateNoRecordedValueExponentialHistogramDataPoint(dataPoint.TimeUnixNano, metricPoint.Tags));
                         }

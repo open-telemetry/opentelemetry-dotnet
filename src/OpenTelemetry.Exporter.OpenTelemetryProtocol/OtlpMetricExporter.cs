@@ -18,6 +18,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 {
     private readonly OtlpExporterTransmissionHandler<OtlpCollector.ExportMetricsServiceRequest> transmissionHandler;
 
+    private readonly bool emitNoRecordedValueNeededDataPoints;
     private OtlpResource.Resource? processResource;
 
     /// <summary>
@@ -44,6 +45,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
         this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetMetricsExportTransmissionHandler(experimentalOptions!);
+        this.emitNoRecordedValueNeededDataPoints = experimentalOptions!.EmitNoRecordedValueNeededDataPoints;
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
@@ -58,7 +60,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
         try
         {
-            request.AddMetrics(this.ProcessResource, metrics);
+            request.AddMetrics(this.ProcessResource, metrics, this.emitNoRecordedValueNeededDataPoints);
 
             if (!this.transmissionHandler.TrySubmitRequest(request))
             {

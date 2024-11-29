@@ -248,7 +248,8 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData(false, "test_gauge", null, null, null, 123.45, true)]
     [InlineData(false, "test_gauge", "description", "unit", 123L, null)]
     [InlineData(false, "test_gauge", "description", "unit", 123L, null, false, true)]
-    public void TestGaugeToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, bool enableExemplars = false, bool disposeMeterEarly = false)
+    [InlineData(false, "test_gauge", "description", "unit", 123L, null, false, true, true)]
+    public void TestGaugeToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -288,7 +289,7 @@ public class OtlpMetricsExporterTests : IDisposable
         }
         else
         {
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch, experimentalEmitNoRecordedValue);
         }
 
         var resourceMetric = request.ResourceMetrics.Single();
@@ -307,7 +308,7 @@ public class OtlpMetricsExporterTests : IDisposable
         Assert.Null(actual.ExponentialHistogram);
         Assert.Null(actual.Summary);
 
-        if (!disposeMeterEarly)
+        if (!disposeMeterEarly || !experimentalEmitNoRecordedValue)
         {
             Assert.Single(actual.Gauge.DataPoints);
         }
@@ -380,7 +381,8 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData(false, "test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
     [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
-    public void TestCounterToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false)
+    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestCounterToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -423,7 +425,7 @@ public class OtlpMetricsExporterTests : IDisposable
         }
         else
         {
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch, experimentalEmitNoRecordedValue);
         }
 
         var resourceMetric = request.ResourceMetrics.Single();
@@ -449,7 +451,7 @@ public class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Delta;
         Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
 
-        if (!disposeMeterEarly)
+        if (!disposeMeterEarly || !experimentalEmitNoRecordedValue)
         {
             Assert.Single(actual.Sum.DataPoints);
         }
@@ -533,7 +535,8 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData(false, "test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
     [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
-    public void TestUpDownCounterToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false)
+    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestUpDownCounterToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -575,7 +578,7 @@ public class OtlpMetricsExporterTests : IDisposable
         }
         else
         {
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch, experimentalEmitNoRecordedValue);
         }
 
         var resourceMetric = request.ResourceMetrics.Single();
@@ -601,7 +604,7 @@ public class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Cumulative;
         Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
 
-        if (!disposeMeterEarly)
+        if (!disposeMeterEarly || !experimentalEmitNoRecordedValue)
         {
             Assert.Single(actual.Sum.DataPoints);
         }
@@ -685,7 +688,8 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData(false, "test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
     [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
-    public void TestExponentialHistogramToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false)
+    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestExponentialHistogramToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -733,7 +737,7 @@ public class OtlpMetricsExporterTests : IDisposable
         }
         else
         {
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch, experimentalEmitNoRecordedValue);
         }
 
         var resourceMetric = request.ResourceMetrics.Single();
@@ -757,7 +761,7 @@ public class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Delta;
         Assert.Equal(otlpAggregationTemporality, actual.ExponentialHistogram.AggregationTemporality);
 
-        if (!disposeMeterEarly)
+        if (!disposeMeterEarly || !experimentalEmitNoRecordedValue)
         {
             Assert.Single(actual.ExponentialHistogram.DataPoints);
         }
@@ -881,7 +885,8 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData(false, "test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
     [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
-    public void TestHistogramToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false)
+    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestHistogramToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -924,7 +929,7 @@ public class OtlpMetricsExporterTests : IDisposable
         }
         else
         {
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch, experimentalEmitNoRecordedValue);
         }
 
         var resourceMetric = request.ResourceMetrics.Single();
@@ -948,7 +953,7 @@ public class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Delta;
         Assert.Equal(otlpAggregationTemporality, actual.Histogram.AggregationTemporality);
 
-        if (!disposeMeterEarly)
+        if (!disposeMeterEarly || !experimentalEmitNoRecordedValue)
         {
             Assert.Single(actual.Histogram.DataPoints);
         }

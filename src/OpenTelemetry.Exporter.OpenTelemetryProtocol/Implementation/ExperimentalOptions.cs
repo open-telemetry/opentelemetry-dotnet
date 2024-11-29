@@ -19,6 +19,8 @@ internal sealed class ExperimentalOptions
 
     public const string OtlpUseCustomSerializer = "OTEL_DOTNET_EXPERIMENTAL_USE_CUSTOM_PROTOBUF_SERIALIZER";
 
+    public const string EmitNoRecordedValueNeededDataPointsEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_METRICS_EMIT_NO_RECORDED_VALUE";
+
     public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
     {
@@ -34,6 +36,11 @@ internal sealed class ExperimentalOptions
         if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, OtlpUseCustomSerializer, out var useCustomSerializer))
         {
             this.UseCustomProtobufSerializer = useCustomSerializer;
+        }
+
+        if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, EmitNoRecordedValueNeededDataPointsEnvVar, out var emitNoRecordedValueNeededDataPoints))
+        {
+            this.EmitNoRecordedValueNeededDataPoints = emitNoRecordedValueNeededDataPoints;
         }
 
         if (configuration.TryGetStringValue(OtlpRetryEnvVar, out var retryPolicy) && retryPolicy != null)
@@ -90,4 +97,10 @@ internal sealed class ExperimentalOptions
     /// Gets a value indicating whether custom serializer should be used for OTLP export.
     /// </summary>
     public bool UseCustomProtobufSerializer { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the NoRecordedValue measurement should be sent when metrics are removed,
+    /// e.g when disposing a Meter.
+    /// </summary>
+    public bool EmitNoRecordedValueNeededDataPoints { get; }
 }
