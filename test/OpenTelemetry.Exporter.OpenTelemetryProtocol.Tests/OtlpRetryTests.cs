@@ -234,7 +234,7 @@ public class OtlpRetryTests
 
                 this.ThrottleDelay = throttleDelay != null ? throttleDelay.ToTimeSpan() : null;
 
-                this.Response = new ExportClientGrpcResponse(expectedSuccess, deadlineUtc, rpcException);
+                this.Response = new ExportClientGrpcResponse(expectedSuccess, deadlineUtc, rpcException, null, null);
 
                 this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
 
