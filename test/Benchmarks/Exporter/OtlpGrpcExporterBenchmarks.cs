@@ -12,7 +12,6 @@ using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-using OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace Benchmarks.Exporter;
 
@@ -36,7 +35,7 @@ public class OtlpGrpcExporterBenchmarks
             options,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            new OtlpExporterTransmissionHandler<ExportTraceServiceRequest>(new OtlpGrpcTraceExportClient(options, new TestTraceServiceClient()), options.TimeoutMilliseconds));
+            new ProtobufOtlpExporterTransmissionHandler(new ProtobufOtlpGrpcExportClient(options, options.HttpClientFactory(), "opentelemetry.proto.collector.trace.v1.TraceService/Export"), options.TimeoutMilliseconds));
 
         this.activity = ActivityHelper.CreateTestActivity();
         this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
