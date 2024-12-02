@@ -31,7 +31,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
 
         this.thread = new Thread(this.RetryStoredRequests)
         {
-            Name = $"OtlpExporter Persistent Retry Storage",
+            Name = "OtlpExporter Persistent Retry Storage",
             IsBackground = true,
         };
 
