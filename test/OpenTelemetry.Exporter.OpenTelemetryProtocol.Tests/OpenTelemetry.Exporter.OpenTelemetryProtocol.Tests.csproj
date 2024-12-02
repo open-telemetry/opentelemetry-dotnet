@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-	<NoWarn>$(NoWarn);SA1518;SA1210</NoWarn>
   </PropertyGroup>
 
   <!-- Add MSBuild Task to Generate Certificates -->
@@ -55,8 +54,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="**/*.proto" Access="internal">
-      <ProtoRoot>Implementation</ProtoRoot>
+    <Protobuf Include="$(RepoRoot)\src\Shared\Proto\**\*.proto" Link="Proto\%(RecursiveDir)%(Filename)%(Extension)" Access="internal">
+      <ProtoRoot>$(RepoRoot)\src\Shared\Proto</ProtoRoot>
     </Protobuf>
   </ItemGroup>
 
