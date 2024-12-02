@@ -3,7 +3,6 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-    <!--<NoWarn>$(NoWarn);SA1518;SA1210</NoWarn>-->
   </PropertyGroup>
 
   <ItemGroup>
