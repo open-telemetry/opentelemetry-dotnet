@@ -132,7 +132,7 @@ internal static class ProtobufOtlpLogSerializer
 
         // numberOfUtf8CharsInString + tagSize + length field size.
         writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, value);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, value);
 
         for (int i = 0; i < logRecords.Count; i++)
         {
@@ -298,7 +298,7 @@ internal static class ProtobufOtlpLogSerializer
 
         // length = numberOfUtf8CharsInString + tagSize + length field size.
         writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, ProtobufOtlpLogFieldNumberConstants.LogRecord_Body, ProtobufWireType.LEN);
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.AnyValue_String_Value, numberOfUtf8CharsInString, value);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, numberOfUtf8CharsInString, value);
         return writePosition;
     }
 
