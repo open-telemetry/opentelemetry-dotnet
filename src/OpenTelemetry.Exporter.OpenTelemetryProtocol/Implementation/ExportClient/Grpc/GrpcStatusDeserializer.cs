@@ -26,9 +26,9 @@ internal static class GrpcStatusDeserializer
                        TimeSpan.FromTicks(retryInfo.Value.RetryDelay.Value.Nanos / 100); // Convert nanos to ticks
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // TODO: Log exception to event source.
+            OpenTelemetryProtocolExporterEventSource.Log.GrpcRetryDelayParsingFailed(grpcStatusDetailsHeader, ex);
             return null;
         }
 
