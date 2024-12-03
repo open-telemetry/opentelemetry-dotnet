@@ -57,10 +57,6 @@ internal static class ProtobufOtlpMetricSerializer
 
             return TryWriteResourceMetrics(buffer, writePosition, resource, scopeMetrics);
         }
-        catch
-        {
-            throw;
-        }
 
         return writePosition;
     }

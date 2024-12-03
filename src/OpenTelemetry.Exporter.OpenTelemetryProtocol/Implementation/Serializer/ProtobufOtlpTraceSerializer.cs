@@ -63,10 +63,6 @@ internal static class ProtobufOtlpTraceSerializer
             // and avoids stack overflow.
             return TryWriteResourceSpans(buffer, writePosition, sdkLimitOptions, resource);
         }
-        catch
-        {
-            throw;
-        }
 
         return writePosition;
     }

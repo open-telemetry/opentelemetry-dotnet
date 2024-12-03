@@ -69,10 +69,6 @@ internal static class ProtobufOtlpLogSerializer
 
             return TryWriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
         }
-        catch
-        {
-            throw;
-        }
 
         return writePosition;
     }
