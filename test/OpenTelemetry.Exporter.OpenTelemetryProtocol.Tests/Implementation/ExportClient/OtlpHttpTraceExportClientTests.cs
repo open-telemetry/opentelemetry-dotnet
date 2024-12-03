@@ -7,6 +7,7 @@ using System.Net.Http;
 #endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -43,7 +44,7 @@ public class OtlpHttpTraceExportClientTests
             Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
         };
 
-        var client = new OtlpHttpTraceExportClient(options, options.HttpClientFactory());
+        var client = new OtlpHttpExportClient(options, options.HttpClientFactory(), "/v1/traces");
 
         Assert.NotNull(client.HttpClient);
 
@@ -85,7 +86,7 @@ public class OtlpHttpTraceExportClientTests
 
         var httpClient = new HttpClient(testHttpHandler);
 
-        var exportClient = new OtlpHttpTraceExportClient(options, httpClient);
+        var exportClient = new OtlpHttpExportClient(options, httpClient, string.Empty);
 
         var resourceBuilder = ResourceBuilder.CreateEmpty();
         if (includeServiceNameInResource)
@@ -131,10 +132,10 @@ public class OtlpHttpTraceExportClientTests
             var deadlineUtc = DateTime.UtcNow.AddMilliseconds(httpClient.Timeout.TotalMilliseconds);
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
-            request.AddBatch(DefaultSdkLimitOptions, resourceBuilder.Build().ToOtlpResource(), batch);
+            var (buffer, contentLength) = CreateTraceExportRequest(DefaultSdkLimitOptions, batch, resourceBuilder.Build());
 
             // Act
-            var result = exportClient.SendExportRequest(request, deadlineUtc);
+            var result = exportClient.SendExportRequest(buffer, contentLength, deadlineUtc);
 
             var httpRequest = testHttpHandler.HttpRequestMessage;
 
@@ -154,8 +155,11 @@ public class OtlpHttpTraceExportClientTests
             }
 
             Assert.NotNull(testHttpHandler.HttpRequestContent);
-            Assert.IsType<OtlpHttpTraceExportClient.ExportRequestContent>(httpRequest.Content);
-            Assert.Contains(httpRequest.Content.Headers, h => h.Key == "Content-Type" && h.Value.First() == OtlpHttpTraceExportClient.MediaContentType);
+
+            // TODO: Revisit once the HttpClient part is overridden.
+            // Assert.IsType<ProtobufOtlpHttpExportClient.ExportRequestContent>(httpRequest.Content);
+            Assert.NotNull(httpRequest.Content);
+            Assert.Contains(httpRequest.Content.Headers, h => h.Key == "Content-Type" && h.Value.First() == OtlpHttpExportClient.MediaHeaderValue.ToString());
 
             var exportTraceRequest = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(testHttpHandler.HttpRequestContent);
             Assert.NotNull(exportTraceRequest);
@@ -172,5 +176,12 @@ public class OtlpHttpTraceExportClientTests
                 Assert.Contains(resourceSpan.Resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
             }
         }
+    }
+
+    private static (byte[] Buffer, int ContentLength) CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)
+    {
+        var buffer = new byte[4096];
+        var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(buffer, 0, sdkOptions, resource, batch);
+        return (buffer, writePosition);
     }
 }

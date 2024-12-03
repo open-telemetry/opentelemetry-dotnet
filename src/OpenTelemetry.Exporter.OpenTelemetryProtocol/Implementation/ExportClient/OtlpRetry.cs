@@ -1,12 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
-using Google.Rpc;
-using Grpc.Core;
-using Status = Google.Rpc.Status;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
@@ -83,12 +80,50 @@ internal static class OtlpRetry
 
     public static bool TryGetGrpcRetryResult(ExportClientGrpcResponse response, int retryDelayMilliseconds, out RetryResult retryResult)
     {
-        if (response.Exception is RpcException rpcException)
+        retryResult = default;
+
+        if (response.Status != null)
         {
-            return TryGetRetryResult(rpcException.StatusCode, IsGrpcStatusCodeRetryable, response.DeadlineUtc, rpcException.Trailers, TryGetGrpcRetryDelay, retryDelayMilliseconds, out retryResult);
+            var nextRetryDelayMilliseconds = retryDelayMilliseconds;
+
+            if (IsDeadlineExceeded(response.DeadlineUtc))
+            {
+                return false;
+            }
+
+            var throttleDelay = GrpcStatusDeserializer.TryGetGrpcRetryDelay(response.GrpcStatusDetailsHeader);
+            var retryable = IsGrpcStatusCodeRetryable(response.Status.Value.StatusCode, throttleDelay.HasValue);
+
+            if (!retryable)
+            {
+                return false;
+            }
+
+            var delayDuration = throttleDelay ?? TimeSpan.FromMilliseconds(GetRandomNumber(0, nextRetryDelayMilliseconds));
+
+            if (IsDeadlineExceeded(response.DeadlineUtc + delayDuration))
+            {
+                return false;
+            }
+
+            if (throttleDelay.HasValue)
+            {
+                try
+                {
+                    // TODO: Consider making nextRetryDelayMilliseconds a double to avoid the need for convert/overflow handling
+                    nextRetryDelayMilliseconds = Convert.ToInt32(throttleDelay.Value.TotalMilliseconds);
+                }
+                catch (OverflowException)
+                {
+                    nextRetryDelayMilliseconds = MaxBackoffMilliseconds;
+                }
+            }
+
+            nextRetryDelayMilliseconds = CalculateNextRetryDelay(nextRetryDelayMilliseconds);
+            retryResult = new RetryResult(throttleDelay.HasValue, delayDuration, nextRetryDelayMilliseconds);
+            return true;
         }
 
-        retryResult = default;
         return false;
     }
 
@@ -159,32 +194,6 @@ internal static class OtlpRetry
         var nextMilliseconds = nextRetryDelayMilliseconds * BackoffMultiplier;
         nextMilliseconds = Math.Min(nextMilliseconds, MaxBackoffMilliseconds);
         return Convert.ToInt32(nextMilliseconds);
-    }
-
-    private static TimeSpan? TryGetGrpcRetryDelay(StatusCode statusCode, Metadata trailers)
-    {
-        Debug.Assert(trailers != null, "trailers was null");
-
-        if (statusCode != StatusCode.ResourceExhausted && statusCode != StatusCode.Unavailable)
-        {
-            return null;
-        }
-
-        var statusDetails = trailers!.Get(GrpcStatusDetailsHeader);
-        if (statusDetails != null && statusDetails.IsBinary)
-        {
-            var status = Status.Parser.ParseFrom(statusDetails.ValueBytes);
-            foreach (var item in status.Details)
-            {
-                var success = item.TryUnpack<RetryInfo>(out var retryInfo);
-                if (success)
-                {
-                    return retryInfo.RetryDelay.ToTimeSpan();
-                }
-            }
-        }
-
-        return null;
     }
 
     private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode statusCode, HttpResponseHeaders? responseHeaders)

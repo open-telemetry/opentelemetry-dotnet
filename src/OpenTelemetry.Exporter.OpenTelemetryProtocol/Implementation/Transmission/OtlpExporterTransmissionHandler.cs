@@ -7,9 +7,9 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 
-internal class OtlpExporterTransmissionHandler<TRequest> : IDisposable
+internal class OtlpExporterTransmissionHandler : IDisposable
 {
-    public OtlpExporterTransmissionHandler(IExportClient<TRequest> exportClient, double timeoutMilliseconds)
+    public OtlpExporterTransmissionHandler(IExportClient exportClient, double timeoutMilliseconds)
     {
         Guard.ThrowIfNull(exportClient);
 
@@ -17,7 +17,7 @@ internal class OtlpExporterTransmissionHandler<TRequest> : IDisposable
         this.TimeoutMilliseconds = timeoutMilliseconds;
     }
 
-    internal IExportClient<TRequest> ExportClient { get; }
+    internal IExportClient ExportClient { get; }
 
     internal double TimeoutMilliseconds { get; }
 
@@ -25,21 +25,22 @@ internal class OtlpExporterTransmissionHandler<TRequest> : IDisposable
     /// Attempts to send an export request to the server.
     /// </summary>
     /// <param name="request">The request to send to the server.</param>
+    /// <param name="contentLength">length of content.</param>
     /// <returns> <see langword="true" /> if the request is sent successfully; otherwise, <see
     /// langword="false" />.
     /// </returns>
-    public bool TrySubmitRequest(TRequest request)
+    public bool TrySubmitRequest(byte[] request, int contentLength)
     {
         try
         {
             var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
-            var response = this.ExportClient.SendExportRequest(request, deadlineUtc);
+            var response = this.ExportClient.SendExportRequest(request, contentLength, deadlineUtc);
             if (response.Success)
             {
                 return true;
             }
 
-            return this.OnSubmitRequestFailure(request, response);
+            return this.OnSubmitRequestFailure(request, contentLength, response);
         }
         catch (Exception ex)
         {
@@ -100,32 +101,25 @@ internal class OtlpExporterTransmissionHandler<TRequest> : IDisposable
     /// Fired when a request could not be submitted.
     /// </summary>
     /// <param name="request">The request that was attempted to send to the server.</param>
+    /// <param name="contentLength">Length of content.</param>
     /// <param name="response"><see cref="ExportClientResponse" />.</param>
     /// <returns><see langword="true" /> If the request is resubmitted and succeeds; otherwise, <see
     /// langword="false" />.</returns>
-    protected virtual bool OnSubmitRequestFailure(TRequest request, ExportClientResponse response)
-    {
-        return false;
-    }
+    protected virtual bool OnSubmitRequestFailure(byte[] request, int contentLength, ExportClientResponse response) => false;
 
     /// <summary>
     /// Fired when resending a request to the server.
     /// </summary>
     /// <param name="request">The request to be resent to the server.</param>
+    /// <param name="contentLength">Length of content.</param>
     /// <param name="deadlineUtc">The deadline time in utc for export request to finish.</param>
     /// <param name="response"><see cref="ExportClientResponse" />.</param>
     /// <returns><see langword="true" /> If the retry succeeds; otherwise, <see
     /// langword="false" />.</returns>
-    protected bool TryRetryRequest(TRequest request, DateTime deadlineUtc, out ExportClientResponse response)
+    protected bool TryRetryRequest(byte[] request, int contentLength, DateTime deadlineUtc, out ExportClientResponse response)
     {
-        response = this.ExportClient.SendExportRequest(request, deadlineUtc);
-        if (!response.Success)
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(response.Exception, isRetry: true);
-            return false;
-        }
-
-        return true;
+        response = this.ExportClient.SendExportRequest(request, contentLength, deadlineUtc);
+        return response.Success;
     }
 
     /// <summary>
