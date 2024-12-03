@@ -126,28 +126,4 @@ internal static class ProtobufOtlpMetricFieldNumberConstants
     internal const int Exemplar_Value_As_Int = 6;
     internal const int Exemplar_Span_Id = 4;
     internal const int Exemplar_Trace_Id = 5;
-
-    // ---------- COMMON FIELDS BELOW THIS LINE ----------
-    // TODO: THESE SHOULD BE MOVED TO A SEPARATE FILE. These are currently copied in each Constants file.
-
-    // InstrumentationScope
-    internal const int InstrumentationScope_Name = 1;
-    internal const int InstrumentationScope_Version = 2;
-    internal const int InstrumentationScope_Attributes = 3;
-    internal const int InstrumentationScope_Dropped_Attributes_Count = 4;
-
-    // KeyValue
-    internal const int KeyValue_Key = 1;
-    internal const int KeyValue_Value = 2;
-
-    // AnyValue
-    internal const int AnyValue_String_Value = 1;
-    internal const int AnyValue_Bool_Value = 2;
-    internal const int AnyValue_Int_Value = 3;
-    internal const int AnyValue_Double_Value = 4;
-    internal const int AnyValue_Array_Value = 5;
-    internal const int AnyValue_Kvlist_Value = 6;
-    internal const int AnyValue_Bytes_Value = 7;
-
-    internal const int ArrayValue_Value = 1;
 }
