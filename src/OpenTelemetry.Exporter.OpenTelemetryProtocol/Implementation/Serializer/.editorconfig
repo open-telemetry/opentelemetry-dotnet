@@ -1,0 +1,4 @@
+[*Constants.cs]
+# SA1310: Field names should not contain underscore
+# Justification: These names describe the nested names and properties in the .Proto file.
+dotnet_diagnostic.SA1310.severity = none

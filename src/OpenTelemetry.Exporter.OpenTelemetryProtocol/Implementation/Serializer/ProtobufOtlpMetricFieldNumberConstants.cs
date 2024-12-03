@@ -3,13 +3,10 @@
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
-using System.Diagnostics.CodeAnalysis;
-
 /// <summary>
 /// Defines field number constants for fields defined in
 /// <see href="https://github.com/open-telemetry/opentelemetry-proto/blob/v1.2.0/opentelemetry/proto/metrics/v1/metrics.proto"/>.
 /// </summary>
-[SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:Field names should not contain underscore", Justification = "These names describe the nested names and properties in the .Proto file.")]
 internal static class ProtobufOtlpMetricFieldNumberConstants
 {
     // Metrics Data
