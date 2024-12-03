@@ -9,7 +9,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public class BaseOtlpHttpExportClientTests
+public class OtlpHttpExportClientTests
 {
     [Theory]
     [InlineData(null, null, "http://localhost:4318/signal/path")]
@@ -30,25 +30,12 @@ public class BaseOtlpHttpExportClientTests
                 options.Endpoint = new Uri(optionEndpoint);
             }
 
-            var exporterClient = new TestOtlpHttpExportClient(options, new HttpClient());
+            var exporterClient = new OtlpHttpExportClient(options, new HttpClient(), "signal/path");
             Assert.Equal(new Uri(expectedExporterEndpoint), exporterClient.Endpoint);
         }
         finally
         {
             Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName, null);
-        }
-    }
-
-    internal class TestOtlpHttpExportClient : BaseOtlpHttpExportClient<string>
-    {
-        public TestOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient)
-            : base(options, httpClient, "signal/path")
-        {
-        }
-
-        protected override HttpContent CreateHttpContent(string exportRequest)
-        {
-            throw new NotImplementedException();
         }
     }
 }

@@ -16,7 +16,7 @@ using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
-using OtlpCollector = OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Logs.V1;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 
 /*
 BenchmarkDotNet v0.13.6, Windows 11 (10.0.22621.2134/22H2/2022Update/SunValley2) (Hyper-V)

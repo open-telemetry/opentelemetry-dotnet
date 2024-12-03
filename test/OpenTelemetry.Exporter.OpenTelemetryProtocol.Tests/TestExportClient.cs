@@ -5,7 +5,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-internal class TestExportClient<T>(bool throwException = false) : IExportClient<T>
+internal class TestExportClient(bool throwException = false) : IExportClient
 {
     public bool SendExportRequestCalled { get; private set; }
 
@@ -13,7 +13,7 @@ internal class TestExportClient<T>(bool throwException = false) : IExportClient<
 
     public bool ThrowException { get; set; } = throwException;
 
-    public ExportClientResponse SendExportRequest(T request, DateTime deadlineUtc, CancellationToken cancellationToken = default)
+    public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
         if (this.ThrowException)
         {
