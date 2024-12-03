@@ -261,7 +261,7 @@ Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/ma
 * [Reiley Yang](https://github.com/reyang)
 * [Robert Paj&#x105;k](https://github.com/pellared)
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev)
-* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
+* [Utkarsh Umesan Pillai](https://github.com/utpilla)
 * [Victor Lu](https://github.com/victlu)
 * [Vishwesh Bankwar](https://github.com/vishweshbankwar)
 
