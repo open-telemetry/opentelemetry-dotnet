@@ -44,7 +44,7 @@ public class OtlpHttpTraceExportClientTests
             Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
         };
 
-        var client = new ProtobufOtlpHttpExportClient(options, options.HttpClientFactory(), "/v1/traces");
+        var client = new OtlpHttpExportClient(options, options.HttpClientFactory(), "/v1/traces");
 
         Assert.NotNull(client.HttpClient);
 
@@ -86,7 +86,7 @@ public class OtlpHttpTraceExportClientTests
 
         var httpClient = new HttpClient(testHttpHandler);
 
-        var exportClient = new ProtobufOtlpHttpExportClient(options, httpClient, string.Empty);
+        var exportClient = new OtlpHttpExportClient(options, httpClient, string.Empty);
 
         var resourceBuilder = ResourceBuilder.CreateEmpty();
         if (includeServiceNameInResource)
@@ -159,7 +159,7 @@ public class OtlpHttpTraceExportClientTests
             // TODO: Revisit once the HttpClient part is overridden.
             // Assert.IsType<ProtobufOtlpHttpExportClient.ExportRequestContent>(httpRequest.Content);
             Assert.NotNull(httpRequest.Content);
-            Assert.Contains(httpRequest.Content.Headers, h => h.Key == "Content-Type" && h.Value.First() == ProtobufOtlpHttpExportClient.MediaHeaderValue.ToString());
+            Assert.Contains(httpRequest.Content.Headers, h => h.Key == "Content-Type" && h.Value.First() == OtlpHttpExportClient.MediaHeaderValue.ToString());
 
             var exportTraceRequest = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(testHttpHandler.HttpRequestContent);
             Assert.NotNull(exportTraceRequest);

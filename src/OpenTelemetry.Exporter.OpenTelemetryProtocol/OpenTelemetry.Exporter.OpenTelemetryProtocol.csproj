@@ -24,13 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.Net.Client" Condition="'$(TargetFramework)' != 'netstandard2.0' AND '$(TargetFramework)' != '$(NetFrameworkMinimumSupportedVersion)'" />
-    <PackageReference Include="Grpc" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'" />
-    <PackageReference Include="Google.Protobuf" />
-    <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'" />
   </ItemGroup>
 
@@ -39,12 +32,6 @@
     <Compile Include="$(RepoRoot)\src\Shared\PeerServiceResolver.cs" Link="Includes\PeerServiceResolver.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\TagWriter\ArrayTagWriter.cs" Link="Includes\TagWriter\ArrayTagWriter.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\TagWriter\TagWriter.cs" Link="Includes\TagWriter\TagWriter.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Protobuf Include="**/*.proto" Access="internal">
-      <ProtoRoot>Implementation</ProtoRoot>
-    </Protobuf>
   </ItemGroup>
 
 </Project>

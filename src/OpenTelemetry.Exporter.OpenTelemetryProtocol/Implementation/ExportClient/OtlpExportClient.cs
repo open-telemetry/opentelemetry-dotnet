@@ -9,14 +9,14 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
-internal abstract class ProtobufOtlpExportClient : IProtobufExportClient
+internal abstract class OtlpExportClient : IExportClient
 {
     private static readonly Version Http2RequestVersion = new(2, 0);
 
 #if NET
     private static readonly bool SynchronousSendSupportedByCurrentPlatform;
 
-    static ProtobufOtlpExportClient()
+    static OtlpExportClient()
     {
 #if NET
         // See: https://github.com/dotnet/runtime/blob/280f2a0c60ce0378b8db49adc0eecc463d00fe5d/src/libraries/System.Net.Http/src/System/Net/Http/HttpClientHandler.AnyMobile.cs#L767
@@ -28,13 +28,24 @@ internal abstract class ProtobufOtlpExportClient : IProtobufExportClient
     }
 #endif
 
-    protected ProtobufOtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
+    protected OtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
         Guard.ThrowIfNull(options);
         Guard.ThrowIfNull(httpClient);
         Guard.ThrowIfNull(signalPath);
 
-        Uri exporterEndpoint = options.Endpoint.AppendPathIfNotPresent(signalPath);
+        Uri exporterEndpoint;
+        if (options.Protocol == OtlpExportProtocol.Grpc)
+        {
+            exporterEndpoint = options.Endpoint.AppendPathIfNotPresent(signalPath);
+        }
+        else
+        {
+            exporterEndpoint = options.AppendSignalPathToEndpoint
+                ? options.Endpoint.AppendPathIfNotPresent(signalPath)
+                : options.Endpoint;
+        }
+
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
         this.HttpClient = httpClient;

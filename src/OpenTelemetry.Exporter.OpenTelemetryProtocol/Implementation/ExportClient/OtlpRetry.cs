@@ -1,12 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
-using Google.Rpc;
-using Grpc.Core;
-using Status = Google.Rpc.Status;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
@@ -85,11 +82,7 @@ internal static class OtlpRetry
     {
         retryResult = default;
 
-        if (response.Exception is RpcException rpcException)
-        {
-            return TryGetRetryResult(rpcException.StatusCode, IsGrpcStatusCodeRetryable, response.DeadlineUtc, rpcException.Trailers, TryGetGrpcRetryDelay, retryDelayMilliseconds, out retryResult);
-        }
-        else if (response.Status != null)
+        if (response.Status != null)
         {
             var nextRetryDelayMilliseconds = retryDelayMilliseconds;
 
@@ -98,7 +91,7 @@ internal static class OtlpRetry
                 return false;
             }
 
-            var throttleDelay = Grpc.GrpcStatusDeserializer.TryGetGrpcRetryDelay(response.GrpcStatusDetailsHeader);
+            var throttleDelay = GrpcStatusDeserializer.TryGetGrpcRetryDelay(response.GrpcStatusDetailsHeader);
             var retryable = IsGrpcStatusCodeRetryable(response.Status.Value.StatusCode, throttleDelay.HasValue);
 
             if (!retryable)
@@ -203,32 +196,6 @@ internal static class OtlpRetry
         return Convert.ToInt32(nextMilliseconds);
     }
 
-    private static TimeSpan? TryGetGrpcRetryDelay(StatusCode statusCode, Metadata trailers)
-    {
-        Debug.Assert(trailers != null, "trailers was null");
-
-        if (statusCode != StatusCode.ResourceExhausted && statusCode != StatusCode.Unavailable)
-        {
-            return null;
-        }
-
-        var statusDetails = trailers!.Get(GrpcStatusDetailsHeader);
-        if (statusDetails != null && statusDetails.IsBinary)
-        {
-            var status = Status.Parser.ParseFrom(statusDetails.ValueBytes);
-            foreach (var item in status.Details)
-            {
-                var success = item.TryUnpack<RetryInfo>(out var retryInfo);
-                if (success)
-                {
-                    return retryInfo.RetryDelay.ToTimeSpan();
-                }
-            }
-        }
-
-        return null;
-    }
-
     private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode statusCode, HttpResponseHeaders? responseHeaders)
     {
 #if NETSTANDARD2_1_OR_GREATER || NET
@@ -252,24 +219,6 @@ internal static class OtlpRetry
             case StatusCode.DataLoss:
                 return true;
             case StatusCode.ResourceExhausted:
-                return hasRetryDelay;
-            default:
-                return false;
-        }
-    }
-
-    private static bool IsGrpcStatusCodeRetryable(Grpc.StatusCode statusCode, bool hasRetryDelay)
-    {
-        switch (statusCode)
-        {
-            case Grpc.StatusCode.Cancelled:
-            case Grpc.StatusCode.DeadlineExceeded:
-            case Grpc.StatusCode.Aborted:
-            case Grpc.StatusCode.OutOfRange:
-            case Grpc.StatusCode.Unavailable:
-            case Grpc.StatusCode.DataLoss:
-                return true;
-            case Grpc.StatusCode.ResourceExhausted:
                 return hasRetryDelay;
             default:
                 return false;

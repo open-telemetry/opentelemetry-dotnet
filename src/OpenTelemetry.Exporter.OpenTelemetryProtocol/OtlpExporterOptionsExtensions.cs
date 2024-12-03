@@ -4,18 +4,11 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Diagnostics;
 using System.Reflection;
-using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
-#if NETSTANDARD2_1 || NET
-using Grpc.Net.Client;
-#endif
-using System.Diagnostics;
-using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
-using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 
 namespace OpenTelemetry.Exporter;
 
@@ -28,39 +21,6 @@ internal static class OtlpExporterOptionsExtensions
     private const string TraceHttpServicePath = "v1/traces";
     private const string MetricsHttpServicePath = "v1/metrics";
     private const string LogsHttpServicePath = "v1/logs";
-
-#if NETSTANDARD2_1 || NET
-    public static GrpcChannel CreateChannel(this OtlpExporterOptions options)
-#else
-    public static Channel CreateChannel(this OtlpExporterOptions options)
-#endif
-    {
-        if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
-        {
-            throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
-        }
-
-#if NETSTANDARD2_1 || NET
-        return GrpcChannel.ForAddress(options.Endpoint);
-#else
-        ChannelCredentials channelCredentials;
-        if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
-        {
-            channelCredentials = new SslCredentials();
-        }
-        else
-        {
-            channelCredentials = ChannelCredentials.Insecure;
-        }
-
-        return new Channel(options.Endpoint.Authority, channelCredentials);
-#endif
-    }
-
-    public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options)
-    {
-        return options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
-    }
 
     public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
         where THeaders : new()
@@ -98,37 +58,37 @@ internal static class OtlpExporterOptionsExtensions
         return headers;
     }
 
-    public static ProtobufOtlpExporterTransmissionHandler GetProtobufExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions, OtlpSignalType otlpSignalType)
+    public static OtlpExporterTransmissionHandler GetProtobufExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions, OtlpSignalType otlpSignalType)
     {
         var exportClient = GetProtobufExportClient(options, otlpSignalType);
 
         // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
         // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
         // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
-        double timeoutMilliseconds = exportClient is ProtobufOtlpHttpExportClient httpTraceExportClient
+        double timeoutMilliseconds = exportClient is OtlpHttpExportClient httpTraceExportClient
             ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
         if (experimentalOptions.EnableInMemoryRetry)
         {
-            return new ProtobufOtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds);
+            return new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds);
         }
         else if (experimentalOptions.EnableDiskRetry)
         {
             Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
 
-            return new ProtobufOtlpExporterPersistentStorageTransmissionHandler(
+            return new OtlpExporterPersistentStorageTransmissionHandler(
                 exportClient,
                 timeoutMilliseconds,
                 Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "traces"));
         }
         else
         {
-            return new ProtobufOtlpExporterTransmissionHandler(exportClient, timeoutMilliseconds);
+            return new OtlpExporterTransmissionHandler(exportClient, timeoutMilliseconds);
         }
     }
 
-    public static IProtobufExportClient GetProtobufExportClient(this OtlpExporterOptions options, OtlpSignalType otlpSignalType)
+    public static IExportClient GetProtobufExportClient(this OtlpExporterOptions options, OtlpSignalType otlpSignalType)
     {
         var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
 
@@ -140,108 +100,20 @@ internal static class OtlpExporterOptionsExtensions
         return otlpSignalType switch
         {
             OtlpSignalType.Traces => options.Protocol == OtlpExportProtocol.Grpc
-                ? new ProtobufOtlpGrpcExportClient(options, httpClient, TraceGrpcServicePath)
-                : new ProtobufOtlpHttpExportClient(options, httpClient, TraceHttpServicePath),
+                ? new OtlpGrpcExportClient(options, httpClient, TraceGrpcServicePath)
+                : new OtlpHttpExportClient(options, httpClient, TraceHttpServicePath),
 
             OtlpSignalType.Metrics => options.Protocol == OtlpExportProtocol.Grpc
-                ? new ProtobufOtlpGrpcExportClient(options, httpClient, MetricsGrpcServicePath)
-                : new ProtobufOtlpHttpExportClient(options, httpClient, MetricsHttpServicePath),
+                ? new OtlpGrpcExportClient(options, httpClient, MetricsGrpcServicePath)
+                : new OtlpHttpExportClient(options, httpClient, MetricsHttpServicePath),
 
             OtlpSignalType.Logs => options.Protocol == OtlpExportProtocol.Grpc
-                ? new ProtobufOtlpGrpcExportClient(options, httpClient, LogsGrpcServicePath)
-                : new ProtobufOtlpHttpExportClient(options, httpClient, LogsHttpServicePath),
+                ? new OtlpGrpcExportClient(options, httpClient, LogsGrpcServicePath)
+                : new OtlpHttpExportClient(options, httpClient, LogsHttpServicePath),
 
             _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
         };
     }
-
-    public static OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
-    {
-        var exportClient = GetMetricsExportClient(options);
-
-        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
-        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
-        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
-        double timeoutMilliseconds = exportClient is OtlpHttpMetricsExportClient httpMetricsExportClient
-            ? httpMetricsExportClient.HttpClient.Timeout.TotalMilliseconds
-            : options.TimeoutMilliseconds;
-
-        if (experimentalOptions.EnableInMemoryRetry)
-        {
-            return new OtlpExporterRetryTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds);
-        }
-        else if (experimentalOptions.EnableDiskRetry)
-        {
-            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
-
-            return new OtlpExporterPersistentStorageTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(
-                exportClient,
-                timeoutMilliseconds,
-                (byte[] data) =>
-                {
-                    var request = new MetricsOtlpCollector.ExportMetricsServiceRequest();
-                    request.MergeFrom(data);
-                    return request;
-                },
-                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "metrics"));
-        }
-        else
-        {
-            return new OtlpExporterTransmissionHandler<MetricsOtlpCollector.ExportMetricsServiceRequest>(exportClient, timeoutMilliseconds);
-        }
-    }
-
-    public static OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest> GetLogsExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions)
-    {
-        var exportClient = GetLogExportClient(options);
-        double timeoutMilliseconds = exportClient is OtlpHttpLogExportClient httpLogExportClient
-            ? httpLogExportClient.HttpClient.Timeout.TotalMilliseconds
-            : options.TimeoutMilliseconds;
-
-        if (experimentalOptions.EnableInMemoryRetry)
-        {
-            return new OtlpExporterRetryTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
-        }
-        else if (experimentalOptions.EnableDiskRetry)
-        {
-            Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
-
-            return new OtlpExporterPersistentStorageTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(
-                exportClient,
-                timeoutMilliseconds,
-                (byte[] data) =>
-                {
-                    var request = new LogOtlpCollector.ExportLogsServiceRequest();
-                    request.MergeFrom(data);
-                    return request;
-                },
-                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "logs"));
-        }
-        else
-        {
-            return new OtlpExporterTransmissionHandler<LogOtlpCollector.ExportLogsServiceRequest>(exportClient, timeoutMilliseconds);
-        }
-    }
-
-    public static IExportClient<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportClient(this OtlpExporterOptions options) =>
-        options.Protocol switch
-        {
-            OtlpExportProtocol.Grpc => new OtlpGrpcMetricsExportClient(options),
-            OtlpExportProtocol.HttpProtobuf => new OtlpHttpMetricsExportClient(
-                options,
-                options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
-            _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
-        };
-
-    public static IExportClient<LogOtlpCollector.ExportLogsServiceRequest> GetLogExportClient(this OtlpExporterOptions options) =>
-        options.Protocol switch
-        {
-            OtlpExportProtocol.Grpc => new OtlpGrpcLogExportClient(options),
-            OtlpExportProtocol.HttpProtobuf => new OtlpHttpLogExportClient(
-                options,
-                options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
-            _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
-        };
 
     public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
     {
