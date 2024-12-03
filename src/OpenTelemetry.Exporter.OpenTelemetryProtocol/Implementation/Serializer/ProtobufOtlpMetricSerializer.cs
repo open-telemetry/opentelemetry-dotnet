@@ -93,10 +93,10 @@ internal static class ProtobufOtlpMetricSerializer
         var meterVersion = metrics[0].MeterVersion;
         var meterTags = metrics[0].MeterTags;
 
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.InstrumentationScope_Name, meterName);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, meterName);
         if (meterVersion != null)
         {
-            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.InstrumentationScope_Version, meterVersion);
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Version, meterVersion);
         }
 
         if (meterTags != null)
@@ -105,14 +105,14 @@ internal static class ProtobufOtlpMetricSerializer
             {
                 for (int i = 0; i < readonlyMeterTags.Count; i++)
                 {
-                    writePosition = WriteTag(buffer, writePosition, readonlyMeterTags[i], ProtobufOtlpMetricFieldNumberConstants.InstrumentationScope_Attributes);
+                    writePosition = WriteTag(buffer, writePosition, readonlyMeterTags[i], ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes);
                 }
             }
             else
             {
                 foreach (var tag in meterTags)
                 {
-                    writePosition = WriteTag(buffer, writePosition, tag, ProtobufOtlpMetricFieldNumberConstants.InstrumentationScope_Attributes);
+                    writePosition = WriteTag(buffer, writePosition, tag, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes);
                 }
             }
         }
