@@ -9,12 +9,12 @@ using System.Net.Http.Headers;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 /// <summary>Class for sending OTLP trace export request over HTTP.</summary>
-internal sealed class ProtobufOtlpHttpExportClient : ProtobufOtlpExportClient
+internal sealed class OtlpHttpExportClient : OtlpExportClient
 {
     internal static readonly MediaTypeHeaderValue MediaHeaderValue = new("application/x-protobuf");
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
 
-    internal ProtobufOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
+    internal OtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
         : base(options, httpClient, signalPath)
     {
     }

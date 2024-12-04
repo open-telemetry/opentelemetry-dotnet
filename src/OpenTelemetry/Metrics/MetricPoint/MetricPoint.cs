@@ -316,7 +316,7 @@ public struct MetricPoint
     /// </remarks>
     /// <returns><see cref="ExponentialHistogramData"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ExponentialHistogramData GetExponentialHistogramData()
+    public readonly ExponentialHistogramData GetExponentialHistogramData()
     {
         if (this.aggType != AggregationType.Base2ExponentialHistogram &&
             this.aggType != AggregationType.Base2ExponentialHistogramWithMinMax)

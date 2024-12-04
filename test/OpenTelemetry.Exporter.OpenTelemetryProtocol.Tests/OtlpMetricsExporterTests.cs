@@ -7,7 +7,6 @@ using System.Reflection;
 using Google.Protobuf;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -159,12 +158,9 @@ public class OtlpMetricsExporterTests : IDisposable
     }
 
     [Theory]
-    [InlineData(true, true)]
-    [InlineData(true, false)]
-
-    [InlineData(false, true)]
-    [InlineData(false, false)]
-    public void ToOtlpResourceMetricsTest(bool useCustomSerializer, bool includeServiceNameInResource)
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ToOtlpResourceMetricsTest(bool includeServiceNameInResource)
     {
         var resourceBuilder = ResourceBuilder.CreateEmpty();
         if (includeServiceNameInResource)
@@ -198,17 +194,7 @@ public class OtlpMetricsExporterTests : IDisposable
         provider.ForceFlush();
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-
-        var request = new OtlpCollector.ExportMetricsServiceRequest();
-
-        if (useCustomSerializer)
-        {
-            request = CreateMetricExportRequest(batch, resourceBuilder.Build());
-        }
-        else
-        {
-            request.AddMetrics(resourceBuilder.Build().ToOtlpResource(), batch);
-        }
+        var request = CreateMetricExportRequest(batch, resourceBuilder.Build(), false);
 
         Assert.Single(request.ResourceMetrics);
         var resourceMetric = request.ResourceMetrics.First();
@@ -236,20 +222,14 @@ public class OtlpMetricsExporterTests : IDisposable
     }
 
     [Theory]
-    [InlineData(true, "test_gauge", null, null, 123L, null)]
-    [InlineData(true, "test_gauge", null, null, null, 123.45)]
-    [InlineData(true, "test_gauge", null, null, 123L, null, true)]
-    [InlineData(true, "test_gauge", null, null, null, 123.45, true)]
-    [InlineData(true, "test_gauge", "description", "unit", 123L, null)]
-
-    [InlineData(false, "test_gauge", null, null, 123L, null)]
-    [InlineData(false, "test_gauge", null, null, null, 123.45)]
-    [InlineData(false, "test_gauge", null, null, 123L, null, true)]
-    [InlineData(false, "test_gauge", null, null, null, 123.45, true)]
-    [InlineData(false, "test_gauge", "description", "unit", 123L, null)]
-    [InlineData(false, "test_gauge", "description", "unit", 123L, null, false, true)]
-    [InlineData(false, "test_gauge", "description", "unit", 123L, null, false, true, true)]
-    public void TestGaugeToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
+    [InlineData("test_gauge", null, null, 123L, null)]
+    [InlineData("test_gauge", null, null, null, 123.45)]
+    [InlineData("test_gauge", null, null, 123L, null, true)]
+    [InlineData("test_gauge", null, null, null, 123.45, true)]
+    [InlineData("test_gauge", "description", "unit", 123L, null)]
+    [InlineData("test_gauge", "description", "unit", 123L, null, false, true)]
+    [InlineData("test_gauge", "description", "unit", 123L, null, false, true, true)]
+    public void TestGaugeToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -281,16 +261,7 @@ public class OtlpMetricsExporterTests : IDisposable
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
 
-        var request = new OtlpCollector.ExportMetricsServiceRequest();
-
-        if (useCustomSerializer)
-        {
-            request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
-        }
-        else
-        {
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch, experimentalEmitNoRecordedValue);
-        }
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), experimentalEmitNoRecordedValue);
 
         var resourceMetric = request.ResourceMetrics.Single();
         var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -322,7 +293,15 @@ public class OtlpMetricsExporterTests : IDisposable
             var dataPoint = actual.Gauge.DataPoints[index];
             bool isNoRecordedValueDataPoint = index == 1;
 
-            Assert.True(dataPoint.StartTimeUnixNano > 0);
+            if (isNoRecordedValueDataPoint)
+            {
+                Assert.Equal(0UL, dataPoint.StartTimeUnixNano);
+            }
+            else
+            {
+                Assert.NotEqual(0UL, dataPoint.StartTimeUnixNano);
+            }
+
             Assert.True(dataPoint.TimeUnixNano > 0);
 
             if (!isNoRecordedValueDataPoint)
@@ -359,30 +338,19 @@ public class OtlpMetricsExporterTests : IDisposable
     }
 
     [Theory]
-    [InlineData(true, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(true, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(true, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(true, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(true, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(true, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(true, "test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(false, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(false, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(false, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(false, "test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
-    public void TestCounterToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, false, true)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestCounterToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -416,17 +384,7 @@ public class OtlpMetricsExporterTests : IDisposable
         provider.ForceFlush();
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-
-        var request = new OtlpCollector.ExportMetricsServiceRequest();
-
-        if (useCustomSerializer)
-        {
-            request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
-        }
-        else
-        {
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch, experimentalEmitNoRecordedValue);
-        }
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), experimentalEmitNoRecordedValue);
 
         var resourceMetric = request.ResourceMetrics.Single();
         var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -465,7 +423,15 @@ public class OtlpMetricsExporterTests : IDisposable
             var dataPoint = actual.Sum.DataPoints[index];
             bool isNoRecordedValueDataPoint = index == 1;
 
-            Assert.True(dataPoint.StartTimeUnixNano > 0);
+            if (isNoRecordedValueDataPoint)
+            {
+                Assert.Equal(0UL, dataPoint.StartTimeUnixNano);
+            }
+            else
+            {
+                Assert.NotEqual(0UL, dataPoint.StartTimeUnixNano);
+            }
+
             Assert.True(dataPoint.TimeUnixNano > 0);
 
             if (!isNoRecordedValueDataPoint)
@@ -509,34 +475,21 @@ public class OtlpMetricsExporterTests : IDisposable
     }
 
     [Theory]
-    [InlineData(true, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(true, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(true, "test_counter", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(true, "test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(true, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(true, "test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(true, "test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(false, "test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(false, "test_counter", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(false, "test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(false, "test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(false, "test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
-    [InlineData(false, "test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
-    public void TestUpDownCounterToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_counter", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestUpDownCounterToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -571,15 +524,7 @@ public class OtlpMetricsExporterTests : IDisposable
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
 
-        var request = new OtlpCollector.ExportMetricsServiceRequest();
-        if (useCustomSerializer)
-        {
-            request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
-        }
-        else
-        {
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch, experimentalEmitNoRecordedValue);
-        }
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), experimentalEmitNoRecordedValue);
 
         var resourceMetric = request.ResourceMetrics.Single();
         var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -618,7 +563,15 @@ public class OtlpMetricsExporterTests : IDisposable
             var dataPoint = actual.Sum.DataPoints[index];
             bool isNoRecordedValueDataPoint = index == 1;
 
-            Assert.True(dataPoint.StartTimeUnixNano > 0);
+            if (isNoRecordedValueDataPoint)
+            {
+                Assert.Equal(0UL, dataPoint.StartTimeUnixNano);
+            }
+            else
+            {
+                Assert.NotEqual(0UL, dataPoint.StartTimeUnixNano);
+            }
+
             Assert.True(dataPoint.TimeUnixNano > 0);
 
             if (!isNoRecordedValueDataPoint)
@@ -662,34 +615,21 @@ public class OtlpMetricsExporterTests : IDisposable
     }
 
     [Theory]
-    [InlineData(true, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(true, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(true, "test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(true, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(true, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(true, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(true, "test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(false, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(false, "test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(false, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(false, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(false, "test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
-    public void TestExponentialHistogramToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestExponentialHistogramToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -729,16 +669,7 @@ public class OtlpMetricsExporterTests : IDisposable
         provider.ForceFlush();
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-
-        var request = new OtlpCollector.ExportMetricsServiceRequest();
-        if (useCustomSerializer)
-        {
-            request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
-        }
-        else
-        {
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch, experimentalEmitNoRecordedValue);
-        }
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), experimentalEmitNoRecordedValue);
 
         var resourceMetric = request.ResourceMetrics.Single();
         var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -775,7 +706,15 @@ public class OtlpMetricsExporterTests : IDisposable
             var dataPoint = actual.ExponentialHistogram.DataPoints[index];
             bool isNoRecordedValueDataPoint = index == 1;
 
-            Assert.True(dataPoint.StartTimeUnixNano > 0);
+            if (isNoRecordedValueDataPoint)
+            {
+                Assert.Equal(0UL, dataPoint.StartTimeUnixNano);
+            }
+            else
+            {
+                Assert.NotEqual(0UL, dataPoint.StartTimeUnixNano);
+            }
+
             Assert.True(dataPoint.TimeUnixNano > 0);
 
             if (!isNoRecordedValueDataPoint)
@@ -859,39 +798,25 @@ public class OtlpMetricsExporterTests : IDisposable
     }
 
     [Theory]
-    [InlineData(true, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(true, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(true, "test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(true, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(true, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(true, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(true, "test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(true, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(false, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
-    [InlineData(false, "test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(false, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(false, "test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
-    [InlineData(false, "test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
-    [InlineData(false, "test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
-    public void TestHistogramToOtlpMetric(bool useCustomSerializer, string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, false, true)]
+    [InlineData("test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
+    [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestHistogramToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
-
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .SetExemplarFilter(enableExemplars ? ExemplarFilterType.AlwaysOn : ExemplarFilterType.AlwaysOff)
@@ -921,16 +846,7 @@ public class OtlpMetricsExporterTests : IDisposable
         provider.ForceFlush();
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-
-        var request = new OtlpCollector.ExportMetricsServiceRequest();
-        if (useCustomSerializer)
-        {
-            request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
-        }
-        else
-        {
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch, experimentalEmitNoRecordedValue);
-        }
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), experimentalEmitNoRecordedValue);
 
         var resourceMetric = request.ResourceMetrics.Single();
         var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -967,7 +883,15 @@ public class OtlpMetricsExporterTests : IDisposable
             var dataPoint = actual.Histogram.DataPoints[index];
             bool isNoRecordedValueDataPoint = index == 1;
 
-            Assert.True(dataPoint.StartTimeUnixNano > 0);
+            if (isNoRecordedValueDataPoint)
+            {
+                Assert.Equal(0UL, dataPoint.StartTimeUnixNano);
+            }
+            else
+            {
+                Assert.NotEqual(0UL, dataPoint.StartTimeUnixNano);
+            }
+
             Assert.True(dataPoint.TimeUnixNano > 0);
 
             if (!isNoRecordedValueDataPoint)
@@ -1081,16 +1005,11 @@ public class OtlpMetricsExporterTests : IDisposable
     }
 
     [Theory]
-    [InlineData(true, false, false)]
-    [InlineData(true, true, false)]
-    [InlineData(true, false, true)]
-    [InlineData(true, true, true)]
-
-    [InlineData(false, false, false)]
-    [InlineData(false, true, false)]
-    [InlineData(false, false, true)]
-    [InlineData(false, true, true)]
-    public void ToOtlpExemplarTests(bool useCustomSerializer, bool enableTagFiltering, bool enableTracing)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void ToOtlpExemplarTests(bool enableTagFiltering, bool enableTracing)
     {
         ActivitySource? activitySource = null;
         Activity? activity = null;
@@ -1135,15 +1054,7 @@ public class OtlpMetricsExporterTests : IDisposable
         meterProvider.ForceFlush();
 
         var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count);
-        var request = new OtlpCollector.ExportMetricsServiceRequest();
-        if (useCustomSerializer)
-        {
-            request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
-        }
-        else
-        {
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
-        }
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), false);
 
         Assert.Single(request.ResourceMetrics);
         var resourceMetric = request.ResourceMetrics.First();
@@ -1250,10 +1161,10 @@ public class OtlpMetricsExporterTests : IDisposable
         }
     }
 
-    private static OtlpCollector.ExportMetricsServiceRequest CreateMetricExportRequest(in Batch<Metric> batch, Resource resource)
+    private static OtlpCollector.ExportMetricsServiceRequest CreateMetricExportRequest(in Batch<Metric> batch, Resource resource, bool experimentalEmitNoRecordedValue)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(buffer, 0, resource, in batch);
+        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(buffer, 0, resource, in batch, experimentalEmitNoRecordedValue);
         using var stream = new MemoryStream(buffer, 0, writePosition);
 
         var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);

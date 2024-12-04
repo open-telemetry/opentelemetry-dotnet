@@ -10,7 +10,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.G
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 /// <summary>Base class for sending OTLP export request over gRPC.</summary>
-internal sealed class ProtobufOtlpGrpcExportClient : ProtobufOtlpExportClient
+internal sealed class OtlpGrpcExportClient : OtlpExportClient
 {
     public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
@@ -24,7 +24,7 @@ internal sealed class ProtobufOtlpGrpcExportClient : ProtobufOtlpExportClient
             status: null,
             grpcStatusDetailsHeader: null);
 
-    public ProtobufOtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
+    public OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
         : base(options, httpClient, signalPath)
     {
     }
