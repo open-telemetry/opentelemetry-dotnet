@@ -20,6 +20,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
 
+    private readonly bool emitNoRecordedValueNeededDataPoints;
     private Resource? resource;
 
     // Initial buffer size set to ~732KB.
@@ -52,6 +53,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
         this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? 5 : 0;
         this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Metrics);
+        this.emitNoRecordedValueNeededDataPoints = experimentalOptions!.EmitNoRecordedValueNeededDataPoints;
     }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
@@ -64,7 +66,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
         try
         {
-            int writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(this.buffer, this.startWritePosition, this.Resource, metrics);
+            int writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(this.buffer, this.startWritePosition, this.Resource, metrics, this.emitNoRecordedValueNeededDataPoints);
 
             if (this.startWritePosition == 5)
             {
