@@ -24,6 +24,9 @@ logger.FoodPriceChanged("<secret>", 9.99);
 // This will flush the remaining logs.
 loggerProvider.ForceFlush();
 
+// This will shutdown the logging pipeline.
+loggerFactory.Dispose();
+
 internal static partial class LoggerExtensions
 {
     [LoggerMessage(LogLevel.Information, "Food `{name}` price changed to `{price}`.")]

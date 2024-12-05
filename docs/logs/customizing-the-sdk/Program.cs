@@ -15,11 +15,7 @@ var loggerFactory = LoggerFactory.Create(builder =>
         logging.IncludeScopes = true;
         logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
             serviceName: "MyService",
-            serviceVersion: "1.0.0")
-            .AddAttributes(new Dictionary<string, object>
-                {
-                    { "service.instance.id", "my-instance" },
-                }));
+            serviceVersion: "1.0.0"));
         logging.AddConsoleExporter();
     });
 });

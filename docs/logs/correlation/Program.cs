@@ -39,7 +39,6 @@ public class Program
         // This will flush the remaining logs.
         loggerProvider.ForceFlush();
 
-        // Dispose logger factory before the application ends.
         // This will shutdown the logging pipeline.
         loggerFactory.Dispose();
 
