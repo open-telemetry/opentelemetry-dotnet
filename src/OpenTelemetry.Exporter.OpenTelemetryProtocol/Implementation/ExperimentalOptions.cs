@@ -17,8 +17,6 @@ internal sealed class ExperimentalOptions
 
     public const string OtlpDiskRetryDirectoryPathEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH";
 
-    public const string OtlpUseCustomSerializer = "OTEL_DOTNET_EXPERIMENTAL_USE_CUSTOM_PROTOBUF_SERIALIZER";
-
     public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
     {
@@ -29,11 +27,6 @@ internal sealed class ExperimentalOptions
         if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, EmitLogEventEnvVar, out var emitLogEventAttributes))
         {
             this.EmitLogEventAttributes = emitLogEventAttributes;
-        }
-
-        if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, OtlpUseCustomSerializer, out var useCustomSerializer))
-        {
-            this.UseCustomProtobufSerializer = useCustomSerializer;
         }
 
         if (configuration.TryGetStringValue(OtlpRetryEnvVar, out var retryPolicy) && retryPolicy != null)
@@ -85,9 +78,4 @@ internal sealed class ExperimentalOptions
     /// Gets the path on disk where the telemetry will be stored for retries at a later point.
     /// </summary>
     public string? DiskRetryDirectoryPath { get; }
-
-    /// <summary>
-    /// Gets a value indicating whether custom serializer should be used for OTLP export.
-    /// </summary>
-    public bool UseCustomProtobufSerializer { get; }
 }
