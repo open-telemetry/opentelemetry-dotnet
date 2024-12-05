@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using OpenTelemetry.Logs;
+
+var loggerProvider = Sdk.CreateLoggerProviderBuilder().Build();
 
 var loggerFactory = LoggerFactory.Create(builder =>
 {
@@ -18,9 +21,8 @@ var logger = loggerFactory.CreateLogger<Program>();
 // Message will be redacted by MyRedactionProcessor
 logger.FoodPriceChanged("<secret>", 9.99);
 
-// Dispose logger factory before the application ends.
-// This will flush the remaining logs and shutdown the logging pipeline.
-loggerFactory.Dispose();
+// This will flush the remaining logs.
+loggerProvider.ForceFlush();
 
 internal static partial class LoggerExtensions
 {

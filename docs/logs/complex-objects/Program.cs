@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using OpenTelemetry.Logs;
+
+var loggerProvider = Sdk.CreateLoggerProviderBuilder().Build();
 
 var loggerFactory = LoggerFactory.Create(builder =>
 {
@@ -25,8 +28,10 @@ var foodRecallNotice = new FoodRecallNotice
 
 logger.FoodRecallNotice(foodRecallNotice);
 
-// Dispose logger factory before the application ends.
-// This will flush the remaining logs and shutdown the logging pipeline.
+// This will flush the remaining logs.
+loggerProvider.ForceFlush();
+
+// This will shutdown the logging pipeline.
 loggerFactory.Dispose();
 
 internal static partial class LoggerExtensions

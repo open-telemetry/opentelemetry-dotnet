@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
@@ -34,6 +35,8 @@ app.MapGet("/", (ILogger<Program> logger) =>
 app.Logger.StartingApp();
 
 app.Run();
+
+// Any flush or shutdown operations we want to showcase?
 
 internal static partial class LoggerExtensions
 {

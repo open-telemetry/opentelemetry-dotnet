@@ -13,6 +13,8 @@ public class Program
 
     public static void Main()
     {
+        var loggerProvider = Sdk.CreateLoggerProviderBuilder().Build();
+
         var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
@@ -34,8 +36,11 @@ public class Program
             logger.FoodPriceChanged("artichoke", 9.99);
         }
 
+        // This will flush the remaining logs.
+        loggerProvider.ForceFlush();
+
         // Dispose logger factory before the application ends.
-        // This will flush the remaining logs and shutdown the logging pipeline.
+        // This will shutdown the logging pipeline.
         loggerFactory.Dispose();
 
         // Dispose tracer provider before the application ends.

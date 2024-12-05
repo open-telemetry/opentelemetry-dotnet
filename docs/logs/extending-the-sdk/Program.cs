@@ -3,6 +3,7 @@
 
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using OpenTelemetry.Logs;
 
 namespace ExtendingTheSdk;
 
@@ -10,6 +11,8 @@ public class Program
 {
     public static void Main()
     {
+        var loggerProvider = Sdk.CreateLoggerProviderBuilder().Build();
+
         using var loggerFactory = LoggerFactory.Create(builder =>
             builder.AddOpenTelemetry(options =>
             {
@@ -53,6 +56,12 @@ public class Program
 
         // message will be redacted by MyRedactionProcessor
         logger.LogInformation("OpenTelemetry {sensitiveString}.", "<secret>");
+
+        // This will flush the remaining logs.
+        loggerProvider.ForceFlush();
+
+        // This will shutdown the logging pipeline.
+        loggerFactory.Dispose();
     }
 
     internal struct Food

@@ -38,6 +38,8 @@ app.MapGet("/", (HttpContext context, ILogger<Program> logger, IDedicatedLogger<
 
 app.Run();
 
+// Any flush or shutdown operations we want to showcase?
+
 internal static partial class LoggerExtensions
 {
     [LoggerMessage(LogLevel.Information, "Food `{name}` price changed to `{price}`.")]
