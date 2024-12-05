@@ -35,8 +35,6 @@ app.Logger.StartingApp();
 
 app.Run();
 
-// Any flush or shutdown operations we want to showcase?
-
 internal static partial class LoggerExtensions
 {
     [LoggerMessage(LogLevel.Information, "Starting the app...")]

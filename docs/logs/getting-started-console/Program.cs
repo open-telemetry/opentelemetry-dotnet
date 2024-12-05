@@ -5,11 +5,6 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-// Comment for PR to think about:
-// -Unclear to me if this needs to be before LoggerFactory.Create and if they interact at all.
-// -Unintituive that this `LoggerProvider` is not an `ILoggerProvider`.
-// -In general, I think the `Sdk.Create*()` APIs are going to add confusion with the existing .Net blogs posts of
-//  how to use ILogger, ILoggerProvider, and ILoggerFactory.
 var loggerProvider = Sdk.CreateLoggerProviderBuilder().Build();
 
 var loggerFactory = LoggerFactory.Create(builder =>
