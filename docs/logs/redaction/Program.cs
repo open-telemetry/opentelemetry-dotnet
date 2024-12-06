@@ -6,7 +6,11 @@ using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 var sdk = OpenTelemetrySdk.Create(builder => builder
-    .WithLogging(logging => logging.AddConsoleExporter()));
+    .WithLogging(logging =>
+    {
+        logging.AddProcessor(new MyRedactionProcessor());
+        logging.AddConsoleExporter();
+    }));
 
 var logger = sdk.GetLoggerFactory().CreateLogger<Program>();
 
