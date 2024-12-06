@@ -5,17 +5,10 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-var loggerProvider = Sdk.CreateLoggerProviderBuilder().Build();
+var sdk = OpenTelemetrySdk.Create(builder => builder
+    .WithLogging(logging => logging.AddConsoleExporter()));
 
-var loggerFactory = LoggerFactory.Create(builder =>
-{
-    builder.AddOpenTelemetry(logging =>
-    {
-        logging.AddConsoleExporter();
-    });
-});
-
-var logger = loggerFactory.CreateLogger<Program>();
+var logger = sdk.GetLoggerFactory().CreateLogger<Program>();
 
 logger.FoodPriceChanged("artichoke", 9.99);
 
@@ -27,10 +20,10 @@ logger.FoodRecallNotice(
     companyName: "Contoso Fresh Vegetables, Inc.");
 
 // This will flush the remaining logs.
-loggerProvider.ForceFlush();
+sdk.LoggerProvider.ForceFlush();
 
-// This will shutdown the logging pipeline.
-loggerFactory.Dispose();
+// Dispose SDK before the application ends.
+sdk.Dispose();
 
 internal static partial class LoggerExtensions
 {

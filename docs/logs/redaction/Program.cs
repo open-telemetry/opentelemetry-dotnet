@@ -5,27 +5,19 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-var loggerProvider = Sdk.CreateLoggerProviderBuilder().Build();
+var sdk = OpenTelemetrySdk.Create(builder => builder
+    .WithLogging(logging => logging.AddConsoleExporter()));
 
-var loggerFactory = LoggerFactory.Create(builder =>
-{
-    builder.AddOpenTelemetry(logging =>
-    {
-        logging.AddProcessor(new MyRedactionProcessor());
-        logging.AddConsoleExporter();
-    });
-});
-
-var logger = loggerFactory.CreateLogger<Program>();
+var logger = sdk.GetLoggerFactory().CreateLogger<Program>();
 
 // Message will be redacted by MyRedactionProcessor
 logger.FoodPriceChanged("<secret>", 9.99);
 
 // This will flush the remaining logs.
-loggerProvider.ForceFlush();
+sdk.LoggerProvider.ForceFlush();
 
-// This will shutdown the logging pipeline.
-loggerFactory.Dispose();
+// Dispose SDK before the application ends.
+sdk.Dispose();
 
 internal static partial class LoggerExtensions
 {

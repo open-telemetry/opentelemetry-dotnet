@@ -6,21 +6,17 @@ using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
-var loggerProvider = Sdk.CreateLoggerProviderBuilder().Build();
-
-var loggerFactory = LoggerFactory.Create(builder =>
-{
-    builder.AddOpenTelemetry(logging =>
+var sdk = OpenTelemetrySdk.Create(builder => builder
+    .WithLogging(logging =>
     {
-        logging.IncludeScopes = true;
+        // logging.IncludeScopes = true;
         logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
             serviceName: "MyService",
             serviceVersion: "1.0.0"));
         logging.AddConsoleExporter();
-    });
-});
+    }));
 
-var logger = loggerFactory.CreateLogger<Program>();
+var logger = sdk.GetLoggerFactory().CreateLogger<Program>();
 
 logger.FoodPriceChanged("artichoke", 9.99);
 
@@ -40,10 +36,10 @@ logger.FoodRecallNotice(
     companyName: "Contoso Fresh Vegetables, Inc.");
 
 // This will flush the remaining logs.
-loggerProvider.ForceFlush();
+sdk.LoggerProvider.ForceFlush();
 
-// This will shutdown the logging pipeline.
-loggerFactory.Dispose();
+// Dispose SDK before the application ends.
+sdk.Dispose();
 
 internal static partial class LoggerExtensions
 {

@@ -11,19 +11,17 @@ public class Program
 {
     public static void Main()
     {
-        var loggerProvider = Sdk.CreateLoggerProviderBuilder().Build();
-
-        using var loggerFactory = LoggerFactory.Create(builder =>
-            builder.AddOpenTelemetry(options =>
+        var sdk = OpenTelemetrySdk.Create(builder => builder
+            .WithLogging(logging =>
             {
-                options.IncludeScopes = true;
-                options.AddProcessor(new MyProcessor("ProcessorA"))
-                       .AddProcessor(new MyProcessor("ProcessorB"))
-                       .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
-                       .AddMyExporter();
+                // logging.IncludeScopes = true;
+                logging.AddProcessor(new MyProcessor("ProcessorA"));
+                logging.AddProcessor(new MyProcessor("ProcessorB"));
+                logging.AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")));
+                logging.AddMyExporter();
             }));
 
-        var logger = loggerFactory.CreateLogger<Program>();
+        var logger = sdk.GetLoggerFactory().CreateLogger<Program>();
 
         // unstructured log
         logger.LogInformation("Hello, World!");
@@ -58,10 +56,10 @@ public class Program
         logger.LogInformation("OpenTelemetry {sensitiveString}.", "<secret>");
 
         // This will flush the remaining logs.
-        loggerProvider.ForceFlush();
+        sdk.LoggerProvider.ForceFlush();
 
-        // This will shutdown the logging pipeline.
-        loggerFactory.Dispose();
+        // Dispose SDK before the application ends.
+        sdk.Dispose();
     }
 
     internal struct Food

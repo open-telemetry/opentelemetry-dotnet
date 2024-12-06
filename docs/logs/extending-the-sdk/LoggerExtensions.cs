@@ -6,7 +6,7 @@ using OpenTelemetry.Logs;
 
 internal static class LoggerExtensions
 {
-    public static OpenTelemetryLoggerOptions AddMyExporter(this OpenTelemetryLoggerOptions options)
+    public static LoggerProviderBuilder AddMyExporter(this LoggerProviderBuilder options)
     {
         if (options == null)
         {

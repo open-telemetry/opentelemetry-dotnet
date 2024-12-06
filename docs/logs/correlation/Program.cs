@@ -13,22 +13,15 @@ public class Program
 
     public static void Main()
     {
-        var loggerProvider = Sdk.CreateLoggerProviderBuilder().Build();
-
-        var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource("MyCompany.MyProduct.MyLibrary")
-            .AddConsoleExporter()
-            .Build();
-
-        var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.AddOpenTelemetry(logging =>
+        var sdk = OpenTelemetrySdk.Create(builder => builder
+            .WithLogging(logging => logging.AddConsoleExporter())
+            .WithTracing(tracing =>
             {
-                logging.AddConsoleExporter();
-            });
-        });
+                tracing.AddSource("MyCompany.MyProduct.MyLibrary");
+                tracing.AddConsoleExporter();
+            }));
 
-        var logger = loggerFactory.CreateLogger<Program>();
+        var logger = sdk.GetLoggerFactory().CreateLogger<Program>();
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
@@ -37,13 +30,12 @@ public class Program
         }
 
         // This will flush the remaining logs.
-        loggerProvider.ForceFlush();
+        sdk.LoggerProvider.ForceFlush();
 
-        // This will shutdown the logging pipeline.
-        loggerFactory.Dispose();
+        // This will flush the remaining traces.
+        sdk.TracerProvider.ForceFlush();
 
-        // Dispose tracer provider before the application ends.
-        // This will flush the remaining spans and shutdown the tracing pipeline.
-        tracerProvider.Dispose();
+        // Dispose SDK before the application ends.
+        sdk.Dispose();
     }
 }

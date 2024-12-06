@@ -93,6 +93,10 @@ var sdk = OpenTelemetrySdk.Create(builder => builder
     .WithMetrics(metrics => /* Metrics configuration goes here */)
     .WithTracing(tracing => /* Tracing configuration goes here */));
 
+// Optionally ForceFlush() telemetry objects in memory
+sdk.LoggerProvider.ForceFlush();
+sdk.
+
 // During application shutdown
 sdk.Dispose();
 ```
