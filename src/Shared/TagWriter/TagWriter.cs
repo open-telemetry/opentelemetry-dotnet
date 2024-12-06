@@ -71,6 +71,10 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 {
                     this.WriteArrayTagInternal(ref state, key, array, tagValueMaxLength);
                 }
+                catch (ArgumentException)
+                {
+                    throw new IndexOutOfRangeException();
+                }
                 catch
                 {
                     // If an exception is thrown when calling ToString
@@ -152,27 +156,48 @@ internal abstract class TagWriter<TTagState, TArrayState>
     {
         var arrayState = this.arrayWriter.BeginWriteArray();
 
-        // This switch ensures the values of the resultant array-valued tag are of the same type.
-        switch (array)
+        try
         {
-            case char[] charArray: this.WriteStructToArray(ref arrayState, charArray); break;
-            case string?[] stringArray: this.WriteStringsToArray(ref arrayState, stringArray, tagValueMaxLength); break;
-            case bool[] boolArray: this.WriteStructToArray(ref arrayState, boolArray); break;
-            case byte[] byteArray: this.WriteToArrayCovariant(ref arrayState, byteArray); break;
-            case short[] shortArray: this.WriteToArrayCovariant(ref arrayState, shortArray); break;
+            // This switch ensures the values of the resultant array-valued tag are of the same type.
+            switch (array)
+            {
+                case char[] charArray: this.WriteStructToArray(ref arrayState, charArray); break;
+                case string?[] stringArray: this.WriteStringsToArray(ref arrayState, stringArray, tagValueMaxLength); break;
+                case bool[] boolArray: this.WriteStructToArray(ref arrayState, boolArray); break;
+                case byte[] byteArray: this.WriteToArrayCovariant(ref arrayState, byteArray); break;
+                case short[] shortArray: this.WriteToArrayCovariant(ref arrayState, shortArray); break;
 #if NETFRAMEWORK
-            case int[]: this.WriteArrayTagIntNetFramework(ref arrayState, array, tagValueMaxLength); break;
-            case long[]: this.WriteArrayTagLongNetFramework(ref arrayState, array, tagValueMaxLength); break;
+                case int[]: this.WriteArrayTagIntNetFramework(ref arrayState, array, tagValueMaxLength); break;
+                case long[]: this.WriteArrayTagLongNetFramework(ref arrayState, array, tagValueMaxLength); break;
 #else
-            case int[] intArray: this.WriteToArrayCovariant(ref arrayState, intArray); break;
-            case long[] longArray: this.WriteToArrayCovariant(ref arrayState, longArray); break;
+                case int[] intArray: this.WriteToArrayCovariant(ref arrayState, intArray); break;
+                case long[] longArray: this.WriteToArrayCovariant(ref arrayState, longArray); break;
 #endif
-            case float[] floatArray: this.WriteStructToArray(ref arrayState, floatArray); break;
-            case double[] doubleArray: this.WriteStructToArray(ref arrayState, doubleArray); break;
-            default: this.WriteToArrayTypeChecked(ref arrayState, array, tagValueMaxLength); break;
-        }
+                case float[] floatArray: this.WriteStructToArray(ref arrayState, floatArray); break;
+                case double[] doubleArray: this.WriteStructToArray(ref arrayState, doubleArray); break;
+                default: this.WriteToArrayTypeChecked(ref arrayState, array, tagValueMaxLength); break;
+            }
 
-        this.arrayWriter.EndWriteArray(ref arrayState);
+            this.arrayWriter.EndWriteArray(ref arrayState);
+        }
+        catch (IndexOutOfRangeException)
+        {
+            // If the array writer cannot be resized, TryResize should log a message to the event source, return false.
+            if (this.arrayWriter.TryResize())
+            {
+                this.WriteArrayTagInternal(ref state, key, array, tagValueMaxLength);
+                return;
+            }
+
+            // Drop the array value and set "TRUNCATED" as value for easier isolation.
+            // This is a best effort to avoid dropping the entire tag.
+            this.WriteStringTag(
+                ref state,
+                key,
+                "TRUNCATED".AsSpan());
+
+            throw;
+        }
 
         this.WriteArrayTag(ref state, key, ref arrayState);
     }

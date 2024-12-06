@@ -65,7 +65,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
         try
         {
-            int writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(this.buffer, this.startWritePosition, this.Resource, metrics);
+            int writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref this.buffer, this.startWritePosition, this.Resource, metrics);
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
