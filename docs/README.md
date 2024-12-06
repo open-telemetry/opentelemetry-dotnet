@@ -95,7 +95,8 @@ var sdk = OpenTelemetrySdk.Create(builder => builder
 
 // Optionally ForceFlush() telemetry objects in memory
 sdk.LoggerProvider.ForceFlush();
-sdk.
+sdk.MeterProvider.ForceFlush();
+sdk.TracerProvider.ForceFlush();
 
 // During application shutdown
 sdk.Dispose();
