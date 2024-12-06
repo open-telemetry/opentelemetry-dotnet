@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus;
@@ -28,8 +29,11 @@ internal static partial class PrometheusSerializer
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
         cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description, openMetricsRequested);
 
+        var isLong = metric.MetricType.IsLong();
         if (!metric.MetricType.IsHistogram())
         {
+            var isSum = metric.MetricType.IsSum();
+
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
@@ -40,12 +44,9 @@ internal static partial class PrometheusSerializer
 
                 buffer[cursor++] = unchecked((byte)' ');
 
-                // TODO: MetricType is same for all MetricPoints
-                // within a given Metric, so this check can avoided
-                // for each MetricPoint
-                if (((int)metric.MetricType & 0b_0000_1111) == 0x0a /* I8 */)
+                if (isLong)
                 {
-                    if (metric.MetricType.IsSum())
+                    if (isSum)
                     {
                         cursor = WriteLong(buffer, cursor, metricPoint.GetSumLong());
                     }
@@ -56,7 +57,7 @@ internal static partial class PrometheusSerializer
                 }
                 else
                 {
-                    if (metric.MetricType.IsSum())
+                    if (isSum)
                     {
                         cursor = WriteDouble(buffer, cursor, metricPoint.GetSumDouble());
                     }
@@ -70,15 +71,26 @@ internal static partial class PrometheusSerializer
 
                 cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
 
+                if (isSum && openMetricsRequested && metricPoint.TryGetExemplars(out var exemplarCollection))
+                {
+                    cursor = WriteSumExemplar(buffer, cursor, metric, exemplarCollection);
+                }
+
                 buffer[cursor++] = ASCII_LINEFEED;
             }
         }
         else
         {
+            Debug.Assert(!isLong, "Expected histogram metric to be of type `double`");
+
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var tags = metricPoint.Tags;
                 var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
+
+                metricPoint.TryGetExemplars(out var exemplarCollection);
+                var exemplars = exemplarCollection.GetEnumerator();
+                var hasExemplar = exemplars.MoveNext();
 
                 long totalCount = 0;
                 foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
@@ -106,6 +118,19 @@ internal static partial class PrometheusSerializer
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
+
+                    if (hasExemplar && openMetricsRequested)
+                    {
+                        if (exemplars.Current.DoubleValue <= histogramMeasurement.ExplicitBound)
+                        {
+                            cursor = WriteExemplar(buffer, cursor, exemplars.Current, metric.Name, isLong: false);
+                        }
+
+                        while (hasExemplar && exemplars.Current.DoubleValue <= histogramMeasurement.ExplicitBound)
+                        {
+                            hasExemplar = exemplars.MoveNext();
+                        }
+                    }
 
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
@@ -139,6 +164,101 @@ internal static partial class PrometheusSerializer
                 buffer[cursor++] = ASCII_LINEFEED;
             }
         }
+
+        return cursor;
+    }
+
+    private static int WriteSumExemplar(
+        byte[] buffer,
+        int cursor,
+        in Metric metric,
+        in ReadOnlyExemplarCollection exemplarCollection)
+    {
+        var exemplars = exemplarCollection.GetEnumerator();
+        if (!exemplars.MoveNext())
+        {
+            return cursor;
+        }
+
+        ref readonly Exemplar maxExemplar = ref exemplars.Current;
+        var isLong = metric.MetricType.IsLong();
+
+        while (exemplars.MoveNext())
+        {
+            if (isLong)
+            {
+                if (exemplars.Current.LongValue >= maxExemplar.LongValue)
+                {
+                    maxExemplar = ref exemplars.Current;
+                }
+            }
+            else
+            {
+                if (exemplars.Current.DoubleValue >= maxExemplar.DoubleValue)
+                {
+                    maxExemplar = ref exemplars.Current;
+                }
+            }
+        }
+
+        return WriteExemplar(buffer, cursor, maxExemplar, metric.Name, isLong);
+    }
+
+    private static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, string metricName, bool isLong)
+    {
+        buffer[cursor++] = unchecked((byte)' ');
+        buffer[cursor++] = unchecked((byte)'#');
+        buffer[cursor++] = unchecked((byte)' ');
+
+        buffer[cursor++] = unchecked((byte)'{');
+        var labelSetCursorStart = cursor;
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "trace_id=\"");
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, exemplar.TraceId.ToHexString());
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "\",span_id=\"");
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, exemplar.SpanId.ToHexString());
+        buffer[cursor++] = unchecked((byte)'"');
+        buffer[cursor++] = unchecked((byte)',');
+
+        var labelSetWritten = cursor - labelSetCursorStart - 8;
+
+        var tagResetCursor = cursor;
+
+        foreach (var tag in exemplar.FilteredTags)
+        {
+            var prevCursor = cursor;
+            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+
+            // From the spec:
+            //   Other characters in the text rendering of an exemplar such as ",= are not included in this limit
+            //   for implementation simplicity and for consistency between the text and proto formats.
+            labelSetWritten += cursor - prevCursor - 3; // subtract 2 x " and 1 x = character
+
+            buffer[cursor++] = unchecked((byte)',');
+
+            // From the spec:
+            //   The combined length of the label names and values of an Exemplar's LabelSet MUST NOT exceed 128 UTF-8 character code points.
+            if (labelSetWritten > 128)
+            {
+                cursor = tagResetCursor;
+                PrometheusExporterEventSource.Log.ExemplarTagsTooLong(metricName);
+                break;
+            }
+        }
+
+        buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
+        buffer[cursor++] = unchecked((byte)' ');
+
+        if (isLong)
+        {
+            cursor = WriteLong(buffer, cursor, exemplar.LongValue);
+        }
+        else
+        {
+            cursor = WriteDouble(buffer, cursor, exemplar.DoubleValue);
+        }
+
+        buffer[cursor++] = unchecked((byte)' ');
+        cursor = WriteTimestamp(buffer, cursor, exemplar.Timestamp.ToUnixTimeMilliseconds(), useOpenMetrics: true);
 
         return cursor;
     }
