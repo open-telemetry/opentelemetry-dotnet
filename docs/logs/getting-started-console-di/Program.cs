@@ -3,25 +3,21 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 // Add services to the container, including OpenTelemetry with logging
 var services = new ServiceCollection();
 services.AddOpenTelemetry().WithLogging(logging => logging.AddConsoleExporter());
 services.AddSingleton<ExampleService>();
-IServiceProvider serviceProvider = services.BuildServiceProvider();
+ServiceProvider serviceProvider = services.BuildServiceProvider();
 
 // Get the ExampleService object from the container
 ExampleService service = serviceProvider.GetRequiredService<ExampleService>();
 
 service.DoSomeWork();
 
-// This will flush the remaining logs.
-serviceProvider.GetRequiredService<LoggerProvider>().ForceFlush();
-
-// Dispose SDK before the application ends.
-serviceProvider.GetRequiredService<OpenTelemetrySdk>().Dispose();
+// Dispose before the application ends.
+serviceProvider.Dispose();
 
 internal static partial class LoggerExtensions
 {

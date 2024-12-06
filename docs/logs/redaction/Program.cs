@@ -13,9 +13,6 @@ var logger = sdk.GetLoggerFactory().CreateLogger<Program>();
 // Message will be redacted by MyRedactionProcessor
 logger.FoodPriceChanged("<secret>", 9.99);
 
-// This will flush the remaining logs.
-sdk.LoggerProvider.ForceFlush();
-
 // Dispose SDK before the application ends.
 sdk.Dispose();
 

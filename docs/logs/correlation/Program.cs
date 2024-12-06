@@ -29,12 +29,6 @@ public class Program
             logger.FoodPriceChanged("artichoke", 9.99);
         }
 
-        // This will flush the remaining logs.
-        sdk.LoggerProvider.ForceFlush();
-
-        // This will flush the remaining traces.
-        sdk.TracerProvider.ForceFlush();
-
         // Dispose SDK before the application ends.
         sdk.Dispose();
     }

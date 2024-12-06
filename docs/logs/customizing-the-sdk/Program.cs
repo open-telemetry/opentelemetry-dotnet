@@ -7,14 +7,15 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
 var sdk = OpenTelemetrySdk.Create(builder => builder
-    .WithLogging(logging =>
-    {
-        // logging.IncludeScopes = true;
-        logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
-            serviceName: "MyService",
-            serviceVersion: "1.0.0"));
-        logging.AddConsoleExporter();
-    }));
+    .WithLogging(
+        logging =>
+        {
+            logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                serviceName: "MyService",
+                serviceVersion: "1.0.0"));
+            logging.AddConsoleExporter();
+        },
+        options => options.IncludeScopes = true));
 
 var logger = sdk.GetLoggerFactory().CreateLogger<Program>();
 
@@ -34,9 +35,6 @@ logger.FoodRecallNotice(
     productType: "Food & Beverages",
     recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
     companyName: "Contoso Fresh Vegetables, Inc.");
-
-// This will flush the remaining logs.
-sdk.LoggerProvider.ForceFlush();
 
 // Dispose SDK before the application ends.
 sdk.Dispose();

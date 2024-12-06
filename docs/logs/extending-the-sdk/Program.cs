@@ -12,14 +12,15 @@ public class Program
     public static void Main()
     {
         var sdk = OpenTelemetrySdk.Create(builder => builder
-            .WithLogging(logging =>
-            {
-                // logging.IncludeScopes = true;
-                logging.AddProcessor(new MyProcessor("ProcessorA"));
-                logging.AddProcessor(new MyProcessor("ProcessorB"));
-                logging.AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")));
-                logging.AddMyExporter();
-            }));
+            .WithLogging(
+                logging =>
+                {
+                    logging.AddProcessor(new MyProcessor("ProcessorA"));
+                    logging.AddProcessor(new MyProcessor("ProcessorB"));
+                    logging.AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")));
+                    logging.AddMyExporter();
+                },
+                options => options.IncludeScopes = true));
 
         var logger = sdk.GetLoggerFactory().CreateLogger<Program>();
 
@@ -55,8 +56,9 @@ public class Program
         // message will be redacted by MyRedactionProcessor
         logger.LogInformation("OpenTelemetry {sensitiveString}.", "<secret>");
 
-        // This will flush the remaining logs.
-        sdk.LoggerProvider.ForceFlush();
+        // Attempt to flush the remaining logs when using an exporter that may require it, such as the custom one defined here.
+        // Ignoring success or failure for flush after 5 seconds, but a richer application should choose to handle this in some manner.
+        sdk.LoggerProvider.ForceFlush(5000);
 
         // Dispose SDK before the application ends.
         sdk.Dispose();

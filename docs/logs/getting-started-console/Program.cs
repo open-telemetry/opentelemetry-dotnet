@@ -19,9 +19,6 @@ logger.FoodRecallNotice(
     recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
     companyName: "Contoso Fresh Vegetables, Inc.");
 
-// This will flush the remaining logs.
-sdk.LoggerProvider.ForceFlush();
-
 // Dispose SDK before the application ends.
 sdk.Dispose();
 

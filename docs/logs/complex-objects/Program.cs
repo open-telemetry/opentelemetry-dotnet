@@ -21,9 +21,6 @@ var foodRecallNotice = new FoodRecallNotice
 
 logger.FoodRecallNotice(foodRecallNotice);
 
-// This will flush the remaining logs.
-sdk.LoggerProvider.ForceFlush();
-
 // Dispose SDK before the application ends.
 sdk.Dispose();
 
