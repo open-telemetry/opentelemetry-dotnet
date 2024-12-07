@@ -197,6 +197,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 "TRUNCATED".AsSpan());
 
             this.LogUnsupportedTagTypeAndReturnFalse(key, array!.GetType().ToString());
+            return;
         }
 
         this.WriteArrayTag(ref state, key, ref arrayState);
