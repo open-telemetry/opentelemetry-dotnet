@@ -213,7 +213,7 @@ public class OtlpArrayTagWriterTests : IDisposable
         using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags);
 
         Assert.NotNull(activity);
-        Assert.Throws<IndexOutOfRangeException>(() => ToOtlpSpan(new SdkLimitOptions(), activity));
+        Assert.Throws<ArgumentException>(() => ToOtlpSpan(new SdkLimitOptions(), activity));
     }
 
     [Fact]

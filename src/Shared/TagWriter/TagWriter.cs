@@ -71,9 +71,9 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 {
                     this.WriteArrayTagInternal(ref state, key, array, tagValueMaxLength);
                 }
-                catch (ArgumentException)
+                catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
                 {
-                    throw new IndexOutOfRangeException();
+                    throw;
                 }
                 catch
                 {
@@ -180,7 +180,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
             this.arrayWriter.EndWriteArray(ref arrayState);
         }
-        catch (IndexOutOfRangeException)
+        catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
         {
             // If the array writer cannot be resized, TryResize should log a message to the event source, return false.
             if (this.arrayWriter.TryResize())
@@ -196,7 +196,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 key,
                 "TRUNCATED".AsSpan());
 
-            throw;
+            this.LogUnsupportedTagTypeAndReturnFalse(key, array!.GetType().ToString());
         }
 
         this.WriteArrayTag(ref state, key, ref arrayState);
