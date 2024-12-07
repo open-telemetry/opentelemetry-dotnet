@@ -72,7 +72,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 
         try
         {
-            int writePosition = ProtobufOtlpLogSerializer.WriteLogsData(this.buffer, this.startWritePosition, this.sdkLimitOptions, this.experimentalOptions, this.Resource, logRecordBatch);
+            int writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref this.buffer, this.startWritePosition, this.sdkLimitOptions, this.experimentalOptions, this.Resource, logRecordBatch);
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {

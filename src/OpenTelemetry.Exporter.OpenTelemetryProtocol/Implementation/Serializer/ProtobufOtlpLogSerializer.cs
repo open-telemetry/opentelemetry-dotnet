@@ -20,7 +20,7 @@ internal static class ProtobufOtlpLogSerializer
     [ThreadStatic]
     private static SerializationState? threadSerializationState;
 
-    internal static int WriteLogsData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, in Batch<LogRecord> logRecordBatch)
+    internal static int WriteLogsData(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, in Batch<LogRecord> logRecordBatch)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.LogsData_Resource_Logs, ProtobufWireType.LEN);
         int logsDataLengthPosition = writePosition;
@@ -47,27 +47,27 @@ internal static class ProtobufOtlpLogSerializer
             logRecords.Add(logRecord);
         }
 
-        writePosition = TryWriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, ScopeLogsList);
+        writePosition = TryWriteResourceLogs(ref buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, ScopeLogsList);
         ProtobufSerializer.WriteReservedLength(buffer, logsDataLengthPosition, writePosition - (logsDataLengthPosition + ReserveSizeForLength));
         ReturnLogRecordListToPool();
 
         return writePosition;
     }
 
-    internal static int TryWriteResourceLogs(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<string, List<LogRecord>> scopeLogs)
+    internal static int TryWriteResourceLogs(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<string, List<LogRecord>> scopeLogs)
     {
         try
         {
             writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
         }
-        catch (IndexOutOfRangeException)
+        catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
         {
             if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Logs))
             {
                 throw;
             }
 
-            return TryWriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
+            return TryWriteResourceLogs(ref buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
         }
 
         return writePosition;

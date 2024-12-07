@@ -220,6 +220,12 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         this.WriteEvent(24, grpcStatusDetailsHeader, exception);
     }
 
+    [Event(25, Message = "The array tag buffer exceeded the maximum allowed size. The array tag value was replaced with 'TRUNCATED'", Level = EventLevel.Warning)]
+    public void ArrayBufferExceededMaxSize()
+    {
+        this.WriteEvent(25);
+    }
+
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
     {
         this.InvalidConfigurationValue(key, value);

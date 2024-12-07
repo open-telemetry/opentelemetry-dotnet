@@ -17,7 +17,7 @@ internal static class ProtobufOtlpMetricSerializer
 
     private delegate int WriteExemplarFunc(byte[] buffer, int writePosition, in Exemplar exemplar);
 
-    internal static int WriteMetricsData(byte[] buffer, int writePosition, Resources.Resource? resource, in Batch<Metric> batch)
+    internal static int WriteMetricsData(ref byte[] buffer, int writePosition, Resources.Resource? resource, in Batch<Metric> batch)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.MetricsData_Resource_Metrics, ProtobufWireType.LEN);
         int mericsDataLengthPosition = writePosition;
@@ -35,27 +35,27 @@ internal static class ProtobufOtlpMetricSerializer
             metrics.Add(metric);
         }
 
-        writePosition = TryWriteResourceMetrics(buffer, writePosition, resource, ScopeMetricsList);
+        writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, ScopeMetricsList);
         ProtobufSerializer.WriteReservedLength(buffer, mericsDataLengthPosition, writePosition - (mericsDataLengthPosition + ReserveSizeForLength));
         ReturnMetricListToPool();
 
         return writePosition;
     }
 
-    internal static int TryWriteResourceMetrics(byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<string, List<Metric>> scopeMetrics)
+    internal static int TryWriteResourceMetrics(ref byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<string, List<Metric>> scopeMetrics)
     {
         try
         {
             writePosition = WriteResourceMetrics(buffer, writePosition, resource, scopeMetrics);
         }
-        catch (IndexOutOfRangeException)
+        catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
         {
             if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics))
             {
                 throw;
             }
 
-            return TryWriteResourceMetrics(buffer, writePosition, resource, scopeMetrics);
+            return TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetrics);
         }
 
         return writePosition;
