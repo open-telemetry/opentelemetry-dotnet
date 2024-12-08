@@ -6,8 +6,8 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Updated `OpenTelemetry.Metrics.MetricStreamIdentity` Metric tags are now considered identifiers,
-  contributing to metric scope uniqueness.
+* [Meter.Tags](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.metrics.meter.tags?view=net-9.0) will now be considered when resolving the SDK metric to update when measurements are recorded.
+  Meters with the same name and different tags will now lead to unique metrics.
   ([#5982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5982))
 
 ## 1.10.0
