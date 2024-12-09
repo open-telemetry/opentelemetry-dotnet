@@ -173,7 +173,7 @@ public class OtlpHttpTraceExportClientTests
             }
             else
             {
-                Assert.Contains(resourceSpan.Resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
+                Assert.DoesNotContain(resourceSpan.Resource.Attributes, kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName);
             }
         }
     }
