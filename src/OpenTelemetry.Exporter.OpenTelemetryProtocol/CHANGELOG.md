@@ -14,7 +14,8 @@ Notes](../../RELEASENOTES.md).
   * `Grpc.Net.Client`
   * `Grpc.Tools`
 
-  These changes were made to streamline dependencies and reduce the footprint of the exporter.
+  These changes were made to streamline dependencies and reduce the footprint of
+  the exporter.
   ([#6015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6015))
 
 * Switched from using the `Google.Protobuf` library for serialization to a
