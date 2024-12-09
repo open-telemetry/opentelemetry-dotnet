@@ -7,6 +7,28 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Removed the following package references:
+
+  * `Google.Protobuf`
+  * `Grpc`
+  * `Grpc.Net.Client`
+  * `Grpc.Tools`
+
+  These changes were made to streamline dependencies and reduce the footprint of the exporter.
+
+* Switched from using the `Google.Protobuf` library for serialization to a
+  custom manual implementation of protobuf serialization.
+
+* Fixed an issue where a `service.name` was added to the resource if it was
+  missing. The exporter now respects the resource data provided by the SDK
+  without modifications.
+
+* Removed the peer service resolver, which was based on earlier experimental
+  semantic conventions that are not part of the stable specification. This
+  change ensures that the exporter no longer modifies or assumes the value of
+  peer service attributes, aligning it more closely with OpenTelemetry protocol
+  specifications 
+
 ## 1.10.0
 
 Released 2024-Nov-12
