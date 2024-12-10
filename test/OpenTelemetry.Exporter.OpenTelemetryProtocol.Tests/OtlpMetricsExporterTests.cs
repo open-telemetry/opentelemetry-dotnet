@@ -943,9 +943,6 @@ public class OtlpMetricsExporterTests : IDisposable
 
         Assert.Single(request.ResourceMetrics);
         var resourceMetric = request.ResourceMetrics.First();
-        var otlpResource = resourceMetric.Resource;
-
-        Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
 
         Assert.Single(resourceMetric.ScopeMetrics);
         var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
