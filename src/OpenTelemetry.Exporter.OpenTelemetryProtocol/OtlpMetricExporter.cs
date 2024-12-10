@@ -17,6 +17,7 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 public class OtlpMetricExporter : BaseExporter<Metric>
 {
+    private const int GrpcStartWritePosition = 5;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
 
@@ -51,8 +52,8 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
-        this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? 5 : 0;
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Metrics);
+        this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Metrics);
         this.emitNoRecordedValueNeededDataPoints = experimentalOptions!.EmitNoRecordedValueNeededDataPoints;
     }
 
@@ -68,27 +69,20 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         {
             int writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(this.buffer, this.startWritePosition, this.Resource, metrics, this.emitNoRecordedValueNeededDataPoints);
 
-            if (this.startWritePosition == 5)
+            if (this.startWritePosition == GrpcStartWritePosition)
             {
                 // Grpc payload consists of 3 parts
                 // byte 0 - Specifying if the payload is compressed.
                 // 1-4 byte - Specifies the length of payload in big endian format.
                 // 5 and above -  Protobuf serialized data.
                 Span<byte> data = new Span<byte>(this.buffer, 1, 4);
-                var dataLength = writePosition - 5;
+                var dataLength = writePosition - GrpcStartWritePosition;
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }
 
             if (!this.transmissionHandler.TrySubmitRequest(this.buffer, writePosition))
             {
                 return ExportResult.Failure;
-            }
-        }
-        catch (IndexOutOfRangeException)
-        {
-            if (!this.IncreaseBufferSize())
-            {
-                throw;
             }
         }
         catch (Exception ex)
@@ -102,21 +96,4 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds) => this.transmissionHandler.Shutdown(timeoutMilliseconds);
-
-    // TODO: Consider moving this to a shared utility class.
-    private bool IncreaseBufferSize()
-    {
-        var newBufferSize = this.buffer.Length * 2;
-
-        if (newBufferSize > 100 * 1024 * 1024)
-        {
-            return false;
-        }
-
-        var newBuffer = new byte[newBufferSize];
-        this.buffer.CopyTo(newBuffer, 0);
-        this.buffer = newBuffer;
-
-        return true;
-    }
 }

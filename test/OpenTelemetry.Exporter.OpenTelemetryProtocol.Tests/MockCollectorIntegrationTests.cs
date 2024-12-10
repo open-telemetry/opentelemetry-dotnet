@@ -182,7 +182,6 @@ public sealed class MockCollectorIntegrationTests
                                  .AddInMemoryCollection(new Dictionary<string, string?>
                                  {
                                      [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null,
-                                     [ExperimentalOptions.OtlpUseCustomSerializer] = "true",
                                  })
                                  .Build();
 
@@ -271,7 +270,6 @@ public sealed class MockCollectorIntegrationTests
                                  .AddInMemoryCollection(new Dictionary<string, string?>
                                  {
                                      [ExperimentalOptions.OtlpRetryEnvVar] = useRetryTransmissionHandler ? "in_memory" : null,
-                                     [ExperimentalOptions.OtlpUseCustomSerializer] = "true",
                                  })
                                  .Build();
 
@@ -372,14 +370,7 @@ public sealed class MockCollectorIntegrationTests
             transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
         }
 
-        var configuration = new ConfigurationBuilder()
-                         .AddInMemoryCollection(new Dictionary<string, string?>
-                         {
-                             [ExperimentalOptions.OtlpUseCustomSerializer] = "true",
-                         })
-                         .Build();
-
-        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new(), new(configuration), transmissionHandler);
+        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new(), new(), transmissionHandler);
 
         var activitySourceName = "otel.http.persistent.storage.retry.test";
         using var source = new ActivitySource(activitySourceName);
@@ -512,14 +503,7 @@ public sealed class MockCollectorIntegrationTests
             transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
         }
 
-        var configuration = new ConfigurationBuilder()
-                                 .AddInMemoryCollection(new Dictionary<string, string?>
-                                 {
-                                     [ExperimentalOptions.OtlpUseCustomSerializer] = "true",
-                                 })
-                                 .Build();
-
-        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new(), new(configuration), transmissionHandler);
+        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new(), new(), transmissionHandler);
 
         var activitySourceName = "otel.grpc.persistent.storage.retry.test";
         using var source = new ActivitySource(activitySourceName);

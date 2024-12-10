@@ -47,9 +47,28 @@ internal static class ProtobufOtlpLogSerializer
             logRecords.Add(logRecord);
         }
 
-        writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, ScopeLogsList);
+        writePosition = TryWriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, ScopeLogsList);
         ProtobufSerializer.WriteReservedLength(buffer, logsDataLengthPosition, writePosition - (logsDataLengthPosition + ReserveSizeForLength));
         ReturnLogRecordListToPool();
+
+        return writePosition;
+    }
+
+    internal static int TryWriteResourceLogs(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<string, List<LogRecord>> scopeLogs)
+    {
+        try
+        {
+            writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
+        }
+        catch (IndexOutOfRangeException)
+        {
+            if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Logs))
+            {
+                throw;
+            }
+
+            return TryWriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
+        }
 
         return writePosition;
     }

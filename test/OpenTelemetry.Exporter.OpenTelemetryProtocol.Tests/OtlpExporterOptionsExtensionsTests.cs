@@ -44,7 +44,7 @@ public class OtlpExporterOptionsExtensionsTests
             Protocol = protocol,
         };
 
-        var exportClient = options.GetProtobufExportClient(OtlpSignalType.Traces);
+        var exportClient = options.GetExportClient(OtlpSignalType.Traces);
 
         Assert.Equal(expectedExportClientType, exportClient.GetType());
     }
@@ -57,7 +57,7 @@ public class OtlpExporterOptionsExtensionsTests
             Protocol = (OtlpExportProtocol)123,
         };
 
-        Assert.Throws<NotSupportedException>(() => options.GetProtobufExportClient(OtlpSignalType.Traces));
+        Assert.Throws<NotSupportedException>(() => options.GetExportClient(OtlpSignalType.Traces));
     }
 
     [Theory]
@@ -99,7 +99,7 @@ public class OtlpExporterOptionsExtensionsTests
          .AddInMemoryCollection(new Dictionary<string, string?> { [ExperimentalOptions.OtlpRetryEnvVar] = retryStrategy })
          .Build();
 
-        var transmissionHandler = exporterOptions.GetProtobufExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Traces);
+        var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Traces);
         AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
     }
 

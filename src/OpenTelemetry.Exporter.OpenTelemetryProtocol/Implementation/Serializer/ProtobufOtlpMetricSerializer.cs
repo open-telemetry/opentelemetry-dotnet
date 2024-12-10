@@ -41,9 +41,28 @@ internal static class ProtobufOtlpMetricSerializer
             metrics.Add(metric);
         }
 
-        writePosition = WriteResourceMetrics(buffer, writePosition, resource, ScopeMetricsList, emitNoRecordedValueNeededDataPoints);
+        writePosition = TryWriteResourceMetrics(buffer, writePosition, resource, ScopeMetricsList, emitNoRecordedValueNeededDataPoints);
         ProtobufSerializer.WriteReservedLength(buffer, mericsDataLengthPosition, writePosition - (mericsDataLengthPosition + ReserveSizeForLength));
         ReturnMetricListToPool();
+
+        return writePosition;
+    }
+
+    internal static int TryWriteResourceMetrics(byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<string, List<Metric>> scopeMetrics, bool emitNoRecordedValueNeededDataPoints)
+    {
+        try
+        {
+            writePosition = WriteResourceMetrics(buffer, writePosition, resource, scopeMetrics, emitNoRecordedValueNeededDataPoints);
+        }
+        catch (IndexOutOfRangeException)
+        {
+            if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics))
+            {
+                throw;
+            }
+
+            return TryWriteResourceMetrics(buffer, writePosition, resource, scopeMetrics, emitNoRecordedValueNeededDataPoints);
+        }
 
         return writePosition;
     }
