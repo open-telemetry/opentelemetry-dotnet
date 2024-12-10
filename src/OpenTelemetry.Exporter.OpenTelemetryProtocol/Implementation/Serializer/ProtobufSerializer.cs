@@ -321,6 +321,13 @@ internal static class ProtobufSerializer
         writePosition = WriteLength(buffer, writePosition, numberOfUtf8CharsInString);
 
 #if NETFRAMEWORK || NETSTANDARD2_0
+        if (buffer.Length - writePosition < numberOfUtf8CharsInString)
+        {
+            // Note: Validate there is enough space in the buffer to hold the
+            // string otherwise throw to trigger a resize of the buffer.
+            throw new IndexOutOfRangeException();
+        }
+
         unsafe
         {
             fixed (char* strPtr = &GetNonNullPinnableReference(value))
