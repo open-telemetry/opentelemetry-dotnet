@@ -12,7 +12,6 @@ Notes](../../RELEASENOTES.md).
   * `Google.Protobuf`
   * `Grpc`
   * `Grpc.Net.Client`
-  * `Grpc.Tools`
 
   These changes were made to streamline dependencies and reduce the footprint of
   the exporter.
