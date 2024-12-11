@@ -12,26 +12,31 @@ internal static class ProtobufOtlpMetricSerializer
     private const int TraceIdSize = 16;
     private const int SpanIdSize = 8;
 
-    private static readonly Stack<List<Metric>> MetricListPool = [];
-    private static readonly Dictionary<string, List<Metric>> ScopeMetricsList = [];
+    [ThreadStatic]
+    private static Stack<List<Metric>>? metricListPool;
+    [ThreadStatic]
+    private static Dictionary<string, List<Metric>>? scopeMetricsList;
 
     private delegate int WriteExemplarFunc(byte[] buffer, int writePosition, in Exemplar exemplar);
 
     internal static int WriteMetricsData(ref byte[] buffer, int writePosition, Resources.Resource? resource, in Batch<Metric> batch)
     {
+        metricListPool ??= [];
+        scopeMetricsList ??= [];
+
         foreach (var metric in batch)
         {
             var metricName = metric.MeterName;
-            if (!ScopeMetricsList.TryGetValue(metricName, out var metrics))
+            if (!scopeMetricsList.TryGetValue(metricName, out var metrics))
             {
-                metrics = MetricListPool.Count > 0 ? MetricListPool.Pop() : new List<Metric>();
-                ScopeMetricsList[metricName] = metrics;
+                metrics = metricListPool.Count > 0 ? metricListPool.Pop() : new List<Metric>();
+                scopeMetricsList[metricName] = metrics;
             }
 
             metrics.Add(metric);
         }
 
-        writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, ScopeMetricsList);
+        writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetricsList);
         ReturnMetricListToPool();
 
         return writePosition;
@@ -67,15 +72,15 @@ internal static class ProtobufOtlpMetricSerializer
 
     private static void ReturnMetricListToPool()
     {
-        if (ScopeMetricsList.Count != 0)
+        if (scopeMetricsList.Count != 0)
         {
-            foreach (var entry in ScopeMetricsList)
+            foreach (var entry in scopeMetricsList)
             {
                 entry.Value.Clear();
-                MetricListPool.Push(entry.Value);
+                metricListPool.Push(entry.Value);
             }
 
-            ScopeMetricsList.Clear();
+            scopeMetricsList.Clear();
         }
     }
 
