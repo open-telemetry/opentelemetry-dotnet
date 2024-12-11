@@ -184,7 +184,7 @@ public class OtlpTraceExporterTests
             }
             else
             {
-                Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
+                Assert.DoesNotContain(otlpResource.Attributes, kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName);
             }
 
             var scopeSpans = request.ResourceSpans.First().ScopeSpans;
@@ -590,6 +590,46 @@ public class OtlpTraceExporterTests
         }
     }
 
+    [Fact]
+    public void TracesSerialization_ExpandsBufferForTracesAndSerializes()
+    {
+        var tags = new ActivityTagsCollection
+        {
+            new("Tagkey", "Tagvalue"),
+        };
+
+        using var activitySource = new ActivitySource(nameof(this.TracesSerialization_ExpandsBufferForTracesAndSerializes));
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags);
+
+        Assert.NotNull(activity);
+        var batch = new Batch<Activity>([activity], 1);
+        RunTest(new(), batch);
+
+        void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
+        {
+            var buffer = new byte[50];
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
+            var request = new OtlpCollector.ExportTraceServiceRequest();
+            request.ResourceSpans.Add(tracesData.ResourceSpans);
+
+            // Buffer should be expanded to accommodate the large array.
+            Assert.True(buffer.Length > 50);
+
+            Assert.Single(request.ResourceSpans);
+            var scopeSpans = request.ResourceSpans.First().ScopeSpans;
+            Assert.Single(scopeSpans);
+            var otlpSpan = scopeSpans.First().Spans.First();
+            Assert.NotNull(otlpSpan);
+
+            // The string is too large, hence not evaluating the content.
+            var keyValue = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "Tagkey");
+            Assert.NotNull(keyValue);
+            Assert.Equal("Tagvalue", keyValue.Value.StringValue);
+        }
+    }
+
     [Theory]
     [InlineData(StatusCode.Unset, "Unset", "Description will be ignored if status is Unset.")]
     [InlineData(StatusCode.Ok, "Ok", "Description must only be used with the Error StatusCode.")]
@@ -743,10 +783,10 @@ public class OtlpTraceExporterTests
     [Fact]
     public void Shutdown_ClientShutdownIsCalled()
     {
-        var exportClientMock = new TestProtobufExportClient();
+        var exportClientMock = new TestExportClient();
 
         var exporterOptions = new OtlpExporterOptions();
-        var transmissionHandler = new ProtobufOtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+        var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
 
         using var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
         exporter.Shutdown();
@@ -970,7 +1010,7 @@ public class OtlpTraceExporterTests
     private static OtlpCollector.ExportTraceServiceRequest CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(buffer, 0, sdkOptions, resource, batch);
+        var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
         var request = new OtlpCollector.ExportTraceServiceRequest();

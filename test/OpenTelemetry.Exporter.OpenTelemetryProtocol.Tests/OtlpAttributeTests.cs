@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.CodeAnalysis;
-using Google.Protobuf.Collections;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using Xunit;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 
@@ -269,12 +268,22 @@ public class OtlpAttributeTests
 
     private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute)
     {
-        var destination = new RepeatedField<OtlpCommon.KeyValue>();
-
-        if (OtlpTagWriter.Instance.TryWriteTag(ref destination, tag))
+        ProtobufOtlpTagWriter.OtlpTagWriterState otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
-            Assert.NotEmpty(destination);
-            attribute = destination[0];
+            Buffer = new byte[1024],
+            WritePosition = 0,
+        };
+
+        if (ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag))
+        {
+            // Deserialize the ResourceSpans and validate the attributes.
+            using (var stream = new MemoryStream(otlpTagWriterState.Buffer, 0, otlpTagWriterState.WritePosition))
+            {
+                var keyValue = OtlpCommon.KeyValue.Parser.ParseFrom(stream);
+                Assert.NotNull(keyValue);
+                attribute = keyValue;
+            }
+
             return true;
         }
 

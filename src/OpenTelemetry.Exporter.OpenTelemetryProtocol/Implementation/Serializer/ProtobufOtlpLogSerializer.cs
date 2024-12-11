@@ -20,7 +20,7 @@ internal static class ProtobufOtlpLogSerializer
     [ThreadStatic]
     private static SerializationState? threadSerializationState;
 
-    internal static int WriteLogsData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, in Batch<LogRecord> logRecordBatch)
+    internal static int WriteLogsData(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, in Batch<LogRecord> logRecordBatch)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.LogsData_Resource_Logs, ProtobufWireType.LEN);
         int logsDataLengthPosition = writePosition;
@@ -47,9 +47,28 @@ internal static class ProtobufOtlpLogSerializer
             logRecords.Add(logRecord);
         }
 
-        writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, ScopeLogsList);
+        writePosition = TryWriteResourceLogs(ref buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, ScopeLogsList);
         ProtobufSerializer.WriteReservedLength(buffer, logsDataLengthPosition, writePosition - (logsDataLengthPosition + ReserveSizeForLength));
         ReturnLogRecordListToPool();
+
+        return writePosition;
+    }
+
+    internal static int TryWriteResourceLogs(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<string, List<LogRecord>> scopeLogs)
+    {
+        try
+        {
+            writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
+        }
+        catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
+        {
+            if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Logs))
+            {
+                throw;
+            }
+
+            return TryWriteResourceLogs(ref buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
+        }
 
         return writePosition;
     }
@@ -113,7 +132,7 @@ internal static class ProtobufOtlpLogSerializer
 
         // numberOfUtf8CharsInString + tagSize + length field size.
         writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, value);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, value);
 
         for (int i = 0; i < logRecords.Count; i++)
         {
@@ -279,7 +298,7 @@ internal static class ProtobufOtlpLogSerializer
 
         // length = numberOfUtf8CharsInString + tagSize + length field size.
         writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, ProtobufOtlpLogFieldNumberConstants.LogRecord_Body, ProtobufWireType.LEN);
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.AnyValue_String_Value, numberOfUtf8CharsInString, value);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, numberOfUtf8CharsInString, value);
         return writePosition;
     }
 

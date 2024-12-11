@@ -16,8 +16,9 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 public class OtlpTraceExporter : BaseExporter<Activity>
 {
+    private const int GrpcStartWritePosition = 5;
     private readonly SdkLimitOptions sdkLimitOptions;
-    private readonly ProtobufOtlpExporterTransmissionHandler transmissionHandler;
+    private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
 
     private Resource? resource;
@@ -42,19 +43,19 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
     /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
-    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler{T}"/>.</param>
+    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler"/>.</param>
     internal OtlpTraceExporter(
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
-        ProtobufOtlpExporterTransmissionHandler? transmissionHandler = null)
+        OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
         this.sdkLimitOptions = sdkLimitOptions!;
-        this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? 5 : 0;
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
+        this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
     }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
@@ -67,16 +68,16 @@ public class OtlpTraceExporter : BaseExporter<Activity>
 
         try
         {
-            int writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(this.buffer, this.startWritePosition, this.sdkLimitOptions, this.Resource, activityBatch);
+            int writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref this.buffer, this.startWritePosition, this.sdkLimitOptions, this.Resource, activityBatch);
 
-            if (this.startWritePosition == 5)
+            if (this.startWritePosition == GrpcStartWritePosition)
             {
                 // Grpc payload consists of 3 parts
                 // byte 0 - Specifying if the payload is compressed.
                 // 1-4 byte - Specifies the length of payload in big endian format.
                 // 5 and above -  Protobuf serialized data.
                 Span<byte> data = new Span<byte>(this.buffer, 1, 4);
-                var dataLength = writePosition - 5;
+                var dataLength = writePosition - GrpcStartWritePosition;
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }
 

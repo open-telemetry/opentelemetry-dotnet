@@ -63,7 +63,7 @@ public class OtlpHttpExporterBenchmarks
             options,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            new ProtobufOtlpExporterTransmissionHandler(new ProtobufOtlpHttpExportClient(options, options.HttpClientFactory(), "v1/traces"), options.TimeoutMilliseconds));
+            new OtlpExporterTransmissionHandler(new OtlpHttpExportClient(options, options.HttpClientFactory(), "v1/traces"), options.TimeoutMilliseconds));
 
         this.activity = ActivityHelper.CreateTestActivity();
         this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);

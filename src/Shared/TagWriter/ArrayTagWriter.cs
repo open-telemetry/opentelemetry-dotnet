@@ -19,4 +19,6 @@ internal abstract class ArrayTagWriter<TArrayState>
     public abstract void WriteStringValue(ref TArrayState state, ReadOnlySpan<char> value);
 
     public abstract void EndWriteArray(ref TArrayState state);
+
+    public virtual bool TryResize() => false;
 }
