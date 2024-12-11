@@ -72,12 +72,12 @@ internal static class ProtobufOtlpMetricSerializer
 
     private static void ReturnMetricListToPool()
     {
-        if (scopeMetricsList.Count != 0)
+        if (scopeMetricsList?.Count != 0)
         {
-            foreach (var entry in scopeMetricsList)
+            foreach (var entry in scopeMetricsList!)
             {
                 entry.Value.Clear();
-                metricListPool.Push(entry.Value);
+                metricListPool?.Push(entry.Value);
             }
 
             scopeMetricsList.Clear();

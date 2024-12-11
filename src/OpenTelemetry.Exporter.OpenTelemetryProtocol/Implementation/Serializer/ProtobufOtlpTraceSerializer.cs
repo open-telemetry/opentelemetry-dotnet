@@ -79,12 +79,12 @@ internal static class ProtobufOtlpTraceSerializer
 
     internal static void ReturnActivityListToPool()
     {
-        if (scopeTracesList.Count != 0)
+        if (scopeTracesList?.Count != 0)
         {
-            foreach (var entry in scopeTracesList)
+            foreach (var entry in scopeTracesList!)
             {
                 entry.Value.Clear();
-                activityListPool.Push(entry.Value);
+                activityListPool?.Push(entry.Value);
             }
 
             scopeTracesList.Clear();

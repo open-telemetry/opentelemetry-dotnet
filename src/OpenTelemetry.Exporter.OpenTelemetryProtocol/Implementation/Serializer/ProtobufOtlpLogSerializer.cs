@@ -84,9 +84,9 @@ internal static class ProtobufOtlpLogSerializer
 
     internal static void ReturnLogRecordListToPool()
     {
-        if (scopeLogsList.Count != 0)
+        if (scopeLogsList?.Count != 0)
         {
-            foreach (var entry in scopeLogsList)
+            foreach (var entry in scopeLogsList!)
             {
                 foreach (var logRecord in entry.Value)
                 {
@@ -101,7 +101,7 @@ internal static class ProtobufOtlpLogSerializer
                 }
 
                 entry.Value.Clear();
-                logsListPool.Push(entry.Value);
+                logsListPool?.Push(entry.Value);
             }
 
             scopeLogsList.Clear();
