@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.11.0-rc.1
+
+Released 2024-Dec-11
+
 * Removed the following package references:
 
   * `Google.Protobuf`
