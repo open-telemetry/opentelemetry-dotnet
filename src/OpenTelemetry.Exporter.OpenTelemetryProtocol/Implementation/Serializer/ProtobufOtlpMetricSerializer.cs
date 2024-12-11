@@ -19,10 +19,6 @@ internal static class ProtobufOtlpMetricSerializer
 
     internal static int WriteMetricsData(ref byte[] buffer, int writePosition, Resources.Resource? resource, in Batch<Metric> batch)
     {
-        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.MetricsData_Resource_Metrics, ProtobufWireType.LEN);
-        int mericsDataLengthPosition = writePosition;
-        writePosition += ReserveSizeForLength;
-
         foreach (var metric in batch)
         {
             var metricName = metric.MeterName;
@@ -36,7 +32,6 @@ internal static class ProtobufOtlpMetricSerializer
         }
 
         writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, ScopeMetricsList);
-        ProtobufSerializer.WriteReservedLength(buffer, mericsDataLengthPosition, writePosition - (mericsDataLengthPosition + ReserveSizeForLength));
         ReturnMetricListToPool();
 
         return writePosition;
@@ -44,12 +39,21 @@ internal static class ProtobufOtlpMetricSerializer
 
     internal static int TryWriteResourceMetrics(ref byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<string, List<Metric>> scopeMetrics)
     {
+        int entryWritePosition = writePosition;
+
         try
         {
+            writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.MetricsData_Resource_Metrics, ProtobufWireType.LEN);
+            int mericsDataLengthPosition = writePosition;
+            writePosition += ReserveSizeForLength;
+
             writePosition = WriteResourceMetrics(buffer, writePosition, resource, scopeMetrics);
+
+            ProtobufSerializer.WriteReservedLength(buffer, mericsDataLengthPosition, writePosition - (mericsDataLengthPosition + ReserveSizeForLength));
         }
         catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
         {
+            writePosition = entryWritePosition;
             if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics))
             {
                 throw;

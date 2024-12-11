@@ -359,9 +359,7 @@ internal static class ProtobufSerializer
         try
         {
             var newBufferSize = buffer.Length * 2;
-            var newBuffer = new byte[newBufferSize];
-            buffer.CopyTo(newBuffer, 0);
-            buffer = newBuffer;
+            buffer = new byte[newBufferSize];
             return true;
         }
         catch (OutOfMemoryException)
