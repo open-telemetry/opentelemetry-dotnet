@@ -20,10 +20,6 @@ internal static class ProtobufOtlpTraceSerializer
 
     internal static int WriteTraceData(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource, in Batch<Activity> batch)
     {
-        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.TracesData_Resource_Spans, ProtobufWireType.LEN);
-        int resourceSpansScopeSpansLengthPosition = writePosition;
-        writePosition += ReserveSizeForLength;
-
         foreach (var activity in batch)
         {
             var sourceName = activity.Source.Name;
@@ -38,19 +34,28 @@ internal static class ProtobufOtlpTraceSerializer
 
         writePosition = TryWriteResourceSpans(ref buffer, writePosition, sdkLimitOptions, resource);
         ReturnActivityListToPool();
-        ProtobufSerializer.WriteReservedLength(buffer, resourceSpansScopeSpansLengthPosition, writePosition - (resourceSpansScopeSpansLengthPosition + ReserveSizeForLength));
 
         return writePosition;
     }
 
     internal static int TryWriteResourceSpans(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource)
     {
+        int entryWritePosition = writePosition;
+
         try
         {
+            writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.TracesData_Resource_Spans, ProtobufWireType.LEN);
+            int resourceSpansScopeSpansLengthPosition = writePosition;
+            writePosition += ReserveSizeForLength;
+
             writePosition = WriteResourceSpans(buffer, writePosition, sdkLimitOptions, resource);
+
+            ProtobufSerializer.WriteReservedLength(buffer, resourceSpansScopeSpansLengthPosition, writePosition - (resourceSpansScopeSpansLengthPosition + ReserveSizeForLength));
         }
         catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
         {
+            writePosition = entryWritePosition;
+
             // Attempt to increase the buffer size
             if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces))
             {

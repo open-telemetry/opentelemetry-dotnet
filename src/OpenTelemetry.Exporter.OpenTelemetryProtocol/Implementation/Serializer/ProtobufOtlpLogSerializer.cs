@@ -22,10 +22,6 @@ internal static class ProtobufOtlpLogSerializer
 
     internal static int WriteLogsData(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, in Batch<LogRecord> logRecordBatch)
     {
-        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.LogsData_Resource_Logs, ProtobufWireType.LEN);
-        int logsDataLengthPosition = writePosition;
-        writePosition += ReserveSizeForLength;
-
         foreach (var logRecord in logRecordBatch)
         {
             var scopeName = logRecord.Logger.Name;
@@ -48,7 +44,6 @@ internal static class ProtobufOtlpLogSerializer
         }
 
         writePosition = TryWriteResourceLogs(ref buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, ScopeLogsList);
-        ProtobufSerializer.WriteReservedLength(buffer, logsDataLengthPosition, writePosition - (logsDataLengthPosition + ReserveSizeForLength));
         ReturnLogRecordListToPool();
 
         return writePosition;
@@ -56,12 +51,21 @@ internal static class ProtobufOtlpLogSerializer
 
     internal static int TryWriteResourceLogs(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<string, List<LogRecord>> scopeLogs)
     {
+        int entryWritePosition = writePosition;
+
         try
         {
+            writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.LogsData_Resource_Logs, ProtobufWireType.LEN);
+            int logsDataLengthPosition = writePosition;
+            writePosition += ReserveSizeForLength;
+
             writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
+
+            ProtobufSerializer.WriteReservedLength(buffer, logsDataLengthPosition, writePosition - (logsDataLengthPosition + ReserveSizeForLength));
         }
         catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
         {
+            writePosition = entryWritePosition;
             if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Logs))
             {
                 throw;
