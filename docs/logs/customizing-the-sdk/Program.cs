@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
-var loggerFactory = LoggerFactory.Create(builder =>
-{
-    builder.AddOpenTelemetry(logging =>
-    {
-        logging.IncludeScopes = true;
-        logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
-            serviceName: "MyService",
-            serviceVersion: "1.0.0"));
-        logging.AddConsoleExporter();
-    });
-});
+var sdk = OpenTelemetrySdk.Create(builder => builder
+    .WithLogging(
+        logging =>
+        {
+            logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                serviceName: "MyService",
+                serviceVersion: "1.0.0"));
+            logging.AddConsoleExporter();
+        },
+        options => options.IncludeScopes = true));
 
-var logger = loggerFactory.CreateLogger<Program>();
+var logger = sdk.GetLoggerFactory().CreateLogger<Program>();
 
 logger.FoodPriceChanged("artichoke", 9.99);
 
@@ -36,9 +36,8 @@ logger.FoodRecallNotice(
     recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
     companyName: "Contoso Fresh Vegetables, Inc.");
 
-// Dispose logger factory before the application ends.
-// This will flush the remaining logs and shutdown the logging pipeline.
-loggerFactory.Dispose();
+// Dispose SDK before the application ends.
+sdk.Dispose();
 
 internal static partial class LoggerExtensions
 {
