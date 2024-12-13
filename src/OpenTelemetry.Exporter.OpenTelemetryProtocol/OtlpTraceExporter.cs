@@ -68,7 +68,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
 
         try
         {
-            int writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(this.buffer, this.startWritePosition, this.sdkLimitOptions, this.Resource, activityBatch);
+            int writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref this.buffer, this.startWritePosition, this.sdkLimitOptions, this.Resource, activityBatch);
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {

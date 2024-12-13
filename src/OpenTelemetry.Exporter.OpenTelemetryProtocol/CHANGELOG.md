@@ -7,6 +7,36 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.11.0-rc.1
+
+Released 2024-Dec-11
+
+* Removed the following package references:
+
+  * `Google.Protobuf`
+  * `Grpc`
+  * `Grpc.Net.Client`
+
+  These changes were made to streamline dependencies and reduce the footprint of
+  the exporter.
+  ([#6005](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6005))
+
+* Switched from using the `Google.Protobuf` library for serialization to a
+  custom manual implementation of protobuf serialization.
+  ([#6005](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6005))
+
+* Fixed an issue where a `service.name` was added to the resource if it was
+  missing. The exporter now respects the resource data provided by the SDK
+  without modifications.
+  ([#6015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6015))
+
+* Removed the peer service resolver, which was based on earlier experimental
+  semantic conventions that are not part of the stable specification. This
+  change ensures that the exporter no longer modifies or assumes the value of
+  peer service attributes, aligning it more closely with OpenTelemetry protocol
+  specifications.
+  ([#6005](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6005))
+
 ## 1.10.0
 
 Released 2024-Nov-12
