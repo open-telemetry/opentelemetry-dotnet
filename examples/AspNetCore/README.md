@@ -19,7 +19,7 @@ The example by default writes telemetry to stdout. To enable telemetry export
 via OTLP, update the `appsettings.json` file to replace `"console"` with
 `"otlp"`. Launching the application will then send telemetry data via OTLP.
 
-Use the provided [docker-compose](docker-compose.yaml) file to spin up the
+Use the provided [docker-compose](./docker-compose.yaml) file to spin up the
 required dependencies, including:
 
 - **OTel Collector** Accept telemetry and forwards them to Tempo, Prometheus
