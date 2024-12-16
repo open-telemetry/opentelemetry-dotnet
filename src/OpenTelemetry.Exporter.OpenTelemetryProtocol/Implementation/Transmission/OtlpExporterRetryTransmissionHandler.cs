@@ -5,14 +5,14 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 
-internal sealed class OtlpExporterRetryTransmissionHandler<TRequest> : OtlpExporterTransmissionHandler<TRequest>
+internal sealed class OtlpExporterRetryTransmissionHandler : OtlpExporterTransmissionHandler
 {
-    internal OtlpExporterRetryTransmissionHandler(IExportClient<TRequest> exportClient, double timeoutMilliseconds)
+    internal OtlpExporterRetryTransmissionHandler(IExportClient exportClient, double timeoutMilliseconds)
         : base(exportClient, timeoutMilliseconds)
     {
     }
 
-    protected override bool OnSubmitRequestFailure(TRequest request, ExportClientResponse response)
+    protected override bool OnSubmitRequestFailure(byte[] request, int contentLength, ExportClientResponse response)
     {
         var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
         while (RetryHelper.ShouldRetryRequest(response, nextRetryDelayMilliseconds, out var retryResult))
@@ -22,7 +22,7 @@ internal sealed class OtlpExporterRetryTransmissionHandler<TRequest> : OtlpExpor
             // we would fail fast and drop the data.
             Thread.Sleep(retryResult.RetryDelay);
 
-            if (this.TryRetryRequest(request, response.DeadlineUtc, out response))
+            if (this.TryRetryRequest(request, contentLength, response.DeadlineUtc, out response))
             {
                 return true;
             }

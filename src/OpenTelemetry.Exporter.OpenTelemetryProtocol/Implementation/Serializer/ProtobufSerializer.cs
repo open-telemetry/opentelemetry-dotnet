@@ -13,6 +13,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 
 internal static class ProtobufSerializer
 {
+    private const int MaxBufferSize = 100 * 1024 * 1024;
     private const uint UInt128 = 0x80;
     private const ulong ULong128 = 0x80;
     private const int Fixed32Size = 4;
@@ -320,6 +321,13 @@ internal static class ProtobufSerializer
         writePosition = WriteLength(buffer, writePosition, numberOfUtf8CharsInString);
 
 #if NETFRAMEWORK || NETSTANDARD2_0
+        if (buffer.Length - writePosition < numberOfUtf8CharsInString)
+        {
+            // Note: Validate there is enough space in the buffer to hold the
+            // string otherwise throw to trigger a resize of the buffer.
+            throw new IndexOutOfRangeException();
+        }
+
         unsafe
         {
             fixed (char* strPtr = &GetNonNullPinnableReference(value))
@@ -338,6 +346,27 @@ internal static class ProtobufSerializer
 
         writePosition += numberOfUtf8CharsInString;
         return writePosition;
+    }
+
+    internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
+    {
+        if (buffer.Length >= MaxBufferSize)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.BufferExceededMaxSize(otlpSignalType.ToString(), buffer.Length);
+            return false;
+        }
+
+        try
+        {
+            var newBufferSize = buffer.Length * 2;
+            buffer = new byte[newBufferSize];
+            return true;
+        }
+        catch (OutOfMemoryException)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.BufferResizeFailedDueToMemory(otlpSignalType.ToString());
+            return false;
+        }
     }
 
 #if NETFRAMEWORK || NETSTANDARD2_0

@@ -14,25 +14,26 @@ internal static class ProtobufOtlpLogSerializer
     private const int TraceIdSize = 16;
     private const int SpanIdSize = 8;
 
-    private static readonly Stack<List<LogRecord>> LogsListPool = [];
-    private static readonly Dictionary<string, List<LogRecord>> ScopeLogsList = [];
+    [ThreadStatic]
+    private static Stack<List<LogRecord>>? logsListPool;
+    [ThreadStatic]
+    private static Dictionary<string, List<LogRecord>>? scopeLogsList;
 
     [ThreadStatic]
     private static SerializationState? threadSerializationState;
 
-    internal static int WriteLogsData(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, in Batch<LogRecord> logRecordBatch)
+    internal static int WriteLogsData(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, in Batch<LogRecord> logRecordBatch)
     {
-        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.LogsData_Resource_Logs, ProtobufWireType.LEN);
-        int logsDataLengthPosition = writePosition;
-        writePosition += ReserveSizeForLength;
+        logsListPool ??= [];
+        scopeLogsList ??= [];
 
         foreach (var logRecord in logRecordBatch)
         {
             var scopeName = logRecord.Logger.Name;
-            if (!ScopeLogsList.TryGetValue(scopeName, out var logRecords))
+            if (!scopeLogsList.TryGetValue(scopeName, out var logRecords))
             {
-                logRecords = LogsListPool.Count > 0 ? LogsListPool.Pop() : [];
-                ScopeLogsList[scopeName] = logRecords;
+                logRecords = logsListPool.Count > 0 ? logsListPool.Pop() : [];
+                scopeLogsList[scopeName] = logRecords;
             }
 
             if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
@@ -47,18 +48,45 @@ internal static class ProtobufOtlpLogSerializer
             logRecords.Add(logRecord);
         }
 
-        writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, ScopeLogsList);
-        ProtobufSerializer.WriteReservedLength(buffer, logsDataLengthPosition, writePosition - (logsDataLengthPosition + ReserveSizeForLength));
+        writePosition = TryWriteResourceLogs(ref buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogsList);
         ReturnLogRecordListToPool();
+
+        return writePosition;
+    }
+
+    internal static int TryWriteResourceLogs(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<string, List<LogRecord>> scopeLogs)
+    {
+        int entryWritePosition = writePosition;
+
+        try
+        {
+            writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.LogsData_Resource_Logs, ProtobufWireType.LEN);
+            int logsDataLengthPosition = writePosition;
+            writePosition += ReserveSizeForLength;
+
+            writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
+
+            ProtobufSerializer.WriteReservedLength(buffer, logsDataLengthPosition, writePosition - (logsDataLengthPosition + ReserveSizeForLength));
+        }
+        catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
+        {
+            writePosition = entryWritePosition;
+            if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Logs))
+            {
+                throw;
+            }
+
+            return TryWriteResourceLogs(ref buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
+        }
 
         return writePosition;
     }
 
     internal static void ReturnLogRecordListToPool()
     {
-        if (ScopeLogsList.Count != 0)
+        if (scopeLogsList?.Count != 0)
         {
-            foreach (var entry in ScopeLogsList)
+            foreach (var entry in scopeLogsList!)
             {
                 foreach (var logRecord in entry.Value)
                 {
@@ -73,10 +101,10 @@ internal static class ProtobufOtlpLogSerializer
                 }
 
                 entry.Value.Clear();
-                LogsListPool.Push(entry.Value);
+                logsListPool?.Push(entry.Value);
             }
 
-            ScopeLogsList.Clear();
+            scopeLogsList.Clear();
         }
     }
 
@@ -113,7 +141,7 @@ internal static class ProtobufOtlpLogSerializer
 
         // numberOfUtf8CharsInString + tagSize + length field size.
         writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, value);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, value);
 
         for (int i = 0; i < logRecords.Count; i++)
         {
@@ -279,7 +307,7 @@ internal static class ProtobufOtlpLogSerializer
 
         // length = numberOfUtf8CharsInString + tagSize + length field size.
         writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, ProtobufOtlpLogFieldNumberConstants.LogRecord_Body, ProtobufWireType.LEN);
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.AnyValue_String_Value, numberOfUtf8CharsInString, value);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, numberOfUtf8CharsInString, value);
         return writePosition;
     }
 
