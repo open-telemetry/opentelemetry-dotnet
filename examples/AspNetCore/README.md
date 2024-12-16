@@ -33,7 +33,7 @@ Once the Docker containers are running, you can access the **Grafana UI** at:
 
 ## References
 
-* [ASP.NET Core](https://learn.microsoft.com/aspnet/core/introduction-to-aspnet-core)
-* [Docker](http://docker.com)
-* [Prometheus](http://prometheus.io/docs)
-* [Tempo](https://github.com/grafana/tempo)
+- [ASP.NET Core](https://learn.microsoft.com/aspnet/core/introduction-to-aspnet-core)
+- [Docker](http://docker.com)
+- [Prometheus](http://prometheus.io/docs)
+- [Tempo](https://github.com/grafana/tempo)
