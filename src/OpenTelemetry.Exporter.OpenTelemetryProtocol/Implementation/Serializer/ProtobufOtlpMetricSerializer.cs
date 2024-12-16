@@ -12,47 +12,75 @@ internal static class ProtobufOtlpMetricSerializer
     private const int TraceIdSize = 16;
     private const int SpanIdSize = 8;
 
-    private static readonly Stack<List<Metric>> MetricListPool = [];
-    private static readonly Dictionary<string, List<Metric>> ScopeMetricsList = [];
+    [ThreadStatic]
+    private static Stack<List<Metric>>? metricListPool;
+    [ThreadStatic]
+    private static Dictionary<string, List<Metric>>? scopeMetricsList;
 
     private delegate int WriteExemplarFunc(byte[] buffer, int writePosition, in Exemplar exemplar);
 
-    internal static int WriteMetricsData(byte[] buffer, int writePosition, Resources.Resource? resource, in Batch<Metric> batch)
+    internal static int WriteMetricsData(ref byte[] buffer, int writePosition, Resources.Resource? resource, in Batch<Metric> batch)
     {
-        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.MetricsData_Resource_Metrics, ProtobufWireType.LEN);
-        int mericsDataLengthPosition = writePosition;
-        writePosition += ReserveSizeForLength;
+        metricListPool ??= [];
+        scopeMetricsList ??= [];
 
         foreach (var metric in batch)
         {
             var metricName = metric.MeterName;
-            if (!ScopeMetricsList.TryGetValue(metricName, out var metrics))
+            if (!scopeMetricsList.TryGetValue(metricName, out var metrics))
             {
-                metrics = MetricListPool.Count > 0 ? MetricListPool.Pop() : new List<Metric>();
-                ScopeMetricsList[metricName] = metrics;
+                metrics = metricListPool.Count > 0 ? metricListPool.Pop() : new List<Metric>();
+                scopeMetricsList[metricName] = metrics;
             }
 
             metrics.Add(metric);
         }
 
-        writePosition = WriteResourceMetrics(buffer, writePosition, resource, ScopeMetricsList);
-        ProtobufSerializer.WriteReservedLength(buffer, mericsDataLengthPosition, writePosition - (mericsDataLengthPosition + ReserveSizeForLength));
+        writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetricsList);
         ReturnMetricListToPool();
+
+        return writePosition;
+    }
+
+    internal static int TryWriteResourceMetrics(ref byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<string, List<Metric>> scopeMetrics)
+    {
+        int entryWritePosition = writePosition;
+
+        try
+        {
+            writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.MetricsData_Resource_Metrics, ProtobufWireType.LEN);
+            int mericsDataLengthPosition = writePosition;
+            writePosition += ReserveSizeForLength;
+
+            writePosition = WriteResourceMetrics(buffer, writePosition, resource, scopeMetrics);
+
+            ProtobufSerializer.WriteReservedLength(buffer, mericsDataLengthPosition, writePosition - (mericsDataLengthPosition + ReserveSizeForLength));
+        }
+        catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
+        {
+            writePosition = entryWritePosition;
+            if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics))
+            {
+                throw;
+            }
+
+            return TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetrics);
+        }
 
         return writePosition;
     }
 
     private static void ReturnMetricListToPool()
     {
-        if (ScopeMetricsList.Count != 0)
+        if (scopeMetricsList?.Count != 0)
         {
-            foreach (var entry in ScopeMetricsList)
+            foreach (var entry in scopeMetricsList!)
             {
                 entry.Value.Clear();
-                MetricListPool.Push(entry.Value);
+                metricListPool?.Push(entry.Value);
             }
 
-            ScopeMetricsList.Clear();
+            scopeMetricsList.Clear();
         }
     }
 
@@ -93,10 +121,10 @@ internal static class ProtobufOtlpMetricSerializer
         var meterVersion = metrics[0].MeterVersion;
         var meterTags = metrics[0].MeterTags;
 
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.InstrumentationScope_Name, meterName);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, meterName);
         if (meterVersion != null)
         {
-            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.InstrumentationScope_Version, meterVersion);
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Version, meterVersion);
         }
 
         if (meterTags != null)
@@ -105,14 +133,14 @@ internal static class ProtobufOtlpMetricSerializer
             {
                 for (int i = 0; i < readonlyMeterTags.Count; i++)
                 {
-                    writePosition = WriteTag(buffer, writePosition, readonlyMeterTags[i], ProtobufOtlpMetricFieldNumberConstants.InstrumentationScope_Attributes);
+                    writePosition = WriteTag(buffer, writePosition, readonlyMeterTags[i], ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes);
                 }
             }
             else
             {
                 foreach (var tag in meterTags)
                 {
-                    writePosition = WriteTag(buffer, writePosition, tag, ProtobufOtlpMetricFieldNumberConstants.InstrumentationScope_Attributes);
+                    writePosition = WriteTag(buffer, writePosition, tag, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes);
                 }
             }
         }

@@ -85,6 +85,15 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         }
     }
 
+    [NonEvent]
+    public void GrpcRetryDelayParsingFailed(string? grpcStatusDetailsHeader, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.GrpcRetryDelayParsingFailed(grpcStatusDetailsHeader ?? "null", ex.ToInvariantString());
+        }
+    }
+
     [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
     public void FailedToReachCollector(string rawCollectorUri, string ex)
     {
@@ -203,6 +212,18 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     public void ExportFailure(string endpoint, string message)
     {
         this.WriteEvent(23, endpoint, message);
+    }
+
+    [Event(24, Message = "Failed to parse gRPC retry delay from header grpcStatusDetailsHeader: '{0}'. Exception: {1}", Level = EventLevel.Warning)]
+    public void GrpcRetryDelayParsingFailed(string grpcStatusDetailsHeader, string exception)
+    {
+        this.WriteEvent(24, grpcStatusDetailsHeader, exception);
+    }
+
+    [Event(25, Message = "The array tag buffer exceeded the maximum allowed size. The array tag value was replaced with 'TRUNCATED'", Level = EventLevel.Warning)]
+    public void ArrayBufferExceededMaxSize()
+    {
+        this.WriteEvent(25);
     }
 
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)

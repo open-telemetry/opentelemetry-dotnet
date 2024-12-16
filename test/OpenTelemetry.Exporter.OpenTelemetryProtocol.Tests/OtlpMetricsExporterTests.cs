@@ -207,7 +207,7 @@ public class OtlpMetricsExporterTests : IDisposable
         }
         else
         {
-            Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
+            Assert.DoesNotContain(otlpResource.Attributes, kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName);
         }
 
         Assert.Single(resourceMetric.ScopeMetrics);
@@ -906,6 +906,55 @@ public class OtlpMetricsExporterTests : IDisposable
         }
     }
 
+    [Fact]
+    public void MetricsSerialization_ExpandsBufferForMetricsAndSerializes()
+    {
+        var metrics = new List<Metric>();
+
+        var meterTags = new KeyValuePair<string, object?>[]
+        {
+            new("key1", "value1"),
+            new("key2", "value2"),
+        };
+
+        using var meter = new Meter(name: $"{Utils.GetCurrentMethodName()}", version: "0.0.1", tags: meterTags);
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<int>("counter");
+        counter.Add(100);
+
+        provider.ForceFlush();
+
+        var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+
+        var buffer = new byte[50];
+        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch);
+        using var stream = new MemoryStream(buffer, 0, writePosition);
+
+        var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);
+
+        var request = new OtlpCollector.ExportMetricsServiceRequest();
+        request.ResourceMetrics.Add(metricsData.ResourceMetrics);
+
+        Assert.True(buffer.Length > 50);
+
+        Assert.Single(request.ResourceMetrics);
+        var resourceMetric = request.ResourceMetrics.First();
+
+        Assert.Single(resourceMetric.ScopeMetrics);
+        var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
+        Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
+        Assert.Equal(meter.Name, instrumentationLibraryMetrics.Scope.Name);
+        Assert.Equal("0.0.1", instrumentationLibraryMetrics.Scope.Version);
+
+        Assert.Equal(2, instrumentationLibraryMetrics.Scope.Attributes.Count);
+        Assert.Contains(instrumentationLibraryMetrics.Scope.Attributes, (kvp) => kvp.Key == "key1" && kvp.Value.StringValue == "value1");
+        Assert.Contains(instrumentationLibraryMetrics.Scope.Attributes, (kvp) => kvp.Key == "key2" && kvp.Value.StringValue == "value2");
+    }
+
     public void Dispose()
     {
         OtlpSpecConfigDefinitionTests.ClearEnvVars();
@@ -939,7 +988,7 @@ public class OtlpMetricsExporterTests : IDisposable
     private static OtlpCollector.ExportMetricsServiceRequest CreateMetricExportRequest(in Batch<Metric> batch, Resource resource)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(buffer, 0, resource, in batch);
+        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, resource, in batch);
         using var stream = new MemoryStream(buffer, 0, writePosition);
 
         var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);

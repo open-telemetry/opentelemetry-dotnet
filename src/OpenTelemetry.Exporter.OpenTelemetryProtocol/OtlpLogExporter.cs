@@ -17,6 +17,7 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 {
+    private const int GrpcStartWritePosition = 5;
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
@@ -57,8 +58,8 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 
         this.experimentalOptions = experimentalOptions!;
         this.sdkLimitOptions = sdkLimitOptions!;
-        this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? 5 : 0;
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetProtobufExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Logs);
+        this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
+        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Logs);
     }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
@@ -71,29 +72,22 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 
         try
         {
-            int writePosition = ProtobufOtlpLogSerializer.WriteLogsData(this.buffer, this.startWritePosition, this.sdkLimitOptions, this.experimentalOptions, this.Resource, logRecordBatch);
+            int writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref this.buffer, this.startWritePosition, this.sdkLimitOptions, this.experimentalOptions, this.Resource, logRecordBatch);
 
-            if (this.startWritePosition == 5)
+            if (this.startWritePosition == GrpcStartWritePosition)
             {
                 // Grpc payload consists of 3 parts
                 // byte 0 - Specifying if the payload is compressed.
                 // 1-4 byte - Specifies the length of payload in big endian format.
                 // 5 and above -  Protobuf serialized data.
                 Span<byte> data = new Span<byte>(this.buffer, 1, 4);
-                var dataLength = writePosition - 5;
+                var dataLength = writePosition - GrpcStartWritePosition;
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }
 
             if (!this.transmissionHandler.TrySubmitRequest(this.buffer, writePosition))
             {
                 return ExportResult.Failure;
-            }
-        }
-        catch (IndexOutOfRangeException)
-        {
-            if (!this.IncreaseBufferSize())
-            {
-                throw;
             }
         }
         catch (Exception ex)
@@ -107,21 +101,4 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds) => this.transmissionHandler?.Shutdown(timeoutMilliseconds) ?? true;
-
-    // TODO: Consider moving this to a shared utility class.
-    private bool IncreaseBufferSize()
-    {
-        var newBufferSize = this.buffer.Length * 2;
-
-        if (newBufferSize > 100 * 1024 * 1024)
-        {
-            return false;
-        }
-
-        var newBuffer = new byte[newBufferSize];
-        this.buffer.CopyTo(newBuffer, 0);
-        this.buffer = newBuffer;
-
-        return true;
-    }
 }

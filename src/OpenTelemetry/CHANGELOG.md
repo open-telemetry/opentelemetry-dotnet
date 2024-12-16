@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
   Meters with the same name and different tags will now lead to unique metrics.
   ([#5982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5982))
 
+## 1.11.0-rc.1
+
+Released 2024-Dec-11
+
 ## 1.10.0
 
 Released 2024-Nov-12
