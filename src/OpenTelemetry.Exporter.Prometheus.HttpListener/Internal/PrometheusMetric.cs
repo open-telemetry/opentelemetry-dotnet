@@ -37,7 +37,7 @@ internal sealed class PrometheusMetric
             sanitizedUnit = GetUnit(unit);
 
             // The resulting unit SHOULD be added to the metric as
-            // [OpenMetrics UNIT metadata](https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#metricfamily)
+            // [OpenMetrics UNIT metadata](https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#metricfamily)
             // and as a suffix to the metric name. The unit suffix comes before any type-specific suffixes.
             // https://github.com/open-telemetry/opentelemetry-specification/blob/3dfb383fe583e3b74a2365c5a1d90256b273ee76/specification/compatibility/prometheus_and_openmetrics.md#metric-metadata-1
             if (!sanitizedName.EndsWith(sanitizedUnit))
@@ -57,14 +57,14 @@ internal sealed class PrometheusMetric
         }
 
         // For counters requested using OpenMetrics format, the MetricFamily name MUST be suffixed with '_total', regardless of the setting to disable the 'total' suffix.
-        // https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#counter-1
+        // https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#counter-1
         if (type == PrometheusType.Counter && !openMetricsName.EndsWith("_total"))
         {
             openMetricsName += "_total";
         }
 
         // In OpenMetrics format, the UNIT, TYPE and HELP metadata must be suffixed with the unit (handled above), and not the '_total' suffix, as in the case for counters.
-        // https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#unit
+        // https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#unit
         var openMetricsMetadataName = type == PrometheusType.Counter
             ? SanitizeOpenMetricsName(openMetricsName)
             : sanitizedName;
@@ -241,7 +241,7 @@ internal sealed class PrometheusMetric
     // OTLP metrics use the c/s notation as specified at https://ucum.org/ucum.html
     // (See also https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/metrics.md#instrument-units)
     // Prometheus best practices for units: https://prometheus.io/docs/practices/naming/#base-units
-    // OpenMetrics specification for units: https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#units-and-base-units
+    // OpenMetrics specification for units: https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#units-and-base-units
     private static string MapUnit(ReadOnlySpan<char> unit)
     {
         return unit switch
