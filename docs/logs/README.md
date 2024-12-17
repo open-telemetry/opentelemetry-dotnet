@@ -113,7 +113,7 @@ benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
 var food = "tomato";
 var price = 2.99;
 
-logger.LogInformation("Hello from {Food} {Price}.");
+logger.LogInformation("Hello from {food} {price}.", food, price);
 ```
 
 :stop_sign: You should avoid string interpolation.
@@ -308,7 +308,7 @@ internal static partial class LoggerExtensions
     [LoggerMessage(Level = LogLevel.Information, Message = "Hello from {food} {price}.")]
     public static partial void SayHello(this ILogger logger, string food, double price);
 
-    // BAD - Exception should not be part of the template. Use the dedicated parameter.
+    // BAD - Exception should not be part of the message template. Use the dedicated parameter.
     [LoggerMessage(Level = LogLevel.Error, Message = "Could not say hello from {food} {price} {message}.")]
     public static partial void SayHelloFailure(this ILogger logger, string food, double price, string message);
 }
@@ -326,7 +326,7 @@ try
 }
 catch (Exception ex)
 {
-    // BAD - Exception should not be part of the template. Use the dedicated parameter.
+    // BAD - Exception should not be part of the message template. Use the dedicated parameter.
     logger.LogError("Could not say hello from {food} {price} {message}.", food, price, ex.Message);
 }
 ```
