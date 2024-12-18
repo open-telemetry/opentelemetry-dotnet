@@ -194,7 +194,7 @@ public class OtlpMetricsExporterTests : IDisposable
         provider.ForceFlush();
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-        var request = CreateMetricExportRequest(batch, resourceBuilder.Build());
+        var request = CreateMetricExportRequest(batch, resourceBuilder.Build(), false);
 
         Assert.Single(request.ResourceMetrics);
         var resourceMetric = request.ResourceMetrics.First();
@@ -227,7 +227,9 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData("test_gauge", null, null, 123L, null, true)]
     [InlineData("test_gauge", null, null, null, 123.45, true)]
     [InlineData("test_gauge", "description", "unit", 123L, null)]
-    public void TestGaugeToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, bool enableExemplars = false)
+    [InlineData("test_gauge", "description", "unit", 123L, null, false, true)]
+    [InlineData("test_gauge", "description", "unit", 123L, null, false, true, true)]
+    public void TestGaugeToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -247,11 +249,19 @@ public class OtlpMetricsExporterTests : IDisposable
             meter.CreateObservableGauge(name, () => doubleValue!.Value, unit, description);
         }
 
+        if (disposeMeterEarly)
+        {
+            // For observable instruments, disposing the meter before the first collection leaves the metric with no data at all.
+            provider.ForceFlush();
+            metrics.Clear();
+            meter.Dispose();
+        }
+
         provider.ForceFlush();
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
 
-        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), experimentalEmitNoRecordedValue);
 
         var resourceMetric = request.ResourceMetrics.Single();
         var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -269,25 +279,62 @@ public class OtlpMetricsExporterTests : IDisposable
         Assert.Null(actual.ExponentialHistogram);
         Assert.Null(actual.Summary);
 
-        Assert.Single(actual.Gauge.DataPoints);
-        var dataPoint = actual.Gauge.DataPoints.First();
-        Assert.True(dataPoint.StartTimeUnixNano > 0);
-        Assert.True(dataPoint.TimeUnixNano > 0);
-
-        if (longValue.HasValue)
+        if (!disposeMeterEarly || !experimentalEmitNoRecordedValue)
         {
-            Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
-            Assert.Equal(longValue, dataPoint.AsInt);
+            Assert.Single(actual.Gauge.DataPoints);
         }
         else
         {
-            Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
-            Assert.Equal(doubleValue, dataPoint.AsDouble);
+            Assert.Equal(2, actual.Gauge.DataPoints.Count);
         }
 
-        Assert.Empty(dataPoint.Attributes);
+        for (var index = 0; index < actual.Gauge.DataPoints.Count; index++)
+        {
+            var dataPoint = actual.Gauge.DataPoints[index];
+            bool isNoRecordedValueDataPoint = index == 1;
 
-        VerifyExemplars(longValue, doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
+            if (isNoRecordedValueDataPoint)
+            {
+                Assert.Equal(0UL, dataPoint.StartTimeUnixNano);
+            }
+            else
+            {
+                Assert.NotEqual(0UL, dataPoint.StartTimeUnixNano);
+            }
+
+            Assert.True(dataPoint.TimeUnixNano > 0);
+
+            if (!isNoRecordedValueDataPoint)
+            {
+                if (longValue.HasValue)
+                {
+                    Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
+                    Assert.Equal(longValue, dataPoint.AsInt);
+                }
+                else
+                {
+                    Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
+                    Assert.Equal(doubleValue, dataPoint.AsDouble);
+                }
+
+                Assert.Equal((uint)OtlpMetrics.DataPointFlags.DoNotUse, dataPoint.Flags);
+            }
+            else
+            {
+                Assert.Equal((uint)OtlpMetrics.DataPointFlags.NoRecordedValueMask, dataPoint.Flags);
+            }
+
+            Assert.Empty(dataPoint.Attributes);
+
+            if (!isNoRecordedValueDataPoint)
+            {
+                VerifyExemplars(longValue, doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Exemplars);
+            }
+        }
     }
 
     [Theory]
@@ -301,7 +348,9 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    public void TestCounterToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, false, true)]
+    [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestCounterToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -327,10 +376,15 @@ public class OtlpMetricsExporterTests : IDisposable
             counter.Add(doubleValue!.Value, attributes);
         }
 
+        if (disposeMeterEarly)
+        {
+            meter.Dispose();
+        }
+
         provider.ForceFlush();
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), experimentalEmitNoRecordedValue);
 
         var resourceMetric = request.ResourceMetrics.Single();
         var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -355,32 +409,69 @@ public class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Delta;
         Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
 
-        Assert.Single(actual.Sum.DataPoints);
-        var dataPoint = actual.Sum.DataPoints.First();
-        Assert.True(dataPoint.StartTimeUnixNano > 0);
-        Assert.True(dataPoint.TimeUnixNano > 0);
-
-        if (longValue.HasValue)
+        if (!disposeMeterEarly || !experimentalEmitNoRecordedValue)
         {
-            Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
-            Assert.Equal(longValue, dataPoint.AsInt);
+            Assert.Single(actual.Sum.DataPoints);
         }
         else
         {
-            Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
-            Assert.Equal(doubleValue, dataPoint.AsDouble);
+            Assert.Equal(2, actual.Sum.DataPoints.Count);
         }
 
-        if (attributes.Length > 0)
+        for (var index = 0; index < actual.Sum.DataPoints.Count; index++)
         {
-            OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
-        }
-        else
-        {
-            Assert.Empty(dataPoint.Attributes);
-        }
+            var dataPoint = actual.Sum.DataPoints[index];
+            bool isNoRecordedValueDataPoint = index == 1;
 
-        VerifyExemplars(longValue, doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
+            if (isNoRecordedValueDataPoint)
+            {
+                Assert.Equal(0UL, dataPoint.StartTimeUnixNano);
+            }
+            else
+            {
+                Assert.NotEqual(0UL, dataPoint.StartTimeUnixNano);
+            }
+
+            Assert.True(dataPoint.TimeUnixNano > 0);
+
+            if (!isNoRecordedValueDataPoint)
+            {
+                if (longValue.HasValue)
+                {
+                    Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
+                    Assert.Equal(longValue, dataPoint.AsInt);
+                }
+                else
+                {
+                    Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
+                    Assert.Equal(doubleValue, dataPoint.AsDouble);
+                }
+
+                Assert.Equal((uint)OtlpMetrics.DataPointFlags.DoNotUse, dataPoint.Flags);
+            }
+            else
+            {
+                Assert.Equal((uint)OtlpMetrics.DataPointFlags.NoRecordedValueMask, dataPoint.Flags);
+            }
+
+            if (attributes.Length > 0)
+            {
+                OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Attributes);
+            }
+
+            if (!isNoRecordedValueDataPoint)
+            {
+                VerifyExemplars(longValue, doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Exemplars);
+            }
+        }
     }
 
     [Theory]
@@ -396,7 +487,9 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData("test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    public void TestUpDownCounterToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
+    [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestUpDownCounterToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -422,11 +515,16 @@ public class OtlpMetricsExporterTests : IDisposable
             counter.Add(doubleValue!.Value, attributes);
         }
 
+        if (disposeMeterEarly)
+        {
+            meter.Dispose();
+        }
+
         provider.ForceFlush();
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
 
-        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), experimentalEmitNoRecordedValue);
 
         var resourceMetric = request.ResourceMetrics.Single();
         var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -451,32 +549,69 @@ public class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Cumulative;
         Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
 
-        Assert.Single(actual.Sum.DataPoints);
-        var dataPoint = actual.Sum.DataPoints.First();
-        Assert.True(dataPoint.StartTimeUnixNano > 0);
-        Assert.True(dataPoint.TimeUnixNano > 0);
-
-        if (longValue.HasValue)
+        if (!disposeMeterEarly || !experimentalEmitNoRecordedValue)
         {
-            Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
-            Assert.Equal(longValue, dataPoint.AsInt);
+            Assert.Single(actual.Sum.DataPoints);
         }
         else
         {
-            Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
-            Assert.Equal(doubleValue, dataPoint.AsDouble);
+            Assert.Equal(2, actual.Sum.DataPoints.Count);
         }
 
-        if (attributes.Length > 0)
+        for (var index = 0; index < actual.Sum.DataPoints.Count; index++)
         {
-            OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
-        }
-        else
-        {
-            Assert.Empty(dataPoint.Attributes);
-        }
+            var dataPoint = actual.Sum.DataPoints[index];
+            bool isNoRecordedValueDataPoint = index == 1;
 
-        VerifyExemplars(longValue, doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
+            if (isNoRecordedValueDataPoint)
+            {
+                Assert.Equal(0UL, dataPoint.StartTimeUnixNano);
+            }
+            else
+            {
+                Assert.NotEqual(0UL, dataPoint.StartTimeUnixNano);
+            }
+
+            Assert.True(dataPoint.TimeUnixNano > 0);
+
+            if (!isNoRecordedValueDataPoint)
+            {
+                if (longValue.HasValue)
+                {
+                    Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
+                    Assert.Equal(longValue, dataPoint.AsInt);
+                }
+                else
+                {
+                    Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
+                    Assert.Equal(doubleValue, dataPoint.AsDouble);
+                }
+
+                Assert.Equal((uint)OtlpMetrics.DataPointFlags.DoNotUse, dataPoint.Flags);
+            }
+            else
+            {
+                Assert.Equal((uint)OtlpMetrics.DataPointFlags.NoRecordedValueMask, dataPoint.Flags);
+            }
+
+            if (attributes.Length > 0)
+            {
+                OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Attributes);
+            }
+
+            if (!isNoRecordedValueDataPoint)
+            {
+                VerifyExemplars(longValue, doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Exemplars);
+            }
+        }
     }
 
     [Theory]
@@ -492,7 +627,9 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    public void TestExponentialHistogramToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestExponentialHistogramToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -524,10 +661,15 @@ public class OtlpMetricsExporterTests : IDisposable
             histogram.Record(0, attributes);
         }
 
+        if (disposeMeterEarly)
+        {
+            meter.Dispose();
+        }
+
         provider.ForceFlush();
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), experimentalEmitNoRecordedValue);
 
         var resourceMetric = request.ResourceMetrics.Single();
         var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -550,70 +692,108 @@ public class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Delta;
         Assert.Equal(otlpAggregationTemporality, actual.ExponentialHistogram.AggregationTemporality);
 
-        Assert.Single(actual.ExponentialHistogram.DataPoints);
-        var dataPoint = actual.ExponentialHistogram.DataPoints.First();
-        Assert.True(dataPoint.StartTimeUnixNano > 0);
-        Assert.True(dataPoint.TimeUnixNano > 0);
-
-        Assert.Equal(20, dataPoint.Scale);
-        Assert.Equal(1UL, dataPoint.ZeroCount);
-        if (longValue > 0 || doubleValue > 0)
+        if (!disposeMeterEarly || !experimentalEmitNoRecordedValue)
         {
-            Assert.Equal(2UL, dataPoint.Count);
+            Assert.Single(actual.ExponentialHistogram.DataPoints);
         }
         else
         {
-            Assert.Equal(1UL, dataPoint.Count);
+            Assert.Equal(2, actual.ExponentialHistogram.DataPoints.Count);
         }
 
-        if (longValue.HasValue)
+        for (var index = 0; index < actual.ExponentialHistogram.DataPoints.Count; index++)
         {
-            if (longValue > 0)
+            var dataPoint = actual.ExponentialHistogram.DataPoints[index];
+            bool isNoRecordedValueDataPoint = index == 1;
+
+            if (isNoRecordedValueDataPoint)
             {
-                Assert.Equal((double)longValue, dataPoint.Sum);
-                Assert.Null(dataPoint.Negative);
-                Assert.True(dataPoint.Positive.Offset > 0);
-                Assert.Equal(1UL, dataPoint.Positive.BucketCounts[0]);
+                Assert.Equal(0UL, dataPoint.StartTimeUnixNano);
             }
             else
             {
-                Assert.Equal(0, dataPoint.Sum);
-                Assert.Null(dataPoint.Negative);
-                Assert.Equal(0, dataPoint.Positive.Offset);
-                Assert.Empty(dataPoint.Positive.BucketCounts);
+                Assert.NotEqual(0UL, dataPoint.StartTimeUnixNano);
             }
-        }
-        else
-        {
-            if (doubleValue > 0)
+
+            Assert.True(dataPoint.TimeUnixNano > 0);
+
+            if (!isNoRecordedValueDataPoint)
             {
-                Assert.Equal(doubleValue, dataPoint.Sum);
-                Assert.Null(dataPoint.Negative);
-                Assert.True(dataPoint.Positive.Offset > 0);
-                Assert.Equal(1UL, dataPoint.Positive.BucketCounts[0]);
+                Assert.Equal(20, dataPoint.Scale);
+                Assert.Equal(1UL, dataPoint.ZeroCount);
+                if (longValue > 0 || doubleValue > 0)
+                {
+                    Assert.Equal(2UL, dataPoint.Count);
+                }
+                else
+                {
+                    Assert.Equal(1UL, dataPoint.Count);
+                }
+
+                if (longValue.HasValue)
+                {
+                    if (longValue > 0)
+                    {
+                        Assert.Equal((double)longValue, dataPoint.Sum);
+                        Assert.Null(dataPoint.Negative);
+                        Assert.True(dataPoint.Positive.Offset > 0);
+                        Assert.Equal(1UL, dataPoint.Positive.BucketCounts[0]);
+                    }
+                    else
+                    {
+                        Assert.Equal(0, dataPoint.Sum);
+                        Assert.Null(dataPoint.Negative);
+                        Assert.Equal(0, dataPoint.Positive.Offset);
+                        Assert.Empty(dataPoint.Positive.BucketCounts);
+                    }
+                }
+                else
+                {
+                    if (doubleValue > 0)
+                    {
+                        Assert.Equal(doubleValue, dataPoint.Sum);
+                        Assert.Null(dataPoint.Negative);
+                        Assert.True(dataPoint.Positive.Offset > 0);
+                        Assert.Equal(1UL, dataPoint.Positive.BucketCounts[0]);
+                    }
+                    else
+                    {
+                        Assert.Equal(0, dataPoint.Sum);
+                        Assert.Null(dataPoint.Negative);
+                        Assert.Equal(0, dataPoint.Positive.Offset);
+                        Assert.Empty(dataPoint.Positive.BucketCounts);
+                    }
+                }
+
+                Assert.Equal((uint)OtlpMetrics.DataPointFlags.DoNotUse, dataPoint.Flags);
             }
             else
             {
-                Assert.Equal(0, dataPoint.Sum);
-                Assert.Null(dataPoint.Negative);
-                Assert.Equal(0, dataPoint.Positive.Offset);
-                Assert.Empty(dataPoint.Positive.BucketCounts);
+                Assert.Equal(0UL, dataPoint.Count);
+                Assert.Equal((uint)OtlpMetrics.DataPointFlags.NoRecordedValueMask, dataPoint.Flags);
             }
-        }
 
-        if (attributes.Length > 0)
-        {
-            OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
-        }
-        else
-        {
-            Assert.Empty(dataPoint.Attributes);
-        }
+            if (attributes.Length > 0)
+            {
+                OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Attributes);
+            }
 
-        VerifyExemplars(null, longValue ?? doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
-        if (enableExemplars)
-        {
-            VerifyExemplars(null, 0, enableExemplars, d => d.Exemplars.Skip(1).FirstOrDefault(), dataPoint);
+            if (!isNoRecordedValueDataPoint)
+            {
+                VerifyExemplars(null, longValue ?? doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
+                if (enableExemplars)
+                {
+                    VerifyExemplars(null, 0, enableExemplars, d => d.Exemplars.Skip(1).FirstOrDefault(), dataPoint);
+                }
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Exemplars);
+            }
         }
     }
 
@@ -630,7 +810,9 @@ public class OtlpMetricsExporterTests : IDisposable
     [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Delta, false, true)]
     [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-    public void TestHistogramToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false)
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true)]
+    [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, false, false, true, true)]
+    public void TestHistogramToOtlpMetric(string name, string? description, string? unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool enableKeyValues = false, bool enableExemplars = false, bool disposeMeterEarly = false, bool experimentalEmitNoRecordedValue = false)
     {
         var metrics = new List<Metric>();
 
@@ -656,10 +838,15 @@ public class OtlpMetricsExporterTests : IDisposable
             histogram.Record(doubleValue!.Value, attributes);
         }
 
+        if (disposeMeterEarly)
+        {
+            meter.Dispose();
+        }
+
         provider.ForceFlush();
 
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), experimentalEmitNoRecordedValue);
 
         var resourceMetric = request.ResourceMetrics.Single();
         var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -682,46 +869,84 @@ public class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Delta;
         Assert.Equal(otlpAggregationTemporality, actual.Histogram.AggregationTemporality);
 
-        Assert.Single(actual.Histogram.DataPoints);
-        var dataPoint = actual.Histogram.DataPoints.First();
-        Assert.True(dataPoint.StartTimeUnixNano > 0);
-        Assert.True(dataPoint.TimeUnixNano > 0);
-
-        Assert.Equal(1UL, dataPoint.Count);
-
-        // Known issue: Negative measurements affect the Sum. Per the spec, they should not.
-        if (longValue.HasValue)
+        if (!disposeMeterEarly || !experimentalEmitNoRecordedValue)
         {
-            Assert.Equal((double)longValue, dataPoint.Sum);
+            Assert.Single(actual.Histogram.DataPoints);
         }
         else
         {
-            Assert.Equal(doubleValue, dataPoint.Sum);
+            Assert.Equal(2, actual.Histogram.DataPoints.Count);
         }
 
-        int bucketIndex;
-        for (bucketIndex = 0; bucketIndex < dataPoint.ExplicitBounds.Count; ++bucketIndex)
+        for (var index = 0; index < actual.Histogram.DataPoints.Count; index++)
         {
-            if (dataPoint.Sum <= dataPoint.ExplicitBounds[bucketIndex])
+            var dataPoint = actual.Histogram.DataPoints[index];
+            bool isNoRecordedValueDataPoint = index == 1;
+
+            if (isNoRecordedValueDataPoint)
             {
-                break;
+                Assert.Equal(0UL, dataPoint.StartTimeUnixNano);
+            }
+            else
+            {
+                Assert.NotEqual(0UL, dataPoint.StartTimeUnixNano);
             }
 
-            Assert.Equal(0UL, dataPoint.BucketCounts[bucketIndex]);
-        }
+            Assert.True(dataPoint.TimeUnixNano > 0);
 
-        Assert.Equal(1UL, dataPoint.BucketCounts[bucketIndex]);
+            if (!isNoRecordedValueDataPoint)
+            {
+                Assert.Equal(1UL, dataPoint.Count);
 
-        if (attributes.Length > 0)
-        {
-            OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
-        }
-        else
-        {
-            Assert.Empty(dataPoint.Attributes);
-        }
+                // Known issue: Negative measurements affect the Sum. Per the spec, they should not.
+                if (longValue.HasValue)
+                {
+                    Assert.Equal((double)longValue, dataPoint.Sum);
+                }
+                else
+                {
+                    Assert.Equal(doubleValue, dataPoint.Sum);
+                }
 
-        VerifyExemplars(null, longValue ?? doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
+                int bucketIndex;
+                for (bucketIndex = 0; bucketIndex < dataPoint.ExplicitBounds.Count; ++bucketIndex)
+                {
+                    if (dataPoint.Sum <= dataPoint.ExplicitBounds[bucketIndex])
+                    {
+                        break;
+                    }
+
+                    Assert.Equal(0UL, dataPoint.BucketCounts[bucketIndex]);
+                }
+
+                Assert.Equal(1UL, dataPoint.BucketCounts[bucketIndex]);
+
+                Assert.Equal((uint)OtlpMetrics.DataPointFlags.DoNotUse, dataPoint.Flags);
+            }
+            else
+            {
+                Assert.Equal(0UL, dataPoint.Count);
+                Assert.Equal((uint)OtlpMetrics.DataPointFlags.NoRecordedValueMask, dataPoint.Flags);
+            }
+
+            if (attributes.Length > 0)
+            {
+                OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Attributes);
+            }
+
+            if (!isNoRecordedValueDataPoint)
+            {
+                VerifyExemplars(null, longValue ?? doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Exemplars);
+            }
+        }
     }
 
     [Theory]
@@ -829,7 +1054,7 @@ public class OtlpMetricsExporterTests : IDisposable
         meterProvider.ForceFlush();
 
         var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count);
-        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build(), false);
 
         Assert.Single(request.ResourceMetrics);
         var resourceMetric = request.ResourceMetrics.First();
@@ -931,7 +1156,7 @@ public class OtlpMetricsExporterTests : IDisposable
         var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
 
         var buffer = new byte[50];
-        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch);
+        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch, true);
         using var stream = new MemoryStream(buffer, 0, writePosition);
 
         var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);
@@ -985,10 +1210,10 @@ public class OtlpMetricsExporterTests : IDisposable
         }
     }
 
-    private static OtlpCollector.ExportMetricsServiceRequest CreateMetricExportRequest(in Batch<Metric> batch, Resource resource)
+    private static OtlpCollector.ExportMetricsServiceRequest CreateMetricExportRequest(in Batch<Metric> batch, Resource resource, bool experimentalEmitNoRecordedValue)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, resource, in batch);
+        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, resource, in batch, experimentalEmitNoRecordedValue);
         using var stream = new MemoryStream(buffer, 0, writePosition);
 
         var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);

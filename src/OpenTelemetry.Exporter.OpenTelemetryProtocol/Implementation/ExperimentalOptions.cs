@@ -17,6 +17,8 @@ internal sealed class ExperimentalOptions
 
     public const string OtlpDiskRetryDirectoryPathEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH";
 
+    public const string EmitNoRecordedValueNeededDataPointsEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_METRICS_EMIT_NO_RECORDED_VALUE";
+
     public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
     {
@@ -27,6 +29,11 @@ internal sealed class ExperimentalOptions
         if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, EmitLogEventEnvVar, out var emitLogEventAttributes))
         {
             this.EmitLogEventAttributes = emitLogEventAttributes;
+        }
+
+        if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, EmitNoRecordedValueNeededDataPointsEnvVar, out var emitNoRecordedValueNeededDataPoints))
+        {
+            this.EmitNoRecordedValueNeededDataPoints = emitNoRecordedValueNeededDataPoints;
         }
 
         if (configuration.TryGetStringValue(OtlpRetryEnvVar, out var retryPolicy) && retryPolicy != null)
@@ -78,4 +85,10 @@ internal sealed class ExperimentalOptions
     /// Gets the path on disk where the telemetry will be stored for retries at a later point.
     /// </summary>
     public string? DiskRetryDirectoryPath { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the NoRecordedValue measurement should be sent when metrics are removed,
+    /// e.g when disposing a Meter.
+    /// </summary>
+    public bool EmitNoRecordedValueNeededDataPoints { get; }
 }
