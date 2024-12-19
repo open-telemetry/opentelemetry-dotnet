@@ -20,7 +20,7 @@ on:
         required: false
         type: string
       os-list:
-        default: '[ "windows-latest", "ubuntu-latest", "otel-linux-arm64" ]'
+        default: '[ "windows-latest", "ubuntu-22.04", "otel-linux-arm64" ]'
         required: false
         type: string
       tfm-list:
@@ -37,7 +37,7 @@ jobs:
         os: ${{ fromJSON(inputs.os-list) }}
         version: ${{ fromJSON(inputs.tfm-list) }}
         exclude:
-        - os: ubuntu-latest
+        - os: ubuntu-22.04
           version: net462
         - os: otel-linux-arm64
           version: net462
