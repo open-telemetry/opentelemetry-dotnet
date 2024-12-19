@@ -11,6 +11,9 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
+#if NET6_0_OR_GREATER
+using System.Security.Cryptography.X509Certificates;
+#endif
 
 namespace OpenTelemetry.Exporter;
 
@@ -27,6 +30,9 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal const string DefaultGrpcEndpoint = "http://localhost:4317";
     internal const string DefaultHttpEndpoint = "http://localhost:4318";
     internal const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
+    internal const string CertificateFileEnvVarName = "OTEL_EXPORTER_OTLP_CERTIFICATE";
+    internal const string ClientKeyFileEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_KEY";
+    internal const string ClientCertificateFileEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE";
 
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
@@ -68,13 +74,80 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.DefaultHttpClientFactory = () =>
         {
+#if NET6_0_OR_GREATER
+            // Create a new handler
+            var handler = new HttpClientHandler();
+
+            // Load server certificate
+            if (!string.IsNullOrEmpty(this.CertificateFile))
+            {
+                var trustedCertificate = X509Certificate2.CreateFromPemFile(this.CertificateFile);
+
+                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+                {
+                    if (cert != null && chain != null)
+                    {
+                        chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                        chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
+                        return chain.Build(cert);
+                    }
+
+                    return false;
+                };
+            }
+
+            // Load client certificate for mTLS
+            if (!string.IsNullOrEmpty(this.ClientCertificateFile) && !string.IsNullOrEmpty(this.ClientKeyFile))
+            {
+                var clientCertificate = X509Certificate2.CreateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile);
+                handler.ClientCertificates.Add(clientCertificate);
+            }
+
+            // Create and return the HttpClient
+            return new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
+            };
+#else
+            // For earlier .NET versions
             return new HttpClient
             {
                 Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
             };
+#endif
         };
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;
+
+        // Load CertificateFile from environment variable
+        if (Environment.GetEnvironmentVariable(CertificateFileEnvVarName) is string certificateFile)
+        {
+            this.CertificateFile = certificateFile;
+        }
+        else
+        {
+            this.CertificateFile = string.Empty;
+        }
+
+        // Load ClientKeyFile from environment variable
+        if (Environment.GetEnvironmentVariable(ClientKeyFileEnvVarName) is string clientKeyFile)
+        {
+            this.ClientKeyFile = clientKeyFile;
+        }
+        else
+        {
+            this.ClientKeyFile = string.Empty;
+        }
+
+        // Load ClientCertificateFile from environment variable
+        if (Environment.GetEnvironmentVariable(ClientCertificateFileEnvVarName) is string clientCertificateFile)
+        {
+            this.ClientCertificateFile = clientCertificateFile;
+        }
+        else
+        {
+            this.ClientCertificateFile = string.Empty;
+        }
     }
 
     /// <inheritdoc/>
@@ -141,6 +214,21 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             this.httpClientFactory = value;
         }
     }
+
+    /// <summary>
+    /// Gets or sets the trusted certificate to use when verifying a server's TLS credentials.
+    /// </summary>
+    public string CertificateFile { get; set; }
+
+    /// <summary>
+    /// Gets or sets the path to the private key to use in mTLS communication in PEM format.
+    /// </summary>
+    public string ClientKeyFile { get; set; }
+
+    /// <summary>
+    /// Gets or sets the path to the certificate/chain trust for client's private key to use in mTLS communication in PEM format.
+    /// </summary>
+    public string ClientCertificateFile { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
@@ -218,6 +306,45 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         this.httpClientFactory ??= defaultExporterOptions.httpClientFactory;
 
         return this;
+    }
+
+    internal HttpClient AddCertificatesToHttpClient(HttpClientHandler handler)
+    {
+#if NET6_0_OR_GREATER
+        // Set up server certificate validation if CertificateFile is provided
+        if (!string.IsNullOrEmpty(this.CertificateFile))
+        {
+            // Load the certificate from the file
+            var trustedCertificate = X509Certificate2.CreateFromPemFile(this.CertificateFile);
+
+            // Set custom server certificate validation callback
+            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+            {
+                if (cert != null && chain != null)
+                {
+                    chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                    chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
+                    return chain.Build(cert);
+                }
+
+                return false;
+            };
+        }
+
+        // Add client certificate if both files are provided
+        if (!string.IsNullOrEmpty(this.ClientCertificateFile) && !string.IsNullOrEmpty(this.ClientKeyFile))
+        {
+            // Load the client certificate from PEM files
+            var clientCertificate = X509Certificate2.CreateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile);
+            handler.ClientCertificates.Add(clientCertificate);
+        }
+
+        // Create and return an HttpClient with the modified handler
+        return new HttpClient(handler);
+#else
+        // Handle alternative methods for earlier .NET versions
+        throw new PlatformNotSupportedException("mTLS support requires .NET 6.0 or later.");
+#endif
     }
 
     private static string GetUserAgentString()
