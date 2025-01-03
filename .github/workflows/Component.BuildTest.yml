@@ -20,7 +20,7 @@ on:
         required: false
         type: string
       os-list:
-        default: '[ "windows-latest", "ubuntu-22.04", "otel-linux-arm64" ]'
+        default: '[ "windows-latest", "ubuntu-22.04", "otel-windows-arm64", "otel-linux-arm64" ]'
         required: false
         type: string
       tfm-list:
@@ -43,9 +43,17 @@ jobs:
           version: net462
         - os: otel-linux-arm64
           version: net8.0
+        - os: otel-windows-arm64
+          version: net462
+        - os: otel-windows-arm64
+          version: net8.0
 
     runs-on: ${{ matrix.os }}
     steps:
+    - name: Install git on otel-windows-arm64
+      run: choco install git
+      if: ${{ matrix.os == 'otel-windows-arm64' }}
+
     - uses: actions/checkout@v4
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
