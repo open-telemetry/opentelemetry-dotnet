@@ -78,7 +78,7 @@ public class TracerProvider : BaseProvider
     {
         if (disposing)
         {
-            var tracers = Interlocked.CompareExchange(ref this.Tracers, null, this.Tracers);
+            var tracers = Interlocked.Exchange(ref this.Tracers, null);
             if (tracers != null)
             {
                 lock (tracers)
@@ -90,8 +90,6 @@ public class TracerProvider : BaseProvider
                         tracer.ActivitySource = null;
                         activitySource?.Dispose();
                     }
-
-                    tracers.Clear();
                 }
             }
         }

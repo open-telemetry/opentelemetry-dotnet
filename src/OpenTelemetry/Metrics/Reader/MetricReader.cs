@@ -125,7 +125,7 @@ public abstract partial class MetricReader : IDisposable
 
         if (!shouldRunCollect)
         {
-            return Task.WaitAny(tcs.Task, this.shutdownTcs.Task, Task.Delay(timeoutMilliseconds)) == 0 && tcs.Task.Result;
+            return Task.WaitAny([tcs.Task, this.shutdownTcs.Task], timeoutMilliseconds) == 0 && tcs.Task.Result;
         }
 
         var result = false;

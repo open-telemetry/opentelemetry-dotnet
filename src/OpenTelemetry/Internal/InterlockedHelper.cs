@@ -18,29 +18,28 @@ internal static class InterlockedHelper
         var returnedValue = Interlocked.CompareExchange(ref location, currentValue + value, currentValue);
         if (returnedValue != currentValue)
         {
-            AddRare(ref location, value, returnedValue);
+            AddRare(ref location, value);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double Read(ref double location)
-        => Interlocked.CompareExchange(ref location, double.NaN, double.NaN);
+        => Interlocked.CompareExchange(ref location, 0, 0);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static void AddRare(ref double location, double value, double currentValue)
+    private static void AddRare(ref double location, double value)
     {
         var sw = default(SpinWait);
         while (true)
         {
             sw.SpinOnce();
 
+            double currentValue = Volatile.Read(ref location);
             var returnedValue = Interlocked.CompareExchange(ref location, currentValue + value, currentValue);
             if (returnedValue == currentValue)
             {
                 break;
             }
-
-            currentValue = returnedValue;
         }
     }
 }

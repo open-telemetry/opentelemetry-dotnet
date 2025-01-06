@@ -143,12 +143,12 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
 
         // Setup Listener
-        if (state.MeterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
+        if (state.MeterSources.Exists(WildcardHelper.ContainsWildcard))
         {
             var regex = WildcardHelper.GetWildcardRegex(state.MeterSources);
             this.shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
         }
-        else if (state.MeterSources.Any())
+        else if (state.MeterSources.Count > 0)
         {
             var meterSourcesToSubscribe = new HashSet<string>(state.MeterSources, StringComparer.OrdinalIgnoreCase);
             this.shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
