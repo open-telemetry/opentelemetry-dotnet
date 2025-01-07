@@ -24,7 +24,7 @@ jobs:
       with:
         filters: |
           md: ['**.md']
-          build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props']
+          build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props', 'global.json']
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
           solution: ['OpenTelemetry.sln']
