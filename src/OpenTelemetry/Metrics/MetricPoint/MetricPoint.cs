@@ -394,7 +394,7 @@ public struct MetricPoint
             case AggregationType.LongSumIncomingCumulative:
             case AggregationType.LongGauge:
                 {
-                    Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                    Volatile.Write(ref this.runningValue.AsLong, number);
                     break;
                 }
 
@@ -451,7 +451,7 @@ public struct MetricPoint
             case AggregationType.LongSumIncomingCumulative:
             case AggregationType.LongGauge:
                 {
-                    Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                    Volatile.Write(ref this.runningValue.AsLong, number);
                     break;
                 }
 
@@ -510,7 +510,7 @@ public struct MetricPoint
             case AggregationType.DoubleSumIncomingCumulative:
             case AggregationType.DoubleGauge:
                 {
-                    Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                    Volatile.Write(ref this.runningValue.AsDouble, number);
                     break;
                 }
 
@@ -567,7 +567,7 @@ public struct MetricPoint
             case AggregationType.DoubleSumIncomingCumulative:
             case AggregationType.DoubleGauge:
                 {
-                    Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                    Volatile.Write(ref this.runningValue.AsDouble, number);
                     break;
                 }
 
@@ -622,7 +622,7 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
-                        long initValue = Interlocked.Read(ref this.runningValue.AsLong);
+                        long initValue = Volatile.Read(ref this.runningValue.AsLong);
                         this.snapshotValue.AsLong = initValue - this.deltaLastValue.AsLong;
                         this.deltaLastValue.AsLong = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
@@ -636,7 +636,7 @@ public struct MetricPoint
                     }
                     else
                     {
-                        this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
+                        this.snapshotValue.AsLong = Volatile.Read(ref this.runningValue.AsLong);
                     }
 
                     break;
@@ -647,7 +647,7 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
-                        double initValue = InterlockedHelper.Read(ref this.runningValue.AsDouble);
+                        double initValue = Volatile.Read(ref this.runningValue.AsDouble);
                         this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
                         this.deltaLastValue.AsDouble = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
@@ -661,7 +661,7 @@ public struct MetricPoint
                     }
                     else
                     {
-                        this.snapshotValue.AsDouble = InterlockedHelper.Read(ref this.runningValue.AsDouble);
+                        this.snapshotValue.AsDouble = Volatile.Read(ref this.runningValue.AsDouble);
                     }
 
                     break;
@@ -669,7 +669,7 @@ public struct MetricPoint
 
             case AggregationType.LongGauge:
                 {
-                    this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
+                    this.snapshotValue.AsLong = Volatile.Read(ref this.runningValue.AsLong);
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     // Check again if value got updated, if yes reset status.
@@ -684,7 +684,7 @@ public struct MetricPoint
 
             case AggregationType.DoubleGauge:
                 {
-                    this.snapshotValue.AsDouble = InterlockedHelper.Read(ref this.runningValue.AsDouble);
+                    this.snapshotValue.AsDouble = Volatile.Read(ref this.runningValue.AsDouble);
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     // Check again if value got updated, if yes reset status.
