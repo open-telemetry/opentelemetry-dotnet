@@ -48,7 +48,7 @@ internal sealed class MetricPointOptionalComponents
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ReleaseLock()
     {
-        Volatile.Write(ref this.isCriticalSectionOccupied, 0);
+        Interlocked.Exchange(ref this.isCriticalSectionOccupied, 0);
     }
 
     // Note: This method is marked as NoInlining because the whole point of it

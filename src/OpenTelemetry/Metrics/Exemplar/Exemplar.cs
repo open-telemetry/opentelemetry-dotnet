@@ -135,7 +135,7 @@ public struct Exemplar
             this.StoreRawTags(measurement.Tags);
         }
 
-        Volatile.Write(ref this.isCriticalSectionOccupied, 0);
+        Interlocked.Exchange(ref this.isCriticalSectionOccupied, 0);
     }
 
     internal void Reset()
@@ -168,7 +168,7 @@ public struct Exemplar
             destination.Reset();
         }
 
-        Volatile.Write(ref this.isCriticalSectionOccupied, 0);
+        Interlocked.Exchange(ref this.isCriticalSectionOccupied, 0);
     }
 
     internal readonly void Copy(ref Exemplar destination)
