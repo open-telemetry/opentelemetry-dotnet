@@ -185,14 +185,14 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         this.WriteEvent(16, exception);
     }
 
-    [Event(24, Message = "Activity started. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose, Opcode = EventOpcode.Start)]
-    public void ActivityStarted(string name, string id)
+    [Event(24, Message = "Activity started. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
+    public void ActivityStart(string name, string id)
     {
         this.WriteEvent(24, name, id);
     }
 
-    [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose, Opcode = EventOpcode.Stop)]
-    public void ActivityStopped(string name, string? id)
+    [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
+    public void ActivityStop(string name, string? id)
     {
         this.WriteEvent(25, name, id);
     }
