@@ -12,6 +12,10 @@ Notes](../../RELEASENOTES.md).
   now lead to unique metrics.
   ([#5982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5982))
 
+* Fixed a bug in tracing where `TraceState` set by a custom `Sampler` is not
+  applied when creating propagation-only spans.
+  ([#6058](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6058))
+
 ## 1.11.0-rc.1
 
 Released 2024-Dec-11
