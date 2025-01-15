@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.11.0
+
+Released 2025-Jan-15
+
 * [Meter.Tags](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.metrics.meter.tags?view=net-9.0)
   will now be considered when resolving the SDK metric to update when
   measurements are recorded. Meters with the same name and different tags will
