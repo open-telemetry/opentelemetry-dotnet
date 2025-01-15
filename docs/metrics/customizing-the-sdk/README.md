@@ -248,8 +248,8 @@ histogram aggregation:
   recommended to be used by library authors when the SDK defaults don't match the
   required granularity for the histogram being emitted.
 
-  See:
-  [InstrumentAdvice&lt;T&gt;](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.instrumentadvice-1).
+  See: [Using Advice to customize Histogram
+  instruments](https://learn.microsoft.com/dotnet/core/diagnostics/metrics-instrumentation#using-advice-to-customize-histogram-instruments).
 
 ##### Base2 exponential bucket histogram aggregation
 
