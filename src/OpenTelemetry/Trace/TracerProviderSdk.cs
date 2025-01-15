@@ -237,7 +237,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         else if (this.sampler is AlwaysOffSampler)
         {
             activityListener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent) : ActivitySamplingResult.None;
+                !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(ref options) : ActivitySamplingResult.None;
             this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
         }
         else
@@ -493,47 +493,46 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
             SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
-            _ => ActivitySamplingResult.PropagationData,
+            _ => PropagateOrIgnoreData(ref options),
         };
 
-        if (activitySamplingResult != ActivitySamplingResult.PropagationData)
+        if (activitySamplingResult > ActivitySamplingResult.PropagationData)
         {
             foreach (var att in samplingResult.Attributes)
             {
                 options.SamplingTags.Add(att.Key, att.Value);
             }
+        }
 
+        if (activitySamplingResult != ActivitySamplingResult.None
+            && samplingResult.TraceStateString != null)
+        {
             // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler
             // Spec requires clearing Tracestate if empty Tracestate is returned.
             // Since .NET did not have this capability, it'll break
             // existing samplers if we did that. So the following is
             // adopted to remain spec-compliant and backward compat.
             // The behavior is:
-            // if sampler returns null, its treated as if it has no intend
+            // if sampler returns null, its treated as if it has not intended
             // to change Tracestate. Existing SamplingResult ctors will put null as default TraceStateString,
             // so all existing samplers will get this behavior.
             // if sampler returns non-null, then it'll be used as the
             // new value for Tracestate
             // A sampler can return string.Empty if it intends to clear the state.
-            if (samplingResult.TraceStateString != null)
-            {
-                options = options with { TraceState = samplingResult.TraceStateString };
-            }
-
-            return activitySamplingResult;
+            options = options with { TraceState = samplingResult.TraceStateString };
         }
 
-        return PropagateOrIgnoreData(options.Parent);
+        return activitySamplingResult;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ActivitySamplingResult PropagateOrIgnoreData(in ActivityContext parentContext)
+    private static ActivitySamplingResult PropagateOrIgnoreData(ref ActivityCreationOptions<ActivityContext> options)
     {
-        var isRootSpan = parentContext.TraceId == default;
+        var isRootSpan = options.Parent.TraceId == default;
 
         // If it is the root span or the parent is remote select PropagationData so the trace ID is preserved
         // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
-        return (isRootSpan || parentContext.IsRemote)
+        return (isRootSpan || options.Parent.IsRemote)
             ? ActivitySamplingResult.PropagationData
             : ActivitySamplingResult.None;
     }
@@ -606,11 +605,11 @@ internal sealed class TracerProviderSdk : TracerProvider
             {
                 activity.SetTag(att.Key, att.Value);
             }
+        }
 
-            if (samplingResult.TraceStateString != null)
-            {
-                activity.TraceStateString = samplingResult.TraceStateString;
-            }
+        if (samplingResult.TraceStateString != null)
+        {
+            activity.TraceStateString = samplingResult.TraceStateString;
         }
     }
 }
