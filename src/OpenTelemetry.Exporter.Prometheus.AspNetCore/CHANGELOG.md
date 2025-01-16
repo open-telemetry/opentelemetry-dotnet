@@ -7,6 +7,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.11.0-beta.1
+
+Released 2025-Jan-16
+
+* Updated OpenTelemetry core component version(s) to `1.11.0`.
+  ([#6064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6064))
+
 ## 1.10.0-beta.1
 
 Released 2024-Nov-12
@@ -150,7 +157,7 @@ Released 2022-Sep-29
   ([#3651](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3651))
 
 * Added `"# EOF\n"` ending following the [OpenMetrics
-  specification](https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md)
+  specification](https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md)
   ([#3654](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3654))
 
 ## 1.4.0-alpha.2

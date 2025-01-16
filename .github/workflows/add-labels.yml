@@ -14,7 +14,7 @@ jobs:
   add-labels-on-issues:
     if: github.event_name == 'issues' && !github.event.issue.pull_request
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: check out code
@@ -35,7 +35,7 @@ jobs:
   add-labels-on-pull-requests:
     if: github.event_name == 'pull_request_target'
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: check out code

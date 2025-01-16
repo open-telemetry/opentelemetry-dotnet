@@ -91,7 +91,7 @@ jobs:
         nuget push src/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
   post-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     needs:
     - automation

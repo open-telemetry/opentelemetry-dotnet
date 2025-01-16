@@ -22,7 +22,7 @@ jobs:
     secrets: inherit
 
   push-packages-and-publish-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     needs: automation
 
@@ -62,7 +62,7 @@ jobs:
           -pushToNuget '${{ secrets.NUGET_TOKEN != '' }}'
 
   post-release-published:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     needs:
     - automation

@@ -29,7 +29,7 @@ jobs:
     secrets: inherit
 
   prepare-release-pr:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     needs: automation
 
@@ -59,7 +59,7 @@ jobs:
           -gitUserEmail '${{ needs.automation.outputs.email }}'
 
   lock-pr-and-post-notice-to-create-release-tag:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     needs: automation
 
@@ -91,7 +91,7 @@ jobs:
           -botUserName '${{ needs.automation.outputs.username }}'
 
   create-release-tag-pr-post-notice:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     needs: automation
 
@@ -130,7 +130,7 @@ jobs:
           -gitUserEmail '${{ needs.automation.outputs.email }}'
 
   update-changelog-release-dates-on-prepare-pr-post-notice:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     needs: automation
 

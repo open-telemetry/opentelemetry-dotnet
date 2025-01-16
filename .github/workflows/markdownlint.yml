@@ -7,14 +7,14 @@ on:
 
 jobs:
   run-markdownlint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: check out code
       uses: actions/checkout@v4
 
     - name: run markdownlint
-      uses: DavidAnson/markdownlint-cli2-action@v18.0.0
+      uses: DavidAnson/markdownlint-cli2-action@v19.0.0
       with:
         globs: |
           **/*.md
