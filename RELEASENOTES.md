@@ -4,6 +4,13 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.11.0
+
+* `OpenTelemetry.Exporter.OpenTelemetryProtocol` no longer depends on the
+  `Google.Protobuf`, `Grpc`, or `Grpc.Net.Client` packages. Serialization and
+  transmission of outgoing data is now performed manually to improve the overall
+  performance.
+
 ## 1.10.0
 
 * Bumped the package versions of `System.Diagnostic.DiagnosticSource` and other
