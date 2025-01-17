@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -40,6 +42,23 @@ public sealed class LoggerProviderBuilderExtensionsTests
         Assert.True(((CustomInstrumentation)instrumentation[0]).Disposed);
         Assert.True(((CustomInstrumentation)instrumentation[1]).Disposed);
         Assert.True(((CustomInstrumentation)instrumentation[2]).Disposed);
+    }
+
+    [Fact]
+    public void LoggerProviderBuilderAddInstrumentationLogsCorrectlyTest()
+    {
+        using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
+        using (Sdk.CreateLoggerProviderBuilder()
+                   .AddInstrumentation<CustomInstrumentation>()
+                   .Build())
+        {
+        }
+
+        var eventArgs = inMemoryEventListener.Events
+            .Single(_ => _.Payload!.OfType<string>()
+                .Any(_ => _.StartsWith("Instrumentations added")));
+        var payload = (string)eventArgs.Payload![0]!;
+        Assert.Equal("""Instrumentations added = "CustomInstrumentation 1.0.0.0".""", payload);
     }
 
     [Theory]

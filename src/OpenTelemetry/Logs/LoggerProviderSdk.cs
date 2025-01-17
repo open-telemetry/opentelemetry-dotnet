@@ -69,7 +69,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
                 this.instrumentations.Add(instrumentation.Instance);
             }
 
-            instrumentationFactoriesAdded.Append(instrumentation.Name);
+            instrumentationFactoriesAdded.Append($"{instrumentation.Name} {instrumentation.Version}");
             instrumentationFactoriesAdded.Append(';');
         }
 
