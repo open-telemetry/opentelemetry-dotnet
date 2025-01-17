@@ -61,26 +61,23 @@ Requested by: @$requestedByUserName
 
 ## Commands
 
+``/UpdateReleaseDates``: Use to update release dates in CHANGELOGs before merging [``approvers``, ``maintainers``]
 "@
 
   if ($minVerTagPrefix -eq 'core-' -and $isPrerelease -ne $true)
   {
     $body +=
 @"
-``/UpdateReleaseDates``: Use to update release dates in CHANGELOGs before merging [``approvers``, ``maintainers``]
 ``/UpdateReleaseNotes``: Use to update ``RELEASENOTES.md`` before merging [``approvers``, ``maintainers``]
-``/CreateReleaseTag``: Use after merging to push the release tag and trigger the job to create packages [``approvers``, ``maintainers``]
-``/PushPackages``: Use after the created packages have been validated to push to NuGet [``maintainers``]
 "@
   }
-  else {
-    $body +=
+
+  $body +=
 @"
 ``/UpdateReleaseDates``: Use to update release dates in CHANGELOGs before merging [``approvers``, ``maintainers``]
 ``/CreateReleaseTag``: Use after merging to push the release tag and trigger the job to create packages [``approvers``, ``maintainers``]
 ``/PushPackages``: Use after the created packages have been validated to push to NuGet [``maintainers``]
 "@
-  }
 
   git commit -a -m "Prepare repo to release $tag." 2>&1 | % ToString
   if ($LASTEXITCODE -gt 0)
@@ -376,12 +373,20 @@ function UpdateReleaseNotesAndPostNoticeOnPullRequest {
 
   $tagPrefix = $match.Groups[1].Value
   $version = $match.Groups[2].Value
+  $isPrerelease = $version -match '-alpha' -or $version -match '-beta' -or $version -match '-rc'
 
   $commentUserPermission = gh api "repos/$gitRepository/collaborators/$commentUserName/permission" | ConvertFrom-Json
   if ($commentUserPermission.permission -ne 'admin' -and $commentUserPermission.permission -ne 'write')
   {
     gh pr comment $pullRequestNumber `
       --body "I'm sorry @$commentUserName but you don't have permission to update this PR. Only maintainers and approvers can update this PR."
+    return
+  }
+
+  if ($tagPrefix -ne 'core-' -or $$isPrerelease -eq $true)
+  {
+    gh pr comment $pullRequestNumber `
+      --body "I'm sorry @$commentUserName but we don't typically add release notes for prereleases or unstable packages."
     return
   }
 
