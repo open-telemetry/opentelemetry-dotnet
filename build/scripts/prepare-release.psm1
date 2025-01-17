@@ -68,12 +68,14 @@ Requested by: @$requestedByUserName
   {
     $body +=
 @"
+
 ``/UpdateReleaseNotes``: Use to update ``RELEASENOTES.md`` before merging [``approvers``, ``maintainers``]
 "@
   }
 
   $body +=
 @"
+
 ``/UpdateReleaseDates``: Use to update release dates in CHANGELOGs before merging [``approvers``, ``maintainers``]
 ``/CreateReleaseTag``: Use after merging to push the release tag and trigger the job to create packages [``approvers``, ``maintainers``]
 ``/PushPackages``: Use after the created packages have been validated to push to NuGet [``maintainers``]
