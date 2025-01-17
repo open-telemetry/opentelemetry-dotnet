@@ -408,7 +408,7 @@ function UpdateReleaseNotesAndPostNoticeOnPullRequest {
       throw 'Could not find release notes content'
   }
 
-  $content = $match.Groups[1].Value.Trim()
+  $content = $match.Groups[1].Value.Trim() -replace "`r`n", "`n"
 
   $body =
 @"
@@ -423,7 +423,7 @@ $content
   if ($match.Success -eq $true)
   {
     $content = [regex]::Replace($releaseNotesContent, "(## $version[\w\W\s]*?)##", $body, [Text.RegularExpressions.RegexOptions]::Multiline)
-    Set-Content -Path "RELEASENOTES.md" -Value $content
+    Set-Content -Path "RELEASENOTES.md" -Value $content.TrimEnd()
   }
   else {
     $match = [regex]::Match($releaseNotesContent, '(# Release Notes[\w\W\s]*?)##', [Text.RegularExpressions.RegexOptions]::Multiline)
@@ -434,7 +434,7 @@ $content
 
     $body = $match.Groups[1].Value + $body
     $content = [regex]::Replace($releaseNotesContent, '(# Release Notes[\w\W\s]*?)##', $body, [Text.RegularExpressions.RegexOptions]::Multiline)
-    Set-Content -Path "RELEASENOTES.md" -Value $content
+    Set-Content -Path "RELEASENOTES.md" -Value $content.TrimEnd()
   }
 
   git commit -a -m "Update RELEASENOTES for $tag." 2>&1 | % ToString
