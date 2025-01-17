@@ -383,7 +383,7 @@ function UpdateReleaseNotesAndPostNoticeOnPullRequest {
     return
   }
 
-  if ($tagPrefix -ne 'core-' -or $$isPrerelease -eq $true)
+  if ($tagPrefix -ne 'core-' -or $isPrerelease -eq $true)
   {
     gh pr comment $pullRequestNumber `
       --body "I'm sorry @$commentUserName but we don't typically add release notes for prereleases or unstable packages."
