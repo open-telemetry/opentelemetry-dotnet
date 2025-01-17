@@ -204,6 +204,6 @@ jobs:
           -pullRequestNumber '${{ github.event.issue.number }}' `
           -botUserName '${{ needs.automation.outputs.username }}' `
           -commentUserName '${{ github.event.comment.user.login }}' `
-          -commentBody '${{ github.event.comment.body }}'
+          -commentBody '${{ github.event.comment.body }}' `
           -gitUserName '${{ needs.automation.outputs.username }}' `
           -gitUserEmail '${{ needs.automation.outputs.email }}'
