@@ -118,7 +118,6 @@ internal sealed class SelfDiagnosticsConfigParser
 
     internal static bool TryParseLogDirectory(
         string configJson,
-        [NotNullWhen(true)]
         out string logDirectory)
     {
         var logDirectoryResult = LogDirectoryRegex.Match(configJson);
