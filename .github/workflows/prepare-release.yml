@@ -156,7 +156,6 @@ jobs:
         token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     - name: Update release date
-      id: create-tag
       shell: pwsh
       run: |
         Import-Module .\build\scripts\prepare-release.psm1
@@ -169,3 +168,42 @@ jobs:
           -gitUserName '${{ needs.automation.outputs.username }}' `
           -gitUserEmail '${{ needs.automation.outputs.email }}'
 
+  update-releasenotes-on-prepare-pr-post-notice:
+    runs-on: ubuntu-22.04
+
+    needs: automation
+
+    if: |
+      github.event_name == 'issue_comment'
+      && github.event.issue.pull_request
+      && github.event.issue.state == 'open'
+      && github.event.comment.user.login != needs.automation.outputs.username
+      && contains(github.event.comment.body, '/UpdateReleaseNotes')
+      && startsWith(github.event.issue.title, '[release] Prepare release ')
+      && github.event.issue.pull_request.merged_at == null
+      && needs.automation.outputs.enabled
+
+    env:
+      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+      with:
+        # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
+        fetch-depth: 0
+        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+
+    - name: Update release notes
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\prepare-release.psm1
+
+        UpdateReleaseNotesAndPostNoticeOnPullRequest `
+          -gitRepository '${{ github.repository }}' `
+          -pullRequestNumber '${{ github.event.issue.number }}' `
+          -botUserName '${{ needs.automation.outputs.username }}' `
+          -commentUserName '${{ github.event.comment.user.login }}' `
+          -commentBody '${{ github.event.comment.body }}'
+          -gitUserName '${{ needs.automation.outputs.username }}' `
+          -gitUserEmail '${{ needs.automation.outputs.email }}'

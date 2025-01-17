@@ -15,6 +15,7 @@ function CreatePullRequestToUpdateChangelogsAndPublicApis {
       throw 'Input version did not match expected format'
   }
 
+  $isPrerelease = $version -match '-alpha' -or $version -match '-beta' -or $version -match '-rc'
   $tag="${minVerTagPrefix}${version}"
   $branch="release/prepare-${tag}-release"
 
@@ -48,7 +49,7 @@ Requested by: @$requestedByUserName
   & ./build/scripts/update-changelogs.ps1 -minVerTagPrefix $minVerTagPrefix -version $version
 
   # Update publicApi files for stable releases
-  if ($version -notlike "*-alpha*" -and $version -notlike "*-beta*" -and $version -notlike "*-rc*")
+  if ($isPrerelease -ne $true)
   {
     & ./build/scripts/finalize-publicapi.ps1 -minVerTagPrefix $minVerTagPrefix
 
@@ -60,10 +61,26 @@ Requested by: @$requestedByUserName
 
 ## Commands
 
+"@
+
+  if ($minVerTagPrefix -eq 'core-' -and $isPrerelease -ne $true)
+  {
+    $body +=
+@"
+``/UpdateReleaseDates``: Use to update release dates in CHANGELOGs before merging [``approvers``, ``maintainers``]
+``/UpdateReleaseNotes``: Use to update ``RELEASENOTES.md`` before merging [``approvers``, ``maintainers``]
+``/CreateReleaseTag``: Use after merging to push the release tag and trigger the job to create packages [``approvers``, ``maintainers``]
+``/PushPackages``: Use after the created packages have been validated to push to NuGet [``maintainers``]
+"@
+  }
+  else {
+    $body +=
+@"
 ``/UpdateReleaseDates``: Use to update release dates in CHANGELOGs before merging [``approvers``, ``maintainers``]
 ``/CreateReleaseTag``: Use after merging to push the release tag and trigger the job to create packages [``approvers``, ``maintainers``]
 ``/PushPackages``: Use after the created packages have been validated to push to NuGet [``maintainers``]
 "@
+  }
 
   git commit -a -m "Prepare repo to release $tag." 2>&1 | % ToString
   if ($LASTEXITCODE -gt 0)
@@ -77,12 +94,42 @@ Requested by: @$requestedByUserName
       throw 'git push failure'
   }
 
-  gh pr create `
+  $createPullRequestResponse = gh pr create `
     --title "[release] Prepare release $tag" `
     --body $body `
     --base $targetBranch `
     --head $branch `
     --label release
+
+  Write-Host $createPullRequestResponse
+
+  $match = [regex]::Match($createPullRequestResponse, "\/pull\/(.*)$")
+  if ($match.Success -eq $false)
+  {
+      throw 'Could not parse pull request number from gh pr create response'
+  }
+
+  $pullRequestNumber = $match.Groups[1].Value
+
+  if ($minVerTagPrefix -eq 'core-' -and $isPrerelease -ne $true)
+  {
+    $found = Select-String -Path "RELEASENOTES.md" -Pattern "## $version" -Quiet
+    if ($found -eq $false)
+    {
+      $body =
+@"
+I noticed this PR is releasing a stable version of core packages but there isn't any content in ``RELEASENOTES.md`` for the version being released.
+
+It is important to update ``RELEASENOTES.md`` before creating the release tag because a permalink will become part of the package(s).
+
+Post a comment with "/UpdateReleaseNotes" in the body if you would like me to update release notes.
+
+Note: In the comment everything below "/UpdateReleaseNotes" will be added to ``RELEASENOTES.md`` for the version being released. If something is already there it will be replaced.
+"@
+
+      gh pr comment $pullRequestNumber --body $body
+    }
+  }
 }
 
 Export-ModuleMember -Function CreatePullRequestToUpdateChangelogsAndPublicApis
@@ -294,3 +341,115 @@ Released $(Get-Date -UFormat '%Y-%b-%d')
 }
 
 Export-ModuleMember -Function UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest
+
+function UpdateReleaseNotesAndPostNoticeOnPullRequest {
+  param(
+    [Parameter(Mandatory=$true)][string]$gitRepository,
+    [Parameter(Mandatory=$true)][string]$pullRequestNumber,
+    [Parameter(Mandatory=$true)][string]$botUserName,
+    [Parameter(Mandatory=$true)][string]$commentUserName,
+    [Parameter(Mandatory=$true)][string]$commentBody,
+    [Parameter()][string]$gitUserName,
+    [Parameter()][string]$gitUserEmail
+  )
+
+  $prViewResponse = gh pr view $pullRequestNumber --json headRefName,author,title | ConvertFrom-Json
+
+  if ($prViewResponse.author.login -ne $botUserName)
+  {
+      throw 'PR author was unexpected'
+  }
+
+  $match = [regex]::Match($prViewResponse.title, '^\[release\] Prepare release (.*)$')
+  if ($match.Success -eq $false)
+  {
+      throw 'Could not parse tag from PR title'
+  }
+
+  $tag = $match.Groups[1].Value
+
+  $match = [regex]::Match($tag, '^(.*?-)(.*)$')
+  if ($match.Success -eq $false)
+  {
+      throw 'Could not parse prefix or version from tag'
+  }
+
+  $tagPrefix = $match.Groups[1].Value
+  $version = $match.Groups[2].Value
+
+  $commentUserPermission = gh api "repos/$gitRepository/collaborators/$commentUserName/permission" | ConvertFrom-Json
+  if ($commentUserPermission.permission -ne 'admin' -and $commentUserPermission.permission -ne 'write')
+  {
+    gh pr comment $pullRequestNumber `
+      --body "I'm sorry @$commentUserName but you don't have permission to update this PR. Only maintainers and approvers can update this PR."
+    return
+  }
+
+  if ([string]::IsNullOrEmpty($gitUserName) -eq $false)
+  {
+    git config user.name $gitUserName
+  }
+  if ([string]::IsNullOrEmpty($gitUserEmail) -eq $false)
+  {
+    git config user.email $gitUserEmail
+  }
+
+  git switch $prViewResponse.headRefName 2>&1 | % ToString
+  if ($LASTEXITCODE -gt 0)
+  {
+      throw 'git switch failure'
+  }
+
+  $releaseNotesContent = (Get-Content -Path "RELEASENOTES.md" -Raw)
+
+  $match = [regex]::Match($commentBody, '[\w\W\s]*\/UpdateReleaseNotes.*$([\w\W\s]*)', [Text.RegularExpressions.RegexOptions]::Multiline)
+  if ($match.Success -eq $false)
+  {
+      throw 'Could not find release notes content'
+  }
+
+  $content = $match.Groups[1].Value.Trim()
+
+  $body =
+@"
+## $version
+
+$content
+
+##
+"@
+
+  $match = [regex]::Match($releaseNotesContent, "(## $version[\w\W\s]*?)##", [Text.RegularExpressions.RegexOptions]::Multiline)
+  if ($match.Success -eq $true)
+  {
+    $content = [regex]::Replace($releaseNotesContent, "(## $version[\w\W\s]*?)##", $body, [Text.RegularExpressions.RegexOptions]::Multiline)
+    Set-Content -Path "RELEASENOTES.md" -Value $content
+  }
+  else {
+    $match = [regex]::Match($releaseNotesContent, '(# Release Notes[\w\W\s]*?)##', [Text.RegularExpressions.RegexOptions]::Multiline)
+    if ($match.Success -eq $false)
+    {
+      throw 'Could not find release notes header'
+    }
+
+    $body = $match.Groups[1].Value + $body
+    $content = [regex]::Replace($releaseNotesContent, '(# Release Notes[\w\W\s]*?)##', $body, [Text.RegularExpressions.RegexOptions]::Multiline)
+    Set-Content -Path "RELEASENOTES.md" -Value $content
+  }
+
+  git commit -a -m "Update RELEASENOTES for $tag." 2>&1 | % ToString
+  if ($LASTEXITCODE -gt 0)
+  {
+      throw 'git commit failure'
+  }
+
+  git push -u origin $prViewResponse.headRefName 2>&1 | % ToString
+  if ($LASTEXITCODE -gt 0)
+  {
+      throw 'git push failure'
+  }
+
+  gh pr comment $pullRequestNumber --body "I updated ``RELEASENOTES.md``."
+}
+
+Export-ModuleMember -Function UpdateReleaseNotesAndPostNoticeOnPullRequest
