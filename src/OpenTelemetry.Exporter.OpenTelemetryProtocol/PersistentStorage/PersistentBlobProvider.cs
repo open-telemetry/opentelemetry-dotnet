@@ -102,7 +102,7 @@ public abstract class PersistentBlobProvider
     {
         try
         {
-            return this.OnGetBlobs() ?? Enumerable.Empty<PersistentBlob>();
+            return this.OnGetBlobs();
         }
         catch (Exception ex)
         {
