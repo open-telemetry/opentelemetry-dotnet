@@ -33,7 +33,7 @@ internal sealed class OtlpExporterBuilder
                 name = "otlp";
             }
 
-            BindConfigurationToOptions(services!, name!, configuration);
+            BindConfigurationToOptions(services!, name, configuration);
         }
 
         name ??= Options.DefaultName;

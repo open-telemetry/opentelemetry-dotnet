@@ -199,7 +199,7 @@ public sealed class B3Propagator : TextMapPropagator
                 return context;
             }
 
-            var parts = header!.Split(XB3CombinedDelimiter);
+            var parts = header.Split(XB3CombinedDelimiter);
             if (parts.Length < 2 || parts.Length > 4)
             {
                 return context;

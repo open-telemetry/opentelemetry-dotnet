@@ -56,7 +56,7 @@ public class JaegerPropagator : TextMapPropagator
                 return context;
             }
 
-            var jaegerHeaderParsed = TryExtractTraceContext(jaegerHeader!, out var traceId, out var spanId, out var traceOptions);
+            var jaegerHeaderParsed = TryExtractTraceContext(jaegerHeader, out var traceId, out var spanId, out var traceOptions);
 
             if (!jaegerHeaderParsed)
             {
