@@ -45,7 +45,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
     }
 
     [Fact]
-    public void LoggerProviderBuilderAddInstrumentationLogsCorrectlyTest()
+    public void LoggerProviderBuilderAddInstrumentationLogsTest()
     {
         using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
         using (Sdk.CreateLoggerProviderBuilder()
