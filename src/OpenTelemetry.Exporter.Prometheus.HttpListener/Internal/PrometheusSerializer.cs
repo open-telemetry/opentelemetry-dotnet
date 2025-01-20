@@ -102,15 +102,11 @@ internal static partial class PrometheusSerializer
             buffer[cursor++] = unchecked((byte)(0b_1100_0000 | (ordinal >> 6)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
         }
-        else if (ordinal <= 0xFFFF)
+        else
         {
             buffer[cursor++] = unchecked((byte)(0b_1110_0000 | (ordinal >> 12)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
-        }
-        else
-        {
-            Debug.Assert(ordinal <= 0xFFFF, ".NET string should not go beyond Unicode BMP.");
         }
 
         return cursor;
