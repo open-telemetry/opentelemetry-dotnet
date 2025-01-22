@@ -6,7 +6,8 @@ directory of each individual package.
 
 ## 1.11.1
 
-* Fixed a bug preventing `OpenTelemetry.Exporter.OpenTelemetryProtocol` from exporting telemetry on .NET Framework.
+* Fixed a bug preventing `OpenTelemetry.Exporter.OpenTelemetryProtocol` from
+  exporting telemetry on .NET Framework.
 
 ## 1.11.0
 
