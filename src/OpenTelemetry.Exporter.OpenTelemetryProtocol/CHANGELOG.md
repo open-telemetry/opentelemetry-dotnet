@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an issue where the OTLP gRPC exporter did not export logs, metrics, or
+  traces in .NET Framework projects.
+  ([#6067](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6067))
+
 ## 1.11.0
 
 Released 2025-Jan-15
