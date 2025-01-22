@@ -51,7 +51,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
-#if NET462_OR_GREATER || NETSTANDARD2_0
+#if !NET
         this.startWritePosition = 0;
 #else
         this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;

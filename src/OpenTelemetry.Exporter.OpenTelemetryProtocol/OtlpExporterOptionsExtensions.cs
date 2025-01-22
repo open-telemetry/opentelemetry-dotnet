@@ -9,7 +9,7 @@ using System.Reflection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-#if NET462_OR_GREATER || NETSTANDARD2_0
+#if !NET
 using Grpc.Core;
 #endif
 
@@ -25,7 +25,7 @@ internal static class OtlpExporterOptionsExtensions
     private const string MetricsHttpServicePath = "v1/metrics";
     private const string LogsHttpServicePath = "v1/logs";
 
-#if NET462_OR_GREATER || NETSTANDARD2_0
+#if !NET
     public static Channel CreateChannel(this OtlpExporterOptions options)
     {
         if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
@@ -124,7 +124,7 @@ internal static class OtlpExporterOptionsExtensions
             throw new NotSupportedException($"Protocol {options.Protocol} is not supported.");
         }
 
-#if NET462_OR_GREATER || NETSTANDARD2_0
+#if !NET
         if (options.Protocol == OtlpExportProtocol.Grpc)
         {
             var servicePath = otlpSignalType switch

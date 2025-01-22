@@ -1,9 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET462_OR_GREATER || NETSTANDARD2_0
+#if !NET
 using Grpc.Core;
 using OpenTelemetry.Internal;
+
 using InternalStatus = OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc.Status;
 using InternalStatusCode = OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc.StatusCode;
 using Status = Grpc.Core.Status;
@@ -11,18 +12,18 @@ using StatusCode = Grpc.Core.StatusCode;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
-internal class GrpcExportClient : IExportClient
+internal sealed class GrpcExportClient : IExportClient
 {
     private static readonly ExportClientGrpcResponse SuccessExportResponse = new(
-                                                                                success: false,
-                                                                                deadlineUtc: default,
-                                                                                exception: null,
-                                                                                status: null,
-                                                                                grpcStatusDetailsHeader: null);
+        success: false,
+        deadlineUtc: default,
+        exception: null,
+        status: null,
+        grpcStatusDetailsHeader: null);
 
     private static readonly Marshaller<byte[]> ByteArrayMarshaller = Marshallers.Create(
-                                                                    serializer: input => input,
-                                                                    deserializer: data => data);
+        serializer: static input => input,
+        deserializer: static data => data);
 
     private readonly Method<byte[], byte[]> exportMethod;
 
@@ -44,7 +45,7 @@ internal class GrpcExportClient : IExportClient
         this.callInvoker = this.Channel.CreateCallInvoker();
     }
 
-    internal Channel Channel { get; set; }
+    internal Channel Channel { get; }
 
     internal Uri Endpoint { get; }
 
