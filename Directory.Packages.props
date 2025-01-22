@@ -67,6 +67,7 @@
     -->
     <PackageVersion Include="Google.Protobuf" Version="[3.22.5,4.0)" />
     <PackageVersion Include="Grpc" Version="[2.44.0,3.0)" />
+    <PackageVersion Include="Grpc.Core" Version="[2.44.0,3.0)" />
     <PackageVersion Include="Grpc.Net.Client" Version="[2.52.0,3.0)" />
   </ItemGroup>
 

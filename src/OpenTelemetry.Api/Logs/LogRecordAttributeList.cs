@@ -228,52 +228,49 @@ internal
         attributeStorage ??= new List<KeyValuePair<string, object?>>(OverflowAdditionalCapacity);
 
         // TODO: Perf test this, adjust as needed.
-        if (count > 0)
+        attributeStorage.Add(this.attribute1);
+        if (count == 1)
         {
-            attributeStorage.Add(this.attribute1);
-            if (count == 1)
-            {
-                return attributeStorage;
-            }
-
-            attributeStorage.Add(this.attribute2);
-            if (count == 2)
-            {
-                return attributeStorage;
-            }
-
-            attributeStorage.Add(this.attribute3);
-            if (count == 3)
-            {
-                return attributeStorage;
-            }
-
-            attributeStorage.Add(this.attribute4);
-            if (count == 4)
-            {
-                return attributeStorage;
-            }
-
-            attributeStorage.Add(this.attribute5);
-            if (count == 5)
-            {
-                return attributeStorage;
-            }
-
-            attributeStorage.Add(this.attribute6);
-            if (count == 6)
-            {
-                return attributeStorage;
-            }
-
-            attributeStorage.Add(this.attribute7);
-            if (count == 7)
-            {
-                return attributeStorage;
-            }
-
-            attributeStorage.Add(this.attribute8);
+            return attributeStorage;
         }
+
+        attributeStorage.Add(this.attribute2);
+        if (count == 2)
+        {
+            return attributeStorage;
+        }
+
+        attributeStorage.Add(this.attribute3);
+        if (count == 3)
+        {
+            return attributeStorage;
+        }
+
+        attributeStorage.Add(this.attribute4);
+        if (count == 4)
+        {
+            return attributeStorage;
+        }
+
+        attributeStorage.Add(this.attribute5);
+        if (count == 5)
+        {
+            return attributeStorage;
+        }
+
+        attributeStorage.Add(this.attribute6);
+        if (count == 6)
+        {
+            return attributeStorage;
+        }
+
+        attributeStorage.Add(this.attribute7);
+        if (count == 7)
+        {
+            return attributeStorage;
+        }
+
+        attributeStorage.Add(this.attribute8);
 
         return attributeStorage;
     }
