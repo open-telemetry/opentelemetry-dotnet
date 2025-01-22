@@ -4,6 +4,11 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.11.1
+
+* Fixed a bug preventing `OpenTelemetry.Exporter.OpenTelemetryProtocol` from
+  exporting telemetry on .NET Framework.
+
 ## 1.11.0
 
 * `OpenTelemetry.Exporter.OpenTelemetryProtocol` no longer depends on the
