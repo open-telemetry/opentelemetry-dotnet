@@ -54,7 +54,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
         this.sdkLimitOptions = sdkLimitOptions!;
-#if !NET
+#if NET462_OR_GREATER || NETSTANDARD2_0
         this.startWritePosition = 0;
 #else
         this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;

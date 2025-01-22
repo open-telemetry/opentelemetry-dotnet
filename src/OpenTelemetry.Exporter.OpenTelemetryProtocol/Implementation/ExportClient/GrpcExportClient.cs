@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if !NET
+#if NET462_OR_GREATER || NETSTANDARD2_0
 using Grpc.Core;
 using OpenTelemetry.Internal;
 
