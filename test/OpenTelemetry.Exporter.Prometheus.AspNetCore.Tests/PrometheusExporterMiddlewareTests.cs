@@ -51,7 +51,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         // Due to the default histogram buckets, exemplars will only be recorded
         // for some of the values (the last recorded value for each buckets wins):
-        //                          ✓   ✓   ✓   ✓    -    -    ✓    -    ✓    ✓
+        //                          x   x   x   x    -    -    x    -    x    x
         var values = new double[] { 10, 20, 50, 100, 150, 200, 250, 300, 350, 10001 };
 
         var histogram = meter.CreateHistogram<double>("dbl_histogram", unit: "s");
