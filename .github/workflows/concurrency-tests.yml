@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
-        os: [ windows-latest, ubuntu-latest ]
+        os: [ windows-latest, ubuntu-22.04 ]
         version: [ net8.0 ]
         project: [ OpenTelemetry.Tests, OpenTelemetry.Api.Tests ]
 

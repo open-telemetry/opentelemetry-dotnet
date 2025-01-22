@@ -237,6 +237,12 @@ you're more than welcome to participate!
 * [Alan West](https://github.com/alanwest), New Relic
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 
+[Emeritus Maintainers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
+
+* [Mike Goldsmith](https://github.com/MikeGoldsmith)
+* [Sergey Kanzhelev](https://github.com/SergeyKanzhelev)
+* [Utkarsh Umesan Pillai](https://github.com/utpilla)
+
 [Approvers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver)
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
@@ -244,26 +250,25 @@ you're more than welcome to participate!
 * [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 * [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 
+[Emeritus Approvers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
+
+* [Bruno Garcia](https://github.com/bruno-garcia)
+* [Eddy Nakamura](https://github.com/eddynaka)
+* [Liudmila Molkova](https://github.com/lmolkova)
+* [Paulo Janotti](https://github.com/pjanotti)
+* [Reiley Yang](https://github.com/reyang)
+* [Robert Paj&#x105;k](https://github.com/pellared)
+* [Vishwesh Bankwar](https://github.com/vishweshbankwar)
+
 [Triagers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager)
 ([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
 
 * [Martin Thwaites](https://github.com/martinjt), Honeycomb
 * [Timothy "Mothra" Lee](https://github.com/TimothyMothra), Microsoft
 
-[Emeritus
-Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
+[Emeritus Triagers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
 
-* [Bruno Garcia](https://github.com/bruno-garcia)
-* [Eddy Nakamura](https://github.com/eddynaka)
-* [Liudmila Molkova](https://github.com/lmolkova)
-* [Mike Goldsmith](https://github.com/MikeGoldsmith)
-* [Paulo Janotti](https://github.com/pjanotti)
-* [Reiley Yang](https://github.com/reyang)
-* [Robert Paj&#x105;k](https://github.com/pellared)
-* [Sergey Kanzhelev](https://github.com/SergeyKanzhelev)
-* [Utkarsh Umesan Pillai](https://github.com/utpilla)
 * [Victor Lu](https://github.com/victlu)
-* [Vishwesh Bankwar](https://github.com/vishweshbankwar)
 
 ### Thanks to all the people who have contributed
 

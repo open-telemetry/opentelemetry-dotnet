@@ -4,6 +4,6 @@ type: google.api.Service
 config_version: 3
 http:
  rules:
- - selector: opentelemetry.proto.collector.profiles.v1experimental.ProfilesService.Export
-   post: /v1experimental/profiles
+ - selector: opentelemetry.proto.collector.profiles.v1development.ProfilesService.Export
+   post: /v1development/profiles
    body: "*"

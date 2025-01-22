@@ -24,7 +24,7 @@ jobs:
       with:
         filters: |
           md: ['**.md']
-          build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props']
+          build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props', 'global.json']
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
           solution: ['OpenTelemetry.sln']
@@ -107,7 +107,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'otlp')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -125,7 +125,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'instrumentation')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -187,7 +187,7 @@ jobs:
       concurrency-tests
       ]
     if: always() && !cancelled()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - run: |
           if ( ${{ contains(needs.*.result, 'failure') }} == true ); then echo 'build failed'; exit 1; else echo 'build complete'; fi
