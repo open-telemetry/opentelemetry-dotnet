@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added exemplar support to Prometheus exporter.
+  ([#5929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5929))
+
 ## 1.11.0-beta.1
 
 Released 2025-Jan-16
@@ -20,7 +23,6 @@ Released 2024-Nov-12
 
 * Added meter-level tags to Prometheus exporter
   ([#5837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5837))
-* Added exemplar support to Prometheus exporter ([#5929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5929))
 
 * Updated OpenTelemetry core component version(s) to `1.10.0`.
   ([#5970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5970))
