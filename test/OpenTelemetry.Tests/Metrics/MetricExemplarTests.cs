@@ -69,7 +69,7 @@ public class MetricExemplarTests : MetricTestsBase
         DateTime testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter({Utils.GetCurrentMethodName());
         var counterDouble = meter.CreateCounter<double>("testCounterDouble");
         var counterLong = meter.CreateCounter<long>("testCounterLong");
 
@@ -192,7 +192,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         int measurementIndex = 0;
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter({Utils.GetCurrentMethodName());
         var gaugeDouble = meter.CreateObservableGauge("testGaugeDouble", () => measurementValues[measurementIndex].Value);
         var gaugeLong = meter.CreateObservableGauge("testGaugeLong", () => (long)measurementValues[measurementIndex].Value);
         var counterDouble = meter.CreateObservableCounter("counterDouble", () => measurementValues[measurementIndex].Value);
@@ -275,7 +275,7 @@ public class MetricExemplarTests : MetricTestsBase
         DateTime testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter({Utils.GetCurrentMethodName());
         var histogramWithBucketsAndMinMaxDouble = meter.CreateHistogram<double>("histogramWithBucketsAndMinMaxDouble");
         var histogramWithBucketsDouble = meter.CreateHistogram<double>("histogramWithBucketsDouble");
         var histogramWithBucketsAndMinMaxLong = meter.CreateHistogram<long>("histogramWithBucketsAndMinMaxLong");
@@ -425,7 +425,7 @@ public class MetricExemplarTests : MetricTestsBase
         DateTime testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter({Utils.GetCurrentMethodName());
         var histogramWithoutBucketsAndMinMaxDouble = meter.CreateHistogram<double>("histogramWithoutBucketsAndMinMaxDouble");
         var histogramWithoutBucketsDouble = meter.CreateHistogram<double>("histogramWithoutBucketsDouble");
         var histogramWithoutBucketsAndMinMaxLong = meter.CreateHistogram<long>("histogramWithoutBucketsAndMinMaxLong");
@@ -553,7 +553,7 @@ public class MetricExemplarTests : MetricTestsBase
         DateTime testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter({Utils.GetCurrentMethodName());
         var exponentialHistogramWithMinMaxDouble = meter.CreateHistogram<double>("exponentialHistogramWithMinMaxDouble");
         var exponentialHistogramDouble = meter.CreateHistogram<double>("exponentialHistogramDouble");
         var exponentialHistogramWithMinMaxLong = meter.CreateHistogram<long>("exponentialHistogramWithMinMaxLong");
@@ -674,7 +674,7 @@ public class MetricExemplarTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter({Utils.GetCurrentMethodName());
 
         var counter = meter.CreateCounter<long>("testCounter");
 
@@ -721,7 +721,7 @@ public class MetricExemplarTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter({Utils.GetCurrentMethodName());
 
         var histogram = meter.CreateHistogram<double>("testHistogram");
 
