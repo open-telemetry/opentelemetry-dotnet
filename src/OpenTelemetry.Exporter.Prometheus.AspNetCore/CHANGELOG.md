@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Updated OpenTelemetry core component version(s) to `1.11.1`.
+  ([#6088](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6088))
+
 * Added exemplar support to Prometheus exporter.
   ([#5929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5929))
 
