@@ -54,19 +54,11 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
         {
             var data = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
-            IDictionaryEnumerator e = envVariables.GetEnumerator();
-            try
+            foreach (DictionaryEntry entry in envVariables)
             {
-                while (e.MoveNext())
-                {
-                    string key = (string)e.Entry.Key;
-                    string? value = (string?)e.Entry.Value;
-                    AddIfNormalizedKeyMatchesPrefix(data, Normalize(key), value);
-                }
-            }
-            finally
-            {
-                (e as IDisposable)?.Dispose();
+                string key = (string)entry.Key;
+                string? value = (string?)entry.Value;
+                AddIfNormalizedKeyMatchesPrefix(data, Normalize(key), value);
             }
 
             Data = data;
