@@ -15,7 +15,6 @@
     <Compile Include="$(RepoRoot)\src\Shared\DiagnosticDefinitions.cs" Link="Includes\DiagnosticDefinitions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\Lock.cs" Link="Includes\Shims\Lock.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
