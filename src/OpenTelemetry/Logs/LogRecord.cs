@@ -457,7 +457,7 @@ public sealed class LogRecord
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ResetReferenceCount()
     {
-        this.PoolReferenceCount = 1;
+        Volatile.Write(ref this.PoolReferenceCount, 1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

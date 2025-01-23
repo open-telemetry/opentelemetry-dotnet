@@ -22,8 +22,4 @@ internal static class InterlockedHelper
             currentValue = returnedValue;
         }
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static double Read(ref double location)
-        => Interlocked.CompareExchange(ref location, 0, 0);
 }
