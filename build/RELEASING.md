@@ -204,7 +204,7 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
     `Directory.Packages.props` to the just released stable version. Merge that
     PR once the build passes (this requires the packages be available on NuGet).
 
- 9. The [Complete
+ 8. The [Complete
     release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/post-release.yml)
     workflow should have invoked the [Core version
     update](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/actions/workflows/core-version-update.yml)
