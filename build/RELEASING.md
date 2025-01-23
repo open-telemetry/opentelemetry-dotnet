@@ -80,11 +80,21 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
        for the projects being released.
     </details
 
- 3. :stop_sign: The PR opened by [Prepare for a
+ 3. For stable releases, use the `/UpdateReleaseNotes` command on the PR opened
+    by [Prepare for a
+    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
+    workflow in step 2 to update [Release Notes](../RELEASENOTES.md) with any
+    big or interesting new features.
+
+    * The `/UpdateReleaseDates` command may also be used to update dates in
+      `CHANGELOG.md` files. This is useful when the PR is opened a few days
+      before the planned release date to review public API changes.
+
+ 4. :stop_sign: The PR opened by [Prepare for a
     release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
     workflow in step 2 has to be merged.
 
- 4. Once the PR opened by [Prepare for a
+ 5. Once the PR opened by [Prepare for a
     release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
     workflow in step 2 has been merged a trigger will automatically add a
     comment and lock the PR. Post a comment with "/CreateReleaseTag" in the
@@ -123,7 +133,7 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
     workflow.
     </details>
 
- 5. :stop_sign: Wait for the [Build, pack, and publish to
+ 6. :stop_sign: Wait for the [Build, pack, and publish to
     MyGet](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
     workflow to complete. When complete a trigger will automatically add a
     comment on the PR opened by [Prepare for a
@@ -187,14 +197,14 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
        draft Release and click `Publish release`.
     </details>
 
- 6. If a new stable version of the core packages was released, a PR should have
+ 7. If a new stable version of the core packages was released, a PR should have
     been automatically created by the [Complete
     release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/post-release.yml)
     workflow to update the `OTelLatestStableVer` property in
     `Directory.Packages.props` to the just released stable version. Merge that
     PR once the build passes (this requires the packages be available on NuGet).
 
- 7. The [Complete
+ 9. The [Complete
     release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/post-release.yml)
     workflow should have invoked the [Core version
     update](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/actions/workflows/core-version-update.yml)
@@ -203,7 +213,6 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
     repository which opens a PR to update dependencies. Verify this PR was
     opened successfully.
 
- 8. For stable releases, update [Release Notes](../RELEASENOTES.md) with any big
-    or interesting new features and then post an announcement in the [Slack
-    channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q) with the same
-    information.
+ 9. For stable releases post an announcement in the [Slack
+    channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q) announcing the
+    release and link to the release notes.
