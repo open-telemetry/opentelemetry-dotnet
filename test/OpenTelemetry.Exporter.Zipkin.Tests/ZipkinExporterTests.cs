@@ -25,7 +25,6 @@ public sealed class ZipkinExporterTests : IDisposable
     private static readonly ConcurrentDictionary<Guid, string> Responses = new();
 
     private readonly IDisposable testServer;
-    private readonly ActivityListener activityListener;
     private readonly string testServerHost;
     private readonly int testServerPort;
 
@@ -41,16 +40,6 @@ public sealed class ZipkinExporterTests : IDisposable
             ctx => ProcessServerRequest(ctx),
             out this.testServerHost,
             out this.testServerPort);
-
-        this.activityListener = new ActivityListener
-        {
-            ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => options.Parent.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
-                ? ActivitySamplingResult.AllDataAndRecorded
-                : ActivitySamplingResult.AllData,
-        };
-
-        ActivitySource.AddActivityListener(this.activityListener);
 
         static void ProcessServerRequest(HttpListenerContext context)
         {
@@ -71,7 +60,6 @@ public sealed class ZipkinExporterTests : IDisposable
     public void Dispose()
     {
         this.testServer.Dispose();
-        this.activityListener.Dispose();
     }
 
     [Fact]
@@ -458,6 +446,16 @@ public sealed class ZipkinExporterTests : IDisposable
        string? statusDescription = null,
        DateTime? dateTime = null)
     {
+        using var activityListener = new ActivityListener
+        {
+            ShouldListenTo = _ => true,
+            Sample = (ref ActivityCreationOptions<ActivityContext> options) => options.Parent.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
+                ? ActivitySamplingResult.AllDataAndRecorded
+                : ActivitySamplingResult.AllData,
+        };
+
+        ActivitySource.AddActivityListener(activityListener);
+
         var startTimestamp = DateTime.UtcNow;
         var endTimestamp = startTimestamp.AddSeconds(60);
         var eventTimestamp = DateTime.UtcNow;
@@ -534,6 +532,8 @@ public sealed class ZipkinExporterTests : IDisposable
             tags,
             links,
             startTime: startTimestamp)!;
+
+        Assert.NotNull(activity);
 
         if (addEvents)
         {
