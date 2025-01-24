@@ -917,7 +917,7 @@ public class OtlpMetricsExporterTests : IDisposable
             new("key2", "value2"),
         };
 
-        using var meter = new Meter(name: {Utils.GetCurrentMethodName(), version: "0.0.1", tags: meterTags);
+        using var meter = new Meter(name: Utils.GetCurrentMethodName(), version: "0.0.1", tags: meterTags);
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddInMemoryExporter(metrics)
