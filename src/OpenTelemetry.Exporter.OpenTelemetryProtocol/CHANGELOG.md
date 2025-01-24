@@ -10,7 +10,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed a bug in .NET Framework gRPC export client where the default success
   export response was incorrectly marked as false, now changed to true, ensuring
   exports are correctly marked as successful.
-  ([#](https://github.com/open-telemetry/opentelemetry-dotnet/pull/))
+  ([#6099](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6099))
 
 ## 1.11.1
 
