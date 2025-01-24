@@ -123,20 +123,14 @@ public static class OtlpTraceExporterHelperExtensions
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
     {
-        Debug.Assert(serviceProvider != null, "serviceProvider was null");
-        Debug.Assert(exporterOptions != null, "exporterOptions was null");
-        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
-        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
-        Debug.Assert(batchExportProcessorOptions != null, "batchExportProcessorOptions was null");
-
         if (!skipUseOtlpExporterRegistrationCheck)
         {
-            serviceProvider!.EnsureNoUseOtlpExporterRegistrations();
+            serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        exporterOptions!.TryEnableIHttpClientFactoryIntegration(serviceProvider!, "OtlpTraceExporter");
+        exporterOptions!.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions!, sdkLimitOptions!, experimentalOptions!);
+        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions);
 
         if (configureExporterInstance != null)
         {
@@ -151,7 +145,7 @@ public static class OtlpTraceExporterHelperExtensions
         {
             return new BatchActivityExportProcessor(
                 otlpExporter,
-                batchExportProcessorOptions!.MaxQueueSize,
+                batchExportProcessorOptions.MaxQueueSize,
                 batchExportProcessorOptions.ScheduledDelayMilliseconds,
                 batchExportProcessorOptions.ExporterTimeoutMilliseconds,
                 batchExportProcessorOptions.MaxExportBatchSize);

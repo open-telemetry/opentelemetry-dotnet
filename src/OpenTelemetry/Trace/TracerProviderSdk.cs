@@ -33,12 +33,10 @@ internal sealed class TracerProviderSdk : TracerProvider
         IServiceProvider serviceProvider,
         bool ownsServiceProvider)
     {
-        Debug.Assert(serviceProvider != null, "serviceProvider was null");
-
-        var state = serviceProvider!.GetRequiredService<TracerProviderBuilderSdk>();
+        var state = serviceProvider.GetRequiredService<TracerProviderBuilderSdk>();
         state.RegisterProvider(this);
 
-        this.ServiceProvider = serviceProvider!;
+        this.ServiceProvider = serviceProvider;
 
         if (ownsServiceProvider)
         {
@@ -48,10 +46,10 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("Building TracerProvider.");
 
-        var configureProviderBuilders = serviceProvider!.GetServices<IConfigureTracerProviderBuilder>();
+        var configureProviderBuilders = serviceProvider.GetServices<IConfigureTracerProviderBuilder>();
         foreach (var configureProviderBuilder in configureProviderBuilders)
         {
-            configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
+            configureProviderBuilder.ConfigureBuilder(serviceProvider, state);
         }
 
         StringBuilder processorsAdded = new StringBuilder();
@@ -61,7 +59,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         resourceBuilder.ServiceProvider = serviceProvider;
         this.Resource = resourceBuilder.Build();
 
-        this.sampler = GetSampler(serviceProvider!.GetRequiredService<IConfiguration>(), state.Sampler);
+        this.sampler = GetSampler(serviceProvider.GetRequiredService<IConfiguration>(), state.Sampler);
         OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.sampler.GetType()}\".");
 
         this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;

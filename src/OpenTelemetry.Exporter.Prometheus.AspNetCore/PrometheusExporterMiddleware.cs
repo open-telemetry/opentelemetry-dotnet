@@ -37,8 +37,6 @@ internal sealed class PrometheusExporterMiddleware
 
     internal PrometheusExporterMiddleware(PrometheusExporter exporter)
     {
-        Debug.Assert(exporter != null, "exporter was null");
-
         this.exporter = exporter;
     }
 
@@ -49,8 +47,6 @@ internal sealed class PrometheusExporterMiddleware
     /// <returns>Task.</returns>
     public async Task InvokeAsync(HttpContext httpContext)
     {
-        Debug.Assert(httpContext != null, "httpContext should not be null");
-
         var response = httpContext.Response;
 
         try

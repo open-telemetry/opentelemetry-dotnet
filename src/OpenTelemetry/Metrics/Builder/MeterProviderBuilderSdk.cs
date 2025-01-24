@@ -88,8 +88,6 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
     public void RegisterProvider(MeterProviderSdk meterProvider)
     {
-        Debug.Assert(meterProvider != null, "meterProvider was null");
-
         if (this.meterProvider != null)
         {
             throw new NotSupportedException("MeterProvider cannot be accessed while build is executing.");
@@ -100,12 +98,10 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
     public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
-        Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
-
         return this.AddInstrumentation(
             typeof(TInstrumentation).Name,
             typeof(TInstrumentation).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
-            instrumentationFactory!());
+            instrumentationFactory());
     }
 
     public MeterProviderBuilder AddInstrumentation(
@@ -127,19 +123,15 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
     public MeterProviderBuilder ConfigureResource(Action<ResourceBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
         var resourceBuilder = this.ResourceBuilder ??= ResourceBuilder.CreateDefault();
 
-        configure!(resourceBuilder);
+        configure(resourceBuilder);
 
         return this;
     }
 
     public MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
     {
-        Debug.Assert(resourceBuilder != null, "resourceBuilder was null");
-
         this.ResourceBuilder = resourceBuilder;
 
         return this;
@@ -154,9 +146,7 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
     public override MeterProviderBuilder AddMeter(params string[] names)
     {
-        Debug.Assert(names != null, "names was null");
-
-        foreach (var name in names!)
+        foreach (var name in names)
         {
             Guard.ThrowIfNullOrWhitespace(name);
 
@@ -168,18 +158,14 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
     public MeterProviderBuilder AddReader(MetricReader reader)
     {
-        Debug.Assert(reader != null, "reader was null");
-
-        this.Readers.Add(reader!);
+        this.Readers.Add(reader);
 
         return this;
     }
 
     public MeterProviderBuilder AddView(Func<Instrument, MetricStreamConfiguration?> viewConfig)
     {
-        Debug.Assert(viewConfig != null, "viewConfig was null");
-
-        this.ViewConfigs.Add(viewConfig!);
+        this.ViewConfigs.Add(viewConfig);
 
         return this;
     }
@@ -200,9 +186,7 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
     public MeterProviderBuilder ConfigureBuilder(Action<IServiceProvider, MeterProviderBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
-        configure!(this.serviceProvider, this);
+        configure(this.serviceProvider, this);
 
         return this;
     }

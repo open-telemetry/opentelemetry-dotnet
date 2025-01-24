@@ -25,13 +25,11 @@ internal static class ActivityHelperExtensions
     [Obsolete]
     public static bool TryGetStatus(this Activity activity, out StatusCode statusCode, out string? statusDescription)
     {
-        Debug.Assert(activity != null, "Activity should not be null");
-
         bool foundStatusCode = false;
         statusCode = default;
         statusDescription = null;
 
-        foreach (ref readonly var tag in activity!.EnumerateTagObjects())
+        foreach (ref readonly var tag in activity.EnumerateTagObjects())
         {
             switch (tag.Key)
             {
@@ -70,9 +68,7 @@ internal static class ActivityHelperExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static object? GetTagValue(this Activity activity, string? tagName)
     {
-        Debug.Assert(activity != null, "Activity should not be null");
-
-        foreach (ref readonly var tag in activity!.EnumerateTagObjects())
+        foreach (ref readonly var tag in activity.EnumerateTagObjects())
         {
             if (tag.Key == tagName)
             {
@@ -93,9 +89,7 @@ internal static class ActivityHelperExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryCheckFirstTag(this Activity activity, string tagName, out object? tagValue)
     {
-        Debug.Assert(activity != null, "Activity should not be null");
-
-        var enumerator = activity!.EnumerateTagObjects();
+        var enumerator = activity.EnumerateTagObjects();
 
         if (enumerator.MoveNext())
         {

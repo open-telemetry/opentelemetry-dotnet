@@ -64,11 +64,8 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
         OpenTelemetryLoggerOptions options,
         bool disposeProvider)
     {
-        Debug.Assert(loggerProvider != null, "loggerProvider was null");
-        Debug.Assert(options != null, "options was null");
-
-        this.Provider = loggerProvider!;
-        this.Options = options!.Copy();
+        this.Provider = loggerProvider;
+        this.Options = options.Copy();
         this.ownsProvider = disposeProvider;
     }
 

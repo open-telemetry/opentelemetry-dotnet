@@ -24,8 +24,6 @@ internal sealed class OtlpExporterBuilder
         string? name,
         IConfiguration? configuration)
     {
-        Debug.Assert(services != null, "services was null");
-
         if (configuration != null)
         {
             if (string.IsNullOrEmpty(name))
@@ -33,15 +31,15 @@ internal sealed class OtlpExporterBuilder
                 name = "otlp";
             }
 
-            BindConfigurationToOptions(services!, name!, configuration);
+            BindConfigurationToOptions(services, name, configuration);
         }
 
         name ??= Options.DefaultName;
 
-        RegisterOtlpExporterServices(services!, name);
+        RegisterOtlpExporterServices(services, name);
 
         this.name = name;
-        this.Services = services!;
+        this.Services = services;
     }
 
     public IServiceCollection Services { get; }
@@ -119,9 +117,7 @@ internal sealed class OtlpExporterBuilder
 
     private static void BindConfigurationToOptions(IServiceCollection services, string name, IConfiguration configuration)
     {
-        Debug.Assert(services != null, "services was null");
         Debug.Assert(!string.IsNullOrEmpty(name), "name was null or empty");
-        Debug.Assert(configuration != null, "configuration was null");
 
         /* Config JSON structure is expected to be something like this:
             {
@@ -152,33 +148,30 @@ internal sealed class OtlpExporterBuilder
             }
         */
 
-        services!.Configure<OtlpExporterBuilderOptions>(name, configuration!);
+        services.Configure<OtlpExporterBuilderOptions>(name, configuration);
 
-        services!.Configure<LogRecordExportProcessorOptions>(
+        services.Configure<LogRecordExportProcessorOptions>(
             name, configuration!.GetSection(nameof(OtlpExporterBuilderOptions.LoggingOptions)));
 
-        services!.Configure<MetricReaderOptions>(
+        services.Configure<MetricReaderOptions>(
             name, configuration.GetSection(nameof(OtlpExporterBuilderOptions.MetricsOptions)));
 
-        services!.Configure<ActivityExportProcessorOptions>(
+        services.Configure<ActivityExportProcessorOptions>(
             name, configuration.GetSection(nameof(OtlpExporterBuilderOptions.TracingOptions)));
     }
 
     private static void RegisterOtlpExporterServices(IServiceCollection services, string name)
     {
-        Debug.Assert(services != null, "services was null");
-        Debug.Assert(name != null, "name was null");
-
-        services!.AddOtlpExporterLoggingServices();
-        services!.AddOtlpExporterMetricsServices(name!);
-        services!.AddOtlpExporterTracingServices();
+        services.AddOtlpExporterLoggingServices();
+        services.AddOtlpExporterMetricsServices(name!);
+        services.AddOtlpExporterTracingServices();
 
         // Note: UseOtlpExporterRegistration is added to the service collection
         // for each invocation to detect repeated calls to "UseOtlpExporter" and
         // to throw if "AddOtlpExporter" extensions are called
-        services!.AddSingleton(UseOtlpExporterRegistration.Instance);
+        services.AddSingleton(UseOtlpExporterRegistration.Instance);
 
-        services!.RegisterOptionsFactory((sp, configuration, name) => new OtlpExporterBuilderOptions(
+        services.RegisterOptionsFactory((sp, configuration, name) => new OtlpExporterBuilderOptions(
             configuration,
             /* Note: We don't use name for SdkLimitOptions. There should only be
             one provider for a given service collection so SdkLimitOptions is
@@ -195,10 +188,10 @@ internal sealed class OtlpExporterBuilder
             sp.GetService<IOptionsMonitor<MetricReaderOptions>>()?.Get(name),
             sp.GetService<IOptionsMonitor<ActivityExportProcessorOptions>>()?.Get(name)));
 
-        services!.ConfigureOpenTelemetryLoggerProvider(
+        services.ConfigureOpenTelemetryLoggerProvider(
             (sp, logging) =>
             {
-                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name!);
+                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
 
                 var processor = OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
                     sp,
@@ -213,10 +206,10 @@ internal sealed class OtlpExporterBuilder
                 logging.AddProcessor(processor);
             });
 
-        services!.ConfigureOpenTelemetryMeterProvider(
+        services.ConfigureOpenTelemetryMeterProvider(
             (sp, metrics) =>
             {
-                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name!);
+                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
 
                 metrics.AddReader(
                     OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
@@ -227,10 +220,10 @@ internal sealed class OtlpExporterBuilder
                         skipUseOtlpExporterRegistrationCheck: true));
             });
 
-        services!.ConfigureOpenTelemetryTracerProvider(
+        services.ConfigureOpenTelemetryTracerProvider(
             (sp, tracing) =>
             {
-                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name!);
+                var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
 
                 var processorOptions = builderOptions.ActivityExportProcessorOptions ?? throw new InvalidOperationException("ActivityExportProcessorOptions were missing with tracing enabled");
 

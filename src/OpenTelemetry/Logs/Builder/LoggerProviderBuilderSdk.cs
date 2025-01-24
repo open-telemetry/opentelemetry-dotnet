@@ -32,8 +32,6 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
 
     public void RegisterProvider(LoggerProviderSdk loggerProvider)
     {
-        Debug.Assert(loggerProvider != null, "loggerProvider was null");
-
         if (this.loggerProvider != null)
         {
             throw new NotSupportedException("LoggerProvider cannot be accessed while build is executing.");
@@ -44,32 +42,26 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
 
     public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
-        Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
-
         this.Instrumentation.Add(
             new InstrumentationRegistration(
                 typeof(TInstrumentation).Name,
                 typeof(TInstrumentation).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
-                instrumentationFactory!()));
+                instrumentationFactory()));
 
         return this;
     }
 
     public LoggerProviderBuilder ConfigureResource(Action<ResourceBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
         var resourceBuilder = this.ResourceBuilder ??= ResourceBuilder.CreateDefault();
 
-        configure!(resourceBuilder);
+        configure(resourceBuilder);
 
         return this;
     }
 
     public LoggerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
     {
-        Debug.Assert(resourceBuilder != null, "resourceBuilder was null");
-
         this.ResourceBuilder = resourceBuilder;
 
         return this;
@@ -77,18 +69,14 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
 
     public LoggerProviderBuilder AddProcessor(BaseProcessor<LogRecord> processor)
     {
-        Debug.Assert(processor != null, "processor was null");
-
-        this.Processors.Add(processor!);
+        this.Processors.Add(processor);
 
         return this;
     }
 
     public LoggerProviderBuilder ConfigureBuilder(Action<IServiceProvider, LoggerProviderBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
-        configure!(this.serviceProvider, this);
+        configure(this.serviceProvider, this);
 
         return this;
     }

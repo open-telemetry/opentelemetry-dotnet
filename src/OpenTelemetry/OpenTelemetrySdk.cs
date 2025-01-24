@@ -21,13 +21,11 @@ public sealed class OpenTelemetrySdk : IDisposable
     private OpenTelemetrySdk(
         Action<IOpenTelemetryBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
         var services = new ServiceCollection();
 
         var builder = new OpenTelemetrySdkBuilder(services);
 
-        configure!(builder);
+        configure(builder);
 
         this.serviceProvider = services.BuildServiceProvider();
 
@@ -112,11 +110,9 @@ public sealed class OpenTelemetrySdk : IDisposable
     {
         public OpenTelemetrySdkBuilder(IServiceCollection services)
         {
-            Debug.Assert(services != null, "services was null");
+            services.AddOpenTelemetrySharedProviderBuilderServices();
 
-            services!.AddOpenTelemetrySharedProviderBuilderServices();
-
-            this.Services = services!;
+            this.Services = services;
         }
 
         public IServiceCollection Services { get; }

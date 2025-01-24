@@ -38,11 +38,10 @@ internal sealed class MetricState
     public static MetricState BuildForMetricList(
         List<Metric> metrics)
     {
-        Debug.Assert(metrics != null, "metrics was null");
         Debug.Assert(!metrics.Any(m => m == null), "metrics contained null elements");
 
         // Note: Use an array here to elide bounds checks.
-        var metricsArray = metrics!.ToArray();
+        var metricsArray = metrics.ToArray();
 
         return new(
             completeMeasurement: () =>

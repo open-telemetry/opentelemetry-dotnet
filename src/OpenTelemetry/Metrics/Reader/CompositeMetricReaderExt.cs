@@ -31,9 +31,7 @@ internal sealed partial class CompositeMetricReader
 
     internal override List<Metric> AddMetricWithViews(Instrument instrument, List<MetricStreamConfiguration?> metricStreamConfigs)
     {
-        Debug.Assert(metricStreamConfigs != null, "metricStreamConfigs was null");
-
-        var metrics = new List<Metric>(this.count * metricStreamConfigs!.Count);
+        var metrics = new List<Metric>(this.count * metricStreamConfigs.Count);
 
         for (var cur = this.Head; cur != null; cur = cur.Next)
         {

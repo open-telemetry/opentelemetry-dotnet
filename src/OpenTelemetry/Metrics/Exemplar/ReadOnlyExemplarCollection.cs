@@ -15,9 +15,7 @@ public readonly struct ReadOnlyExemplarCollection
 
     internal ReadOnlyExemplarCollection(Exemplar[] exemplars)
     {
-        Debug.Assert(exemplars != null, "exemplars was null");
-
-        this.exemplars = exemplars!;
+        this.exemplars = exemplars;
     }
 
     /// <summary>
