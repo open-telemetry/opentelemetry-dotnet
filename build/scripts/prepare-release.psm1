@@ -420,6 +420,8 @@ function UpdateReleaseNotesAndPostNoticeOnPullRequest {
 @"
 ## $version
 
+Release details: [$version](https://github.com/$gitRepository/releases/tag/$tagPrefix$version)
+
 $content
 
 ##

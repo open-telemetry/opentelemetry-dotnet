@@ -7,6 +7,19 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed a bug in .NET Framework gRPC export client where the default success
+  export response was incorrectly marked as false, now changed to true, ensuring
+  exports are correctly marked as successful.
+  ([#6099](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6099))
+
+## 1.11.1
+
+Released 2025-Jan-22
+
+* Fixed an issue where the OTLP gRPC exporter did not export logs, metrics, or
+  traces in .NET Framework projects.
+  ([#6083](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6083))
+
 ## 1.11.0
 
 Released 2025-Jan-15
