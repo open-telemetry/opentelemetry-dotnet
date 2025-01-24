@@ -15,7 +15,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 internal sealed class GrpcExportClient : IExportClient
 {
     private static readonly ExportClientGrpcResponse SuccessExportResponse = new(
-        success: false,
+        success: true,
         deadlineUtc: default,
         exception: null,
         status: null,
