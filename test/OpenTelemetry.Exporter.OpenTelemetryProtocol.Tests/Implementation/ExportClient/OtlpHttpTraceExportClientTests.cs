@@ -15,22 +15,32 @@ using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public class OtlpHttpTraceExportClientTests
+public sealed class OtlpHttpTraceExportClientTests : IDisposable
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
+
+    private readonly ActivityListener activityListener;
 
     static OtlpHttpTraceExportClientTests()
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
+    }
 
-        var listener = new ActivityListener
+    public OtlpHttpTraceExportClientTests()
+    {
+        this.activityListener = new ActivityListener
         {
             ShouldListenTo = _ => true,
             Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
         };
 
-        ActivitySource.AddActivityListener(listener);
+        ActivitySource.AddActivityListener(this.activityListener);
+    }
+
+    public void Dispose()
+    {
+        this.activityListener.Dispose();
     }
 
     [Fact]

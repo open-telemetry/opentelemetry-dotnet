@@ -19,12 +19,13 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests;
 
-public class ZipkinExporterTests : IDisposable
+public sealed class ZipkinExporterTests : IDisposable
 {
     private const string TraceId = "e8ea7e9ac72de94e91fabc613f9686b2";
     private static readonly ConcurrentDictionary<Guid, string> Responses = new();
 
     private readonly IDisposable testServer;
+    private readonly ActivityListener activityListener;
     private readonly string testServerHost;
     private readonly int testServerPort;
 
@@ -32,16 +33,6 @@ public class ZipkinExporterTests : IDisposable
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
-
-        var listener = new ActivityListener
-        {
-            ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => options.Parent.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
-                ? ActivitySamplingResult.AllDataAndRecorded
-                : ActivitySamplingResult.AllData,
-        };
-
-        ActivitySource.AddActivityListener(listener);
     }
 
     public ZipkinExporterTests()
@@ -50,6 +41,16 @@ public class ZipkinExporterTests : IDisposable
             ctx => ProcessServerRequest(ctx),
             out this.testServerHost,
             out this.testServerPort);
+
+        this.activityListener = new ActivityListener
+        {
+            ShouldListenTo = _ => true,
+            Sample = (ref ActivityCreationOptions<ActivityContext> options) => options.Parent.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
+                ? ActivitySamplingResult.AllDataAndRecorded
+                : ActivitySamplingResult.AllData,
+        };
+
+        ActivitySource.AddActivityListener(this.activityListener);
 
         static void ProcessServerRequest(HttpListenerContext context)
         {
@@ -70,7 +71,7 @@ public class ZipkinExporterTests : IDisposable
     public void Dispose()
     {
         this.testServer.Dispose();
-        GC.SuppressFinalize(this);
+        this.activityListener.Dispose();
     }
 
     [Fact]
