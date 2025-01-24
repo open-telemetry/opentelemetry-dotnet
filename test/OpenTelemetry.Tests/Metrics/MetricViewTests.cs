@@ -1049,7 +1049,7 @@ public class MetricViewTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter({Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -1152,7 +1152,7 @@ public class MetricViewTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter({Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -1216,7 +1216,7 @@ public class MetricViewTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter({Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -1263,7 +1263,7 @@ public class MetricViewTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter({Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -1311,7 +1311,7 @@ public class MetricViewTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter({Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -1388,7 +1388,7 @@ public class MetricViewTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter({Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -1441,7 +1441,7 @@ public class MetricViewTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter({Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
