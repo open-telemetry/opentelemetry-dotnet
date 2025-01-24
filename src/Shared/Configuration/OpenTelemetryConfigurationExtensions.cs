@@ -26,9 +26,7 @@ internal static class OpenTelemetryConfigurationExtensions
 #endif
         out string? value)
     {
-        Debug.Assert(configuration != null, "configuration was null");
-
-        value = configuration![key];
+        value = configuration[key];
 
         return !string.IsNullOrWhiteSpace(value);
     }

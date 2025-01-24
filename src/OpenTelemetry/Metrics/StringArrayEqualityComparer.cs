@@ -39,8 +39,6 @@ internal sealed class StringArrayEqualityComparer : IEqualityComparer<string[]>
 
     public int GetHashCode(string[] strings)
     {
-        Debug.Assert(strings != null, "strings was null");
-
 #if NET
         HashCode hashCode = default;
 
@@ -53,7 +51,7 @@ internal sealed class StringArrayEqualityComparer : IEqualityComparer<string[]>
 #else
         var hash = 17;
 
-        for (int i = 0; i < strings!.Length; i++)
+        for (int i = 0; i < strings.Length; i++)
         {
             unchecked
             {

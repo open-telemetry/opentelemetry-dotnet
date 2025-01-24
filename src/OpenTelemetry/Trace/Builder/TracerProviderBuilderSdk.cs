@@ -41,8 +41,6 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public void RegisterProvider(TracerProviderSdk tracerProvider)
     {
-        Debug.Assert(tracerProvider != null, "tracerProvider was null");
-
         if (this.tracerProvider != null)
         {
             throw new NotSupportedException("TracerProvider cannot be accessed while build is executing.");
