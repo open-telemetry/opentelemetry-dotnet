@@ -20,7 +20,7 @@ internal static class OtlpServiceCollectionExtensions
     {
         AddOtlpExporterSharedServices(services, registerSdkLimitOptions: false);
 
-        services!.AddOptions<MetricReaderOptions>(name).Configure<IConfiguration>(
+        services.AddOptions<MetricReaderOptions>(name).Configure<IConfiguration>(
             (readerOptions, config) =>
             {
                 var otlpTemporalityPreference = config[OtlpSpecConfigDefinitions.MetricsTemporalityPreferenceEnvVarName];
