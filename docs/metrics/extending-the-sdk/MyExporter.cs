@@ -28,7 +28,7 @@ internal class MyExporter : BaseExporter<Metric>
                 sb.Append(", ");
             }
 
-            sb.Append($"{metric.Name}");
+            sb.Append(metric.Name);
 
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
