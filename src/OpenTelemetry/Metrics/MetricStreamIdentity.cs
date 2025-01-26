@@ -50,9 +50,9 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         hashCode.Add(this.ExponentialHistogramMaxScale);
         if (this.HistogramBucketBounds != null)
         {
-            for (var i = 0; i < this.HistogramBucketBounds.Length; ++i)
+            foreach (var bound in this.HistogramBucketBounds)
             {
-                hashCode.Add(this.HistogramBucketBounds[i]);
+                hashCode.Add(bound);
             }
         }
 

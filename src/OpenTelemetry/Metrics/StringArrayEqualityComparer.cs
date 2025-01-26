@@ -44,9 +44,9 @@ internal sealed class StringArrayEqualityComparer : IEqualityComparer<string[]>
 #if NET
         HashCode hashCode = default;
 
-        for (int i = 0; i < strings.Length; i++)
+        foreach (var ch in strings)
         {
-            hashCode.Add(strings[i]);
+            hashCode.Add(ch);
         }
 
         var hash = hashCode.ToHashCode();

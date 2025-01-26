@@ -84,14 +84,14 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
             if (logRecord.Attributes != null)
             {
                 this.WriteLine("LogRecord.Attributes (Key:Value):");
-                for (int i = 0; i < logRecord.Attributes.Count; i++)
+                foreach (var attribute in logRecord.Attributes)
                 {
                     // Special casing {OriginalFormat}
                     // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                     // for explanation.
-                    var valueToTransform = logRecord.Attributes[i].Key.Equals("{OriginalFormat}")
-                        ? new KeyValuePair<string, object?>("OriginalFormat (a.k.a Body)", logRecord.Attributes[i].Value)
-                        : logRecord.Attributes[i];
+                    var valueToTransform = attribute.Key.Equals("{OriginalFormat}")
+                        ? new KeyValuePair<string, object?>("OriginalFormat (a.k.a Body)", attribute.Value)
+                        : attribute;
 
                     if (this.TagWriter.TryTransformTag(valueToTransform, out var result))
                     {

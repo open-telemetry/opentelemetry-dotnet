@@ -25,9 +25,9 @@ internal static class ProtobufOtlpResourceSerializer
         {
             if (resource.Attributes is IReadOnlyList<KeyValuePair<string, object>> resourceAttributesList)
             {
-                for (int i = 0; i < resourceAttributesList.Count; i++)
+                foreach (var attribute in resourceAttributesList)
                 {
-                    ProcessResourceAttribute(ref otlpTagWriterState, resourceAttributesList[i]);
+                    ProcessResourceAttribute(ref otlpTagWriterState, attribute);
                 }
             }
             else

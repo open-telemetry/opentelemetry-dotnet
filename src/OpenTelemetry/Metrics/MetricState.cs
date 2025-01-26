@@ -47,23 +47,23 @@ internal sealed class MetricState
         return new(
             completeMeasurement: () =>
             {
-                for (int i = 0; i < metricsArray.Length; i++)
+                foreach (var metric in metricsArray)
                 {
-                    MetricReader.DeactivateMetric(metricsArray[i]);
+                    MetricReader.DeactivateMetric(metric);
                 }
             },
             recordMeasurementLong: (v, t) =>
             {
-                for (int i = 0; i < metricsArray.Length; i++)
+                foreach (var metric in metricsArray)
                 {
-                    metricsArray[i].UpdateLong(v, t);
+                    metric.UpdateLong(v, t);
                 }
             },
             recordMeasurementDouble: (v, t) =>
             {
-                for (int i = 0; i < metricsArray.Length; i++)
+                foreach (var metric in metricsArray)
                 {
-                    metricsArray[i].UpdateDouble(v, t);
+                    metric.UpdateDouble(v, t);
                 }
             });
     }

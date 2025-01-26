@@ -143,7 +143,7 @@ internal static class ProtobufOtlpTraceSerializer
 
             if (activitySource.Tags is IReadOnlyList<KeyValuePair<string, object?>> activitySourceTagsList)
             {
-                for (int i = 0; i < activitySourceTagsList.Count; i++)
+                foreach (var tag in activitySourceTagsList)
                 {
                     if (otlpTagWriterState.TagCount < maxAttributeCount)
                     {
@@ -151,7 +151,7 @@ internal static class ProtobufOtlpTraceSerializer
                         int instrumentationScopeAttributesLengthPosition = otlpTagWriterState.WritePosition;
                         otlpTagWriterState.WritePosition += ReserveSizeForLength;
 
-                        ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, activitySourceTagsList[i].Key, activitySourceTagsList[i].Value, maxAttributeValueLength);
+                        ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag.Key, tag.Value, maxAttributeValueLength);
 
                         var instrumentationScopeAttributesLength = otlpTagWriterState.WritePosition - (instrumentationScopeAttributesLengthPosition + ReserveSizeForLength);
                         ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, instrumentationScopeAttributesLengthPosition, instrumentationScopeAttributesLength);
@@ -197,9 +197,9 @@ internal static class ProtobufOtlpTraceSerializer
 
         ProtobufSerializer.WriteReservedLength(buffer, instrumentationScopeLengthPosition, writePosition - (instrumentationScopeLengthPosition + ReserveSizeForLength));
 
-        for (int i = 0; i < activities.Count; i++)
+        foreach (var activity in activities)
         {
-            writePosition = WriteSpan(buffer, writePosition, sdkLimitOptions, activities[i]);
+            writePosition = WriteSpan(buffer, writePosition, sdkLimitOptions, activity);
         }
 
         return writePosition;

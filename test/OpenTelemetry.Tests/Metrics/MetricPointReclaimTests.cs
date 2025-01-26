@@ -74,9 +74,9 @@ public class MetricPointReclaimTests
             threads[i].Start(threadArgs);
         }
 
-        for (int i = 0; i < threads.Length; i++)
+        foreach (var thread in threads)
         {
-            threads[i].Join();
+            thread.Join();
         }
 
         meterProvider.ForceFlush();
@@ -174,9 +174,9 @@ public class MetricPointReclaimTests
             threads[i].Start();
         }
 
-        for (int i = 0; i < threads.Length; i++)
+        foreach (var thread in threads)
         {
-            threads[i].Join();
+            thread.Join();
         }
 
         meterProvider.ForceFlush();

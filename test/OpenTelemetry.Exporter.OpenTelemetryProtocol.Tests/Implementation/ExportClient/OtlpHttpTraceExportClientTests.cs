@@ -52,9 +52,9 @@ public class OtlpHttpTraceExportClientTests
         Assert.Contains(client.Headers, kvp => kvp.Key == header1.Name && kvp.Value == header1.Value);
         Assert.Contains(client.Headers, kvp => kvp.Key == header2.Name && kvp.Value == header2.Value);
 
-        for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+        foreach (var header in OtlpExporterOptions.StandardHeaders)
         {
-            Assert.Contains(client.Headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value == OtlpExporterOptions.StandardHeaders[i].Value);
+            Assert.Contains(client.Headers, entry => entry.Key == header.Key && entry.Value == header.Value);
         }
     }
 
@@ -149,9 +149,9 @@ public class OtlpHttpTraceExportClientTests
             Assert.Contains(httpRequest.Headers, h => h.Key == header1.Name && h.Value.First() == header1.Value);
             Assert.Contains(httpRequest.Headers, h => h.Key == header2.Name && h.Value.First() == header2.Value);
 
-            for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+            foreach (var header in OtlpExporterOptions.StandardHeaders)
             {
-                Assert.Contains(httpRequest.Headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value.First() == OtlpExporterOptions.StandardHeaders[i].Value);
+                Assert.Contains(httpRequest.Headers, entry => entry.Key == header.Key && entry.Value.First() == header.Value);
             }
 
             Assert.NotNull(testHttpHandler.HttpRequestContent);

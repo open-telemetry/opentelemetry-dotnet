@@ -143,9 +143,9 @@ internal static class ProtobufOtlpLogSerializer
         writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
         writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, value);
 
-        for (int i = 0; i < logRecords.Count; i++)
+        foreach (var logRecord in logRecords)
         {
-            writePosition = WriteLogRecord(buffer, writePosition, sdkLimitOptions, experimentalOptions, logRecords[i]);
+            writePosition = WriteLogRecord(buffer, writePosition, sdkLimitOptions, experimentalOptions, logRecord);
         }
 
         return writePosition;

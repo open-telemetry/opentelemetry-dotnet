@@ -82,9 +82,9 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteAsciiStringNoEscape(byte[] buffer, int cursor, string value)
     {
-        for (int i = 0; i < value.Length; i++)
+        foreach (var t in value)
         {
-            buffer[cursor++] = unchecked((byte)value[i]);
+            buffer[cursor++] = unchecked((byte)t);
         }
 
         return cursor;
@@ -116,9 +116,9 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteUnicodeString(byte[] buffer, int cursor, string value)
     {
-        for (int i = 0; i < value.Length; i++)
+        foreach (var ch in value)
         {
-            var ordinal = (ushort)value[i];
+            var ordinal = (ushort)ch;
             switch (ordinal)
             {
                 case ASCII_REVERSE_SOLIDUS:
@@ -150,9 +150,9 @@ internal static partial class PrometheusSerializer
             buffer[cursor++] = unchecked((byte)'_');
         }
 
-        for (int i = 0; i < value.Length; i++)
+        foreach (var ch in value)
         {
-            ordinal = (ushort)value[i];
+            ordinal = (ushort)ch;
 
             if ((ordinal >= (ushort)'A' && ordinal <= (ushort)'Z') ||
                 (ordinal >= (ushort)'a' && ordinal <= (ushort)'z') ||
@@ -234,9 +234,9 @@ internal static partial class PrometheusSerializer
 
         Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
 
-        for (int i = 0; i < name.Length; i++)
+        foreach (var ch in name)
         {
-            var ordinal = (ushort)name[i];
+            var ordinal = (ushort)ch;
             buffer[cursor++] = unchecked((byte)ordinal);
         }
 
@@ -251,9 +251,9 @@ internal static partial class PrometheusSerializer
 
         Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
 
-        for (int i = 0; i < name.Length; i++)
+        foreach (var ch in name)
         {
-            var ordinal = (ushort)name[i];
+            var ordinal = (ushort)ch;
             buffer[cursor++] = unchecked((byte)ordinal);
         }
 

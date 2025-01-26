@@ -1757,9 +1757,9 @@ public class MetricApiTests : MetricTestsBase
 
         for (int i = 0; i < NumberOfMetricUpdateByEachThread; i++)
         {
-            for (int j = 0; j < arguments.ValuesToRecord.Length; j++)
+            foreach (var value in arguments.ValuesToRecord)
             {
-                histogram!.Record(arguments.ValuesToRecord[j]);
+                histogram!.Record(value);
             }
         }
     }

@@ -802,9 +802,9 @@ public class MetricViewTests : MetricTestsBase
             .AddView(histogram.Name, histogramConfiguration)
             .AddInMemoryExporter(exportedItems));
 
-        for (var i = 0; i < values.Length; i++)
+        foreach (var value in values)
         {
-            histogram.Record(values[i]);
+            histogram.Record(value);
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -840,9 +840,9 @@ public class MetricViewTests : MetricTestsBase
             .AddView(histogram.Name, histogramConfiguration)
             .AddInMemoryExporter(exportedItems));
 
-        for (var i = 0; i < values.Length; i++)
+        foreach (var value in values)
         {
-            histogram.Record(values[i]);
+            histogram.Record(value);
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);

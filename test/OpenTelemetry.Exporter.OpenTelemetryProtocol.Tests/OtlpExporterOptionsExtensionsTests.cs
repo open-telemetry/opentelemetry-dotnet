@@ -28,9 +28,9 @@ public class OtlpExporterOptionsExtensionsTests
 
         Assert.Equal(OtlpExporterOptions.StandardHeaders.Length, headers.Count);
 
-        for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+        foreach (var header in OtlpExporterOptions.StandardHeaders)
         {
-            Assert.Contains(headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value == OtlpExporterOptions.StandardHeaders[i].Value);
+            Assert.Contains(headers, entry => entry.Key == header.Key && entry.Value == header.Value);
         }
     }
 
