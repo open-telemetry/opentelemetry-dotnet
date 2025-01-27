@@ -323,7 +323,7 @@ public class TraceContextPropagatorTest
     {
         var headers = new Dictionary<string, string[]>
         {
-            { TraceParent, [$"00-{TraceId}-{SpanId}-01"]},
+            { TraceParent, [$"00-{TraceId}-{SpanId}-01"] },
             { TraceState, tracestate },
         };
         var f = new TraceContextPropagator();
