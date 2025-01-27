@@ -29,19 +29,19 @@ public class Program
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 
             // Change Histogram boundaries using the Explicit Bucket Histogram aggregation.
-            .AddView(instrumentName: "MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 } })
+            .AddView(instrumentName: "MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = [10, 20] })
 
             // Change Histogram to use the Base2 Exponential Bucket Histogram aggregation.
             .AddView(instrumentName: "MyExponentialBucketHistogram", new Base2ExponentialBucketHistogramConfiguration())
 
             // For the instrument "MyCounterCustomTags", aggregate with only the keys "tag1", "tag2".
-            .AddView(instrumentName: "MyCounterCustomTags", new MetricStreamConfiguration() { TagKeys = new string[] { "tag1", "tag2" } })
+            .AddView(instrumentName: "MyCounterCustomTags", new MetricStreamConfiguration() { TagKeys = ["tag1", "tag2"] })
 
             // Drop the instrument "MyCounterDrop".
             .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
 
             // Configure the Explicit Bucket Histogram aggregation with custom boundaries and new name.
-            .AddView(instrumentName: "histogramWithMultipleAggregations", new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 }, Name = "MyHistogramWithExplicitHistogram" })
+            .AddView(instrumentName: "histogramWithMultipleAggregations", new ExplicitBucketHistogramConfiguration() { Boundaries = [10, 20], Name = "MyHistogramWithExplicitHistogram" })
 
             // Use Base2 Exponential Bucket Histogram aggregation and new name.
             .AddView(instrumentName: "histogramWithMultipleAggregations", new Base2ExponentialBucketHistogramConfiguration() { Name = "MyHistogramWithBase2ExponentialBucketHistogram" })

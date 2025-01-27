@@ -17,7 +17,7 @@ public class JaegerPropagator : TextMapPropagator
     internal const string JaegerDelimiterEncoded = "%3A"; // while the spec defines the delimiter as a ':', some clients will url encode headers.
     internal const string SampledValue = "1";
 
-    internal static readonly string[] JaegerDelimiters = { JaegerDelimiter, JaegerDelimiterEncoded };
+    internal static readonly string[] JaegerDelimiters = [JaegerDelimiter, JaegerDelimiterEncoded];
 
     private static readonly int TraceId128BitLength = "0af7651916cd43dd8448eb211c80319c".Length;
     private static readonly int SpanIdLength = "00f067aa0ba902b7".Length;

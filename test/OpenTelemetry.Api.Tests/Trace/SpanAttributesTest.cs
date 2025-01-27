@@ -19,16 +19,16 @@ public class SpanAttributesTest
     {
         var spanAttribute = new SpanAttributes();
         spanAttribute.Add("key_string", "string");
-        spanAttribute.Add("key_a_string", new string[] { "string" });
+        spanAttribute.Add("key_a_string", ["string"]);
 
         spanAttribute.Add("key_double", 1.01);
-        spanAttribute.Add("key_a_double", new double[] { 1.01 });
+        spanAttribute.Add("key_a_double", [1.01]);
 
         spanAttribute.Add("key_bool", true);
-        spanAttribute.Add("key_a_bool", new bool[] { true });
+        spanAttribute.Add("key_a_bool", [true]);
 
         spanAttribute.Add("key_long", 1);
-        spanAttribute.Add("key_a_long", new long[] { 1 });
+        spanAttribute.Add("key_a_long", [1]);
 
         Assert.Equal(8, spanAttribute.Attributes.Count);
     }

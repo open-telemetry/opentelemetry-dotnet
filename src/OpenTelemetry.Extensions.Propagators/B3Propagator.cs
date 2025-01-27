@@ -35,7 +35,7 @@ public sealed class B3Propagator : TextMapPropagator
     // "Debug" sampled value.
     internal const string FlagsValue = "1";
 
-    private static readonly HashSet<string> AllFields = new() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
+    private static readonly HashSet<string> AllFields = [XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags];
 
     private static readonly HashSet<string> SampledValues = new(StringComparer.Ordinal) { SampledValue, LegacySampledValue };
 
