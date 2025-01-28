@@ -21,7 +21,7 @@ public sealed class ListenAndSampleAllActivitySources : ICollectionFixture<Liste
             this.listener = new ActivityListener
             {
                 ShouldListenTo = _ => true,
-                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
             };
 
             ActivitySource.AddActivityListener(this.listener);

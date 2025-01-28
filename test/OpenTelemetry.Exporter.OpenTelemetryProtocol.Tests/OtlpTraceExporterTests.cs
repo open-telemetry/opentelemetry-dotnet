@@ -20,24 +20,35 @@ using Status = OpenTelemetry.Trace.Status;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 [Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
-public class OtlpTraceExporterTests
+public sealed class OtlpTraceExporterTests : IDisposable
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
-
     private static readonly ExperimentalOptions DefaultExperimentalOptions = new();
+
+    private readonly ActivityListener activityListener;
 
     static OtlpTraceExporterTests()
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
+    }
 
-        var listener = new ActivityListener
+    public OtlpTraceExporterTests()
+    {
+        this.activityListener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+            Sample = (ref ActivityCreationOptions<ActivityContext> options) => options.Parent.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
+                ? ActivitySamplingResult.AllDataAndRecorded
+                : ActivitySamplingResult.AllData,
         };
 
-        ActivitySource.AddActivityListener(listener);
+        ActivitySource.AddActivityListener(this.activityListener);
+    }
+
+    public void Dispose()
+    {
+        this.activityListener.Dispose();
     }
 
     [Fact]

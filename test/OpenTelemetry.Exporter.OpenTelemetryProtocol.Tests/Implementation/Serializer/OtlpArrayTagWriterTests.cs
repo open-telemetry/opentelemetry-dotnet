@@ -11,27 +11,27 @@ using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Serializer;
 
-public class OtlpArrayTagWriterTests : IDisposable
+public sealed class OtlpArrayTagWriterTests : IDisposable
 {
     private readonly ProtobufOtlpTagWriter.OtlpArrayTagWriter arrayTagWriter;
+    private readonly ActivityListener activityListener;
 
     static OtlpArrayTagWriterTests()
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
-
-        var listener = new ActivityListener
-        {
-            ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
-        };
-
-        ActivitySource.AddActivityListener(listener);
     }
 
     public OtlpArrayTagWriterTests()
     {
         this.arrayTagWriter = new ProtobufOtlpTagWriter.OtlpArrayTagWriter();
+        this.activityListener = new ActivityListener
+        {
+            ShouldListenTo = _ => true,
+            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
+        };
+
+        ActivitySource.AddActivityListener(this.activityListener);
     }
 
     [Fact]
@@ -265,6 +265,7 @@ public class OtlpArrayTagWriterTests : IDisposable
     {
         // Clean up the thread buffer after each test
         ProtobufOtlpTagWriter.OtlpArrayTagWriter.ThreadBuffer = null;
+        this.activityListener.Dispose();
     }
 
     private static OtlpTrace.Span? ToOtlpSpan(SdkLimitOptions sdkOptions, Activity activity)
