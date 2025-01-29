@@ -29,7 +29,7 @@ public class Program
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 
             // Change Histogram boundaries using the Explicit Bucket Histogram aggregation.
-            .AddView(instrumentName: "MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = [10, 20] })
+            .AddView(instrumentName: "MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = [10.0, 20.0] })
 
             // Change Histogram to use the Base2 Exponential Bucket Histogram aggregation.
             .AddView(instrumentName: "MyExponentialBucketHistogram", new Base2ExponentialBucketHistogramConfiguration())
