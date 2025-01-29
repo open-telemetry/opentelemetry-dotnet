@@ -12,9 +12,9 @@ Notes](../../RELEASENOTES.md).
   exports are correctly marked as successful.
   ([#6099](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6099))
 
-* Fixed a bug in logging bridge API where the \{OriginalFormat\} attribute would 
-overwrite `Body` of the emitted `LogRecordData`.
-([#6113](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6113))
+* Fixed a bug in logging bridge API where the \{OriginalFormat\} attribute would
+  overwrite `Body` of the emitted `LogRecordData`.
+  ([#6113](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6113))
 
 ## 1.11.1
 
