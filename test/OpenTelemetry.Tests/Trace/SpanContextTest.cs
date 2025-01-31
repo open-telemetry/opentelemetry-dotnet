@@ -8,10 +8,10 @@ namespace OpenTelemetry.Trace.Tests;
 
 public class SpanContextTest
 {
-    private static readonly byte[] FirstTraceIdBytes = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte)'a' };
-    private static readonly byte[] SecondTraceIdBytes = { 0, 0, 0, 0, 0, 0, 0, (byte)'0', 0, 0, 0, 0, 0, 0, 0, 0 };
-    private static readonly byte[] FirstSpanIdBytes = { 0, 0, 0, 0, 0, 0, 0, (byte)'a' };
-    private static readonly byte[] SecondSpanIdBytes = { (byte)'0', 0, 0, 0, 0, 0, 0, 0 };
+    private static readonly byte[] FirstTraceIdBytes = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0a"u8.ToArray();
+    private static readonly byte[] SecondTraceIdBytes = "\0\0\0\0\0\0\00\0\0\0\0\0\0\0\0"u8.ToArray();
+    private static readonly byte[] FirstSpanIdBytes = "\0\0\0\0\0\0\0a"u8.ToArray();
+    private static readonly byte[] SecondSpanIdBytes = "0\0\0\0\0\0\0\0"u8.ToArray();
 
     private static readonly SpanContext First =
       new(
