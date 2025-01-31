@@ -191,7 +191,7 @@ public class SelfDiagnosticsEventListenerTest
 
         // '\n' will be appended to the original string "abc" after EncodeInBuffer is called.
         // The byte where '\n' will be placed should not be touched within EncodeInBuffer, so it stays as '\0'.
-        byte[] expected = Encoding.UTF8.GetBytes("abc\0");
+        byte[] expected = "abc\0"u8.ToArray();
         AssertBufferOutput(expected, buffer, startPos, endPos + 1);
     }
 
@@ -204,7 +204,7 @@ public class SelfDiagnosticsEventListenerTest
         // It's a quick estimate by assumption that most Unicode characters takes up to 2 16-bit UTF-16 chars,
         // which can be up to 4 bytes when encoded in UTF-8.
         int endPos = SelfDiagnosticsEventListener.EncodeInBuffer("abc", false, buffer, startPos);
-        byte[] expected = Encoding.UTF8.GetBytes("ab...\0");
+        byte[] expected = "ab...\0"u8.ToArray();
         AssertBufferOutput(expected, buffer, startPos, endPos + 1);
     }
 
@@ -214,7 +214,7 @@ public class SelfDiagnosticsEventListenerTest
         byte[] buffer = new byte[20];
         int startPos = buffer.Length - Ellipses.Length;  // Just enough space for "...\n".
         int endPos = SelfDiagnosticsEventListener.EncodeInBuffer("abc", false, buffer, startPos);
-        byte[] expected = Encoding.UTF8.GetBytes("...\0");
+        byte[] expected = "...\0"u8.ToArray();
         AssertBufferOutput(expected, buffer, startPos, endPos + 1);
     }
 
@@ -233,7 +233,7 @@ public class SelfDiagnosticsEventListenerTest
         byte[] buffer = new byte[20];
         int startPos = buffer.Length - EllipsesWithBrackets.Length - 6;  // Just enough space for "abc" even if "...\n" need to be added.
         int endPos = SelfDiagnosticsEventListener.EncodeInBuffer("abc", true, buffer, startPos);
-        byte[] expected = Encoding.UTF8.GetBytes("{abc}\0");
+        byte[] expected = "{abc}\0"u8.ToArray();
         AssertBufferOutput(expected, buffer, startPos, endPos + 1);
     }
 
@@ -243,7 +243,7 @@ public class SelfDiagnosticsEventListenerTest
         byte[] buffer = new byte[20];
         int startPos = buffer.Length - EllipsesWithBrackets.Length - 5;  // Just not space for "...\n".
         int endPos = SelfDiagnosticsEventListener.EncodeInBuffer("abc", true, buffer, startPos);
-        byte[] expected = Encoding.UTF8.GetBytes("{ab...}\0");
+        byte[] expected = "{ab...}\0"u8.ToArray();
         AssertBufferOutput(expected, buffer, startPos, endPos + 1);
     }
 
@@ -253,7 +253,7 @@ public class SelfDiagnosticsEventListenerTest
         byte[] buffer = new byte[20];
         int startPos = buffer.Length - EllipsesWithBrackets.Length;  // Just enough space for "{...}\n".
         int endPos = SelfDiagnosticsEventListener.EncodeInBuffer("abc", true, buffer, startPos);
-        byte[] expected = Encoding.UTF8.GetBytes("{...}\0");
+        byte[] expected = "{...}\0"u8.ToArray();
         AssertBufferOutput(expected, buffer, startPos, endPos + 1);
     }
 
