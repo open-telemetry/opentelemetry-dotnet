@@ -12,6 +12,12 @@ Notes](../../RELEASENOTES.md).
   exports are correctly marked as successful.
   ([#6099](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6099))
 
+* Fixed an issue where `Status.Description` exceeding 127 bytes resulted in
+  incorrect length encoding, leading to serialization errors. The length
+  encoding now correctly handles descriptions longer than 127 bytes, ensuring
+  accurate serialization and preventing related failures.
+  ([#](https://github.com/open-telemetry/opentelemetry-dotnet/pull/))
+
 ## 1.11.1
 
 Released 2025-Jan-22
