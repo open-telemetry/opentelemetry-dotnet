@@ -246,8 +246,6 @@ internal static class ZipkinActivityConversionExtensions
 
     private struct EventEnumerationState
     {
-        public bool Created;
-
         public PooledList<ZipkinAnnotation> Annotations;
 
         public void EnumerateEvents(Activity activity)
@@ -257,7 +255,6 @@ internal static class ZipkinActivityConversionExtensions
             if (enumerator.MoveNext())
             {
                 this.Annotations = PooledList<ZipkinAnnotation>.Create();
-                this.Created = true;
 
                 do
                 {
