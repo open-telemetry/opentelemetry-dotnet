@@ -32,25 +32,24 @@ public class TraceIdRatioBasedSamplerTest
         // is not less than probability * Long.MAX_VALUE;
         var notSampledtraceId =
             ActivityTraceId.CreateFromBytes(
-                new byte[]
-                {
-                  0x8F,
-                  0xFF,
-                  0xFF,
-                  0xFF,
-                  0xFF,
-                  0xFF,
-                  0xFF,
-                  0xFF,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                });
+            [
+                0x8F,
+                0xFF,
+                0xFF,
+                0xFF,
+                0xFF,
+                0xFF,
+                0xFF,
+                0xFF,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]);
         Assert.Equal(
             SamplingDecision.Drop,
             defaultProbability.ShouldSample(new SamplingParameters(default, notSampledtraceId, ActivityDisplayName, ActivityKindServer, null, null)).Decision);
@@ -59,25 +58,24 @@ public class TraceIdRatioBasedSamplerTest
         // is less than probability * Long.MAX_VALUE;
         var sampledtraceId =
             ActivityTraceId.CreateFromBytes(
-                new byte[]
-                {
-                  0x00,
-                  0x00,
-                  0xFF,
-                  0xFF,
-                  0xFF,
-                  0xFF,
-                  0xFF,
-                  0xFF,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                });
+            [
+                0x00,
+                0x00,
+                0xFF,
+                0xFF,
+                0xFF,
+                0xFF,
+                0xFF,
+                0xFF,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]);
         Assert.Equal(
             SamplingDecision.RecordAndSample,
             defaultProbability.ShouldSample(new SamplingParameters(default, sampledtraceId, ActivityDisplayName, ActivityKindServer, null, null)).Decision);

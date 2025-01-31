@@ -91,7 +91,7 @@ public static class ZipkinExporterHelperExtensions
                             "CreateClient",
                             BindingFlags.Public | BindingFlags.Instance,
                             binder: null,
-                            new Type[] { typeof(string) },
+                            [typeof(string)],
                             modifiers: null);
                         if (createClientMethod != null)
                         {

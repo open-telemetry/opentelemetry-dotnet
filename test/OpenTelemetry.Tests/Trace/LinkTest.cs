@@ -29,10 +29,10 @@ public class LinkTest : IDisposable
         this.tags.Add("MyAttributeKey1", 10L);
         this.tags.Add("MyAttributeKey2", true);
         this.tags.Add("MyAttributeKey3", 0.005);
-        this.tags.Add("MyAttributeKey4", new long[] { 1, 2 });
-        this.tags.Add("MyAttributeKey5", new string[] { "a", "b" });
-        this.tags.Add("MyAttributeKey6", new bool[] { true, false });
-        this.tags.Add("MyAttributeKey7", new double[] { 0.1, -0.1 });
+        this.tags.Add("MyAttributeKey4", [1, 2]);
+        this.tags.Add("MyAttributeKey5", ["a", "b"]);
+        this.tags.Add("MyAttributeKey6", [true, false]);
+        this.tags.Add("MyAttributeKey7", [0.1, -0.1]);
     }
 
     [Fact]

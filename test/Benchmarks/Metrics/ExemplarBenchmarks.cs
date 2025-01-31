@@ -41,7 +41,7 @@ namespace Benchmarks.Metrics;
 public class ExemplarBenchmarks
 {
     private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
-    private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
+    private readonly string[] dimensionValues = ["DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10"];
     private Histogram<double>? histogramWithoutTagReduction;
     private Histogram<double>? histogramWithTagReduction;
     private Counter<long>? counterWithoutTagReduction;
@@ -86,7 +86,7 @@ public class ExemplarBenchmarks
                 {
                     return new MetricStreamConfiguration()
                     {
-                        TagKeys = new string[] { "DimName1", "DimName2", "DimName3" },
+                        TagKeys = ["DimName1", "DimName2", "DimName3"],
                         ExemplarReservoirFactory = CreateExemplarReservoir,
                     };
                 }

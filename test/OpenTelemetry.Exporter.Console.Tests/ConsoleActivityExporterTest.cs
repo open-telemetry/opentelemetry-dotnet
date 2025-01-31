@@ -43,6 +43,6 @@ public class ConsoleActivityExporterTest
 
         // Test that the ConsoleExporter correctly handles an Activity without Tags.
         using var consoleExporter = new ConsoleActivityExporter(new ConsoleExporterOptions());
-        Assert.Equal(ExportResult.Success, consoleExporter.Export(new Batch<Activity>(new[] { activity }, 1)));
+        Assert.Equal(ExportResult.Success, consoleExporter.Export(new Batch<Activity>([activity], 1)));
     }
 }
