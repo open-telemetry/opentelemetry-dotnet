@@ -19,7 +19,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests;
 
-public class ZipkinExporterTests : IDisposable
+public sealed class ZipkinExporterTests : IDisposable
 {
     private const string TraceId = "e8ea7e9ac72de94e91fabc613f9686b2";
     private static readonly ConcurrentDictionary<Guid, string> Responses = new();
@@ -32,14 +32,6 @@ public class ZipkinExporterTests : IDisposable
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
-
-        var listener = new ActivityListener
-        {
-            ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
-        };
-
-        ActivitySource.AddActivityListener(listener);
     }
 
     public ZipkinExporterTests()
@@ -68,7 +60,6 @@ public class ZipkinExporterTests : IDisposable
     public void Dispose()
     {
         this.testServer.Dispose();
-        GC.SuppressFinalize(this);
     }
 
     [Fact]
@@ -455,6 +446,16 @@ public class ZipkinExporterTests : IDisposable
        string? statusDescription = null,
        DateTime? dateTime = null)
     {
+        using var activityListener = new ActivityListener
+        {
+            ShouldListenTo = _ => true,
+            Sample = (ref ActivityCreationOptions<ActivityContext> options) => options.Parent.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
+                ? ActivitySamplingResult.AllDataAndRecorded
+                : ActivitySamplingResult.AllData,
+        };
+
+        ActivitySource.AddActivityListener(activityListener);
+
         var startTimestamp = DateTime.UtcNow;
         var endTimestamp = startTimestamp.AddSeconds(60);
         var eventTimestamp = DateTime.UtcNow;
@@ -531,6 +532,8 @@ public class ZipkinExporterTests : IDisposable
             tags,
             links,
             startTime: startTimestamp)!;
+
+        Assert.NotNull(activity);
 
         if (addEvents)
         {
