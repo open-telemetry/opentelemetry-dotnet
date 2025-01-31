@@ -611,6 +611,55 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
+    public void LogRecordBodyAndOriginalFormatIsExportedWhenUsingBridgeApi()
+    {
+        LogRecordAttributeList attributes = default;
+        attributes.Add("name", "tomato");
+        attributes.Add("price", 2.99);
+        attributes.Add("{OriginalFormat}", "Hello from {name} {price}.");
+
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            var logger = loggerProvider.GetLogger();
+
+            logger.EmitLog(
+                new LogRecordData()
+            {
+                Body = "Hello world",
+            },
+                attributes);
+        }
+
+        Assert.Single(logRecords);
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecords[0]);
+
+        Assert.NotNull(otlpLogRecord);
+
+        Assert.Equal("Hello world", otlpLogRecord.Body?.StringValue);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal(3, otlpLogRecord.Attributes.Count);
+
+        var index = 0;
+        var attribute = otlpLogRecord.Attributes[index];
+        Assert.Equal("name", attribute.Key);
+        Assert.Equal("tomato", attribute.Value.StringValue);
+
+        attribute = otlpLogRecord.Attributes[++index];
+        Assert.Equal("price", attribute.Key);
+        Assert.Equal(2.99, attribute.Value.DoubleValue);
+
+        attribute = otlpLogRecord.Attributes[++index];
+        Assert.Equal("{OriginalFormat}", attribute.Key);
+        Assert.Equal("Hello from {name} {price}.", attribute.Value.StringValue);
+    }
+
+    [Fact]
     public void CheckToOtlpLogRecordExceptionAttributes()
     {
         var logRecords = new List<LogRecord>();

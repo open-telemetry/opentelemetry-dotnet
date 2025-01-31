@@ -207,13 +207,11 @@ internal static class ProtobufOtlpLogSerializer
         }
 
         bool bodyPopulatedFromFormattedMessage = false;
-        bool isLogRecordBodySet = false;
 
         if (logRecord.FormattedMessage != null)
         {
             otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.FormattedMessage.AsSpan());
             bodyPopulatedFromFormattedMessage = true;
-            isLogRecordBodySet = true;
         }
 
         if (logRecord.Attributes != null)
@@ -226,20 +224,11 @@ internal static class ProtobufOtlpLogSerializer
                 if (attribute.Key.Equals("{OriginalFormat}") && !bodyPopulatedFromFormattedMessage)
                 {
                     otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, (attribute.Value as string).AsSpan());
-                    isLogRecordBodySet = true;
                 }
                 else
                 {
                     AddLogAttribute(state, attribute);
                 }
-            }
-
-            // Supports setting Body directly on LogRecord for the Logs Bridge API.
-            if (!isLogRecordBodySet && logRecord.Body != null)
-            {
-                // If {OriginalFormat} is not present in the attributes,
-                // use logRecord.Body if it is set.
-                otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.Body.AsSpan());
             }
         }
 
