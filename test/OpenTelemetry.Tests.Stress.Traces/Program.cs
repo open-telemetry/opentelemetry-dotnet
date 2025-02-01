@@ -26,21 +26,14 @@ public static class Program
                 .Build();
         }
 
+        public override void Dispose() =>
+            this.tracerProvider.Dispose();
+
         protected override void RunWorkItemInParallel()
         {
             using var activity = ActivitySource.StartActivity("test");
 
             activity?.SetTag("foo", "value");
-        }
-
-        protected override void Dispose(bool isDisposing)
-        {
-            if (isDisposing)
-            {
-                this.tracerProvider.Dispose();
-            }
-
-            base.Dispose(isDisposing);
         }
     }
 }

@@ -32,6 +32,12 @@ public static class Program
             this.logger = this.loggerFactory.CreateLogger<LogsStressTest>();
         }
 
+        public override void Dispose()
+        {
+            this.loggerFactory.Dispose();
+            base.Dispose();
+        }
+
         protected override void RunWorkItemInParallel()
         {
             this.logger.FoodRecallNotice(
@@ -40,16 +46,6 @@ public static class Program
                 productType: "Food & Beverages",
                 recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
                 companyName: "Contoso Fresh Vegetables, Inc.");
-        }
-
-        protected override void Dispose(bool isDisposing)
-        {
-            if (isDisposing)
-            {
-                this.loggerFactory.Dispose();
-            }
-
-            base.Dispose(isDisposing);
         }
     }
 }
