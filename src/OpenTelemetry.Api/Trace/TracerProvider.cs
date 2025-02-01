@@ -27,6 +27,50 @@ public class TracerProvider : BaseProvider
     /// </summary>
     public static TracerProvider Default { get; } = new TracerProvider();
 
+#if NET9_0_OR_GREATER
+    /// <summary>
+    /// Gets a tracer with given name, version and tags.
+    /// </summary>
+    /// <param name="name">Name identifying the instrumentation library.</param>
+    /// <param name="version">Version of the instrumentation library.</param>
+    /// <param name="tags">Tags associated with the tracer.</param>
+    /// <returns>Tracer instance.</returns>
+    public Tracer GetTracer(
+        [AllowNull] string name,
+        string? version = null,
+        IEnumerable<KeyValuePair<string, object?>>? tags = null)
+    {
+        var tracers = this.Tracers;
+        if (tracers == null)
+        {
+            // Note: Returns a no-op Tracer once dispose has been called.
+            return new(activitySource: null);
+        }
+
+        var key = new TracerKey(name, version, tags);
+
+        if (!tracers.TryGetValue(key, out var tracer))
+        {
+            lock (tracers)
+            {
+                if (this.Tracers == null)
+                {
+                    // Note: We check here for a race with Dispose and return a
+                    // no-op Tracer in that case.
+                    return new(activitySource: null);
+                }
+
+                tracer = new(new(key.Name, key.Version, key.Tags));
+                bool result = tracers.TryAdd(key, tracer);
+#if DEBUG
+                System.Diagnostics.Debug.Assert(result, "Write into tracers cache failed");
+#endif
+            }
+        }
+
+        return tracer;
+    }
+#else
     /// <summary>
     /// Gets a tracer with given name and version.
     /// </summary>
@@ -60,18 +104,17 @@ public class TracerProvider : BaseProvider
                     return new(activitySource: null);
                 }
 
-                tracer = new(new(key.Name, key.Version));
-#if DEBUG
+                tracer = new (new (key.Name, key.Version));
                 bool result = tracers.TryAdd(key, tracer);
+#if DEBUG
                 System.Diagnostics.Debug.Assert(result, "Write into tracers cache failed");
-#else
-                tracers.TryAdd(key, tracer);
 #endif
             }
         }
 
         return tracer;
     }
+#endif
 
     /// <inheritdoc/>
     protected override void Dispose(bool disposing)
@@ -99,6 +142,21 @@ public class TracerProvider : BaseProvider
         base.Dispose(disposing);
     }
 
+#if NET9_0_OR_GREATER
+    internal readonly record struct TracerKey
+    {
+        public readonly string Name;
+        public readonly string? Version;
+        public readonly IEnumerable<KeyValuePair<string, object?>>? Tags;
+
+        public TracerKey(string? name, string? version, IEnumerable<KeyValuePair<string, object?>>? tags)
+        {
+            this.Name = name ?? string.Empty;
+            this.Version = version;
+            this.Tags = tags?.OrderBy(e => e.Key);
+        }
+    }
+#else
     internal readonly record struct TracerKey
     {
         public readonly string Name;
@@ -110,4 +168,5 @@ public class TracerProvider : BaseProvider
             this.Version = version;
         }
     }
+#endif
 }
