@@ -193,13 +193,20 @@ public sealed class B3Propagator : TextMapPropagator
     {
         try
         {
-            var header = getter(carrier, XB3Combined)?.FirstOrDefault();
+            var headers = getter(carrier, XB3Combined);
+            if (headers == null)
+            {
+                return context;
+            }
+
+            var header = headers.FirstOrDefault();
+
             if (string.IsNullOrWhiteSpace(header))
             {
                 return context;
             }
 
-            var parts = header!.Split(XB3CombinedDelimiter);
+            var parts = header.Split(XB3CombinedDelimiter);
             if (parts.Length < 2 || parts.Length > 4)
             {
                 return context;

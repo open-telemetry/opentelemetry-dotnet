@@ -393,7 +393,7 @@ public sealed class MockCollectorIntegrationTests
             Assert.NotNull(mockProvider);
             if (exportResult == ExportResult.Success)
             {
-                Assert.Single(mockProvider!.TryGetBlobs());
+                Assert.Single(mockProvider.TryGetBlobs());
 
                 // Force Retry
                 Assert.True((transmissionHandler as OtlpExporterPersistentStorageTransmissionHandler)?.InitiateAndWaitForRetryProcess(-1));

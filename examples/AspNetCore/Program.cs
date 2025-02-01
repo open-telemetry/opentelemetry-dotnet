@@ -13,16 +13,16 @@ using OpenTelemetry.Trace;
 var appBuilder = WebApplication.CreateBuilder(args);
 
 // Note: Switch between Zipkin/OTLP/Console by setting UseTracingExporter in appsettings.json.
-var tracingExporter = appBuilder.Configuration.GetValue("UseTracingExporter", defaultValue: "console")!.ToLowerInvariant();
+var tracingExporter = appBuilder.Configuration.GetValue("UseTracingExporter", defaultValue: "console").ToLowerInvariant();
 
 // Note: Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.
-var metricsExporter = appBuilder.Configuration.GetValue("UseMetricsExporter", defaultValue: "console")!.ToLowerInvariant();
+var metricsExporter = appBuilder.Configuration.GetValue("UseMetricsExporter", defaultValue: "console").ToLowerInvariant();
 
 // Note: Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
-var logExporter = appBuilder.Configuration.GetValue("UseLogExporter", defaultValue: "console")!.ToLowerInvariant();
+var logExporter = appBuilder.Configuration.GetValue("UseLogExporter", defaultValue: "console").ToLowerInvariant();
 
 // Note: Switch between Explicit/Exponential by setting HistogramAggregation in appsettings.json
-var histogramAggregation = appBuilder.Configuration.GetValue("HistogramAggregation", defaultValue: "explicit")!.ToLowerInvariant();
+var histogramAggregation = appBuilder.Configuration.GetValue("HistogramAggregation", defaultValue: "explicit").ToLowerInvariant();
 
 // Create a service to expose ActivitySource, and Metric Instruments
 // for manual instrumentation
@@ -69,7 +69,7 @@ appBuilder.Services.AddOpenTelemetry()
                 builder.AddOtlpExporter(otlpOptions =>
                 {
                     // Use IConfiguration directly for Otlp exporter endpoint option.
-                    otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317")!);
+                    otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317"));
                 });
                 break;
 
@@ -133,7 +133,7 @@ appBuilder.Services.AddOpenTelemetry()
                 builder.AddOtlpExporter(otlpOptions =>
                 {
                     // Use IConfiguration directly for Otlp exporter endpoint option.
-                    otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317")!);
+                    otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317"));
                 });
                 break;
             default:
