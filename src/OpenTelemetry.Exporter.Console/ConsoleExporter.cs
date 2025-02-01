@@ -10,7 +10,7 @@ public abstract class ConsoleExporter<T> : BaseExporter<T>
 
     protected ConsoleExporter(ConsoleExporterOptions options)
     {
-        this.options = options ?? new ConsoleExporterOptions();
+        this.options = options;
 
         this.TagWriter = new ConsoleTagWriter(this.OnUnsupportedTagDropped);
     }
