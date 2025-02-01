@@ -11,6 +11,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.InMemory" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.OpenTelemetryProtocol" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Exporter.Zipkin" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Exporter.Zipkin.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Extensions.Hosting" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Extensions.Hosting.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Shims.OpenTracing.Tests" + AssemblyInfo.PublicKey)]

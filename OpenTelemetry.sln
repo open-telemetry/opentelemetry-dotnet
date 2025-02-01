@@ -258,7 +258,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 		src\Shared\PeriodicExportingMetricReaderHelper.cs = src\Shared\PeriodicExportingMetricReaderHelper.cs
 		src\Shared\PooledList.cs = src\Shared\PooledList.cs
 		src\Shared\ResourceSemanticConventions.cs = src\Shared\ResourceSemanticConventions.cs
-		src\Shared\SemanticConventions.cs = src\Shared\SemanticConventions.cs
 		src\Shared\SpanAttributeConstants.cs = src\Shared\SpanAttributeConstants.cs
 		src\Shared\StatusHelper.cs = src\Shared\StatusHelper.cs
 		src\Shared\ThreadSafeRandom.cs = src\Shared\ThreadSafeRandom.cs
