@@ -1067,8 +1067,6 @@ internal sealed class AggregatorStore
             return 0;
         }
 
-        Debug.Assert(tagKeysAndValues != null, "tagKeysAndValues was null");
-
-        return this.lookupAggregatorStore(tagKeysAndValues!, actualLength);
+        return this.lookupAggregatorStore(tagKeysAndValues, actualLength);
     }
 }

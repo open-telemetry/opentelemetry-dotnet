@@ -433,9 +433,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     private bool LogUnsupportedTagTypeAndReturnFalse(string key, object value)
     {
-        Debug.Assert(value != null, "value was null");
-
-        this.OnUnsupportedTagDropped(key, value!.GetType().ToString());
+        this.OnUnsupportedTagDropped(key, value.GetType().ToString());
         return false;
     }
 }

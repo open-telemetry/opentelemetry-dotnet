@@ -17,8 +17,6 @@ internal class TestHttpClient
     // dotnet run httpclient
     internal static int Run(HttpClientOptions options)
     {
-        Debug.Assert(options != null, "options was null");
-
         System.Console.WriteLine("Hello World!");
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()

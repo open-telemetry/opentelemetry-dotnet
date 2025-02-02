@@ -52,18 +52,14 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
-        Debug.Assert(exporterOptions != null, "exporterOptions was null");
-        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
-        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
-
-        this.experimentalOptions = experimentalOptions!;
-        this.sdkLimitOptions = sdkLimitOptions!;
+        this.experimentalOptions = experimentalOptions;
+        this.sdkLimitOptions = sdkLimitOptions;
 #if NET462_OR_GREATER || NETSTANDARD2_0
         this.startWritePosition = 0;
 #else
-        this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
+        this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #endif
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Logs);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs);
     }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();

@@ -50,16 +50,13 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
-        Debug.Assert(exporterOptions != null, "exporterOptions was null");
-        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
-
-        this.sdkLimitOptions = sdkLimitOptions!;
+        this.sdkLimitOptions = sdkLimitOptions;
 #if NET462_OR_GREATER || NETSTANDARD2_0
         this.startWritePosition = 0;
 #else
-        this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
+        this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #endif
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
     }
 
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();

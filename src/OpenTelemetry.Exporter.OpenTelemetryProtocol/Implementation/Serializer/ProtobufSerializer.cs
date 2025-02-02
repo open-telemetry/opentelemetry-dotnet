@@ -284,8 +284,6 @@ internal static class ProtobufSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, string value)
     {
-        Debug.Assert(value != null, "value was null");
-
         return WriteStringWithTag(buffer, writePosition, fieldNumber, value.AsSpan());
     }
 

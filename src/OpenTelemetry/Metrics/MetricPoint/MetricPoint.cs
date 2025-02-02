@@ -44,9 +44,7 @@ public struct MetricPoint
         int exponentialHistogramMaxScale,
         LookupData? lookupData = null)
     {
-        Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
-        Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
-        Debug.Assert(!aggregatorStore!.OutputDelta || lookupData != null, "LookupData was null.");
+        Debug.Assert(!aggregatorStore.OutputDelta || lookupData != null, "LookupData was null.");
 
         this.aggType = aggType;
         this.Tags = new ReadOnlyTagCollection(tagKeysAndValues);
@@ -57,7 +55,7 @@ public struct MetricPoint
         this.ReferenceCount = 1;
         this.LookupData = lookupData;
 
-        var isExemplarEnabled = aggregatorStore!.IsExemplarEnabled();
+        var isExemplarEnabled = aggregatorStore.IsExemplarEnabled();
 
         ExemplarReservoir? reservoir;
         try

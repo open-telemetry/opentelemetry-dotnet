@@ -24,8 +24,6 @@ internal static class TraceStateUtilsNew
     /// <returns>True if string was parsed successfully and tracestate was recognized, false otherwise.</returns>
     internal static bool AppendTraceState(string traceStateString, List<KeyValuePair<string, string>> tracestate)
     {
-        Debug.Assert(tracestate != null, "tracestate list cannot be null");
-
         if (string.IsNullOrEmpty(traceStateString))
         {
             return false;
@@ -56,7 +54,7 @@ internal static class TraceStateUtilsNew
                 var keyStr = key.ToString();
                 if (names.Add(keyStr))
                 {
-                    tracestate!.Add(new KeyValuePair<string, string>(keyStr, value.ToString()));
+                    tracestate.Add(new KeyValuePair<string, string>(keyStr, value.ToString()));
                 }
                 else
                 {

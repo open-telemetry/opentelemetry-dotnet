@@ -41,8 +41,6 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public void RegisterProvider(TracerProviderSdk tracerProvider)
     {
-        Debug.Assert(tracerProvider != null, "tracerProvider was null");
-
         if (this.tracerProvider != null)
         {
             throw new NotSupportedException("TracerProvider cannot be accessed while build is executing.");
@@ -53,12 +51,10 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
-        Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
-
         return this.AddInstrumentation(
             typeof(TInstrumentation).Name,
             typeof(TInstrumentation).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
-            instrumentationFactory!());
+            instrumentationFactory());
     }
 
     public TracerProviderBuilder AddInstrumentation(
@@ -80,19 +76,15 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public TracerProviderBuilder ConfigureResource(Action<ResourceBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
         var resourceBuilder = this.ResourceBuilder ??= ResourceBuilder.CreateDefault();
 
-        configure!(resourceBuilder);
+        configure(resourceBuilder);
 
         return this;
     }
 
     public TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
     {
-        Debug.Assert(resourceBuilder != null, "resourceBuilder was null");
-
         this.ResourceBuilder = resourceBuilder;
 
         return this;
@@ -109,9 +101,7 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public override TracerProviderBuilder AddSource(params string[] names)
     {
-        Debug.Assert(names != null, "names was null");
-
-        foreach (var name in names!)
+        foreach (var name in names)
         {
             Guard.ThrowIfNullOrWhitespace(name);
 
@@ -125,17 +115,13 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
     {
-        Debug.Assert(processor != null, "processor was null");
-
-        this.Processors.Add(processor!);
+        this.Processors.Add(processor);
 
         return this;
     }
 
     public TracerProviderBuilder SetSampler(Sampler sampler)
     {
-        Debug.Assert(sampler != null, "sampler was null");
-
         this.Sampler = sampler;
 
         return this;
@@ -150,9 +136,7 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public TracerProviderBuilder ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
-        configure!(this.serviceProvider, this);
+        configure(this.serviceProvider, this);
 
         return this;
     }

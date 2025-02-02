@@ -54,13 +54,11 @@ internal static class OpenTelemetryMetricsBuilderExtensions
         IServiceCollection services,
         Action<MeterProviderBuilder> configure)
     {
-        Debug.Assert(services != null, "services was null");
-
         Guard.ThrowIfNull(configure);
 
-        var builder = new MeterProviderBuilderBase(services!);
+        var builder = new MeterProviderBuilderBase(services);
 
-        services!.TryAddEnumerable(
+        services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IMetricsListener, OpenTelemetryMetricsListener>());
 
         configure(builder);

@@ -132,9 +132,7 @@ public class ExceptionProcessorTest
 
     private static object? GetTagValue(Activity activity, string tagName)
     {
-        Debug.Assert(activity != null, "Activity should not be null");
-
-        foreach (ref readonly var tag in activity!.EnumerateTagObjects())
+        foreach (ref readonly var tag in activity.EnumerateTagObjects())
         {
             if (tag.Key == tagName)
             {

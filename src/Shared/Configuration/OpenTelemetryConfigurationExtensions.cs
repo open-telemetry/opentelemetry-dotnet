@@ -26,9 +26,7 @@ internal static class OpenTelemetryConfigurationExtensions
 #endif
         out string? value)
     {
-        Debug.Assert(configuration != null, "configuration was null");
-
-        value = configuration![key];
+        value = configuration[key];
 
         return !string.IsNullOrWhiteSpace(value);
     }
@@ -42,8 +40,6 @@ internal static class OpenTelemetryConfigurationExtensions
 #endif
         out Uri? value)
     {
-        Debug.Assert(logger != null, "logger was null");
-
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = null;
@@ -52,7 +48,7 @@ internal static class OpenTelemetryConfigurationExtensions
 
         if (!Uri.TryCreate(stringValue, UriKind.Absolute, out value))
         {
-            logger!.LogInvalidConfigurationValue(key, stringValue!);
+            logger.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 
@@ -65,8 +61,6 @@ internal static class OpenTelemetryConfigurationExtensions
         string key,
         out int value)
     {
-        Debug.Assert(logger != null, "logger was null");
-
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = default;
@@ -75,7 +69,7 @@ internal static class OpenTelemetryConfigurationExtensions
 
         if (!int.TryParse(stringValue, NumberStyles.None, CultureInfo.InvariantCulture, out value))
         {
-            logger!.LogInvalidConfigurationValue(key, stringValue!);
+            logger.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 
@@ -88,8 +82,6 @@ internal static class OpenTelemetryConfigurationExtensions
         string key,
         out bool value)
     {
-        Debug.Assert(logger != null, "logger was null");
-
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = default;
@@ -98,7 +90,7 @@ internal static class OpenTelemetryConfigurationExtensions
 
         if (!bool.TryParse(stringValue, out value))
         {
-            logger!.LogInvalidConfigurationValue(key, stringValue!);
+            logger.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 
@@ -115,8 +107,6 @@ internal static class OpenTelemetryConfigurationExtensions
 #endif
         out T? value)
     {
-        Debug.Assert(logger != null, "logger was null");
-
         if (!configuration.TryGetStringValue(key, out var stringValue))
         {
             value = default;
@@ -125,7 +115,7 @@ internal static class OpenTelemetryConfigurationExtensions
 
         if (!tryParseFunc(stringValue!, out value))
         {
-            logger!.LogInvalidConfigurationValue(key, stringValue!);
+            logger.LogInvalidConfigurationValue(key, stringValue!);
             return false;
         }
 

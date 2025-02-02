@@ -59,11 +59,8 @@ internal sealed class DelegatingOptionsFactory<TOptions> :
         // When it isn't already an array, convert it to one, but don't use System.Linq to avoid pulling Linq in to
         // small trimmed applications.
 
-        Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
-        Debug.Assert(configuration != null, "configuration was null");
-
-        this.optionsFactoryFunc = optionsFactoryFunc!;
-        this.configuration = configuration!;
+        this.optionsFactoryFunc = optionsFactoryFunc;
+        this.configuration = configuration;
         _setups = setups as IConfigureOptions<TOptions>[] ?? new List<IConfigureOptions<TOptions>>(setups).ToArray();
         _postConfigures = postConfigures as IPostConfigureOptions<TOptions>[] ?? new List<IPostConfigureOptions<TOptions>>(postConfigures).ToArray();
         _validations = validations as IValidateOptions<TOptions>[] ?? new List<IValidateOptions<TOptions>>(validations).ToArray();

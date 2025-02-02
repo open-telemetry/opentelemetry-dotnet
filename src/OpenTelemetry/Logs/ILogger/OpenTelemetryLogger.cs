@@ -31,12 +31,8 @@ internal sealed class OpenTelemetryLogger : ILogger
         OpenTelemetryLoggerOptions options,
         string categoryName)
     {
-        Debug.Assert(provider != null, "provider was null");
-        Debug.Assert(categoryName != null, "categoryName was null");
-        Debug.Assert(options != null, "options was null");
-
-        this.provider = provider!;
-        this.options = options!;
+        this.provider = provider;
+        this.options = options;
         this.instrumentationScope = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(categoryName);
     }
 

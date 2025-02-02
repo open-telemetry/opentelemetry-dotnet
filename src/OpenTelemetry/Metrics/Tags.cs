@@ -102,8 +102,6 @@ internal readonly struct Tags : IEquatable<Tags>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int ComputeHashCode(KeyValuePair<string, object?>[] keyValuePairs)
     {
-        Debug.Assert(keyValuePairs != null, "keyValuePairs was null");
-
 #if NET
         HashCode hashCode = default;
 

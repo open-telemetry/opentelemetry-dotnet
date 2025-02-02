@@ -11,8 +11,6 @@ internal static class AssemblyVersionExtensions
 {
     public static string GetPackageVersion(this Assembly assembly)
     {
-        Debug.Assert(assembly != null, "assembly was null");
-
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
 
         Debug.Assert(!string.IsNullOrEmpty(informationalVersion), "AssemblyInformationalVersionAttribute was not found in assembly");
@@ -22,8 +20,6 @@ internal static class AssemblyVersionExtensions
 
     public static bool TryGetPackageVersion(this Assembly assembly, [NotNullWhen(true)] out string? packageVersion)
     {
-        Debug.Assert(assembly != null, "assembly was null");
-
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
 
         if (string.IsNullOrEmpty(informationalVersion))

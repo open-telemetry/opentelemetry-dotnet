@@ -39,21 +39,19 @@ internal sealed class TelemetryHostedService : IHostedService
 
     internal static void Initialize(IServiceProvider serviceProvider)
     {
-        Debug.Assert(serviceProvider != null, "serviceProvider was null");
-
-        var meterProvider = serviceProvider!.GetService<MeterProvider>();
+        var meterProvider = serviceProvider.GetService<MeterProvider>();
         if (meterProvider == null)
         {
             HostingExtensionsEventSource.Log.MeterProviderNotRegistered();
         }
 
-        var tracerProvider = serviceProvider!.GetService<TracerProvider>();
+        var tracerProvider = serviceProvider.GetService<TracerProvider>();
         if (tracerProvider == null)
         {
             HostingExtensionsEventSource.Log.TracerProviderNotRegistered();
         }
 
-        var loggerProvider = serviceProvider!.GetService<LoggerProvider>();
+        var loggerProvider = serviceProvider.GetService<LoggerProvider>();
         if (loggerProvider == null)
         {
             HostingExtensionsEventSource.Log.LoggerProviderNotRegistered();

@@ -36,12 +36,10 @@ internal sealed class MeterProviderSdk : MeterProvider
         IServiceProvider serviceProvider,
         bool ownsServiceProvider)
     {
-        Debug.Assert(serviceProvider != null, "serviceProvider was null");
-
-        var state = serviceProvider!.GetRequiredService<MeterProviderBuilderSdk>();
+        var state = serviceProvider.GetRequiredService<MeterProviderBuilderSdk>();
         state.RegisterProvider(this);
 
-        this.ServiceProvider = serviceProvider!;
+        this.ServiceProvider = serviceProvider;
 
         if (ownsServiceProvider)
         {
@@ -51,15 +49,15 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
-        var configureProviderBuilders = serviceProvider!.GetServices<IConfigureMeterProviderBuilder>();
+        var configureProviderBuilders = serviceProvider.GetServices<IConfigureMeterProviderBuilder>();
         foreach (var configureProviderBuilder in configureProviderBuilders)
         {
-            configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
+            configureProviderBuilder.ConfigureBuilder(serviceProvider, state);
         }
 
         this.ExemplarFilter = state.ExemplarFilter;
 
-        this.ApplySpecificationConfigurationKeys(serviceProvider!.GetRequiredService<IConfiguration>());
+        this.ApplySpecificationConfigurationKeys(serviceProvider.GetRequiredService<IConfiguration>());
 
         StringBuilder exportersAdded = new StringBuilder();
         StringBuilder instrumentationFactoriesAdded = new StringBuilder();

@@ -13,9 +13,7 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
 
     public ConsoleTagWriter(Action<string, string> onUnsupportedTagDropped)
     {
-        Debug.Assert(onUnsupportedTagDropped != null, "onUnsupportedTagDropped was null");
-
-        this.onUnsupportedTagDropped = onUnsupportedTagDropped!;
+        this.onUnsupportedTagDropped = onUnsupportedTagDropped;
     }
 
     public bool TryTransformTag(KeyValuePair<string, object?> tag, out KeyValuePair<string, string> result)

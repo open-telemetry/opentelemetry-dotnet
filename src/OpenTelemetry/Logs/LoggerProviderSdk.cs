@@ -29,12 +29,10 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         IServiceProvider serviceProvider,
         bool ownsServiceProvider)
     {
-        Debug.Assert(serviceProvider != null, "serviceProvider was null");
-
-        var state = serviceProvider!.GetRequiredService<LoggerProviderBuilderSdk>();
+        var state = serviceProvider.GetRequiredService<LoggerProviderBuilderSdk>();
         state.RegisterProvider(this);
 
-        this.ServiceProvider = serviceProvider!;
+        this.ServiceProvider = serviceProvider;
 
         if (ownsServiceProvider)
         {
