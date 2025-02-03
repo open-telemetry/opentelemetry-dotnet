@@ -24,7 +24,7 @@ internal sealed class OtelServiceNameEnvVarDetector : IResourceDetector
         {
             resource = new Resource(new Dictionary<string, object>
             {
-                [ResourceSemanticConventions.AttributeServiceName] = envResourceAttributeValue!,
+                [ResourceSemanticConventions.AttributeServiceName] = envResourceAttributeValue,
             });
         }
 

@@ -42,7 +42,7 @@ public sealed class ZipkinExporterOptions
 
         if (configuration!.TryGetUriValue(ZipkinExporterEventSource.Log, ZipkinEndpointEnvVar, out var endpoint))
         {
-            this.Endpoint = endpoint!;
+            this.Endpoint = endpoint;
         }
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;

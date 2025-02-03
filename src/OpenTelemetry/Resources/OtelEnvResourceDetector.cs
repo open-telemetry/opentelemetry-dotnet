@@ -24,7 +24,7 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
 
         if (this.configuration.TryGetStringValue(EnvVarKey, out string? envResourceAttributeValue))
         {
-            var attributes = ParseResourceAttributes(envResourceAttributeValue!);
+            var attributes = ParseResourceAttributes(envResourceAttributeValue);
             resource = new Resource(attributes);
         }
 
