@@ -447,7 +447,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                     }
 
                 default:
-                    OpenTelemetrySdkEventSource.Log.TracesSamplerConfigInvalid(configValue ?? string.Empty);
+                    OpenTelemetrySdkEventSource.Log.TracesSamplerConfigInvalid(configValue);
                     break;
             }
 
