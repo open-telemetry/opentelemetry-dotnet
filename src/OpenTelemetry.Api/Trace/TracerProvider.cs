@@ -90,6 +90,8 @@ public class TracerProvider : BaseProvider
                         tracer.ActivitySource = null;
                         activitySource?.Dispose();
                     }
+
+                    tracers.Clear();
                 }
             }
         }

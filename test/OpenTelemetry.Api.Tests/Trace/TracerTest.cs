@@ -404,10 +404,7 @@ public class TracerTest : IDisposable
                 getTracerThread.Join();
             }
 
-            foreach (var kvp in tracers)
-            {
-                Assert.Null(kvp.Value.ActivitySource);
-            }
+            Assert.Empty(tracers);
         }
     }
 
