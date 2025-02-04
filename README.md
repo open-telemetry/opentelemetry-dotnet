@@ -236,6 +236,7 @@ you're more than welcome to participate!
 
 * [Alan West](https://github.com/alanwest), New Relic
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
+* [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 
 [Emeritus Maintainers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
 
@@ -248,7 +249,6 @@ you're more than welcome to participate!
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
-* [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 
 [Emeritus Approvers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
 

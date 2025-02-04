@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <OTelLatestStableVer>1.10.0</OTelLatestStableVer>
+    <OTelLatestStableVer>1.11.1</OTelLatestStableVer>
 
     <!--
         This is typically the latest annual release of .NET. Use this wherever
@@ -67,6 +67,7 @@
     -->
     <PackageVersion Include="Google.Protobuf" Version="[3.22.5,4.0)" />
     <PackageVersion Include="Grpc" Version="[2.44.0,3.0)" />
+    <PackageVersion Include="Grpc.Core" Version="[2.44.0,3.0)" />
     <PackageVersion Include="Grpc.Net.Client" Version="[2.52.0,3.0)" />
   </ItemGroup>
 

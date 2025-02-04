@@ -39,17 +39,6 @@ internal sealed class SelfDiagnostics : IDisposable
     }
 
     /// <inheritdoc/>
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            this.configRefresher.Dispose();
-        }
-    }
+    public void Dispose() =>
+        this.configRefresher.Dispose();
 }
