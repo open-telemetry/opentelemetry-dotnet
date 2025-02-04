@@ -25,33 +25,17 @@ OpenTelemetry .NET:
 * [Getting Started - Console Application](./getting-started-console/README.md)
 * [Logging with Complex Objects](./complex-objects/README.md)
 
-## Structured Logging
+## Logging API
 
-:heavy_check_mark: You should use structured logging.
+### ILogger
 
-* Structured logging is more efficient than unstructured logging.
-  * Filtering and redaction can happen on individual key-value pairs instead of
-    the entire log message.
-  * Storage and indexing are more efficient.
-* Structured logging makes it easier to manage and consume logs.
+.NET supports high performance, structured logging via the
+[`Microsoft.Extensions.Logging.ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
+interface (including
+[`ILogger<TCategoryName>`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1))
+to help monitor application behavior and diagnose issues.
 
-:stop_sign: You should avoid string interpolation.
-
-> [!WARNING]
-> The following code has bad performance due to [string
-  interpolation](https://learn.microsoft.com/dotnet/csharp/tutorials/string-interpolation):
-
-```csharp
-var food = "tomato";
-var price = 2.99;
-
-logger.LogInformation($"Hello from {food} {price}.");
-```
-
-Refer to the [logging performance
-benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
-
-## Package Version
+#### Package Version
 
 :heavy_check_mark: You should always use the
 [`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
@@ -68,16 +52,6 @@ package, regardless of the .NET runtime version being used:
 * Starting from version `3.1.0`, the .NET runtime team is holding a high bar for
   backward compatibility on `Microsoft.Extensions.Logging` even during major
   version bumps, so compatibility is not a concern here.
-
-## Logging API
-
-### ILogger
-
-.NET supports high performance, structured logging via the
-[`Microsoft.Extensions.Logging.ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
-interface (including
-[`ILogger<TCategoryName>`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1))
-to help monitor application behavior and diagnose issues.
 
 #### Get Logger
 
@@ -125,7 +99,38 @@ are not super expensive, they still come with CPU and memory cost, and are meant
 to be reused throughout the application. Refer to the [logging performance
 benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
 
-#### Use Logger
+#### Write log messages
+
+:heavy_check_mark: You should use structured logging.
+
+* Structured logging is more efficient than unstructured logging.
+  * Filtering and redaction can happen on individual key-value pairs instead of
+    the entire log message.
+  * Storage and indexing are more efficient.
+* Structured logging makes it easier to manage and consume logs.
+
+```csharp
+var food = "tomato";
+var price = 2.99;
+
+logger.LogInformation("Hello from {food} {price}.", food, price);
+```
+
+:stop_sign: You should avoid string interpolation.
+
+> [!WARNING]
+> The following code has bad performance due to [string
+  interpolation](https://learn.microsoft.com/dotnet/csharp/tutorials/string-interpolation):
+
+```csharp
+var food = "tomato";
+var price = 2.99;
+
+logger.LogInformation($"Hello from {food} {price}.");
+```
+
+Refer to the [logging performance
+benchmark](../../test/Benchmarks/Logs/LogBenchmarks.cs) for more details.
 
 :heavy_check_mark: You should use [compile-time logging source
 generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
@@ -221,6 +226,111 @@ for most users it can cause more problems. For example, the performance of the
 code is now depending on which logger is being enabled, not to mention the
 argument evaluation might have significant side effects that are now depending
 on the logging configuration.
+
+:heavy_check_mark: You should use a dedicated parameter to log exceptions when
+using the compile-time source generator.
+
+```csharp
+var food = "tomato";
+var price = 2.99;
+
+try
+{
+    // Execute some logic
+
+    logger.SayHello(food, price);
+}
+catch (Exception ex)
+{
+    logger.SayHelloFailure(ex, food, price);
+}
+
+internal static partial class LoggerExtensions
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Hello from {food} {price}.")]
+    public static partial void SayHello(this ILogger logger, string food, double price);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Could not say hello from {food} {price}.")]
+    public static partial void SayHelloFailure(this ILogger logger, Exception exception, string food, double price);
+}
+```
+
+> [!NOTE]
+> When using the compile-time source generator the first `Exception` parameter
+> detected is automatically given special handling. It **SHOULD NOT** be part of
+> the message template. For details see: [Log method
+> anatomy](https://learn.microsoft.com/dotnet/core/extensions/logger-message-generator#log-method-anatomy).
+
+:heavy_check_mark: You should use the dedicated overloads to log exceptions when
+using the logging extensions methods.
+
+```csharp
+var food = "tomato";
+var price = 2.99;
+
+try
+{
+    // Execute some logic
+
+    logger.LogInformation("Hello from {food} {price}.", food, price);
+}
+catch (Exception ex)
+{
+    logger.LogError(ex, "Could not say hello from {food} {price}.", food, price);
+}
+```
+
+:stop_sign: You should avoid adding exception details into the message template.
+
+You want to use the correct `Exception` APIs because the OpenTelemetry
+Specification [defines dedicated
+attributes](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-logs.md)
+for `Exception` details. The following examples show what **NOT** to do. In
+these cases the details won't be lost, but the dedicated attributes also won't
+be added.
+
+```csharp
+var food = "tomato";
+var price = 2.99;
+
+try
+{
+    // Execute some logic
+
+    logger.SayHello(food, price);
+}
+catch (Exception ex)
+{
+    logger.SayHelloFailure(food, price, ex.Message);
+}
+
+internal static partial class LoggerExtensions
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Hello from {food} {price}.")]
+    public static partial void SayHello(this ILogger logger, string food, double price);
+
+    // BAD - Exception should not be part of the message template. Use the dedicated parameter.
+    [LoggerMessage(Level = LogLevel.Error, Message = "Could not say hello from {food} {price} {message}.")]
+    public static partial void SayHelloFailure(this ILogger logger, string food, double price, string message);
+}
+```
+
+```csharp
+var food = "tomato";
+var price = 2.99;
+
+try
+{
+    // Execute some logic
+
+    logger.LogInformation("Hello from {food} {price}.", food, price);
+}
+catch (Exception ex)
+{
+    // BAD - Exception should not be part of the message template. Use the dedicated parameter.
+    logger.LogError("Could not say hello from {food} {price} {message}.", food, price, ex.Message);
+}
+```
 
 ## LoggerFactory
 
