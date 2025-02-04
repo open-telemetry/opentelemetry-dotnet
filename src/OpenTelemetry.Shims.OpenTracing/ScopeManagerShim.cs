@@ -59,10 +59,15 @@ internal sealed class ScopeManagerShim : IScopeManager
                 scope!.Dispose();
             });
 
-        SpanScopeTable.Add(shim.Span, instrumentation);
+        // not recorded span is static TelemetrySpan.NoopInstance
+        // we do not return the instrumentation if the span is not recorded anyway
+        if (shim.Span.IsRecording)
+        {
+            SpanScopeTable.Add(shim.Span, instrumentation);
 #if DEBUG
-        Interlocked.Increment(ref this.spanScopeTableCount);
+            Interlocked.Increment(ref this.spanScopeTableCount);
 #endif
+        }
 
         return instrumentation;
     }
