@@ -16,7 +16,7 @@ namespace OpenTelemetry.Internal;
 [EventSource(Name = "OpenTelemetry-Sdk")]
 internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationExtensionsLogger
 {
-    public static OpenTelemetrySdkEventSource Log = new();
+    public static readonly OpenTelemetrySdkEventSource Log = new();
 #if DEBUG
     public static OpenTelemetryEventListener Listener = new();
 #endif

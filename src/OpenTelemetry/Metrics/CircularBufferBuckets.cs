@@ -263,10 +263,11 @@ internal sealed class CircularBufferBuckets
     {
         if (this.trait != null)
         {
-            for (var i = 0; i < this.trait.Length; ++i)
-            {
-                this.trait[i] = 0;
-            }
+#if NET
+            Array.Clear(this.trait);
+#else
+            Array.Clear(this.trait, 0, this.trait.Length);
+#endif
         }
     }
 

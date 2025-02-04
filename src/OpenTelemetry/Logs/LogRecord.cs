@@ -429,19 +429,17 @@ public sealed class LogRecord
     {
         Guard.ThrowIfNull(callback);
 
-        var forEachScopeState = new ScopeForEachState<TState>(callback, state);
-
         var bufferedScopes = this.ILoggerData.BufferedScopes;
         if (bufferedScopes != null)
         {
             foreach (object? scope in bufferedScopes)
             {
-                ScopeForEachState<TState>.ForEachScope(scope, forEachScopeState);
+                callback(new(scope), state);
             }
         }
         else
         {
-            this.ILoggerData.ScopeProvider?.ForEachScope(ScopeForEachState<TState>.ForEachScope, forEachScopeState);
+            this.ILoggerData.ScopeProvider?.ForEachScope(ScopeForEachState<TState>.ForEachScope, new(callback, state));
         }
     }
 
