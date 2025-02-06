@@ -11,13 +11,11 @@ public class SamplersTest
 {
     private static readonly ActivityKind ActivityKindServer = ActivityKind.Server;
     private readonly ActivityTraceId traceId;
-    private readonly ActivitySpanId spanId;
     private readonly ActivitySpanId parentSpanId;
 
     public SamplersTest()
     {
         this.traceId = ActivityTraceId.CreateRandom();
-        this.spanId = ActivitySpanId.CreateRandom();
         this.parentSpanId = ActivitySpanId.CreateRandom();
     }
 

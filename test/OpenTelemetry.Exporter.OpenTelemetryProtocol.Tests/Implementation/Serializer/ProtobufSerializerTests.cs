@@ -246,7 +246,7 @@ public class ProtobufSerializerTests
         Assert.Equal(10, buffer[0]); // Tag
         Assert.Equal(5, buffer[1]); // Length
 
-        byte[] expectedContent = Encoding.ASCII.GetBytes("Hello");
+        byte[] expectedContent = "Hello"u8.ToArray();
         byte[] actualContent = new byte[5];
         Array.Copy(buffer, 2, actualContent, 0, 5);
         Assert.True(expectedContent.SequenceEqual(actualContent));
