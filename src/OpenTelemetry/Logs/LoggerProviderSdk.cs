@@ -213,15 +213,12 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         {
             if (disposing)
             {
-                if (this.instrumentations != null)
+                foreach (var item in this.instrumentations)
                 {
-                    foreach (var item in this.instrumentations)
-                    {
-                        (item as IDisposable)?.Dispose();
-                    }
-
-                    this.instrumentations.Clear();
+                    (item as IDisposable)?.Dispose();
                 }
+
+                this.instrumentations.Clear();
 
                 // Wait for up to 5 seconds grace period
                 this.Processor?.Shutdown(5000);

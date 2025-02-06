@@ -15,29 +15,39 @@ using Xunit;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
-using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 [Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
-public class OtlpTraceExporterTests
+public sealed class OtlpTraceExporterTests : IDisposable
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
-
     private static readonly ExperimentalOptions DefaultExperimentalOptions = new();
+
+    private readonly ActivityListener activityListener;
 
     static OtlpTraceExporterTests()
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
+    }
 
-        var listener = new ActivityListener
+    public OtlpTraceExporterTests()
+    {
+        this.activityListener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+            Sample = (ref ActivityCreationOptions<ActivityContext> options) => options.Parent.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
+                ? ActivitySamplingResult.AllDataAndRecorded
+                : ActivitySamplingResult.AllData,
         };
 
-        ActivitySource.AddActivityListener(listener);
+        ActivitySource.AddActivityListener(this.activityListener);
+    }
+
+    public void Dispose()
+    {
+        this.activityListener.Dispose();
     }
 
     [Fact]
@@ -489,7 +499,7 @@ public class OtlpTraceExporterTests
 
         Assert.NotNull(childActivity);
 
-        childActivity.SetStatus(ActivityStatusCode.Error);
+        childActivity.SetStatus(ActivityStatusCode.Error, new string('a', 150));
 
         var childEvents = new List<ActivityEvent> { new("e0"), new("e1", default, new ActivityTagsCollection(attributes)) };
         childActivity.AddEvent(childEvents[0]);
@@ -510,7 +520,7 @@ public class OtlpTraceExporterTests
         Assert.NotNull(otlpSpan.Status);
         Assert.Equal(OtlpTrace.Status.Types.StatusCode.Error, otlpSpan.Status.Code);
 
-        Assert.Equal(Status.Error.Description ?? string.Empty, otlpSpan.Status.Message);
+        Assert.Equal(childActivity.StatusDescription ?? string.Empty, otlpSpan.Status.Message);
         Assert.Empty(otlpSpan.Attributes);
 
         Assert.Equal(childEvents.Count, otlpSpan.Events.Count);
@@ -561,6 +571,7 @@ public class OtlpTraceExporterTests
     [InlineData(ActivityStatusCode.Unset, "Description will be ignored if status is Unset.")]
     [InlineData(ActivityStatusCode.Ok, "Description will be ignored if status is Okay.")]
     [InlineData(ActivityStatusCode.Error, "Description will be kept if status is Error.")]
+    [InlineData(ActivityStatusCode.Error, "150 Character String - aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]
     public void ToOtlpSpanNativeActivityStatusTest(ActivityStatusCode expectedStatusCode, string statusDescription)
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
@@ -634,6 +645,7 @@ public class OtlpTraceExporterTests
     [InlineData(StatusCode.Unset, "Unset", "Description will be ignored if status is Unset.")]
     [InlineData(StatusCode.Ok, "Ok", "Description must only be used with the Error StatusCode.")]
     [InlineData(StatusCode.Error, "Error", "Error description.")]
+    [InlineData(StatusCode.Error, "Error", "150 Character String - aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]
     [Obsolete("Remove when ActivityExtensions status APIs are removed")]
     public void ToOtlpSpanStatusTagTest(StatusCode expectedStatusCode, string statusCodeTagValue, string statusDescription)
     {

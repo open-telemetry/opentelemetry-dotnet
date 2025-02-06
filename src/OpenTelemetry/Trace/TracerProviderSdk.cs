@@ -352,18 +352,14 @@ internal sealed class TracerProviderSdk : TracerProvider
     internal bool OnShutdown(int timeoutMilliseconds)
     {
         // TO DO Put OnShutdown logic in a task to run within the user provider timeOutMilliseconds
-        bool? result;
-        if (this.instrumentations != null)
+        foreach (var item in this.instrumentations)
         {
-            foreach (var item in this.instrumentations)
-            {
-                (item as IDisposable)?.Dispose();
-            }
-
-            this.instrumentations.Clear();
+            (item as IDisposable)?.Dispose();
         }
 
-        result = this.processor?.Shutdown(timeoutMilliseconds);
+        this.instrumentations.Clear();
+
+        bool? result = this.processor?.Shutdown(timeoutMilliseconds);
         this.listener?.Dispose();
         return result ?? true;
     }
@@ -374,15 +370,12 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             if (disposing)
             {
-                if (this.instrumentations != null)
+                foreach (var item in this.instrumentations)
                 {
-                    foreach (var item in this.instrumentations)
-                    {
-                        (item as IDisposable)?.Dispose();
-                    }
-
-                    this.instrumentations.Clear();
+                    (item as IDisposable)?.Dispose();
                 }
+
+                this.instrumentations.Clear();
 
                 (this.sampler as IDisposable)?.Dispose();
 
