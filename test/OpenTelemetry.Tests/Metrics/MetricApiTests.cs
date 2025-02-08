@@ -125,7 +125,7 @@ public class MetricApiTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -147,7 +147,7 @@ public class MetricApiTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -173,7 +173,7 @@ public class MetricApiTests : MetricTestsBase
                 "MeterTagKey",
                 "MeterTagValue"),
         };
-        using var meter = new Meter($"{meterName}", meterVersion, meterTags);
+        using var meter = new Meter(meterName, meterVersion, meterTags);
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
@@ -264,7 +264,7 @@ public class MetricApiTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -297,7 +297,7 @@ public class MetricApiTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -343,7 +343,7 @@ public class MetricApiTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -389,7 +389,7 @@ public class MetricApiTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -433,7 +433,7 @@ public class MetricApiTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -478,8 +478,8 @@ public class MetricApiTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}", "1.0");
-        using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}", "2.0");
+        using var meter1 = new Meter(Utils.GetCurrentMethodName(), "1.0");
+        using var meter2 = new Meter(Utils.GetCurrentMethodName(), "2.0");
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter1.Name)
@@ -1592,7 +1592,7 @@ public class MetricApiTests : MetricTestsBase
     [Fact]
     public void UnsupportedMetricInstrument()
     {
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
@@ -1627,7 +1627,7 @@ public class MetricApiTests : MetricTestsBase
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -1656,7 +1656,7 @@ public class MetricApiTests : MetricTestsBase
     {
         var exportedMetrics = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        using var meter = new Meter(Utils.GetCurrentMethodName());
         using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedMetrics, metricReaderOptions =>
