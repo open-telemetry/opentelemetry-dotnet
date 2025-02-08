@@ -9,7 +9,7 @@ namespace OpenTelemetry.PersistentStorage.Abstractions;
 [EventSource(Name = EventSourceName)]
 internal sealed class PersistentStorageAbstractionsEventSource : EventSource
 {
-    public static PersistentStorageAbstractionsEventSource Log = new PersistentStorageAbstractionsEventSource();
+    public static readonly PersistentStorageAbstractionsEventSource Log = new PersistentStorageAbstractionsEventSource();
 #if BUILDING_INTERNAL_PERSISTENT_STORAGE
     private const string EventSourceName = "OpenTelemetry-PersistentStorage-Abstractions-Otlp";
 #else
