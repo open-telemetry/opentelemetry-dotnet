@@ -13,9 +13,9 @@ public readonly struct MetricPointsAccessor
 {
     private readonly MetricPoint[] metricsPoints;
     private readonly int[] metricPointsToProcess;
-    private readonly long targetCount;
+    private readonly int targetCount;
 
-    internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount)
+    internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, int targetCount)
     {
         Debug.Assert(metricsPoints != null, "metricPoints was null");
         Debug.Assert(metricPointsToProcess != null, "metricPointsToProcess was null");
@@ -39,10 +39,10 @@ public readonly struct MetricPointsAccessor
     {
         private readonly MetricPoint[] metricsPoints;
         private readonly int[] metricPointsToProcess;
-        private readonly long targetCount;
-        private long index;
+        private readonly int targetCount;
+        private int index;
 
-        internal Enumerator(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount)
+        internal Enumerator(MetricPoint[] metricsPoints, int[] metricPointsToProcess, int targetCount)
         {
             this.metricsPoints = metricsPoints;
             this.metricPointsToProcess = metricPointsToProcess;
