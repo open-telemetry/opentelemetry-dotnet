@@ -333,3 +333,43 @@ See
 [EnvironmentVariablesExtensions.cs](./src/Shared/EnvironmentVariables/EnvironmentVariablesExtensions.cs)
 for an example of a file copied from another project and attributed in the [3rd
 party notices](./THIRD-PARTY-NOTICES.TXT) file.
+
+
+## Troubleshooting Common Issues
+
+### 1. SDK Version Compatibility Issues
+
+**Problem:** The project requires .NET SDK version `9.0.100-RC.1.24452.12`, but developers may download an incompatible version.
+
+**Solution:**
+- Explicitly state the required .NET SDK version upfront in the documentation.
+- Provide direct links to the required SDK version.
+- Verify your installed SDK version with:
+  ```sh
+  dotnet --version
+  ```
+- If you have an incompatible SDK, download the correct version [here](https://dotnet.microsoft.com/download/dotnet/9.0).
+
+### 2. Build and Test Challenges
+
+#### Version Mismatch Between Assemblies
+
+**Issue:** CS1705 version conflict when referencing OpenTelemetry.Api package.
+
+**Fix:**
+- Ensure dependencies are updated by running:
+  ```sh
+  dotnet restore
+  ```
+- If the issue persists, force-reinstall dependencies:
+  ```sh
+  dotnet nuget locals all --clear
+  dotnet restore
+  ```
+
+#### Dynamically Referenced Packages Causing Compatibility Problems
+
+**Solution:**
+- Ensure your `global.json` file correctly specifies the required SDK version.
+- If using multiple SDK versions, use `dotnet --list-sdks` to confirm correct installation.
+- Consider using a virtual environment or containerized build system to maintain a consistent development environment.
