@@ -11,7 +11,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation;
 [EventSource(Name = "OpenTelemetry-Extensions-Hosting")]
 internal sealed class HostingExtensionsEventSource : EventSource
 {
-    public static HostingExtensionsEventSource Log = new();
+    public static readonly HostingExtensionsEventSource Log = new();
 
     [Event(1, Message = "OpenTelemetry TracerProvider was not found in application services. Tracing will remain disabled.", Level = EventLevel.Warning)]
     public void TracerProviderNotRegistered()
