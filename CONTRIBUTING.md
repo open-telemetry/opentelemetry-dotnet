@@ -339,16 +339,19 @@ party notices](./THIRD-PARTY-NOTICES.TXT) file.
 
 ### 1. SDK Version Compatibility Issues
 
-**Problem:** The project requires .NET SDK version `9.0.100-RC.1.24452.12`, but developers may download an incompatible version.
+**Problem:** The project requires .NET SDK version `9.0.100-RC.1.24452.12`, 
+but developers may download an incompatible version.
 
 **Solution:**
-- Explicitly state the required .NET SDK version upfront in the documentation.
-- Provide direct links to the required SDK version.
-- Verify your installed SDK version with:
+* Explicitly state the required .NET SDK version upfront in the documentation.
+* Provide direct links to the required SDK version.
+* Verify your installed SDK version with:
+
   ```sh
   dotnet --version
   ```
-- If you have an incompatible SDK, download the correct version [here](https://dotnet.microsoft.com/download/dotnet/9.0).
+
+If you have an incompatible SDK, download the correct version [here](https://dotnet.microsoft.com/download/dotnet/9.0).
 
 ### 2. Build and Test Challenges
 
@@ -357,11 +360,11 @@ party notices](./THIRD-PARTY-NOTICES.TXT) file.
 **Issue:** CS1705 version conflict when referencing OpenTelemetry.Api package.
 
 **Fix:**
-- Ensure dependencies are updated by running:
+Ensure dependencies are updated by running:
   ```sh
   dotnet restore
   ```
-- If the issue persists, force-reinstall dependencies:
+If the issue persists, force-reinstall dependencies:
   ```sh
   dotnet nuget locals all --clear
   dotnet restore
@@ -370,6 +373,6 @@ party notices](./THIRD-PARTY-NOTICES.TXT) file.
 #### Dynamically Referenced Packages Causing Compatibility Problems
 
 **Solution:**
-- Ensure your `global.json` file correctly specifies the required SDK version.
-- If using multiple SDK versions, use `dotnet --list-sdks` to confirm correct installation.
-- Consider using a virtual environment or containerized build system to maintain a consistent development environment.
+* Ensure your `global.json` file correctly specifies the required SDK version.
+* If using multiple SDK versions, use `dotnet --list-sdks` to confirm correct installation.
+* Consider using a virtual environment or containerized build system to maintain a consistent development environment.
