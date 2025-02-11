@@ -338,8 +338,10 @@ party notices](./THIRD-PARTY-NOTICES.TXT) file.
 
 ### 1. SDK Version Compatibility Issues
 
-**Problem:** 
-The project requires a specific SFV version but developers may download an incompatible version.
+**Problem:**
+
+The project requires a specific SFV version 
+but developers may download an incompatible version.
 
 **Solution:**
 
@@ -376,7 +378,10 @@ If the issue persists, force-reinstall dependencies:
 
 **Solution:**
 
-* Ensure your `global.json` file correctly specifies the required SDK version.
-* If using multiple SDK versions, use `dotnet --list-sdks` to confirm correct installation.
-* Consider using a virtual environment or containerized build system to maintain a consistent development environment.
+* Ensure your `global.json` file correctly specifies
+  the required SDK version.
+* If using multiple SDK versions, use `dotnet --list-sdks`
+  to confirm correct installation.
+* Consider using a virtual environment or containerized build system
+  to maintain a consistent development environment.
 
