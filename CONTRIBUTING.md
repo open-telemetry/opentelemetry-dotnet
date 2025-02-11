@@ -339,12 +339,11 @@ party notices](./THIRD-PARTY-NOTICES.TXT) file.
 ### 1. SDK Version Compatibility Issues
 
 **Problem:** 
-The project requires .NET SDK version `9.0.100-RC.1.24452.12`, but developers may download an incompatible version.
+The project requires a specific SFV version but developers may download an incompatible version.
 
 **Solution:**
 
-* Explicitly state the required .NET SDK version upfront in the documentation.
-* Provide direct links to the required SDK version.
+* See [required version here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/global.json#L4)
 * Verify your installed SDK version with:
 
   ```sh
