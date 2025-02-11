@@ -12,8 +12,6 @@ namespace OpenTelemetry;
 /// </summary>
 public static class OpenTelemetrySdkExtensions
 {
-    private static readonly NullLoggerFactory NoopLoggerFactory = new();
-
     /// <summary>
     /// Gets the <see cref="ILoggerFactory"/> contained in an <see
     /// cref="OpenTelemetrySdk"/> instance.
@@ -31,6 +29,6 @@ public static class OpenTelemetrySdkExtensions
         Guard.ThrowIfNull(sdk);
 
         return (ILoggerFactory?)sdk.Services.GetService(typeof(ILoggerFactory))
-            ?? NoopLoggerFactory;
+            ?? NullLoggerFactory.Instance;
     }
 }
