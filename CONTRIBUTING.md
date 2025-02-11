@@ -334,15 +334,15 @@ See
 for an example of a file copied from another project and attributed in the [3rd
 party notices](./THIRD-PARTY-NOTICES.TXT) file.
 
-
 ## Troubleshooting Common Issues
 
 ### 1. SDK Version Compatibility Issues
 
-**Problem:** The project requires .NET SDK version `9.0.100-RC.1.24452.12`, 
-but developers may download an incompatible version.
+**Problem:** 
+The project requires .NET SDK version `9.0.100-RC.1.24452.12`, but developers may download an incompatible version.
 
 **Solution:**
+
 * Explicitly state the required .NET SDK version upfront in the documentation.
 * Provide direct links to the required SDK version.
 * Verify your installed SDK version with:
@@ -361,10 +361,13 @@ If you have an incompatible SDK, download the correct version [here](https://dot
 
 **Fix:**
 Ensure dependencies are updated by running:
+
   ```sh
   dotnet restore
   ```
+
 If the issue persists, force-reinstall dependencies:
+
   ```sh
   dotnet nuget locals all --clear
   dotnet restore
@@ -373,6 +376,8 @@ If the issue persists, force-reinstall dependencies:
 #### Dynamically Referenced Packages Causing Compatibility Problems
 
 **Solution:**
+
 * Ensure your `global.json` file correctly specifies the required SDK version.
 * If using multiple SDK versions, use `dotnet --list-sdks` to confirm correct installation.
 * Consider using a virtual environment or containerized build system to maintain a consistent development environment.
+
