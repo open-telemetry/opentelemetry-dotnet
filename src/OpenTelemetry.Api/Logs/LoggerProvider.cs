@@ -38,7 +38,7 @@ public class LoggerProvider : BaseProvider
     internal
 #endif
         Logger GetLogger()
-        => this.GetLogger(name: null, version: null);
+        => this.GetLogger(name: null, version: null, attributes: null);
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -55,7 +55,7 @@ public class LoggerProvider : BaseProvider
     internal
 #endif
         Logger GetLogger(string? name)
-        => this.GetLogger(name, version: null);
+        => this.GetLogger(name, version: null, attributes: null);
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -73,13 +73,32 @@ public class LoggerProvider : BaseProvider
     internal
 #endif
         Logger GetLogger(string? name, string? version)
+        => this.GetLogger(name, version, attributes: null);
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Gets a logger with the given name and version.
+    /// </summary>
+    /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+    /// <param name="name">Optional name identifying the instrumentation library.</param>
+    /// <param name="version">Optional version of the instrumentation library.</param>
+    /// <param name="attributes">Optional instrumentation scope attributes.</param>
+    /// <returns><see cref="Logger"/> instance.</returns>
+#if NET
+    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
+    public
+#else
+    internal
+#endif
+        Logger GetLogger(string? name, string? version, IEnumerable<KeyValuePair<string, object?>>? attributes)
     {
         if (!this.TryCreateLogger(name, out var logger))
         {
             return NoopLogger;
         }
 
-        logger!.SetInstrumentationScope(version);
+        logger!.SetInstrumentationScope(version, attributes);
 
         return logger;
     }

@@ -47,6 +47,11 @@ abstract class Logger
     public string? Version { get; private set; }
 
     /// <summary>
+    /// Gets the attributes of the instrumentation library.
+    /// </summary>
+    public IEnumerable<KeyValuePair<string, object?>>? Attributes { get; private set; }
+
+    /// <summary>
     /// Emit a log.
     /// </summary>
     /// <param name="data"><see cref="LogRecordData"/>.</param>
@@ -63,8 +68,10 @@ abstract class Logger
         in LogRecordAttributeList attributes);
 
     internal void SetInstrumentationScope(
-        string? version)
+        string? version,
+        IEnumerable<KeyValuePair<string, object?>>? attributes)
     {
         this.Version = version;
+        this.Attributes = attributes;
     }
 }
