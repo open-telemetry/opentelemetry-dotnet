@@ -334,33 +334,16 @@ See
 for an example of a file copied from another project and attributed in the [3rd
 party notices](./THIRD-PARTY-NOTICES.TXT) file.
 
-## Troubleshooting Common Issues
+## Troubleshooting
 
-### 1. SDK Version Compatibility Issues
-
-**Problem:**
-
-The project requires a specific SFV version 
-but developers may download an incompatible version.
-
-**Solution:**
-
-* See [required version here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/global.json#L4)
-* Verify your installed SDK version with:
-
-  ```sh
-  dotnet --version
-  ```
-
-If you have an incompatible SDK, download the correct version [here](https://dotnet.microsoft.com/download/dotnet/9.0).
-
-### 2. Build and Test Challenges
+### Build and Test Challenge
 
 #### Version Mismatch Between Assemblies
 
 **Issue:** CS1705 version conflict when referencing OpenTelemetry.Api package.
 
 **Fix:**
+
 Ensure dependencies are updated by running:
 
   ```sh
@@ -373,15 +356,3 @@ If the issue persists, force-reinstall dependencies:
   dotnet nuget locals all --clear
   dotnet restore
   ```
-
-#### Dynamically Referenced Packages Causing Compatibility Problems
-
-**Solution:**
-
-* Ensure your `global.json` file correctly specifies
-  the required SDK version.
-* If using multiple SDK versions, use `dotnet --list-sdks`
-  to confirm correct installation.
-* Consider using a virtual environment or containerized build system
-  to maintain a consistent development environment.
-
