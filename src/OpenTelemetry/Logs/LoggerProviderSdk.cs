@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if NETSTANDARD2_1_OR_GREATER || NET
 using System.Diagnostics.CodeAnalysis;
-#endif
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
@@ -201,9 +199,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 #endif
         override bool TryCreateLogger(
         string? name,
-#if NETSTANDARD2_1_OR_GREATER || NET
         [NotNullWhen(true)]
-#endif
         out Logger? logger)
     {
         logger = new LoggerSdk(this, name);
@@ -217,15 +213,12 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         {
             if (disposing)
             {
-                if (this.instrumentations != null)
+                foreach (var item in this.instrumentations)
                 {
-                    foreach (var item in this.instrumentations)
-                    {
-                        (item as IDisposable)?.Dispose();
-                    }
-
-                    this.instrumentations.Clear();
+                    (item as IDisposable)?.Dispose();
                 }
+
+                this.instrumentations.Clear();
 
                 // Wait for up to 5 seconds grace period
                 this.Processor?.Shutdown(5000);

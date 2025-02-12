@@ -77,6 +77,12 @@ public static class Program
             this.meterProvider = builder.Build();
         }
 
+        public override void Dispose()
+        {
+            this.meterProvider.Dispose();
+            base.Dispose();
+        }
+
         protected override void WriteRunInformationToConsole()
         {
             if (this.Options.PrometheusTestMetricsPort != 0)
@@ -104,16 +110,6 @@ public static class Program
                    new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
                    new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
             }
-        }
-
-        protected override void Dispose(bool isDisposing)
-        {
-            if (isDisposing)
-            {
-                this.meterProvider.Dispose();
-            }
-
-            base.Dispose(isDisposing);
         }
     }
 

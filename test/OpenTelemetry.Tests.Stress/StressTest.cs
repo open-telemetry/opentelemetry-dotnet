@@ -22,10 +22,8 @@ public abstract class StressTest<T> : IDisposable
 
     public T Options { get; }
 
-    public void Dispose()
+    public virtual void Dispose()
     {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     public void RunSynchronously()
@@ -202,10 +200,6 @@ public abstract class StressTest<T> : IDisposable
     }
 
     protected abstract void RunWorkItemInParallel();
-
-    protected virtual void Dispose(bool isDisposing)
-    {
-    }
 
     // Padding to avoid false sharing.
     // For most systems, the cache line size should be less than or equal to 128 bytes.
