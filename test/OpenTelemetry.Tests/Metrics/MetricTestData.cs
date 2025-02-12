@@ -53,7 +53,7 @@ public class MetricTestData
        => new List<object[]>
        {
                 new object[] { new double[] { 1 }, new HistogramConfiguration() { RecordMinMax = false } },
-                new object[] { new double[] { 1 }, new ExplicitBucketHistogramConfiguration() { Boundaries = [10, 20], RecordMinMax = false } },
+                new object[] { new double[] { 1 }, new ExplicitBucketHistogramConfiguration() { Boundaries = [10.0, 20.0], RecordMinMax = false } },
                 new object[] { new double[] { 1 }, new Base2ExponentialBucketHistogramConfiguration() { RecordMinMax = false } },
        };
 }
