@@ -41,7 +41,7 @@ public class Program
             .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
 
             // Configure the Explicit Bucket Histogram aggregation with custom boundaries and new name.
-            .AddView(instrumentName: "histogramWithMultipleAggregations", new ExplicitBucketHistogramConfiguration() { Boundaries = [10, 20], Name = "MyHistogramWithExplicitHistogram" })
+            .AddView(instrumentName: "histogramWithMultipleAggregations", new ExplicitBucketHistogramConfiguration() { Boundaries = [10.0, 20.0], Name = "MyHistogramWithExplicitHistogram" })
 
             // Use Base2 Exponential Bucket Histogram aggregation and new name.
             .AddView(instrumentName: "histogramWithMultipleAggregations", new Base2ExponentialBucketHistogramConfiguration() { Name = "MyHistogramWithBase2ExponentialBucketHistogram" })
