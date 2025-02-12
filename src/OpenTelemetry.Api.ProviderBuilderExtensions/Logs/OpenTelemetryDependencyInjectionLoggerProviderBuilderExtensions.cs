@@ -36,7 +36,7 @@ public static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensi
 
         loggerProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
-            builder.AddInstrumentation(() => sp.GetRequiredService<T>());
+            builder.AddInstrumentation(sp.GetRequiredService<T>);
         });
 
         return loggerProviderBuilder;
