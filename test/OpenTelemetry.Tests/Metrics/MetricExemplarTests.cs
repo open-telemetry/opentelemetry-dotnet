@@ -329,7 +329,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         var measurementValues = buckets
             /* 2000 is here to test overflow measurement */
-            .Concat([2000])
+            .Concat([2000.0])
             .Select(b => (Value: b, ExpectTraceId: false))
             .ToArray();
         foreach (var value in measurementValues)

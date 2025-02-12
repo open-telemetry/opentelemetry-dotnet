@@ -45,7 +45,7 @@ public class MetricTestData
                 new object[] { new double[] { double.NegativeInfinity }, new HistogramConfiguration(), double.NegativeInfinity, double.NegativeInfinity },
                 new object[] { new double[] { double.NegativeInfinity, 0, double.PositiveInfinity }, new HistogramConfiguration(), double.NegativeInfinity, double.PositiveInfinity },
                 new object[] { new double[] { 1 }, new HistogramConfiguration(), 1, 1 },
-                new object[] { new double[] { 5, 100, 4, 101, -2, 97 }, new ExplicitBucketHistogramConfiguration() { Boundaries = [10, 20] }, -2, 101 },
+                new object[] { new double[] { 5, 100, 4, 101, -2, 97 }, new ExplicitBucketHistogramConfiguration() { Boundaries = [10.0, 20.0] }, -2, 101 },
                 new object[] { new double[] { 5, 100, 4, 101, -2, 97 }, new Base2ExponentialBucketHistogramConfiguration(), 4, 101 },
        };
 
