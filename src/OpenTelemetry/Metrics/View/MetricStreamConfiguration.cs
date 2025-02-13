@@ -71,8 +71,8 @@ public class MetricStreamConfiguration
     /// </remarks>
     public string[]? TagKeys
     {
-        get => this.CopiedTagKeys != null ? this.CopiedTagKeys.AsSpan().ToArray() : null;
-        set => this.CopiedTagKeys = value != null ? value.AsSpan().ToArray() : null;
+        get => this.CopiedTagKeys?.ToArray();
+        set => this.CopiedTagKeys = value?.ToArray();
     }
 
     /// <summary>
