@@ -28,7 +28,7 @@ public class SpanAttributesTest
         spanAttribute.Add("key_a_bool", [true]);
 
         spanAttribute.Add("key_long", 1);
-        spanAttribute.Add("key_a_long", [1l]);
+        spanAttribute.Add("key_a_long", [1L]);
 
         Assert.Equal(8, spanAttribute.Attributes.Count);
     }
