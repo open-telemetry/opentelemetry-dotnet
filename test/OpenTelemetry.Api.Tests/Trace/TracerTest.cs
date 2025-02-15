@@ -410,8 +410,6 @@ public class TracerTest : IDisposable
         }
     }
 
-
-#if NET9_0_OR_GREATER
     [Fact]
     public void GetTracer_WithTags_ReturnsSameInstanceForSameTags()
     {
@@ -488,7 +486,7 @@ public class TracerTest : IDisposable
         // Verify the tracer's tags are applied to the activity
         Assert.Contains(activity.Source.Tags, kvp => kvp.Key == "tracerTag" && (string)kvp.Value == "tracerValue");
     }
-#endif
+
 
     public void Dispose()
     {
