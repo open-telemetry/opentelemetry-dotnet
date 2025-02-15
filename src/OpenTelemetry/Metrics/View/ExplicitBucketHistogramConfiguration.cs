@@ -25,17 +25,7 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
     /// </remarks>
     public double[]? Boundaries
     {
-        get
-        {
-            if (this.CopiedBoundaries != null)
-            {
-                double[] copy = new double[this.CopiedBoundaries.Length];
-                this.CopiedBoundaries.AsSpan().CopyTo(copy);
-                return copy;
-            }
-
-            return null;
-        }
+        get => this.CopiedBoundaries?.ToArray();
 
         set
         {
@@ -46,9 +36,7 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
                     throw new ArgumentException($"Histogram boundaries are invalid. Histogram boundaries must be in ascending order with distinct values.", nameof(value));
                 }
 
-                double[] copy = new double[value.Length];
-                value.AsSpan().CopyTo(copy);
-                this.CopiedBoundaries = copy;
+                this.CopiedBoundaries = value.ToArray();
             }
             else
             {

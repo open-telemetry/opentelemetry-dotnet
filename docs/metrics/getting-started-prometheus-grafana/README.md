@@ -88,7 +88,7 @@ access. Run the `prometheus(.exe)` server executable with feature flag
 enabled:
 
 ```sh
-./prometheus --enable-feature=otlp-write-receiver
+./prometheus --web.enable-otlp-receiver
 ```
 
 ### View results in Prometheus

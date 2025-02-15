@@ -15,7 +15,6 @@ using Xunit;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
-using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -500,7 +499,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         Assert.NotNull(childActivity);
 
-        childActivity.SetStatus(ActivityStatusCode.Error);
+        childActivity.SetStatus(ActivityStatusCode.Error, new string('a', 150));
 
         var childEvents = new List<ActivityEvent> { new("e0"), new("e1", default, new ActivityTagsCollection(attributes)) };
         childActivity.AddEvent(childEvents[0]);
@@ -521,7 +520,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         Assert.NotNull(otlpSpan.Status);
         Assert.Equal(OtlpTrace.Status.Types.StatusCode.Error, otlpSpan.Status.Code);
 
-        Assert.Equal(Status.Error.Description ?? string.Empty, otlpSpan.Status.Message);
+        Assert.Equal(childActivity.StatusDescription ?? string.Empty, otlpSpan.Status.Message);
         Assert.Empty(otlpSpan.Attributes);
 
         Assert.Equal(childEvents.Count, otlpSpan.Events.Count);
@@ -572,6 +571,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
     [InlineData(ActivityStatusCode.Unset, "Description will be ignored if status is Unset.")]
     [InlineData(ActivityStatusCode.Ok, "Description will be ignored if status is Okay.")]
     [InlineData(ActivityStatusCode.Error, "Description will be kept if status is Error.")]
+    [InlineData(ActivityStatusCode.Error, "150 Character String - aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]
     public void ToOtlpSpanNativeActivityStatusTest(ActivityStatusCode expectedStatusCode, string statusDescription)
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
@@ -645,6 +645,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
     [InlineData(StatusCode.Unset, "Unset", "Description will be ignored if status is Unset.")]
     [InlineData(StatusCode.Ok, "Ok", "Description must only be used with the Error StatusCode.")]
     [InlineData(StatusCode.Error, "Error", "Error description.")]
+    [InlineData(StatusCode.Error, "Error", "150 Character String - aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]
     [Obsolete("Remove when ActivityExtensions status APIs are removed")]
     public void ToOtlpSpanStatusTagTest(StatusCode expectedStatusCode, string statusCodeTagValue, string statusDescription)
     {
