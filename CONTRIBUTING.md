@@ -333,3 +333,26 @@ See
 [EnvironmentVariablesExtensions.cs](./src/Shared/EnvironmentVariables/EnvironmentVariablesExtensions.cs)
 for an example of a file copied from another project and attributed in the [3rd
 party notices](./THIRD-PARTY-NOTICES.TXT) file.
+
+## Troubleshooting
+
+### Build and Test Challenge
+
+#### Version Mismatch Between Assemblies
+
+**Issue:** CS1705 version conflict when referencing OpenTelemetry.Api package.
+
+**Fix:**
+
+Ensure dependencies are updated by running:
+
+  ```sh
+  dotnet restore
+  ```
+
+If the issue persists, force-reinstall dependencies:
+
+  ```sh
+  dotnet nuget locals all --clear
+  dotnet restore
+  ```
