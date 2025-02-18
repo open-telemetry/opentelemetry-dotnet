@@ -33,6 +33,11 @@ public class LogBenchmarks
 {
     private const double FoodPrice = 2.99;
     private static readonly string FoodName = "tomato";
+    private static readonly List<KeyValuePair<string, object?>> Attributes = new List<KeyValuePair<string, object?>>
+{
+    new("key1", "value1"),
+    new("key2", "value2"),
+};
 
     private readonly ILogger loggerWithNoListener;
     private readonly ILogger loggerWithOneProcessor;
@@ -45,6 +50,8 @@ public class LogBenchmarks
     private readonly ILoggerFactory loggerFactoryWithBatchProcessor;
     private readonly ILoggerFactory loggerFactoryWithTwoProcessor;
     private readonly ILoggerFactory loggerFactoryWithThreeProcessor;
+
+    private readonly LoggerProvider loggerProvider;
 
     public LogBenchmarks()
     {
@@ -81,6 +88,10 @@ public class LogBenchmarks
                 .AddProcessor(new NoopLogProcessor()));
         });
         this.loggerWithThreeProcessors = this.loggerFactoryWithThreeProcessor.CreateLogger<LogBenchmarks>();
+
+        this.loggerProvider = Sdk
+            .CreateLoggerProviderBuilder()
+            .Build();
     }
 
     [GlobalCleanup]
@@ -183,6 +194,18 @@ public class LogBenchmarks
                 productType: "Food & Beverages",
                 recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
                 companyName: "Contoso Fresh Vegetables, Inc.");
+    }
+
+    [Benchmark]
+    public void GetLogger()
+    {
+        this.loggerProvider.GetLogger("name");
+    }
+
+    [Benchmark]
+    public void GetLoggerWithAttributes()
+    {
+        this.loggerProvider.GetLogger("name", attributes: Attributes);
     }
 
     internal class NoopLogProcessor : BaseProcessor<LogRecord>
