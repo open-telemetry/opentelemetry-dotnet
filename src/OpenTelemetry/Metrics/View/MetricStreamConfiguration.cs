@@ -71,31 +71,8 @@ public class MetricStreamConfiguration
     /// </remarks>
     public string[]? TagKeys
     {
-        get
-        {
-            if (this.CopiedTagKeys != null)
-            {
-                string[] copy = new string[this.CopiedTagKeys.Length];
-                this.CopiedTagKeys.AsSpan().CopyTo(copy);
-                return copy;
-            }
-
-            return null;
-        }
-
-        set
-        {
-            if (value != null)
-            {
-                string[] copy = new string[value.Length];
-                value.AsSpan().CopyTo(copy);
-                this.CopiedTagKeys = copy;
-            }
-            else
-            {
-                this.CopiedTagKeys = null;
-            }
-        }
+        get => this.CopiedTagKeys?.ToArray();
+        set => this.CopiedTagKeys = value?.ToArray();
     }
 
     /// <summary>

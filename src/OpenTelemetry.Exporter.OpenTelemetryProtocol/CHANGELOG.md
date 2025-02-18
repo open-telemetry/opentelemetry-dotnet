@@ -12,6 +12,10 @@ Notes](../../RELEASENOTES.md).
   exports are correctly marked as successful.
   ([#6099](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6099))
 
+* Fixed an issues causing trace exports to fail when
+  `Activity.StatusDescription` exceeds 127 bytes.
+  ([#6119](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6119))
+
 ## 1.11.1
 
 Released 2025-Jan-22

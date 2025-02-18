@@ -75,7 +75,7 @@ public class MessageReceiver : IDisposable
         {
             if (props.Headers.TryGetValue(key, out var value))
             {
-                var bytes = value as byte[];
+                var bytes = (byte[])value;
                 return new[] { Encoding.UTF8.GetString(bytes) };
             }
         }
