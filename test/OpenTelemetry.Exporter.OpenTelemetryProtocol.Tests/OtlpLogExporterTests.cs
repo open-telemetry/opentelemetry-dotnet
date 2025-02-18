@@ -1497,6 +1497,94 @@ public class OtlpLogExporterTests
         Assert.Equal("MyLogger", request.ResourceLogs[0].ScopeLogs[0].Scope?.Name);
     }
 
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public void InstrumentationScopeVersionAndAttributesAreExported(bool includeVersion, bool includeAttributes)
+    {
+        var version = "1.0.0";
+        var loggerName = "MyLogger";
+
+        var instrumentationScopeAttributes = new List<KeyValuePair<string, object?>>
+        {
+            new("a", "x"),
+            new("b", 1),
+            new("c", true),
+        };
+
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            Logger? logger;
+
+            if (includeVersion && includeAttributes)
+            {
+                logger = loggerProvider.GetLogger(loggerName, version, instrumentationScopeAttributes);
+            }
+            else if (includeVersion && !includeAttributes)
+            {
+                logger = loggerProvider.GetLogger(loggerName, version);
+            }
+            else if (!includeVersion && includeAttributes)
+            {
+                logger = loggerProvider.GetLogger(loggerName, null, instrumentationScopeAttributes);
+            }
+            else
+            {
+                logger = loggerProvider.GetLogger(loggerName);
+            }
+
+            logger.EmitLog(new LogRecordData());
+        }
+
+        Assert.Single(logRecords);
+
+        var batch = new Batch<LogRecord>(logRecords.ToArray(), logRecords.Count);
+        var resourceBuilder = ResourceBuilder.CreateEmpty();
+
+        OtlpCollector.ExportLogsServiceRequest request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, resourceBuilder.Build());
+
+        Assert.Equal(loggerName, request.ResourceLogs[0].ScopeLogs[0].Scope?.Name);
+
+        if (includeVersion)
+        {
+            Assert.Equal(version, request.ResourceLogs[0].ScopeLogs[0].Scope?.Version);
+        }
+        else
+        {
+            Assert.Equal(string.Empty, request.ResourceLogs[0].ScopeLogs[0].Scope?.Version);
+        }
+
+        if (includeAttributes)
+        {
+            Assert.Equal(instrumentationScopeAttributes.Count, request.ResourceLogs[0].ScopeLogs[0].Scope?.Attributes.Count);
+
+            var index = 0;
+
+            Assert.Equal(instrumentationScopeAttributes[index].Key, request.ResourceLogs[0].ScopeLogs[0].Scope?.Attributes[index].Key);
+            Assert.Equal(instrumentationScopeAttributes[index].Value, request.ResourceLogs[0].ScopeLogs[0].Scope?.Attributes[index].Value.StringValue);
+
+            index++;
+
+            Assert.Equal(instrumentationScopeAttributes[index].Key, request.ResourceLogs[0].ScopeLogs[0].Scope?.Attributes[index].Key);
+            Assert.Equal(instrumentationScopeAttributes[index].Value, (int?)request.ResourceLogs[0].ScopeLogs[0].Scope?.Attributes[index].Value.IntValue);
+
+            index++;
+
+            Assert.Equal(instrumentationScopeAttributes[index].Key, request.ResourceLogs[0].ScopeLogs[0].Scope?.Attributes[index].Key);
+            Assert.Equal(instrumentationScopeAttributes[index].Value, request.ResourceLogs[0].ScopeLogs[0].Scope?.Attributes[index].Value.BoolValue);
+        }
+        else
+        {
+            Assert.Empty(request.ResourceLogs[0].ScopeLogs[0].Scope?.Attributes!);
+        }
+    }
+
     private static void RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
         string? optionsName,
         Func<Action<IServiceCollection>, (IDisposable Container, ILoggerFactory LoggerFactory)> createLoggerFactoryFunc)
