@@ -91,7 +91,7 @@ public class LoggerProvider : BaseProvider
 #else
     internal
 #endif
-        Logger GetLogger(string? name, string? version, IEnumerable<KeyValuePair<string, object?>>? attributes)
+        Logger GetLogger(string? name, string? version = null, IEnumerable<KeyValuePair<string, object?>>? attributes = null)
     {
         if (!this.TryCreateLogger(name, out var logger))
         {

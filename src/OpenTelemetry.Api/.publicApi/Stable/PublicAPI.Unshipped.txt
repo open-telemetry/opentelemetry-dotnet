@@ -1,2 +1,2 @@
 OpenTelemetry.Logs.Logger.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>?
-OpenTelemetry.Logs.LoggerProvider.GetLogger(string? name, string? version, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? attributes) -> OpenTelemetry.Logs.Logger!
+OpenTelemetry.Logs.LoggerProvider.GetLogger(string? name, string? version = null, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? attributes = null) -> OpenTelemetry.Logs.Logger!

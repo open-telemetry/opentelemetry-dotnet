@@ -72,6 +72,14 @@ abstract class Logger
         IEnumerable<KeyValuePair<string, object?>>? attributes)
     {
         this.Version = version;
-        this.Attributes = attributes;
+
+        if (attributes is not null)
+        {
+            var attributeList = new List<KeyValuePair<string, object?>>(attributes);
+            attributeList.Sort((left, right) => string.Compare(left.Key, right.Key, StringComparison.Ordinal));
+            this.Attributes = attributeList.AsReadOnly();
+
+            this.Attributes = attributeList;
+        }
     }
 }
