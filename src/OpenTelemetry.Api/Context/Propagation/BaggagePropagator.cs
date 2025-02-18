@@ -20,8 +20,8 @@ public class BaggagePropagator : TextMapPropagator
     private const int MaxBaggageLength = 8192;
     private const int MaxBaggageItems = 180;
 
-    private static readonly char[] EqualSignSeparator = new[] { '=' };
-    private static readonly char[] CommaSignSeparator = new[] { ',' };
+    private static readonly char[] EqualSignSeparator = ['='];
+    private static readonly char[] CommaSignSeparator = [','];
 
     /// <inheritdoc/>
     public override ISet<string> Fields => new HashSet<string> { BaggageHeaderName };

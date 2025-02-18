@@ -51,7 +51,7 @@ public static class Program
 
             if (options.PrometheusTestMetricsPort != 0)
             {
-                builder.AddPrometheusHttpListener(o => o.UriPrefixes = new string[] { $"http://localhost:{options.PrometheusTestMetricsPort}/" });
+                builder.AddPrometheusHttpListener(o => o.UriPrefixes = [$"http://localhost:{options.PrometheusTestMetricsPort}/"]);
             }
 
             if (options.EnableExemplars)
@@ -62,8 +62,8 @@ public static class Program
             if (options.AddViewToFilterTags)
             {
                 builder
-                    .AddView("TestCounter", new MetricStreamConfiguration { TagKeys = new string[] { "DimName1" } })
-                    .AddView("TestHistogram", new MetricStreamConfiguration { TagKeys = new string[] { "DimName1" } });
+                    .AddView("TestCounter", new MetricStreamConfiguration { TagKeys = ["DimName1"] })
+                    .AddView("TestHistogram", new MetricStreamConfiguration { TagKeys = ["DimName1"] });
             }
 
             if (options.AddOtlpExporter)

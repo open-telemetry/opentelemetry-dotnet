@@ -69,7 +69,7 @@ public abstract class StressTest<T> : IDisposable
         using var meterProvider = options.PrometheusInternalMetricsPort != 0 ? Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddRuntimeInstrumentation()
-            .AddPrometheusHttpListener(o => o.UriPrefixes = new string[] { $"http://localhost:{options.PrometheusInternalMetricsPort}/" })
+            .AddPrometheusHttpListener(o => o.UriPrefixes = [$"http://localhost:{options.PrometheusInternalMetricsPort}/"])
             .Build() : null;
 
         var statistics = new MeasurementData[options.Concurrency];

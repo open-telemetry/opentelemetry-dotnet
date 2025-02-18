@@ -56,7 +56,7 @@ public class PrometheusHttpListenerTests
     {
         Assert.Throws<ArgumentException>(() =>
         {
-            TestPrometheusHttpListenerUriPrefixOptions(new string[] { "ftp://example.com" });
+            TestPrometheusHttpListenerUriPrefixOptions(["ftp://example.com"]);
         });
     }
 
@@ -132,7 +132,7 @@ public class PrometheusHttpListenerTests
                     exporter,
                     new()
                     {
-                        UriPrefixes = new string[] { address },
+                        UriPrefixes = [address],
                     });
 
                 listener.Start();
@@ -158,7 +158,7 @@ public class PrometheusHttpListenerTests
                 exporter,
                 new()
                 {
-                    UriPrefixes = new string[] { address! },
+                    UriPrefixes = [address!],
                 });
 
             listener.Start();
@@ -238,7 +238,7 @@ public class PrometheusHttpListenerTests
                     .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1").AddAttributes(attributes))
                     .AddPrometheusHttpListener(options =>
                     {
-                        options.UriPrefixes = new string[] { generatedAddress };
+                        options.UriPrefixes = [generatedAddress];
                     })
                     .Build();
 

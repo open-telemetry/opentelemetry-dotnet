@@ -184,11 +184,11 @@ public class MetricExemplarTests : MetricTestsBase
         DateTime testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
 
-        (double Value, bool ExpectTraceId)[] measurementValues = new (double Value, bool ExpectTraceId)[]
-        {
+        (double Value, bool ExpectTraceId)[] measurementValues =
+        [
             (18D, false),
-            (19D, false),
-        };
+            (19D, false)
+        ];
 
         int measurementIndex = 0;
 
@@ -329,7 +329,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         var measurementValues = buckets
             /* 2000 is here to test overflow measurement */
-            .Concat(new double[] { 2000 })
+            .Concat([2000.0])
             .Select(b => (Value: b, ExpectTraceId: false))
             .ToArray();
         foreach (var value in measurementValues)
@@ -734,7 +734,7 @@ public class MetricExemplarTests : MetricTestsBase
                 histogram.Name,
                 new MetricStreamConfiguration()
                 {
-                    TagKeys = enableTagFiltering ? new string[] { "key1" } : null,
+                    TagKeys = enableTagFiltering ? ["key1"] : null,
                     ExemplarReservoirFactory = () =>
                     {
                         if (testExemplarReservoir != null)

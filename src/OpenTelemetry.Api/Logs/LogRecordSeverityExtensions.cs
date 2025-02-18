@@ -57,8 +57,8 @@ internal
     internal const string Fatal3ShortName = FatalShortName + "3";
     internal const string Fatal4ShortName = FatalShortName + "4";
 
-    private static readonly string[] LogRecordSeverityShortNames = new string[]
-    {
+    private static readonly string[] LogRecordSeverityShortNames =
+    [
         UnspecifiedShortName,
 
         TraceShortName,
@@ -89,8 +89,8 @@ internal
         FatalShortName,
         Fatal2ShortName,
         Fatal3ShortName,
-        Fatal4ShortName,
-    };
+        Fatal4ShortName
+    ];
 
     /// <summary>
     /// Returns the OpenTelemetry Specification short name for the <see
