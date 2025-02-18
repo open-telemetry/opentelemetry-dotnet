@@ -49,14 +49,19 @@ public class JaegerPropagator : TextMapPropagator
         try
         {
             var jaegerHeaderCollection = getter(carrier, JaegerHeader);
-            var jaegerHeader = jaegerHeaderCollection?.First();
+            if (jaegerHeaderCollection == null)
+            {
+                return context;
+            }
+
+            var jaegerHeader = jaegerHeaderCollection.First();
 
             if (string.IsNullOrWhiteSpace(jaegerHeader))
             {
                 return context;
             }
 
-            var jaegerHeaderParsed = TryExtractTraceContext(jaegerHeader!, out var traceId, out var spanId, out var traceOptions);
+            var jaegerHeaderParsed = TryExtractTraceContext(jaegerHeader, out var traceId, out var spanId, out var traceOptions);
 
             if (!jaegerHeaderParsed)
             {
