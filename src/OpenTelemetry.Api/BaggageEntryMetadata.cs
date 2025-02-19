@@ -35,5 +35,5 @@ public readonly struct BaggageEntryMetadata : IEquatable<BaggageEntryMetadata>
     public override bool Equals(object? obj) => obj is BaggageEntryMetadata other && this.Equals(other);
 
     /// <inheritdoc />
-    public override int GetHashCode() => this.Value != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(this.Value) : 0;
+    public override int GetHashCode() => this.Value != null ? this.Value.GetHashCode() : 0;
 }

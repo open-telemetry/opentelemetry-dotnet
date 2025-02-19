@@ -48,7 +48,7 @@ public readonly struct BaggageEntry : IEquatable<BaggageEntry>
     {
         unchecked
         {
-            return (StringComparer.OrdinalIgnoreCase.GetHashCode(this.Value) * 397) ^ (this.Metadata != null ? this.Metadata.GetHashCode() : 0);
+            return (this.Value.GetHashCode() * 397) ^ (this.Metadata != null ? this.Metadata.GetHashCode() : 0);
         }
     }
 }
