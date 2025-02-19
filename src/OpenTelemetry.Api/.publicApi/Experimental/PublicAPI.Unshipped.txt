@@ -1,23 +1,4 @@
 abstract OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributeList attributes) -> void
-OpenTelemetry.Baggage.Enumerator
-OpenTelemetry.Baggage.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, OpenTelemetry.BaggageEntry>
-OpenTelemetry.Baggage.Enumerator.Dispose() -> void
-OpenTelemetry.Baggage.Enumerator.Enumerator() -> void
-OpenTelemetry.Baggage.Enumerator.MoveNext() -> bool
-OpenTelemetry.Baggage.Enumerator.Reset() -> void
-OpenTelemetry.Baggage.GetEnumeratorWithMetadata() -> OpenTelemetry.Baggage.Enumerator
-OpenTelemetry.Baggage.SetBaggage(string! name, string? value, string? metadata) -> OpenTelemetry.Baggage
-OpenTelemetry.BaggageEntry
-OpenTelemetry.BaggageEntry.BaggageEntry() -> void
-OpenTelemetry.BaggageEntry.BaggageEntry(string! value, OpenTelemetry.BaggageEntryMetadata? metadata = null) -> void
-OpenTelemetry.BaggageEntry.Equals(OpenTelemetry.BaggageEntry other) -> bool
-OpenTelemetry.BaggageEntry.Metadata.get -> OpenTelemetry.BaggageEntryMetadata?
-OpenTelemetry.BaggageEntry.Value.get -> string!
-OpenTelemetry.BaggageEntryMetadata
-OpenTelemetry.BaggageEntryMetadata.BaggageEntryMetadata() -> void
-OpenTelemetry.BaggageEntryMetadata.BaggageEntryMetadata(string? value) -> void
-OpenTelemetry.BaggageEntryMetadata.Equals(OpenTelemetry.BaggageEntryMetadata other) -> bool
-OpenTelemetry.BaggageEntryMetadata.Value.get -> string?
 OpenTelemetry.Logs.Logger
 OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data) -> void
 OpenTelemetry.Logs.Logger.Logger(string? name) -> void
@@ -87,17 +68,6 @@ OpenTelemetry.Logs.LogRecordSeverity.Warn2 = 14 -> OpenTelemetry.Logs.LogRecordS
 OpenTelemetry.Logs.LogRecordSeverity.Warn3 = 15 -> OpenTelemetry.Logs.LogRecordSeverity
 OpenTelemetry.Logs.LogRecordSeverity.Warn4 = 16 -> OpenTelemetry.Logs.LogRecordSeverity
 OpenTelemetry.Logs.LogRecordSeverityExtensions
-override OpenTelemetry.BaggageEntry.Equals(object? obj) -> bool
-override OpenTelemetry.BaggageEntry.GetHashCode() -> int
-override OpenTelemetry.BaggageEntryMetadata.Equals(object? obj) -> bool
-override OpenTelemetry.BaggageEntryMetadata.GetHashCode() -> int
-static OpenTelemetry.Baggage.CreateWithMetadata(System.Collections.Generic.Dictionary<string!, OpenTelemetry.BaggageEntry>! baggageItems) -> OpenTelemetry.Baggage
-static OpenTelemetry.Baggage.GetEnumeratorWithMetadata(OpenTelemetry.Baggage baggage) -> OpenTelemetry.Baggage.Enumerator
-static OpenTelemetry.Baggage.SetBaggage(string! name, string? value, string? metadata, OpenTelemetry.Baggage baggage) -> OpenTelemetry.Baggage
-static OpenTelemetry.BaggageEntry.operator !=(OpenTelemetry.BaggageEntry left, OpenTelemetry.BaggageEntry right) -> bool
-static OpenTelemetry.BaggageEntry.operator ==(OpenTelemetry.BaggageEntry left, OpenTelemetry.BaggageEntry right) -> bool
-static OpenTelemetry.BaggageEntryMetadata.operator !=(OpenTelemetry.BaggageEntryMetadata left, OpenTelemetry.BaggageEntryMetadata right) -> bool
-static OpenTelemetry.BaggageEntryMetadata.operator ==(OpenTelemetry.BaggageEntryMetadata left, OpenTelemetry.BaggageEntryMetadata right) -> bool
 static OpenTelemetry.Logs.LogRecordAttributeList.CreateFromEnumerable(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>! attributes) -> OpenTelemetry.Logs.LogRecordAttributeList
 static OpenTelemetry.Logs.LogRecordSeverityExtensions.ToShortName(this OpenTelemetry.Logs.LogRecordSeverity logRecordSeverity) -> string!
 virtual OpenTelemetry.Logs.LoggerProvider.TryCreateLogger(string? name, out OpenTelemetry.Logs.Logger? logger) -> bool
