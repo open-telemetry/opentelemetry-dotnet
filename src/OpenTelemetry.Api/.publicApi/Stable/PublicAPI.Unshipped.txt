@@ -4,6 +4,7 @@ OpenTelemetry.Baggage.Enumerator.Dispose() -> void
 OpenTelemetry.Baggage.Enumerator.Enumerator() -> void
 OpenTelemetry.Baggage.Enumerator.MoveNext() -> bool
 OpenTelemetry.Baggage.Enumerator.Reset() -> void
+OpenTelemetry.Baggage.GetBaggageWithMetadata(string! name) -> OpenTelemetry.BaggageEntry?
 OpenTelemetry.Baggage.GetEnumeratorWithMetadata() -> OpenTelemetry.Baggage.Enumerator
 OpenTelemetry.Baggage.SetBaggage(string! name, string? value, string? metadata) -> OpenTelemetry.Baggage
 OpenTelemetry.BaggageEntry
