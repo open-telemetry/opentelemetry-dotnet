@@ -6,6 +6,8 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Update `Baggage` implementation to allow [`metadata`](https://github.com/open-telemetry/opentelemetry-specification/blob/815598814f3cf461ad5493ccbddd53633fb5cf24/specification/baggage/api.md?plain=1#L117-L119) storage.
+
 ## 1.11.1
 
 Released 2025-Jan-22

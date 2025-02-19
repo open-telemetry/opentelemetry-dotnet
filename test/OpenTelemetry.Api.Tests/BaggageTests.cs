@@ -15,6 +15,10 @@ public class BaggageTests
     private const string V2 = "Value2";
     private const string V3 = "Value3";
 
+    private const string M1 = "Metadata1";
+    private const string M2 = "Metadata2";
+    private const string M3 = "Metadata3";
+
     [Fact]
     public void EmptyTest()
     {
@@ -45,6 +49,42 @@ public class BaggageTests
         Assert.Equal(V2, Baggage.Current.GetBaggage(K2));
 
         Assert.Throws<ArgumentException>(() => Baggage.GetBaggage(null!));
+    }
+
+    [Fact]
+    public void SetAndGetWithMetadataTest()
+    {
+        var expectedBaggageContents = new List<KeyValuePair<string, BaggageEntry>>(2)
+        {
+            new(K1, new(V1, new BaggageEntryMetadata(M1))),
+            new(K2, new(V2, new BaggageEntryMetadata(M2))),
+        };
+
+        var baggage = Baggage.Current
+            .SetBaggage(K1, V1, M1)
+            .SetBaggage(K2, V2, M2);
+        Baggage.Current = baggage;
+
+        Assert.NotEmpty(Baggage.GetBaggage());
+
+        var returnedBaggage = new List<KeyValuePair<string, BaggageEntry>>();
+
+        var enumerator = Baggage.Current.GetEnumeratorWithMetadata();
+        while (enumerator.MoveNext())
+        {
+            returnedBaggage.Add(enumerator.Current);
+        }
+
+        Assert.Equal(expectedBaggageContents, returnedBaggage);
+
+        Assert.Equal(V1, Baggage.GetBaggage(K1));
+        Assert.Equal(V1, Baggage.GetBaggage(K1.ToLower()));
+        Assert.Equal(V1, Baggage.GetBaggage(K1.ToUpper()));
+        Assert.Null(Baggage.GetBaggage("NO_KEY"));
+        Assert.Equal(V2, Baggage.Current.GetBaggage(K2));
+
+        Assert.Equal(M1, Baggage.Current.GetBaggageWithMetadata(K1)?.Metadata?.Value);
+        Assert.Equal(M2, Baggage.Current.GetBaggageWithMetadata(K2)?.Metadata?.Value);
     }
 
     [Fact]
@@ -176,6 +216,35 @@ public class BaggageTests
     }
 
     [Fact]
+    public void EnumeratorWithMetadataTest()
+    {
+        var list = new List<KeyValuePair<string, BaggageEntry>>(2)
+        {
+            new(K1, new BaggageEntry(V1)),
+            new(K2, new BaggageEntry(V2, new BaggageEntryMetadata(M2))),
+        };
+
+        var baggage = Baggage.SetBaggage(K1, V1);
+        baggage = Baggage.SetBaggage(K2, V2, M2, baggage);
+
+        var enumerator = Baggage.GetEnumeratorWithMetadata(baggage);
+
+        Assert.True(enumerator.MoveNext());
+        var baggageItem1 = enumerator.Current;
+        Assert.True(enumerator.MoveNext());
+        var baggageItem2 = enumerator.Current;
+        Assert.False(enumerator.MoveNext());
+
+        Assert.Equal(list, new List<KeyValuePair<string, BaggageEntry>> { baggageItem1, baggageItem2 });
+
+        Baggage.ClearBaggage();
+
+        enumerator = Baggage.GetEnumeratorWithMetadata(default);
+
+        Assert.False(enumerator.MoveNext());
+    }
+
+    [Fact]
     public void EqualsTest()
     {
         var bc1 = new Baggage(new Dictionary<string, string> { [K1] = V1, [K2] = V2 });
@@ -241,6 +310,22 @@ public class BaggageTests
     }
 
     [Fact]
+    public void EqualityWithMetadataTests()
+    {
+        var emptyBaggage = Baggage.Create(null);
+
+        var baggage = Baggage.SetBaggage(K1, V1, M1, default);
+
+        Assert.NotEqual(emptyBaggage, baggage);
+
+        Assert.True(emptyBaggage != baggage);
+
+        baggage = Baggage.ClearBaggage(baggage);
+
+        Assert.Equal(emptyBaggage, baggage);
+    }
+
+    [Fact]
     public void GetHashCodeTests()
     {
         var baggage = Baggage.Current;
@@ -253,6 +338,28 @@ public class BaggageTests
         Assert.NotEqual(emptyBaggage.GetHashCode(), baggage.GetHashCode());
 
         var expectedBaggage = Baggage.Create(new Dictionary<string, string> { [K1] = V1 });
+
+        Assert.Equal(expectedBaggage.GetHashCode(), baggage.GetHashCode());
+    }
+
+    [Fact]
+    public void GetHashCodeWithMetadataTests()
+    {
+        var baggage = Baggage.Current;
+        var emptyBaggage = Baggage.Create(null);
+
+        baggage = Baggage.SetBaggage(K1, V1, M1, baggage).SetBaggage(K2, V2);
+        baggage = Baggage.SetBaggage(K3, V3, M3, baggage);
+
+        Assert.NotEqual(emptyBaggage.GetHashCode(), baggage.GetHashCode());
+
+        var expectedBaggage = Baggage.CreateWithMetadata(
+            new Dictionary<string, BaggageEntry>
+            {
+                [K1] = new(V1, new BaggageEntryMetadata(M1)),
+                [K2] = new(V2),
+                [K3] = new(V3, new BaggageEntryMetadata(M3)),
+            });
 
         Assert.Equal(expectedBaggage.GetHashCode(), baggage.GetHashCode());
     }
