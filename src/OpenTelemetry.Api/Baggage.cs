@@ -93,7 +93,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// Create a <see cref="Baggage"/> instance from dictionary of baggage key/value pairs.
     /// </summary>
     /// <remarks>
-    /// Note: This method is obsolete. Call the <see cref="Baggage.CreateWithMetadata(System.Collections.Generic.Dictionary{string,BaggageEntry})"/>
+    /// Note: This method is obsolete. Call the <see cref="CreateWithMetadata(Dictionary{string,BaggageEntry})"/>
     /// method instead.
     /// </remarks>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
@@ -151,7 +151,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// Returns the name/value pairs in the <see cref="Baggage"/>.
     /// </summary>
     /// <remarks>
-    /// Note: This method is obsolete. Call the <see cref="Baggage.GetEnumeratorWithMetadata(Baggage)"/>
+    /// Note: This method is obsolete. Call the <see cref="GetEnumeratorWithMetadata(Baggage)"/>
     /// method instead.
     /// </remarks>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
@@ -166,7 +166,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// Returns an enumerator that iterates through the <see cref="Baggage"/>.
     /// </summary>
     /// <remarks>
-    /// Note: This method is obsolete. Call the <see cref="Baggage.GetEnumeratorWithMetadata(Baggage)"/>
+    /// Note: This method is obsolete. Call the <see cref="GetEnumeratorWithMetadata(Baggage)"/>
     /// method instead.
     /// </remarks>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
@@ -179,7 +179,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// Returns an enumerator that iterates over the <see cref="Baggage"/>, returning keys, values and optional metadata.
     /// </summary>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
-    /// <returns><see cref="Baggage.Enumerator"/>.</returns>
+    /// <returns><see cref="Enumerator"/>.</returns>
     public static Enumerator GetEnumeratorWithMetadata(Baggage baggage)
         => baggage == default ? Current.GetEnumeratorWithMetadata() : baggage.GetEnumeratorWithMetadata();
 
@@ -290,7 +290,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </summary>
     /// <remarks>
     /// Note: This method is obsolete.
-    /// Call the <see cref="Baggage.GetEnumeratorWithMetadata()"/> instead to iterate over the baggage.
+    /// Call the <see cref="GetEnumeratorWithMetadata()"/> instead to iterate over the baggage.
     /// </remarks>
     /// <returns>Baggage key/value pairs.</returns>
     // [Obsolete("Call GetEnumeratorWithMetadata instead to iterate over the baggage.")]
@@ -302,7 +302,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// Returns the value associated with the given name, or <see langword="null"/> if the given name is not present.
     /// </summary>
     /// <remarks>
-    /// Note: This method is obsolete. Call the <see cref="Baggage.GetBaggageWithMetadata(string)"/>
+    /// Note: This method is obsolete. Call the <see cref="GetBaggageWithMetadata(string)"/>
     /// method instead.
     /// </remarks>>
     /// <param name="name">Baggage item name.</param>
@@ -370,7 +370,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// Returns a new <see cref="Baggage"/> which contains the new key/value pairs.
     /// </summary>
     /// <remarks>
-    /// Note: This method is obsolete. Call the <see cref="Baggage.CreateWithMetadata(System.Collections.Generic.Dictionary{string,BaggageEntry})"/>
+    /// Note: This method is obsolete. Call the <see cref="CreateWithMetadata(Dictionary{string,BaggageEntry})"/>
     /// method instead.
     /// </remarks>>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
@@ -383,7 +383,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// Returns a new <see cref="Baggage"/> which contains the new key/value pairs.
     /// </summary>
     /// <remarks>
-    /// Note: This method is obsolete. Call the <see cref="Baggage.CreateWithMetadata(System.Collections.Generic.Dictionary{string,BaggageEntry})"/>
+    /// Note: This method is obsolete. Call the <see cref="CreateWithMetadata(Dictionary{string,BaggageEntry})"/>
     /// method instead.
     /// </remarks>>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
@@ -445,7 +445,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <summary>
     /// Returns an enumerator that iterates through the <see cref="Baggage"/>.
     /// </summary>
-    /// Note: This method is obsolete. Call the <see cref="Baggage.GetEnumeratorWithMetadata()"/>
+    /// Note: This method is obsolete. Call the <see cref="GetEnumeratorWithMetadata()"/>
     /// method instead.
     /// <returns><see cref="Dictionary{TKey, TValue}.Enumerator"/>.</returns>
     // [Obsolete("Call GetEnumeratorWithMetadata instead.")]
@@ -455,7 +455,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <summary>
     /// Returns an enumerator that iterates through the <see cref="Baggage"/>, returning both values and metadata.
     /// </summary>
-    /// <returns><see cref="Baggage.Enumerator"/>.</returns>
+    /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumeratorWithMetadata()
         => new(this.baggage ?? EmptyBaggage, this.metadata ?? EmptyMetadata);
 
