@@ -20,7 +20,7 @@ on:
         required: false
         type: string
       os-list:
-        default: '[ "windows-latest", "ubuntu-22.04", "otel-linux-arm64" ]'
+        default: '[ "windows-latest", "ubuntu-22.04", "ubuntu-22.04-arm" ]'
         required: false
         type: string
       tfm-list:
@@ -39,9 +39,9 @@ jobs:
         exclude:
         - os: ubuntu-22.04
           version: net462
-        - os: otel-linux-arm64
+        - os: ubuntu-22.04-arm
           version: net462
-        - os: otel-linux-arm64
+        - os: ubuntu-22.04-arm
           version: net8.0
 
     runs-on: ${{ matrix.os }}
