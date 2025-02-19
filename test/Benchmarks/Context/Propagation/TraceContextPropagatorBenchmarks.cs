@@ -66,5 +66,5 @@ public class TraceContextPropagatorBenchmarks
     }
 
     [Benchmark(Baseline = true)]
-    public void Extract() => _ = TraceContextPropagator!.Extract(default, this.Headers!, Getter);
+    public void Extract() => _ = TraceContextPropagator.Extract(default, this.Headers!, Getter);
 }
