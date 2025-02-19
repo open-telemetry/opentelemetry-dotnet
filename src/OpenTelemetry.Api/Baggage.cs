@@ -351,19 +351,22 @@ public readonly struct Baggage : IEquatable<Baggage>
             return this.RemoveBaggage(name);
         }
 
-        var metadataDictionary =
-            new Dictionary<string, BaggageEntryMetadata>(this.metadata ?? EmptyMetadata, StringComparer.OrdinalIgnoreCase);
-        if (metadata is not null)
+        var baggageDictionary = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase)
         {
-            metadataDictionary[name] = new BaggageEntryMetadata(metadata);
+            [name] = value!,
+        };
+        if (metadata == null && this.metadata == null)
+        {
+            return new Baggage(baggageDictionary);
         }
 
-        return new Baggage(
-            new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase)
-            {
-                [name] = value!,
-            },
-            metadataDictionary);
+        var baggageMetadata = new Dictionary<string, BaggageEntryMetadata>(this.metadata ?? EmptyMetadata, StringComparer.OrdinalIgnoreCase);
+        if (metadata != null)
+        {
+            baggageMetadata[name] = new BaggageEntryMetadata(metadata);
+        }
+
+        return new Baggage(baggageDictionary, baggageMetadata);
     }
 
     /// <summary>
@@ -422,9 +425,13 @@ public readonly struct Baggage : IEquatable<Baggage>
     public Baggage RemoveBaggage(string name)
     {
         var baggageValue = CopyWithItemRemoved(this.baggage ?? EmptyBaggage, name);
-        var baggageMetadata = CopyWithItemRemoved(this.metadata ?? EmptyMetadata, name);
+        if (this.metadata != null)
+        {
+            var baggageMetadata = CopyWithItemRemoved(this.metadata, name);
+            return new Baggage(baggageValue, baggageMetadata);
+        }
 
-        return new Baggage(baggageValue, baggageMetadata);
+        return new Baggage(baggageValue);
 
         static Dictionary<string, TValue> CopyWithItemRemoved<TValue>(Dictionary<string, TValue> dictionary, string key)
         {
@@ -490,8 +497,10 @@ public readonly struct Baggage : IEquatable<Baggage>
         var hash = 17;
         hash = Hash(baggage, hash);
 
-        var baggageMetadata = this.metadata ?? EmptyMetadata;
-        hash = Hash(baggageMetadata, hash);
+        if (this.metadata != null)
+        {
+            hash = Hash(this.metadata, hash);
+        }
 
         return hash;
 

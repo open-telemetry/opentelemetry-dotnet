@@ -77,14 +77,16 @@ public class BaggageTests
 
         Assert.Equal(expectedBaggageContents, returnedBaggage);
 
-        Assert.Equal(V1, Baggage.GetBaggage(K1));
-        Assert.Equal(V1, Baggage.GetBaggage(K1.ToLower()));
-        Assert.Equal(V1, Baggage.GetBaggage(K1.ToUpper()));
-        Assert.Null(Baggage.GetBaggage("NO_KEY"));
-        Assert.Equal(V2, Baggage.Current.GetBaggage(K2));
+        var expectedBaggageEntry1 = new BaggageEntry(V1, new BaggageEntryMetadata(M1));
+        var expectedBaggageEntry2 = new BaggageEntry(V2, new BaggageEntryMetadata(M2));
 
-        Assert.Equal(M1, Baggage.Current.GetBaggageWithMetadata(K1)?.Metadata?.Value);
-        Assert.Equal(M2, Baggage.Current.GetBaggageWithMetadata(K2)?.Metadata?.Value);
+        Assert.Equal(expectedBaggageEntry1, Baggage.Current.GetBaggageWithMetadata(K1));
+        Assert.Equal(expectedBaggageEntry1, Baggage.Current.GetBaggageWithMetadata(K1.ToLower()));
+        Assert.Equal(expectedBaggageEntry1, Baggage.Current.GetBaggageWithMetadata(K1.ToUpper()));
+
+        Assert.Null(Baggage.Current.GetBaggageWithMetadata("NO_KEY"));
+
+        Assert.Equal(expectedBaggageEntry2, Baggage.Current.GetBaggageWithMetadata(K2));
     }
 
     [Fact]
@@ -147,6 +149,33 @@ public class BaggageTests
         Assert.Equal(2, baggage2.Count);
 
         Assert.DoesNotContain(new KeyValuePair<string, string>(K1, V1), baggage2.GetBaggage());
+    }
+
+    [Fact]
+    public void RemoveWithMetadataTest()
+    {
+        var baggage = Baggage.CreateWithMetadata(new Dictionary<string, BaggageEntry>
+        {
+            [K1] = new(V1, new BaggageEntryMetadata(M1)),
+            [K2] = new(V2, new BaggageEntryMetadata(M2)),
+            [K3] = new(V3, new BaggageEntryMetadata(M3)),
+        });
+
+        var baggage2 = Baggage.RemoveBaggage(K1, baggage);
+
+        Assert.Equal(3, baggage.Count);
+        Assert.Equal(2, baggage2.Count);
+
+        Assert.Null(baggage2.GetBaggageWithMetadata(K1));
+
+        var b = new List<KeyValuePair<string, BaggageEntry>>();
+        var enumeratorWithMetadata = baggage2.GetEnumeratorWithMetadata();
+        while (enumeratorWithMetadata.MoveNext())
+        {
+            b.Add(enumeratorWithMetadata.Current);
+        }
+
+        Assert.DoesNotContain(new KeyValuePair<string, BaggageEntry>(K1, new BaggageEntry(V1, new BaggageEntryMetadata(M1))), b);
     }
 
     [Fact]
