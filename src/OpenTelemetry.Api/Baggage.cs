@@ -157,6 +157,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns>Baggage key/value pairs.</returns>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
+
     // [Obsolete("Call GetEnumeratorWithMetadata instead to iterate over the baggage.")]
     public static IReadOnlyDictionary<string, string> GetBaggage(Baggage baggage = default)
         => baggage == default ? Current.GetBaggage() : baggage.GetBaggage();
@@ -201,6 +202,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
+    [SuppressMessage("roslyn", "RS0027", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
     public static Baggage SetBaggage(string name, string? value, Baggage baggage = default) => SetBaggage(name, value, null, baggage);
 
     /// <summary>
@@ -234,6 +236,8 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>New <see cref="Baggage"/> containing the new key/value pairs.</returns>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
+    [SuppressMessage("roslyn", "RS0027", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
+
     // [Obsolete("This method is obsolete and will be removed in a future release.")]
     public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems, Baggage baggage = default)
     {
