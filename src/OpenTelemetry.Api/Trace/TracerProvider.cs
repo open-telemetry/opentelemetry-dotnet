@@ -31,6 +31,18 @@ public class TracerProvider : BaseProvider
     /// Gets a tracer with given name and version.
     /// </summary>
     /// <param name="name">Name identifying the instrumentation library.</param>
+    /// <returns>Tracer instance.</returns>
+    public Tracer GetTracer(
+#if NET
+        [AllowNull]
+#endif
+        string name) =>
+        this.GetTracer(name, string.Empty, null);
+
+    /// <summary>
+    /// Gets a tracer with given name and version.
+    /// </summary>
+    /// <param name="name">Name identifying the instrumentation library.</param>
     /// <param name="version">Version of the instrumentation library.</param>
     /// <returns>Tracer instance.</returns>
     public Tracer GetTracer(
@@ -38,7 +50,23 @@ public class TracerProvider : BaseProvider
         [AllowNull]
 #endif
         string name,
-        string? version = null)
+        string? version = "") =>
+        this.GetTracer(name, version, null);
+
+    /// <summary>
+    /// Gets a tracer with given name, version and tags.
+    /// </summary>
+    /// <param name="name">Name identifying the instrumentation library.</param>
+    /// <param name="version">Version of the instrumentation library.</param>
+    /// <param name="tags">Tags associated with the tracer.</param>
+    /// <returns>Tracer instance.</returns>
+    public Tracer GetTracer(
+#if NET
+        [AllowNull]
+#endif
+        string name,
+        string? version = "",
+        IEnumerable<KeyValuePair<string, object?>>? tags = null)
     {
         var tracers = this.Tracers;
         if (tracers == null)
@@ -47,7 +75,7 @@ public class TracerProvider : BaseProvider
             return new(activitySource: null);
         }
 
-        var key = new TracerKey(name, version);
+        var key = new TracerKey(name, version, tags);
 
         if (!tracers.TryGetValue(key, out var tracer))
         {
@@ -60,12 +88,10 @@ public class TracerProvider : BaseProvider
                     return new(activitySource: null);
                 }
 
-                tracer = new(new(key.Name, key.Version));
-#if DEBUG
+                tracer = new(new(key.Name, key.Version, key.Tags));
                 bool result = tracers.TryAdd(key, tracer);
+#if DEBUG
                 System.Diagnostics.Debug.Assert(result, "Write into tracers cache failed");
-#else
-                tracers.TryAdd(key, tracer);
 #endif
             }
         }
@@ -103,11 +129,26 @@ public class TracerProvider : BaseProvider
     {
         public readonly string Name;
         public readonly string? Version;
+        public readonly IEnumerable<KeyValuePair<string, object?>>? Tags;
 
-        public TracerKey(string? name, string? version)
+        public TracerKey(string? name, string? version, IEnumerable<KeyValuePair<string, object?>>? tags)
         {
             this.Name = name ?? string.Empty;
             this.Version = version;
+            this.Tags = GetOrderedTags(tags);
+        }
+
+        private static IEnumerable<KeyValuePair<string, object?>>? GetOrderedTags(
+            IEnumerable<KeyValuePair<string, object?>>? tags)
+        {
+            if (tags is null)
+            {
+                return null;
+            }
+
+            var orderedTagList = new List<KeyValuePair<string, object?>>(tags);
+            orderedTagList.Sort((left, right) => string.Compare(left.Key, right.Key, StringComparison.Ordinal));
+            return orderedTagList.AsReadOnly();
         }
     }
 }
