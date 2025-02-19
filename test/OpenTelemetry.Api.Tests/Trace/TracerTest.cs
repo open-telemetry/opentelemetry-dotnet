@@ -235,8 +235,7 @@ public class TracerTest : IDisposable
         Assert.NotNull(span3.Activity);
         Assert.Equal(span3.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
 
-        var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-            ActivityTraceFlags.Recorded);
+        var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
         var span4 = this.tracer.StartActiveSpan("Test", SpanKind.Client, spanContext);
         Assert.NotNull(span4.Activity);
         Assert.Equal(span4.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
@@ -339,8 +338,7 @@ public class TracerTest : IDisposable
         this.output.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
 
         var dir = Directory.GetCurrentDirectory();
-        if (test.TryEmitReports(dir, $"{nameof(this.TracerConcurrencyTest)}_CoyoteOutput",
-                out IEnumerable<string> reportPaths))
+        if (test.TryEmitReports(dir, $"{nameof(this.TracerConcurrencyTest)}_CoyoteOutput", out IEnumerable<string> reportPaths))
         {
             foreach (var reportPath in reportPaths)
             {
@@ -483,10 +481,8 @@ public class TracerTest : IDisposable
         Assert.Single(exportedItems);
         var activity = exportedItems[0];
 
-        // Verify the tracer's tags are applied to the activity
-        Assert.Contains(activity.Source.Tags, kvp => kvp.Key == "tracerTag" && (string)kvp.Value == "tracerValue");
+        Assert.Contains(activity.Source.Tags!, kvp => kvp.Key == "tracerTag" && (string)kvp.Value! == "tracerValue");
     }
-
 
     public void Dispose()
     {

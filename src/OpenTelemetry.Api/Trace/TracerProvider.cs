@@ -65,7 +65,7 @@ public class TracerProvider : BaseProvider
         [AllowNull]
 #endif
         string name,
-        string? version = null,
+        string? version = "",
         IEnumerable<KeyValuePair<string, object?>>? tags = null)
     {
         var tracers = this.Tracers;
@@ -138,7 +138,7 @@ public class TracerProvider : BaseProvider
             this.Tags = GetOrderedTags(tags);
         }
 
-        private IEnumerable<KeyValuePair<string, object>>? GetOrderedTags(
+        private static IEnumerable<KeyValuePair<string, object?>>? GetOrderedTags(
             IEnumerable<KeyValuePair<string, object?>>? tags)
         {
             if (tags is null)
