@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry;
+#pragma warning disable CS0618 // Type or member is obsolete
 
 internal class MyEnrichingProcessor : BaseProcessor<Activity>
 {

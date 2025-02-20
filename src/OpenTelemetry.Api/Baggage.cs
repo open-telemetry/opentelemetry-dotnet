@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#pragma warning disable CS0618
+
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Context;
@@ -98,7 +100,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </remarks>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
     /// <returns><see cref="Baggage"/>.</returns>
-    // [Obsolete("Call CreateWithMetadata instead.")]
+    [Obsolete("Call CreateWithMetadata instead.")]
     public static Baggage Create(Dictionary<string, string>? baggageItems = null)
     {
         if (baggageItems == null)
@@ -157,8 +159,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns>Baggage key/value pairs.</returns>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
-
-    // [Obsolete("Call GetEnumeratorWithMetadata instead to iterate over the baggage.")]
+    [Obsolete("Call GetEnumeratorWithMetadata instead to iterate over the baggage.")]
     public static IReadOnlyDictionary<string, string> GetBaggage(Baggage baggage = default)
         => baggage == default ? Current.GetBaggage() : baggage.GetBaggage();
 
@@ -171,7 +172,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </remarks>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns><see cref="Dictionary{TKey, TValue}.Enumerator"/>.</returns>
-    // [Obsolete("Call GetEnumeratorWithMetadata instead to iterate over the baggage.")]
+    [Obsolete("Call GetEnumeratorWithMetadata instead to iterate over the baggage.")]
     public static Dictionary<string, string>.Enumerator GetEnumerator(Baggage baggage = default)
         => baggage == default ? Current.GetEnumerator() : baggage.GetEnumerator();
 
@@ -228,17 +229,16 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <summary>
     /// Returns a new <see cref="Baggage"/> which contains the new key/value pairs.
     /// </summary>
-    /// <remarks>
-    /// Note: This method is obsolete and will be removed in a future release.
-    /// </remarks>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
     /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
     /// <returns>New <see cref="Baggage"/> containing the new key/value pairs.</returns>
-    /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
+    /// <remarks>
+    /// Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.
+    /// This method is obsolete and will be removed in a future release.
+    /// </remarks>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
     [SuppressMessage("roslyn", "RS0027", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
-
-    // [Obsolete("This method is obsolete and will be removed in a future release.")]
+    [Obsolete("This method is obsolete and will be removed in a future release.")]
     public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems, Baggage baggage = default)
     {
         var baggageHolder = EnsureBaggageHolder();
@@ -293,7 +293,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// Call the <see cref="GetEnumeratorWithMetadata()"/> instead to iterate over the baggage.
     /// </remarks>
     /// <returns>Baggage key/value pairs.</returns>
-    // [Obsolete("Call GetEnumeratorWithMetadata instead to iterate over the baggage.")]
+    [Obsolete("Call GetEnumeratorWithMetadata instead to iterate over the baggage.")]
     public IReadOnlyDictionary<string, string> GetBaggage()
         =>
             this.baggage ?? EmptyBaggage;
@@ -304,10 +304,10 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <remarks>
     /// Note: This method is obsolete. Call the <see cref="GetBaggageWithMetadata(string)"/>
     /// method instead.
-    /// </remarks>>
+    /// </remarks>
     /// <param name="name">Baggage item name.</param>
     /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
-    // [Obsolete("Call GetBaggageWithMetadata instead.")]
+    [Obsolete("Call GetBaggageWithMetadata instead.")]
     public string? GetBaggage(string name) => this.GetBaggageWithMetadata(name)?.Value;
 
     /// <summary>
@@ -375,10 +375,10 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <remarks>
     /// Note: This method is obsolete. Call the <see cref="CreateWithMetadata(Dictionary{string,BaggageEntry})"/>
     /// method instead.
-    /// </remarks>>
+    /// </remarks>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
     /// <returns>New <see cref="Baggage"/> containing the key/value pairs.</returns>
-    // [Obsolete("Call CreateWithMetadata instead.")]
+    [Obsolete("Call CreateWithMetadata instead.")]
     public Baggage SetBaggage(params KeyValuePair<string, string?>[] baggageItems)
         => this.SetBaggage((IEnumerable<KeyValuePair<string, string?>>)baggageItems);
 
@@ -388,10 +388,10 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <remarks>
     /// Note: This method is obsolete. Call the <see cref="CreateWithMetadata(Dictionary{string,BaggageEntry})"/>
     /// method instead.
-    /// </remarks>>
+    /// </remarks>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
     /// <returns>New <see cref="Baggage"/> containing the key/value pairs.</returns>
-    // [Obsolete("Call CreateWithMetadata instead.")]
+    [Obsolete("Call CreateWithMetadata instead.")]
     public Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems)
     {
         if (baggageItems?.Any() != true)
@@ -452,10 +452,12 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <summary>
     /// Returns an enumerator that iterates through the <see cref="Baggage"/>.
     /// </summary>
+    /// <remarks>
     /// Note: This method is obsolete. Call the <see cref="GetEnumeratorWithMetadata()"/>
     /// method instead.
+    /// </remarks>
     /// <returns><see cref="Dictionary{TKey, TValue}.Enumerator"/>.</returns>
-    // [Obsolete("Call GetEnumeratorWithMetadata instead.")]
+    [Obsolete("Call GetEnumeratorWithMetadata instead.")]
     public Dictionary<string, string>.Enumerator GetEnumerator()
         => (this.baggage ?? EmptyBaggage).GetEnumerator();
 
