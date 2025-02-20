@@ -40,7 +40,7 @@ public class TracerProvider : BaseProvider
 #endif
         string name,
         string? version) =>
-        this.GetTracer(name, version);
+        this.GetTracer(name, version, null);
 
     /// <summary>
     /// Gets a tracer with given name, version and tags.
