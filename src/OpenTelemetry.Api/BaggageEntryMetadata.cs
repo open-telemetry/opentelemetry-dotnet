@@ -4,7 +4,10 @@
 namespace OpenTelemetry;
 
 /// <summary>
-/// Wraps string value of metadata, as required by the spec: https://github.com/open-telemetry/opentelemetry-specification/blob/815598814f3cf461ad5493ccbddd53633fb5cf24/specification/baggage/api.md?plain=1#L117-L119.
+/// Wraps string value of metadata.
+/// <remarks>
+/// Spec reference: <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/v1.42.0/specification/baggage/api.md?plain=1#L117-L119">metadata</a>.
+/// </remarks>
 /// </summary>
 public readonly struct BaggageEntryMetadata : IEquatable<BaggageEntryMetadata>
 {
