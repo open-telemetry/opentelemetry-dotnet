@@ -31,27 +31,16 @@ public class TracerProvider : BaseProvider
     /// Gets a tracer with given name and version.
     /// </summary>
     /// <param name="name">Name identifying the instrumentation library.</param>
-    /// <returns>Tracer instance.</returns>
-    public Tracer GetTracer(
-#if NET
-        [AllowNull]
-#endif
-        string name) =>
-        this.GetTracer(name, string.Empty, null);
-
-    /// <summary>
-    /// Gets a tracer with given name and version.
-    /// </summary>
-    /// <param name="name">Name identifying the instrumentation library.</param>
     /// <param name="version">Version of the instrumentation library.</param>
     /// <returns>Tracer instance.</returns>
+    // 1.11.1 BACKCOMPAT OVERLOAD -- DO NOT TOUCH
     public Tracer GetTracer(
 #if NET
         [AllowNull]
 #endif
         string name,
-        string? version = "") =>
-        this.GetTracer(name, version, null);
+        string? version) =>
+        this.GetTracer(name, version);
 
     /// <summary>
     /// Gets a tracer with given name, version and tags.
@@ -65,7 +54,7 @@ public class TracerProvider : BaseProvider
         [AllowNull]
 #endif
         string name,
-        string? version = "",
+        string? version = null,
         IEnumerable<KeyValuePair<string, object?>>? tags = null)
     {
         var tracers = this.Tracers;
