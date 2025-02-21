@@ -5,6 +5,10 @@ highlights and announcements covering all components see: [Release
 Notes](../../RELEASENOTES.md).
 
 ## Unreleased
+* Added a new overload for `TracerProvider.GetTracer` which accepts an optional
+  `IEnumerable<KeyValuePair<string, object?>>? tags` parameter, allowing
+  additional attributes to be associated with the `Tracer`.
+  ([#6137](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6137))
 
 ## 1.11.1
 

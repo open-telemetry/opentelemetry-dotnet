@@ -155,20 +155,47 @@ public class TracerProvider : BaseProvider
         }
 
         private static bool AreTagsEqual(
-            IEnumerable<KeyValuePair<string, object?>>? tags1,
-            IEnumerable<KeyValuePair<string, object?>>? tags2)
+            KeyValuePair<string, object?>[]? tags1,
+            KeyValuePair<string, object?>[]? tags2)
         {
-            if (tags1 is null && tags2 is null)
+            if (tags1 == null && tags2 == null)
             {
                 return true;
             }
 
-            if (tags1 is null || tags2 is null)
+            if (tags1 == null || tags2 == null || tags1.Length != tags2.Length)
             {
                 return false;
             }
 
-            return tags1.SequenceEqual(tags2);
+            for (int i = 0; i < tags1.Length; i++)
+            {
+                var kvp1 = tags1[i];
+                var kvp2 = tags2[i];
+
+                if (!string.Equals(kvp1.Key, kvp2.Key, StringComparison.Ordinal))
+                {
+                    return false;
+                }
+
+                // Compare values
+                if (kvp1.Value is null)
+                {
+                    if (kvp2.Value is not null)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!kvp1.Value.Equals(kvp2.Value))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         private static int GetTagsHashCode(

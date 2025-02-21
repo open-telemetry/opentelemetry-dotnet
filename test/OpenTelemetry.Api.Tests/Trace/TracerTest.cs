@@ -409,7 +409,7 @@ public class TracerTest : IDisposable
     }
 
     [Fact]
-    public void GetTracer_WithTags_ReturnsSameInstanceForSameTags()
+    public void GetTracer_WithSameTags_ReturnsSameInstance()
     {
         var tags1 = new List<KeyValuePair<string, object?>> { new("tag1", "value1"), new("tag2", "value2") };
         var tags2 = new List<KeyValuePair<string, object?>> { new("tag1", "value1"), new("tag2", "value2") };
@@ -422,7 +422,17 @@ public class TracerTest : IDisposable
     }
 
     [Fact]
-    public void GetTracer_WithTags_ReturnsDifferentInstancesForDifferentTags()
+    public void GetTracer_WithoutTags_ReturnsSameInstance()
+    {
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0");
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0");
+
+        Assert.Same(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_WithDifferentTags_ReturnsDifferentInstances()
     {
         var tags1 = new List<KeyValuePair<string, object?>> { new("tag1", "value1") };
         var tags2 = new List<KeyValuePair<string, object?>> { new("tag2", "value2") };
@@ -435,7 +445,7 @@ public class TracerTest : IDisposable
     }
 
     [Fact]
-    public void GetTracer_WithTags_OrdersTagsByKey()
+    public void GetTracer_WithDifferentOrderTags_ReturnsSameInstance()
     {
         var tags1 = new List<KeyValuePair<string, object?>> { new("tag2", "value2"), new("tag1", "value1"), };
         var tags2 = new List<KeyValuePair<string, object?>> { new("tag1", "value1"), new("tag2", "value2"), };
@@ -445,6 +455,32 @@ public class TracerTest : IDisposable
         var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
 
         Assert.Same(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_TagsValuesAreIntType_ReturnsSameInstance()
+    {
+        var tags1 = new List<KeyValuePair<string, object?>> { new("tag2", 2), new("tag1", 1) };
+        var tags2 = new List<KeyValuePair<string, object?>> { new("tag1", 1), new("tag2", 2) };
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
+
+        Assert.Same(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_WithDifferentTagsSize_ReturnsDifferentInstances()
+    {
+        var tags1 = new List<KeyValuePair<string, object?>> { new("tag2", 2), new("tag1", 1) };
+        var tags2 = new List<KeyValuePair<string, object?>> { new("tag1", 1), new("tag2", 2), new("tag3", 3) };
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
+
+        Assert.NotSame(tracer1, tracer2);
     }
 
     [Fact]
