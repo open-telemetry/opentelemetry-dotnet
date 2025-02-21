@@ -118,16 +118,84 @@ public class TracerProvider : BaseProvider
     {
         public readonly string Name;
         public readonly string? Version;
-        public readonly IEnumerable<KeyValuePair<string, object?>>? Tags;
+        public readonly KeyValuePair<string, object?>[]? Tags;
 
         public TracerKey(string? name, string? version, IEnumerable<KeyValuePair<string, object?>>? tags)
         {
             this.Name = name ?? string.Empty;
             this.Version = version;
-            this.Tags = GetOrderedTags(tags);
+            this.Tags = this.GetOrderedTags(tags);
         }
 
-        private static IEnumerable<KeyValuePair<string, object?>>? GetOrderedTags(
+        public bool Equals(TracerKey other)
+        {
+            if (!string.Equals(this.Name, other.Name, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (!string.Equals(this.Version, other.Version, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            return AreTagsEqual(this.Tags, other.Tags);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hash = 17;
+                hash = (hash * 31) + (this.Name?.GetHashCode() ?? 0);
+                hash = (hash * 31) + (this.Version?.GetHashCode() ?? 0);
+                hash = (hash * 31) + GetTagsHashCode(this.Tags);
+                return hash;
+            }
+        }
+
+        private static bool AreTagsEqual(
+            IEnumerable<KeyValuePair<string, object?>>? tags1,
+            IEnumerable<KeyValuePair<string, object?>>? tags2)
+        {
+            if (tags1 is null && tags2 is null)
+            {
+                return true;
+            }
+
+            if (tags1 is null || tags2 is null)
+            {
+                return false;
+            }
+
+            return tags1.SequenceEqual(tags2);
+        }
+
+        private static int GetTagsHashCode(
+            IEnumerable<KeyValuePair<string, object?>>? tags)
+        {
+            if (tags is null)
+            {
+                return 0;
+            }
+
+            var hash = 0;
+            unchecked
+            {
+                foreach (var kvp in tags)
+                {
+                    hash = (hash * 31) + kvp.Key.GetHashCode();
+                    if (kvp.Value != null)
+                    {
+                        hash = (hash * 31) + kvp.Value.GetHashCode()!;
+                    }
+                }
+            }
+
+            return hash;
+        }
+
+        private KeyValuePair<string, object?>[]? GetOrderedTags(
             IEnumerable<KeyValuePair<string, object?>>? tags)
         {
             if (tags is null)
@@ -137,7 +205,7 @@ public class TracerProvider : BaseProvider
 
             var orderedTagList = new List<KeyValuePair<string, object?>>(tags);
             orderedTagList.Sort((left, right) => string.Compare(left.Key, right.Key, StringComparison.Ordinal));
-            return orderedTagList.AsReadOnly();
+            return orderedTagList.ToArray();
         }
     }
 }

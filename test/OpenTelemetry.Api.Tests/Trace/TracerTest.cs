@@ -418,7 +418,7 @@ public class TracerTest : IDisposable
         var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
         var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
 
-        Assert.Equivalent(tracer1, tracer2);
+        Assert.Same(tracer1, tracer2);
     }
 
     [Fact]
@@ -431,7 +431,7 @@ public class TracerTest : IDisposable
         var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
         var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
 
-        Assert.NotEqual(tracer1, tracer2);
+        Assert.NotSame(tracer1, tracer2);
     }
 
     [Fact]
@@ -444,7 +444,7 @@ public class TracerTest : IDisposable
         var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
         var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
 
-        Assert.Equivalent(tracer1, tracer2);
+        Assert.Same(tracer1, tracer2);
     }
 
     [Fact]
@@ -456,7 +456,7 @@ public class TracerTest : IDisposable
         var tracerWithTags = tracerProvider.GetTracer("test", "1.0.0", tags);
         var tracerWithoutTags = tracerProvider.GetTracer("test", "1.0.0");
 
-        Assert.NotSame(tracerWithTags, tracerWithoutTags);
+        Assert.NotEqual(tracerWithTags, tracerWithoutTags);
     }
 
     [Fact]
@@ -478,8 +478,7 @@ public class TracerTest : IDisposable
             // Activity started by the tracer with tags
         }
 
-        Assert.Single(exportedItems);
-        var activity = exportedItems[0];
+        var activity = Assert.Single(exportedItems);
 
         Assert.Contains(activity.Source.Tags!, kvp => kvp.Key == "tracerTag" && (string)kvp.Value! == "tracerValue");
     }
