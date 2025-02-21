@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.ObjectModel;
+using System.ComponentModel.Design;
 using System.Diagnostics.Tracing;
 using System.Text;
 
@@ -144,6 +145,10 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
 
             buffer[pos++] = (byte)'\n';
             int byteCount = pos - 0;
+
+            // if read from EnVar and choose to write to Console
+            // Console.WriteLine()
+
             if (this.configRefresher.TryGetLogStream(byteCount, out Stream? stream, out int availableByteCount))
             {
                 if (availableByteCount >= byteCount)
@@ -309,7 +314,14 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         // See: https://github.com/open-telemetry/opentelemetry-dotnet/pull/5046
         if (eventData.EventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.OrdinalIgnoreCase))
         {
-            this.WriteEvent(eventData.Message, eventData.Payload);
+            if ()
+            {
+                //
+            }
+            else
+            {
+                this.WriteEvent(eventData.Message, eventData.Payload);
+            }
         }
     }
 
