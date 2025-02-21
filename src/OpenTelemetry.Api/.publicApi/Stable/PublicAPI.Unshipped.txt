@@ -22,7 +22,7 @@ override OpenTelemetry.BaggageEntry.Equals(object? obj) -> bool
 override OpenTelemetry.BaggageEntry.GetHashCode() -> int
 override OpenTelemetry.BaggageEntryMetadata.Equals(object? obj) -> bool
 override OpenTelemetry.BaggageEntryMetadata.GetHashCode() -> int
-static OpenTelemetry.Baggage.CreateWithMetadata(System.Collections.Generic.Dictionary<string!, OpenTelemetry.BaggageEntry>? baggageItems) -> OpenTelemetry.Baggage
+static OpenTelemetry.Baggage.CreateWithMetadata(System.Collections.Generic.Dictionary<string!, OpenTelemetry.BaggageEntry>? baggageItems = null) -> OpenTelemetry.Baggage
 static OpenTelemetry.Baggage.GetEnumeratorWithMetadata(OpenTelemetry.Baggage baggage) -> OpenTelemetry.Baggage.Enumerator
 static OpenTelemetry.Baggage.SetBaggage(string! name, string? value, string? metadata, OpenTelemetry.Baggage baggage) -> OpenTelemetry.Baggage
 static OpenTelemetry.BaggageEntry.operator !=(OpenTelemetry.BaggageEntry left, OpenTelemetry.BaggageEntry right) -> bool
