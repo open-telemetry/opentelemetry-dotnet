@@ -129,8 +129,13 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// </summary>
     /// <param name="baggageItems">Dictionary of baggage keys and values with optional metadata.</param>
     /// <returns><see cref="Baggage"/>.</returns>
-    public static Baggage CreateWithMetadata(Dictionary<string, BaggageEntry> baggageItems)
+    public static Baggage CreateWithMetadata(Dictionary<string, BaggageEntry>? baggageItems)
     {
+        if (baggageItems == null)
+        {
+            return default;
+        }
+
         Dictionary<string, string> baggageCopy =
             new Dictionary<string, string>(baggageItems.Count, StringComparer.OrdinalIgnoreCase);
 
