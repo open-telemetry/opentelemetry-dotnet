@@ -7,8 +7,8 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Update `Baggage` implementation to allow
-[`metadata`](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.42.0/specification/baggage/api.md?plain=1#L117-L119)
-storage. ([#6144](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6144))
+  [`metadata`](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.42.0/specification/baggage/api.md?plain=1#L117-L119)
+  storage. ([#6144](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6144))
 
 ## 1.11.1
 
