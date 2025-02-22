@@ -16,6 +16,9 @@ Notes](../../RELEASENOTES.md).
   `Activity.StatusDescription` exceeds 127 bytes.
   ([#6119](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6119))
 
+* Fixed protobuf serialization handling of null values in OTLP exporter.
+  ([#6149](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6149))
+
 ## 1.11.1
 
 Released 2025-Jan-22
