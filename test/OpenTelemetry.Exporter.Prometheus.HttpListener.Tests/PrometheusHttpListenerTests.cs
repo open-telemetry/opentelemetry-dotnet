@@ -1,14 +1,17 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Net;
+using System.Text.RegularExpressions;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
@@ -182,7 +185,7 @@ public class PrometheusHttpListenerTests
             attributes.Add(new KeyValuePair<string, object>(x.ToString(), oneKb));
         }
 
-        var provider = BuildMeterProvider(meter, attributes, out var address);
+        using var provider = BuildMeterProvider(meter, attributes, false, out var address);
 
         for (var x = 0; x < 1000; x++)
         {
@@ -203,8 +206,165 @@ public class PrometheusHttpListenerTests
         var content = await response.Content.ReadAsStringAsync();
         Assert.Contains("counter_double_999", content);
         Assert.DoesNotContain('\0', content);
+    }
 
-        provider.Dispose();
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task PrometheusExporterHttpServerIntegration_Histogram_Exemplars(bool enableExemplars)
+    {
+        using var activitySource = new ActivitySource(Utils.GetCurrentMethodName());
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySource.Name)
+            .SetSampler(new AlwaysOnSampler())
+            .Build();
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        using var provider = BuildMeterProvider(meter, [], enableExemplars, out var address);
+
+        var counterTags = new KeyValuePair<string, object?>[]
+        {
+            new("key1", "value1"),
+            new("key2", "value2"),
+        };
+
+        var counter = meter.CreateCounter<double>("counter_double", unit: "By");
+        counter.Add(100.18, counterTags);
+
+        string expectedTraceId;
+        string expectedSpanId;
+        using (var activity = activitySource.StartActivity("testActivity"))
+        {
+            Assert.NotNull(activity);
+
+            counter.Add(0.99, counterTags);
+            expectedTraceId = activity.TraceId.ToHexString();
+            expectedSpanId = activity.SpanId.ToHexString();
+        }
+
+        using HttpClient client = new HttpClient();
+        client.DefaultRequestHeaders.Add("Accept", "application/openmetrics-text");
+
+        using var response = await client.GetAsync($"{address}metrics");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var content = await response.Content.ReadAsStringAsync();
+
+        var expected =
+            enableExemplars
+                ? $$"""
+                    \# TYPE target info
+                    \# HELP target Target metadata
+                    target_info\{service_name="my_service",service_instance_id="id1"} 1
+                    \# TYPE otel_scope_info info
+                    \# HELP otel_scope_info Scope metadata
+                    otel_scope_info\{otel_scope_name="{{MeterName}}"} 1
+                    \# TYPE counter_double_bytes counter
+                    \# UNIT counter_double_bytes bytes
+                    counter_double_bytes_total\{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101\.17 \d+.\d{3} \# \{trace_id="([a-z0-9]{32})",span_id="([a-z0-9]{16})"} 0\.99 \d+.\d{3}
+                    \# EOF
+                    """.Replace("\r\n", "\n")
+                : $$"""
+                    \# TYPE target info
+                    \# HELP target Target metadata
+                    target_info\{service_name="my_service",service_instance_id="id1"} 1
+                    \# TYPE otel_scope_info info
+                    \# HELP otel_scope_info Scope metadata
+                    otel_scope_info\{otel_scope_name="{{MeterName}}"} 1
+                    \# TYPE counter_double_bytes counter
+                    \# UNIT counter_double_bytes bytes
+                    counter_double_bytes_total\{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101\.17 \d+.\d{3}
+                    \# EOF
+                    """.Replace("\r\n", "\n");
+
+        var match = Regex.Match(content, expected);
+        Assert.True(match.Success);
+
+        if (enableExemplars)
+        {
+            Assert.Equal(expectedTraceId, match.Groups[1].Value);
+            Assert.Equal(expectedSpanId, match.Groups[2].Value);
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task PrometheusExporterHttpServerIntegration_Exemplars_OpenMetricsFormat(bool openMetricsFormat)
+    {
+        using var activitySource = new ActivitySource(Utils.GetCurrentMethodName());
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySource.Name)
+            .SetSampler(new AlwaysOnSampler())
+            .Build();
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        using var provider = BuildMeterProvider(meter, [], true, out var address);
+
+        var counterTags = new KeyValuePair<string, object?>[]
+        {
+            new("key1", "value1"),
+            new("key2", "value2"),
+        };
+
+        var counter = meter.CreateCounter<double>("counter_double", unit: "By");
+        counter.Add(100.18, counterTags);
+
+        string expectedTraceId;
+        string expectedSpanId;
+        using (var activity = activitySource.StartActivity("testActivity"))
+        {
+            Assert.NotNull(activity);
+
+            counter.Add(0.99, counterTags);
+            expectedTraceId = activity.TraceId.ToHexString();
+            expectedSpanId = activity.SpanId.ToHexString();
+        }
+
+        using HttpClient client = new HttpClient();
+        if (openMetricsFormat)
+        {
+            client.DefaultRequestHeaders.Add("Accept", "application/openmetrics-text");
+        }
+
+        using var response = await client.GetAsync($"{address}metrics");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var content = await response.Content.ReadAsStringAsync();
+
+        var expected =
+            openMetricsFormat
+                ? $$"""
+                    \# TYPE target info
+                    \# HELP target Target metadata
+                    target_info\{service_name="my_service",service_instance_id="id1"} 1
+                    \# TYPE otel_scope_info info
+                    \# HELP otel_scope_info Scope metadata
+                    otel_scope_info\{otel_scope_name="{{MeterName}}"} 1
+                    \# TYPE counter_double_bytes counter
+                    \# UNIT counter_double_bytes bytes
+                    counter_double_bytes_total\{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101\.17 \d+.\d{3} \# \{trace_id="([a-z0-9]{32})",span_id="([a-z0-9]{16})"} 0\.99 \d+.\d{3}
+                    \# EOF
+                    """.Replace("\r\n", "\n")
+                : $$"""
+                    \# TYPE counter_double_bytes_total counter
+                    \# UNIT counter_double_bytes_total bytes
+                    counter_double_bytes_total\{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",key1="value1",key2="value2"} 101\.17 \d+
+                    \# EOF
+                    """.Replace("\r\n", "\n");
+
+        var match = Regex.Match(content, expected);
+        Assert.True(match.Success);
+
+        if (openMetricsFormat)
+        {
+            Assert.Equal(expectedTraceId, match.Groups[1].Value);
+            Assert.Equal(expectedSpanId, match.Groups[2].Value);
+        }
     }
 
     private static void TestPrometheusHttpListenerUriPrefixOptions(string[] uriPrefixes)
@@ -218,7 +378,7 @@ public class PrometheusHttpListenerTests
             });
     }
 
-    private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, out string address)
+    private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, bool enableExemplars, out string address)
     {
         Random random = new Random();
         int retryAttempts = 5;
@@ -233,14 +393,20 @@ public class PrometheusHttpListenerTests
 
             try
             {
-                provider = Sdk.CreateMeterProviderBuilder()
+                var builder = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(meter.Name)
                     .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1").AddAttributes(attributes))
                     .AddPrometheusHttpListener(options =>
                     {
                         options.UriPrefixes = new string[] { generatedAddress };
-                    })
-                    .Build();
+                    });
+
+                if (enableExemplars)
+                {
+                    builder.SetExemplarFilter(ExemplarFilterType.AlwaysOn);
+                }
+
+                provider = builder.Build();
 
                 break;
             }
@@ -260,13 +426,17 @@ public class PrometheusHttpListenerTests
         return provider;
     }
 
-    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text", KeyValuePair<string, object?>[]? meterTags = null)
+    private async Task RunPrometheusExporterHttpServerIntegrationTest(
+        bool skipMetrics = false,
+        string acceptHeader = "application/openmetrics-text",
+        KeyValuePair<string, object?>[]? meterTags = null,
+        bool enableExemplars = false)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
 
         using var meter = new Meter(MeterName, MeterVersion, meterTags);
 
-        var provider = BuildMeterProvider(meter, [], out var address);
+        using var provider = BuildMeterProvider(meter, [], enableExemplars, out var address);
 
         var counterTags = new KeyValuePair<string, object?>[]
         {
@@ -290,49 +460,49 @@ public class PrometheusHttpListenerTests
 
         using var response = await client.GetAsync($"{address}metrics");
 
-        if (!skipMetrics)
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Content.Headers.Contains("Last-Modified"));
+
+        if (requestOpenMetrics)
         {
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.True(response.Content.Headers.Contains("Last-Modified"));
-
-            if (requestOpenMetrics)
-            {
-                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType!.ToString());
-            }
-            else
-            {
-                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType!.ToString());
-            }
-
-            var additionalTags = meterTags != null && meterTags.Any()
-                ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}='{x.Value}'"))},"
-                : string.Empty;
-
-            var content = await response.Content.ReadAsStringAsync();
-
-            var expected = requestOpenMetrics
-                ? "# TYPE target info\n"
-                  + "# HELP target Target metadata\n"
-                  + "target_info{service_name='my_service',service_instance_id='id1'} 1\n"
-                  + "# TYPE otel_scope_info info\n"
-                  + "# HELP otel_scope_info Scope metadata\n"
-                  + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
-                  + "# TYPE counter_double_bytes counter\n"
-                  + "# UNIT counter_double_bytes bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
-                  + "# EOF\n"
-                : "# TYPE counter_double_bytes_total counter\n"
-                  + "# UNIT counter_double_bytes_total bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17 (\\d+)\n"
-                  + "# EOF\n";
-
-            Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);
+            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType!.ToString());
         }
         else
         {
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType!.ToString());
         }
 
-        provider.Dispose();
+        var content = await response.Content.ReadAsStringAsync();
+
+        if (!skipMetrics)
+        {
+            var additionalTags = meterTags != null && meterTags.Any()
+                ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}=\"{x.Value}\""))},"
+                : string.Empty;
+
+            var expected = requestOpenMetrics
+                ? $$"""
+                    # TYPE target info
+                    # HELP target Target metadata
+                    target_info{service_name="my_service",service_instance_id="id1"} 1
+                    # TYPE otel_scope_info info
+                    # HELP otel_scope_info Scope metadata
+                    otel_scope_info{otel_scope_name="{{MeterName}}"} 1
+                    # TYPE counter_double_bytes counter
+                    # UNIT counter_double_bytes bytes
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17 (\d+\.\d{3})
+                    # EOF
+
+                    """.Replace("\r\n", "\n")
+                : $$"""
+                    # TYPE counter_double_bytes_total counter
+                    # UNIT counter_double_bytes_total bytes
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17 (\d+)
+                    # EOF
+
+                    """.Replace("\r\n", "\n");
+
+            Assert.Matches("^" + expected + "$", content);
+        }
     }
 }
