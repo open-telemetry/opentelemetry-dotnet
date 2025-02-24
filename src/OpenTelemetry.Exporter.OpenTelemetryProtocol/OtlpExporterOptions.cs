@@ -179,7 +179,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// </summary>
     public string ClientCertificateFile { get; set; }
 
-#if NET6_0_OR_GREATER
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
     /// be appended to <see cref="Endpoint"/>.
