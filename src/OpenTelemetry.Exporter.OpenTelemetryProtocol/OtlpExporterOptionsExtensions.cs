@@ -36,7 +36,29 @@ internal static class OtlpExporterOptionsExtensions
         ChannelCredentials channelCredentials;
         if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
         {
-            channelCredentials = new SslCredentials();
+            if (!string.IsNullOrEmpty(options.ClientCertificateFile) && !string.IsNullOrEmpty(options.ClientKeyFile))
+            {
+                string clientCertPem = System.IO.File.ReadAllText(options.ClientCertificateFile);
+                string clientKeyPem = System.IO.File.ReadAllText(options.ClientKeyFile);
+                var keyPair = new KeyCertificatePair(clientCertPem, clientKeyPem);
+
+                string? rootCertPem = null;
+                if (!string.IsNullOrEmpty(options.CertificateFile))
+                {
+                    rootCertPem = System.IO.File.ReadAllText(options.CertificateFile);
+                }
+
+                channelCredentials = new SslCredentials(rootCertPem, keyPair);
+            }
+            else
+            {
+                string? rootCertPem = null;
+                if (!string.IsNullOrEmpty(options.CertificateFile))
+                {
+                    rootCertPem = System.IO.File.ReadAllText(options.CertificateFile);
+                }
+                channelCredentials = new SslCredentials(rootCertPem);
+            }
         }
         else
         {
