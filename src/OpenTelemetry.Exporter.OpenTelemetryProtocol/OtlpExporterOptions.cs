@@ -289,10 +289,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         // Create and return an HttpClient with the modified handler
         return new HttpClient(handler);
-#else
-        // Handle alternative methods for earlier .NET versions
-        throw new PlatformNotSupportedException("mTLS support requires .NET 6.0 or later.");
-#endif
     }
 
     private static string GetUserAgentString()
