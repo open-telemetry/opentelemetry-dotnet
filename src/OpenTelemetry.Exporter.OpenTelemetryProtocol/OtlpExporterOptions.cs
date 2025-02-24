@@ -76,9 +76,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         this.DefaultHttpClientFactory = () =>
         {
 #if NET6_0_OR_GREATER
-            // Create a new handler
             var handler = new HttpClientHandler();
-            // Load certificates (including client & server certificates if configured)
             HttpClient client = this.AddCertificatesToHttpClient(handler);
             client.Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds);
             return client;
@@ -257,6 +255,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         return this;
     }
 
+#if NET6_0_OR_GREATER
     internal HttpClient AddCertificatesToHttpClient(HttpClientHandler handler)
     {
         // Configure server certificate validation if CertificateFile is provided
@@ -281,7 +280,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         // Add client certificate if both files are provided
         if (!string.IsNullOrEmpty(this.ClientCertificateFile) && !string.IsNullOrEmpty(this.ClientKeyFile))
         {
-            // Load the client certificate from PEM files
             var clientCertificate = X509Certificate2.CreateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile);
             handler.ClientCertificates.Add(clientCertificate);
         }
@@ -289,6 +287,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         // Create and return an HttpClient with the modified handler
         return new HttpClient(handler);
     }
+#endif
 
     private static string GetUserAgentString()
     {
