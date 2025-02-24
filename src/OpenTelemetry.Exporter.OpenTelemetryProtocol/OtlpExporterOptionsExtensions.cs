@@ -42,7 +42,7 @@ internal static class OtlpExporterOptionsExtensions
                 string clientKeyPem = System.IO.File.ReadAllText(options.ClientKeyFile);
                 var keyPair = new KeyCertificatePair(clientCertPem, clientKeyPem);
 
-                string? rootCertPem = null;
+                string rootCertPem = string.Empty;
                 if (!string.IsNullOrEmpty(options.CertificateFile))
                 {
                     rootCertPem = System.IO.File.ReadAllText(options.CertificateFile);
@@ -52,11 +52,12 @@ internal static class OtlpExporterOptionsExtensions
             }
             else
             {
-                string? rootCertPem = null;
+                string rootCertPem = string.Empty;
                 if (!string.IsNullOrEmpty(options.CertificateFile))
                 {
                     rootCertPem = System.IO.File.ReadAllText(options.CertificateFile);
                 }
+
                 channelCredentials = new SslCredentials(rootCertPem);
             }
         }

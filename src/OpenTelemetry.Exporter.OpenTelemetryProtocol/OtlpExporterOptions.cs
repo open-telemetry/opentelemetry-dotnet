@@ -273,6 +273,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                     chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
                     return chain.Build(cert);
                 }
+
                 return false;
             };
         }
