@@ -30,6 +30,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal const string DefaultGrpcEndpoint = "http://localhost:4317";
     internal const string DefaultHttpEndpoint = "http://localhost:4318";
     internal const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
+
     internal const string CertificateFileEnvVarName = "OTEL_EXPORTER_OTLP_CERTIFICATE";
     internal const string ClientKeyFileEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_KEY";
     internal const string ClientCertificateFileEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE";
@@ -77,37 +78,10 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 #if NET6_0_OR_GREATER
             // Create a new handler
             var handler = new HttpClientHandler();
-
-            // Load server certificate
-            if (!string.IsNullOrEmpty(this.CertificateFile))
-            {
-                var trustedCertificate = X509Certificate2.CreateFromPemFile(this.CertificateFile);
-
-                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
-                {
-                    if (cert != null && chain != null)
-                    {
-                        chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
-                        chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
-                        return chain.Build(cert);
-                    }
-
-                    return false;
-                };
-            }
-
-            // Load client certificate for mTLS
-            if (!string.IsNullOrEmpty(this.ClientCertificateFile) && !string.IsNullOrEmpty(this.ClientKeyFile))
-            {
-                var clientCertificate = X509Certificate2.CreateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile);
-                handler.ClientCertificates.Add(clientCertificate);
-            }
-
-            // Create and return the HttpClient
-            return new HttpClient(handler)
-            {
-                Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
-            };
+            // Load certificates (including client & server certificates if configured)
+            HttpClient client = this.AddCertificatesToHttpClient(handler);
+            client.Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds);
+            return client;
 #else
             // For earlier .NET versions
             return new HttpClient
@@ -119,35 +93,10 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;
 
-        // Load CertificateFile from environment variable
-        if (Environment.GetEnvironmentVariable(CertificateFileEnvVarName) is string certificateFile)
-        {
-            this.CertificateFile = certificateFile;
-        }
-        else
-        {
-            this.CertificateFile = string.Empty;
-        }
-
-        // Load ClientKeyFile from environment variable
-        if (Environment.GetEnvironmentVariable(ClientKeyFileEnvVarName) is string clientKeyFile)
-        {
-            this.ClientKeyFile = clientKeyFile;
-        }
-        else
-        {
-            this.ClientKeyFile = string.Empty;
-        }
-
-        // Load ClientCertificateFile from environment variable
-        if (Environment.GetEnvironmentVariable(ClientCertificateFileEnvVarName) is string clientCertificateFile)
-        {
-            this.ClientCertificateFile = clientCertificateFile;
-        }
-        else
-        {
-            this.ClientCertificateFile = string.Empty;
-        }
+        // Load certificate-related environment variables
+        this.CertificateFile = Environment.GetEnvironmentVariable(CertificateFileEnvVarName) ?? string.Empty;
+        this.ClientKeyFile = Environment.GetEnvironmentVariable(ClientKeyFileEnvVarName) ?? string.Empty;
+        this.ClientCertificateFile = Environment.GetEnvironmentVariable(ClientCertificateFileEnvVarName) ?? string.Empty;
     }
 
     /// <inheritdoc/>
@@ -230,6 +179,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// </summary>
     public string ClientCertificateFile { get; set; }
 
+#if NET6_0_OR_GREATER
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
     /// be appended to <see cref="Endpoint"/>.
@@ -310,8 +260,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     internal HttpClient AddCertificatesToHttpClient(HttpClientHandler handler)
     {
-#if NET6_0_OR_GREATER
-        // Set up server certificate validation if CertificateFile is provided
+        // Configure server certificate validation if CertificateFile is provided
         if (!string.IsNullOrEmpty(this.CertificateFile))
         {
             // Load the certificate from the file
@@ -326,7 +275,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                     chain.ChainPolicy.CustomTrustStore.Add(trustedCertificate);
                     return chain.Build(cert);
                 }
-
                 return false;
             };
         }
