@@ -18,7 +18,6 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed incorrect log serialization of attributes with null values, causing
   some backends to reject logs.
-  some backends to reject logs when using OTLP exporter to output protobuf.
   ([#6149](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6149))
 
 ## 1.11.1
