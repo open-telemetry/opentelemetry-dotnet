@@ -235,7 +235,6 @@ you're more than welcome to participate!
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
 * [Alan West](https://github.com/alanwest), New Relic
-* [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 * [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 
 [Emeritus Maintainers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
@@ -248,6 +247,7 @@ you're more than welcome to participate!
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
+* [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 * [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 
 [Emeritus Approvers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):

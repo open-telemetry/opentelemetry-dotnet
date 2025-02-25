@@ -193,6 +193,11 @@ public class JsonStringArrayTagWriterTests
         {
         }
 
+        protected override bool TryWriteEmptyTag(ref Tag state, string key, object? value)
+        {
+            throw new NotImplementedException();
+        }
+
         public struct Tag
         {
             public string? Key;
