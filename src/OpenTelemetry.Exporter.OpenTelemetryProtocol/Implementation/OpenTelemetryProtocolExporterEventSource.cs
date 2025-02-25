@@ -209,7 +209,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(23, Message = "Export failed for {0}. Message: {1}. Status code: {2}", Level = EventLevel.Error)]
-    public void ExportFailure(string endpoint, string message, int statusCode)
+    public void ExportFailure(string endpoint, string message, string statusCode)
     {
         this.WriteEvent(23, endpoint, message, statusCode);
     }
