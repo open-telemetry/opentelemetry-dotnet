@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel.Design;
 using System.Diagnostics.Tracing;
@@ -110,6 +111,23 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         }
 
         return position;
+    }
+
+    internal void WriteEventToConsole(string? eventMessage, ReadOnlyCollection<object?>? payload)
+    {
+        if (!string.IsNullOrEmpty(eventMessage))
+        {
+            Console.WriteLine(eventMessage);
+        }
+
+        if (payload != null)
+        {
+            for (int i = 0; i < payload.Count; ++i)
+            {
+                object? obj = payload[i];
+                Console.WriteLine(obj?.ToString() ?? "null");
+            }
+        }
     }
 
     internal void WriteEvent(string? eventMessage, ReadOnlyCollection<object?>? payload)
@@ -314,9 +332,9 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         // See: https://github.com/open-telemetry/opentelemetry-dotnet/pull/5046
         if (eventData.EventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.OrdinalIgnoreCase))
         {
-            if ()
+            if (this.configRefresher.IsSelfDiagnosticsEnVarOn)
             {
-                //
+                this.WriteEventToConsole(eventData.Message, eventData.Payload);
             }
             else
             {

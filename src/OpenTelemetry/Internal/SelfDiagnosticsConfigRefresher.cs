@@ -23,7 +23,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     private readonly CancellationTokenSource cancellationTokenSource;
     private readonly Task worker;
-    private readonly SelfDiagnosticsEnvarParser? envarParser;
+    private readonly SelfDiagnosticsEnVarParser? envarParser;
     private readonly SelfDiagnosticsConfigParser? configParser;
 
     /// <summary>
@@ -45,9 +45,11 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     public SelfDiagnosticsConfigRefresher()
     {
-        if (IsSelfDiagnosticsEnVarOn())
+        if (this.IsSelfDiagnosticsEnVarOn)
         {
-            this.envarParser = new SelfDiagnosticsEnvarParser();
+            this.envarParser = new SelfDiagnosticsEnVarParser();
+            this.logEventLevel = this.envarParser.GetLogLevel();
+            this.eventListener = new SelfDiagnosticsEventListener(this.logEventLevel, this);
         }
         else
         {
@@ -59,7 +61,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
         this.worker = Task.Run(() => this.Worker(this.cancellationTokenSource.Token), this.cancellationTokenSource.Token);
     }
 
-    public static bool IsSelfDiagnosticsEnVarOn() => Environment.GetEnvironmentVariable("EnableSelfDiagnostics") == "1";
+    public bool IsSelfDiagnosticsEnVarOn => Environment.GetEnvironmentVariable("EnableSelfDiagnostics") == "1";
 
     /// <inheritdoc/>
     public void Dispose()
@@ -140,7 +142,11 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
         await Task.Delay(ConfigurationUpdatePeriodMilliSeconds, cancellationToken).ConfigureAwait(false);
         while (!cancellationToken.IsCancellationRequested)
         {
-            this.UpdateMemoryMappedFileFromConfiguration();
+            if (this.configParser != null)
+            {
+                this.UpdateMemoryMappedFileFromConfiguration();
+            }
+
             await Task.Delay(ConfigurationUpdatePeriodMilliSeconds, cancellationToken).ConfigureAwait(false);
         }
     }

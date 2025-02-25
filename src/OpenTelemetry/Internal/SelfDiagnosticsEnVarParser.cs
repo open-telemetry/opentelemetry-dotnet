@@ -2,25 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Tracing;
+using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Internal;
 
-internal sealed class SelfDiagnosticsEnvarParser
+internal sealed class SelfDiagnosticsEnVarParser
 {
-    //public bool TryGetConfigurationFromEnVar(
-    //    out string? outputTarget, // default writing to Console
-    //    out EventLevel logLevel)
-    //{
-    //    outputTarget = null;
+    internal EventLevel GetLogLevel()
+    {
+        EventLevel logLevel = EventLevel.Informational;
+        var logLevelString = Environment.GetEnvironmentVariable("LogLevel");
 
-    //    logLevel = EventLevel.LogAlways;
-    //    if (Environment.GetEnvironmentVariable("EnableSelfDiagnostics") != null)
-    //    {
-    //        outputTarget = Environment.GetEnvironmentVariable("outputTarget");
-    //        var logLevelStringFromEnVar = Environment.GetEnvironmentVariable("selfDiagnosticsLogLevel");
-    //        Enum.TryParse(logLevelStringFromEnVar, out logLevel);
+        if (!string.IsNullOrEmpty(logLevelString))
+        {
+            if (Enum.TryParse(logLevelString, out logLevel))
+            {
+                return logLevel;
+            }
+        }
 
-    //        return true;
-    //    }
-    //}
+        return logLevel;
+    }
 }
