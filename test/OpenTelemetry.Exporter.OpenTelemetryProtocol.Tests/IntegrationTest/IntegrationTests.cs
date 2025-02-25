@@ -208,9 +208,16 @@ public sealed class IntegrationTests : IDisposable
     [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/logs", ExportProcessorType.Simple)]
     [InlineData(OtlpExportProtocol.Grpc, ":5317", ExportProcessorType.Simple, "https")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, ":5318/v1/logs", ExportProcessorType.Simple, "https")]
+    [InlineData(OtlpExportProtocol.Grpc, ":7317", ExportProcessorType.Batch, "https")]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, ":7318/v1/traces", ExportProcessorType.Batch, "https")]
     [Trait("CategoryName", "CollectorIntegrationTests")]
     [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
-    public void LogExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, ExportProcessorType exportProcessorType, string scheme = "http")
+    public void TraceExportResultIsSuccess(
+        OtlpExportProtocol protocol,
+        string endpoint,
+        ExportProcessorType exportProcessorType,
+        string scheme = "http",
+        bool useMtls = false)
     {
         using EventWaitHandle handle = new ManualResetEvent(false);
 
@@ -219,6 +226,13 @@ public sealed class IntegrationTests : IDisposable
             Endpoint = new Uri($"{scheme}://{CollectorHostname}{endpoint}"),
             Protocol = protocol,
         };
+
+        if (useMtls)
+        {
+            exporterOptions.CertificateFile = "/cfg/certs/otel-test-server-cert.pem";
+            exporterOptions.ClientCertificateFile = "/cfg/certs/otel-test-client-cert.pem";
+            exporterOptions.ClientKeyFile = "/cfg/certs/otel-test-client-key.pem";
+        }
 
         DelegatingExporter<LogRecord> delegatingExporter;
         var exportResults = new List<ExportResult>();
