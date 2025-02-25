@@ -14,7 +14,13 @@ public class OtlpAttributeTests
     public void NullValueAttribute()
     {
         var kvp = new KeyValuePair<string, object?>("key", null);
-        Assert.False(TryTransformTag(kvp, out _));
+        Assert.True(TryTransformTag(kvp, out var attribute));
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.None, attribute.Value.ValueCase);
+        Assert.False(attribute.Value.HasBoolValue);
+        Assert.False(attribute.Value.HasBytesValue);
+        Assert.False(attribute.Value.HasDoubleValue);
+        Assert.False(attribute.Value.HasIntValue);
+        Assert.False(attribute.Value.HasStringValue);
     }
 
     [Fact]
