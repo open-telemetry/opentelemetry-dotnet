@@ -36,7 +36,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
     {
         if (value == null)
         {
-            return false;
+            return this.TryWriteEmptyTag(ref state, key, value);
         }
 
         switch (value)
@@ -116,6 +116,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
         return true;
     }
+
+    protected abstract bool TryWriteEmptyTag(ref TTagState state, string key, object? value);
 
     protected abstract void WriteIntegralTag(ref TTagState state, string key, long value);
 
