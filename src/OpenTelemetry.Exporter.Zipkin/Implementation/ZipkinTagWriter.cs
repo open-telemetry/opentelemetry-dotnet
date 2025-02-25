@@ -64,4 +64,6 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
             tagValueTypeFullName,
             tagKey);
     }
+
+    protected override bool TryWriteEmptyTag(ref Utf8JsonWriter state, string key, object? value) => false;
 }

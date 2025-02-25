@@ -73,6 +73,13 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         this.onUnsupportedTagDropped(tagKey, tagValueTypeFullName);
     }
 
+    protected override bool TryWriteEmptyTag(ref ConsoleTag consoleTag, string key, object? value)
+    {
+        consoleTag.Key = key;
+        consoleTag.Value = null;
+        return true;
+    }
+
     internal struct ConsoleTag
     {
         public string? Key;

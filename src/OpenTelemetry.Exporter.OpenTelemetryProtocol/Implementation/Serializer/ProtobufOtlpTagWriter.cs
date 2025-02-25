@@ -81,6 +81,13 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             tagValueTypeFullName,
             tagKey);
 
+    protected override bool TryWriteEmptyTag(ref OtlpTagWriterState state, string key, object? value)
+    {
+        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+        state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, 0, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        return true;
+    }
+
     internal struct OtlpTagWriterState
     {
         public byte[] Buffer;
