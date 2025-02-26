@@ -188,7 +188,7 @@ public class MetricApiTests : MetricTestsBase
 
         Assert.NotNull(metric.MeterTags);
 
-        Assert.Single(metric.MeterTags.Where(kvp => kvp.Key == meterTags[0].Key && kvp.Value == meterTags[0].Value));
+        Assert.Single(metric.MeterTags, kvp => kvp.Key == meterTags[0].Key && kvp.Value == meterTags[0].Value);
     }
 
     [Fact]
