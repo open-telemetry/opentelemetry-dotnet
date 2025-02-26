@@ -3,6 +3,7 @@
 
 using System.Diagnostics.Tracing;
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -91,6 +92,15 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
         {
             this.GrpcRetryDelayParsingFailed(grpcStatusDetailsHeader ?? "null", ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void ExportFailure(string endpoint, string message, Status status)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.ExportFailure(endpoint, message, status.StatusCode.ToString(), status.Detail);
         }
     }
 
@@ -208,10 +218,10 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         this.WriteEvent(22, endpoint, statusCode);
     }
 
-    [Event(23, Message = "Export failed for {0}. Message: {1}. Status code: {2}", Level = EventLevel.Error)]
-    public void ExportFailure(string endpoint, string message, string statusCode)
+    [Event(23, Message = "Export failed for {0}. Message: {1}. Status Code: {2}. Detail: {3}.", Level = EventLevel.Error)]
+    public void ExportFailure(string endpoint, string message, string statusCode, string detail)
     {
-        this.WriteEvent(23, endpoint, message, statusCode);
+        this.WriteEvent(23, endpoint, message, statusCode, detail);
     }
 
     [Event(24, Message = "Failed to parse gRPC retry delay from header grpcStatusDetailsHeader: '{0}'. Exception: {1}", Level = EventLevel.Warning)]
