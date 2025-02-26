@@ -17,9 +17,9 @@ internal sealed class TestMeterProviderBuilder : MeterProviderBuilder, IMeterPro
 
     public ServiceProvider? ServiceProvider { get; private set; }
 
-    public List<string> Meters { get; } = new();
+    public List<string> Meters { get; } = [];
 
-    public List<object> Instrumentation { get; } = new();
+    public List<object> Instrumentation { get; } = [];
 
     public MeterProvider? Provider { get; private set; }
 
