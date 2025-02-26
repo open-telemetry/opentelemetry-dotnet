@@ -1449,7 +1449,7 @@ public class OtlpLogExporterTests
 
         Assert.Single(logRecords);
 
-        var batch = new Batch<LogRecord>(new[] { logRecords[0] }, 1);
+        var batch = new Batch<LogRecord>([logRecords[0]], 1);
         OtlpCollector.ExportLogsServiceRequest request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
 
         Assert.NotNull(request);
@@ -1480,7 +1480,7 @@ public class OtlpLogExporterTests
 
         Assert.Single(logRecords);
 
-        var batch = new Batch<LogRecord>(new[] { logRecords[0] }, 1);
+        var batch = new Batch<LogRecord>([logRecords[0]], 1);
 
         var buffer = new byte[50];
         var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, DefaultSdkLimitOptions, new(), ResourceBuilder.CreateEmpty().Build(), batch);

@@ -16,7 +16,7 @@ public class CompositeActivityProcessorTests
         Assert.Throws<ArgumentException>(() => new CompositeProcessor<Activity>(Array.Empty<BaseProcessor<Activity>>()));
 
         using var p1 = new TestActivityProcessor(null, null);
-        using var processor = new CompositeProcessor<Activity>(new[] { p1 });
+        using var processor = new CompositeProcessor<Activity>([p1]);
         Assert.Throws<ArgumentNullException>(() => processor.AddProcessor(null!));
     }
 
@@ -34,7 +34,7 @@ public class CompositeActivityProcessorTests
 
         using var activity = new Activity("test");
 
-        using (var processor = new CompositeProcessor<Activity>(new[] { p1, p2 }))
+        using (var processor = new CompositeProcessor<Activity>([p1, p2]))
         {
             processor.OnStart(activity);
             processor.OnEnd(activity);
@@ -52,7 +52,7 @@ public class CompositeActivityProcessorTests
 
         using var activity = new Activity("test");
 
-        using var processor = new CompositeProcessor<Activity>(new[] { p1 });
+        using var processor = new CompositeProcessor<Activity>([p1]);
         Assert.Throws<Exception>(() => { processor.OnStart(activity); });
         Assert.Throws<Exception>(() => { processor.OnEnd(activity); });
     }
@@ -63,7 +63,7 @@ public class CompositeActivityProcessorTests
         using var p1 = new TestActivityProcessor(null, null);
         using var p2 = new TestActivityProcessor(null, null);
 
-        using var processor = new CompositeProcessor<Activity>(new[] { p1, p2 });
+        using var processor = new CompositeProcessor<Activity>([p1, p2]);
         processor.Shutdown();
         Assert.True(p1.ShutdownCalled);
         Assert.True(p2.ShutdownCalled);
@@ -78,7 +78,7 @@ public class CompositeActivityProcessorTests
         using var p1 = new TestActivityProcessor(null, null);
         using var p2 = new TestActivityProcessor(null, null);
 
-        using var processor = new CompositeProcessor<Activity>(new[] { p1, p2 });
+        using var processor = new CompositeProcessor<Activity>([p1, p2]);
         processor.ForceFlush(timeout);
 
         Assert.True(p1.ForceFlushCalled);
@@ -93,7 +93,7 @@ public class CompositeActivityProcessorTests
         using var p1 = new TestActivityProcessor(null, null);
         using var p2 = new TestActivityProcessor(null, null);
 
-        using var processor = new CompositeProcessor<Activity>(new[] { p1, p2 });
+        using var processor = new CompositeProcessor<Activity>([p1, p2]);
 
         Assert.Null(processor.ParentProvider);
         Assert.Null(p1.ParentProvider);
