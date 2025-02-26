@@ -93,7 +93,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 grpcStatusDetailsHeader = GrpcProtocolHelpers.GetHeaderValue(trailingHeaders, GrpcStatusDetailsHeader);
             }
 
-            OpenTelemetryProtocolExporterEventSource.Log.ExportFailure(this.Endpoint.ToString(), "Export failed due to unexpected status code.", status);
+            OpenTelemetryProtocolExporterEventSource.Log.ExportFailure(this.Endpoint, "Export failed due to unexpected status code.", status);
 
             return new ExportClientGrpcResponse(
                 success: false,

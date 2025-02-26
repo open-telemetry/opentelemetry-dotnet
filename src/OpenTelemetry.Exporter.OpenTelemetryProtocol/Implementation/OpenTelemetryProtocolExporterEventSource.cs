@@ -96,11 +96,11 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [NonEvent]
-    public void ExportFailure(string endpoint, string message, Status status)
+    public void ExportFailure(Uri endpoint, string message, Status status)
     {
         if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            this.ExportFailure(endpoint, message, status.ToString());
+            this.ExportFailure(endpoint.ToString(), message, status.ToString());
         }
     }
 
