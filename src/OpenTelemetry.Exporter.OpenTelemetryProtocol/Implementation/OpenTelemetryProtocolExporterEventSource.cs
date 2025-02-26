@@ -100,7 +100,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     {
         if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            this.ExportFailure(endpoint, message, status.StatusCode.ToString(), status.Detail);
+            this.ExportFailure(endpoint, message, status.ToString());
         }
     }
 
@@ -218,10 +218,10 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         this.WriteEvent(22, endpoint, statusCode);
     }
 
-    [Event(23, Message = "Export failed for {0}. Message: {1}. Status Code: {2}. Detail: {3}.", Level = EventLevel.Error)]
-    public void ExportFailure(string endpoint, string message, string statusCode, string detail)
+    [Event(23, Message = "Export failed for {0}. Message: {1}. {2}.", Level = EventLevel.Error)]
+    public void ExportFailure(string endpoint, string message, string statusString)
     {
-        this.WriteEvent(23, endpoint, message, statusCode, detail);
+        this.WriteEvent(23, endpoint, message, statusString);
     }
 
     [Event(24, Message = "Failed to parse gRPC retry delay from header grpcStatusDetailsHeader: '{0}'. Exception: {1}", Level = EventLevel.Warning)]
