@@ -76,7 +76,7 @@ public class TracerShim : global::OpenTracing.ITracer
 
             foreach (var entry in textMapCarrier)
             {
-                carrierMap.Add(entry.Key, new[] { entry.Value });
+                carrierMap.Add(entry.Key, [entry.Value]);
             }
 
             static IEnumerable<string>? GetCarrierKeyValue(Dictionary<string, IEnumerable<string>> source, string key)

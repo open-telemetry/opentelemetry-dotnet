@@ -14,7 +14,7 @@ public class CompositePropagatorTest
         count++;
         if (headers.TryGetValue(name, out var value))
         {
-            return new[] { value };
+            return [value];
         }
 
         return Empty;

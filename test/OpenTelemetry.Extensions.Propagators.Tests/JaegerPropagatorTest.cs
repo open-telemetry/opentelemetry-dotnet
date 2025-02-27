@@ -104,7 +104,7 @@ public class JaegerPropagatorTest
             parentSpanId,
             flags);
 
-        var headers = new Dictionary<string, string[]> { { JaegerHeader, new[] { formattedHeader } } };
+        var headers = new Dictionary<string, string[]> { { JaegerHeader, [formattedHeader] } };
 
         // act
         var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
@@ -128,7 +128,7 @@ public class JaegerPropagatorTest
             parentSpanId,
             flags);
 
-        var headers = new Dictionary<string, string[]> { { JaegerHeader, new[] { formattedHeader } } };
+        var headers = new Dictionary<string, string[]> { { JaegerHeader, [formattedHeader] } };
 
         // act
         var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
