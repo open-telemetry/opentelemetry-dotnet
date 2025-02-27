@@ -6,7 +6,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Api.ProviderBuilderExtensions.Tests;
 
-public sealed class TestTracerProviderBuilder : TracerProviderBuilder, ITracerProviderBuilder, IDisposable
+internal sealed class TestTracerProviderBuilder : TracerProviderBuilder, ITracerProviderBuilder, IDisposable
 {
     public TestTracerProviderBuilder()
     {
@@ -17,11 +17,11 @@ public sealed class TestTracerProviderBuilder : TracerProviderBuilder, ITracerPr
 
     public ServiceProvider? ServiceProvider { get; private set; }
 
-    public List<string> Sources { get; } = new();
+    public List<string> Sources { get; } = [];
 
-    public List<string> LegacySources { get; } = new();
+    public List<string> LegacySources { get; } = [];
 
-    public List<object> Instrumentation { get; } = new();
+    public List<object> Instrumentation { get; } = [];
 
     public TracerProvider? Provider { get; private set; }
 
