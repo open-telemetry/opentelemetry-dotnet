@@ -125,7 +125,7 @@ internal static class ProtobufOtlpLogSerializer
                 int resourceLogsScopeLogsLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeLog(buffer, writePosition, sdkLimitOptions, experimentalOptions, entry.Value[0].Logger.Name, entry.Value);
+                writePosition = WriteScopeLog(buffer, writePosition, sdkLimitOptions, experimentalOptions, entry.Value[0].Logger, entry.Value);
                 ProtobufSerializer.WriteReservedLength(buffer, resourceLogsScopeLogsLengthPosition, writePosition - (resourceLogsScopeLogsLengthPosition + ReserveSizeForLength));
             }
         }
@@ -133,15 +133,88 @@ internal static class ProtobufOtlpLogSerializer
         return writePosition;
     }
 
-    internal static int WriteScopeLog(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, string loggerName, List<LogRecord> logRecords)
+    internal static int WriteScopeLog(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Logger logger, List<LogRecord> logRecords)
     {
-        var value = loggerName.AsSpan();
-        var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(value);
-        var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)numberOfUtf8CharsInString);
+        var value = logger.Name.AsSpan();
 
-        // numberOfUtf8CharsInString + tagSize + length field size.
-        writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, value);
+        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
+        int instrumentationScopeLengthPosition = writePosition;
+        writePosition += ReserveSizeForLength;
+
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, value);
+
+        if (logger.Version != null)
+        {
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Version, logger.Version);
+        }
+
+        if (logger.Attributes != null)
+        {
+            var maxAttributeCount = sdkLimitOptions.LogRecordAttributeCountLimit ?? int.MaxValue;
+            var maxAttributeValueLength = sdkLimitOptions.LogRecordAttributeValueLengthLimit ?? int.MaxValue;
+            ProtobufOtlpTagWriter.OtlpTagWriterState otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
+            {
+                Buffer = buffer,
+                WritePosition = writePosition,
+                TagCount = 0,
+                DroppedTagCount = 0,
+            };
+
+            if (logger.Attributes is IReadOnlyList<KeyValuePair<string, object?>> attributes)
+            {
+                for (int i = 0; i < attributes.Count; i++)
+                {
+                    if (otlpTagWriterState.TagCount < maxAttributeCount)
+                    {
+                        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes, ProtobufWireType.LEN);
+                        int instrumentationScopeAttributesLengthPosition = otlpTagWriterState.WritePosition;
+                        otlpTagWriterState.WritePosition += ReserveSizeForLength;
+
+                        ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, attributes[i].Key, attributes[i].Value, maxAttributeValueLength);
+
+                        var instrumentationScopeAttributesLength = otlpTagWriterState.WritePosition - (instrumentationScopeAttributesLengthPosition + ReserveSizeForLength);
+                        ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, instrumentationScopeAttributesLengthPosition, instrumentationScopeAttributesLength);
+                        otlpTagWriterState.TagCount++;
+                    }
+                    else
+                    {
+                        otlpTagWriterState.DroppedTagCount++;
+                    }
+                }
+            }
+            else
+            {
+                foreach (var attribute in logger.Attributes)
+                {
+                    if (otlpTagWriterState.TagCount < maxAttributeCount)
+                    {
+                        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes, ProtobufWireType.LEN);
+                        int instrumentationScopeAttributesLengthPosition = otlpTagWriterState.WritePosition;
+                        otlpTagWriterState.WritePosition += ReserveSizeForLength;
+
+                        ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, attribute.Key, attribute.Value, maxAttributeValueLength);
+
+                        var instrumentationScopeAttributesLength = otlpTagWriterState.WritePosition - (instrumentationScopeAttributesLengthPosition + ReserveSizeForLength);
+                        ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, instrumentationScopeAttributesLengthPosition, instrumentationScopeAttributesLength);
+                        otlpTagWriterState.TagCount++;
+                    }
+                    else
+                    {
+                        otlpTagWriterState.DroppedTagCount++;
+                    }
+                }
+            }
+
+            if (otlpTagWriterState.DroppedTagCount > 0)
+            {
+                otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(buffer, otlpTagWriterState.WritePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Dropped_Attributes_Count, ProtobufWireType.VARINT);
+                otlpTagWriterState.WritePosition = ProtobufSerializer.WriteVarInt32(buffer, otlpTagWriterState.WritePosition, (uint)otlpTagWriterState.DroppedTagCount);
+            }
+
+            writePosition = otlpTagWriterState.WritePosition;
+        }
+
+        ProtobufSerializer.WriteReservedLength(buffer, instrumentationScopeLengthPosition, writePosition - (instrumentationScopeLengthPosition + ReserveSizeForLength));
 
         for (int i = 0; i < logRecords.Count; i++)
         {
