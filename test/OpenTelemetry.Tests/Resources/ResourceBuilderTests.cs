@@ -13,7 +13,7 @@ public class ResourceBuilderTests
         var resource = ResourceBuilder.CreateEmpty().AddService("my-service").Build();
         Assert.Equal(2, resource.Attributes.Count());
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "my-service"), resource.Attributes);
-        Assert.Single(resource.Attributes.Where(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName));
+        Assert.Single(resource.Attributes, kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName);
         Assert.True(Guid.TryParse((string)resource.Attributes.Single(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceInstance).Value, out _));
     }
 

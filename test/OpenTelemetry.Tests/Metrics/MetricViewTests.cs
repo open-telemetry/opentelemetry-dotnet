@@ -137,7 +137,7 @@ public class MetricViewTests : MetricTestsBase
         {
             var counter1 = meter1.CreateCounter<long>("counter1");
             counter1.Add(1);
-            Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 41));
+            Assert.Single(inMemoryEventListener.Events, e => e.EventId == 41);
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);

@@ -188,7 +188,7 @@ public class MetricApiTests : MetricTestsBase
 
         Assert.NotNull(metric.MeterTags);
 
-        Assert.Single(metric.MeterTags.Where(kvp => kvp.Key == meterTags[0].Key && kvp.Value == meterTags[0].Value));
+        Assert.Single(metric.MeterTags, kvp => kvp.Key == meterTags[0].Key && kvp.Value == meterTags[0].Value);
     }
 
     [Fact]
@@ -584,7 +584,7 @@ public class MetricApiTests : MetricTestsBase
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.True(exportedItems.Count == 5); // "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
+        Assert.Equal(5, exportedItems.Count); // "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
 
         if (hasView)
         {
@@ -629,7 +629,7 @@ public class MetricApiTests : MetricTestsBase
         meter2.CreateObservableGauge("myGauge2", () => measurement);
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.True(exportedItems.Count == 0);
+        Assert.Empty(exportedItems);
     }
 
     [Theory]
