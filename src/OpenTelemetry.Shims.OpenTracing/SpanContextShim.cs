@@ -21,5 +21,7 @@ internal sealed class SpanContextShim : ISpanContext
     public string SpanId => this.SpanContext.SpanId.ToString();
 
     public IEnumerable<KeyValuePair<string, string>> GetBaggageItems()
+#pragma warning disable CS0618 // Type or member is obsolete
         => Baggage.GetBaggage();
+#pragma warning restore CS0618 // Type or member is obsolete
 }

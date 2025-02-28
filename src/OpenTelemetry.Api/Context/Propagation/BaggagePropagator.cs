@@ -83,7 +83,9 @@ public class BaggagePropagator : TextMapPropagator
             return;
         }
 
+#pragma warning disable CS0618 // Type or member is obsolete
         using var e = context.Baggage.GetEnumerator();
+#pragma warning restore CS0618 // Type or member is obsolete
 
         if (e.MoveNext() == true)
         {

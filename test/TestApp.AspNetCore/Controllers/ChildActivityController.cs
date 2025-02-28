@@ -32,7 +32,9 @@ public class ChildActivityController : Controller
     [Route("api/GetChildActivityBaggageContext")]
     public IReadOnlyDictionary<string, string> GetChildActivityBaggageContext()
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = Baggage.Current.GetBaggage();
+#pragma warning restore CS0618 // Type or member is obsolete
         return result;
     }
 
