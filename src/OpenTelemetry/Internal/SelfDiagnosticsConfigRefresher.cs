@@ -23,7 +23,8 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     private readonly CancellationTokenSource cancellationTokenSource;
     private readonly Task worker;
-    private readonly SelfDiagnosticsConfigParser configParser;
+    private readonly SelfDiagnosticsEnVarParser? envarParser;
+    private readonly SelfDiagnosticsConfigParser? configParser;
 
     /// <summary>
     /// memoryMappedFileCache is a handle kept in thread-local storage as a cache to indicate whether the cached
@@ -44,11 +45,23 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     public SelfDiagnosticsConfigRefresher()
     {
-        this.configParser = new SelfDiagnosticsConfigParser();
-        this.UpdateMemoryMappedFileFromConfiguration();
+        if (this.IsSelfDiagnosticsEnVarOn)
+        {
+            this.envarParser = new SelfDiagnosticsEnVarParser();
+            this.logEventLevel = this.envarParser.GetLogLevel();
+            this.eventListener = new SelfDiagnosticsEventListener(this.logEventLevel, this);
+        }
+        else
+        {
+            this.configParser = new SelfDiagnosticsConfigParser();
+            this.UpdateMemoryMappedFileFromConfiguration();
+        }
+
         this.cancellationTokenSource = new CancellationTokenSource();
         this.worker = Task.Run(() => this.Worker(this.cancellationTokenSource.Token), this.cancellationTokenSource.Token);
     }
+
+    public bool IsSelfDiagnosticsEnVarOn => Environment.GetEnvironmentVariable("EnableSelfDiagnostics") == "1";
 
     /// <inheritdoc/>
     public void Dispose()
@@ -129,14 +142,18 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
         await Task.Delay(ConfigurationUpdatePeriodMilliSeconds, cancellationToken).ConfigureAwait(false);
         while (!cancellationToken.IsCancellationRequested)
         {
-            this.UpdateMemoryMappedFileFromConfiguration();
+            if (this.configParser != null)
+            {
+                this.UpdateMemoryMappedFileFromConfiguration();
+            }
+
             await Task.Delay(ConfigurationUpdatePeriodMilliSeconds, cancellationToken).ConfigureAwait(false);
         }
     }
 
     private void UpdateMemoryMappedFileFromConfiguration()
     {
-        if (this.configParser.TryGetConfiguration(out string? newLogDirectory, out int fileSizeInKB, out EventLevel newEventLevel))
+        if (this.configParser!.TryGetConfiguration(out string? newLogDirectory, out int fileSizeInKB, out EventLevel newEventLevel))
         {
             int newFileSize = fileSizeInKB * 1024;
             if (!newLogDirectory.Equals(this.logDirectory) || this.logFileSize != newFileSize)
