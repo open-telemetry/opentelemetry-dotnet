@@ -148,10 +148,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
             span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpanContext, this.attributes, this.links, this.explicitStartTime ?? default);
         }
 
-        if (span == null)
-        {
-            span = this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanContext), this.attributes, null, this.explicitStartTime ?? default);
-        }
+        span ??= this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanContext), this.attributes, null, this.explicitStartTime ?? default);
 
         if (this.error)
         {
