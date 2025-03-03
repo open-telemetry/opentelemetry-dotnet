@@ -132,7 +132,7 @@ public class TracerShimTests
         AssertOpenTracerSpanContextEqual(spanContextShim, extractedSpanContext!);
     }
 
-    private static void AssertOpenTracerSpanContextEqual(ISpanContext source, ISpanContext target)
+    private static void AssertOpenTracerSpanContextEqual(SpanContextShim source, ISpanContext target)
     {
         Assert.Equal(source.TraceId, target.TraceId);
         Assert.Equal(source.SpanId, target.SpanId);
