@@ -132,7 +132,7 @@ public class SpanBuilderShimTests
 
         Assert.NotNull(spanShim.Span.Activity);
         Assert.Equal("foo", spanShim.Span.Activity.OperationName);
-        Assert.Contains(spanShim.Context.TraceId, spanShim.Span.Activity.TraceId.ToHexString());
+        Assert.Contains(spanShim.Context.TraceId, spanShim.Span.Activity.TraceId.ToHexString(), StringComparison.Ordinal);
 
         // TODO: Check for multi level parenting
     }
@@ -191,7 +191,7 @@ public class SpanBuilderShimTests
         var spanShim = (SpanShim)shim.Start();
         Assert.NotNull(spanShim.Span.Activity);
         Assert.Equal("foo", spanShim.Span.Activity.OperationName);
-        Assert.Contains(spanContext1.TraceId, spanShim.Span.Activity.ParentId);
+        Assert.Contains(spanContext1.TraceId, spanShim.Span.Activity.ParentId, StringComparison.Ordinal);
         Assert.Equal(spanContext2.SpanId, spanShim.Span.Activity.Links.First().Context.SpanId.ToHexString());
     }
 
