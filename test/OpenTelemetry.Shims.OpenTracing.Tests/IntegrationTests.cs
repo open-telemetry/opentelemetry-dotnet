@@ -99,7 +99,7 @@ public class IntegrationTests
         }
     }
 
-    private class TestSampler : Sampler
+    private sealed class TestSampler : Sampler
     {
         private readonly Func<SamplingParameters, SamplingDecision> shouldSampleDelegate;
 

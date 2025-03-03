@@ -144,7 +144,7 @@ public class TracerShimTests
     /// Simple ITextMap implementation used for the inject/extract tests.
     /// </summary>
     /// <seealso cref="OpenTracing.Propagation.ITextMap" />
-    private class TextMapCarrier : ITextMap
+    private sealed class TextMapCarrier : ITextMap
     {
         private readonly Dictionary<string, string> map = new();
 
