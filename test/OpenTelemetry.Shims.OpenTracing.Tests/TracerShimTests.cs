@@ -159,22 +159,4 @@ public class TracerShimTests
 
         IEnumerator IEnumerable.GetEnumerator() => this.map.GetEnumerator();
     }
-
-    /// <summary>
-    /// Simple IBinary implementation used for the inject/extract tests.
-    /// </summary>
-    /// <seealso cref="OpenTracing.Propagation.IBinary" />
-    private class BinaryCarrier : IBinary
-    {
-        private readonly MemoryStream carrierStream = new();
-
-        public MemoryStream Get() => this.carrierStream;
-
-        public void Set(MemoryStream stream)
-        {
-            this.carrierStream.SetLength(stream.Length);
-            this.carrierStream.Seek(0, SeekOrigin.Begin);
-            stream.CopyTo(this.carrierStream, (int)this.carrierStream.Length);
-        }
-    }
 }
