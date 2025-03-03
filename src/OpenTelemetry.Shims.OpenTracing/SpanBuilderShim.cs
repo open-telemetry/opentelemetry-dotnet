@@ -27,7 +27,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     /// <summary>
     /// The OpenTelemetry links. These correspond loosely to OpenTracing references.
     /// </summary>
-    private readonly List<Link> links = new();
+    private readonly List<Link> links = [];
 
     /// <summary>
     /// The OpenTelemetry attributes. These correspond to OpenTracing Tags.
