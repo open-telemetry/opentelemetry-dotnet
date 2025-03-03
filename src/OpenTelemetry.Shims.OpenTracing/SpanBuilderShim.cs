@@ -65,7 +65,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
         this.ScopeManager = new ScopeManagerShim();
     }
 
-    private IScopeManager ScopeManager { get; }
+    private ScopeManagerShim ScopeManager { get; }
 
     private bool ParentSet => this.parentSpan != null || this.parentSpanContext.IsValid;
 

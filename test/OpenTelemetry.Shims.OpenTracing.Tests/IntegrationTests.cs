@@ -55,7 +55,7 @@ public class IntegrationTests
                 b => b.AddSource(ChildActivitySource))
             .Build();
 
-        ITracer otTracer = new TracerShim(
+        var otTracer = new TracerShim(
             tracerProvider,
             Propagators.DefaultTextMapPropagator);
 
