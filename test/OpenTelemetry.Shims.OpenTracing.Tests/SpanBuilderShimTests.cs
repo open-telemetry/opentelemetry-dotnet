@@ -94,8 +94,8 @@ public class SpanBuilderShimTests
     public void Start_ActivityOperationRootSpanChecks()
     {
         // Create an activity
-        using var activity = new Activity("foo")
-            .SetIdFormat(ActivityIdFormat.W3C)
+        using var activity = new Activity("foo");
+        activity.SetIdFormat(ActivityIdFormat.W3C)
             .Start();
 
         // matching root operation name
