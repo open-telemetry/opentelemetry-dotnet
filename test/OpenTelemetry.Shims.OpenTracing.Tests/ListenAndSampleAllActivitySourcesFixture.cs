@@ -5,7 +5,9 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests;
 
+#pragma warning disable CA1515
 public sealed class ListenAndSampleAllActivitySourcesFixture : IDisposable
+#pragma warning restore CA1515
 {
     private readonly ActivityListener listener;
 

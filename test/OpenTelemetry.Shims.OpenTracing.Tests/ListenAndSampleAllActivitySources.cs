@@ -6,4 +6,6 @@ using Xunit;
 namespace OpenTelemetry.Shims.OpenTracing.Tests;
 
 [CollectionDefinition(nameof(ListenAndSampleAllActivitySources))]
+#pragma warning disable CA1515
 public sealed class ListenAndSampleAllActivitySources : ICollectionFixture<ListenAndSampleAllActivitySourcesFixture>;
+#pragma warning restore CA1515
