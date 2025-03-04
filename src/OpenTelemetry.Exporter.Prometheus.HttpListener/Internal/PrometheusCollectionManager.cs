@@ -148,6 +148,22 @@ internal sealed class PrometheusCollectionManager
         Interlocked.Decrement(ref this.readerCount);
     }
 
+    private static bool IncreaseBufferSize(ref byte[] buffer)
+    {
+        var newBufferSize = buffer.Length * 2;
+
+        if (newBufferSize > 100 * 1024 * 1024)
+        {
+            return false;
+        }
+
+        var newBuffer = new byte[newBufferSize];
+        buffer.CopyTo(newBuffer, 0);
+        buffer = newBuffer;
+
+        return true;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void EnterGlobalLock()
     {
@@ -230,7 +246,7 @@ internal sealed class PrometheusCollectionManager
                             }
                             catch (IndexOutOfRangeException)
                             {
-                                if (!this.IncreaseBufferSize(ref buffer))
+                                if (!IncreaseBufferSize(ref buffer))
                                 {
                                     // there are two cases we might run into the following condition:
                                     // 1. we have many metrics to be exported - in this case we probably want
@@ -268,7 +284,7 @@ internal sealed class PrometheusCollectionManager
                     }
                     catch (IndexOutOfRangeException)
                     {
-                        if (!this.IncreaseBufferSize(ref buffer))
+                        if (!IncreaseBufferSize(ref buffer))
                         {
                             throw;
                         }
@@ -285,7 +301,7 @@ internal sealed class PrometheusCollectionManager
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    if (!this.IncreaseBufferSize(ref buffer))
+                    if (!IncreaseBufferSize(ref buffer))
                     {
                         throw;
                     }
@@ -332,7 +348,7 @@ internal sealed class PrometheusCollectionManager
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    if (!this.IncreaseBufferSize(ref buffer))
+                    if (!IncreaseBufferSize(ref buffer))
                     {
                         throw;
                     }
@@ -341,22 +357,6 @@ internal sealed class PrometheusCollectionManager
         }
 
         return this.targetInfoBufferLength;
-    }
-
-    private bool IncreaseBufferSize(ref byte[] buffer)
-    {
-        var newBufferSize = buffer.Length * 2;
-
-        if (newBufferSize > 100 * 1024 * 1024)
-        {
-            return false;
-        }
-
-        var newBuffer = new byte[newBufferSize];
-        buffer.CopyTo(newBuffer, 0);
-        buffer = newBuffer;
-
-        return true;
     }
 
     private PrometheusMetric GetPrometheusMetric(Metric metric)
