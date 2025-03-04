@@ -17,7 +17,7 @@ public class MetricSnapshot
         this.instrumentIdentity = metric.InstrumentIdentity;
         this.MetricType = metric.MetricType;
 
-        List<MetricPoint> metricPoints = new();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var metricPoint in metric.GetMetricPoints())
         {
             metricPoints.Add(metricPoint.Copy());
