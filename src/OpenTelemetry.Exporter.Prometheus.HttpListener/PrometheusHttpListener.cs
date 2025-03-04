@@ -172,7 +172,11 @@ internal sealed class PrometheusHttpListener : IDisposable
                         ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
                         : "text/plain; charset=utf-8; version=0.0.4";
 
-                    await context.Response.OutputStream.WriteAsync(dataView.Array!, 0, dataView.Count).ConfigureAwait(false);
+#if NET
+                    await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count)).ConfigureAwait(false);
+#else
+                    await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count).ConfigureAwait(false);
+#endif
                 }
                 else
                 {
