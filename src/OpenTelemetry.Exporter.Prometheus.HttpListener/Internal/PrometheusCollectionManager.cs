@@ -68,10 +68,7 @@ internal sealed class PrometheusCollectionManager
         // If a collection is already running, return a task to wait on the result.
         if (this.collectionRunning)
         {
-            if (this.collectionTcs == null)
-            {
-                this.collectionTcs = new TaskCompletionSource<CollectionResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-            }
+            this.collectionTcs ??= new TaskCompletionSource<CollectionResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             Interlocked.Increment(ref this.readerCount);
             this.ExitGlobalLock();
