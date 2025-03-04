@@ -156,6 +156,10 @@ dotnet_diagnostic.IDE0005.severity = warning
 # RS0041: Public members should not use oblivious types
 dotnet_diagnostic.RS0041.severity = suggestion
 
+[*Tests.cs]
+# CA1515: Disable making types internal for Tests classes. It is required by xunit
+dotnet_diagnostic.CA1515.severity = none
+
 [**/obj/**.cs]
 generated_code = true
 

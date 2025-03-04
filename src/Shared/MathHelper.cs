@@ -12,8 +12,8 @@ namespace OpenTelemetry.Internal;
 internal static class MathHelper
 {
     // https://en.wikipedia.org/wiki/Leading_zero
-    private static readonly byte[] LeadingZeroLookupTable = new byte[]
-    {
+    private static readonly byte[] LeadingZeroLookupTable =
+    [
         8, 7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -29,8 +29,8 @@ internal static class MathHelper
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    };
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int LeadingZero8(byte value)

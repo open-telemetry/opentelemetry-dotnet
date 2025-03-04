@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.11.2
+
+Released 2025-Mar-04
+
+* Revert optimize performance of `TraceContextPropagator.Extract` introduced
+  in #5749 to resolve #6158.
+  ([#6161](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6161))
+
 ## 1.11.1
 
 Released 2025-Jan-22

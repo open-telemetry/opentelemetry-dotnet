@@ -6,7 +6,7 @@ using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Api.ProviderBuilderExtensions.Tests;
 
-public sealed class TestMeterProviderBuilder : MeterProviderBuilder, IMeterProviderBuilder, IDisposable
+internal sealed class TestMeterProviderBuilder : MeterProviderBuilder, IMeterProviderBuilder, IDisposable
 {
     public TestMeterProviderBuilder()
     {
@@ -17,9 +17,9 @@ public sealed class TestMeterProviderBuilder : MeterProviderBuilder, IMeterProvi
 
     public ServiceProvider? ServiceProvider { get; private set; }
 
-    public List<string> Meters { get; } = new();
+    public List<string> Meters { get; } = [];
 
-    public List<object> Instrumentation { get; } = new();
+    public List<object> Instrumentation { get; } = [];
 
     public MeterProvider? Provider { get; private set; }
 

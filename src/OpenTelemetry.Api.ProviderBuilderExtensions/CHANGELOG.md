@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.11.2
+
+Released 2025-Mar-04
+
 ## 1.11.1
 
 Released 2025-Jan-22

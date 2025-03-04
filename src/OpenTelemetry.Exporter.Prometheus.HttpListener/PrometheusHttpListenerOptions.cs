@@ -12,7 +12,7 @@ public class PrometheusHttpListenerOptions
 {
     internal const string DefaultScrapeEndpointPath = "/metrics";
 
-    private IReadOnlyCollection<string> uriPrefixes = new[] { "http://localhost:9464/" };
+    private IReadOnlyCollection<string> uriPrefixes = ["http://localhost:9464/"];
 
     /// <summary>
     /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
