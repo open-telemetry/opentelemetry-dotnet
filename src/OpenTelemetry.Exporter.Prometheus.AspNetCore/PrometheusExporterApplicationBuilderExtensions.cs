@@ -99,6 +99,8 @@ public static class PrometheusExporterApplicationBuilderExtensions
         Action<IApplicationBuilder>? configureBranchedPipeline,
         string? optionsName)
     {
+        Guard.ThrowIfNull(app);
+
         // Note: Order is important here. MeterProvider is accessed before
         // GetOptions<PrometheusAspNetCoreOptions> so that any changes made to
         // PrometheusAspNetCoreOptions in deferred AddPrometheusExporter
