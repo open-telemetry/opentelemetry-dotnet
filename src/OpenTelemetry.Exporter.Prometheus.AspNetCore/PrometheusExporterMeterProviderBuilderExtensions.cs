@@ -64,7 +64,9 @@ public static class PrometheusExporterMeterProviderBuilderExtensions
 
     private static MetricReader BuildPrometheusExporterMetricReader(PrometheusAspNetCoreOptions options)
     {
+#pragma warning disable CA2000
         var exporter = new PrometheusExporter(options.ExporterOptions);
+#pragma warning restore CA2000
 
         return new BaseExportingMetricReader(exporter)
         {
