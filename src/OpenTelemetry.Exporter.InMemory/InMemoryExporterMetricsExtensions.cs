@@ -147,7 +147,7 @@ public static class InMemoryExporterMetricsExtensions
         });
     }
 
-    private static MetricReader BuildInMemoryExporterMetricReader(
+    private static PeriodicExportingMetricReader BuildInMemoryExporterMetricReader(
         ICollection<Metric> exportedItems,
         MetricReaderOptions metricReaderOptions)
     {
@@ -160,7 +160,7 @@ public static class InMemoryExporterMetricsExtensions
             DefaultExportTimeoutMilliseconds);
     }
 
-    private static MetricReader BuildInMemoryExporterMetricReader(
+    private static PeriodicExportingMetricReader BuildInMemoryExporterMetricReader(
         ICollection<MetricSnapshot> exportedItems,
         MetricReaderOptions metricReaderOptions)
     {
