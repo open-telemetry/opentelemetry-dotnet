@@ -16,10 +16,10 @@ internal sealed class PrometheusMetric
        UpDownCounter becomes gauge
      * https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#otlp-metric-points-to-prometheus
     */
-    private static readonly PrometheusType[] MetricTypes = new PrometheusType[]
-    {
+    private static readonly PrometheusType[] MetricTypes =
+    [
         PrometheusType.Untyped, PrometheusType.Counter, PrometheusType.Gauge, PrometheusType.Summary, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Gauge,
-    };
+    ];
 
     public PrometheusMetric(string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters)
     {
