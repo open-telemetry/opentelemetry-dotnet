@@ -323,11 +323,11 @@ internal sealed class PrometheusCollectionManager
         {
             if (this.exporter.OpenMetricsRequested)
             {
-                this.previousOpenMetricsDataView = new ArraySegment<byte>(Array.Empty<byte>(), 0, 0);
+                this.previousOpenMetricsDataView = new ArraySegment<byte>([], 0, 0);
             }
             else
             {
-                this.previousPlainTextDataView = new ArraySegment<byte>(Array.Empty<byte>(), 0, 0);
+                this.previousPlainTextDataView = new ArraySegment<byte>([], 0, 0);
             }
 
             return ExportResult.Failure;
