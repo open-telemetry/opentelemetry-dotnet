@@ -62,7 +62,7 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
         });
     }
 
-    private static MetricReader BuildPrometheusHttpListenerMetricReader(
+    private static BaseExportingMetricReader BuildPrometheusHttpListenerMetricReader(
         PrometheusHttpListenerOptions options)
     {
         var exporter = new PrometheusExporter(new PrometheusExporterOptions
@@ -78,7 +78,9 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
 
         try
         {
+#pragma warning disable CA2000
             var listener = new PrometheusHttpListener(exporter, options);
+#pragma warning restore CA2000
             exporter.OnDispose = listener.Dispose;
             listener.Start();
         }
