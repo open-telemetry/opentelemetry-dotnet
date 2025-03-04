@@ -114,7 +114,7 @@ public static class PrometheusExporterApplicationBuilderExtensions
                 path = options.ScrapeEndpointPath ?? PrometheusAspNetCoreOptions.DefaultScrapeEndpointPath;
             }
 
-            if (!path.StartsWith("/"))
+            if (!path.StartsWith('/'))
             {
                 path = $"/{path}";
             }
