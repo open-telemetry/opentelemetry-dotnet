@@ -127,7 +127,7 @@ internal sealed class PrometheusMetric
 
         return sb?.ToString() ?? metricName;
 
-        static StringBuilder CreateStringBuilder(string name) => new StringBuilder(name.Length);
+        static StringBuilder CreateStringBuilder(string name) => new(name.Length);
     }
 
     internal static string RemoveAnnotations(string unit)
