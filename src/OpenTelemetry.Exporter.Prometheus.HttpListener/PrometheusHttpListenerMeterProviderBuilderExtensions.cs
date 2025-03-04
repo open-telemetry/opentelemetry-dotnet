@@ -79,7 +79,7 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
         try
         {
             var listener = new PrometheusHttpListener(exporter, options);
-            exporter.OnDispose = () => listener.Dispose();
+            exporter.OnDispose = listener.Dispose;
             listener.Start();
         }
         catch (Exception ex)
