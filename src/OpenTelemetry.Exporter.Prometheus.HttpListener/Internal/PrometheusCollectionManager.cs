@@ -34,8 +34,8 @@ internal sealed class PrometheusCollectionManager
         this.exporter = exporter;
         this.scrapeResponseCacheDurationMilliseconds = this.exporter.ScrapeResponseCacheDurationMilliseconds;
         this.onCollectRef = this.OnCollect;
-        this.metricsCache = new Dictionary<Metric, PrometheusMetric>();
-        this.scopes = new HashSet<string>();
+        this.metricsCache = [];
+        this.scopes = [];
     }
 
 #if NET
