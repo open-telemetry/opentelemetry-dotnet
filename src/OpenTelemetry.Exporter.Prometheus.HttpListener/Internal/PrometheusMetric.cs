@@ -40,7 +40,7 @@ internal sealed class PrometheusMetric
             // [OpenMetrics UNIT metadata](https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#metricfamily)
             // and as a suffix to the metric name. The unit suffix comes before any type-specific suffixes.
             // https://github.com/open-telemetry/opentelemetry-specification/blob/3dfb383fe583e3b74a2365c5a1d90256b273ee76/specification/compatibility/prometheus_and_openmetrics.md#metric-metadata-1
-            if (!sanitizedName.EndsWith(sanitizedUnit))
+            if (!sanitizedName.EndsWith(sanitizedUnit, StringComparison.Ordinal))
             {
                 sanitizedName += $"_{sanitizedUnit}";
                 openMetricsName += $"_{sanitizedUnit}";
@@ -51,14 +51,14 @@ internal sealed class PrometheusMetric
         // Exporters SHOULD provide a configuration option to disable the addition of `_total` suffixes.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L286
         // Note that we no longer append '_ratio' for units that are '1', see: https://github.com/open-telemetry/opentelemetry-specification/issues/4058
-        if (type == PrometheusType.Counter && !sanitizedName.EndsWith("_total") && !disableTotalNameSuffixForCounters)
+        if (type == PrometheusType.Counter && !sanitizedName.EndsWith("_total", StringComparison.Ordinal) && !disableTotalNameSuffixForCounters)
         {
             sanitizedName += "_total";
         }
 
         // For counters requested using OpenMetrics format, the MetricFamily name MUST be suffixed with '_total', regardless of the setting to disable the 'total' suffix.
         // https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#counter-1
-        if (type == PrometheusType.Counter && !openMetricsName.EndsWith("_total"))
+        if (type == PrometheusType.Counter && !openMetricsName.EndsWith("_total", StringComparison.Ordinal))
         {
             openMetricsName += "_total";
         }
@@ -179,7 +179,7 @@ internal sealed class PrometheusMetric
 
     private static string SanitizeOpenMetricsName(string metricName)
     {
-        if (metricName.EndsWith("_total"))
+        if (metricName.EndsWith("_total", StringComparison.Ordinal))
         {
             return metricName.Substring(0, metricName.Length - 6);
         }
