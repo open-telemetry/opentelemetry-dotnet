@@ -113,7 +113,7 @@ public sealed class PrometheusExporterMiddlewareTests
             {
                 if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string>? headers))
                 {
-                    headers = Array.Empty<string>();
+                    headers = [];
                 }
 
                 Assert.Equal("true", headers.FirstOrDefault());
@@ -140,7 +140,7 @@ public sealed class PrometheusExporterMiddlewareTests
             {
                 if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string>? headers))
                 {
-                    headers = Array.Empty<string>();
+                    headers = [];
                 }
 
                 Assert.Equal("true", headers.FirstOrDefault());
