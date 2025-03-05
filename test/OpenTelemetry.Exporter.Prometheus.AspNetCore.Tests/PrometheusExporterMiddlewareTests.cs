@@ -373,7 +373,7 @@ public sealed class PrometheusExporterMiddlewareTests
         string acceptHeader = "application/openmetrics-text",
         KeyValuePair<string, object?>[]? meterTags = null)
     {
-        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
+        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text", StringComparison.Ordinal);
 
         using var host = await StartTestHostAsync(configure, configureServices, registerMeterProvider, configureOptions);
 
