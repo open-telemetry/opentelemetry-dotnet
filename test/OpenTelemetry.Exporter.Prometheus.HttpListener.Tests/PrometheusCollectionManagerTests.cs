@@ -60,7 +60,7 @@ public sealed class PrometheusCollectionManagerTests
                         return new Response
                         {
                             CollectionResponse = response,
-                            ViewPayload = openMetricsRequested ? response.OpenMetricsView.ToArray() : response.PlainTextView.ToArray(),
+                            ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
                         };
                     }
                     finally
@@ -124,7 +124,7 @@ public sealed class PrometheusCollectionManagerTests
                         return new Response
                         {
                             CollectionResponse = response,
-                            ViewPayload = openMetricsRequested ? response.OpenMetricsView.ToArray() : response.PlainTextView.ToArray(),
+                            ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
                         };
                     }
                     finally
