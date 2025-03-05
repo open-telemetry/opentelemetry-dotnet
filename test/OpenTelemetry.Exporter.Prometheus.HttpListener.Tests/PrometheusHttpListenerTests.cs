@@ -253,12 +253,7 @@ public class PrometheusHttpListenerTests
 
         address = generatedAddress!;
 
-        if (provider == null)
-        {
-            throw new InvalidOperationException("HttpListener could not be started");
-        }
-
-        return provider;
+        return provider ?? throw new InvalidOperationException("HttpListener could not be started");
     }
 
     private static Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text", KeyValuePair<string, object?>[]? meterTags = null)
