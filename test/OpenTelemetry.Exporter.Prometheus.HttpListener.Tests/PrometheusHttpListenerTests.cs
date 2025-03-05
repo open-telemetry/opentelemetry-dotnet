@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Net;
 #if NETFRAMEWORK
 using System.Net.Http;
@@ -179,7 +180,7 @@ public class PrometheusHttpListenerTests
         var oneKb = new string('A', 1024);
         for (var x = 0; x < 8500; x++)
         {
-            attributes.Add(new KeyValuePair<string, object>(x.ToString(), oneKb));
+            attributes.Add(new KeyValuePair<string, object>(x.ToString(CultureInfo.InvariantCulture), oneKb));
         }
 
         var provider = BuildMeterProvider(meter, attributes, out var address);
