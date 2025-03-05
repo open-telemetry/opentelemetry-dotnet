@@ -263,7 +263,7 @@ public class PrometheusHttpListenerTests
 
     private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text", KeyValuePair<string, object?>[]? meterTags = null)
     {
-        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
+        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text", StringComparison.Ordinal);
 
         using var meter = new Meter(MeterName, MeterVersion, meterTags);
 
