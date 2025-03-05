@@ -48,7 +48,7 @@ public class PrometheusHttpListenerTests
     {
         Assert.Throws<ArgumentException>(() =>
         {
-            TestPrometheusHttpListenerUriPrefixOptions(new string[] { });
+            TestPrometheusHttpListenerUriPrefixOptions([]);
         });
     }
 
