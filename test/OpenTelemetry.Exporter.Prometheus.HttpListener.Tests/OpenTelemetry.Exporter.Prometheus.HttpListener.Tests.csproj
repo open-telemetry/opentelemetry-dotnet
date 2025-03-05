@@ -4,9 +4,10 @@
     <Description>Unit test project for Prometheus Exporter HttpListener for OpenTelemetry</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);PROMETHEUS_HTTP_LISTENER</DefineConstants>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
-  <ItemGroup>
+	<ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
