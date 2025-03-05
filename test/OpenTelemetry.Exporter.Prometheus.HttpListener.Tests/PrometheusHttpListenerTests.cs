@@ -202,7 +202,7 @@ public class PrometheusHttpListenerTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var content = await response.Content.ReadAsStringAsync();
-        Assert.Contains("counter_double_999", content);
+        Assert.Contains("counter_double_999", content, StringComparison.Ordinal);
         Assert.DoesNotContain('\0', content);
 
         provider.Dispose();
