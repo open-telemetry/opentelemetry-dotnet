@@ -300,7 +300,7 @@ public class PrometheusHttpListenerTests
                 Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType!.ToString());
             }
 
-            var additionalTags = meterTags != null && meterTags.Any()
+            var additionalTags = meterTags is { Length: > 0 }
                 ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}='{x.Value}'"))},"
                 : string.Empty;
 
