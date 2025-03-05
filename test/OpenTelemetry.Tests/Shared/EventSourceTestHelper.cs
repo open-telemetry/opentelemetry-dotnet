@@ -128,6 +128,6 @@ internal static class EventSourceTestHelper
     private static IEnumerable<MethodInfo> GetEventMethods(EventSource eventSource)
     {
         MethodInfo[] methods = eventSource.GetType().GetMethods();
-        return methods.Where(m => m.GetCustomAttributes(typeof(EventAttribute), false).Any());
+        return methods.Where(m => m.GetCustomAttributes(typeof(EventAttribute), false).Length > 0);
     }
 }
