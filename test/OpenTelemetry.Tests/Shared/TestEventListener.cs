@@ -8,7 +8,7 @@ namespace OpenTelemetry.Tests;
 /// <summary>
 /// Event listener for testing event sources.
 /// </summary>
-internal class TestEventListener : EventListener
+internal sealed class TestEventListener : EventListener
 {
     /// <summary>Unique Id used to identify events from the test thread.</summary>
     private readonly Guid activityId;
