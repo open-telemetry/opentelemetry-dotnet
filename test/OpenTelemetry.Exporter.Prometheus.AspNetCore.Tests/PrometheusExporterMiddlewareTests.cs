@@ -3,6 +3,7 @@
 
 #if !NETFRAMEWORK
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
@@ -464,7 +465,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         Assert.True(matches.Count == 1, content);
 
-        var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty));
+        var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty, StringComparison.Ordinal), CultureInfo.InvariantCulture);
 
         Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp, $"{beginTimestamp} {timestamp} {endTimestamp}");
     }
