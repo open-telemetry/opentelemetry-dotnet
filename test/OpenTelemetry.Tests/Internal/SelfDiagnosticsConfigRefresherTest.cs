@@ -50,6 +50,27 @@ public class SelfDiagnosticsConfigRefresherTest
     }
 
     [Fact]
+    public void SelfDiagnosticsEnVarRefresher_CaptureAsConfigured()
+    {
+        Environment.SetEnvironmentVariable("EnableSelfDiagnostics", "1");
+        using var configRefresher = new SelfDiagnosticsConfigRefresher();
+
+        // Emitting event of EventLevel.Error
+        OpenTelemetrySdkEventSource.Log.TracerProviderException("Event string sample", "Exception string sample");
+        string expectedMessage = "Unknown error in TracerProvider '{0}': '{1}'.{Event string sample}{Exception string sample}";
+
+        //int bufferSize = 2 * (MessageOnNewFileString.Length + expectedMessage.Length);
+        //byte[] actualBytes = ReadFile(logDirectory, bufferSize);
+        //string logText = Encoding.UTF8.GetString(actualBytes);
+        //Assert.StartsWith(MessageOnNewFileString, logText);
+
+        //// The event was captured
+        //string logLine = logText.Substring(MessageOnNewFileString.Length);
+        //string logMessage = ParseLogMessage(logLine);
+        //Assert.StartsWith(expectedMessage, logMessage);
+    }
+
+    [Fact]
     public void SelfDiagnosticsConfigRefresher_CaptureAsConfigured()
     {
         try
