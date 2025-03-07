@@ -198,7 +198,7 @@ public class PrometheusHttpListenerTests
             client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
-        using var response = await client.GetAsync($"{address}metrics");
+        using var response = await client.GetAsync(new Uri($"{address}metrics"));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var content = await response.Content.ReadAsStringAsync();
@@ -284,7 +284,7 @@ public class PrometheusHttpListenerTests
             client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
-        using var response = await client.GetAsync($"{address}metrics");
+        using var response = await client.GetAsync(new Uri($"{address}metrics"));
 
         if (!skipMetrics)
         {
