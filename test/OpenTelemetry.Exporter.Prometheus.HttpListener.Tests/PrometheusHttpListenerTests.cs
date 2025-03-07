@@ -114,7 +114,6 @@ public class PrometheusHttpListenerTests
     {
         Random random = new Random();
         int retryAttempts = 5;
-        int port = 0;
         string? address = null;
 
         PrometheusExporter? exporter = null;
@@ -123,7 +122,9 @@ public class PrometheusHttpListenerTests
         // Step 1: Start a listener on a random port.
         while (retryAttempts-- != 0)
         {
-            port = random.Next(2000, 5000);
+#pragma warning disable CA5394
+            int port = random.Next(2000, 5000);
+#pragma warning restore CA5394
             address = $"http://localhost:{port}/";
 
             try
@@ -223,13 +224,14 @@ public class PrometheusHttpListenerTests
     {
         Random random = new Random();
         int retryAttempts = 5;
-        int port = 0;
         string? generatedAddress = null;
         MeterProvider? provider = null;
 
         while (retryAttempts-- != 0)
         {
-            port = random.Next(2000, 5000);
+#pragma warning disable CA5394
+            int port = random.Next(2000, 5000);
+#pragma warning restore CA5394
             generatedAddress = $"http://localhost:{port}/";
 
             try
