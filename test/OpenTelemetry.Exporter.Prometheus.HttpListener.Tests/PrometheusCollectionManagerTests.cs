@@ -112,7 +112,7 @@ public sealed class PrometheusCollectionManagerTests
                 exporter.CollectionManager.ExitCollect();
             }
 
-            Thread.Sleep(exporter.ScrapeResponseCacheDurationMilliseconds);
+            await Task.Delay(exporter.ScrapeResponseCacheDurationMilliseconds);
 
             counter.Add(100);
 
