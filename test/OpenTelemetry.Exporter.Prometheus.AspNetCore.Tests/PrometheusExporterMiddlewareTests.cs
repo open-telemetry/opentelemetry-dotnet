@@ -315,7 +315,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var client = host.GetTestClient();
 
-        using var response = await client.GetAsync(new Uri("/metrics"));
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
         var text = await response.Content.ReadAsStringAsync();
 
         Assert.NotEmpty(text);
@@ -401,7 +401,7 @@ public sealed class PrometheusExporterMiddlewareTests
             client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
-        using var response = await client.GetAsync(new Uri(path));
+        using var response = await client.GetAsync(new Uri(path, UriKind.Relative));
 
         var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
