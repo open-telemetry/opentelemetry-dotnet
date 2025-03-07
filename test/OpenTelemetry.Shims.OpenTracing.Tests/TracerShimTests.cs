@@ -132,7 +132,7 @@ public class TracerShimTests
         AssertOpenTracerSpanContextEqual(spanContextShim, extractedSpanContext!);
     }
 
-    private static void AssertOpenTracerSpanContextEqual(ISpanContext source, ISpanContext target)
+    private static void AssertOpenTracerSpanContextEqual(SpanContextShim source, ISpanContext target)
     {
         Assert.Equal(source.TraceId, target.TraceId);
         Assert.Equal(source.SpanId, target.SpanId);
@@ -144,7 +144,7 @@ public class TracerShimTests
     /// Simple ITextMap implementation used for the inject/extract tests.
     /// </summary>
     /// <seealso cref="OpenTracing.Propagation.ITextMap" />
-    private class TextMapCarrier : ITextMap
+    private sealed class TextMapCarrier : ITextMap
     {
         private readonly Dictionary<string, string> map = new();
 
@@ -158,23 +158,5 @@ public class TracerShimTests
         }
 
         IEnumerator IEnumerable.GetEnumerator() => this.map.GetEnumerator();
-    }
-
-    /// <summary>
-    /// Simple IBinary implementation used for the inject/extract tests.
-    /// </summary>
-    /// <seealso cref="OpenTracing.Propagation.IBinary" />
-    private class BinaryCarrier : IBinary
-    {
-        private readonly MemoryStream carrierStream = new();
-
-        public MemoryStream Get() => this.carrierStream;
-
-        public void Set(MemoryStream stream)
-        {
-            this.carrierStream.SetLength(stream.Length);
-            this.carrierStream.Seek(0, SeekOrigin.Begin);
-            stream.CopyTo(this.carrierStream, (int)this.carrierStream.Length);
-        }
     }
 }
