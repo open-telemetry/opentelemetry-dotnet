@@ -22,10 +22,12 @@ public static class InMemoryExporterLoggingExtensions
         Guard.ThrowIfNull(loggerOptions);
         Guard.ThrowIfNull(exportedItems);
 
+#pragma warning disable CA2000
         var logExporter = BuildExporter(exportedItems);
 
         return loggerOptions.AddProcessor(
             new SimpleLogRecordExportProcessor(logExporter));
+#pragma warning restore CA2000
     }
 
     /// <summary>
@@ -41,10 +43,12 @@ public static class InMemoryExporterLoggingExtensions
         Guard.ThrowIfNull(loggerProviderBuilder);
         Guard.ThrowIfNull(exportedItems);
 
+#pragma warning disable CA2000
         var logExporter = BuildExporter(exportedItems);
 
         return loggerProviderBuilder.AddProcessor(
             new SimpleLogRecordExportProcessor(logExporter));
+#pragma warning restore CA2000
     }
 
     private static InMemoryExporter<LogRecord> BuildExporter(ICollection<LogRecord> exportedItems)

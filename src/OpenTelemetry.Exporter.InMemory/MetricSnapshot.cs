@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -14,10 +16,11 @@ public class MetricSnapshot
 
     public MetricSnapshot(Metric metric)
     {
+        Guard.ThrowIfNull(metric);
         this.instrumentIdentity = metric.InstrumentIdentity;
         this.MetricType = metric.MetricType;
 
-        List<MetricPoint> metricPoints = new();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var metricPoint in metric.GetMetricPoints())
         {
             metricPoints.Add(metricPoint.Copy());
