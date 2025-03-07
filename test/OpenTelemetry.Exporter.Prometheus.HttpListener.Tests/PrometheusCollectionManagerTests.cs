@@ -154,7 +154,7 @@ public sealed class PrometheusCollectionManagerTests
         }
     }
 
-    private class Response
+    private sealed class Response
     {
         public PrometheusCollectionManager.CollectionResponse CollectionResponse;
 
