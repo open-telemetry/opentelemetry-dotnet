@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.11.2
+
+Released 2025-Mar-04
+
 * Fixed a bug in .NET Framework gRPC export client where the default success
   export response was incorrectly marked as false, now changed to true, ensuring
   exports are correctly marked as successful.
@@ -15,6 +19,10 @@ Notes](../../RELEASENOTES.md).
 * Fixed an issues causing trace exports to fail when
   `Activity.StatusDescription` exceeds 127 bytes.
   ([#6119](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6119))
+
+* Fixed incorrect log serialization of attributes with null values, causing
+  some backends to reject logs.
+  ([#6149](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6149))
 
 ## 1.11.1
 

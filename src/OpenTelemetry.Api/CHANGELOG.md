@@ -6,10 +6,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Added a new overload for `TracerProvider.GetTracer` which accepts an optional
-  `IEnumerable<KeyValuePair<string, object?>>? tags` parameter, allowing
-  additional attributes to be associated with the `Tracer`.
-  ([#6137](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6137))
+## 1.11.2
+
+Released 2025-Mar-04
+
+* Revert optimize performance of `TraceContextPropagator.Extract` introduced
+  in #5749 to resolve [GHSA-8785-wc3w-h8q6](https://github.com/open-telemetry/opentelemetry-dotnet/security/advisories/GHSA-8785-wc3w-h8q6).
+  ([#6161](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6161))
 
 ## 1.11.1
 

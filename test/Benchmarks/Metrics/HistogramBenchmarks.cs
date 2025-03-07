@@ -46,7 +46,7 @@ public class HistogramBenchmarks
 {
     private const int MaxValue = 10000;
     private readonly Random random = new();
-    private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
+    private readonly string[] dimensionValues = ["DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10"];
     private Histogram<long>? histogram;
     private MeterProvider? meterProvider;
     private Meter? meter;

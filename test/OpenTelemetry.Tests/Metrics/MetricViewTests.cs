@@ -137,7 +137,7 @@ public class MetricViewTests : MetricTestsBase
         {
             var counter1 = meter1.CreateCounter<long>("counter1");
             counter1.Add(1);
-            Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 41));
+            Assert.Single(inMemoryEventListener.Events, e => e.EventId == 41);
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -559,7 +559,7 @@ public class MetricViewTests : MetricTestsBase
 
         index = 0;
         actualCount = 0;
-        expectedBucketCounts = new long[] { 5, 2, 0 };
+        expectedBucketCounts = [5, 2, 0];
         foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
         {
             Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
@@ -652,7 +652,7 @@ public class MetricViewTests : MetricTestsBase
 
             var index = 0;
             var actualCount = 0;
-            long[] expectedBucketCounts = new long[] { 2, 1, 0 };
+            long[] expectedBucketCounts = [2, 1, 0];
 
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
@@ -673,7 +673,7 @@ public class MetricViewTests : MetricTestsBase
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
         IReadOnlyList<long> adviceBoundaries = new List<long>() { 5, 10, 20 };
-        double[] viewBoundaries = new double[] { 10, 20 };
+        double[] viewBoundaries = [10, 20];
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder =>
         {
@@ -729,7 +729,7 @@ public class MetricViewTests : MetricTestsBase
 
         var index = 0;
         var actualCount = 0;
-        long[] expectedBucketCounts = useViewToOverride ? new long[] { 5, 2, 1 } : new long[] { 3, 2, 2, 1 };
+        long[] expectedBucketCounts = useViewToOverride ? [5, 2, 1] : [3, 2, 2, 1];
 
         foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
         {
@@ -867,12 +867,12 @@ public class MetricViewTests : MetricTestsBase
             .AddMeter(meter.Name)
             .AddView("FruitCounter", new MetricStreamConfiguration()
             {
-                TagKeys = new string[] { "name" },
+                TagKeys = ["name"],
                 Name = "NameOnly",
             })
             .AddView("FruitCounter", new MetricStreamConfiguration()
             {
-                TagKeys = new string[] { "size" },
+                TagKeys = ["size"],
                 Name = "SizeOnly",
             })
             .AddView("FruitCounter", new MetricStreamConfiguration()
@@ -1222,11 +1222,11 @@ public class MetricViewTests : MetricTestsBase
             .AddMeter(meter.Name)
             .AddView((instrument) =>
             {
-                return new MetricStreamConfiguration { TagKeys = new[] { "key1" } };
+                return new MetricStreamConfiguration { TagKeys = ["key1"] };
             })
             .AddView((instrument) =>
             {
-                return new MetricStreamConfiguration { TagKeys = new[] { "key2" } };
+                return new MetricStreamConfiguration { TagKeys = ["key2"] };
             })
             .AddInMemoryExporter(exportedItems));
 
@@ -1269,11 +1269,11 @@ public class MetricViewTests : MetricTestsBase
             .AddMeter(meter.Name)
             .AddView((instrument) =>
             {
-                return new MetricStreamConfiguration { TagKeys = new[] { "key1" } };
+                return new MetricStreamConfiguration { TagKeys = ["key1"] };
             })
             .AddView((instrument) =>
             {
-                return new MetricStreamConfiguration { TagKeys = new[] { "key1" } };
+                return new MetricStreamConfiguration { TagKeys = ["key1"] };
             })
             .AddInMemoryExporter(exportedItems));
 
@@ -1317,11 +1317,11 @@ public class MetricViewTests : MetricTestsBase
             .AddMeter(meter.Name)
             .AddView((instrument) =>
             {
-                return new ExplicitBucketHistogramConfiguration { Boundaries = new[] { 5.0, 10.0 } };
+                return new ExplicitBucketHistogramConfiguration { Boundaries = [5.0, 10.0] };
             })
             .AddView((instrument) =>
             {
-                return new ExplicitBucketHistogramConfiguration { Boundaries = new[] { 10.0, 20.0 } };
+                return new ExplicitBucketHistogramConfiguration { Boundaries = [10.0, 20.0] };
             })
             .AddInMemoryExporter(exportedItems));
 
@@ -1374,7 +1374,7 @@ public class MetricViewTests : MetricTestsBase
 
         index = 0;
         actualCount = 0;
-        expectedBucketCounts = new long[] { 0, 2, 0 };
+        expectedBucketCounts = [0, 2, 0];
         foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
         {
             Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
@@ -1396,7 +1396,7 @@ public class MetricViewTests : MetricTestsBase
             {
                 if (instrument.Name == "name")
                 {
-                    return new MetricStreamConfiguration { Name = "othername", TagKeys = new[] { "key1" } };
+                    return new MetricStreamConfiguration { Name = "othername", TagKeys = ["key1"] };
                 }
                 else
                 {

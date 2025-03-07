@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <OTelLatestStableVer>1.11.1</OTelLatestStableVer>
+    <OTelLatestStableVer>1.11.2</OTelLatestStableVer>
 
     <!--
         This is typically the latest annual release of .NET. Use this wherever
@@ -109,7 +109,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="[9.0.0,)" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="[17.11.0,18.0.0)" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="[17.13.0,18.0.0)" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="[8.0.0,9.0)" />
     <PackageVersion Include="MinVer" Version="[5.0.0,6.0)" />
     <PackageVersion Include="NuGet.Versioning" Version="6.11.0" />
@@ -121,7 +121,7 @@
     <PackageVersion Include="StyleCop.Analyzers" Version="[1.2.0-beta.556,2.0)" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="[6.7.3,)" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageVersion Include="xunit" Version="[2.9.0,3.0)" />
+    <PackageVersion Include="xunit" Version="[2.9.3,3.0)" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="[2.8.2,3.0)" />
   </ItemGroup>
 

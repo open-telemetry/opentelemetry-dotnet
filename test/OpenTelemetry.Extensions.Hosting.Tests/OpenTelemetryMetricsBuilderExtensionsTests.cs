@@ -75,7 +75,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         var source = new MemoryConfigurationSource();
         var memory = new MemoryConfigurationProvider(source);
-        var configuration = new ConfigurationRoot(new[] { memory });
+        var configuration = new ConfigurationRoot([memory]);
 
         using var host = MetricTestsBase.BuildHost(
             useWithMetricsStyle,
@@ -167,7 +167,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         var source = new MemoryConfigurationSource();
         var memory = new MemoryConfigurationProvider(source);
         memory.Set($"Metrics:EnabledMetrics:{meter.Name}:Default", "true");
-        var configuration = new ConfigurationRoot(new[] { memory });
+        var configuration = new ConfigurationRoot([memory]);
 
         using var host = MetricTestsBase.BuildHost(
             useWithMetricsStyle,
