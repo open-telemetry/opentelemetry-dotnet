@@ -64,25 +64,25 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest();
+        await RunPrometheusExporterHttpServerIntegrationTest();
     }
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoMetrics()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
+        await RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
     }
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty);
+        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty);
     }
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_UseOpenMetricsVersionHeader()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
+        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class PrometheusHttpListenerTests
             new("meter2", "value2"),
         };
 
-        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty, meterTags: tags);
+        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty, meterTags: tags);
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public class PrometheusHttpListenerTests
             new("meter2", "value2"),
         };
 
-        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0", meterTags: tags);
+        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0", meterTags: tags);
     }
 
     [Fact]
