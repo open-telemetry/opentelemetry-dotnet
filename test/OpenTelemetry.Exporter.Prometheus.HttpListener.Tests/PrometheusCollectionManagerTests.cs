@@ -112,7 +112,9 @@ public sealed class PrometheusCollectionManagerTests
                 exporter.CollectionManager.ExitCollect();
             }
 
-            await Task.Delay(exporter.ScrapeResponseCacheDurationMilliseconds);
+#pragma warning disable CA1849
+            Thread.Sleep(exporter.ScrapeResponseCacheDurationMilliseconds);
+#pragma warning restore CA1849
 
             counter.Add(100);
 
