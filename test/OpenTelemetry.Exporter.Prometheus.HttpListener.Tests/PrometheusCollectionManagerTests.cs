@@ -31,7 +31,9 @@ public sealed class PrometheusCollectionManagerTests
 #endif
             .Build())
         {
+#pragma warning disable CA2000
             if (!provider.TryFindExporter(out PrometheusExporter? exporter))
+#pragma warning restore CA2000
             {
                 throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
             }
@@ -60,7 +62,7 @@ public sealed class PrometheusCollectionManagerTests
                         return new Response
                         {
                             CollectionResponse = response,
-                            ViewPayload = openMetricsRequested ? response.OpenMetricsView.ToArray() : response.PlainTextView.ToArray(),
+                            ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
                         };
                     }
                     finally
@@ -110,7 +112,9 @@ public sealed class PrometheusCollectionManagerTests
                 exporter.CollectionManager.ExitCollect();
             }
 
+#pragma warning disable CA1849
             Thread.Sleep(exporter.ScrapeResponseCacheDurationMilliseconds);
+#pragma warning restore CA1849
 
             counter.Add(100);
 
@@ -124,7 +128,7 @@ public sealed class PrometheusCollectionManagerTests
                         return new Response
                         {
                             CollectionResponse = response,
-                            ViewPayload = openMetricsRequested ? response.OpenMetricsView.ToArray() : response.PlainTextView.ToArray(),
+                            ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
                         };
                     }
                     finally
@@ -152,7 +156,7 @@ public sealed class PrometheusCollectionManagerTests
         }
     }
 
-    private class Response
+    private sealed class Response
     {
         public PrometheusCollectionManager.CollectionResponse CollectionResponse;
 

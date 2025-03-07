@@ -160,6 +160,9 @@ dotnet_diagnostic.RS0041.severity = suggestion
 # CA1515: Disable making types internal for Tests classes. It is required by xunit
 dotnet_diagnostic.CA1515.severity = none
 
+# CA2007: Disable Consider calling ConfigureAwait on the awaited task. It is not working with xunit
+dotnet_diagnostic.CA2007.severity = none
+
 [**/obj/**.cs]
 generated_code = true
 

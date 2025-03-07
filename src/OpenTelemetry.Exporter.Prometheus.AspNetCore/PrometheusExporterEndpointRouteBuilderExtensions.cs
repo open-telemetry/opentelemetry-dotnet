@@ -69,6 +69,8 @@ public static class PrometheusExporterEndpointRouteBuilderExtensions
         Action<IApplicationBuilder>? configureBranchedPipeline,
         string? optionsName)
     {
+        Guard.ThrowIfNull(endpoints);
+
         var builder = endpoints.CreateApplicationBuilder();
 
         // Note: Order is important here. MeterProvider is accessed before
@@ -84,7 +86,7 @@ public static class PrometheusExporterEndpointRouteBuilderExtensions
             path = options.ScrapeEndpointPath ?? PrometheusAspNetCoreOptions.DefaultScrapeEndpointPath;
         }
 
-        if (!path.StartsWith("/"))
+        if (!path.StartsWith('/'))
         {
             path = $"/{path}";
         }

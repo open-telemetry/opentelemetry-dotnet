@@ -8,7 +8,7 @@ namespace OpenTelemetry.Tests;
 /// <summary>
 /// Event listener for testing event sources.
 /// </summary>
-internal class TestEventListener : EventListener
+internal sealed class TestEventListener : EventListener
 {
     /// <summary>Unique Id used to identify events from the test thread.</summary>
     private readonly Guid activityId;
@@ -64,6 +64,12 @@ internal class TestEventListener : EventListener
     public void ClearMessages()
     {
         this.events.Clear();
+    }
+
+    public override void Dispose()
+    {
+        this.eventWritten.Dispose();
+        base.Dispose();
     }
 
     /// <summary>Handler for event source writes.</summary>

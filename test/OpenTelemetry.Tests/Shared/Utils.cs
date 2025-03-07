@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Tests;
 
-internal class Utils
+internal static class Utils
 {
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static string GetCurrentMethodName()
