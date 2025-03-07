@@ -66,6 +66,12 @@ internal sealed class TestEventListener : EventListener
         this.events.Clear();
     }
 
+    public override void Dispose()
+    {
+        this.eventWritten.Dispose();
+        base.Dispose();
+    }
+
     /// <summary>Handler for event source writes.</summary>
     /// <param name="eventData">The event data that was written.</param>
     protected override void OnEventWritten(EventWrittenEventArgs eventData)
