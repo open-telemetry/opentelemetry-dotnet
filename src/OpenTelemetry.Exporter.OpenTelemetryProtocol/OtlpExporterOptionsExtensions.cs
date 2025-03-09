@@ -74,11 +74,13 @@ internal static class OtlpExporterOptionsExtensions
                     pair = headersSpan.Slice(0, commaIndex);
                     headersSpan = headersSpan.Slice(commaIndex + 1);
                 }
+
                 int equalIndex = pair.IndexOf('=');
                 if (equalIndex == -1)
                 {
                     throw new ArgumentException("Headers provided in an invalid format.");
                 }
+
                 var key = pair.Slice(0, equalIndex).ToString().Trim();
                 var value = pair.Slice(equalIndex + 1).ToString().Trim();
                 addHeader(headers, key, value);
@@ -88,6 +90,7 @@ internal static class OtlpExporterOptionsExtensions
         {
             addHeader(headers, header.Key, header.Value);
         }
+
         return headers;
     }
 
