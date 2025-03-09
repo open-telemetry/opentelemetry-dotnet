@@ -49,50 +49,51 @@ internal static class OtlpExporterOptionsExtensions
     public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options) => options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
 #endif
 
-  public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
-    where THeaders : new()
-{
-    var optionHeaders = options.Headers;
-    var headers = new THeaders();
-    if (!string.IsNullOrEmpty(optionHeaders))
+    public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
+        where THeaders : new()
     {
-        optionHeaders = Uri.UnescapeDataString(optionHeaders);
-        ReadOnlySpan<char> headersSpan = optionHeaders.AsSpan();
-
-        while (!headersSpan.IsEmpty)
+        var optionHeaders = options.Headers;
+        var headers = new THeaders();
+        if (!string.IsNullOrEmpty(optionHeaders))
         {
-            int commaIndex = headersSpan.IndexOf(',');
-            ReadOnlySpan<char> pair;
-            if (commaIndex == -1)
-            {
-                pair = headersSpan;
-                headersSpan = ReadOnlySpan<char>.Empty;
-            }
-            else
-            {
-                pair = headersSpan.Slice(0, commaIndex);
-                headersSpan = headersSpan.Slice(commaIndex + 1);
-            }
+            // According to the specification, URL-encoded headers must be supported.
+            optionHeaders = Uri.UnescapeDataString(optionHeaders);
+            ReadOnlySpan<char> headersSpan = optionHeaders.AsSpan();
 
-            int equalIndex = pair.IndexOf('=');
-            if (equalIndex == -1)
+            while (!headersSpan.IsEmpty)
             {
-                throw new ArgumentException("Headers provided in an invalid format.");
-            }
+                int commaIndex = headersSpan.IndexOf(',');
+                ReadOnlySpan<char> pair;
+                if (commaIndex == -1)
+                {
+                    pair = headersSpan;
+                    headersSpan = ReadOnlySpan<char>.Empty;
+                }
+                else
+                {
+                    pair = headersSpan.Slice(0, commaIndex);
+                    headersSpan = headersSpan.Slice(commaIndex + 1);
+                }
 
-            var key = pair.Slice(0, equalIndex).ToString().Trim();
-            var value = pair.Slice(equalIndex + 1).ToString().Trim();
-            addHeader(headers, key, value);
+                int equalIndex = pair.IndexOf('=');
+                if (equalIndex == -1)
+                {
+                    throw new ArgumentException("Headers provided in an invalid format.");
+                }
+
+                var key = pair.Slice(0, equalIndex).ToString().Trim();
+                var value = pair.Slice(equalIndex + 1).ToString().Trim();
+                addHeader(headers, key, value);
+            }
         }
-    }
 
-    foreach (var header in OtlpExporterOptions.StandardHeaders)
-    {
-        addHeader(headers, header.Key, header.Value);
-    }
+        foreach (var header in OtlpExporterOptions.StandardHeaders)
+        {
+            addHeader(headers, header.Key, header.Value);
+        }
 
-    return headers;
-}
+        return headers;
+    }
 
 
     public static OtlpExporterTransmissionHandler GetExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions, OtlpSignalType otlpSignalType)
