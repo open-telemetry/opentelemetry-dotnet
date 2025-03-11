@@ -81,8 +81,8 @@ internal static class OtlpExporterOptionsExtensions
                     throw new ArgumentException("Headers provided in an invalid format.");
                 }
 
-                var key = pair.Slice(0, equalIndex).ToString().Trim();
-                var value = pair.Slice(equalIndex + 1).ToString().Trim();
+                var key = pair.Slice(0, equalIndex).Trim().ToString();
+                var value = pair.Slice(equalIndex + 1).Trim().ToString();
                 addHeader(headers, key, value);
             }
         }
