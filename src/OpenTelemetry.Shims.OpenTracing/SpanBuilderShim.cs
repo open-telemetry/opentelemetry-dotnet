@@ -27,7 +27,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     /// <summary>
     /// The OpenTelemetry links. These correspond loosely to OpenTracing references.
     /// </summary>
-    private readonly List<Link> links = new();
+    private readonly List<Link> links = [];
 
     /// <summary>
     /// The OpenTelemetry attributes. These correspond to OpenTracing Tags.
@@ -65,7 +65,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
         this.ScopeManager = new ScopeManagerShim();
     }
 
-    private IScopeManager ScopeManager { get; }
+    private ScopeManagerShim ScopeManager { get; }
 
     private bool ParentSet => this.parentSpan != null || this.parentSpanContext.IsValid;
 
@@ -148,10 +148,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
             span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpanContext, this.attributes, this.links, this.explicitStartTime ?? default);
         }
 
-        if (span == null)
-        {
-            span = this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanContext), this.attributes, null, this.explicitStartTime ?? default);
-        }
+        span ??= this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanContext), this.attributes, null, this.explicitStartTime ?? default);
 
         if (this.error)
         {
