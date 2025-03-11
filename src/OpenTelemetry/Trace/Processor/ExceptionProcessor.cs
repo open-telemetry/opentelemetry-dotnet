@@ -62,9 +62,9 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
 
         if (snapshot != pointers)
         {
-#pragma warning disable
+#pragma warning disable CS0618 // Type or member is obsolete
             activity.SetStatus(Status.Error);
-#pragma warning restore
+#pragma warning restore CS0618 // Type or member is obsolete
         }
     }
 }

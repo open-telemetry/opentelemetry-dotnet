@@ -45,9 +45,9 @@ public class TelemetrySpan : IDisposable
     /// <param name="value">Status to be set.</param>
     public void SetStatus(Status value)
     {
-#pragma warning disable
+#pragma warning disable CS0618 // Type or member is obsolete
         this.Activity.SetStatus(value);
-#pragma warning restore
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     /// <summary>
