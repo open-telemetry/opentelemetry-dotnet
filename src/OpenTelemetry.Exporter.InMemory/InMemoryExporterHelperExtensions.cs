@@ -20,6 +20,8 @@ public static class InMemoryExporterHelperExtensions
         Guard.ThrowIfNull(builder);
         Guard.ThrowIfNull(exportedItems);
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         return builder.AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
+#pragma warning restore CA2000 // Dispose objects before losing scope
     }
 }

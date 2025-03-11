@@ -147,11 +147,13 @@ public static class InMemoryExporterMetricsExtensions
         });
     }
 
-    private static MetricReader BuildInMemoryExporterMetricReader(
+    private static PeriodicExportingMetricReader BuildInMemoryExporterMetricReader(
         ICollection<Metric> exportedItems,
         MetricReaderOptions metricReaderOptions)
     {
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var metricExporter = new InMemoryExporter<Metric>(exportedItems);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
             metricExporter,
@@ -160,12 +162,14 @@ public static class InMemoryExporterMetricsExtensions
             DefaultExportTimeoutMilliseconds);
     }
 
-    private static MetricReader BuildInMemoryExporterMetricReader(
+    private static PeriodicExportingMetricReader BuildInMemoryExporterMetricReader(
         ICollection<MetricSnapshot> exportedItems,
         MetricReaderOptions metricReaderOptions)
     {
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var metricExporter = new InMemoryExporter<Metric>(
             exportFunc: (in Batch<Metric> metricBatch) => ExportMetricSnapshot(in metricBatch, exportedItems));
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
             metricExporter,
