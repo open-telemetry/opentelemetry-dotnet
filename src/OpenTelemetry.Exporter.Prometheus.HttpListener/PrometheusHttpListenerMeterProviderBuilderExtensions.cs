@@ -78,9 +78,9 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
 
         try
         {
-#pragma warning disable CA2000
+#pragma warning disable CA2000 // Dispose objects before losing scope
             var listener = new PrometheusHttpListener(exporter, options);
-#pragma warning restore CA2000
+#pragma warning restore CA2000 // Dispose objects before losing scope
             exporter.OnDispose = listener.Dispose;
             listener.Start();
         }

@@ -122,9 +122,9 @@ public class PrometheusHttpListenerTests
         // Step 1: Start a listener on a random port.
         while (retryAttempts-- != 0)
         {
-#pragma warning disable CA5394
+#pragma warning disable CA5394 // Do not use insecure randomness
             int port = random.Next(2000, 5000);
-#pragma warning restore CA5394
+#pragma warning restore CA5394 // Do not use insecure randomness
             address = $"http://localhost:{port}/";
 
             try
@@ -229,9 +229,9 @@ public class PrometheusHttpListenerTests
 
         while (retryAttempts-- != 0)
         {
-#pragma warning disable CA5394
+#pragma warning disable CA5394 // Do not use insecure randomness
             int port = random.Next(2000, 5000);
-#pragma warning restore CA5394
+#pragma warning restore CA5394 // Do not use insecure randomness
             generatedAddress = $"http://localhost:{port}/";
 
             try

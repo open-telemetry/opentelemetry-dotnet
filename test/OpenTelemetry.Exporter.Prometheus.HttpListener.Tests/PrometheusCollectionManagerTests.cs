@@ -31,9 +31,9 @@ public sealed class PrometheusCollectionManagerTests
 #endif
             .Build())
         {
-#pragma warning disable CA2000
+#pragma warning disable CA2000 // Dispose objects before losing scope
             if (!provider.TryFindExporter(out PrometheusExporter? exporter))
-#pragma warning restore CA2000
+#pragma warning restore CA2000 // Dispose objects before losing scope
             {
                 throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
             }
