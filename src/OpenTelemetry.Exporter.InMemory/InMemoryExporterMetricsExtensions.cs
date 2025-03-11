@@ -151,9 +151,9 @@ public static class InMemoryExporterMetricsExtensions
         ICollection<Metric> exportedItems,
         MetricReaderOptions metricReaderOptions)
     {
-#pragma warning disable CA2000
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var metricExporter = new InMemoryExporter<Metric>(exportedItems);
-#pragma warning restore CA2000
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
             metricExporter,
@@ -166,10 +166,10 @@ public static class InMemoryExporterMetricsExtensions
         ICollection<MetricSnapshot> exportedItems,
         MetricReaderOptions metricReaderOptions)
     {
-#pragma warning disable CA2000
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var metricExporter = new InMemoryExporter<Metric>(
             exportFunc: (in Batch<Metric> metricBatch) => ExportMetricSnapshot(in metricBatch, exportedItems));
-#pragma warning restore CA2000
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
             metricExporter,
