@@ -67,7 +67,7 @@ internal static class OtlpExporterOptionsExtensions
                 if (commaIndex == -1)
                 {
                     pair = headersSpan;
-                    headersSpan = ReadOnlySpan<char>.Empty;
+                    headersSpan = [];
                 }
                 else
                 {
@@ -86,6 +86,7 @@ internal static class OtlpExporterOptionsExtensions
                 addHeader(headers, key, value);
             }
         }
+
         foreach (var header in OtlpExporterOptions.StandardHeaders)
         {
             addHeader(headers, header.Key, header.Value);
