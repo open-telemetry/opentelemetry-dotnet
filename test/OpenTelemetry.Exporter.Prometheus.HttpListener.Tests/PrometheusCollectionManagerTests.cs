@@ -120,13 +120,13 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
-                    var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
+                    var collectionResponse = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
                     try
                     {
                         return new Response
                         {
-                            CollectionResponse = response,
-                            ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
+                            CollectionResponse = collectionResponse,
+                            ViewPayload = openMetricsRequested ? [.. collectionResponse.OpenMetricsView] : [.. collectionResponse.PlainTextView],
                         };
                     }
                     finally
