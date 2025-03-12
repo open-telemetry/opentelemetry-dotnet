@@ -112,7 +112,10 @@ public sealed class PrometheusCollectionManagerTests
                 exporter.CollectionManager.ExitCollect();
             }
 
+#pragma warning disable CA1849 // 'Thread.Sleep(int)' synchronously blocks. Use await instead.
+            // Changing to await Task.Delay leads to test instability.
             Thread.Sleep(exporter.ScrapeResponseCacheDurationMilliseconds);
+#pragma warning restore CA1849 // 'Thread.Sleep(int)' synchronously blocks. Use await instead.
 
             counter.Add(100);
 
