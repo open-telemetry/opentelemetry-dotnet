@@ -20,7 +20,9 @@ internal class TestHttpServer
         {
             try
             {
+#pragma warning disable CA5394 // Do not use insecure randomness
                 port = GlobalRandom.Next(2000, 5000);
+#pragma warning restore CA5394 // Do not use insecure randomness
                 server = new RunningServer(action, host, port);
                 server.Start();
                 break;
