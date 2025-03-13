@@ -45,7 +45,7 @@ public sealed class ZipkinExporterTests : IDisposable
         {
             context.Response.StatusCode = 200;
 
-            using StreamReader readStream = new StreamReader(context.Request.InputStream);
+            using StreamReader readStream = new(context.Request.InputStream);
 
             string requestContent = readStream.ReadToEnd();
 
@@ -95,7 +95,7 @@ public sealed class ZipkinExporterTests : IDisposable
     {
         const string ActivitySourceName = "zipkin.test";
         Guid requestId = Guid.NewGuid();
-        TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        TestActivityProcessor testActivityProcessor = new();
 
         int endCalledCount = 0;
 
@@ -107,7 +107,7 @@ public sealed class ZipkinExporterTests : IDisposable
 
         var exporterOptions = new ZipkinExporterOptions
         {
-            Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
+            Endpoint = new($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
         };
         using var zipkinExporter = new ZipkinExporter(exporterOptions);
         using var exportActivityProcessor = new BatchActivityExportProcessor(zipkinExporter);
@@ -159,7 +159,7 @@ public sealed class ZipkinExporterTests : IDisposable
 
             var exporterOptions = new ZipkinExporterOptions
             {
-                Endpoint = new Uri("http://urifromcode"),
+                Endpoint = new("http://urifromcode"),
             };
 
             Assert.Equal(new Uri("http://urifromcode").AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
@@ -179,7 +179,7 @@ public sealed class ZipkinExporterTests : IDisposable
 
             var options = new ZipkinExporterOptions();
 
-            Assert.Equal(new Uri(ZipkinExporterOptions.DefaultZipkinEndpoint), options.Endpoint);
+            Assert.Equal(new(ZipkinExporterOptions.DefaultZipkinEndpoint), options.Endpoint);
         }
         finally
         {
@@ -201,13 +201,13 @@ public sealed class ZipkinExporterTests : IDisposable
 
         var options = new ZipkinExporterOptions(configuration, new());
 
-        Assert.Equal(new Uri("http://custom-endpoint:12345"), options.Endpoint);
+        Assert.Equal(new("http://custom-endpoint:12345"), options.Endpoint);
     }
 
     [Fact]
     public void UserHttpFactoryCalled()
     {
-        ZipkinExporterOptions options = new ZipkinExporterOptions();
+        ZipkinExporterOptions options = new();
 
         var defaultFactory = options.HttpClientFactory;
 
@@ -275,7 +275,7 @@ public sealed class ZipkinExporterTests : IDisposable
     [Fact]
     public void UpdatesServiceNameFromDefaultResource()
     {
-        var zipkinExporter = new ZipkinExporter(new ZipkinExporterOptions());
+        var zipkinExporter = new ZipkinExporter(new());
 
         zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
 
@@ -297,7 +297,7 @@ public sealed class ZipkinExporterTests : IDisposable
                     new ConfigurationBuilder().AddInMemoryCollection(configuration!).Build());
             });
 
-        var zipkinExporter = new ZipkinExporter(new ZipkinExporterOptions());
+        var zipkinExporter = new ZipkinExporter(new());
 
         tracerProviderBuilder.AddProcessor(new BatchActivityExportProcessor(zipkinExporter));
 
@@ -327,10 +327,10 @@ public sealed class ZipkinExporterTests : IDisposable
     {
         Guid requestId = Guid.NewGuid();
 
-        ZipkinExporter exporter = new ZipkinExporter(
-            new ZipkinExporterOptions
+        ZipkinExporter exporter = new(
+            new()
             {
-                Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
+                Endpoint = new($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
                 UseShortTraceIds = useShortTraceIds,
             });
 
@@ -368,7 +368,7 @@ public sealed class ZipkinExporterTests : IDisposable
         var timestamp = activity.StartTimeUtc.ToEpochMicroseconds();
         var eventTimestamp = activity.Events.First().Timestamp.ToEpochMicroseconds();
 
-        StringBuilder ipInformation = new StringBuilder();
+        StringBuilder ipInformation = new();
         if (!string.IsNullOrEmpty(exporter.LocalEndpoint!.Ipv4))
         {
             ipInformation.Append($@",""ipv4"":""{exporter.LocalEndpoint.Ipv4}""");
@@ -463,7 +463,7 @@ public sealed class ZipkinExporterTests : IDisposable
 
         dateTime ??= DateTime.UtcNow;
 
-        var parentSpanId = isRootSpan ? default : ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
+        var parentSpanId = isRootSpan ? default : ActivitySpanId.CreateFromBytes([12, 23, 34, 45, 56, 67, 78, 89]);
 
         var attributes = new Dictionary<string, object>
         {
@@ -492,17 +492,17 @@ public sealed class ZipkinExporterTests : IDisposable
 
         var events = new List<ActivityEvent>
         {
-            new ActivityEvent(
+            new(
                 "Event1",
                 eventTimestamp,
-                new ActivityTagsCollection(new Dictionary<string, object?>
+                new(new Dictionary<string, object?>
                 {
                     { "key", "value" },
                 })),
-            new ActivityEvent(
+            new(
                 "Event2",
                 eventTimestamp,
-                new ActivityTagsCollection(new Dictionary<string, object?>
+                new(new Dictionary<string, object?>
                 {
                     { "key", "value" },
                 })),
@@ -518,7 +518,7 @@ public sealed class ZipkinExporterTests : IDisposable
         var links = addLinks ?
                 new[]
                 {
-                    new ActivityLink(new ActivityContext(
+                    new ActivityLink(new(
                         traceId,
                         linkedSpanId,
                         ActivityTraceFlags.Recorded)),
@@ -528,7 +528,7 @@ public sealed class ZipkinExporterTests : IDisposable
         var activity = activitySource.StartActivity(
             "Name",
             kind,
-            parentContext: new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
+            parentContext: new(traceId, parentSpanId, ActivityTraceFlags.Recorded),
             tags,
             links,
             startTime: startTimestamp)!;

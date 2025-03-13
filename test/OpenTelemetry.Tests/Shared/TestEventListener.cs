@@ -29,7 +29,7 @@ internal sealed class TestEventListener : EventListener
         this.activityId = Guid.NewGuid();
         EventSource.SetCurrentThreadActivityId(this.activityId);
 
-        this.events = new List<EventWrittenEventArgs>();
+        this.events = [];
         this.eventWritten = new AutoResetEvent(false);
         this.OnOnEventWritten = e =>
         {
