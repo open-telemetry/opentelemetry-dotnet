@@ -440,7 +440,6 @@ public sealed class ZipkinExporterTests : IDisposable
        Dictionary<string, object>? additionalAttributes = null,
        bool addEvents = true,
        bool addLinks = true,
-       Resource? resource = null,
        ActivityKind kind = ActivityKind.Client,
        ActivityStatusCode statusCode = ActivityStatusCode.Unset,
        string? statusDescription = null,
