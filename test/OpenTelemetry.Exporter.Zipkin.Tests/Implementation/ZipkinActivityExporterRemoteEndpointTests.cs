@@ -14,7 +14,7 @@ public class ZipkinActivityExporterRemoteEndpointTests
     public void GenerateActivity_RemoteEndpointOmittedByDefault()
     {
         // Arrange
-        using var activity = ZipkinExporterTests.CreateTestActivity();
+        using var activity = ZipkinActivitySource.CreateTestActivity();
 
         // Act & Assert
         var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);
@@ -26,7 +26,7 @@ public class ZipkinActivityExporterRemoteEndpointTests
     public void GenerateActivity_RemoteEndpointResolution()
     {
         // Arrange
-        using var activity = ZipkinExporterTests.CreateTestActivity(
+        using var activity = ZipkinActivitySource.CreateTestActivity(
             additionalAttributes: new Dictionary<string, object> { ["net.peer.name"] = "RemoteServiceName", });
 
         // Act & Assert
@@ -42,7 +42,7 @@ public class ZipkinActivityExporterRemoteEndpointTests
     {
         // Arrange
         using var activity =
-            ZipkinExporterTests.CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes!);
+            ZipkinActivitySource.CreateTestActivity(additionalAttributes: testCase!.RemoteEndpointAttributes!);
 
         // Act & Assert
         var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);

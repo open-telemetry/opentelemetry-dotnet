@@ -18,7 +18,7 @@ public class ZipkinActivityConversionTest
     public void ToZipkinSpan_AllPropertiesSet()
     {
         // Arrange
-        using var activity = ZipkinExporterTests.CreateTestActivity();
+        using var activity = ZipkinActivitySource.CreateTestActivity();
 
         // Act & Assert
         var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
@@ -51,7 +51,7 @@ public class ZipkinActivityConversionTest
     public void ToZipkinSpan_NoEvents()
     {
         // Arrange
-        using var activity = ZipkinExporterTests.CreateTestActivity(addEvents: false);
+        using var activity = ZipkinActivitySource.CreateTestActivity(addEvents: false);
 
         // Act & Assert
         var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
@@ -83,7 +83,7 @@ public class ZipkinActivityConversionTest
     public void ToZipkinSpan_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue)
     {
         // Arrange
-        using var activity = ZipkinExporterTests.CreateTestActivity();
+        using var activity = ZipkinActivitySource.CreateTestActivity();
         activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
 
         // Act
@@ -122,7 +122,7 @@ public class ZipkinActivityConversionTest
     {
         // Arrange.
         const string description = "Description when ActivityStatusCode is Error.";
-        using var activity = ZipkinExporterTests.CreateTestActivity();
+        using var activity = ZipkinActivitySource.CreateTestActivity();
         activity.SetStatus(expectedStatusCode, description);
 
         // Act.
@@ -164,7 +164,7 @@ public class ZipkinActivityConversionTest
     public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsOk()
     {
         // Arrange.
-        using var activity = ZipkinExporterTests.CreateTestActivity();
+        using var activity = ZipkinActivitySource.CreateTestActivity();
         activity.SetStatus(ActivityStatusCode.Ok);
         activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
 
@@ -190,7 +190,7 @@ public class ZipkinActivityConversionTest
     public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsError()
     {
         // Arrange.
-        using var activity = ZipkinExporterTests.CreateTestActivity();
+        using var activity = ZipkinActivitySource.CreateTestActivity();
 
         const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
         const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
@@ -226,7 +226,7 @@ public class ZipkinActivityConversionTest
     public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsError_SettingTagFirst()
     {
         // Arrange.
-        using var activity = ZipkinExporterTests.CreateTestActivity();
+        using var activity = ZipkinActivitySource.CreateTestActivity();
 
         const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
         const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
