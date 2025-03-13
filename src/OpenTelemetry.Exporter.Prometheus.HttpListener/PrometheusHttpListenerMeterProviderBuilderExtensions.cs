@@ -62,7 +62,7 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
         });
     }
 
-    private static MetricReader BuildPrometheusHttpListenerMetricReader(
+    private static BaseExportingMetricReader BuildPrometheusHttpListenerMetricReader(
         PrometheusHttpListenerOptions options)
     {
         var exporter = new PrometheusExporter(new PrometheusExporterOptions
@@ -78,8 +78,10 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
 
         try
         {
+#pragma warning disable CA2000 // Dispose objects before losing scope
             var listener = new PrometheusHttpListener(exporter, options);
-            exporter.OnDispose = () => listener.Dispose();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+            exporter.OnDispose = listener.Dispose;
             listener.Start();
         }
         catch (Exception ex)

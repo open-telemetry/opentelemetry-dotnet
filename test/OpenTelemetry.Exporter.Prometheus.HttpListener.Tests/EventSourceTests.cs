@@ -6,7 +6,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
-public class EventSourceTest
+public class EventSourceTests
 {
     [Fact]
     public void EventSourceTest_PrometheusExporterEventSource()

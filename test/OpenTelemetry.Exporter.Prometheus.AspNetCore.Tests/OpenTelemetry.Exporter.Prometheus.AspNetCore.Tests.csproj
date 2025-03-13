@@ -4,6 +4,7 @@
     <Description>Unit test project for Prometheus Exporter AspNetCore for OpenTelemetry</Description>
     <TargetFrameworks>$(TargetFrameworksForAspNetCoreTests)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE</DefineConstants>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\EventSourceTest.cs" Link="Includes\EventSourceTest.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\EventSourceTests.cs" Link="Includes\EventSourceTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PrometheusCollectionManagerTests.cs" Link="Includes\PrometheusCollectionManagerTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PrometheusSerializerTests.cs" Link="Includes\PrometheusSerializerTests.cs" />
 
