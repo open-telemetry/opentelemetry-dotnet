@@ -56,11 +56,11 @@ public class ZipkinActivityExporterRemoteEndpointTests
 
     public class RemoteEndpointPriorityTestCase
     {
-        public string? Name { get; set; }
+        public string? Name { get; private set; }
 
-        public string? ExpectedResult { get; set; }
+        public string? ExpectedResult { get; private set; }
 
-        public Dictionary<string, object>? RemoteEndpointAttributes { get; set; }
+        public Dictionary<string, object>? RemoteEndpointAttributes { get; private set; }
 
         public static TheoryData<RemoteEndpointPriorityTestCase> GetTestCases()
         {
