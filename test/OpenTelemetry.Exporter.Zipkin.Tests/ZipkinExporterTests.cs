@@ -95,7 +95,9 @@ public sealed class ZipkinExporterTests : IDisposable
     {
         const string ActivitySourceName = "zipkin.test";
         Guid requestId = Guid.NewGuid();
+#pragma warning disable CA2000 // Dispose objects before losing scope
         TestActivityProcessor testActivityProcessor = new();
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         int endCalledCount = 0;
 
@@ -112,7 +114,7 @@ public sealed class ZipkinExporterTests : IDisposable
         using var zipkinExporter = new ZipkinExporter(exporterOptions);
         using var exportActivityProcessor = new BatchActivityExportProcessor(zipkinExporter);
 
-        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource(ActivitySourceName)
             .AddProcessor(testActivityProcessor)
             .AddProcessor(exportActivityProcessor)
@@ -275,7 +277,7 @@ public sealed class ZipkinExporterTests : IDisposable
     [Fact]
     public void UpdatesServiceNameFromDefaultResource()
     {
-        var zipkinExporter = new ZipkinExporter(new());
+        using var zipkinExporter = new ZipkinExporter(new());
 
         zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
 
@@ -297,9 +299,11 @@ public sealed class ZipkinExporterTests : IDisposable
                     new ConfigurationBuilder().AddInMemoryCollection(configuration!).Build());
             });
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var zipkinExporter = new ZipkinExporter(new());
 
         tracerProviderBuilder.AddProcessor(new BatchActivityExportProcessor(zipkinExporter));
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         using var provider = tracerProviderBuilder.Build();
 
