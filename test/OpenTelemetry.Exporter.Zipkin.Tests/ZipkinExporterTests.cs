@@ -331,12 +331,14 @@ public sealed class ZipkinExporterTests : IDisposable
     {
         Guid requestId = Guid.NewGuid();
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         ZipkinExporter exporter = new(
             new()
             {
                 Endpoint = new($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
                 UseShortTraceIds = useShortTraceIds,
             });
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         var serviceName = (string)exporter.ParentProvider.GetDefaultResource().Attributes
             .Where(pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
@@ -363,7 +365,7 @@ public sealed class ZipkinExporterTests : IDisposable
             activity.SetTag(ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName, "This should be removed.");
         }
 
-        var processor = new SimpleActivityExportProcessor(exporter);
+        using var processor = new SimpleActivityExportProcessor(exporter);
 
         processor.OnEnd(activity);
 
