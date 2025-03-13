@@ -6,7 +6,7 @@ using OpenTelemetry.Trace;
 
 namespace Examples.GrpcService;
 
-public class Startup
+internal class Startup
 {
     public Startup(IConfiguration configuration)
     {
