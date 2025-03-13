@@ -62,10 +62,10 @@ public class ZipkinActivityExporterRemoteEndpointTests
 
         public Dictionary<string, object>? RemoteEndpointAttributes { get; set; }
 
-        public static IEnumerable<object[]> GetTestCases()
+        public static TheoryData<RemoteEndpointPriorityTestCase> GetTestCases()
         {
-            yield return new object[]
-            {
+            return
+            [
                 new RemoteEndpointPriorityTestCase
                 {
                     Name = "Highest priority name = net.peer.name",
@@ -77,10 +77,6 @@ public class ZipkinActivityExporterRemoteEndpointTests
                         ["peer.hostname"] = "DiscardedRemoteServiceName",
                     },
                 },
-            };
-
-            yield return new object[]
-            {
                 new RemoteEndpointPriorityTestCase
                 {
                     Name = "Highest priority name = SemanticConventions.AttributePeerService",
@@ -94,10 +90,6 @@ public class ZipkinActivityExporterRemoteEndpointTests
                         ["peer.hostname"] = "DiscardedRemoteServiceName",
                     },
                 },
-            };
-
-            yield return new object[]
-            {
                 new RemoteEndpointPriorityTestCase
                 {
                     Name = "Only has net.peer.name and net.peer.port",
@@ -108,10 +100,6 @@ public class ZipkinActivityExporterRemoteEndpointTests
                         ["net.peer.port"] = "1234",
                     },
                 },
-            };
-
-            yield return new object[]
-            {
                 new RemoteEndpointPriorityTestCase
                 {
                     Name = "net.peer.port is an int",
@@ -122,10 +110,6 @@ public class ZipkinActivityExporterRemoteEndpointTests
                         ["net.peer.port"] = 1234,
                     },
                 },
-            };
-
-            yield return new object[]
-            {
                 new RemoteEndpointPriorityTestCase
                 {
                     Name = "Has net.peer.name and net.peer.port",
@@ -138,10 +122,6 @@ public class ZipkinActivityExporterRemoteEndpointTests
                         ["peer.hostname"] = "DiscardedRemoteServiceName",
                     },
                 },
-            };
-
-            yield return new object[]
-            {
                 new RemoteEndpointPriorityTestCase
                 {
                     Name = "Has net.peer.ip and net.peer.port",
@@ -154,10 +134,6 @@ public class ZipkinActivityExporterRemoteEndpointTests
                         ["peer.hostname"] = "DiscardedRemoteServiceName",
                     },
                 },
-            };
-
-            yield return new object[]
-            {
                 new RemoteEndpointPriorityTestCase
                 {
                     Name = "Has net.peer.name, net.peer.ip, and net.peer.port",
@@ -171,7 +147,7 @@ public class ZipkinActivityExporterRemoteEndpointTests
                         ["peer.hostname"] = "DiscardedRemoteServiceName",
                     },
                 },
-            };
+            ];
         }
 
         public override string? ToString()
