@@ -106,7 +106,9 @@ public static class ZipkinExporterHelperExtensions
             };
         }
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var zipkinExporter = new ZipkinExporter(options);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         if (options.ExportProcessorType == ExportProcessorType.Simple)
         {
