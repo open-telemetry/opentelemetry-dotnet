@@ -14,8 +14,8 @@ internal sealed class SpanShim : ISpan
     /// </summary>
     public const string DefaultEventName = "log";
 
-    private static readonly IReadOnlyCollection<Type> OpenTelemetrySupportedAttributeValueTypes = new List<Type>
-    {
+    private static readonly IReadOnlyCollection<Type> OpenTelemetrySupportedAttributeValueTypes =
+    [
         typeof(string),
         typeof(bool),
         typeof(byte),
@@ -24,7 +24,7 @@ internal sealed class SpanShim : ISpan
         typeof(long),
         typeof(float),
         typeof(double),
-    };
+    ];
 
     private readonly SpanContextShim spanContextShim;
 

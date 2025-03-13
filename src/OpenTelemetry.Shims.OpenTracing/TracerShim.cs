@@ -48,13 +48,7 @@ public class TracerShim : global::OpenTracing.ITracer
     /// <inheritdoc/>
     public global::OpenTracing.ISpan? ActiveSpan => this.ScopeManager.Active?.Span;
 
-    private TextMapPropagator Propagator
-    {
-        get
-        {
-            return this.definedPropagator ?? Propagators.DefaultTextMapPropagator;
-        }
-    }
+    private TextMapPropagator Propagator => this.definedPropagator ?? Propagators.DefaultTextMapPropagator;
 
     /// <inheritdoc/>
     public global::OpenTracing.ISpanBuilder BuildSpan(string operationName)
