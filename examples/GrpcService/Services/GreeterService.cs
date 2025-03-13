@@ -5,7 +5,7 @@ using Grpc.Core;
 
 namespace Examples.GrpcService;
 
-internal class GreeterService : Greeter.GreeterBase
+internal sealed class GreeterService : Greeter.GreeterBase
 {
     public override Task<HelloReply> SayHello(HelloRequest request, ServerCallContext context)
     {
