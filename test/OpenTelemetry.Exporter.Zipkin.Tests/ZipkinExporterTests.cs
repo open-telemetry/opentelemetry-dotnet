@@ -441,8 +441,8 @@ public sealed class ZipkinExporterTests : IDisposable
                 + $@"""dateTimeArrayKey"":""[\u0022{Convert.ToString(dateTime, CultureInfo.InvariantCulture)}\u0022]"","
                 + statusTag
                 + errorTag
-                + @"""otel.scope.name"":""CreateTestActivity"","
-                + @"""otel.library.name"":""CreateTestActivity"","
+                + @"""otel.scope.name"":""ZipkinActivitySource"","
+                + @"""otel.library.name"":""ZipkinActivitySource"","
                 + @"""peer.service"":""http://localhost:44312/"""
             + "}}]",
             Responses[requestId]);
