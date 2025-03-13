@@ -79,7 +79,7 @@ jobs:
         TFM: ${{ matrix.version }}
         token: ${{ secrets.CODECOV_TOKEN }}
       with:
-        file: TestResults/Cobertura.xml
+        files: TestResults/Cobertura.xml
         env_vars: OS,TFM
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
         name: Code Coverage for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
