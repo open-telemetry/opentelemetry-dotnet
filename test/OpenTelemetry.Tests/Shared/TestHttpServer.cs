@@ -96,6 +96,7 @@ internal class TestHttpServer
             {
                 this.listener.Close();
                 this.httpListenerTask?.Wait();
+                this.initialized.Dispose();
             }
             catch (ObjectDisposedException)
             {
