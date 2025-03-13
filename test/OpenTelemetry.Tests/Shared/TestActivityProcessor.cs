@@ -51,5 +51,6 @@ internal class TestActivityProcessor : BaseProcessor<Activity>
     protected override void Dispose(bool disposing)
     {
         this.DisposedCalled = true;
+        base.Dispose(disposing);
     }
 }
