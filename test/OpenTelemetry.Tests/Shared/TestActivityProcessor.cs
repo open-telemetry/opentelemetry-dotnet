@@ -20,11 +20,11 @@ internal class TestActivityProcessor : BaseProcessor<Activity>
         this.EndAction = onEnd;
     }
 
-    public bool ShutdownCalled { get; private set; } = false;
+    public bool ShutdownCalled { get; private set; }
 
-    public bool ForceFlushCalled { get; private set; } = false;
+    public bool ForceFlushCalled { get; private set; }
 
-    public bool DisposedCalled { get; private set; } = false;
+    public bool DisposedCalled { get; private set; }
 
     public override void OnStart(Activity span)
     {
