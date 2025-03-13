@@ -375,12 +375,20 @@ public sealed class ZipkinExporterTests : IDisposable
         StringBuilder ipInformation = new();
         if (!string.IsNullOrEmpty(exporter.LocalEndpoint!.Ipv4))
         {
+#if NET
+            ipInformation.Append(CultureInfo.InvariantCulture, $@",""ipv4"":""{exporter.LocalEndpoint.Ipv4}""");
+#else
             ipInformation.Append($@",""ipv4"":""{exporter.LocalEndpoint.Ipv4}""");
+#endif
         }
 
         if (!string.IsNullOrEmpty(exporter.LocalEndpoint.Ipv6))
         {
+#if NET
+            ipInformation.Append(CultureInfo.InvariantCulture, $@",""ipv6"":""{exporter.LocalEndpoint.Ipv6}""");
+#else
             ipInformation.Append($@",""ipv6"":""{exporter.LocalEndpoint.Ipv6}""");
+#endif
         }
 
         var parentId = isRootSpan ? string.Empty : $@"""parentId"":""{ZipkinActivityConversionExtensions.EncodeSpanId(activity.ParentSpanId)}"",";
