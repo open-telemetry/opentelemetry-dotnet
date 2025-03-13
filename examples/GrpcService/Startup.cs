@@ -27,16 +27,16 @@ public class Startup
                     .AddAspNetCoreInstrumentation();
 
                 // Switch between Otlp/Zipkin/Console by setting UseExporter in appsettings.json.
-                var exporter = this.Configuration.GetValue("UseExporter", defaultValue: "console").ToLowerInvariant();
+                var exporter = this.Configuration.GetValue("UseExporter", defaultValue: "console").ToUpperInvariant();
                 switch (exporter)
                 {
-                    case "otlp":
+                    case "OTLP":
                         builder.AddOtlpExporter(otlpOptions =>
                         {
                             otlpOptions.Endpoint = new Uri(this.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317"));
                         });
                         break;
-                    case "zipkin":
+                    case "ZIPKIN":
                         builder.AddZipkinExporter(zipkinOptions =>
                         {
                             zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue("Zipkin:Endpoint", defaultValue: "http://localhost:9411/api/v2/spans"));
