@@ -106,7 +106,7 @@ public class ZipkinActivityConversionTest
 
         if (expectedStatusCode == StatusCode.Error)
         {
-            Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string?)t.Value == string.Empty);
+            Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && ((string?)t.Value)?.Length == 0);
         }
         else
         {
