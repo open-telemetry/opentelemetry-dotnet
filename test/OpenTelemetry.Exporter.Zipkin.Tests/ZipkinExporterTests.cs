@@ -279,7 +279,7 @@ public sealed class ZipkinExporterTests : IDisposable
 
         zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
 
-        Assert.StartsWith("unknown_service:", zipkinExporter.LocalEndpoint!.ServiceName);
+        Assert.StartsWith("unknown_service:", zipkinExporter.LocalEndpoint!.ServiceName, StringComparison.Ordinal);
     }
 
     [Fact]
