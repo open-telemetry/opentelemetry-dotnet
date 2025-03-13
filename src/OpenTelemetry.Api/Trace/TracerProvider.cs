@@ -231,7 +231,34 @@ public class TracerProvider : BaseProvider
             }
 
             var orderedTagList = new List<KeyValuePair<string, object?>>(tags);
-            orderedTagList.Sort((left, right) => string.Compare(left.Key, right.Key, StringComparison.Ordinal));
+            orderedTagList.Sort((left, right) =>
+            {
+                // First compare by key
+                int keyComparison = string.Compare(left.Key, right.Key, StringComparison.Ordinal);
+                if (keyComparison != 0)
+                {
+                    return keyComparison;
+                }
+
+                // If keys are equal, compare by value
+                if (left.Value == null && right.Value == null)
+                {
+                    return 0;
+                }
+
+                if (left.Value == null)
+                {
+                    return -1;
+                }
+
+                if (right.Value == null)
+                {
+                    return 1;
+                }
+
+                // Both values are non-null, compare as strings
+                return string.Compare(left.Value.ToString(), right.Value.ToString(), StringComparison.Ordinal);
+            });
             return orderedTagList.ToArray();
         }
     }
