@@ -66,7 +66,9 @@ internal class TestHttpServer
 
                         this.initialized.Set();
 
+#pragma warning disable CA2007 // Do not directly await a Task
                         action(await ctxTask);
+#pragma warning disable CA2007 // Do not directly await a Task
                     }
                     catch (Exception ex)
                     {
