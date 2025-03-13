@@ -5,7 +5,7 @@ using System.Net;
 
 namespace OpenTelemetry.Tests;
 
-internal class TestHttpServer
+internal sealed class TestHttpServer
 {
     private static readonly Random GlobalRandom = new();
 
@@ -43,7 +43,7 @@ internal class TestHttpServer
         return server;
     }
 
-    private class RunningServer : IDisposable
+    private sealed class RunningServer : IDisposable
     {
         private readonly Task httpListenerTask;
         private readonly HttpListener listener;

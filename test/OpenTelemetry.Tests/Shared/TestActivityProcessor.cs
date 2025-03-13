@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Tests;
 
-internal class TestActivityProcessor : BaseProcessor<Activity>
+internal sealed class TestActivityProcessor : BaseProcessor<Activity>
 {
     public Action<Activity>? StartAction;
     public Action<Activity>? EndAction;
