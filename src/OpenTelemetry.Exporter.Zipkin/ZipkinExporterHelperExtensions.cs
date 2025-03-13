@@ -68,12 +68,11 @@ public static class ZipkinExporterHelperExtensions
         {
             var options = sp.GetRequiredService<IOptionsMonitor<ZipkinExporterOptions>>().Get(name);
 
-            return BuildZipkinExporterProcessor(builder, options, sp);
+            return BuildZipkinExporterProcessor(options, sp);
         });
     }
 
     private static BaseProcessor<Activity> BuildZipkinExporterProcessor(
-        TracerProviderBuilder builder,
         ZipkinExporterOptions options,
         IServiceProvider serviceProvider)
     {
