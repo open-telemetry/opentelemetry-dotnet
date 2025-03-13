@@ -142,15 +142,13 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     private void WriteCharTag(ref TTagState state, string key, char value)
     {
-        Span<char> destination = stackalloc char[1];
-        destination[0] = value;
+        Span<char> destination = [value];
         this.WriteStringTag(ref state, key, destination);
     }
 
     private void WriteCharValue(ref TArrayState state, char value)
     {
-        Span<char> destination = stackalloc char[1];
-        destination[0] = value;
+        Span<char> destination = [value];
         this.arrayWriter.WriteStringValue(ref state, destination);
     }
 
