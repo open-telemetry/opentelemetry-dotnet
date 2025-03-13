@@ -10,6 +10,8 @@ internal static class ZipkinActivitySource
 {
     private static readonly ActivitySource ActivitySource = new(nameof(ZipkinActivitySource));
 
+    private static readonly bool[] BoolArray = [true, false];
+
     internal static Activity CreateTestActivity(
        bool isRootSpan = false,
        bool setAttributes = true,
@@ -49,7 +51,7 @@ internal static class ZipkinActivitySource
             { "doubleKey2", 1F },
             { "longArrayKey", new long[] { 1, 2 } },
             { "boolKey", true },
-            { "boolArrayKey", new bool[] { true, false } },
+            { "boolArrayKey", BoolArray },
             { "http.host", "http://localhost:44312/" }, // simulating instrumentation tag adding http.host
             { "dateTimeKey", dateTime.Value },
             { "dateTimeArrayKey", new DateTime[] { dateTime.Value } },
