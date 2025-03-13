@@ -5,7 +5,9 @@ using Grpc.Core;
 
 namespace Examples.GrpcService;
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
 internal sealed class GreeterService : Greeter.GreeterBase
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
 {
     public override Task<HelloReply> SayHello(HelloRequest request, ServerCallContext context)
     {

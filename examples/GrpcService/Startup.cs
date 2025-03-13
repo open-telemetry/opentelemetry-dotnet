@@ -6,7 +6,9 @@ using OpenTelemetry.Trace;
 
 namespace Examples.GrpcService;
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
 internal sealed class Startup
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
 {
     public Startup(IConfiguration configuration)
     {
