@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Net;
 #if NETFRAMEWORK
 using System.Net.Http;
@@ -47,7 +48,7 @@ public class PrometheusHttpListenerTests
     {
         Assert.Throws<ArgumentException>(() =>
         {
-            TestPrometheusHttpListenerUriPrefixOptions(new string[] { });
+            TestPrometheusHttpListenerUriPrefixOptions([]);
         });
     }
 
@@ -63,25 +64,25 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest();
+        await RunPrometheusExporterHttpServerIntegrationTest();
     }
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoMetrics()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
+        await RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
     }
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty);
+        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty);
     }
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_UseOpenMetricsVersionHeader()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
+        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
     }
 
     [Fact]
@@ -93,7 +94,7 @@ public class PrometheusHttpListenerTests
             new("meter2", "value2"),
         };
 
-        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty, meterTags: tags);
+        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty, meterTags: tags);
     }
 
     [Fact]
@@ -105,7 +106,7 @@ public class PrometheusHttpListenerTests
             new("meter2", "value2"),
         };
 
-        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0", meterTags: tags);
+        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0", meterTags: tags);
     }
 
     [Fact]
@@ -113,7 +114,6 @@ public class PrometheusHttpListenerTests
     {
         Random random = new Random();
         int retryAttempts = 5;
-        int port = 0;
         string? address = null;
 
         PrometheusExporter? exporter = null;
@@ -122,7 +122,9 @@ public class PrometheusHttpListenerTests
         // Step 1: Start a listener on a random port.
         while (retryAttempts-- != 0)
         {
-            port = random.Next(2000, 5000);
+#pragma warning disable CA5394 // Do not use insecure randomness
+            int port = random.Next(2000, 5000);
+#pragma warning restore CA5394 // Do not use insecure randomness
             address = $"http://localhost:{port}/";
 
             try
@@ -179,7 +181,7 @@ public class PrometheusHttpListenerTests
         var oneKb = new string('A', 1024);
         for (var x = 0; x < 8500; x++)
         {
-            attributes.Add(new KeyValuePair<string, object>(x.ToString(), oneKb));
+            attributes.Add(new KeyValuePair<string, object>(x.ToString(CultureInfo.InvariantCulture), oneKb));
         }
 
         var provider = BuildMeterProvider(meter, attributes, out var address);
@@ -197,11 +199,11 @@ public class PrometheusHttpListenerTests
             client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
-        using var response = await client.GetAsync($"{address}metrics");
+        using var response = await client.GetAsync(new Uri($"{address}metrics"));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var content = await response.Content.ReadAsStringAsync();
-        Assert.Contains("counter_double_999", content);
+        Assert.Contains("counter_double_999", content, StringComparison.Ordinal);
         Assert.DoesNotContain('\0', content);
 
         provider.Dispose();
@@ -222,13 +224,14 @@ public class PrometheusHttpListenerTests
     {
         Random random = new Random();
         int retryAttempts = 5;
-        int port = 0;
         string? generatedAddress = null;
         MeterProvider? provider = null;
 
         while (retryAttempts-- != 0)
         {
-            port = random.Next(2000, 5000);
+#pragma warning disable CA5394 // Do not use insecure randomness
+            int port = random.Next(2000, 5000);
+#pragma warning restore CA5394 // Do not use insecure randomness
             generatedAddress = $"http://localhost:{port}/";
 
             try
@@ -252,17 +255,12 @@ public class PrometheusHttpListenerTests
 
         address = generatedAddress!;
 
-        if (provider == null)
-        {
-            throw new InvalidOperationException("HttpListener could not be started");
-        }
-
-        return provider;
+        return provider ?? throw new InvalidOperationException("HttpListener could not be started");
     }
 
-    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text", KeyValuePair<string, object?>[]? meterTags = null)
+    private static async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text", KeyValuePair<string, object?>[]? meterTags = null)
     {
-        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
+        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text", StringComparison.Ordinal);
 
         using var meter = new Meter(MeterName, MeterVersion, meterTags);
 
@@ -288,7 +286,7 @@ public class PrometheusHttpListenerTests
             client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
-        using var response = await client.GetAsync($"{address}metrics");
+        using var response = await client.GetAsync(new Uri($"{address}metrics"));
 
         if (!skipMetrics)
         {
@@ -304,7 +302,7 @@ public class PrometheusHttpListenerTests
                 Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType!.ToString());
             }
 
-            var additionalTags = meterTags != null && meterTags.Any()
+            var additionalTags = meterTags is { Length: > 0 }
                 ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}='{x.Value}'"))},"
                 : string.Empty;
 
