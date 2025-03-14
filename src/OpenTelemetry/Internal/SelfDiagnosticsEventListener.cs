@@ -111,6 +111,23 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         return position;
     }
 
+    internal void WriteEventToConsole(string? eventMessage, ReadOnlyCollection<object?>? payload)
+    {
+        if (!string.IsNullOrEmpty(eventMessage))
+        {
+            Console.WriteLine(eventMessage);
+        }
+
+        if (payload != null)
+        {
+            for (int i = 0; i < payload.Count; ++i)
+            {
+                object? obj = payload[i];
+                Console.WriteLine(obj?.ToString() ?? "null");
+            }
+        }
+    }
+
     internal void WriteEvent(string? eventMessage, ReadOnlyCollection<object?>? payload)
     {
         try
@@ -144,6 +161,10 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
 
             buffer[pos++] = (byte)'\n';
             int byteCount = pos - 0;
+
+            // if read from EnVar and choose to write to Console
+            // Console.WriteLine()
+
             if (this.configRefresher.TryGetLogStream(byteCount, out Stream? stream, out int availableByteCount))
             {
                 if (availableByteCount >= byteCount)
@@ -309,7 +330,14 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         // See: https://github.com/open-telemetry/opentelemetry-dotnet/pull/5046
         if (eventData.EventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.OrdinalIgnoreCase))
         {
-            this.WriteEvent(eventData.Message, eventData.Payload);
+            if (this.configRefresher.IsSelfDiagnosticsEnVarOn)
+            {
+                this.WriteEventToConsole(eventData.Message, eventData.Payload);
+            }
+            else
+            {
+                this.WriteEvent(eventData.Message, eventData.Payload);
+            }
         }
     }
 
