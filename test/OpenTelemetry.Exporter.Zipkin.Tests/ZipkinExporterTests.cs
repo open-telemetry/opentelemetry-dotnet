@@ -170,7 +170,7 @@ public sealed class ZipkinExporterTests : IDisposable
         }
     }
 
-    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3690")]
+    [Fact]
     public void ErrorGettingUriFromEnvVarSetsDefaultEndpointValue()
     {
         try
