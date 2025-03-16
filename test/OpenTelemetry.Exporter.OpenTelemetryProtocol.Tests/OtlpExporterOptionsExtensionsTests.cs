@@ -35,6 +35,115 @@ public class OtlpExporterOptionsExtensionsTests
     }
 
     [Theory]
+    [InlineData("key1=value1")]
+    [InlineData("key1=value1,key2=value2")]
+    [InlineData("key1=value1,key2=value2,key3=value3")]
+    public void GetHeaders_ValidOptionHeaders_ReturnsMergedHeaders(string optionHeaders)
+    {
+        // Arrange: Create OtlpExporterOptions with specified headers
+        var options = new OtlpExporterOptions
+        {
+            Headers = optionHeaders,
+        };
+
+        // Act: Retrieve headers using GetHeaders method
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+        // Assert: Verify the count of headers matches the sum of standard headers and provided headers
+        Assert.Equal(OtlpExporterOptions.StandardHeaders.Length + optionHeaders.Split(',').Length, headers.Count);
+
+        // Assert: Verify each provided header is present in the result
+        foreach (var header in optionHeaders.Split(','))
+        {
+            var parts = header.Split('=');
+            Assert.Contains(headers, entry => entry.Key == parts[0] && entry.Value == parts[1]);
+        }
+
+        // Assert: Verify each standard header is present in the result
+        foreach (var standardHeader in OtlpExporterOptions.StandardHeaders)
+        {
+            Assert.Contains(headers, entry => entry.Key == standardHeader.Key && entry.Value == standardHeader.Value);
+        }
+    }
+
+    [Theory]
+    [InlineData("key1=value1,key2=value2,key3=value3")]
+    [InlineData("key1=value1,key2=value2,key3=value3,key4=value4")]
+    public void GetHeaders_ValidOptionHeadersWithStandardHeaders_ReturnsMergedHeadersWithoutDuplicates(string optionHeaders)
+    {
+        // Arrange: Create OtlpExporterOptions with specified headers
+        var options = new OtlpExporterOptions
+        {
+            Headers = optionHeaders,
+        };
+
+        // Act: Retrieve headers using GetHeaders method
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+        // Assert: Verify the count of headers matches the sum of standard headers and provided headers
+        Assert.Equal(OtlpExporterOptions.StandardHeaders.Length + optionHeaders.Split(',').Length, headers.Count);
+
+        // Assert: Verify each provided header is present in the result
+        foreach (var header in optionHeaders.Split(','))
+        {
+            var parts = header.Split('=');
+            Assert.Contains(headers, entry => entry.Key == parts[0] && entry.Value == parts[1]);
+        }
+
+        // Assert: Verify each standard header is present in the result
+        foreach (var standardHeader in OtlpExporterOptions.StandardHeaders)
+        {
+            Assert.Contains(headers, entry => entry.Key == standardHeader.Key && entry.Value == standardHeader.Value);
+        }
+    }
+
+    [Theory]
+    [InlineData("key1=value1,key2")]
+    [InlineData("key1")]
+    public void GetHeaders_InvalidOptionHeaders_ThrowsArgumentException(string optionHeaders)
+    {
+        // Arrange: Create OtlpExporterOptions with invalid headers
+        var options = new OtlpExporterOptions
+        {
+            Headers = optionHeaders,
+        };
+
+        // Act & Assert: Verify that an ArgumentException is thrown when calling GetHeaders
+        Assert.Throws<ArgumentException>(() => options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v)));
+    }
+
+    [Theory]
+    [InlineData("key1=value1%2Ckey2=value2", 2)]
+    [InlineData("key1=value1%2Ckey2=value2%2Ckey3=value3", 3)]
+    public void GetHeaders_UrlEncodedOptionHeaders_ReturnsDecodedHeaders(string optionHeaders, int expectedCount)
+    {
+        // Arrange: Create OtlpExporterOptions with URL-encoded headers
+        var options = new OtlpExporterOptions
+        {
+            Headers = optionHeaders,
+        };
+
+        // Act: Retrieve headers using GetHeaders method
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+        // Assert: Verify the count of headers matches the sum of standard headers and expected count
+        Assert.Equal(OtlpExporterOptions.StandardHeaders.Length + expectedCount, headers.Count);
+
+        // Assert: Verify each provided header is present in the result
+        foreach (var header in Uri.UnescapeDataString(optionHeaders).Split(','))
+        {
+            var parts = header.Split('=');
+            Assert.Contains(headers, entry => entry.Key == parts[0] && entry.Value == parts[1]);
+        }
+
+        // Assert: Verify each standard header is present in the result
+        foreach (var standardHeader in OtlpExporterOptions.StandardHeaders)
+        {
+            Assert.Contains(headers, entry => entry.Key == standardHeader.Key && entry.Value == standardHeader.Value);
+        }
+    }
+
+    [Theory]
 #if NET462_OR_GREATER
     [InlineData(OtlpExportProtocol.Grpc, typeof(GrpcExportClient))]
 #else
