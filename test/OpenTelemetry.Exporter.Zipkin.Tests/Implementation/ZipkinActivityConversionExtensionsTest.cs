@@ -22,9 +22,9 @@ public class ZipkinActivityConversionExtensionsTest
         var tags = PooledList<KeyValuePair<string, object?>>.Create();
         ExtractTags(activity, ref tags);
 
-        Assert.Single(tags);
-        Assert.Equal(key, tags[0].Key);
-        Assert.Equal(value, tags[0].Value);
+        var tag = Assert.Single(tags);
+        Assert.Equal(key, tag.Key);
+        Assert.Equal(value, tag.Value);
     }
 
     [Theory]
