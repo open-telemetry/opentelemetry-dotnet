@@ -12,7 +12,7 @@ public static class Program
         return StressTestFactory.RunSynchronously<LogsStressTest>(args);
     }
 
-    private sealed class LogsStressTest : StressTest<StressTestOptions>
+    private sealed class LogsStressTest : StressTests<StressTestOptions>
     {
         private static readonly Payload Payload = new();
         private readonly ILoggerFactory loggerFactory;

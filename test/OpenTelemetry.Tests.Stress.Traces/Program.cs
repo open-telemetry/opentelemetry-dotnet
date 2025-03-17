@@ -13,7 +13,7 @@ public static class Program
         return StressTestFactory.RunSynchronously<TracesStressTest>(args);
     }
 
-    private sealed class TracesStressTest : StressTest<StressTestOptions>
+    private sealed class TracesStressTest : StressTests<StressTestOptions>
     {
         private static readonly ActivitySource ActivitySource = new("OpenTelemetry.Tests.Stress");
         private readonly TracerProvider tracerProvider;
