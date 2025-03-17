@@ -74,7 +74,7 @@ internal sealed class PrometheusExporterMiddleware
                         ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
                         : "text/plain; charset=utf-8; version=0.0.4";
 
-                    await response.Body.WriteAsync(dataView.Array!, 0, dataView.Count).ConfigureAwait(false);
+                    await response.Body.WriteAsync(dataView.Array.AsMemory(0, dataView.Count)).ConfigureAwait(false);
                 }
                 else
                 {

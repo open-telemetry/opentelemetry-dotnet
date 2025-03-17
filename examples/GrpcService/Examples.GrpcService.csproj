@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>$(DefaultTargetFrameworkForExampleApps)</TargetFramework>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>

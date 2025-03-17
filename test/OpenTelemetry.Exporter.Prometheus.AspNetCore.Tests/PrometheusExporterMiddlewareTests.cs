@@ -3,6 +3,7 @@
 
 #if !NETFRAMEWORK
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
@@ -112,7 +113,7 @@ public sealed class PrometheusExporterMiddlewareTests
             {
                 if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string>? headers))
                 {
-                    headers = Array.Empty<string>();
+                    headers = [];
                 }
 
                 Assert.Equal("true", headers.FirstOrDefault());
@@ -139,7 +140,7 @@ public sealed class PrometheusExporterMiddlewareTests
             {
                 if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string>? headers))
                 {
-                    headers = Array.Empty<string>();
+                    headers = [];
                 }
 
                 Assert.Equal("true", headers.FirstOrDefault());
@@ -314,7 +315,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var client = host.GetTestClient();
 
-        using var response = await client.GetAsync("/metrics");
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
         var text = await response.Content.ReadAsStringAsync();
 
         Assert.NotEmpty(text);
@@ -372,7 +373,7 @@ public sealed class PrometheusExporterMiddlewareTests
         string acceptHeader = "application/openmetrics-text",
         KeyValuePair<string, object?>[]? meterTags = null)
     {
-        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
+        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text", StringComparison.Ordinal);
 
         using var host = await StartTestHostAsync(configure, configureServices, registerMeterProvider, configureOptions);
 
@@ -400,7 +401,7 @@ public sealed class PrometheusExporterMiddlewareTests
             client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
-        using var response = await client.GetAsync(path);
+        using var response = await client.GetAsync(new Uri(path, UriKind.Relative));
 
         var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
@@ -432,7 +433,7 @@ public sealed class PrometheusExporterMiddlewareTests
             Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType!.ToString());
         }
 
-        var additionalTags = meterTags != null && meterTags.Any()
+        var additionalTags = meterTags is { Length: > 0 }
             ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}=\"{x.Value}\""))},"
             : string.Empty;
 
@@ -464,7 +465,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         Assert.True(matches.Count == 1, content);
 
-        var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty));
+        var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty, StringComparison.Ordinal), CultureInfo.InvariantCulture);
 
         Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp, $"{beginTimestamp} {timestamp} {endTimestamp}");
     }
