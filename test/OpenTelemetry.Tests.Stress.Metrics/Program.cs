@@ -24,7 +24,7 @@ public static class Program
         return StressTestFactory.RunSynchronously<MetricsStressTest, MetricsStressTestOptions>(args);
     }
 
-    private sealed class MetricsStressTest : StressTest<MetricsStressTestOptions>
+    private sealed class MetricsStressTest : StressTests<MetricsStressTestOptions>
     {
         private const int ArraySize = 10;
         private const int MaxHistogramMeasurement = 1000;
