@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Exporter.Zipkin.Tests;
-using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
@@ -23,21 +22,22 @@ public class ZipkinActivityExporterRemoteEndpointTests
         Assert.NotNull(zipkinSpan.RemoteEndpoint);
     }
 
-    [Fact]
-    public void GenerateActivity_RemoteEndpointResolution()
+    [Theory]
+    [InlineData("peer.service", "PeerServiceName", "PeerServiceName")]
+    [InlineData("server.address", "ServerAddressName", "ServerAddressName")]
+    [InlineData("net.peer.name", "NetPeerName", "NetPeerName")]
+    public void GenerateActivity_RemoteEndpoint_SingleAttribute(string attribute, string attributeValue, string expected)
     {
-        // Arrange
         using var activity = ZipkinExporterTests.CreateTestActivity(
             additionalAttributes: new Dictionary<string, object>
             {
-                ["net.peer.name"] = "RemoteServiceName",
+                [attribute] = attributeValue,
             });
 
-        // Act & Assert
         var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);
 
         Assert.NotNull(zipkinSpan.RemoteEndpoint);
-        Assert.Equal("RemoteServiceName", zipkinSpan.RemoteEndpoint.ServiceName);
+        Assert.Equal(expected, zipkinSpan.RemoteEndpoint.ServiceName);
     }
 
     [Theory]
@@ -68,13 +68,11 @@ public class ZipkinActivityExporterRemoteEndpointTests
             {
                 new RemoteEndpointPriorityTestCase
                 {
-                    Name = "Highest priority name = net.peer.name",
-                    ExpectedResult = "RemoteServiceName",
+                    Name = "Rank 1: Only peer.service provided",
+                    ExpectedResult = "PeerService",
                     RemoteEndpointAttributes = new Dictionary<string, object>
                     {
-                        ["http.host"] = "DiscardedRemoteServiceName",
-                        ["net.peer.name"] = "RemoteServiceName",
-                        ["peer.hostname"] = "DiscardedRemoteServiceName",
+                        ["peer.service"] = "PeerService",
                     },
                 },
             };
@@ -83,15 +81,11 @@ public class ZipkinActivityExporterRemoteEndpointTests
             {
                 new RemoteEndpointPriorityTestCase
                 {
-                    Name = "Highest priority name = SemanticConventions.AttributePeerService",
-                    ExpectedResult = "RemoteServiceName",
+                    Name = "Rank 2: Only server.address provided",
+                    ExpectedResult = "ServerAddress",
                     RemoteEndpointAttributes = new Dictionary<string, object>
                     {
-                        [SemanticConventions.AttributePeerService] = "RemoteServiceName",
-                        ["http.host"] = "DiscardedRemoteServiceName",
-                        ["net.peer.name"] = "DiscardedRemoteServiceName",
-                        ["net.peer.port"] = "1234",
-                        ["peer.hostname"] = "DiscardedRemoteServiceName",
+                        ["server.address"] = "ServerAddress",
                     },
                 },
             };
@@ -100,12 +94,11 @@ public class ZipkinActivityExporterRemoteEndpointTests
             {
                 new RemoteEndpointPriorityTestCase
                 {
-                    Name = "Only has net.peer.name and net.peer.port",
-                    ExpectedResult = "RemoteServiceName:1234",
+                    Name = "Rank 3: Only net.peer.name provided",
+                    ExpectedResult = "NetPeerName",
                     RemoteEndpointAttributes = new Dictionary<string, object>
                     {
-                        ["net.peer.name"] = "RemoteServiceName",
-                        ["net.peer.port"] = "1234",
+                        ["net.peer.name"] = "NetPeerName",
                     },
                 },
             };
@@ -114,12 +107,12 @@ public class ZipkinActivityExporterRemoteEndpointTests
             {
                 new RemoteEndpointPriorityTestCase
                 {
-                    Name = "net.peer.port is an int",
-                    ExpectedResult = "RemoteServiceName:1234",
+                    Name = "Rank 4: network.peer.address and network.peer.port provided",
+                    ExpectedResult = "1.2.3.4:5678",
                     RemoteEndpointAttributes = new Dictionary<string, object>
                     {
-                        ["net.peer.name"] = "RemoteServiceName",
-                        ["net.peer.port"] = 1234,
+                        ["network.peer.address"] = "1.2.3.4",
+                        ["network.peer.port"] = "5678",
                     },
                 },
             };
@@ -128,14 +121,11 @@ public class ZipkinActivityExporterRemoteEndpointTests
             {
                 new RemoteEndpointPriorityTestCase
                 {
-                    Name = "Has net.peer.name and net.peer.port",
-                    ExpectedResult = "RemoteServiceName:1234",
+                    Name = "Rank 4: Only network.peer.address provided",
+                    ExpectedResult = "1.2.3.4",
                     RemoteEndpointAttributes = new Dictionary<string, object>
                     {
-                        ["http.host"] = "DiscardedRemoteServiceName",
-                        ["net.peer.name"] = "RemoteServiceName",
-                        ["net.peer.port"] = "1234",
-                        ["peer.hostname"] = "DiscardedRemoteServiceName",
+                        ["network.peer.address"] = "1.2.3.4",
                     },
                 },
             };
@@ -144,14 +134,11 @@ public class ZipkinActivityExporterRemoteEndpointTests
             {
                 new RemoteEndpointPriorityTestCase
                 {
-                    Name = "Has net.peer.ip and net.peer.port",
-                    ExpectedResult = "1.2.3.4:1234",
+                    Name = "Rank 5: Only server.socket.domain provided",
+                    ExpectedResult = "SocketDomain",
                     RemoteEndpointAttributes = new Dictionary<string, object>
                     {
-                        ["http.host"] = "DiscardedRemoteServiceName",
-                        ["net.peer.ip"] = "1.2.3.4",
-                        ["net.peer.port"] = "1234",
-                        ["peer.hostname"] = "DiscardedRemoteServiceName",
+                        ["server.socket.domain"] = "SocketDomain",
                     },
                 },
             };
@@ -160,15 +147,104 @@ public class ZipkinActivityExporterRemoteEndpointTests
             {
                 new RemoteEndpointPriorityTestCase
                 {
-                    Name = "Has net.peer.name, net.peer.ip, and net.peer.port",
-                    ExpectedResult = "RemoteServiceName:1234",
+                    Name = "Rank 6: server.socket.address and server.socket.port provided",
+                    ExpectedResult = "SocketAddress:4321",
                     RemoteEndpointAttributes = new Dictionary<string, object>
                     {
-                        ["http.host"] = "DiscardedRemoteServiceName",
-                        ["net.peer.name"] = "RemoteServiceName",
-                        ["net.peer.ip"] = "1.2.3.4",
-                        ["net.peer.port"] = "1234",
-                        ["peer.hostname"] = "DiscardedRemoteServiceName",
+                        ["server.socket.address"] = "SocketAddress",
+                        ["server.socket.port"] = "4321",
+                    },
+                },
+            };
+
+            yield return new object[]
+            {
+                new RemoteEndpointPriorityTestCase
+                {
+                    Name = "Rank 7: Only net.sock.peer.name provided",
+                    ExpectedResult = "NetSockPeerName",
+                    RemoteEndpointAttributes = new Dictionary<string, object>
+                    {
+                        ["net.sock.peer.name"] = "NetSockPeerName",
+                    },
+                },
+            };
+
+            yield return new object[]
+            {
+                new RemoteEndpointPriorityTestCase
+                {
+                    Name = "Rank 8: net.sock.peer.addr and net.sock.peer.port provided",
+                    ExpectedResult = "5.6.7.8:8765",
+                    RemoteEndpointAttributes = new Dictionary<string, object>
+                    {
+                        ["net.sock.peer.addr"] = "5.6.7.8",
+                        ["net.sock.peer.port"] = "8765",
+                    },
+                },
+            };
+
+            yield return new object[]
+            {
+                new RemoteEndpointPriorityTestCase
+                {
+                    Name = "Rank 9: Only peer.hostname provided",
+                    ExpectedResult = "PeerHostname",
+                    RemoteEndpointAttributes = new Dictionary<string, object>
+                    {
+                        ["peer.hostname"] = "PeerHostname",
+                    },
+                },
+            };
+
+            yield return new object[]
+            {
+                new RemoteEndpointPriorityTestCase
+                {
+                    Name = "Rank 10: Only peer.address provided",
+                    ExpectedResult = "PeerAddress",
+                    RemoteEndpointAttributes = new Dictionary<string, object>
+                    {
+                        ["peer.address"] = "PeerAddress",
+                    },
+                },
+            };
+
+            yield return new object[]
+            {
+                new RemoteEndpointPriorityTestCase
+                {
+                    Name = "Rank 11: Only db.name provided",
+                    ExpectedResult = "DbName",
+                    RemoteEndpointAttributes = new Dictionary<string, object>
+                    {
+                        ["db.name"] = "DbName",
+                    },
+                },
+            };
+
+            yield return new object[]
+            {
+                new RemoteEndpointPriorityTestCase
+                {
+                    Name = "Multiple attributes: highest rank wins",
+                    ExpectedResult = "PeerService",
+                    RemoteEndpointAttributes = new Dictionary<string, object>
+                    {
+                        ["db.name"] = "DbName",
+                        ["peer.address"] = "PeerAddress",
+                        ["peer.hostname"] = "PeerHostname",
+                        ["net.sock.peer.addr"] = "5.6.7.8",
+                        ["net.sock.peer.port"] = "8765",
+                        ["net.sock.peer.name"] = "NetSockPeerName",
+                        ["server.socket.address"] = "SocketAddress",
+                        ["server.socket.port"] = "4321",
+                        ["server.socket.domain"] = "SocketDomain",
+                        ["network.peer.address"] = "1.2.3.4",
+                        ["network.peer.port"] = "5678",
+                        ["net.peer.name"] = "NetPeerName",
+                        ["server.address"] = "ServerAddress",
+                        ["peer.service"] = "PeerService",
                     },
                 },
             };

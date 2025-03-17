@@ -76,7 +76,7 @@ public class ZipkinActivityConversionTest
 
     [Theory]
     [InlineData(StatusCode.Unset, "unset")]
-    [InlineData(StatusCode.Ok, "Ok")]
+    [InlineData(StatusCode.Ok, "OK")]
     [InlineData(StatusCode.Error, "ERROR")]
     [InlineData(StatusCode.Unset, "iNvAlId")]
     [Obsolete("Remove when ActivityExtensions status APIs are removed")]
