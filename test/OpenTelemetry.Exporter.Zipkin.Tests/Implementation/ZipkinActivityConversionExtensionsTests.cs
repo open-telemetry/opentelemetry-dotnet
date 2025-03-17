@@ -8,7 +8,7 @@ using static OpenTelemetry.Exporter.Zipkin.Implementation.ZipkinActivityConversi
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
 
-public class ZipkinActivityConversionExtensionsTest
+public class ZipkinActivityConversionExtensionsTests
 {
     [Theory]
     [InlineData("int", 1)]

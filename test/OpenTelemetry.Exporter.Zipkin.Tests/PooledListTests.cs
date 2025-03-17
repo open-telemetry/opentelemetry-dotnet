@@ -7,7 +7,7 @@ using Xunit;
 
 namespace OpenTelemetry.Internal.Tests;
 
-public class PooledListTest
+public class PooledListTests
 {
     [Fact]
     public void Verify_ICollectionExplicitProperties()

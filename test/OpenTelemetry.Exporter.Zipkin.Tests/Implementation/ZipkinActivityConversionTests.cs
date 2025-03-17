@@ -9,7 +9,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
 
-public class ZipkinActivityConversionTest
+public class ZipkinActivityConversionTests
 {
     private const string ZipkinSpanName = "Name";
     private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new("TestService");

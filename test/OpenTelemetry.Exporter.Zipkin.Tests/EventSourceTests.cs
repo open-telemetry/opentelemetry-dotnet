@@ -7,7 +7,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests;
 
-public class EventSourceTest
+public class EventSourceTests
 {
     [Fact]
     public void EventSourceTest_ZipkinExporterEventSource()
