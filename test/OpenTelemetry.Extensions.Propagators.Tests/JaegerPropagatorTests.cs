@@ -28,7 +28,7 @@ public class JaegerPropagatorTests
             return value;
         }
 
-        return Array.Empty<string>();
+        return [];
     };
 
     private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
