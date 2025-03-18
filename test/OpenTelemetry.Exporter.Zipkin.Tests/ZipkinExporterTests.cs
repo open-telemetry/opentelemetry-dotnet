@@ -340,8 +340,7 @@ public sealed class ZipkinExporterTests : IDisposable
             });
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-        var serviceName = (string)exporter.ParentProvider.GetDefaultResource().Attributes
-            .Where(pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
+        var serviceName = (string)exporter.ParentProvider.GetDefaultResource().Attributes.FirstOrDefault(pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).Value;
         var resourceTags = string.Empty;
         var dateTime = DateTime.UtcNow;
         using var activity = ZipkinActivitySource.CreateTestActivity(isRootSpan: isRootSpan, statusCode: statusCode, statusDescription: statusDescription, dateTime: dateTime);
