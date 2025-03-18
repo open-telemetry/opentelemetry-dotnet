@@ -93,7 +93,7 @@ public sealed class ZipkinExporterTests : IDisposable
     [Fact]
     public void SuppressesInstrumentation()
     {
-        const string ActivitySourceName = "zipkin.test";
+        const string activitySourceName = "zipkin.test";
         Guid requestId = Guid.NewGuid();
 #pragma warning disable CA2000 // Dispose objects before losing scope
         TestActivityProcessor testActivityProcessor = new();
@@ -115,13 +115,13 @@ public sealed class ZipkinExporterTests : IDisposable
         using var exportActivityProcessor = new BatchActivityExportProcessor(zipkinExporter);
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource(ActivitySourceName)
+            .AddSource(activitySourceName)
             .AddProcessor(testActivityProcessor)
             .AddProcessor(exportActivityProcessor)
             .AddHttpClientInstrumentation()
             .Build();
 
-        using var source = new ActivitySource(ActivitySourceName);
+        using var source = new ActivitySource(activitySourceName);
         using var activity = source.StartActivity("Test Zipkin Activity");
         activity?.Stop();
 
