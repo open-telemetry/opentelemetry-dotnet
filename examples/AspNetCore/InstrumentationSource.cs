@@ -11,15 +11,15 @@ using System.Diagnostics.Metrics;
 /// ActivitySource and Instruments. This avoids possible type collisions
 /// with other components in the DI container.
 /// </summary>
-public sealed class Instrumentation : IDisposable
+public sealed class InstrumentationSource : IDisposable
 {
     internal const string ActivitySourceName = "Examples.AspNetCore";
     internal const string MeterName = "Examples.AspNetCore";
     private readonly Meter meter;
 
-    public Instrumentation()
+    public InstrumentationSource()
     {
-        string? version = typeof(Instrumentation).Assembly.GetName().Version?.ToString();
+        string? version = typeof(InstrumentationSource).Assembly.GetName().Version?.ToString();
         this.ActivitySource = new ActivitySource(ActivitySourceName, version);
         this.meter = new Meter(MeterName, version);
         this.FreezingDaysCounter = this.meter.CreateCounter<long>("weather.days.freezing", description: "The number of days where the temperature is below freezing");

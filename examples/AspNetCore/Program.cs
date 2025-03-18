@@ -26,7 +26,7 @@ var histogramAggregation = appBuilder.Configuration.GetValue("HistogramAggregati
 
 // Create a service to expose ActivitySource, and Metric Instruments
 // for manual instrumentation
-appBuilder.Services.AddSingleton<Instrumentation>();
+appBuilder.Services.AddSingleton<InstrumentationSource>();
 
 // Clear default logging providers used by WebApplication host.
 appBuilder.Logging.ClearProviders();
@@ -45,7 +45,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         // Ensure the TracerProvider subscribes to any custom ActivitySources.
         builder
-            .AddSource(Instrumentation.ActivitySourceName)
+            .AddSource(InstrumentationSource.ActivitySourceName)
             .SetSampler(new AlwaysOnSampler())
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
@@ -84,7 +84,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         // Ensure the MeterProvider subscribes to any custom Meters.
         builder
-            .AddMeter(Instrumentation.MeterName)
+            .AddMeter(InstrumentationSource.MeterName)
             .SetExemplarFilter(ExemplarFilterType.TraceBased)
             .AddRuntimeInstrumentation()
             .AddHttpClientInstrumentation()
