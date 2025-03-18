@@ -60,11 +60,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case int:
             case uint:
             case long:
-                this.WriteIntegralTag(ref state, key, Convert.ToInt64(value));
+                this.WriteIntegralTag(ref state, key, Convert.ToInt64(value, CultureInfo.InvariantCulture));
                 break;
             case float:
             case double:
-                this.WriteFloatingPointTag(ref state, key, Convert.ToDouble(value));
+                this.WriteFloatingPointTag(ref state, key, Convert.ToDouble(value, CultureInfo.InvariantCulture));
                 break;
             case Array array:
                 try
@@ -142,15 +142,13 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     private void WriteCharTag(ref TTagState state, string key, char value)
     {
-        Span<char> destination = stackalloc char[1];
-        destination[0] = value;
+        Span<char> destination = [value];
         this.WriteStringTag(ref state, key, destination);
     }
 
     private void WriteCharValue(ref TArrayState state, char value)
     {
-        Span<char> destination = stackalloc char[1];
-        destination[0] = value;
+        Span<char> destination = [value];
         this.arrayWriter.WriteStringValue(ref state, destination);
     }
 
@@ -268,11 +266,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 case int:
                 case uint:
                 case long:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, Convert.ToInt64(item));
+                    this.arrayWriter.WriteIntegralValue(ref arrayState, Convert.ToInt64(item, CultureInfo.InvariantCulture));
                     break;
                 case float:
                 case double:
-                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, Convert.ToDouble(item));
+                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, Convert.ToDouble(item, CultureInfo.InvariantCulture));
                     break;
 
                 // All other types are converted to strings including the following
