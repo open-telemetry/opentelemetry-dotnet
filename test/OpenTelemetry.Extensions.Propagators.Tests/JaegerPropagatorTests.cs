@@ -23,12 +23,7 @@ public class JaegerPropagatorTests
 
     private static readonly Func<IDictionary<string, string[]>, string, IEnumerable<string>> Getter = (headers, name) =>
     {
-        if (headers.TryGetValue(name, out var value))
-        {
-            return value;
-        }
-
-        return [];
+        return headers.TryGetValue(name, out var value) ? value : [];
     };
 
     private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>

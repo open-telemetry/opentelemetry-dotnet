@@ -83,14 +83,7 @@ public sealed class B3Propagator : TextMapPropagator
             return context;
         }
 
-        if (this.singleHeader)
-        {
-            return ExtractFromSingleHeader(context, carrier, getter);
-        }
-        else
-        {
-            return ExtractFromMultipleHeaders(context, carrier, getter);
-        }
+        return this.singleHeader ? ExtractFromSingleHeader(context, carrier, getter) : ExtractFromMultipleHeaders(context, carrier, getter);
     }
 
     /// <inheritdoc/>
