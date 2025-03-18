@@ -23,12 +23,7 @@ public class JaegerPropagatorTests
 
     private static readonly Func<IDictionary<string, string[]>, string, IEnumerable<string>> Getter = (headers, name) =>
     {
-        if (headers.TryGetValue(name, out var value))
-        {
-            return value;
-        }
-
-        return Array.Empty<string>();
+        return headers.TryGetValue(name, out var value) ? value : [];
     };
 
     private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
@@ -118,6 +113,21 @@ public class JaegerPropagatorTests
     [InlineData(TraceIdShort, SpanIdShort, ParentSpanId, FlagNotSampled, JaegerDelimiterEncoded)]
     public void ExtractReturnsNewContextIfHeaderIsValid(string traceId, string spanId, string parentSpanId, string flags, string delimiter)
     {
+#if NET
+        Assert.NotNull(traceId);
+        Assert.NotNull(spanId);
+#else
+        if (traceId == null)
+        {
+            throw new ArgumentNullException(nameof(traceId));
+        }
+
+        if (spanId == null)
+        {
+            throw new ArgumentNullException(nameof(traceId));
+        }
+#endif
+
         // arrange
         var propagationContext = default(PropagationContext);
 
