@@ -222,7 +222,7 @@ Released 2022-June-1
   ([#3281](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3281))
 * Fix exporting of array-valued attributes on an `Activity`. Previously, each
   item in the array would result in a new tag on an exported `Activity`. Now,
-  array-valued attributes are serialzed to a JSON-array representation.
+  array-valued attributes are serialized to a JSON-array representation.
   ([#3281](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3281))
 
 ## 1.3.0-beta.2
