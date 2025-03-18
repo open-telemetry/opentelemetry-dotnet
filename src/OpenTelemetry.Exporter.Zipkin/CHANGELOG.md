@@ -6,8 +6,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Removed the peer service resolver logic. Extended remote endpoint calculation to
-  align with the [opentelemetry-specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.40.0/specification/trace/sdk_exporters/zipkin.md#otlp---zipkin).
+* Removed the peer service resolver, which was based on earlier experimental
+  semantic conventions that are not part of the stable specification. This
+  change ensures that the exporter no longer modifies or assumes the value of
+  peer service attributes.
+  ([#6191](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6191))
+
+* Extended remote endpoint calculation to align with the [opentelemetry-specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.40.0/specification/trace/sdk_exporters/zipkin.md#otlp---zipkin).
   ([#6191](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6191))
 
 ## 1.11.2
