@@ -11,7 +11,7 @@ using System.Diagnostics.Metrics;
 /// ActivitySource and Instruments. This avoids possible type collisions
 /// with other components in the DI container.
 /// </summary>
-public class Instrumentation : IDisposable
+public sealed class Instrumentation : IDisposable
 {
     internal const string ActivitySourceName = "Examples.AspNetCore";
     internal const string MeterName = "Examples.AspNetCore";
