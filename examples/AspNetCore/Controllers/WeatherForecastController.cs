@@ -5,6 +5,7 @@ namespace Examples.AspNetCore.Controllers;
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Security.Cryptography;
 using Examples.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 
@@ -52,12 +53,11 @@ public class WeatherForecastController : ControllerBase
         // a manual activity using Activity.Current?.SetTag()
         using var activity = this.activitySource.StartActivity("calculate forecast");
 
-        var rng = new Random();
         var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
             Date = DateTime.Now.AddDays(index),
-            TemperatureC = rng.Next(-20, 55),
-            Summary = Summaries[rng.Next(Summaries.Length)],
+            TemperatureC = RandomNumberGenerator.GetInt32(-20, 55),
+            Summary = Summaries[RandomNumberGenerator.GetInt32(Summaries.Length)],
         })
         .ToArray();
 
