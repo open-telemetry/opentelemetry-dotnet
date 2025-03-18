@@ -159,7 +159,7 @@ public class JaegerPropagator : TextMapPropagator
         spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
 
         var traceFlagsStr = traceComponents[3];
-        if (SampledValue.Equals(traceFlagsStr))
+        if (SampledValue.Equals(traceFlagsStr, StringComparison.Ordinal))
         {
             traceOptions |= ActivityTraceFlags.Recorded;
         }
