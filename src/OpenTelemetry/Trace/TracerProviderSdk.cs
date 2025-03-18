@@ -251,7 +251,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         // Sources can be null. This happens when user
         // is only interested in InstrumentationLibraries
         // which do not depend on ActivitySources.
-        if (state.Sources.Any())
+        if (state.Sources.Count > 0)
         {
             // Validation of source name is already done in builder.
             if (state.Sources.Any(s => WildcardHelper.ContainsWildcard(s)))
