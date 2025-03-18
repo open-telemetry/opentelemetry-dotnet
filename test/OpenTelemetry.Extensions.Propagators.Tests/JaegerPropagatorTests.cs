@@ -113,6 +113,21 @@ public class JaegerPropagatorTests
     [InlineData(TraceIdShort, SpanIdShort, ParentSpanId, FlagNotSampled, JaegerDelimiterEncoded)]
     public void ExtractReturnsNewContextIfHeaderIsValid(string traceId, string spanId, string parentSpanId, string flags, string delimiter)
     {
+#if NET
+        Assert.NotNull(traceId);
+        Assert.NotNull(spanId);
+#else
+        if (traceId == null)
+        {
+            throw new ArgumentNullException(nameof(traceId));
+        }
+
+        if (spanId == null)
+        {
+            throw new ArgumentNullException(nameof(traceId));
+        }
+#endif
+
         // arrange
         var propagationContext = default(PropagationContext);
 
