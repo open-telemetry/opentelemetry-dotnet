@@ -72,7 +72,7 @@ public class OtlpExporterOptionsExtensionsTests
     public void GetHeaders_ValidOptionHeadersWithStandardHeaders_ReturnsMergedHeadersWithoutDuplicates(string optionHeaders)
     {
         // The expectedAdditionalCount is derived by splitting the provided headers by comma.
-        VerifyHeaders(optionHeaders, optionHeaders.Split(',').Length);
+        this.VerifyHeaders(optionHeaders, optionHeaders.Split(',').Length);
     }
 
     [Theory]
@@ -96,7 +96,7 @@ public class OtlpExporterOptionsExtensionsTests
     public void GetHeaders_UrlEncodedOptionHeaders_ReturnsDecodedHeaders(string optionHeaders, int expectedCount)
     {
         // Unescape the headers before validation
-        VerifyHeaders(optionHeaders, expectedCount, Uri.UnescapeDataString);
+        this.VerifyHeaders(optionHeaders, expectedCount, Uri.UnescapeDataString);
     }
 
     [Theory]
@@ -209,7 +209,7 @@ public class OtlpExporterOptionsExtensionsTests
     /// <param name="optionHeaders">The input header string, potentially URL-encoded, to be processed and verified.</param>
     /// <param name="expectedAdditionalCount">The expected number of additional headers provided in <paramref name="optionHeaders"/>.</param>
     /// <param name="preprocess">Optional function to preprocess the <paramref name="optionHeaders"/>, such as unescaping URL-encoded strings.</param>
-    private void VerifyHeaders(string optionHeaders, int expectedAdditionalCount, Func<string, string> preprocess = null)
+    private void VerifyHeaders(string optionHeaders, int expectedAdditionalCount, Func<string, string>? preprocess = null)
     {
         // Preprocess headers if needed (e.g., unescape URL-encoded strings)
         var processedHeaders = preprocess != null ? preprocess(optionHeaders) : optionHeaders;
