@@ -141,8 +141,7 @@ internal static class ZipkinActivityConversionExtensions
         }
         else
         {
-            var status = activity.GetTagItem(SpanAttributeConstants.StatusCodeKey) as string;
-            if (status != null)
+            if (activity.GetTagItem(SpanAttributeConstants.StatusCodeKey) is string status)
             {
                 if (status == "OK")
                 {
