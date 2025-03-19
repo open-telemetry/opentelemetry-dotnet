@@ -14,7 +14,7 @@ public class ZipkinActivityExporterRemoteEndpointTests
     public void GenerateActivity_RemoteEndpointOmittedByDefault()
     {
         // Arrange
-        using var activity = ZipkinExporterTests.CreateTestActivity();
+        using var activity = ZipkinActivitySource.CreateTestActivity();
 
         // Act & Assert
         var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);
@@ -23,11 +23,21 @@ public class ZipkinActivityExporterRemoteEndpointTests
     }
 
     [Theory]
-    [MemberData(nameof(RemoteEndpointPriorityTestCase.GetTestCases), MemberType = typeof(RemoteEndpointPriorityTestCase))]
+    [MemberData(nameof(RemoteEndpointPriorityTestCase.TestCases), MemberType = typeof(RemoteEndpointPriorityTestCase))]
     public void GenerateActivity_RemoteEndpointResolutionPriority(RemoteEndpointPriorityTestCase testCase)
     {
+#if NET
+        Assert.NotNull(testCase);
+#else
+        if (testCase == null)
+        {
+            throw new ArgumentNullException(nameof(testCase));
+        }
+#endif
+
         // Arrange
-        using var activity = ZipkinExporterTests.CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes!);
+        using var activity =
+            ZipkinActivitySource.CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes!);
 
         // Act & Assert
         var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);
