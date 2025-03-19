@@ -252,7 +252,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 {
                     msg.AppendLine();
                     msg.AppendLine("Exemplars");
-                    msg.Append(exemplarString.ToString());
+                    msg.Append(exemplarString);
                 }
 
                 this.WriteLine(msg.ToString());
