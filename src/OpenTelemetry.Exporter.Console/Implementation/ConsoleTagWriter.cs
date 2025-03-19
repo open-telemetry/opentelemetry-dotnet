@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using OpenTelemetry.Internal;
 
@@ -39,13 +40,13 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
     protected override void WriteIntegralTag(ref ConsoleTag consoleTag, string key, long value)
     {
         consoleTag.Key = key;
-        consoleTag.Value = value.ToString();
+        consoleTag.Value = value.ToString(CultureInfo.InvariantCulture);
     }
 
     protected override void WriteFloatingPointTag(ref ConsoleTag consoleTag, string key, double value)
     {
         consoleTag.Key = key;
-        consoleTag.Value = value.ToString();
+        consoleTag.Value = value.ToString(CultureInfo.InvariantCulture);
     }
 
     protected override void WriteBooleanTag(ref ConsoleTag consoleTag, string key, bool value)
