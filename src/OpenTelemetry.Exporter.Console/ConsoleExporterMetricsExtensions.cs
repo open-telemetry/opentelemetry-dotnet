@@ -104,7 +104,7 @@ public static class ConsoleExporterMetricsExtensions
         });
     }
 
-    private static MetricReader BuildConsoleExporterMetricReader(
+    private static PeriodicExportingMetricReader BuildConsoleExporterMetricReader(
         ConsoleExporterOptions exporterOptions,
         MetricReaderOptions metricReaderOptions)
     {
