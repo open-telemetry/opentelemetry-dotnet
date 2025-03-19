@@ -11,7 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("[controller]")]
+#pragma warning disable CA1515 // Consider making public types internal
 public class WeatherForecastController : ControllerBase
+#pragma warning restore CA1515 // Consider making public types internal
 {
     private static readonly string[] Summaries =
     [

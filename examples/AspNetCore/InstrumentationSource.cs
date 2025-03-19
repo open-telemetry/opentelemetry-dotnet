@@ -11,7 +11,9 @@ using System.Diagnostics.Metrics;
 /// ActivitySource and Instruments. This avoids possible type collisions
 /// with other components in the DI container.
 /// </summary>
+#pragma warning disable CA1515 // Consider making public types internal
 public sealed class InstrumentationSource : IDisposable
+#pragma warning restore CA1515 // Consider making public types internal
 {
     internal const string ActivitySourceName = "Examples.AspNetCore";
     internal const string MeterName = "Examples.AspNetCore";
