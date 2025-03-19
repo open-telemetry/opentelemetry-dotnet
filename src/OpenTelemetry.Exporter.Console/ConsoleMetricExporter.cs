@@ -25,7 +25,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 #else
             msg.Append($"Metric Name: {metric.Name}");
 #endif
-            if (metric.Description != string.Empty)
+            if (string.IsNullOrEmpty(metric.Description))
             {
 #if NET
                 msg.Append(CultureInfo.InvariantCulture, $", Description: {metric.Description}");
@@ -34,7 +34,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 #endif
             }
 
-            if (metric.Unit != string.Empty)
+            if (string.IsNullOrEmpty(metric.Unit))
             {
 #if NET
                 msg.Append(CultureInfo.InvariantCulture, $", Unit: {metric.Unit}");
@@ -235,7 +235,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                 msg.Append("] ");
                 msg.Append(tags);
-                if (tags != string.Empty)
+                if (string.IsNullOrEmpty(tags))
                 {
                     msg.Append(' ');
                 }
