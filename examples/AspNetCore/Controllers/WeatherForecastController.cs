@@ -24,21 +24,21 @@ public class WeatherForecastController : ControllerBase
     private readonly ActivitySource activitySource;
     private readonly Counter<long> freezingDaysCounter;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, Instrumentation instrumentation)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, InstrumentationSource instrumentationSource)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        ArgumentNullException.ThrowIfNull(instrumentation);
-        this.activitySource = instrumentation.ActivitySource;
-        this.freezingDaysCounter = instrumentation.FreezingDaysCounter;
+        ArgumentNullException.ThrowIfNull(instrumentationSource);
+        this.activitySource = instrumentationSource.ActivitySource;
+        this.freezingDaysCounter = instrumentationSource.FreezingDaysCounter;
     }
 
     [HttpGet]
     public IEnumerable<WeatherForecast> Get()
     {
-        using var scope = this.logger.BeginScope("{Id}", Guid.NewGuid().ToString("N"));
+        using var scope = this.logger.BeginIdScope(Guid.NewGuid().ToString("N"));
 
-        // Making an http call here to serve as an example of
+        // Making a http call here to serve as an example of
         // how dependency calls will be captured and treated
         // automatically as child of incoming request.
         var res = HttpClient.GetStringAsync(new Uri("http://google.com")).Result;
@@ -64,10 +64,7 @@ public class WeatherForecastController : ControllerBase
         // Optional: Count the freezing days
         this.freezingDaysCounter.Add(forecast.Count(f => f.TemperatureC < 0));
 
-        this.logger.LogInformation(
-            "WeatherForecasts generated {Count}: {Forecasts}",
-            forecast.Length,
-            forecast);
+        this.logger.WeatherForecastGenerated(LogLevel.Information, forecast.Length, forecast);
 
         return forecast;
     }
