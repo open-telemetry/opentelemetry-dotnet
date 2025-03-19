@@ -105,7 +105,7 @@ internal static class Base2ExponentialBucketHistogramHelper
             }
         }
 
-        double u = BitConverter.Int64BitsToDouble(((long)(0x3ff + n) << 52));
+        double u = BitConverter.Int64BitsToDouble((long)(0x3ff + n) << 52);
         return y * u;
     }
 #pragma warning restore SA1119 // Statement should not use unnecessary parenthesis
