@@ -157,25 +157,11 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 }
                 else if (metricType.IsDouble())
                 {
-                    if (metricType.IsSum())
-                    {
-                        valueDisplay = metricPoint.GetSumDouble().ToString(CultureInfo.InvariantCulture);
-                    }
-                    else
-                    {
-                        valueDisplay = metricPoint.GetGaugeLastValueDouble().ToString(CultureInfo.InvariantCulture);
-                    }
+                    valueDisplay = metricType.IsSum() ? metricPoint.GetSumDouble().ToString(CultureInfo.InvariantCulture) : metricPoint.GetGaugeLastValueDouble().ToString(CultureInfo.InvariantCulture);
                 }
                 else if (metricType.IsLong())
                 {
-                    if (metricType.IsSum())
-                    {
-                        valueDisplay = metricPoint.GetSumLong().ToString(CultureInfo.InvariantCulture);
-                    }
-                    else
-                    {
-                        valueDisplay = metricPoint.GetGaugeLastValueLong().ToString(CultureInfo.InvariantCulture);
-                    }
+                    valueDisplay = metricType.IsSum() ? metricPoint.GetSumLong().ToString(CultureInfo.InvariantCulture) : metricPoint.GetGaugeLastValueLong().ToString(CultureInfo.InvariantCulture);
                 }
 
                 var exemplarString = new StringBuilder();
