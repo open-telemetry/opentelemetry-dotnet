@@ -428,8 +428,7 @@ public sealed class ZipkinExporterTests : IDisposable
                 + statusTag
                 + errorTag
                 + @"""otel.scope.name"":""CreateTestActivity"","
-                + @"""otel.library.name"":""CreateTestActivity"","
-                + @"""peer.service"":""http://localhost:44312/"""
+                + @"""otel.library.name"":""CreateTestActivity"""
             + "}}]",
             Responses[requestId]);
     }

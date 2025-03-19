@@ -27,7 +27,7 @@ internal static class ZipkinActivityConversionExtensions
         ExtractActivityStatus(activity, ref tags);
         ExtractActivitySource(activity, ref tags);
 
-        ZipkinEndpoint? remoteEndpoint = ExtractRemoteEndpoint(activity, ref tags);
+        ZipkinEndpoint? remoteEndpoint = ExtractRemoteEndpoint(activity);
         var annotations = ExtractActivityEvents(activity);
 
         return new ZipkinSpan(
@@ -98,7 +98,7 @@ internal static class ZipkinActivityConversionExtensions
 
     private static void ExtractActivityTags(Activity activity, ref PooledList<KeyValuePair<string, object?>> tags)
     {
-        foreach (var tag in activity.TagObjects)
+        foreach (ref readonly var tag in activity.EnumerateTagObjects())
         {
             if (tag.Key != ZipkinErrorFlagTagName && tag.Key != SpanAttributeConstants.StatusCodeKey)
             {
@@ -193,69 +193,111 @@ internal static class ZipkinActivityConversionExtensions
         }
     }
 
-    private static ZipkinEndpoint? ExtractRemoteEndpoint(Activity activity, ref PooledList<KeyValuePair<string, object?>> tags)
+    private static ZipkinEndpoint? ExtractRemoteEndpoint(Activity activity)
     {
-        // Extract remote endpoint rule from https://github.com/open-telemetry/opentelemetry-specification/blob/v1.42.0/specification/trace/sdk_exporters/zipkin.md#remote-endpoint
         if (activity.Kind != ActivityKind.Client && activity.Kind != ActivityKind.Producer)
         {
             return null;
         }
 
+        static ZipkinEndpoint? TryCreateEndpoint(string? remoteEndpoint)
+        {
+            if (remoteEndpoint != null)
+            {
+                var endpoint = RemoteEndpointCache.GetOrAdd((remoteEndpoint, default), ZipkinEndpoint.Create);
+                return endpoint;
+            }
+
+            return null;
+        }
+
         string? remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributePeerService) as string;
-
-        remoteEndpoint ??= activity.GetTagItem(SemanticConventions.AttributeServerAddress) as string;
-
-        remoteEndpoint ??= activity.GetTagItem(SemanticConventions.AttributeNetPeerName) as string;
-
-        if (remoteEndpoint == null)
+        var endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
         {
-            var peerAddress = activity.GetTagItem(SemanticConventions.AttributeNetworkPeerAddress) as string;
-            var peerPort = activity.GetTagItem(SemanticConventions.AttributeNetworkPeerPort) as string;
-
-            if (peerAddress != null)
-            {
-                remoteEndpoint = peerPort != null ? $"{peerAddress}:{peerPort}" : peerAddress;
-            }
+            return endpoint;
         }
 
-        remoteEndpoint ??= activity.GetTagItem(SemanticConventions.AttributeServerSocketDomain) as string;
-
-        if (remoteEndpoint == null)
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeServerAddress) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
         {
-            var address = activity.GetTagItem(SemanticConventions.AttributeServerSocketAddress) as string;
-            var port = activity.GetTagItem(SemanticConventions.AttributeServerSocketPort) as string;
-
-            if (address != null)
-            {
-                remoteEndpoint = port != null ? $"{address}:{port}" : address;
-            }
+            return endpoint;
         }
 
-        remoteEndpoint ??= activity.GetTagItem(SemanticConventions.AttributeNetSockPeerName) as string;
-
-        if (remoteEndpoint == null)
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeNetPeerName) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
         {
-            var socketAddress = activity.GetTagItem(SemanticConventions.AttributeNetSockPeerAddr) as string;
-            var socketPort = activity.GetTagItem(SemanticConventions.AttributeNetSockPeerPort) as string;
-
-            if (socketAddress != null)
-            {
-                remoteEndpoint = socketPort != null ? $"{socketAddress}:{socketPort}" : socketAddress;
-            }
+            return endpoint;
         }
 
-        remoteEndpoint ??= activity.GetTagItem(SemanticConventions.AttributePeerHostname) as string;
-
-        remoteEndpoint ??= activity.GetTagItem(SemanticConventions.AttributePeerAddress) as string;
-
-        remoteEndpoint ??= activity.GetTagItem(SemanticConventions.AttributeDbName) as string;
-
-        remoteEndpoint ??= activity.GetTagItem(SemanticConventions.AttributeHttpHost) as string;
-
-        if (remoteEndpoint != null)
+        var peerAddress = activity.GetTagItem(SemanticConventions.AttributeNetworkPeerAddress) as string;
+        var peerPort = activity.GetTagItem(SemanticConventions.AttributeNetworkPeerPort) as string;
+        remoteEndpoint = peerPort != null ? $"{peerAddress}:{peerPort}" : peerAddress;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
         {
-            var endpoint = RemoteEndpointCache.GetOrAdd((remoteEndpoint, default), ZipkinEndpoint.Create);
-            PooledList<KeyValuePair<string, object?>>.Add(ref tags, new KeyValuePair<string, object?>(SemanticConventions.AttributePeerService, remoteEndpoint));
+            return endpoint;
+        }
+
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeServerSocketDomain) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
+        {
+            return endpoint;
+        }
+
+        var serverAddress = activity.GetTagItem(SemanticConventions.AttributeServerSocketAddress) as string;
+        var serverPort = activity.GetTagItem(SemanticConventions.AttributeServerSocketPort) as string;
+        remoteEndpoint = serverPort != null ? $"{serverAddress}:{serverPort}" : serverAddress;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
+        {
+            return endpoint;
+        }
+
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeNetSockPeerName) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
+        {
+            return endpoint;
+        }
+
+        var socketAddress = activity.GetTagItem(SemanticConventions.AttributeNetSockPeerAddr) as string;
+        var socketPort = activity.GetTagItem(SemanticConventions.AttributeNetSockPeerPort) as string;
+        remoteEndpoint = socketPort != null ? $"{socketAddress}:{socketPort}" : socketAddress;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
+        {
+            return endpoint;
+        }
+
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributePeerHostname) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
+        {
+            return endpoint;
+        }
+
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributePeerAddress) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
+        {
+            return endpoint;
+        }
+
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeDbName) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
+        {
+            return endpoint;
+        }
+
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeHttpHost) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
+        {
             return endpoint;
         }
 
@@ -265,9 +307,10 @@ internal static class ZipkinActivityConversionExtensions
     private static PooledList<ZipkinAnnotation> ExtractActivityEvents(Activity activity)
     {
         var annotations = PooledList<ZipkinAnnotation>.Create();
-        foreach (var e in activity.Events)
+
+        foreach (ref readonly var @event in activity.EnumerateEvents())
         {
-            PooledList<ZipkinAnnotation>.Add(ref annotations, new ZipkinAnnotation(e.Timestamp.ToEpochMicroseconds(), e.Name));
+            PooledList<ZipkinAnnotation>.Add(ref annotations, new ZipkinAnnotation(@event.Timestamp.ToEpochMicroseconds(), @event.Name));
         }
 
         return annotations;
