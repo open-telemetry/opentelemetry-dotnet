@@ -31,13 +31,10 @@
         3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
           these packages even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="$(LatestRuntimeOutOfBandVer)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(LatestRuntimeOutOfBandVer)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="$(LatestRuntimeOutOfBandVer)" />
 
     <!--
         OTel packages always point to latest stable release.
