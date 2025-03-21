@@ -441,8 +441,7 @@ public sealed class ZipkinExporterTests : IDisposable
                 + statusTag
                 + errorTag
                 + @"""otel.scope.name"":""ZipkinActivitySource"","
-                + @"""otel.library.name"":""ZipkinActivitySource"","
-                + @"""peer.service"":""http://localhost:44312/"""
+                + @"""otel.library.name"":""ZipkinActivitySource"""
             + "}}]",
             Responses[requestId]);
     }
