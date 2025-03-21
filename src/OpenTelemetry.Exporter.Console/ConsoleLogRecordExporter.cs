@@ -89,7 +89,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
                     // Special casing {OriginalFormat}
                     // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                     // for explanation.
-                    var valueToTransform = logRecord.Attributes[i].Key.Equals("{OriginalFormat}")
+                    var valueToTransform = logRecord.Attributes[i].Key.Equals("{OriginalFormat}", StringComparison.Ordinal)
                         ? new KeyValuePair<string, object?>("OriginalFormat (a.k.a Body)", logRecord.Attributes[i].Value)
                         : logRecord.Attributes[i];
 

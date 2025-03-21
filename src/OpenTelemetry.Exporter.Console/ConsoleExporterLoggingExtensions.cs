@@ -32,7 +32,9 @@ public static class ConsoleExporterLoggingExtensions
 
         var options = new ConsoleExporterOptions();
         configure?.Invoke(options);
+#pragma warning disable CA2000 // Dispose objects before losing scope
         return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new ConsoleLogRecordExporter(options)));
+#pragma warning restore CA2000 // Dispose objects before losing scope
     }
 
     /// <summary>
