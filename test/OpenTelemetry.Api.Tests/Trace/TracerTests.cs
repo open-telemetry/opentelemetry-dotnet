@@ -303,8 +303,8 @@ public class TracerTests : IDisposable
         Tracer? tracer1;
 
         using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource("mytracer")
-            .Build())
+                   .AddSource("mytracer")
+                   .Build())
         {
             provider = tracerProvider;
             tracer1 = tracerProvider.GetTracer("mytracer");
@@ -406,6 +406,143 @@ public class TracerTests : IDisposable
 
             Assert.Empty(tracers);
         }
+    }
+
+    [Fact]
+    public void GetTracer_WithSameTags_ReturnsSameInstance()
+    {
+        var tags1 = new List<KeyValuePair<string, object?>> { new("tag1", "value1"), new("tag2", "value2") };
+        var tags2 = new List<KeyValuePair<string, object?>> { new("tag1", "value1"), new("tag2", "value2") };
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
+
+        Assert.Same(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_WithoutTags_ReturnsSameInstance()
+    {
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0");
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0");
+
+        Assert.Same(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_WithDifferentTags_ReturnsDifferentInstances()
+    {
+        var tags1 = new List<KeyValuePair<string, object?>> { new("tag1", "value1") };
+        var tags2 = new List<KeyValuePair<string, object?>> { new("tag2", "value2") };
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
+
+        Assert.NotSame(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_WithDifferentOrderTags_ReturnsSameInstance()
+    {
+        var tags1 = new List<KeyValuePair<string, object?>> { new("tag2", "value2"), new("tag1", "value1"), };
+        var tags2 = new List<KeyValuePair<string, object?>> { new("tag1", "value1"), new("tag2", "value2"), };
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
+
+        Assert.Same(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_TagsValuesAreIntType_ReturnsSameInstance()
+    {
+        var tags1 = new List<KeyValuePair<string, object?>> { new("tag2", 2), new("tag1", 1) };
+        var tags2 = new List<KeyValuePair<string, object?>> { new("tag1", 1), new("tag2", 2) };
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
+
+        Assert.Same(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_TagsValuesAreSameWithDifferentOrder_ReturnsSameInstance()
+    {
+        var tags1 = new List<KeyValuePair<string, object?>> { new("tag3", 1), new("tag1", 1), new("tag2", 1), new("tag1", 2), new("tag2", 2) };
+        var tags2 = new List<KeyValuePair<string, object?>> { new("tag2", 1), new("tag1", 2), new("tag1", 1), new("tag2", 2), new("tag3", 1) };
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
+
+        Assert.Same(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_TagsContainNullValues_ReturnsSameInstance()
+    {
+        var tags1 = new List<KeyValuePair<string, object?>> { new("tag3", 1), new("tag2", 3), new("tag1", null), new("tag2", null), new("tag1", 2), new("tag2", 2) };
+        var tags2 = new List<KeyValuePair<string, object?>> { new("tag2", null), new("tag1", 2), new("tag2", 3), new("tag1", null), new("tag2", 2), new("tag3", 1) };
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
+
+        Assert.Same(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_WithDifferentTagsSize_ReturnsDifferentInstances()
+    {
+        var tags1 = new List<KeyValuePair<string, object?>> { new("tag2", 2), new("tag1", 1) };
+        var tags2 = new List<KeyValuePair<string, object?>> { new("tag1", 1), new("tag2", 2), new("tag3", 3) };
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags1);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags2);
+
+        Assert.NotSame(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_WithTagsAndWithoutTags_ReturnsDifferentInstances()
+    {
+        var tags = new List<KeyValuePair<string, object?>> { new("tag1", "value1") };
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracerWithTags = tracerProvider.GetTracer("test", "1.0.0", tags);
+        var tracerWithoutTags = tracerProvider.GetTracer("test", "1.0.0");
+
+        Assert.NotEqual(tracerWithTags, tracerWithoutTags);
+    }
+
+    [Fact]
+    public void GetTracer_WithTags_AppliesTagsToActivities()
+    {
+        var exportedItems = new List<Activity>();
+        var tags = new List<KeyValuePair<string, object?>> { new("tracerTag", "tracerValue") };
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("test")
+            .AddInMemoryExporter(exportedItems)
+            .SetSampler(new AlwaysOnSampler())
+            .Build();
+
+        var tracer = tracerProvider.GetTracer("test", "1.0.0", tags);
+
+        using (var span = tracer.StartActiveSpan("TestSpan"))
+        {
+            // Activity started by the tracer with tags
+        }
+
+        var activity = Assert.Single(exportedItems);
+
+        Assert.Contains(activity.Source.Tags!, kvp => kvp.Key == "tracerTag" && (string)kvp.Value! == "tracerValue");
     }
 
     public void Dispose()
