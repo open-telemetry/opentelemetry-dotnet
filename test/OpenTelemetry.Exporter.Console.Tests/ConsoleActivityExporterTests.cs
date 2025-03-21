@@ -11,7 +11,7 @@ namespace OpenTelemetry.Exporter.Console.Tests;
 public class ConsoleActivityExporterTests
 {
     [Fact]
-    public void VerifyConsoleActivityExporterDoesntFailWithoutActivityLinkTags()
+    public void VerifyConsoleActivityExporterDoesNotFailWithoutActivityLinkTags()
     {
         var activitySourceName = Utils.GetCurrentMethodName();
         using var activitySource = new ActivitySource(activitySourceName);

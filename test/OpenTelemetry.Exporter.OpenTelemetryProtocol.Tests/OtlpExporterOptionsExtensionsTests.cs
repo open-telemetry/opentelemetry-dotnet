@@ -35,6 +35,32 @@ public class OtlpExporterOptionsExtensionsTests
     }
 
     [Theory]
+    [InlineData(" ")]
+    [InlineData(",key1=value1,key2=value2,")]
+    [InlineData(",,key1=value1,,key2=value2,,")]
+    [InlineData("key1")]
+    public void GetHeaders_InvalidOptionHeaders_ThrowsArgumentException(string inputOptionHeaders)
+    {
+        this.VerifyHeaders(inputOptionHeaders, string.Empty, true);
+    }
+
+    [Theory]
+    [InlineData("", "")]
+    [InlineData("key1=value1", "key1=value1")]
+    [InlineData("key1=value1,key2=value2", "key1=value1,key2=value2")]
+    [InlineData("key1=value1,key2=value2,key3=value3", "key1=value1,key2=value2,key3=value3")]
+    [InlineData(" key1 = value1 , key2=value2 ", "key1=value1,key2=value2")]
+    [InlineData("key1= value with spaces ,key2=another value", "key1=value with spaces,key2=another value")]
+    [InlineData("=value1", "=value1")]
+    [InlineData("key1=", "key1=")]
+    [InlineData("key1=value1%2Ckey2=value2", "key1=value1,key2=value2")]
+    [InlineData("key1=value1%2Ckey2=value2%2Ckey3=value3", "key1=value1,key2=value2,key3=value3")]
+    public void GetHeaders_ValidAndUrlEncodedHeaders_ReturnsCorrectHeaders(string inputOptionHeaders, string expectedNormalizedOptional)
+    {
+        this.VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);
+    }
+
+    [Theory]
 #if NET462_OR_GREATER
     [InlineData(OtlpExportProtocol.Grpc, typeof(GrpcExportClient))]
 #else
@@ -131,5 +157,51 @@ public class OtlpExporterOptionsExtensionsTests
         Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
 
         Assert.Equal(expectedTimeoutMilliseconds, transmissionHandler.TimeoutMilliseconds);
+    }
+
+    /// <summary>
+    /// Validates whether the `Headers` property in `OtlpExporterOptions` is correctly processed and parsed.
+    /// It also verifies that the extracted headers match the expected values and checks for expected exceptions.
+    /// </summary>
+    /// <param name="inputOptionHeaders">The raw header string assigned to `OtlpExporterOptions`.
+    /// The format should be "key1=value1,key2=value2" (comma-separated key-value pairs).</param>
+    /// <param name="expectedNormalizedOptional">A string representing expected additional headers.
+    /// This will be parsed into a dictionary and compared with the actual extracted headers.</param>
+    /// <param name="expectException">If `true`, the method expects `GetHeaders` to throw an `ArgumentException`
+    /// when processing `inputOptionHeaders`.</param>
+    private void VerifyHeaders(string inputOptionHeaders, string expectedNormalizedOptional, bool expectException = false)
+    {
+        var options = new OtlpExporterOptions { Headers = inputOptionHeaders };
+
+        if (expectException)
+        {
+            Assert.Throws<ArgumentException>(() =>
+                options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v)));
+            return;
+        }
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var expectedOptional = new Dictionary<string, string>();
+
+        if (!string.IsNullOrEmpty(expectedNormalizedOptional))
+        {
+            foreach (var segment in expectedNormalizedOptional.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var parts = segment.Split(new[] { '=' }, 2);
+                expectedOptional.Add(parts[0].Trim(), parts[1].Trim());
+            }
+        }
+
+        Assert.Equal(OtlpExporterOptions.StandardHeaders.Length + expectedOptional.Count, headers.Count);
+
+        foreach (var kvp in expectedOptional)
+        {
+            Assert.Contains(headers, h => h.Key == kvp.Key && h.Value == kvp.Value);
+        }
+
+        foreach (var std in OtlpExporterOptions.StandardHeaders)
+        {
+            Assert.Contains(headers, h => h.Key == std.Key && h.Value == std.Value);
+        }
     }
 }
