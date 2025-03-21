@@ -3,7 +3,9 @@
 
 namespace Examples.AspNetCore;
 
+#pragma warning disable CA1515 // Consider making public types internal
 public class WeatherForecast
+#pragma warning restore CA1515 // Consider making public types internal
 {
     public DateTime Date { get; set; }
 
