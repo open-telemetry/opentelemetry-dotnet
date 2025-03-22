@@ -6,10 +6,11 @@
     <PackageTags>$(PackageTags);Console;distributed-tracing</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
     <ReferenceSystemTextJsonPackages>true</ReferenceSystemTextJsonPackages>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn),1591</NoWarn>
+    <NoWarn>$(NoWarn),CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

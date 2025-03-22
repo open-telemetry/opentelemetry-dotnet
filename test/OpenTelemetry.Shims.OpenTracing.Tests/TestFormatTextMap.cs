@@ -5,6 +5,6 @@ using OpenTracing.Propagation;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests;
 
-internal class TestFormatTextMap : IFormat<ITextMap>
+internal sealed class TestFormatTextMap : IFormat<ITextMap>
 {
 }

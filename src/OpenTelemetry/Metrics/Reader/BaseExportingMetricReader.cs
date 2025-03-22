@@ -17,7 +17,6 @@ public class BaseExportingMetricReader : MetricReader
     /// </summary>
     protected readonly BaseExporter<Metric> exporter;
 
-    private readonly ExportModes supportedExportModes = ExportModes.Push | ExportModes.Pull;
     private readonly string exportCalledMessage;
     private readonly string exportSucceededMessage;
     private readonly string exportFailedMessage;
@@ -38,12 +37,12 @@ public class BaseExportingMetricReader : MetricReader
         if (attributes.Length > 0)
         {
             var attr = (ExportModesAttribute)attributes[attributes.Length - 1];
-            this.supportedExportModes = attr.Supported;
+            this.SupportedExportModes = attr.Supported;
         }
 
         if (exporter is IPullMetricExporter pullExporter)
         {
-            if (this.supportedExportModes.HasFlag(ExportModes.Push))
+            if (this.SupportedExportModes.HasFlag(ExportModes.Push))
             {
                 pullExporter.Collect = this.Collect;
             }
@@ -69,7 +68,7 @@ public class BaseExportingMetricReader : MetricReader
     /// <summary>
     /// Gets the supported <see cref="ExportModes"/>.
     /// </summary>
-    protected ExportModes SupportedExportModes => this.supportedExportModes;
+    protected ExportModes SupportedExportModes { get; } = ExportModes.Push | ExportModes.Pull;
 
     internal override void SetParentProvider(BaseProvider parentProvider)
     {
@@ -106,12 +105,12 @@ public class BaseExportingMetricReader : MetricReader
     /// <inheritdoc />
     protected override bool OnCollect(int timeoutMilliseconds)
     {
-        if (this.supportedExportModes.HasFlag(ExportModes.Push))
+        if (this.SupportedExportModes.HasFlag(ExportModes.Push))
         {
             return base.OnCollect(timeoutMilliseconds);
         }
 
-        if (this.supportedExportModes.HasFlag(ExportModes.Pull) && PullMetricScope.IsPullAllowed)
+        if (this.SupportedExportModes.HasFlag(ExportModes.Pull) && PullMetricScope.IsPullAllowed)
         {
             return base.OnCollect(timeoutMilliseconds);
         }

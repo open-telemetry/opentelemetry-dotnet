@@ -7,6 +7,7 @@
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
     <MinVerTagPrefix>coreunstable-</MinVerTagPrefix>
     <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE</DefineConstants>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
