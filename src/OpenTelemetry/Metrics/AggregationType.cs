@@ -6,11 +6,6 @@ namespace OpenTelemetry.Metrics;
 internal enum AggregationType
 {
     /// <summary>
-    /// Invalid.
-    /// </summary>
-    Invalid = -1,
-
-    /// <summary>
     /// Calculate SUM from incoming delta measurements.
     /// </summary>
     LongSumIncomingDelta = 0,
