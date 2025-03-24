@@ -80,7 +80,7 @@ public abstract class MetricTestsBase
 
     // This method relies on the assumption that MetricPoints are exported in the order in which they are emitted.
     // For Delta AggregationTemporality, this holds true only until the AggregatorStore has not begun recaliming the MetricPoints.
-    public static void ValidateMetricPointTags(List<KeyValuePair<string, object?>> expectedTags, ReadOnlyTagCollection actualTags)
+    internal static void ValidateMetricPointTags(List<KeyValuePair<string, object?>> expectedTags, ReadOnlyTagCollection actualTags)
     {
         int tagIndex = 0;
         foreach (var tag in actualTags)
@@ -93,7 +93,7 @@ public abstract class MetricTestsBase
         Assert.Equal(expectedTags.Count, tagIndex);
     }
 
-    public static long GetLongSum(List<Metric> metrics)
+    internal static long GetLongSum(List<Metric> metrics)
     {
         long sum = 0;
         foreach (var metric in metrics)
@@ -114,7 +114,7 @@ public abstract class MetricTestsBase
         return sum;
     }
 
-    public static double GetDoubleSum(List<Metric> metrics)
+    internal static double GetDoubleSum(List<Metric> metrics)
     {
         double sum = 0;
         foreach (var metric in metrics)
@@ -135,7 +135,7 @@ public abstract class MetricTestsBase
         return sum;
     }
 
-    public static int GetNumberOfMetricPoints(List<Metric> metrics)
+    internal static int GetNumberOfMetricPoints(List<Metric> metrics)
     {
         int count = 0;
         foreach (var metric in metrics)
@@ -165,7 +165,7 @@ public abstract class MetricTestsBase
     // This method relies on the assumption that MetricPoints are exported in the order in which they are emitted.
     // For Delta AggregationTemporality, this holds true only until the AggregatorStore has not begun recaliming the MetricPoints.
     // Provide tags input sorted by Key
-    public static void CheckTagsForNthMetricPoint(List<Metric> metrics, List<KeyValuePair<string, object?>> tags, int n)
+    internal static void CheckTagsForNthMetricPoint(List<Metric> metrics, List<KeyValuePair<string, object?>> tags, int n)
     {
         var metric = metrics[0];
         var metricPointEnumerator = metric.GetMetricPoints().GetEnumerator();
