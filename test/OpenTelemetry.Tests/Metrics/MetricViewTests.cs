@@ -475,7 +475,7 @@ public class MetricViewTests : MetricTestsBase
 
         Assert.Equal("NotAHistogram", metric.Name);
 
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -515,7 +515,7 @@ public class MetricViewTests : MetricTestsBase
         Assert.Equal("MyHistogramDefaultBound", metricDefault.Name);
         Assert.Equal("MyHistogram", metricCustom.Name);
 
-        List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
+        List<MetricPoint> metricPointsDefault = [];
         foreach (ref readonly var mp in metricDefault.GetMetricPoints())
         {
             metricPointsDefault.Add(mp);
@@ -542,7 +542,7 @@ public class MetricViewTests : MetricTestsBase
 
         Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, actualCount);
 
-        List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
+        List<MetricPoint> metricPointsCustom = [];
         foreach (ref readonly var mp in metricCustom.GetMetricPoints())
         {
             metricPointsCustom.Add(mp);
@@ -586,11 +586,11 @@ public class MetricViewTests : MetricTestsBase
         // Test cases for different histogram types
         var histograms = new Instrument[]
         {
-            meter.CreateHistogram<long>("longHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = new List<long>() { 10, 20 } }),
-            meter.CreateHistogram<int>("intHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = new List<int>() { 10, 20 } }),
-            meter.CreateHistogram<short>("shortHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = new List<short>() { 10, 20 } }),
-            meter.CreateHistogram<float>("floatHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = new List<float>() { 10.0F, 20.0F } }),
-            meter.CreateHistogram<double>("doubleHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = new List<double>() { 10.0, 20.0 } }),
+            meter.CreateHistogram<long>("longHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = [10L, 20L] }),
+            meter.CreateHistogram<int>("intHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = [10, 20] }),
+            meter.CreateHistogram<short>("shortHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = [10, 20] }),
+            meter.CreateHistogram<float>("floatHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = [10.0F, 20.0F] }),
+            meter.CreateHistogram<double>("doubleHistogram", unit: null, description: null, tags: null, new() { HistogramBucketBoundaries = [10.0, 20.0] }),
         };
 
         foreach (var histogram in histograms)
@@ -635,7 +635,7 @@ public class MetricViewTests : MetricTestsBase
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             var metricCustom = exportedItems[counter];
 
-            List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
+            List<MetricPoint> metricPointsCustom = [];
             foreach (ref readonly var mp in metricCustom.GetMetricPoints())
             {
                 metricPointsCustom.Add(mp);
@@ -672,7 +672,7 @@ public class MetricViewTests : MetricTestsBase
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
-        IReadOnlyList<long> adviceBoundaries = new List<long>() { 5, 10, 20 };
+        IReadOnlyList<long> adviceBoundaries = [5L, 10L, 20L];
         double[] viewBoundaries = [10, 20];
 
         using var container = this.BuildMeterProvider(out var meterProvider, builder =>
@@ -712,7 +712,7 @@ public class MetricViewTests : MetricTestsBase
 
         Assert.Equal("MyHistogram", metricCustom.Name);
 
-        List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
+        List<MetricPoint> metricPointsCustom = [];
         foreach (ref readonly var mp in metricCustom.GetMetricPoints())
         {
             metricPointsCustom.Add(mp);
@@ -877,7 +877,7 @@ public class MetricViewTests : MetricTestsBase
             })
             .AddView("FruitCounter", new MetricStreamConfiguration()
             {
-                TagKeys = Array.Empty<string>(),
+                TagKeys = [],
                 Name = "NoTags",
             })
             .AddInMemoryExporter(exportedItems));
@@ -896,7 +896,7 @@ public class MetricViewTests : MetricTestsBase
         Assert.Equal(3, exportedItems.Count);
         var metric = exportedItems[0];
         Assert.Equal("NameOnly", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -1069,7 +1069,7 @@ public class MetricViewTests : MetricTestsBase
         Assert.Equal("newDescription1", metric1.Description);
         Assert.Equal("newDescription2", metric2.Description);
 
-        List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric1MetricPoints = [];
         foreach (ref readonly var mp in metric1.GetMetricPoints())
         {
             metric1MetricPoints.Add(mp);
@@ -1079,7 +1079,7 @@ public class MetricViewTests : MetricTestsBase
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
-        List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric2MetricPoints = [];
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
@@ -1361,7 +1361,7 @@ public class MetricViewTests : MetricTestsBase
             actualCount++;
         }
 
-        metricPoints = new List<MetricPoint>();
+        metricPoints = [];
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metricPoints.Add(mp);

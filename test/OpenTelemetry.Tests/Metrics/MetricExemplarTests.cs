@@ -440,7 +440,7 @@ public class MetricExemplarTests : MetricTestsBase
                 {
                     return new ExplicitBucketHistogramConfiguration
                     {
-                        Boundaries = Array.Empty<double>(),
+                        Boundaries = [],
                         ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
                     };
                 }
@@ -448,7 +448,7 @@ public class MetricExemplarTests : MetricTestsBase
                 {
                     return new ExplicitBucketHistogramConfiguration
                     {
-                        Boundaries = Array.Empty<double>(),
+                        Boundaries = [],
                         RecordMinMax = false,
                         ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
                     };

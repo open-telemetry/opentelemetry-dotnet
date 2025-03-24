@@ -25,7 +25,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     public void EnableMetricsTest(bool useWithMetricsStyle)
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
-        List<Metric> exportedItems = new();
+        List<Metric> exportedItems = [];
 
         using (var host = MetricTestsBase.BuildHost(
             useWithMetricsStyle,
@@ -45,7 +45,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     public void EnableMetricsWithAddMeterTest(bool useWithMetricsStyle)
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
-        List<Metric> exportedItems = new();
+        List<Metric> exportedItems = [];
 
         using (var host = MetricTestsBase.BuildHost(
             useWithMetricsStyle,
@@ -71,7 +71,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
-        List<Metric> exportedItems = new();
+        List<Metric> exportedItems = [];
 
         var source = new MemoryConfigurationSource();
         var memory = new MemoryConfigurationProvider(source);
@@ -162,7 +162,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
-        List<Metric> exportedItems = new();
+        List<Metric> exportedItems = [];
 
         var source = new MemoryConfigurationSource();
         var memory = new MemoryConfigurationProvider(source);
@@ -232,7 +232,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
     private static void AssertMetricWithLongSum(Metric metric, long expectedValue = 1)
     {
-        List<MetricPoint> metricPoints = new();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);

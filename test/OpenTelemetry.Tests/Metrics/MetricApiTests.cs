@@ -42,7 +42,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("myCounter", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -75,7 +75,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("myGauge", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -105,7 +105,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("myGauge", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -234,7 +234,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
 
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -248,7 +248,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
 
-        metricPoints = new List<MetricPoint>();
+        metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -281,7 +281,7 @@ public class MetricApiTests : MetricTestsBase
 
         var metric = exportedItems[0];
         Assert.Equal("instrumentName", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -317,7 +317,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal("instrumentDescription1", metric1.Description);
         Assert.Equal("instrumentDescription2", metric2.Description);
 
-        List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric1MetricPoints = [];
         foreach (ref readonly var mp in metric1.GetMetricPoints())
         {
             metric1MetricPoints.Add(mp);
@@ -327,7 +327,7 @@ public class MetricApiTests : MetricTestsBase
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
-        List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric2MetricPoints = [];
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
@@ -363,7 +363,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal("instrumentUnit1", metric1.Unit);
         Assert.Equal("instrumentUnit2", metric2.Unit);
 
-        List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric1MetricPoints = [];
         foreach (ref readonly var mp in metric1.GetMetricPoints())
         {
             metric1MetricPoints.Add(mp);
@@ -373,7 +373,7 @@ public class MetricApiTests : MetricTestsBase
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
-        List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric2MetricPoints = [];
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
@@ -407,7 +407,7 @@ public class MetricApiTests : MetricTestsBase
         var metric1 = exportedItems[0];
         var metric2 = exportedItems[1];
 
-        List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric1MetricPoints = [];
         foreach (ref readonly var mp in metric1.GetMetricPoints())
         {
             metric1MetricPoints.Add(mp);
@@ -417,7 +417,7 @@ public class MetricApiTests : MetricTestsBase
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
-        List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric2MetricPoints = [];
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
@@ -451,7 +451,7 @@ public class MetricApiTests : MetricTestsBase
         var metric1 = exportedItems[0];
         var metric2 = exportedItems[1];
 
-        List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric1MetricPoints = [];
         foreach (ref readonly var mp in metric1.GetMetricPoints())
         {
             metric1MetricPoints.Add(mp);
@@ -461,7 +461,7 @@ public class MetricApiTests : MetricTestsBase
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
-        List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric2MetricPoints = [];
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
@@ -830,7 +830,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("observable-counter", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -920,13 +920,13 @@ public class MetricApiTests : MetricTestsBase
             {
                 metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
             })
-            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = Array.Empty<string>() }));
+            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = [] }));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("requestCount", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -1111,7 +1111,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("observable-counter", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -1639,7 +1639,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("Background Noise Level", metric.Description);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
