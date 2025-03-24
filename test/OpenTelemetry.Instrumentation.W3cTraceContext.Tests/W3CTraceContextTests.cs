@@ -14,7 +14,7 @@ using Xunit.Abstractions;
 
 namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests;
 
-public class W3CTraceContextTests : IDisposable
+public sealed class W3CTraceContextTests : IDisposable
 {
     /*
         To run the tests, invoke docker-compose.yml from the root of the repo:
