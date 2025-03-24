@@ -36,7 +36,7 @@ public class MetricExemplarTests : MetricTestsBase
             });
         }
 
-        using var container = this.BuildMeterProvider(out var meterProvider, b =>
+        using var container = BuildMeterProvider(out var meterProvider, b =>
         {
             b.ConfigureServices(
                 s => s.AddSingleton<IConfiguration>(configBuilder.Build()));
@@ -73,7 +73,7 @@ public class MetricExemplarTests : MetricTestsBase
         var counterDouble = meter.CreateCounter<double>("testCounterDouble");
         var counterLong = meter.CreateCounter<long>("testCounterLong");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
@@ -198,7 +198,7 @@ public class MetricExemplarTests : MetricTestsBase
         var counterDouble = meter.CreateObservableCounter("counterDouble", () => measurementValues[measurementIndex].Value);
         var counterLong = meter.CreateObservableCounter("counterLong", () => (long)measurementValues[measurementIndex].Value);
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
@@ -293,7 +293,7 @@ public class MetricExemplarTests : MetricTestsBase
             });
         }
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        using var container = BuildMeterProvider(out var meterProvider, builder =>
         {
             if (string.IsNullOrEmpty(configValue))
             {
@@ -431,7 +431,7 @@ public class MetricExemplarTests : MetricTestsBase
         var histogramWithoutBucketsAndMinMaxLong = meter.CreateHistogram<long>("histogramWithoutBucketsAndMinMaxLong");
         var histogramWithoutBucketsLong = meter.CreateHistogram<long>("histogramWithoutBucketsLong");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
@@ -559,7 +559,7 @@ public class MetricExemplarTests : MetricTestsBase
         var exponentialHistogramWithMinMaxLong = meter.CreateHistogram<long>("exponentialHistogramWithMinMaxLong");
         var exponentialHistogramLong = meter.CreateHistogram<long>("exponentialHistogramLong");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
@@ -678,7 +678,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         var counter = meter.CreateCounter<long>("testCounter");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.TraceBased)
             .AddInMemoryExporter(exportedItems));
@@ -727,7 +727,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         TestExemplarReservoir? testExemplarReservoir = null;
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(

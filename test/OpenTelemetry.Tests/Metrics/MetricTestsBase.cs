@@ -195,7 +195,7 @@ public abstract class MetricTestsBase
         return Array.Empty<Exemplar>();
     }
 
-    internal IDisposable BuildMeterProvider(
+    internal static IDisposable BuildMeterProvider(
         out MeterProvider meterProvider,
         Action<MeterProviderBuilder> configure)
     {
