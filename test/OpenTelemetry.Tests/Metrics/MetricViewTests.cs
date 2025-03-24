@@ -102,7 +102,7 @@ public class MetricViewTests : MetricTestsBase
         using var meter1 = new Meter("AddViewWithExceptionInUserCallback");
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
            .AddMeter(meter1.Name)
-           .AddView((instrument) => { throw new Exception("bad"); })
+           .AddView(_ => { throw new InvalidOperationException("bad"); })
            .AddInMemoryExporter(exportedItems));
 
         using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
@@ -129,7 +129,7 @@ public class MetricViewTests : MetricTestsBase
         using var meter1 = new Meter("AddViewWithExceptionInUserCallback");
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
            .AddMeter(meter1.Name)
-           .AddView((instrument) => { throw new Exception("bad"); })
+           .AddView(_ => { throw new InvalidOperationException("bad"); })
            .AddView("*", MetricStreamConfiguration.Drop)
            .AddInMemoryExporter(exportedItems));
 
@@ -156,8 +156,8 @@ public class MetricViewTests : MetricTestsBase
         using var meter1 = new Meter("AddViewWithExceptionInUserCallback");
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
            .AddMeter(meter1.Name)
-           .AddView((instrument) => { throw new Exception("bad"); })
-           .AddView((instrument) => { return new MetricStreamConfiguration() { Name = "newname" }; })
+           .AddView(_ => { throw new InvalidOperationException("bad"); })
+           .AddView(_ => { return new MetricStreamConfiguration() { Name = "newname" }; })
            .AddInMemoryExporter(exportedItems));
 
         using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))

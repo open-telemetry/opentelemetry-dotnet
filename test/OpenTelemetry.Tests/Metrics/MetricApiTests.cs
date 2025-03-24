@@ -99,7 +99,7 @@ public class MetricApiTests : MetricTestsBase
 
         var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
         meter.CreateObservableGauge("myGauge", () => measurement);
-        meter.CreateObservableGauge<long>("myBadGauge", observeValues: () => throw new Exception("gauge read error"));
+        meter.CreateObservableGauge<long>("myBadGauge", observeValues: () => throw new InvalidOperationException("gauge read error"));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
