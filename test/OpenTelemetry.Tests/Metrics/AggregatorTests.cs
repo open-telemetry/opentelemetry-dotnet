@@ -493,7 +493,7 @@ public class AggregatorTests
         Interlocked.Increment(ref args.ThreadsFinishedAllUpdatesCount);
     }
 
-    private class ThreadArguments
+    private sealed class ThreadArguments
     {
         public readonly ManualResetEvent MreToEnsureAllThreadsStart;
         public MetricPoint HistogramPoint;
