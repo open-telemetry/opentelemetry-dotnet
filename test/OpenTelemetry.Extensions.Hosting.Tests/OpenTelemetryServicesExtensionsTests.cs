@@ -467,6 +467,12 @@ public class OpenTelemetryServicesExtensionsTests
     {
         private readonly ActivitySource activitySource = new ActivitySource(nameof(TestHostedService));
 
+        public override void Dispose()
+        {
+            this.activitySource.Dispose();
+            base.Dispose();
+        }
+
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             using (var activity = this.activitySource.StartActivity("test"))
