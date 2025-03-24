@@ -465,7 +465,7 @@ public class OpenTelemetryServicesExtensionsTests
 
     private sealed class TestHostedService : BackgroundService
     {
-        private readonly ActivitySource activitySource = new ActivitySource(nameof(TestHostedService));
+        private readonly ActivitySource activitySource = new(nameof(TestHostedService));
 
         public override void Dispose()
         {
