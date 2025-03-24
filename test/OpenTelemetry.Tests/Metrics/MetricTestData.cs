@@ -5,7 +5,7 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public class MetricTestData
+public static class MetricTestData
 {
     public static TheoryData<string> InvalidInstrumentNames
        =>
