@@ -149,7 +149,7 @@ public abstract class MetricTestsBase
         return count;
     }
 
-    public static MetricPoint? GetFirstMetricPoint(IEnumerable<Metric> metrics)
+    internal static MetricPoint? GetFirstMetricPoint(IEnumerable<Metric> metrics)
     {
         foreach (var metric in metrics)
         {
