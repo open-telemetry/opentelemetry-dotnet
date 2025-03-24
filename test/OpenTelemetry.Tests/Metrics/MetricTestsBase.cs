@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
 using Microsoft.Extensions.Hosting;
 #endif
+using OpenTelemetry.Internal;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
@@ -198,10 +199,7 @@ public abstract class MetricTestsBase
         out MeterProvider meterProvider,
         Action<MeterProviderBuilder> configure)
     {
-        if (configure == null)
-        {
-            throw new ArgumentNullException(nameof(configure));
-        }
+        Guard.ThrowIfNull(configure);
 
 #if BUILDING_HOSTING_TESTS
         var host = BuildHost(
