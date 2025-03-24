@@ -221,7 +221,9 @@ public abstract class MetricTestsBase
     }
 
 #if BUILDING_HOSTING_TESTS
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MetricsSubscriptionManagerCleanupHostedService : IHostedService, IDisposable
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private readonly object metricsSubscriptionManager;
 

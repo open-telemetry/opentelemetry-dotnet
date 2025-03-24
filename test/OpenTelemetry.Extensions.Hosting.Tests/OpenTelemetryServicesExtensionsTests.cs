@@ -457,13 +457,17 @@ public class OpenTelemetryServicesExtensionsTests
         Assert.Single(exportedItems);
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MySampler : Sampler
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             => new(SamplingDecision.RecordAndSample);
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class TestHostedService : BackgroundService
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private readonly ActivitySource activitySource = new(nameof(TestHostedService));
 

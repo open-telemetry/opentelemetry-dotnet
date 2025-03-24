@@ -91,7 +91,9 @@ public class OpenTelemetryBuilderTests
         Assert.Single(loggerProvider.Resource.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class TestResourceDetector : IResourceDetector
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         public Resource Detect() => ResourceBuilder.CreateEmpty().AddAttributes(
             new Dictionary<string, object>
