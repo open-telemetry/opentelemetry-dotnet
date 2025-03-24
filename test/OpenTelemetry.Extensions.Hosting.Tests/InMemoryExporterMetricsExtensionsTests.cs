@@ -85,7 +85,7 @@ public class InMemoryExporterMetricsExtensionsTests
                })))
            .StartAsync();
 
-        using var response = await host.GetTestClient().GetAsync($"/{nameof(RunMetricsTest)}");
+        using var response = await host.GetTestClient().GetAsync(new Uri($"/{nameof(RunMetricsTest)}", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
