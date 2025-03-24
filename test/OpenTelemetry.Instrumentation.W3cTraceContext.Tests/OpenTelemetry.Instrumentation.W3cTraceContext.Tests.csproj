@@ -3,6 +3,7 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry ASP.NET Core instrumentation for W3C Trace Context Trace</Description>
     <TargetFrameworks>$(TargetFrameworksForAspNetCoreTests)</TargetFrameworks>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>
