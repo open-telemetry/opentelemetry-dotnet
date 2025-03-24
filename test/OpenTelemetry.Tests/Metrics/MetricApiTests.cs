@@ -14,10 +14,10 @@ namespace OpenTelemetry.Metrics.Tests;
 public class MetricApiTests : MetricTestsBase
 {
     private const int MaxTimeToAllowForFlush = 10000;
+    private const long DeltaLongValueUpdatedByEachCall = 10;
+    private const double DeltaDoubleValueUpdatedByEachCall = 11.987;
+    private const int NumberOfMetricUpdateByEachThread = 100000;
     private static readonly int NumberOfThreads = Environment.ProcessorCount;
-    private static readonly long DeltaLongValueUpdatedByEachCall = 10;
-    private static readonly double DeltaDoubleValueUpdatedByEachCall = 11.987;
-    private static readonly int NumberOfMetricUpdateByEachThread = 100000;
     private readonly ITestOutputHelper output;
 
     public MetricApiTests(ITestOutputHelper output)
