@@ -192,7 +192,7 @@ public abstract class MetricTestsBase
             return exemplars.ToReadOnlyList();
         }
 
-        return Array.Empty<Exemplar>();
+        return [];
     }
 
     internal static IDisposable BuildMeterProvider(
