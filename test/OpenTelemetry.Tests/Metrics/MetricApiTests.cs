@@ -227,7 +227,7 @@ public class MetricApiTests : MetricTestsBase
 
         bool TagComparator(KeyValuePair<string, object?> lhs, KeyValuePair<string, object?> rhs)
         {
-            return lhs.Key.Equals(rhs.Key) && lhs.Value!.GetHashCode().Equals(rhs.Value!.GetHashCode());
+            return lhs.Key.Equals(rhs.Key, StringComparison.Ordinal) && lhs.Value!.GetHashCode().Equals(rhs.Value!.GetHashCode());
         }
 
         var metric = exportedItems.First(m => TagComparator(m.MeterTags!.First(), meterTags1!.First()));
