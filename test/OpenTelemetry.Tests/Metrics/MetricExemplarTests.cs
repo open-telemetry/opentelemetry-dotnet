@@ -846,7 +846,7 @@ public class MetricExemplarTests : MetricTestsBase
             count++;
         }
 
-        Assert.Equal(measurements.Count(), count);
+        Assert.Equal(measurements.Length, count);
     }
 
     private sealed class TestExemplarReservoir : FixedSizeExemplarReservoir
