@@ -822,13 +822,15 @@ public class MetricExemplarTests : MetricTestsBase
     {
         int count = 0;
 
+        var measurements = measurementValues.ToArray();
+
         foreach (var exemplar in exemplars)
         {
             Assert.True(exemplar.Timestamp >= startTime && exemplar.Timestamp <= endTime, $"{startTime} < {exemplar.Timestamp} < {endTime}");
             Assert.Equal(0, exemplar.FilteredTags.MaximumCount);
 
-            var measurement = measurementValues.FirstOrDefault(v => v.Value == getExemplarValueFunc(exemplar)
-                || (long)v.Value == getExemplarValueFunc(exemplar));
+            var measurement = measurements.FirstOrDefault(v => v.Value == getExemplarValueFunc(exemplar)
+                                                               || (long)v.Value == getExemplarValueFunc(exemplar));
             Assert.NotEqual(default, measurement);
             if (measurement.ExpectTraceId)
             {
@@ -844,7 +846,7 @@ public class MetricExemplarTests : MetricTestsBase
             count++;
         }
 
-        Assert.Equal(measurementValues.Count(), count);
+        Assert.Equal(measurements.Count(), count);
     }
 
     private sealed class TestExemplarReservoir : FixedSizeExemplarReservoir
