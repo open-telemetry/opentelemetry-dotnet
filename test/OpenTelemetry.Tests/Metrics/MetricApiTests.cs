@@ -1418,7 +1418,7 @@ public class MetricApiTests : MetricTestsBase
                 // Validate second element is overflow attribute.
                 var tagEnumerator = enumerator.Current.Tags.GetEnumerator();
                 tagEnumerator.MoveNext();
-                if (!tagEnumerator.Current.Key.Contains("otel.metric.overflow"))
+                if (!tagEnumerator.Current.Key.Contains("otel.metric.overflow", StringComparison.Ordinal))
                 {
                     count++;
                 }

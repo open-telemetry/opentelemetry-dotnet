@@ -45,14 +45,14 @@ public class MetricViewTests : MetricTestsBase
             .AddView("name1", viewNewName)
             .AddInMemoryExporter(exportedItems)));
 
-        Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message);
+        Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message, StringComparison.Ordinal);
 
         ex = Assert.Throws<ArgumentException>(() => this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter1.Name)
             .AddView("name1", new MetricStreamConfiguration() { Name = viewNewName })
             .AddInMemoryExporter(exportedItems)));
 
-        Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message);
+        Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -184,7 +184,7 @@ public class MetricViewTests : MetricTestsBase
         var ex = Assert.Throws<ArgumentException>(() => this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddView("name1", new ExplicitBucketHistogramConfiguration { Boundaries = boundaries })));
 
-        Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message);
+        Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -196,7 +196,7 @@ public class MetricViewTests : MetricTestsBase
         var ex = Assert.Throws<ArgumentException>(() => this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddView("name1", new Base2ExponentialBucketHistogramConfiguration { MaxSize = maxSize })));
 
-        Assert.Contains("Histogram max size is invalid", ex.Message);
+        Assert.Contains("Histogram max size is invalid", ex.Message, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -207,7 +207,7 @@ public class MetricViewTests : MetricTestsBase
         var ex = Assert.Throws<ArgumentException>(() => this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddView("name1", new Base2ExponentialBucketHistogramConfiguration { MaxScale = maxScale })));
 
-        Assert.Contains("Histogram max scale is invalid", ex.Message);
+        Assert.Contains("Histogram max scale is invalid", ex.Message, StringComparison.Ordinal);
     }
 
     [Theory]
