@@ -38,7 +38,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
 
                 this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be due to the application's incorrect lifecycle management of the LoggerFactory/OpenTelemetry .NET SDK.");
                 this.WriteLine(Environment.StackTrace);
-                this.WriteLine(Environment.NewLine + "Dispose was called on the following stack trace:");
+                this.WriteLine($"{Environment.NewLine}Dispose was called on the following stack trace:");
                 this.WriteLine(this.disposedStackTrace!);
             }
 
@@ -137,7 +137,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
             var resource = this.ParentProvider.GetResource();
             if (resource != Resource.Empty)
             {
-                this.WriteLine("\nResource associated with LogRecord:");
+                this.WriteLine($"{Environment.NewLine}Resource associated with LogRecord:");
                 foreach (var resourceAttribute in resource.Attributes)
                 {
                     if (this.TagWriter.TryTransformTag(resourceAttribute.Key, resourceAttribute.Value, out var result))
