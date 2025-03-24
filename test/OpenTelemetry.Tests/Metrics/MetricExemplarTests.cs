@@ -114,7 +114,8 @@ public class MetricExemplarTests : MetricTestsBase
         var secondMeasurementValues = GenerateRandomValues(1, true, measurementValues);
         foreach (var value in secondMeasurementValues)
         {
-            using var act = new Activity("test").Start();
+            using var activity = new Activity("test");
+            activity.Start();
             counterDouble.Add(value.Value);
             counterLong.Add((long)value.Value);
         }
@@ -356,7 +357,8 @@ public class MetricExemplarTests : MetricTestsBase
         var secondMeasurementValues = buckets.Take(1).Select(b => (Value: b, ExpectTraceId: true)).ToArray();
         foreach (var value in secondMeasurementValues)
         {
-            using var act = new Activity("test").Start();
+            using var activity = new Activity("test");
+            activity.Start();
             histogramWithBucketsAndMinMaxDouble.Record(value.Value);
             histogramWithBucketsDouble.Record(value.Value);
             histogramWithBucketsAndMinMaxLong.Record((long)value.Value);
@@ -484,7 +486,8 @@ public class MetricExemplarTests : MetricTestsBase
         var secondMeasurementValues = GenerateRandomValues(1, true, measurementValues);
         foreach (var value in secondMeasurementValues)
         {
-            using var act = new Activity("test").Start();
+            using var activity = new Activity("test");
+            activity.Start();
             histogramWithoutBucketsAndMinMaxDouble.Record(value.Value);
             histogramWithoutBucketsDouble.Record(value.Value);
             histogramWithoutBucketsAndMinMaxLong.Record((long)value.Value);
@@ -606,7 +609,8 @@ public class MetricExemplarTests : MetricTestsBase
         var secondMeasurementValues = GenerateRandomValues(1, true, measurementValues);
         foreach (var value in secondMeasurementValues)
         {
-            using var act = new Activity("test").Start();
+            using var activity = new Activity("test");
+            activity.Start();
             exponentialHistogramWithMinMaxDouble.Record(value.Value);
             exponentialHistogramDouble.Record(value.Value);
             exponentialHistogramWithMinMaxLong.Record((long)value.Value);
@@ -685,8 +689,9 @@ public class MetricExemplarTests : MetricTestsBase
 
         if (enableTracing)
         {
-            using var act = new Activity("test").Start();
-            act.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            using var activity = new Activity("test");
+            activity.Start();
+            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
             counter.Add(18);
         }
         else
