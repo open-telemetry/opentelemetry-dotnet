@@ -1817,7 +1817,9 @@ public class MetricApiTests : MetricTestsBase
         var bucketCounts = new long[11];
 
         var metrics = new List<Metric>();
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics));
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}");
 
