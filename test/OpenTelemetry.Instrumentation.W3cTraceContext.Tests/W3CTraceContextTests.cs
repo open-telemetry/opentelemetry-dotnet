@@ -76,7 +76,7 @@ public sealed class W3CTraceContextTests : IDisposable
         this.output.WriteLine("result:" + result);
 
         // Assert on the last line
-        Assert.StartsWith("OK", lastLine);
+        Assert.StartsWith("OK", lastLine, StringComparison.Ordinal);
     }
 
     public void Dispose()
