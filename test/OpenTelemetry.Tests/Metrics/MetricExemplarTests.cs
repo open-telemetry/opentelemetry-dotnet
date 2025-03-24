@@ -804,7 +804,9 @@ public class MetricExemplarTests : MetricTestsBase
         var values = new (double, bool)[count];
         for (int i = 0; i < count; i++)
         {
+#pragma warning disable CA5394 // Do not use insecure randomness
             var nextValue = random.NextDouble() * 100_000;
+#pragma warning restore CA5394 // Do not use insecure randomness
             if (values.Any(m => m.Item1 == nextValue || m.Item1 == (long)nextValue)
                 || previousValues?.Any(m => m.Value == nextValue || m.Value == (long)nextValue) == true)
             {
