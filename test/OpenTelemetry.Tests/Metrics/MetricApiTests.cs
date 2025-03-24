@@ -1864,7 +1864,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal(expected, bucketCounts);
     }
 
-    private class UpdateThreadArguments<T>
+    private sealed class UpdateThreadArguments<T>
         where T : struct, IComparable
     {
         public ManualResetEvent MreToBlockUpdateThread;
