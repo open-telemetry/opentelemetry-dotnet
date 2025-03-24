@@ -6,6 +6,7 @@
     <PackageTags>$(PackageTags);Console;distributed-tracing</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
     <ReferenceSystemTextJsonPackages>true</ReferenceSystemTextJsonPackages>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <PropertyGroup>
