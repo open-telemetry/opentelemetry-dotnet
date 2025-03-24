@@ -119,7 +119,9 @@ public sealed class W3CTraceContextTests : IDisposable
         return output.Substring(lastNewLineCharacterPos + 1);
     }
 
-    public class Data
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+    internal sealed class Data
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         [JsonPropertyName("url")]
         public string? Url { get; set; }
