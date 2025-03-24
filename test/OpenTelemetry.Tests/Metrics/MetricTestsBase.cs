@@ -187,12 +187,9 @@ public abstract class MetricTestsBase
 
     internal static IReadOnlyList<Exemplar> GetExemplars(MetricPoint mp)
     {
-        if (mp.TryGetExemplars(out var exemplars))
-        {
-            return exemplars.ToReadOnlyList();
-        }
-
-        return [];
+        return mp.TryGetExemplars(out var exemplars)
+            ? exemplars.ToReadOnlyList()
+            : [];
     }
 
     internal static IDisposable BuildMeterProvider(
