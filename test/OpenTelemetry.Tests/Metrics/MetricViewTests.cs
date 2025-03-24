@@ -793,6 +793,15 @@ public class MetricViewTests : MetricTestsBase
     [MemberData(nameof(MetricTestData.ValidHistogramMinMax), MemberType = typeof(MetricTestData))]
     public void HistogramMinMax(double[] values, HistogramConfiguration histogramConfiguration, double expectedMin, double expectedMax)
     {
+#if NET
+        Assert.NotNull(values);
+#else
+        if (values == null)
+        {
+            throw new ArgumentNullException(nameof(values));
+        }
+#endif
+
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var histogram = meter.CreateHistogram<double>("MyHistogram");
         var exportedItems = new List<Metric>();
@@ -831,6 +840,15 @@ public class MetricViewTests : MetricTestsBase
     [MemberData(nameof(MetricTestData.InvalidHistogramMinMax), MemberType = typeof(MetricTestData))]
     public void HistogramMinMaxNotPresent(double[] values, HistogramConfiguration histogramConfiguration)
     {
+#if NET
+        Assert.NotNull(values);
+#else
+        if (values == null)
+        {
+            throw new ArgumentNullException(nameof(values));
+        }
+#endif
+
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var histogram = meter.CreateHistogram<double>("MyHistogram");
         var exportedItems = new List<Metric>();
