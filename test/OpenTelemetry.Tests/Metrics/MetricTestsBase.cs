@@ -14,7 +14,9 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
+#pragma warning disable CA1515 // Consider making public types internal
 public abstract class MetricTestsBase
+#pragma warning restore CA1515 // Consider making public types internal
 {
     protected MetricTestsBase()
     {

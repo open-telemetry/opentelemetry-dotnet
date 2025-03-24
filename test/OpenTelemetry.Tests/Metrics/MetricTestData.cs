@@ -5,7 +5,9 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
+#pragma warning disable CA1515 // Consider making public types internal
 public static class MetricTestData
+#pragma warning restore CA1515 // Consider making public types internal
 {
     public static TheoryData<string> InvalidInstrumentNames
        =>
