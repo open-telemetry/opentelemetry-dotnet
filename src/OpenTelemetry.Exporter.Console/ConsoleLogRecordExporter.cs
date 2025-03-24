@@ -137,7 +137,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
             var resource = this.ParentProvider.GetResource();
             if (resource != Resource.Empty)
             {
-                this.WriteLine("\nResource associated with LogRecord:");
+                this.WriteLine(Environment.NewLine + "Resource associated with LogRecord:");
                 foreach (var resourceAttribute in resource.Attributes)
                 {
                     if (this.TagWriter.TryTransformTag(resourceAttribute.Key, resourceAttribute.Value, out var result))
