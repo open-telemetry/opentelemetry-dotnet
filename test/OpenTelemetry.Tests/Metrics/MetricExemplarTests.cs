@@ -78,7 +78,7 @@ public class MetricExemplarTests : MetricTestsBase
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
-                if (i.Name.StartsWith("testCounter"))
+                if (i.Name.StartsWith("testCounter", StringComparison.Ordinal))
                 {
                     return new MetricStreamConfiguration
                     {
@@ -305,7 +305,7 @@ public class MetricExemplarTests : MetricTestsBase
                 .AddMeter(meter.Name)
                 .AddView(i =>
                 {
-                    if (i.Name.StartsWith("histogramWithBucketsAndMinMax"))
+                    if (i.Name.StartsWith("histogramWithBucketsAndMinMax", StringComparison.Ordinal))
                     {
                         return new ExplicitBucketHistogramConfiguration
                         {
@@ -436,7 +436,7 @@ public class MetricExemplarTests : MetricTestsBase
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
-                if (i.Name.StartsWith("histogramWithoutBucketsAndMinMax"))
+                if (i.Name.StartsWith("histogramWithoutBucketsAndMinMax", StringComparison.Ordinal))
                 {
                     return new ExplicitBucketHistogramConfiguration
                     {
@@ -564,7 +564,7 @@ public class MetricExemplarTests : MetricTestsBase
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
-                if (i.Name.StartsWith("exponentialHistogramWithMinMax"))
+                if (i.Name.StartsWith("exponentialHistogramWithMinMax", StringComparison.Ordinal))
                 {
                     return new Base2ExponentialBucketHistogramConfiguration();
                 }
