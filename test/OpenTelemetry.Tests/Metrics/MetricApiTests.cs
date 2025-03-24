@@ -741,7 +741,7 @@ public class MetricApiTests : MetricTestsBase
             {
                 return new List<Measurement<long>>()
                 {
-                    new Measurement<long>(i++ * 10),
+                    new(i++ * 10),
                 };
             });
 
@@ -810,11 +810,11 @@ public class MetricApiTests : MetricTestsBase
             "observable-counter",
             () =>
             {
-                return new List<Measurement<long>>()
+                return new List<Measurement<long>>
                 {
-                    new Measurement<long>(10, tags1),
-                    new Measurement<long>(10, tags2),
-                    new Measurement<long>(10, tags3),
+                    new(10L, tags1),
+                    new(10L, tags2),
+                    new(10L, tags3),
                 };
             });
 
@@ -906,11 +906,11 @@ public class MetricApiTests : MetricTestsBase
             "requestCount",
             () =>
             {
-                return new List<Measurement<long>>()
+                return new List<Measurement<long>>
                 {
-                    new Measurement<long>(10, tags1),
-                    new Measurement<long>(10, tags2),
-                    new Measurement<long>(10, tags3),
+                    new(10L, tags1),
+                    new(10L, tags2),
+                    new(10L, tags3),
                 };
             });
 
@@ -1030,9 +1030,9 @@ public class MetricApiTests : MetricTestsBase
             "observable-counter",
             () =>
             {
-                return new List<Measurement<long>>()
+                return new List<Measurement<long>>
                 {
-                    new Measurement<long>(i++ * 10),
+                    new(i++ * 10L),
                 };
             });
 
@@ -1091,11 +1091,11 @@ public class MetricApiTests : MetricTestsBase
             "observable-counter",
             () =>
             {
-                return new List<Measurement<long>>()
+                return new List<Measurement<long>>
                 {
-                    new Measurement<long>(10, tags1),
-                    new Measurement<long>(10, tags2),
-                    new Measurement<long>(10, tags3),
+                    new(10L, tags1),
+                    new(10L, tags2),
+                    new(10L, tags3),
                 };
             });
 
