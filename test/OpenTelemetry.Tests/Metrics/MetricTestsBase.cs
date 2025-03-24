@@ -185,7 +185,17 @@ public abstract class MetricTestsBase
         }
     }
 
-    public IDisposable BuildMeterProvider(
+    internal static IReadOnlyList<Exemplar> GetExemplars(MetricPoint mp)
+    {
+        if (mp.TryGetExemplars(out var exemplars))
+        {
+            return exemplars.ToReadOnlyList();
+        }
+
+        return Array.Empty<Exemplar>();
+    }
+
+    internal IDisposable BuildMeterProvider(
         out MeterProvider meterProvider,
         Action<MeterProviderBuilder> configure)
     {
@@ -209,16 +219,6 @@ public abstract class MetricTestsBase
 
         return meterProvider = builder.Build();
 #endif
-    }
-
-    internal static IReadOnlyList<Exemplar> GetExemplars(MetricPoint mp)
-    {
-        if (mp.TryGetExemplars(out var exemplars))
-        {
-            return exemplars.ToReadOnlyList();
-        }
-
-        return Array.Empty<Exemplar>();
     }
 
 #if BUILDING_HOSTING_TESTS
