@@ -165,17 +165,17 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// <summary>
     /// Gets or sets the trusted certificate to use when verifying a server's TLS credentials.
     /// </summary>
-    public string CertificateFile { get; set; }
+    internal string CertificateFile { get; set; }
 
     /// <summary>
     /// Gets or sets the path to the private key to use in mTLS communication in PEM format.
     /// </summary>
-    public string ClientKeyFile { get; set; }
+    internal string ClientKeyFile { get; set; }
 
     /// <summary>
     /// Gets or sets the path to the certificate/chain trust for client's private key to use in mTLS communication in PEM format.
     /// </summary>
-    public string ClientCertificateFile { get; set; }
+    internal string ClientCertificateFile { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
