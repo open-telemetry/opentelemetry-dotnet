@@ -27,7 +27,7 @@ public sealed class BatchLogRecordExportProcessorTests
 
         var logRecord = pool.Rent();
 
-        var state = new LogRecordTest.DisposingState("Hello world");
+        var state = new LogRecordTests.DisposingState("Hello world");
 
         logRecord.ILoggerData.ScopeProvider = scopeProvider;
         logRecord.StateValues = state;
@@ -84,7 +84,7 @@ public sealed class BatchLogRecordExportProcessorTests
 
         var logRecord = pool.Rent();
 
-        var state = new LogRecordTest.DisposingState("Hello world");
+        var state = new LogRecordTests.DisposingState("Hello world");
         logRecord.State = state;
 
         processor.OnEnd(logRecord);

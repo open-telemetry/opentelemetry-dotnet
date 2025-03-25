@@ -225,6 +225,17 @@ public class ZipkinExporter : BaseExporter<Activity>
             return false;
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.writer?.Dispose();
+                this.writer = null;
+            }
+
+            base.Dispose(disposing);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SerializeToStreamInternal(Stream stream)
         {
