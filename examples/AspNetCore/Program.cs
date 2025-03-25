@@ -13,20 +13,20 @@ using OpenTelemetry.Trace;
 var appBuilder = WebApplication.CreateBuilder(args);
 
 // Note: Switch between Zipkin/OTLP/Console by setting UseTracingExporter in appsettings.json.
-var tracingExporter = appBuilder.Configuration.GetValue("UseTracingExporter", defaultValue: "console").ToLowerInvariant();
+var tracingExporter = appBuilder.Configuration.GetValue("UseTracingExporter", defaultValue: "CONSOLE").ToUpperInvariant();
 
 // Note: Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.
-var metricsExporter = appBuilder.Configuration.GetValue("UseMetricsExporter", defaultValue: "console").ToLowerInvariant();
+var metricsExporter = appBuilder.Configuration.GetValue("UseMetricsExporter", defaultValue: "CONSOLE").ToUpperInvariant();
 
 // Note: Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
-var logExporter = appBuilder.Configuration.GetValue("UseLogExporter", defaultValue: "console").ToLowerInvariant();
+var logExporter = appBuilder.Configuration.GetValue("UseLogExporter", defaultValue: "CONSOLE").ToUpperInvariant();
 
 // Note: Switch between Explicit/Exponential by setting HistogramAggregation in appsettings.json
-var histogramAggregation = appBuilder.Configuration.GetValue("HistogramAggregation", defaultValue: "explicit").ToLowerInvariant();
+var histogramAggregation = appBuilder.Configuration.GetValue("HistogramAggregation", defaultValue: "EXPLICIT").ToUpperInvariant();
 
 // Create a service to expose ActivitySource, and Metric Instruments
 // for manual instrumentation
-appBuilder.Services.AddSingleton<Instrumentation>();
+appBuilder.Services.AddSingleton<InstrumentationSource>();
 
 // Clear default logging providers used by WebApplication host.
 appBuilder.Logging.ClearProviders();
@@ -45,7 +45,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         // Ensure the TracerProvider subscribes to any custom ActivitySources.
         builder
-            .AddSource(Instrumentation.ActivitySourceName)
+            .AddSource(InstrumentationSource.ActivitySourceName)
             .SetSampler(new AlwaysOnSampler())
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
@@ -55,7 +55,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         switch (tracingExporter)
         {
-            case "zipkin":
+            case "ZIPKIN":
                 builder.AddZipkinExporter();
 
                 builder.ConfigureServices(services =>
@@ -65,7 +65,7 @@ appBuilder.Services.AddOpenTelemetry()
                 });
                 break;
 
-            case "otlp":
+            case "OTLP":
                 builder.AddOtlpExporter(otlpOptions =>
                 {
                     // Use IConfiguration directly for Otlp exporter endpoint option.
@@ -84,7 +84,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         // Ensure the MeterProvider subscribes to any custom Meters.
         builder
-            .AddMeter(Instrumentation.MeterName)
+            .AddMeter(InstrumentationSource.MeterName)
             .SetExemplarFilter(ExemplarFilterType.TraceBased)
             .AddRuntimeInstrumentation()
             .AddHttpClientInstrumentation()
@@ -92,7 +92,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         switch (histogramAggregation)
         {
-            case "exponential":
+            case "EXPONENTIAL":
                 builder.AddView(instrument =>
                 {
                     return instrument.GetType().GetGenericTypeDefinition() == typeof(Histogram<>)
@@ -108,10 +108,10 @@ appBuilder.Services.AddOpenTelemetry()
 
         switch (metricsExporter)
         {
-            case "prometheus":
+            case "PROMETHEUS":
                 builder.AddPrometheusExporter();
                 break;
-            case "otlp":
+            case "OTLP":
                 builder.AddOtlpExporter(otlpOptions =>
                 {
                     // Use IConfiguration directly for Otlp exporter endpoint option.
@@ -129,7 +129,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         switch (logExporter)
         {
-            case "otlp":
+            case "OTLP":
                 builder.AddOtlpExporter(otlpOptions =>
                 {
                     // Use IConfiguration directly for Otlp exporter endpoint option.
