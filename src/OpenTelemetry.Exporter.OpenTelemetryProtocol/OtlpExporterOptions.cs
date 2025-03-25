@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
 using System.Security.Cryptography.X509Certificates;
 #endif
 
@@ -75,7 +75,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.DefaultHttpClientFactory = () =>
         {
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
             var handler = new HttpClientHandler();
             HttpClient client = this.AddCertificatesToHttpClient(handler);
             client.Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds);
@@ -255,7 +255,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         return this;
     }
 
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
     internal HttpClient AddCertificatesToHttpClient(HttpClientHandler handler)
     {
         // Configure server certificate validation if CertificateFile is provided
