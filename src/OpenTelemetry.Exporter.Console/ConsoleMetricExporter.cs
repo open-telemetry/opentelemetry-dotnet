@@ -19,7 +19,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         foreach (var metric in batch)
         {
-            var msg = new StringBuilder($"\n");
+            var msg = new StringBuilder(Environment.NewLine);
 #if NET
             msg.Append(CultureInfo.InvariantCulture, $"Metric Name: {metric.Name}");
 #else
