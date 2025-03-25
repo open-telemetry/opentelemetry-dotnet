@@ -104,11 +104,13 @@ public static class ConsoleExporterMetricsExtensions
         });
     }
 
-    private static MetricReader BuildConsoleExporterMetricReader(
+    private static PeriodicExportingMetricReader BuildConsoleExporterMetricReader(
         ConsoleExporterOptions exporterOptions,
         MetricReaderOptions metricReaderOptions)
     {
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var metricExporter = new ConsoleMetricExporter(exporterOptions);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
             metricExporter,

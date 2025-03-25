@@ -5,7 +5,7 @@ using System.Net;
 
 namespace OpenTelemetry.Tests;
 
-internal class TestHttpServer
+internal static class TestHttpServer
 {
     private static readonly Random GlobalRandom = new();
 
@@ -20,7 +20,9 @@ internal class TestHttpServer
         {
             try
             {
+#pragma warning disable CA5394 // Do not use insecure randomness
                 port = GlobalRandom.Next(2000, 5000);
+#pragma warning restore CA5394 // Do not use insecure randomness
                 server = new RunningServer(action, host, port);
                 server.Start();
                 break;
@@ -41,7 +43,7 @@ internal class TestHttpServer
         return server;
     }
 
-    private class RunningServer : IDisposable
+    private sealed class RunningServer : IDisposable
     {
         private readonly Task httpListenerTask;
         private readonly HttpListener listener;
@@ -64,7 +66,9 @@ internal class TestHttpServer
 
                         this.initialized.Set();
 
+#pragma warning disable CA2007 // Do not directly await a Task
                         action(await ctxTask);
+#pragma warning disable CA2007 // Do not directly await a Task
                     }
                     catch (Exception ex)
                     {
@@ -94,6 +98,7 @@ internal class TestHttpServer
             {
                 this.listener.Close();
                 this.httpListenerTask?.Wait();
+                this.initialized.Dispose();
             }
             catch (ObjectDisposedException)
             {

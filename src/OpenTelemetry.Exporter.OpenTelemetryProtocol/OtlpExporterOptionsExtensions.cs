@@ -81,23 +81,33 @@ internal static class OtlpExporterOptionsExtensions
         {
             // According to the specification, URL-encoded headers must be supported.
             optionHeaders = Uri.UnescapeDataString(optionHeaders);
+            ReadOnlySpan<char> headersSpan = optionHeaders.AsSpan();
 
-            Array.ForEach(
-                optionHeaders.Split(','),
-                (pair) =>
+            while (!headersSpan.IsEmpty)
+            {
+                int commaIndex = headersSpan.IndexOf(',');
+                ReadOnlySpan<char> pair;
+                if (commaIndex == -1)
                 {
-                    // Specify the maximum number of substrings to return to 2
-                    // This treats everything that follows the first `=` in the string as the value to be added for the metadata key
-                    var keyValueData = pair.Split(['='], 2);
-                    if (keyValueData.Length != 2)
-                    {
-                        throw new ArgumentException("Headers provided in an invalid format.");
-                    }
+                    pair = headersSpan;
+                    headersSpan = ReadOnlySpan<char>.Empty;
+                }
+                else
+                {
+                    pair = headersSpan.Slice(0, commaIndex);
+                    headersSpan = headersSpan.Slice(commaIndex + 1);
+                }
 
-                    var key = keyValueData[0].Trim();
-                    var value = keyValueData[1].Trim();
-                    addHeader(headers, key, value);
-                });
+                int equalIndex = pair.IndexOf('=');
+                if (equalIndex == -1)
+                {
+                    throw new ArgumentException("Headers provided in an invalid format.");
+                }
+
+                var key = pair.Slice(0, equalIndex).Trim().ToString();
+                var value = pair.Slice(equalIndex + 1).Trim().ToString();
+                addHeader(headers, key, value);
+            }
         }
 
         foreach (var header in OtlpExporterOptions.StandardHeaders)

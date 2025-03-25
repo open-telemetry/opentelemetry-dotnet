@@ -2,7 +2,7 @@
   <Import Project=".\Common.props" />
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn),1574,1591</NoWarn>
+    <NoWarn>$(NoWarn),CS1574,CS1591</NoWarn>
     <IsPackable>false</IsPackable>
     <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\OpenTelemetry.test.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>

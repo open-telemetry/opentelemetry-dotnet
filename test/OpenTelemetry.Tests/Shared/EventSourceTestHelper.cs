@@ -4,6 +4,7 @@
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Reflection;
+using Xunit.Sdk;
 
 namespace OpenTelemetry.Tests;
 
@@ -34,11 +35,11 @@ internal static class EventSourceTestHelper
                 actualEvent = listener.Messages.FirstOrDefault(x => x.EventId == 0);
                 if (actualEvent != null)
                 {
-                    throw new Exception(actualEvent.Message);
+                    throw new InvalidOperationException(actualEvent.Message);
                 }
 
                 // give up
-                throw new Exception("Listener failed to collect event.");
+                throw new InvalidOperationException("Listener failed to collect event.");
             }
 
             VerifyEventId(eventMethod, actualEvent);
@@ -49,7 +50,7 @@ internal static class EventSourceTestHelper
         {
             var name = eventMethod.DeclaringType?.Name + "." + eventMethod.Name;
 
-            throw new Exception("Method '" + name + "' is implemented incorrectly.", e);
+            throw new InvalidOperationException("Method '" + name + "' is implemented incorrectly.", e);
         }
         finally
         {
@@ -116,7 +117,7 @@ internal static class EventSourceTestHelper
                 methodName,
                 expected,
                 actual);
-            throw new Exception(errorMessage);
+            throw EqualException.ForMismatchedValuesWithError(expected, actual, banner: errorMessage);
         }
     }
 
@@ -128,6 +129,6 @@ internal static class EventSourceTestHelper
     private static IEnumerable<MethodInfo> GetEventMethods(EventSource eventSource)
     {
         MethodInfo[] methods = eventSource.GetType().GetMethods();
-        return methods.Where(m => m.GetCustomAttributes(typeof(EventAttribute), false).Any());
+        return methods.Where(m => m.GetCustomAttributes(typeof(EventAttribute), false).Length > 0);
     }
 }
