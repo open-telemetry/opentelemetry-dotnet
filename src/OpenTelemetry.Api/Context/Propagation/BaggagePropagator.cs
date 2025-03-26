@@ -161,10 +161,7 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                if (baggageDictionary == null)
-                {
-                    baggageDictionary = new Dictionary<string, string>();
-                }
+                baggageDictionary ??= new Dictionary<string, string>();
 
                 baggageDictionary[key] = value;
             }
