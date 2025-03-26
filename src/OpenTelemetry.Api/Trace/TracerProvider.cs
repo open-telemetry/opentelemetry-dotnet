@@ -269,7 +269,7 @@ public class TracerProvider : BaseProvider
                 // Both values are non-null, compare as strings
                 return string.Compare(left.Value.ToString(), right.Value.ToString(), StringComparison.Ordinal);
             });
-            return orderedTagList.ToArray();
+            return [.. orderedTagList];
         }
     }
 }

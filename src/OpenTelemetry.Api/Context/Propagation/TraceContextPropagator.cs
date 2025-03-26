@@ -76,7 +76,7 @@ public class TraceContextPropagator : TextMapPropagator
             var tracestateCollection = getter(carrier, TraceState);
             if (tracestateCollection?.Any() ?? false)
             {
-                TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
+                TryExtractTracestate([.. tracestateCollection], out tracestate);
             }
 
             return new PropagationContext(

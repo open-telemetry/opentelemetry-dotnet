@@ -52,7 +52,7 @@ public class BaggagePropagator : TextMapPropagator
             var baggageCollection = getter(carrier, BaggageHeaderName);
             if (baggageCollection?.Any() ?? false)
             {
-                if (TryExtractBaggage(baggageCollection.ToArray(), out var baggage))
+                if (TryExtractBaggage([.. baggageCollection], out var baggage))
                 {
                     return new PropagationContext(context.ActivityContext, new Baggage(baggage!));
                 }
