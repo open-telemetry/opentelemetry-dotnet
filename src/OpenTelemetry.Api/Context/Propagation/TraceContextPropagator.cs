@@ -16,6 +16,12 @@ public class TraceContextPropagator : TextMapPropagator
     private const string TraceParent = "traceparent";
     private const string TraceState = "tracestate";
 
+    // The following length limits are from Trace Context v1 https://www.w3.org/TR/trace-context-1/#key
+    private const int TraceStateKeyMaxLength = 256;
+    private const int TraceStateKeyTenantMaxLength = 241;
+    private const int TraceStateKeyVendorMaxLength = 14;
+    private const int TraceStateValueMaxLength = 256;
+
     private static readonly int VersionPrefixIdLength = "00-".Length;
     private static readonly int TraceIdLength = "0af7651916cd43dd8448eb211c80319c".Length;
     private static readonly int VersionAndTraceIdLength = "00-0af7651916cd43dd8448eb211c80319c-".Length;
@@ -23,12 +29,6 @@ public class TraceContextPropagator : TextMapPropagator
     private static readonly int VersionAndTraceIdAndSpanIdLength = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-".Length;
     private static readonly int OptionsLength = "00".Length;
     private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
-
-    // The following length limits are from Trace Context v1 https://www.w3.org/TR/trace-context-1/#key
-    private static readonly int TraceStateKeyMaxLength = 256;
-    private static readonly int TraceStateKeyTenantMaxLength = 241;
-    private static readonly int TraceStateKeyVendorMaxLength = 14;
-    private static readonly int TraceStateValueMaxLength = 256;
 
     /// <inheritdoc/>
     public override ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
