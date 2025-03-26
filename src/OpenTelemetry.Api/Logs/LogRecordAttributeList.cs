@@ -130,7 +130,7 @@ internal
         Guard.ThrowIfNull(attributes);
 
         LogRecordAttributeList logRecordAttributes = default;
-        logRecordAttributes.OverflowAttributes = new(attributes);
+        logRecordAttributes.OverflowAttributes = [..attributes];
         logRecordAttributes.count = logRecordAttributes.OverflowAttributes.Count;
         return logRecordAttributes;
     }
