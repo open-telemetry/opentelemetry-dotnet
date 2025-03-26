@@ -34,7 +34,7 @@ public readonly struct SpanContext : IEquatable<SpanContext>
         bool isRemote = false,
         IEnumerable<KeyValuePair<string, string>>? traceState = null)
     {
-        this.ActivityContext = new ActivityContext(traceId, spanId, traceFlags, TraceStateUtilsNew.GetString(traceState), isRemote);
+        this.ActivityContext = new ActivityContext(traceId, spanId, traceFlags, TraceStateUtils.GetString(traceState), isRemote);
     }
 
     /// <summary>
@@ -90,7 +90,7 @@ public readonly struct SpanContext : IEquatable<SpanContext>
             }
 
             var traceStateResult = new List<KeyValuePair<string, string>>();
-            TraceStateUtilsNew.AppendTraceState(traceState!, traceStateResult);
+            TraceStateUtils.AppendTraceState(traceState!, traceStateResult);
             return traceStateResult;
         }
     }

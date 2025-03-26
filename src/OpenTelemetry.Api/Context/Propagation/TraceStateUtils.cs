@@ -10,7 +10,7 @@ namespace OpenTelemetry.Context.Propagation;
 /// <summary>
 /// Extension methods to extract TraceState from string.
 /// </summary>
-internal static class TraceStateUtilsNew
+internal static class TraceStateUtils
 {
     private const int KeyMaxSize = 256;
     private const int ValueMaxSize = 256;
