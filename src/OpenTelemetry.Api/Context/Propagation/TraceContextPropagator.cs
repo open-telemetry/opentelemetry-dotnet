@@ -297,7 +297,11 @@ public class TraceContextPropagator : TextMapPropagator
                         result.Append(',');
                     }
 
+#if NET
+                    result.Append(listMember);
+#else
                     result.Append(listMember.ToString());
+#endif
                 }
             }
 
