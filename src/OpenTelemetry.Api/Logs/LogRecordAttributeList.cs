@@ -113,7 +113,9 @@ internal
     /// <param name="key">Attribute name.</param>
     /// <returns>Attribute value.</returns>
     [EditorBrowsable(EditorBrowsableState.Never)]
+#pragma warning disable CA1044 // Properties should not be write only
     public object? this[string key]
+#pragma warning restore CA1044 // Properties should not be write only
     {
         // Note: This only exists to enable collection initializer syntax
         // like { ["key"] = value }.
