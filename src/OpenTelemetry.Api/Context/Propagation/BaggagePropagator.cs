@@ -138,7 +138,11 @@ public class BaggagePropagator : TextMapPropagator
                     break;
                 }
 
+#if NET
+                if (pair.IndexOf('=', StringComparison.Ordinal) < 0)
+#else
                 if (pair.IndexOf('=') < 0)
+#endif
                 {
                     continue;
                 }

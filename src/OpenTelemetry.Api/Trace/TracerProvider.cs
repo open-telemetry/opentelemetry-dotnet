@@ -147,8 +147,14 @@ public class TracerProvider : BaseProvider
             unchecked
             {
                 var hash = 17;
+#if NET
+                hash = (hash * 31) + (this.Name?.GetHashCode(StringComparison.Ordinal) ?? 0);
+                hash = (hash * 31) + (this.Version?.GetHashCode(StringComparison.Ordinal) ?? 0);
+#else
                 hash = (hash * 31) + (this.Name?.GetHashCode() ?? 0);
                 hash = (hash * 31) + (this.Version?.GetHashCode() ?? 0);
+#endif
+
                 hash = (hash * 31) + GetTagsHashCode(this.Tags);
                 return hash;
             }
@@ -211,7 +217,11 @@ public class TracerProvider : BaseProvider
             {
                 foreach (var kvp in tags)
                 {
+#if NET
+                    hash = (hash * 31) + kvp.Key.GetHashCode(StringComparison.Ordinal);
+#else
                     hash = (hash * 31) + kvp.Key.GetHashCode();
+#endif
                     if (kvp.Value != null)
                     {
                         hash = (hash * 31) + kvp.Value.GetHashCode()!;

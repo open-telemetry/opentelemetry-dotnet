@@ -345,7 +345,11 @@ public readonly struct Baggage : IEquatable<Baggage>
             unchecked
             {
                 hash = (hash * 23) + baggage.Comparer.GetHashCode(item.Key);
+#if NET
+                hash = (hash * 23) + item.Value.GetHashCode(StringComparison.Ordinal);
+#else
                 hash = (hash * 23) + item.Value.GetHashCode();
+#endif
             }
         }
 
