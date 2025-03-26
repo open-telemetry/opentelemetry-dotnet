@@ -153,7 +153,7 @@ internal static class TraceStateUtilsNew
             return false;
         }
 
-        value = pair.Slice(valueStartIdx, pair.Length - valueStartIdx).Trim();
+        value = pair.Slice(valueStartIdx).Trim();
         if (!ValidateValue(value))
         {
             OpenTelemetryApiEventSource.Log.TracestateValueIsInvalid(value);
