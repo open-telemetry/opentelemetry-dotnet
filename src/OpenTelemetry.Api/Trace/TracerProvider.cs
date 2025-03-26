@@ -124,7 +124,7 @@ public class TracerProvider : BaseProvider
         {
             this.Name = name ?? string.Empty;
             this.Version = version;
-            this.Tags = this.GetOrderedTags(tags);
+            this.Tags = GetOrderedTags(tags);
         }
 
         public bool Equals(TracerKey other)
@@ -222,7 +222,7 @@ public class TracerProvider : BaseProvider
             return hash;
         }
 
-        private KeyValuePair<string, object?>[]? GetOrderedTags(
+        private static KeyValuePair<string, object?>[]? GetOrderedTags(
             IEnumerable<KeyValuePair<string, object?>>? tags)
         {
             if (tags is null)
