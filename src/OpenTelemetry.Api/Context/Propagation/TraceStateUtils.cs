@@ -98,6 +98,7 @@ internal static class TraceStateUtils
 
     internal static string GetString(IEnumerable<KeyValuePair<string, string>>? traceState)
     {
+#pragma warning disable CA1851 // Possible multiple enumerations of 'IEnumerable' collection
         if (traceState == null || !traceState.Any())
         {
             return string.Empty;
@@ -125,6 +126,7 @@ internal static class TraceStateUtils
                     .Append(',');
             }
         }
+#pragma warning restore CA1851 // Possible multiple enumerations of 'IEnumerable' collection
 
         return sb.Remove(sb.Length - 1, 1).ToString();
     }
