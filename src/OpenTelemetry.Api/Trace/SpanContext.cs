@@ -99,7 +99,9 @@ public readonly struct SpanContext : IEquatable<SpanContext>
     /// Converts a <see cref="SpanContext"/> into an <see cref="ActivityContext"/>.
     /// </summary>
     /// <param name="spanContext"><see cref="SpanContext"/> source.</param>
+#pragma warning disable CA2225 // Operator overloads have named alternates
     public static implicit operator ActivityContext(SpanContext spanContext)
+#pragma warning restore CA2225 // Operator overloads have named alternates
         => spanContext.ActivityContext;
 
     /// <summary>
