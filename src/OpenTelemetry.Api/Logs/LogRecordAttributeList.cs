@@ -32,7 +32,7 @@ internal
     internal const int OverflowMaxCount = 8;
     internal const int OverflowAdditionalCapacity = 16;
     internal List<KeyValuePair<string, object?>>? OverflowAttributes;
-    private static readonly IReadOnlyList<KeyValuePair<string, object?>> Empty = Array.Empty<KeyValuePair<string, object?>>();
+    private static readonly IReadOnlyList<KeyValuePair<string, object?>> Empty = [];
     private KeyValuePair<string, object?> attribute1;
     private KeyValuePair<string, object?> attribute2;
     private KeyValuePair<string, object?> attribute3;

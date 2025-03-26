@@ -86,7 +86,7 @@ public readonly struct SpanContext : IEquatable<SpanContext>
             var traceState = this.ActivityContext.TraceState;
             if (string.IsNullOrEmpty(traceState))
             {
-                return Enumerable.Empty<KeyValuePair<string, string>>();
+                return [];
             }
 
             var traceStateResult = new List<KeyValuePair<string, string>>();
