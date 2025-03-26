@@ -1,9 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry .NET Core hosting library</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);BUILDING_HOSTING_TESTS</DefineConstants>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,7 +14,6 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessTrueTheoryAttribute.cs" Link="Includes\SkipUnlessTrueTheoryAttribute.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="Includes\TestEventListener.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\Utils.cs" Link="Includes\Utils.cs" />
   </ItemGroup>
@@ -23,6 +23,7 @@
     IMetricsBuilder/IMetricsListener API added at the host level in .NET 8
     instead of the direct lower-level MeterListener API added in .NET 6. -->
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\AggregatorTests.cs" Link="Includes\Metrics\AggregatorTests.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\HostingMeterProviderBuilder.cs" Link="Includes\Metrics\HostingMeterProviderBuilder.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\KnownHistogramBuckets.cs" Link="Includes\Metrics\KnownHistogramBuckets.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricApiTests.cs" Link="Includes\Metrics\MetricApiTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricExemplarTests.cs" Link="Includes\Metrics\MetricExemplarTests.cs" />
