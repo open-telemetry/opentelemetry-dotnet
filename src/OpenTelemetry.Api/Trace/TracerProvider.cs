@@ -129,12 +129,8 @@ public class TracerProvider : BaseProvider
 
         public bool Equals(TracerKey other)
         {
-            if (!string.Equals(this.Name, other.Name, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            if (!string.Equals(this.Version, other.Version, StringComparison.Ordinal))
+            if (!string.Equals(this.Name, other.Name, StringComparison.Ordinal) ||
+                !string.Equals(this.Version, other.Version, StringComparison.Ordinal))
             {
                 return false;
             }
