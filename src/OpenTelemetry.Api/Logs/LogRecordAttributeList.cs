@@ -210,8 +210,8 @@ internal
 
     internal readonly IReadOnlyList<KeyValuePair<string, object?>> Export(ref List<KeyValuePair<string, object?>>? attributeStorage)
     {
-        int count = this.count;
-        if (count <= 0)
+        int readonlyCount = this.count;
+        if (readonlyCount <= 0)
         {
             return Empty;
         }
@@ -223,49 +223,49 @@ internal
             return overflowAttributes;
         }
 
-        Debug.Assert(count <= 8, "Invalid size detected.");
+        Debug.Assert(readonlyCount <= 8, "Invalid size detected.");
 
         attributeStorage ??= new List<KeyValuePair<string, object?>>(OverflowAdditionalCapacity);
 
         // TODO: Perf test this, adjust as needed.
         attributeStorage.Add(this.attribute1);
-        if (count == 1)
+        if (readonlyCount == 1)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute2);
-        if (count == 2)
+        if (readonlyCount == 2)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute3);
-        if (count == 3)
+        if (readonlyCount == 3)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute4);
-        if (count == 4)
+        if (readonlyCount == 4)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute5);
-        if (count == 5)
+        if (readonlyCount == 5)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute6);
-        if (count == 6)
+        if (readonlyCount == 6)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute7);
-        if (count == 7)
+        if (readonlyCount == 7)
         {
             return attributeStorage;
         }
