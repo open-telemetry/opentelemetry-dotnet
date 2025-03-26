@@ -27,7 +27,9 @@ public
 /// </summary>
 internal
 #endif
+#pragma warning disable CA1815 // Override equals and operator equals on value types
     struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
     internal const int OverflowMaxCount = 8;
     internal const int OverflowAdditionalCapacity = 16;
