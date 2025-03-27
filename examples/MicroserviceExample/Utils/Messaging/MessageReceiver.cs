@@ -89,6 +89,6 @@ public sealed class MessageReceiver : IDisposable
             this.logger.LogError(ex, "Failed to extract trace context.");
         }
 
-        return Enumerable.Empty<string>();
+        return [];
     }
 }
