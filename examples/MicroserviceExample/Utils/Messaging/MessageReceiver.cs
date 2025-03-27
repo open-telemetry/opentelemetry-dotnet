@@ -58,7 +58,7 @@ public sealed class MessageReceiver : IDisposable
         {
             var message = Encoding.UTF8.GetString(ea.Body.Span.ToArray());
 
-            this.logger.LogInformation("Message received: [{Message}]", message);
+            this.logger.MessageReceived(message);
 
             activity?.SetTag("message", message);
 
@@ -70,7 +70,7 @@ public sealed class MessageReceiver : IDisposable
         }
         catch (Exception ex)
         {
-            this.logger.LogError(ex, "Message processing failed.");
+            this.logger.MessageProcessingFailed(ex);
         }
     }
 
@@ -86,7 +86,7 @@ public sealed class MessageReceiver : IDisposable
         }
         catch (Exception ex)
         {
-            this.logger.LogError(ex, "Failed to extract trace context.");
+            this.logger.FailedToExtractTraceContext(ex);
         }
 
         return [];

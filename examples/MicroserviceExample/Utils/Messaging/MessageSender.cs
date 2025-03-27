@@ -71,13 +71,13 @@ public sealed class MessageSender : IDisposable
                 basicProperties: props,
                 body: Encoding.UTF8.GetBytes(body));
 
-            this.logger.LogInformation("Message sent: [{Body}]", body);
+            this.logger.MessageSent(body);
 
             return body;
         }
         catch (Exception ex)
         {
-            this.logger.LogError(ex, "Message publishing failed.");
+            this.logger.MessagePublishingFailed(ex);
             throw;
         }
     }
@@ -92,7 +92,7 @@ public sealed class MessageSender : IDisposable
         }
         catch (Exception ex)
         {
-            this.logger.LogError(ex, "Failed to inject trace context.");
+            this.logger.FailedToInjectTraceContext(ex);
         }
     }
 }
