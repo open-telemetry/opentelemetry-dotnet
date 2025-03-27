@@ -11,7 +11,7 @@ using RabbitMQ.Client.Events;
 
 namespace Utils.Messaging;
 
-public class MessageReceiver : IDisposable
+public sealed class MessageReceiver : IDisposable
 {
     private static readonly ActivitySource ActivitySource = new(nameof(MessageReceiver));
     private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
