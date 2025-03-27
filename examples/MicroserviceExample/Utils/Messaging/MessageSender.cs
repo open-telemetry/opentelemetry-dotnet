@@ -10,7 +10,7 @@ using RabbitMQ.Client;
 
 namespace Utils.Messaging;
 
-public class MessageSender : IDisposable
+public sealed class MessageSender : IDisposable
 {
     private static readonly ActivitySource ActivitySource = new(nameof(MessageSender));
     private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
