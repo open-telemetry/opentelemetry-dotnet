@@ -12,19 +12,14 @@ public static class RabbitMqHelper
     public const string DefaultExchangeName = "";
     public const string TestQueueName = "TestQueue";
 
-    private static readonly ConnectionFactory ConnectionFactory;
-
-    static RabbitMqHelper()
+    private static readonly ConnectionFactory ConnectionFactory = new()
     {
-        ConnectionFactory = new ConnectionFactory()
-        {
-            HostName = Environment.GetEnvironmentVariable("RABBITMQ_HOSTNAME") ?? "localhost",
-            UserName = Environment.GetEnvironmentVariable("RABBITMQ_DEFAULT_USER") ?? "guest",
-            Password = Environment.GetEnvironmentVariable("RABBITMQ_DEFAULT_PASS") ?? "guest",
-            Port = 5672,
-            RequestedConnectionTimeout = TimeSpan.FromMilliseconds(3000),
-        };
-    }
+        HostName = Environment.GetEnvironmentVariable("RABBITMQ_HOSTNAME") ?? "localhost",
+        UserName = Environment.GetEnvironmentVariable("RABBITMQ_DEFAULT_USER") ?? "guest",
+        Password = Environment.GetEnvironmentVariable("RABBITMQ_DEFAULT_PASS") ?? "guest",
+        Port = 5672,
+        RequestedConnectionTimeout = TimeSpan.FromMilliseconds(3000),
+    };
 
     public static IConnection CreateConnection()
     {
