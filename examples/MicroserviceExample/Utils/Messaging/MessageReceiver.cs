@@ -40,6 +40,11 @@ public sealed class MessageReceiver : IDisposable
 
     public void ReceiveMessage(BasicDeliverEventArgs ea)
     {
+        if (ea == null)
+        {
+            throw new ArgumentNullException(nameof(ea));
+        }
+
         // Extract the PropagationContext of the upstream parent from the message headers.
         var parentContext = Propagator.Extract(default, ea.BasicProperties, this.ExtractTraceContextFromBasicProperties);
         Baggage.Current = parentContext.Baggage;
