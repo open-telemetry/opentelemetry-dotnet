@@ -71,7 +71,7 @@ public class MessageSender : IDisposable
                 basicProperties: props,
                 body: Encoding.UTF8.GetBytes(body));
 
-            this.logger.LogInformation($"Message sent: [{body}]");
+            this.logger.LogInformation("Message sent: [{Body}]", body);
 
             return body;
         }

@@ -58,7 +58,7 @@ public sealed class MessageReceiver : IDisposable
         {
             var message = Encoding.UTF8.GetString(ea.Body.Span.ToArray());
 
-            this.logger.LogInformation($"Message received: [{message}]");
+            this.logger.LogInformation("Message received: [{Message}]", message);
 
             activity?.SetTag("message", message);
 
