@@ -86,10 +86,7 @@ public class MessageSender : IDisposable
     {
         try
         {
-            if (props.Headers == null)
-            {
-                props.Headers = new Dictionary<string, object>();
-            }
+            props.Headers ??= new Dictionary<string, object>();
 
             props.Headers[key] = value;
         }
