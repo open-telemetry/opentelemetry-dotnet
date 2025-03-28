@@ -24,7 +24,9 @@ public
 /// </summary>
 internal
 #endif
+#pragma warning disable CA1815 // Override equals and operator equals on value types
     struct LogRecordData
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
     internal DateTime TimestampBacking = DateTime.UtcNow;
 

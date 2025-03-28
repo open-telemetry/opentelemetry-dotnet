@@ -86,7 +86,11 @@ public readonly struct Status : IEquatable<Status>
         unchecked
         {
             hash = (31 * hash) + this.StatusCode.GetHashCode();
+#if NET
+            hash = (31 * hash) + (this.Description?.GetHashCode(StringComparison.Ordinal) ?? 0);
+#else
             hash = (31 * hash) + (this.Description?.GetHashCode() ?? 0);
+#endif
         }
 
         return hash;

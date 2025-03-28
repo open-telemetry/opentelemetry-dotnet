@@ -27,12 +27,14 @@ public
 /// </summary>
 internal
 #endif
+#pragma warning disable CA1815 // Override equals and operator equals on value types
     struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
     internal const int OverflowMaxCount = 8;
     internal const int OverflowAdditionalCapacity = 16;
     internal List<KeyValuePair<string, object?>>? OverflowAttributes;
-    private static readonly IReadOnlyList<KeyValuePair<string, object?>> Empty = Array.Empty<KeyValuePair<string, object?>>();
+    private static readonly IReadOnlyList<KeyValuePair<string, object?>> Empty = [];
     private KeyValuePair<string, object?> attribute1;
     private KeyValuePair<string, object?> attribute2;
     private KeyValuePair<string, object?> attribute3;
@@ -113,7 +115,9 @@ internal
     /// <param name="key">Attribute name.</param>
     /// <returns>Attribute value.</returns>
     [EditorBrowsable(EditorBrowsableState.Never)]
+#pragma warning disable CA1044 // Properties should not be write only
     public object? this[string key]
+#pragma warning restore CA1044 // Properties should not be write only
     {
         // Note: This only exists to enable collection initializer syntax
         // like { ["key"] = value }.
@@ -130,7 +134,7 @@ internal
         Guard.ThrowIfNull(attributes);
 
         LogRecordAttributeList logRecordAttributes = default;
-        logRecordAttributes.OverflowAttributes = new(attributes);
+        logRecordAttributes.OverflowAttributes = [.. attributes];
         logRecordAttributes.count = logRecordAttributes.OverflowAttributes.Count;
         return logRecordAttributes;
     }
@@ -210,8 +214,8 @@ internal
 
     internal readonly IReadOnlyList<KeyValuePair<string, object?>> Export(ref List<KeyValuePair<string, object?>>? attributeStorage)
     {
-        int count = this.count;
-        if (count <= 0)
+        int readonlyCount = this.count;
+        if (readonlyCount <= 0)
         {
             return Empty;
         }
@@ -223,49 +227,49 @@ internal
             return overflowAttributes;
         }
 
-        Debug.Assert(count <= 8, "Invalid size detected.");
+        Debug.Assert(readonlyCount <= 8, "Invalid size detected.");
 
         attributeStorage ??= new List<KeyValuePair<string, object?>>(OverflowAdditionalCapacity);
 
         // TODO: Perf test this, adjust as needed.
         attributeStorage.Add(this.attribute1);
-        if (count == 1)
+        if (readonlyCount == 1)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute2);
-        if (count == 2)
+        if (readonlyCount == 2)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute3);
-        if (count == 3)
+        if (readonlyCount == 3)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute4);
-        if (count == 4)
+        if (readonlyCount == 4)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute5);
-        if (count == 5)
+        if (readonlyCount == 5)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute6);
-        if (count == 6)
+        if (readonlyCount == 6)
         {
             return attributeStorage;
         }
 
         attributeStorage.Add(this.attribute7);
-        if (count == 7)
+        if (readonlyCount == 7)
         {
             return attributeStorage;
         }

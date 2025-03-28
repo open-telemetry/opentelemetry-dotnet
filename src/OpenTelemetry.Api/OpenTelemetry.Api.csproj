@@ -4,6 +4,7 @@
     <Description>OpenTelemetry .NET API</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>

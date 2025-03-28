@@ -124,17 +124,13 @@ public class TracerProvider : BaseProvider
         {
             this.Name = name ?? string.Empty;
             this.Version = version;
-            this.Tags = this.GetOrderedTags(tags);
+            this.Tags = GetOrderedTags(tags);
         }
 
         public bool Equals(TracerKey other)
         {
-            if (!string.Equals(this.Name, other.Name, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            if (!string.Equals(this.Version, other.Version, StringComparison.Ordinal))
+            if (!string.Equals(this.Name, other.Name, StringComparison.Ordinal) ||
+                !string.Equals(this.Version, other.Version, StringComparison.Ordinal))
             {
                 return false;
             }
@@ -147,8 +143,14 @@ public class TracerProvider : BaseProvider
             unchecked
             {
                 var hash = 17;
+#if NET
+                hash = (hash * 31) + (this.Name?.GetHashCode(StringComparison.Ordinal) ?? 0);
+                hash = (hash * 31) + (this.Version?.GetHashCode(StringComparison.Ordinal) ?? 0);
+#else
                 hash = (hash * 31) + (this.Name?.GetHashCode() ?? 0);
                 hash = (hash * 31) + (this.Version?.GetHashCode() ?? 0);
+#endif
+
                 hash = (hash * 31) + GetTagsHashCode(this.Tags);
                 return hash;
             }
@@ -211,7 +213,11 @@ public class TracerProvider : BaseProvider
             {
                 foreach (var kvp in tags)
                 {
+#if NET
+                    hash = (hash * 31) + kvp.Key.GetHashCode(StringComparison.Ordinal);
+#else
                     hash = (hash * 31) + kvp.Key.GetHashCode();
+#endif
                     if (kvp.Value != null)
                     {
                         hash = (hash * 31) + kvp.Value.GetHashCode()!;
@@ -222,7 +228,7 @@ public class TracerProvider : BaseProvider
             return hash;
         }
 
-        private KeyValuePair<string, object?>[]? GetOrderedTags(
+        private static KeyValuePair<string, object?>[]? GetOrderedTags(
             IEnumerable<KeyValuePair<string, object?>>? tags)
         {
             if (tags is null)
@@ -259,7 +265,7 @@ public class TracerProvider : BaseProvider
                 // Both values are non-null, compare as strings
                 return string.Compare(left.Value.ToString(), right.Value.ToString(), StringComparison.Ordinal);
             });
-            return orderedTagList.ToArray();
+            return [.. orderedTagList];
         }
     }
 }

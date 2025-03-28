@@ -11,7 +11,7 @@ namespace OpenTelemetry.Context.Propagation;
 /// </summary>
 public class CompositeTextMapPropagator : TextMapPropagator
 {
-    private readonly IReadOnlyList<TextMapPropagator> propagators;
+    private readonly List<TextMapPropagator> propagators;
     private readonly ISet<string> allFields;
 
     /// <summary>
