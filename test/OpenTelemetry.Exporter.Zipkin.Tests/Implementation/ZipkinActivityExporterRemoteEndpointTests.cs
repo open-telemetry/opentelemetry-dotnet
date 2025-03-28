@@ -22,20 +22,6 @@ public class ZipkinActivityExporterRemoteEndpointTests
         Assert.NotNull(zipkinSpan.RemoteEndpoint);
     }
 
-    [Fact]
-    public void GenerateActivity_RemoteEndpointResolution()
-    {
-        // Arrange
-        using var activity = ZipkinActivitySource.CreateTestActivity(
-            additionalAttributes: new Dictionary<string, object> { ["net.peer.name"] = "RemoteServiceName", });
-
-        // Act & Assert
-        var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);
-
-        Assert.NotNull(zipkinSpan.RemoteEndpoint);
-        Assert.Equal("RemoteServiceName", zipkinSpan.RemoteEndpoint.ServiceName);
-    }
-
     [Theory]
     [MemberData(nameof(RemoteEndpointPriorityTestCase.TestCases), MemberType = typeof(RemoteEndpointPriorityTestCase))]
     public void GenerateActivity_RemoteEndpointResolutionPriority(RemoteEndpointPriorityTestCase testCase)
