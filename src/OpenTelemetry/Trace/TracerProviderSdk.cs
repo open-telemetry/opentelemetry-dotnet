@@ -18,11 +18,11 @@ internal sealed class TracerProviderSdk : TracerProvider
     internal const string TracesSamplerArgConfigKey = "OTEL_TRACES_SAMPLER_ARG";
 
     internal readonly IServiceProvider ServiceProvider;
-    internal readonly IDisposable? OwnedServiceProvider;
+    internal IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
     internal bool Disposed;
 
-    private readonly List<object> instrumentations = new();
+    private readonly List<object> instrumentations = [];
     private readonly ActivityListener listener;
     private readonly Sampler sampler;
     private readonly Action<Activity> getRequestedDataAction;
@@ -382,6 +382,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                 // Wait for up to 5 seconds grace period
                 this.processor?.Shutdown(5000);
                 this.processor?.Dispose();
+                this.processor = null;
 
                 // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
                 // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
@@ -389,6 +390,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                 this.listener?.Dispose();
 
                 this.OwnedServiceProvider?.Dispose();
+                this.OwnedServiceProvider = null;
             }
 
             this.Disposed = true;

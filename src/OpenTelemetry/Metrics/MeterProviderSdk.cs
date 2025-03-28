@@ -17,20 +17,20 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal const string ExemplarFilterHistogramsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS";
 
     internal readonly IServiceProvider ServiceProvider;
-    internal readonly IDisposable? OwnedServiceProvider;
+    internal IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
     internal bool Disposed;
     internal ExemplarFilterType? ExemplarFilter;
     internal ExemplarFilterType? ExemplarFilterForHistograms;
     internal Action? OnCollectObservableInstruments;
 
-    private readonly List<object> instrumentations = new();
+    private readonly List<object> instrumentations = [];
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
     private readonly Lock collectLock = new();
     private readonly MeterListener listener;
-    private readonly MetricReader? reader;
-    private readonly CompositeMetricReader? compositeMetricReader;
     private readonly Func<Instrument, bool> shouldListenTo = instrument => false;
+    private CompositeMetricReader? compositeMetricReader;
+    private MetricReader? reader;
 
     internal MeterProviderSdk(
         IServiceProvider serviceProvider,
@@ -461,11 +461,15 @@ internal sealed class MeterProviderSdk : MeterProvider
                 // Wait for up to 5 seconds grace period
                 this.reader?.Shutdown(5000);
                 this.reader?.Dispose();
+                this.reader = null;
+
                 this.compositeMetricReader?.Dispose();
+                this.compositeMetricReader = null;
 
                 this.listener?.Dispose();
 
                 this.OwnedServiceProvider?.Dispose();
+                this.OwnedServiceProvider = null;
             }
 
             this.Disposed = true;

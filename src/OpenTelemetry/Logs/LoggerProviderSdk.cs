@@ -16,11 +16,11 @@ namespace OpenTelemetry.Logs;
 internal sealed class LoggerProviderSdk : LoggerProvider
 {
     internal readonly IServiceProvider ServiceProvider;
-    internal readonly IDisposable? OwnedServiceProvider;
+    internal IDisposable? OwnedServiceProvider;
     internal bool Disposed;
     internal int ShutdownCount;
 
-    private readonly List<object> instrumentations = new();
+    private readonly List<object> instrumentations = [];
     private ILogRecordPool? threadStaticPool = LogRecordThreadStaticPool.Instance;
 
     public LoggerProviderSdk(
@@ -223,8 +223,10 @@ internal sealed class LoggerProviderSdk : LoggerProvider
                 // Wait for up to 5 seconds grace period
                 this.Processor?.Shutdown(5000);
                 this.Processor?.Dispose();
+                this.Processor = null;
 
                 this.OwnedServiceProvider?.Dispose();
+                this.OwnedServiceProvider = null;
             }
 
             this.Disposed = true;
