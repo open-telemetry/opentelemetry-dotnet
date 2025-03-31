@@ -5,7 +5,7 @@ using Utils.Messaging;
 
 namespace WorkerService;
 
-internal class Worker : BackgroundService
+internal sealed class Worker : BackgroundService
 {
     private readonly MessageReceiver messageReceiver;
 
