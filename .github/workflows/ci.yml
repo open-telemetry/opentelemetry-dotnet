@@ -18,8 +18,8 @@ jobs:
     outputs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: AurorNZ/paths-filter@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: AurorNZ/paths-filter@3b1f3abc3371cca888d8eb03dfa70bc8a9867629 # v4.0.0
       id: changes
       with:
         filters: |
@@ -113,7 +113,7 @@ jobs:
       matrix:
         version: [ net8.0, net9.0 ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Run OTLP Exporter docker compose
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
@@ -131,7 +131,7 @@ jobs:
       matrix:
         version: [ net8.0, net9.0 ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Run W3C Trace Context docker compose
         run: docker compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 

@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
@@ -18,7 +18,7 @@ jobs:
         fetch-depth: 0
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
 
     - name: dotnet pack
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=false /p:RunningDotNetPack=true
@@ -27,7 +27,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
@@ -35,7 +35,7 @@ jobs:
         fetch-depth: 0
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
 
     - name: dotnet pack
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=true /p:RunningDotNetPack=true
