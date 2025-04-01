@@ -14,7 +14,7 @@ using Xunit.Abstractions;
 
 namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests;
 
-public class W3CTraceContextTests : IDisposable
+public sealed class W3CTraceContextTests : IDisposable
 {
     /*
         To run the tests, invoke docker-compose.yml from the root of the repo:
@@ -76,7 +76,7 @@ public class W3CTraceContextTests : IDisposable
         this.output.WriteLine("result:" + result);
 
         // Assert on the last line
-        Assert.StartsWith("OK", lastLine);
+        Assert.StartsWith("OK", lastLine, StringComparison.Ordinal);
     }
 
     public void Dispose()
@@ -119,7 +119,9 @@ public class W3CTraceContextTests : IDisposable
         return output.Substring(lastNewLineCharacterPos + 1);
     }
 
-    public class Data
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+    internal sealed class Data
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         [JsonPropertyName("url")]
         public string? Url { get; set; }

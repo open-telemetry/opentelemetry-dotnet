@@ -285,13 +285,13 @@ public class AggregatorTests
 
         Assert.Equal(expected, actual);
 
-        actual = new List<long>();
+        actual = [];
         foreach (var bucketCount in data.NegativeBuckets)
         {
             actual.Add(bucketCount);
         }
 
-        expected = new List<long>();
+        expected = [];
         foreach (var bucketCount in expectedData.NegativeBuckets)
         {
             expected.Add(bucketCount);
@@ -493,7 +493,7 @@ public class AggregatorTests
         Interlocked.Increment(ref args.ThreadsFinishedAllUpdatesCount);
     }
 
-    private class ThreadArguments
+    private sealed class ThreadArguments
     {
         public readonly ManualResetEvent MreToEnsureAllThreadsStart;
         public MetricPoint HistogramPoint;

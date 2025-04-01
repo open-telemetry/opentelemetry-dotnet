@@ -14,10 +14,10 @@ namespace OpenTelemetry.Metrics.Tests;
 public class MetricApiTests : MetricTestsBase
 {
     private const int MaxTimeToAllowForFlush = 10000;
+    private const long DeltaLongValueUpdatedByEachCall = 10;
+    private const double DeltaDoubleValueUpdatedByEachCall = 11.987;
+    private const int NumberOfMetricUpdateByEachThread = 100000;
     private static readonly int NumberOfThreads = Environment.ProcessorCount;
-    private static readonly long DeltaLongValueUpdatedByEachCall = 10;
-    private static readonly double DeltaDoubleValueUpdatedByEachCall = 11.987;
-    private static readonly int NumberOfMetricUpdateByEachThread = 100000;
     private readonly ITestOutputHelper output;
 
     public MetricApiTests(ITestOutputHelper output)
@@ -31,7 +31,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -42,7 +42,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("myCounter", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -64,7 +64,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -75,7 +75,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("myGauge", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -93,19 +93,19 @@ public class MetricApiTests : MetricTestsBase
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
         var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
         meter.CreateObservableGauge("myGauge", () => measurement);
-        meter.CreateObservableGauge<long>("myBadGauge", observeValues: () => throw new Exception("gauge read error"));
+        meter.CreateObservableGauge<long>("myBadGauge", observeValues: () => throw new InvalidOperationException("gauge read error"));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("myGauge", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -127,7 +127,7 @@ public class MetricApiTests : MetricTestsBase
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -149,7 +149,7 @@ public class MetricApiTests : MetricTestsBase
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -174,7 +174,7 @@ public class MetricApiTests : MetricTestsBase
                 "MeterTagValue"),
         };
         using var meter = new Meter(meterName, meterVersion, meterTags);
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -213,7 +213,7 @@ public class MetricApiTests : MetricTestsBase
         };
         using var meter1 = new Meter(meterName, meterVersion, meterTags1);
         using var meter2 = new Meter(meterName, meterVersion, meterTags2);
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meterName)
             .AddInMemoryExporter(exportedItems));
 
@@ -227,14 +227,14 @@ public class MetricApiTests : MetricTestsBase
 
         bool TagComparator(KeyValuePair<string, object?> lhs, KeyValuePair<string, object?> rhs)
         {
-            return lhs.Key.Equals(rhs.Key) && lhs.Value!.GetHashCode().Equals(rhs.Value!.GetHashCode());
+            return lhs.Key.Equals(rhs.Key, StringComparison.Ordinal) && lhs.Value!.GetHashCode().Equals(rhs.Value!.GetHashCode());
         }
 
         var metric = exportedItems.First(m => TagComparator(m.MeterTags!.First(), meterTags1!.First()));
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
 
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -248,7 +248,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
 
-        metricPoints = new List<MetricPoint>();
+        metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -266,7 +266,7 @@ public class MetricApiTests : MetricTestsBase
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -281,7 +281,7 @@ public class MetricApiTests : MetricTestsBase
 
         var metric = exportedItems[0];
         Assert.Equal("instrumentName", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -299,7 +299,7 @@ public class MetricApiTests : MetricTestsBase
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -317,7 +317,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal("instrumentDescription1", metric1.Description);
         Assert.Equal("instrumentDescription2", metric2.Description);
 
-        List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric1MetricPoints = [];
         foreach (ref readonly var mp in metric1.GetMetricPoints())
         {
             metric1MetricPoints.Add(mp);
@@ -327,7 +327,7 @@ public class MetricApiTests : MetricTestsBase
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
-        List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric2MetricPoints = [];
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
@@ -345,7 +345,7 @@ public class MetricApiTests : MetricTestsBase
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -363,7 +363,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal("instrumentUnit1", metric1.Unit);
         Assert.Equal("instrumentUnit2", metric2.Unit);
 
-        List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric1MetricPoints = [];
         foreach (ref readonly var mp in metric1.GetMetricPoints())
         {
             metric1MetricPoints.Add(mp);
@@ -373,7 +373,7 @@ public class MetricApiTests : MetricTestsBase
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
-        List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric2MetricPoints = [];
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
@@ -391,7 +391,7 @@ public class MetricApiTests : MetricTestsBase
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -407,7 +407,7 @@ public class MetricApiTests : MetricTestsBase
         var metric1 = exportedItems[0];
         var metric2 = exportedItems[1];
 
-        List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric1MetricPoints = [];
         foreach (ref readonly var mp in metric1.GetMetricPoints())
         {
             metric1MetricPoints.Add(mp);
@@ -417,7 +417,7 @@ public class MetricApiTests : MetricTestsBase
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
-        List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric2MetricPoints = [];
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
@@ -435,7 +435,7 @@ public class MetricApiTests : MetricTestsBase
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -451,7 +451,7 @@ public class MetricApiTests : MetricTestsBase
         var metric1 = exportedItems[0];
         var metric2 = exportedItems[1];
 
-        List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric1MetricPoints = [];
         foreach (ref readonly var mp in metric1.GetMetricPoints())
         {
             metric1MetricPoints.Add(mp);
@@ -461,7 +461,7 @@ public class MetricApiTests : MetricTestsBase
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
-        List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+        List<MetricPoint> metric2MetricPoints = [];
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
@@ -481,7 +481,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter1 = new Meter(Utils.GetCurrentMethodName(), "1.0");
         using var meter2 = new Meter(Utils.GetCurrentMethodName(), "2.0");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter1.Name)
             .AddMeter(meter2.Name)
             .AddInMemoryExporter(exportedItems));
@@ -513,7 +513,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.1.{temporality}");
         using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.2.{temporality}");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        using var container = BuildMeterProvider(out var meterProvider, builder =>
         {
             builder
                 .AddMeter(meter1.Name)
@@ -560,7 +560,7 @@ public class MetricApiTests : MetricTestsBase
 
         var exportedItems = new List<Metric>();
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        using var container = BuildMeterProvider(out var meterProvider, builder =>
         {
             builder
                 .AddMeter("AbcCompany.XyzProduct.Component?")
@@ -612,7 +612,7 @@ public class MetricApiTests : MetricTestsBase
 
         var exportedItems = new List<Metric>();
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        using var container = BuildMeterProvider(out var meterProvider, builder =>
         {
             builder
                 .AddInMemoryExporter(exportedItems);
@@ -644,7 +644,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
         var counterLong = meter.CreateCounter<long>("mycounter");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -741,11 +741,11 @@ public class MetricApiTests : MetricTestsBase
             {
                 return new List<Measurement<long>>()
                 {
-                    new Measurement<long>(i++ * 10),
+                    new(i++ * 10),
                 };
             });
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -810,15 +810,15 @@ public class MetricApiTests : MetricTestsBase
             "observable-counter",
             () =>
             {
-                return new List<Measurement<long>>()
+                return new List<Measurement<long>>
                 {
-                    new Measurement<long>(10, tags1),
-                    new Measurement<long>(10, tags2),
-                    new Measurement<long>(10, tags3),
+                    new(10L, tags1),
+                    new(10L, tags2),
+                    new(10L, tags3),
                 };
             });
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -830,7 +830,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("observable-counter", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -906,27 +906,27 @@ public class MetricApiTests : MetricTestsBase
             "requestCount",
             () =>
             {
-                return new List<Measurement<long>>()
+                return new List<Measurement<long>>
                 {
-                    new Measurement<long>(10, tags1),
-                    new Measurement<long>(10, tags2),
-                    new Measurement<long>(10, tags3),
+                    new(10L, tags1),
+                    new(10L, tags2),
+                    new(10L, tags3),
                 };
             });
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
                 metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
             })
-            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = Array.Empty<string>() }));
+            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = [] }));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("requestCount", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -955,7 +955,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
         var counterLong = meter.CreateUpDownCounter<long>("mycounter");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1030,13 +1030,13 @@ public class MetricApiTests : MetricTestsBase
             "observable-counter",
             () =>
             {
-                return new List<Measurement<long>>()
+                return new List<Measurement<long>>
                 {
-                    new Measurement<long>(i++ * 10),
+                    new(i++ * 10L),
                 };
             });
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1091,15 +1091,15 @@ public class MetricApiTests : MetricTestsBase
             "observable-counter",
             () =>
             {
-                return new List<Measurement<long>>()
+                return new List<Measurement<long>>
                 {
-                    new Measurement<long>(10, tags1),
-                    new Measurement<long>(10, tags2),
-                    new Measurement<long>(10, tags3),
+                    new(10L, tags1),
+                    new(10L, tags2),
+                    new(10L, tags3),
                 };
             });
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1111,7 +1111,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("observable-counter", metric.Name);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -1169,7 +1169,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
         var counterLong = meter.CreateCounter<long>("Counter");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1260,7 +1260,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
         var counterLong = meter.CreateCounter<long>("Counter");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1353,7 +1353,7 @@ public class MetricApiTests : MetricTestsBase
         var counter1 = meter1.CreateCounter<long>("counterFromMeter1");
         var counter2 = meter2.CreateCounter<long>("counterFromMeter2");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter1.Name)
             .AddMeter(meter2.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
@@ -1418,7 +1418,11 @@ public class MetricApiTests : MetricTestsBase
                 // Validate second element is overflow attribute.
                 var tagEnumerator = enumerator.Current.Tags.GetEnumerator();
                 tagEnumerator.MoveNext();
+#if NET
+                if (!tagEnumerator.Current.Key.Contains("otel.metric.overflow", StringComparison.Ordinal))
+#else
                 if (!tagEnumerator.Current.Key.Contains("otel.metric.overflow"))
+#endif
                 {
                     count++;
                 }
@@ -1435,7 +1439,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
         var counterLong = meter.CreateCounter<long>("mycounterCapTest");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1530,7 +1534,7 @@ public class MetricApiTests : MetricTestsBase
 
         using var meter = new Meter("InstrumentWithInvalidNameIsIgnoredTest");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -1551,7 +1555,7 @@ public class MetricApiTests : MetricTestsBase
 
         using var meter = new Meter("InstrumentValidNameIsExportedTest");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -1573,7 +1577,7 @@ public class MetricApiTests : MetricTestsBase
         // This test ensures that MeterProviderSdk can be set up without any reader
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{hasViews}");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        using var container = BuildMeterProvider(out var meterProvider, builder =>
         {
             builder
                 .AddMeter(meter.Name);
@@ -1595,7 +1599,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -1629,7 +1633,7 @@ public class MetricApiTests : MetricTestsBase
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -1639,7 +1643,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal("Background Noise Level", metric.Description);
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -1657,7 +1661,7 @@ public class MetricApiTests : MetricTestsBase
         var exportedMetrics = new List<Metric>();
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedMetrics, metricReaderOptions =>
             {
@@ -1771,7 +1775,7 @@ public class MetricApiTests : MetricTestsBase
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}.{deltaValueUpdatedByEachCall}");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(metricItems));
 
@@ -1817,11 +1821,13 @@ public class MetricApiTests : MetricTestsBase
         var bucketCounts = new long[11];
 
         var metrics = new List<Metric>();
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics));
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddReader(metricReader));
 
@@ -1858,7 +1864,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal(expected, bucketCounts);
     }
 
-    private class UpdateThreadArguments<T>
+    private sealed class UpdateThreadArguments<T>
         where T : struct, IComparable
     {
         public ManualResetEvent MreToBlockUpdateThread;

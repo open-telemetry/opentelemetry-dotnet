@@ -6,7 +6,7 @@ using System.Diagnostics.Tracing;
 
 namespace OpenTelemetry.Tests;
 
-internal class InMemoryEventListener : EventListener
+internal sealed class InMemoryEventListener : EventListener
 {
     public ConcurrentQueue<EventWrittenEventArgs> Events = new();
 
