@@ -116,7 +116,7 @@ internal class TestLogs
         using (logger.BeginScope("{City}", "Seattle"))
         using (logger.BeginScope("{StoreType}", "Physical"))
         {
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            logger.LogInformation("Hello from {Name} {Price}.", "tomato", 2.99);
         }
 
         return 0;
