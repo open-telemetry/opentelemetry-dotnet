@@ -66,7 +66,7 @@ internal class InstrumentationWithActivitySource : IDisposable
                         }
 
                         activity?.SetTag("request.content", requestContent);
-                        activity?.SetTag("request.length", requestContent.Length.ToString());
+                        activity?.SetTag("request.length", requestContent.Length);
 
                         var echo = Encoding.UTF8.GetBytes("echo: " + requestContent);
                         context.Response.ContentEncoding = Encoding.UTF8;
