@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>$(DefaultTargetFrameworkForExampleApps)</TargetFramework>
     <NoWarn>$(NoWarn),CS0618</NoWarn>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>
