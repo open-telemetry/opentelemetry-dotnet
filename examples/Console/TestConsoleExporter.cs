@@ -27,7 +27,9 @@ internal class TestConsoleExporter
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("Samples.SampleClient", "Samples.SampleServer")
             .ConfigureResource(res => res.AddService("console-test"))
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .AddConsoleExporter()
             .Build();
 
