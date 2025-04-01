@@ -7,7 +7,7 @@ using OpenTelemetry.Logs;
 
 namespace Examples.Console;
 
-internal class TestLogs
+internal sealed class TestLogs
 {
     internal static int Run(LogsOptions options)
     {

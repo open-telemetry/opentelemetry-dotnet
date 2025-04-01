@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Examples.Console;
 
-internal class InstrumentationWithActivitySource : IDisposable
+internal sealed class InstrumentationWithActivitySource : IDisposable
 {
     private const string RequestPath = "/api/request";
     private readonly SampleServer server = new();
@@ -27,7 +27,7 @@ internal class InstrumentationWithActivitySource : IDisposable
         this.server.Dispose();
     }
 
-    private class SampleServer : IDisposable
+    private sealed class SampleServer : IDisposable
     {
         private readonly HttpListener listener = new();
 
@@ -88,7 +88,7 @@ internal class InstrumentationWithActivitySource : IDisposable
         }
     }
 
-    private class SampleClient : IDisposable
+    private sealed class SampleClient : IDisposable
     {
         private CancellationTokenSource? cts;
         private Task? requestTask;

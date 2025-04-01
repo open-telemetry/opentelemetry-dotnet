@@ -8,7 +8,7 @@ using OpenTelemetry.Trace;
 
 namespace Examples.Console;
 
-internal class TestConsoleExporter
+internal sealed class TestConsoleExporter
 {
     // To run this example, run the following command from
     // the reporoot\examples\Console\.
@@ -50,7 +50,7 @@ internal class TestConsoleExporter
     /// An example of custom processor which
     /// can be used to add more tags to an activity.
     /// </summary>
-    internal class MyProcessor : BaseProcessor<Activity>
+    internal sealed class MyProcessor : BaseProcessor<Activity>
     {
         public override void OnStart(Activity activity)
         {

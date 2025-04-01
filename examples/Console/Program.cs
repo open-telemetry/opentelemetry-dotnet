@@ -51,21 +51,21 @@ internal static class Program
 #pragma warning disable SA1402 // File may only contain a single type
 
 [Verb("zipkin", HelpText = "Specify the options required to test Zipkin exporter")]
-internal class ZipkinOptions
+internal sealed class ZipkinOptions
 {
     [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
     public required string Uri { get; set; }
 }
 
 [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
-internal class PrometheusOptions
+internal sealed class PrometheusOptions
 {
     [Option('p', "port", Default = 9464, HelpText = "The port to expose metrics. The endpoint will be http://localhost:port/metrics/ (this is the port from which your Prometheus server scraps metrics from.)", Required = false)]
     public int Port { get; set; }
 }
 
 [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
-internal class MetricsOptions
+internal sealed class MetricsOptions
 {
     [Option('d', "IsDelta", HelpText = "Export Delta metrics", Required = false, Default = false)]
     public bool IsDelta { get; set; }
@@ -93,32 +93,32 @@ internal class MetricsOptions
 }
 
 [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]
-internal class GrpcNetClientOptions
+internal sealed class GrpcNetClientOptions
 {
 }
 
 [Verb("httpclient", HelpText = "Specify the options required to test HttpClient")]
-internal class HttpClientOptions
+internal sealed class HttpClientOptions
 {
 }
 
 [Verb("console", HelpText = "Specify the options required to test console exporter")]
-internal class ConsoleOptions
+internal sealed class ConsoleOptions
 {
 }
 
 [Verb("otelshim", HelpText = "Specify the options required to test OpenTelemetry Shim with console exporter")]
-internal class OpenTelemetryShimOptions
+internal sealed class OpenTelemetryShimOptions
 {
 }
 
 [Verb("opentracing", HelpText = "Specify the options required to test OpenTracing Shim with console exporter")]
-internal class OpenTracingShimOptions
+internal sealed class OpenTracingShimOptions
 {
 }
 
 [Verb("otlp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP)")]
-internal class OtlpOptions
+internal sealed class OtlpOptions
 {
     [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces (default value depends on protocol).", Default = null)]
     public string? Endpoint { get; set; }
@@ -128,7 +128,7 @@ internal class OtlpOptions
 }
 
 [Verb("logs", HelpText = "Specify the options required to test Logs")]
-internal class LogsOptions
+internal sealed class LogsOptions
 {
     [Option("useExporter", Default = "otlp", HelpText = "Options include otlp or console.", Required = false)]
     public string? UseExporter { get; set; }
@@ -147,7 +147,7 @@ internal class LogsOptions
 }
 
 [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]
-internal class InMemoryOptions
+internal sealed class InMemoryOptions
 {
 }
 
