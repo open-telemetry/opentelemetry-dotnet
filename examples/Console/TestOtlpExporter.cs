@@ -69,15 +69,13 @@ internal static class TestOtlpExporter
 
         // The above line is required only in Applications
         // which decide to use OpenTelemetry.
-        using (var sample = new InstrumentationWithActivitySource())
-        {
-            sample.Start();
+        using var sample = new InstrumentationWithActivitySource();
+        sample.Start();
 
-            System.Console.WriteLine("Traces are being created and exported " +
-                "to the OpenTelemetry Collector in the background. " +
-                "Press ENTER to stop.");
-            System.Console.ReadLine();
-        }
+        System.Console.WriteLine("Traces are being created and exported " +
+                                 "to the OpenTelemetry Collector in the background. " +
+                                 "Press ENTER to stop.");
+        System.Console.ReadLine();
 
         return 0;
     }

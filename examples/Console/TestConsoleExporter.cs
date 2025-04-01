@@ -35,15 +35,13 @@ internal class TestConsoleExporter
 
         // The above line is required only in applications
         // which decide to use OpenTelemetry.
-        using (var sample = new InstrumentationWithActivitySource())
-        {
-            sample.Start();
+        using var sample = new InstrumentationWithActivitySource();
+        sample.Start();
 
-            System.Console.WriteLine("Traces are being created and exported " +
-                "to Console in the background. " +
-                "Press ENTER to stop.");
-            System.Console.ReadLine();
-        }
+        System.Console.WriteLine("Traces are being created and exported " +
+                                 "to Console in the background. " +
+                                 "Press ENTER to stop.");
+        System.Console.ReadLine();
 
         return 0;
     }
