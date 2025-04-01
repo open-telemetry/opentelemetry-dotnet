@@ -10,7 +10,7 @@ jobs:
   stale:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/stale@v9
+      - uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639 # v9.1.0
         with:
           stale-issue-message: 'This issue was marked stale due to lack of activity and will be closed in 7 days. Commenting will instruct the bot to automatically remove the label. This bot runs once per day.'
           close-issue-message: 'Closed as inactive. Feel free to reopen if this issue is still a concern.'
