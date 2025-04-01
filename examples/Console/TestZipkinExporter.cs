@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace Examples.Console;
 
-internal class TestZipkinExporter
+internal sealed class TestZipkinExporter
 {
     internal static int Run(ZipkinOptions options)
     {

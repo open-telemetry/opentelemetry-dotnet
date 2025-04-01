@@ -9,7 +9,7 @@ using OpenTelemetry.Trace;
 
 namespace Examples.Console;
 
-internal class TestPrometheusExporter
+internal sealed class TestPrometheusExporter
 {
     private static readonly Meter MyMeter = new("MyMeter");
     private static readonly Meter MyMeter2 = new("MyMeter2");

@@ -10,7 +10,7 @@ using OpenTelemetry.Resources;
 
 namespace Examples.Console;
 
-internal class TestMetrics
+internal sealed class TestMetrics
 {
     internal static int Run(MetricsOptions options)
     {

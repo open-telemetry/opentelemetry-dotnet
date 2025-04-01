@@ -8,7 +8,7 @@ using OpenTelemetry.Trace;
 
 namespace Examples.Console;
 
-internal class TestHttpClient
+internal sealed class TestHttpClient
 {
     // To run this example, run the following command from
     // the reporoot\examples\Console\.
