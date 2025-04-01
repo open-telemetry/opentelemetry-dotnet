@@ -1,9 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>$(DefaultTargetFrameworkForExampleApps)</TargetFramework>
-    <NoWarn>$(NoWarn),CS0618</NoWarn>
     <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
