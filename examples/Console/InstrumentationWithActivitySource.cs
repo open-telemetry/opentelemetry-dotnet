@@ -114,7 +114,7 @@ internal class InstrumentationWithActivitySource : IDisposable
                             count++;
 
                             activity?.AddEvent(new ActivityEvent("PostAsync:Started"));
-                            using var response = await client.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
+                            using var response = await client.PostAsync(new Uri(url, UriKind.Absolute), content, cancellationToken).ConfigureAwait(false);
                             activity?.AddEvent(new ActivityEvent("PostAsync:Ended"));
 
                             activity?.SetTag("http.status_code", (int)response.StatusCode);

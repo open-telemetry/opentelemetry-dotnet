@@ -32,7 +32,7 @@ internal sealed class TestHttpClient
         using (var parent = source.StartActivity("incoming request", ActivityKind.Server))
         {
             using var client = new HttpClient();
-            client.GetStringAsync("http://bing.com").GetAwaiter().GetResult();
+            client.GetStringAsync(new Uri("http://bing.com", UriKind.Absolute)).GetAwaiter().GetResult();
         }
 
         System.Console.WriteLine("Press Enter key to exit.");
