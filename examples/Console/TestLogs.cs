@@ -112,9 +112,9 @@ internal class TestLogs
             });
         });
 
-        var logger = loggerFactory.CreateLogger<Program>();
-        using (logger.BeginScope("{city}", "Seattle"))
-        using (logger.BeginScope("{storeType}", "Physical"))
+        var logger = loggerFactory.CreateLogger<TestLogs>();
+        using (logger.BeginScope("{City}", "Seattle"))
+        using (logger.BeginScope("{StoreType}", "Physical"))
         {
             logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
         }

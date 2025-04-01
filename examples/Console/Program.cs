@@ -8,7 +8,7 @@ namespace Examples.Console;
 /// <summary>
 /// Main samples entry point.
 /// </summary>
-public class Program
+internal static class Program
 {
     /// <summary>
     /// Main method - invoke this using command line.
