@@ -37,10 +37,10 @@ internal class TestMetrics
              * launch the OpenTelemetry Collector with an OTLP receiver, by running:
              *
              *  - On Unix based systems use:
-             *     docker run --rm -it -p 4317:4317 -v $(pwd):/cfg otel/opentelemetry-collector:0.33.0 --config=/cfg/otlp-collector-example/config.yaml
+             *     docker run --rm -it -p 4317:4317 -v $(pwd):/cfg otel/opentelemetry-collector:latest --config=/cfg/otlp-collector-example/config.yaml
              *
              *  - On Windows use:
-             *     docker run --rm -it -p 4317:4317 -v "%cd%":/cfg otel/opentelemetry-collector:0.33.0 --config=/cfg/otlp-collector-example/config.yaml
+             *     docker run --rm -it -p 4317:4317 -v "%cd%":/cfg otel/opentelemetry-collector:latest --config=/cfg/otlp-collector-example/config.yaml
              *
              * Open another terminal window at the examples/Console/ directory and
              * launch the OTLP example by running:
