@@ -28,10 +28,7 @@ public static class RabbitMqHelper
 
     public static IModel CreateModelAndDeclareTestQueue(IConnection connection)
     {
-        if (connection == null)
-        {
-            throw new ArgumentNullException(nameof(connection));
-        }
+        ArgumentNullException.ThrowIfNull(connection);
 
         var channel = connection.CreateModel();
 
