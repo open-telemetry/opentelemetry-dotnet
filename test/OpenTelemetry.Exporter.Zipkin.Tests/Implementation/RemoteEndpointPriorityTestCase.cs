@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
@@ -14,83 +13,135 @@ public class RemoteEndpointPriorityTestCase
     [
         new()
         {
-            Name = "Highest priority name = net.peer.name",
-            ExpectedResult = "RemoteServiceName",
+            Name = "Rank 1: Only peer.service provided",
+            ExpectedResult = "PeerService",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["http.host"] = "DiscardedRemoteServiceName",
-                ["net.peer.name"] = "RemoteServiceName",
-                ["peer.hostname"] = "DiscardedRemoteServiceName",
+                ["peer.service"] = "PeerService",
             },
         },
         new()
         {
-            Name = "Highest priority name = SemanticConventions.AttributePeerService",
-            ExpectedResult = "RemoteServiceName",
+            Name = "Rank 2: Only server.address provided",
+            ExpectedResult = "ServerAddress",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                [SemanticConventions.AttributePeerService] = "RemoteServiceName",
-                ["http.host"] = "DiscardedRemoteServiceName",
-                ["net.peer.name"] = "DiscardedRemoteServiceName",
-                ["net.peer.port"] = "1234",
-                ["peer.hostname"] = "DiscardedRemoteServiceName",
+                ["server.address"] = "ServerAddress",
             },
         },
         new()
         {
-            Name = "Only has net.peer.name and net.peer.port",
-            ExpectedResult = "RemoteServiceName:1234",
+            Name = "Rank 3: Only net.peer.name provided",
+            ExpectedResult = "NetPeerName",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["net.peer.name"] = "RemoteServiceName",
-                ["net.peer.port"] = "1234",
+                ["net.peer.name"] = "NetPeerName",
             },
         },
         new()
         {
-            Name = "net.peer.port is an int",
-            ExpectedResult = "RemoteServiceName:1234",
+            Name = "Rank 4: network.peer.address and network.peer.port provided",
+            ExpectedResult = "1.2.3.4:5678",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["net.peer.name"] = "RemoteServiceName",
-                ["net.peer.port"] = 1234,
+                ["network.peer.address"] = "1.2.3.4",
+                ["network.peer.port"] = "5678",
             },
         },
         new()
         {
-            Name = "Has net.peer.name and net.peer.port",
-            ExpectedResult = "RemoteServiceName:1234",
+            Name = "Rank 4: Only network.peer.address provided",
+            ExpectedResult = "1.2.3.4",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["http.host"] = "DiscardedRemoteServiceName",
-                ["net.peer.name"] = "RemoteServiceName",
-                ["net.peer.port"] = "1234",
-                ["peer.hostname"] = "DiscardedRemoteServiceName",
+                ["network.peer.address"] = "1.2.3.4",
             },
         },
         new()
         {
-            Name = "Has net.peer.ip and net.peer.port",
-            ExpectedResult = "1.2.3.4:1234",
+            Name = "Rank 5: Only server.socket.domain provided",
+            ExpectedResult = "SocketDomain",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["http.host"] = "DiscardedRemoteServiceName",
-                ["net.peer.ip"] = "1.2.3.4",
-                ["net.peer.port"] = "1234",
-                ["peer.hostname"] = "DiscardedRemoteServiceName",
+                ["server.socket.domain"] = "SocketDomain",
             },
         },
         new()
         {
-            Name = "Has net.peer.name, net.peer.ip, and net.peer.port",
-            ExpectedResult = "RemoteServiceName:1234",
+            Name = "Rank 6: server.socket.address and server.socket.port provided",
+            ExpectedResult = "SocketAddress:4321",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["http.host"] = "DiscardedRemoteServiceName",
-                ["net.peer.name"] = "RemoteServiceName",
-                ["net.peer.ip"] = "1.2.3.4",
-                ["net.peer.port"] = "1234",
-                ["peer.hostname"] = "DiscardedRemoteServiceName",
+                ["server.socket.address"] = "SocketAddress",
+                ["server.socket.port"] = "4321",
+            },
+        },
+        new()
+        {
+            Name = "Rank 7: Only net.sock.peer.name provided",
+            ExpectedResult = "NetSockPeerName",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                ["net.sock.peer.name"] = "NetSockPeerName",
+            },
+        },
+        new()
+        {
+            Name = "Rank 8: net.sock.peer.addr and net.sock.peer.port provided",
+            ExpectedResult = "5.6.7.8:8765",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                ["net.sock.peer.addr"] = "5.6.7.8",
+                ["net.sock.peer.port"] = "8765",
+            },
+        },
+        new()
+        {
+            Name = "Rank 9: Only peer.hostname provided",
+            ExpectedResult = "PeerHostname",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                ["peer.hostname"] = "PeerHostname",
+            },
+        },
+        new()
+        {
+            Name = "Rank 10: Only peer.address provided",
+            ExpectedResult = "PeerAddress",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                ["peer.address"] = "PeerAddress",
+            },
+        },
+        new()
+        {
+            Name = "Rank 11: Only db.name provided",
+            ExpectedResult = "DbName",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                ["db.name"] = "DbName",
+            },
+        },
+        new()
+        {
+            Name = "Multiple attributes: highest rank wins",
+            ExpectedResult = "PeerService",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                ["db.name"] = "DbName",
+                ["peer.address"] = "PeerAddress",
+                ["peer.hostname"] = "PeerHostname",
+                ["net.sock.peer.addr"] = "5.6.7.8",
+                ["net.sock.peer.port"] = "8765",
+                ["net.sock.peer.name"] = "NetSockPeerName",
+                ["server.socket.address"] = "SocketAddress",
+                ["server.socket.port"] = "4321",
+                ["server.socket.domain"] = "SocketDomain",
+                ["network.peer.address"] = "1.2.3.4",
+                ["network.peer.port"] = "5678",
+                ["net.peer.name"] = "NetPeerName",
+                ["server.address"] = "ServerAddress",
+                ["peer.service"] = "PeerService",
             },
         },
     ];
