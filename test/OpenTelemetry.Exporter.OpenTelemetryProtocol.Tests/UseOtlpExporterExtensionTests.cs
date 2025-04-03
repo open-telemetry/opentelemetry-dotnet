@@ -38,7 +38,12 @@ public class UseOtlpExporterExtensionTests : IDisposable
 
         var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().CurrentValue;
 
+#if NET462_OR_GREATER || NETSTANDARD2_0
+        Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), exporterOptions.DefaultOptions.Endpoint);
+#else
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), exporterOptions.DefaultOptions.Endpoint);
+#endif
+
         Assert.Equal(OtlpExporterOptions.DefaultOtlpExportProtocol, exporterOptions.DefaultOptions.Protocol);
         Assert.False(((OtlpExporterOptions)exporterOptions.DefaultOptions).HasData);
 
