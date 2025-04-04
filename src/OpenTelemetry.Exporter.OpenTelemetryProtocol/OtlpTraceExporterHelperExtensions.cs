@@ -129,6 +129,15 @@ public static class OtlpTraceExporterHelperExtensions
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
         Debug.Assert(batchExportProcessorOptions != null, "batchExportProcessorOptions was null");
 
+#if NET462_OR_GREATER || NETSTANDARD2_0
+        if (exporterOptions!.Protocol == OtlpExportProtocol.Grpc &&
+            ReferenceEquals(exporterOptions.HttpClientFactory, exporterOptions.DefaultHttpClientFactory))
+        {
+            throw new NotSupportedException("OtlpExportProtocol.Grpc with the default HTTP client factory is not supported on .NET Framework or .NET Standard 2.0." +
+                "Please switch to OtlpExportProtocol.HttpProtobuf or provide a custom HttpClientFactory.");
+        }
+#endif
+
         if (!skipUseOtlpExporterRegistrationCheck)
         {
             serviceProvider!.EnsureNoUseOtlpExporterRegistrations();

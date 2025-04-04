@@ -7,6 +7,24 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change (Behavioral)**: Removed the deprecated `Grpc.Core` transport
+  support for `.NET Framework (net462)` and `.NET Standard 2.0` in the OTLP
+  exporter. `OtlpExportProtocol.Grpc` is no longer supported when using the
+  default HTTP client factory on these platforms. Attempting to use this
+  combination will now result in a `NotSupportedException`.
+  ([#6229](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6229))
+
+* Changed default export protocol for `.NET Framework` and `.NET Standard 2.0`
+  to `OtlpExportProtocol.HttpProtobuf`. This aligns with supported and actively
+  maintained transport mechanisms.For `.NET Framework` or `.NET Standard 2.0`
+  users previously relying on `OtlpExportProtocol.Grpc`, update your
+  configuration:
+  ([#6229](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6229))
+
+  ```csharp
+  options.Protocol = OtlpExportProtocol.HttpProtobuf;
+  ```
+
 ## 1.11.2
 
 Released 2025-Mar-04

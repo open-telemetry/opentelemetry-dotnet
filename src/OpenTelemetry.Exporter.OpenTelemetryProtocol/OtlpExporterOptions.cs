@@ -26,7 +26,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 {
     internal const string DefaultGrpcEndpoint = "http://localhost:4317";
     internal const string DefaultHttpEndpoint = "http://localhost:4318";
+#if NET462_OR_GREATER || NETSTANDARD2_0
+    internal const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.HttpProtobuf;
+#else
     internal const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
+#endif
 
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {

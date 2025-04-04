@@ -61,11 +61,7 @@ public class OtlpExporterOptionsExtensionsTests
     }
 
     [Theory]
-#if NET462_OR_GREATER
-    [InlineData(OtlpExportProtocol.Grpc, typeof(GrpcExportClient))]
-#else
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient))]
-#endif
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient))]
     public void GetTraceExportClient_SupportedProtocol_ReturnsCorrectExportClient(OtlpExportProtocol protocol, Type expectedExportClientType)
     {
@@ -105,15 +101,9 @@ public class OtlpExporterOptionsExtensionsTests
     }
 
     [Theory]
-#if NET462_OR_GREATER
-    [InlineData(OtlpExportProtocol.Grpc, typeof(GrpcExportClient), false, 10000, null)]
-    [InlineData(OtlpExportProtocol.Grpc, typeof(GrpcExportClient), false, 10000, "in_memory")]
-    [InlineData(OtlpExportProtocol.Grpc, typeof(GrpcExportClient), false, 10000, "disk")]
-#else
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, null)]
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, "in_memory")]
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, "disk")]
-#endif
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), false, 10000, null)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), true, 8000, null)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), false, 10000, "in_memory")]
