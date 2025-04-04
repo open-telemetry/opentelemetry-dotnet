@@ -16,7 +16,7 @@ namespace OpenTelemetry;
 public readonly struct Baggage : IEquatable<Baggage>
 {
     private static readonly RuntimeContextSlot<BaggageHolder> RuntimeContextSlot = RuntimeContext.RegisterSlot<BaggageHolder>("otel.baggage");
-    private static readonly Dictionary<string, string> EmptyBaggage = new();
+    private static readonly Dictionary<string, string> EmptyBaggage = [];
 
     private readonly Dictionary<string, string> baggage;
 
@@ -305,7 +305,9 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// Returns a new <see cref="Baggage"/> with all the key/value pairs removed.
     /// </summary>
     /// <returns>New <see cref="Baggage"/> with all the key/value pairs removed.</returns>
+#pragma warning disable CA1822 // Mark members as static
     public Baggage ClearBaggage()
+#pragma warning restore CA1822 // Mark members as static
         => default;
 
     /// <summary>
@@ -343,7 +345,11 @@ public readonly struct Baggage : IEquatable<Baggage>
             unchecked
             {
                 hash = (hash * 23) + baggage.Comparer.GetHashCode(item.Key);
+#if NET
+                hash = (hash * 23) + item.Value.GetHashCode(StringComparison.Ordinal);
+#else
                 hash = (hash * 23) + item.Value.GetHashCode();
+#endif
             }
         }
 

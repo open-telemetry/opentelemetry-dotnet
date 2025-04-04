@@ -27,6 +27,7 @@ public sealed class B3Propagator : TextMapPropagator
     internal const string UpperTraceId = "0000000000000000";
 
     // Sampled values via the X_B3_SAMPLED header.
+    internal const char SampledValueChar = '1';
     internal const string SampledValue = "1";
 
     // Some old zipkin implementations may send true/false for the sampled header. Only use this for checking incoming values.
@@ -130,7 +131,7 @@ public sealed class B3Propagator : TextMapPropagator
             if ((context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
             {
                 sb.Append(XB3CombinedDelimiter);
-                sb.Append(SampledValue);
+                sb.Append(SampledValueChar);
             }
 
             setter(carrier, XB3Combined, sb.ToString());

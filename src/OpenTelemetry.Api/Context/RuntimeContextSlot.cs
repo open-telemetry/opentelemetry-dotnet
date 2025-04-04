@@ -31,13 +31,17 @@ public abstract class RuntimeContextSlot<T> : IDisposable
     /// Get the value from the context slot.
     /// </summary>
     /// <returns>The value retrieved from the context slot.</returns>
+#pragma warning disable CA1716 // Identifiers should not match keywords
     public abstract T? Get();
+#pragma warning restore CA1716 // Identifiers should not match keywords
 
     /// <summary>
     /// Set the value to the context slot.
     /// </summary>
     /// <param name="value">The value to be set.</param>
+#pragma warning disable CA1716 // Identifiers should not match keywords
     public abstract void Set(T value);
+#pragma warning restore CA1716 // Identifiers should not match keywords
 
     /// <inheritdoc/>
     public void Dispose()
