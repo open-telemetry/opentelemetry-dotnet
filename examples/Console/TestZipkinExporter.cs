@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace Examples.Console;
 
-internal class TestZipkinExporter
+internal sealed class TestZipkinExporter
 {
     internal static int Run(ZipkinOptions options)
     {
@@ -33,15 +33,13 @@ internal class TestZipkinExporter
             })
             .Build();
 
-        using (var sample = new InstrumentationWithActivitySource())
-        {
-            sample.Start();
+        using var sample = new InstrumentationWithActivitySource();
+        sample.Start();
 
-            System.Console.WriteLine("Traces are being created and exported " +
-                "to Zipkin in the background. Use Zipkin to view them. " +
-                "Press ENTER to stop.");
-            System.Console.ReadLine();
-        }
+        System.Console.WriteLine("Traces are being created and exported " +
+                                 "to Zipkin in the background. Use Zipkin to view them. " +
+                                 "Press ENTER to stop.");
+        System.Console.ReadLine();
 
         return 0;
     }

@@ -10,7 +10,7 @@ using OpenTelemetry.Trace;
 
 namespace Examples.Console;
 
-internal class TestGrpcNetClient
+internal sealed class TestGrpcNetClient
 {
     internal static int Run(GrpcNetClientOptions options)
     {

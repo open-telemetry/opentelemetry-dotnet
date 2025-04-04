@@ -8,7 +8,7 @@ using OpenTelemetry.Trace;
 
 namespace Examples.Console;
 
-internal class TestHttpClient
+internal sealed class TestHttpClient
 {
     // To run this example, run the following command from
     // the reporoot\examples\Console\.
@@ -32,7 +32,7 @@ internal class TestHttpClient
         using (var parent = source.StartActivity("incoming request", ActivityKind.Server))
         {
             using var client = new HttpClient();
-            client.GetStringAsync("http://bing.com").GetAwaiter().GetResult();
+            client.GetStringAsync(new Uri("http://bing.com", UriKind.Absolute)).GetAwaiter().GetResult();
         }
 
         System.Console.WriteLine("Press Enter key to exit.");
