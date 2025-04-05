@@ -49,7 +49,7 @@ too frequently. `ActivitySource` is fairly expensive and meant to be reused
 throughout the application. For most applications, it can be modeled as static
 readonly field (e.g. [Program.cs](./getting-started-console/Program.cs)) or
 singleton via dependency injection (e.g.
-[Instrumentation.cs](../../examples/AspNetCore/Instrumentation.cs)).
+[InstrumentationSource.cs](../../examples/AspNetCore/InstrumentationSource.cs)).
 
 :heavy_check_mark: You should use dot-separated
 [UpperCamelCase](https://en.wikipedia.org/wiki/Camel_case) as the

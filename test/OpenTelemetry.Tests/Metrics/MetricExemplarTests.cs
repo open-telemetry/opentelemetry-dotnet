@@ -36,7 +36,7 @@ public class MetricExemplarTests : MetricTestsBase
             });
         }
 
-        using var container = this.BuildMeterProvider(out var meterProvider, b =>
+        using var container = BuildMeterProvider(out var meterProvider, b =>
         {
             b.ConfigureServices(
                 s => s.AddSingleton<IConfiguration>(configBuilder.Build()));
@@ -73,12 +73,12 @@ public class MetricExemplarTests : MetricTestsBase
         var counterDouble = meter.CreateCounter<double>("testCounterDouble");
         var counterLong = meter.CreateCounter<long>("testCounterLong");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
-                if (i.Name.StartsWith("testCounter"))
+                if (i.Name.StartsWith("testCounter", StringComparison.Ordinal))
                 {
                     return new MetricStreamConfiguration
                     {
@@ -114,7 +114,8 @@ public class MetricExemplarTests : MetricTestsBase
         var secondMeasurementValues = GenerateRandomValues(1, true, measurementValues);
         foreach (var value in secondMeasurementValues)
         {
-            using var act = new Activity("test").Start();
+            using var activity = new Activity("test");
+            activity.Start();
             counterDouble.Add(value.Value);
             counterLong.Add((long)value.Value);
         }
@@ -198,7 +199,7 @@ public class MetricExemplarTests : MetricTestsBase
         var counterDouble = meter.CreateObservableCounter("counterDouble", () => measurementValues[measurementIndex].Value);
         var counterLong = meter.CreateObservableCounter("counterLong", () => (long)measurementValues[measurementIndex].Value);
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
@@ -293,7 +294,7 @@ public class MetricExemplarTests : MetricTestsBase
             });
         }
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
+        using var container = BuildMeterProvider(out var meterProvider, builder =>
         {
             if (string.IsNullOrEmpty(configValue))
             {
@@ -305,7 +306,7 @@ public class MetricExemplarTests : MetricTestsBase
                 .AddMeter(meter.Name)
                 .AddView(i =>
                 {
-                    if (i.Name.StartsWith("histogramWithBucketsAndMinMax"))
+                    if (i.Name.StartsWith("histogramWithBucketsAndMinMax", StringComparison.Ordinal))
                     {
                         return new ExplicitBucketHistogramConfiguration
                         {
@@ -356,7 +357,8 @@ public class MetricExemplarTests : MetricTestsBase
         var secondMeasurementValues = buckets.Take(1).Select(b => (Value: b, ExpectTraceId: true)).ToArray();
         foreach (var value in secondMeasurementValues)
         {
-            using var act = new Activity("test").Start();
+            using var activity = new Activity("test");
+            activity.Start();
             histogramWithBucketsAndMinMaxDouble.Record(value.Value);
             histogramWithBucketsDouble.Record(value.Value);
             histogramWithBucketsAndMinMaxLong.Record((long)value.Value);
@@ -431,16 +433,16 @@ public class MetricExemplarTests : MetricTestsBase
         var histogramWithoutBucketsAndMinMaxLong = meter.CreateHistogram<long>("histogramWithoutBucketsAndMinMaxLong");
         var histogramWithoutBucketsLong = meter.CreateHistogram<long>("histogramWithoutBucketsLong");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
-                if (i.Name.StartsWith("histogramWithoutBucketsAndMinMax"))
+                if (i.Name.StartsWith("histogramWithoutBucketsAndMinMax", StringComparison.Ordinal))
                 {
                     return new ExplicitBucketHistogramConfiguration
                     {
-                        Boundaries = Array.Empty<double>(),
+                        Boundaries = [],
                         ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
                     };
                 }
@@ -448,7 +450,7 @@ public class MetricExemplarTests : MetricTestsBase
                 {
                     return new ExplicitBucketHistogramConfiguration
                     {
-                        Boundaries = Array.Empty<double>(),
+                        Boundaries = [],
                         RecordMinMax = false,
                         ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
                     };
@@ -484,7 +486,8 @@ public class MetricExemplarTests : MetricTestsBase
         var secondMeasurementValues = GenerateRandomValues(1, true, measurementValues);
         foreach (var value in secondMeasurementValues)
         {
-            using var act = new Activity("test").Start();
+            using var activity = new Activity("test");
+            activity.Start();
             histogramWithoutBucketsAndMinMaxDouble.Record(value.Value);
             histogramWithoutBucketsDouble.Record(value.Value);
             histogramWithoutBucketsAndMinMaxLong.Record((long)value.Value);
@@ -559,12 +562,12 @@ public class MetricExemplarTests : MetricTestsBase
         var exponentialHistogramWithMinMaxLong = meter.CreateHistogram<long>("exponentialHistogramWithMinMaxLong");
         var exponentialHistogramLong = meter.CreateHistogram<long>("exponentialHistogramLong");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
-                if (i.Name.StartsWith("exponentialHistogramWithMinMax"))
+                if (i.Name.StartsWith("exponentialHistogramWithMinMax", StringComparison.Ordinal))
                 {
                     return new Base2ExponentialBucketHistogramConfiguration();
                 }
@@ -606,7 +609,8 @@ public class MetricExemplarTests : MetricTestsBase
         var secondMeasurementValues = GenerateRandomValues(1, true, measurementValues);
         foreach (var value in secondMeasurementValues)
         {
-            using var act = new Activity("test").Start();
+            using var activity = new Activity("test");
+            activity.Start();
             exponentialHistogramWithMinMaxDouble.Record(value.Value);
             exponentialHistogramDouble.Record(value.Value);
             exponentialHistogramWithMinMaxLong.Record((long)value.Value);
@@ -678,15 +682,16 @@ public class MetricExemplarTests : MetricTestsBase
 
         var counter = meter.CreateCounter<long>("testCounter");
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.TraceBased)
             .AddInMemoryExporter(exportedItems));
 
         if (enableTracing)
         {
-            using var act = new Activity("test").Start();
-            act.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            using var activity = new Activity("test");
+            activity.Start();
+            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
             counter.Add(18);
         }
         else
@@ -727,7 +732,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         TestExemplarReservoir? testExemplarReservoir = null;
 
-        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(
@@ -799,7 +804,9 @@ public class MetricExemplarTests : MetricTestsBase
         var values = new (double, bool)[count];
         for (int i = 0; i < count; i++)
         {
+#pragma warning disable CA5394 // Do not use insecure randomness
             var nextValue = random.NextDouble() * 100_000;
+#pragma warning restore CA5394 // Do not use insecure randomness
             if (values.Any(m => m.Item1 == nextValue || m.Item1 == (long)nextValue)
                 || previousValues?.Any(m => m.Value == nextValue || m.Value == (long)nextValue) == true)
             {
@@ -822,13 +829,15 @@ public class MetricExemplarTests : MetricTestsBase
     {
         int count = 0;
 
+        var measurements = measurementValues.ToArray();
+
         foreach (var exemplar in exemplars)
         {
             Assert.True(exemplar.Timestamp >= startTime && exemplar.Timestamp <= endTime, $"{startTime} < {exemplar.Timestamp} < {endTime}");
             Assert.Equal(0, exemplar.FilteredTags.MaximumCount);
 
-            var measurement = measurementValues.FirstOrDefault(v => v.Value == getExemplarValueFunc(exemplar)
-                || (long)v.Value == getExemplarValueFunc(exemplar));
+            var measurement = measurements.FirstOrDefault(v => v.Value == getExemplarValueFunc(exemplar)
+                                                               || (long)v.Value == getExemplarValueFunc(exemplar));
             Assert.NotEqual(default, measurement);
             if (measurement.ExpectTraceId)
             {
@@ -844,7 +853,7 @@ public class MetricExemplarTests : MetricTestsBase
             count++;
         }
 
-        Assert.Equal(measurementValues.Count(), count);
+        Assert.Equal(measurements.Length, count);
     }
 
     private sealed class TestExemplarReservoir : FixedSizeExemplarReservoir

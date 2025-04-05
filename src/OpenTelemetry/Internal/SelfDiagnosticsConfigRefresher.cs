@@ -252,10 +252,8 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
                 }
 
                 // Dispose EventListener before files, because EventListener writes to files.
-                if (this.eventListener != null)
-                {
-                    this.eventListener.Dispose();
-                }
+                this.eventListener?.Dispose();
+                this.eventListener = null;
 
                 // Ensure worker thread properly finishes.
                 // Or it might have created another MemoryMappedFile in that thread
