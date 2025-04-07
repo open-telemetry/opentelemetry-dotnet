@@ -26,8 +26,15 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
     {
         try
         {
-            using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
+#if NET
+            var httpRequest = this.CreateHttpRequest(buffer, contentLength);
             using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
+
+#else
+            var httpRequest = this.CreateSynchronousRequestParams(buffer, contentLength);
+            using var httpResponse = this.SendHttpRequestSynchronous(httpRequest.Uri, httpRequest.Method, httpRequest.Headers, httpRequest.Content, httpRequest.ContentType, cancellationToken);
+
+#endif
 
             try
             {
