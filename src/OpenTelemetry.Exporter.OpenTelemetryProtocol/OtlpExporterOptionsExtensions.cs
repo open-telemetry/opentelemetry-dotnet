@@ -102,6 +102,7 @@ internal static class OtlpExporterOptionsExtensions
     {
         var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
 
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         if (options.Protocol != OtlpExportProtocol.Grpc && options.Protocol != OtlpExportProtocol.HttpProtobuf)
         {
             throw new NotSupportedException($"Protocol {options.Protocol} is not supported.");
@@ -123,6 +124,7 @@ internal static class OtlpExporterOptionsExtensions
 
             _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
         };
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     }
 
     public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)

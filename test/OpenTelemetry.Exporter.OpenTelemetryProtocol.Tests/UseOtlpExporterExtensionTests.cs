@@ -53,7 +53,9 @@ public class UseOtlpExporterExtensionTests : IDisposable
     }
 
     [Theory]
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.Grpc)]
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.HttpProtobuf)]
     public void UseOtlpExporterSetEndpointAndProtocolTest(OtlpExportProtocol protocol)
     {

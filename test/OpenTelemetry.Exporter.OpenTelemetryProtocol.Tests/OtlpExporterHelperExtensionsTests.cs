@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #if NET462_OR_GREATER || NETSTANDARD2_0
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -133,4 +134,5 @@ public class OtlpExporterHelperExtensionsTests
         Assert.NotNull(loggerProvider);
     }
 }
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
 #endif

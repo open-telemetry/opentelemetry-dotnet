@@ -35,7 +35,9 @@ internal abstract class OtlpExportClient : IExportClient
         Guard.ThrowIfNull(signalPath);
 
         Uri exporterEndpoint;
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         if (options.Protocol == OtlpExportProtocol.Grpc)
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
         {
             exporterEndpoint = options.Endpoint.AppendPathIfNotPresent(signalPath);
         }

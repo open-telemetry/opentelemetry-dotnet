@@ -88,7 +88,9 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         {
             if (this.endpoint == null)
             {
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
                 return this.Protocol == OtlpExportProtocol.Grpc
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
                     ? new Uri(DefaultGrpcEndpoint)
                     : new Uri(DefaultHttpEndpoint);
             }

@@ -61,7 +61,9 @@ public class OtlpExporterOptionsExtensionsTests
     }
 
     [Theory]
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient))]
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient))]
     public void GetTraceExportClient_SupportedProtocol_ReturnsCorrectExportClient(OtlpExportProtocol protocol, Type expectedExportClientType)
     {
@@ -101,9 +103,11 @@ public class OtlpExporterOptionsExtensionsTests
     }
 
     [Theory]
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, null)]
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, "in_memory")]
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, "disk")]
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), false, 10000, null)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), true, 8000, null)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), false, 10000, "in_memory")]

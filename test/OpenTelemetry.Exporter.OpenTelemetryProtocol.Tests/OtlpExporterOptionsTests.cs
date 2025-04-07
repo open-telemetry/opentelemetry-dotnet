@@ -164,8 +164,9 @@ public class OtlpExporterOptionsTests : IDisposable
         options.Protocol = OtlpExportProtocol.HttpProtobuf;
 
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), options.Endpoint);
-
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         options.Protocol = OtlpExportProtocol.Grpc;
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
 
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), options.Endpoint);
     }
@@ -173,10 +174,12 @@ public class OtlpExporterOptionsTests : IDisposable
     [Fact]
     public void OtlpExporterOptions_EndpointThrowsWhenSetToNull()
     {
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         var options = new OtlpExporterOptions { Endpoint = new Uri("http://test:8888"), Protocol = OtlpExportProtocol.Grpc };
 
         Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
         Assert.Equal(OtlpExportProtocol.Grpc, options.Protocol);
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     }
 
     [Fact]
@@ -225,7 +228,9 @@ public class OtlpExporterOptionsTests : IDisposable
         var targetOptionsWithData = new OtlpExporterOptions
         {
             Endpoint = new Uri("http://metrics_endpoint/"),
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
             Protocol = OtlpExportProtocol.Grpc,
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
             Headers = "key2=value2",
             TimeoutMilliseconds = 1800,
             HttpClientFactory = () => throw new NotImplementedException(),
