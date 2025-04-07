@@ -57,11 +57,6 @@
           even during major version bumps, so compatibility is not a concern here.
     -->
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(LatestRuntimeOutOfBandVer)" />
-
-    <!--
-        We use conservative versions of these packages where an upgrade might
-        introduce breaking changes.
-    -->
   </ItemGroup>
 
   <ItemGroup>
