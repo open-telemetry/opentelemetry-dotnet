@@ -9,9 +9,6 @@ using System.Reflection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-#if NET462_OR_GREATER || NETSTANDARD2_0
-using Grpc.Core;
-#endif
 
 namespace OpenTelemetry.Exporter;
 
@@ -24,30 +21,6 @@ internal static class OtlpExporterOptionsExtensions
     private const string TraceHttpServicePath = "v1/traces";
     private const string MetricsHttpServicePath = "v1/metrics";
     private const string LogsHttpServicePath = "v1/logs";
-
-#if NET462_OR_GREATER || NETSTANDARD2_0
-    public static Channel CreateChannel(this OtlpExporterOptions options)
-    {
-        if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
-        {
-            throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
-        }
-
-        ChannelCredentials channelCredentials;
-        if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
-        {
-            channelCredentials = new SslCredentials();
-        }
-        else
-        {
-            channelCredentials = ChannelCredentials.Insecure;
-        }
-
-        return new Channel(options.Endpoint.Authority, channelCredentials);
-    }
-
-    public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options) => options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
-#endif
 
     public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
         where THeaders : new()
@@ -129,24 +102,11 @@ internal static class OtlpExporterOptionsExtensions
     {
         var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
 
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         if (options.Protocol != OtlpExportProtocol.Grpc && options.Protocol != OtlpExportProtocol.HttpProtobuf)
         {
             throw new NotSupportedException($"Protocol {options.Protocol} is not supported.");
         }
-
-#if NET462_OR_GREATER || NETSTANDARD2_0
-        if (options.Protocol == OtlpExportProtocol.Grpc)
-        {
-            var servicePath = otlpSignalType switch
-            {
-                OtlpSignalType.Traces => TraceGrpcServicePath,
-                OtlpSignalType.Metrics => MetricsGrpcServicePath,
-                OtlpSignalType.Logs => LogsGrpcServicePath,
-                _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
-            };
-            return new GrpcExportClient(options, servicePath);
-        }
-#endif
 
         return otlpSignalType switch
         {
@@ -164,6 +124,7 @@ internal static class OtlpExporterOptionsExtensions
 
             _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
         };
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     }
 
     public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)

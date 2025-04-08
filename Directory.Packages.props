@@ -57,15 +57,6 @@
           even during major version bumps, so compatibility is not a concern here.
     -->
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(LatestRuntimeOutOfBandVer)" />
-
-    <!--
-        We use conservative versions of these packages where an upgrade might
-        introduce breaking changes.
-    -->
-    <PackageVersion Include="Google.Protobuf" Version="[3.22.5,4.0)" />
-    <PackageVersion Include="Grpc" Version="[2.44.0,3.0)" />
-    <PackageVersion Include="Grpc.Core" Version="[2.44.0,3.0)" />
-    <PackageVersion Include="Grpc.Net.Client" Version="[2.52.0,3.0)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -97,6 +88,9 @@
     <PackageVersion Include="Grpc.AspNetCore" Version="[2.59.0,3.0)" />
     <PackageVersion Include="Grpc.AspNetCore.Server" Version="[2.59.0, 3.0)" />
     <PackageVersion Include="Grpc.Tools" Version="[2.59.0,3.0)" />
+    <PackageVersion Include="Google.Protobuf" Version="[3.22.5,4.0)" />
+    <PackageVersion Include="Grpc" Version="[2.44.0,3.0)" />
+    <PackageVersion Include="Grpc.Net.Client" Version="[2.52.0,3.0)" />
     <PackageVersion Include="Microsoft.CSharp" Version="[4.7.0]" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.11.0-beta1.23525.2]" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
