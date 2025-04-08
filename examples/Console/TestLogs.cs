@@ -7,7 +7,7 @@ using OpenTelemetry.Logs;
 
 namespace Examples.Console;
 
-internal class TestLogs
+internal sealed class TestLogs
 {
     internal static int Run(LogsOptions options)
     {
@@ -112,11 +112,11 @@ internal class TestLogs
             });
         });
 
-        var logger = loggerFactory.CreateLogger<Program>();
-        using (logger.BeginScope("{city}", "Seattle"))
-        using (logger.BeginScope("{storeType}", "Physical"))
+        var logger = loggerFactory.CreateLogger<TestLogs>();
+        using (logger.BeginCityScope("Seattle"))
+        using (logger.BeginStoreTypeScope("Physical"))
         {
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            logger.HelloFrom("tomato", 2.99);
         }
 
         return 0;

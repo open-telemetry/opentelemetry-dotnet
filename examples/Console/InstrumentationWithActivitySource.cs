@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Examples.Console;
 
-internal class InstrumentationWithActivitySource : IDisposable
+internal sealed class InstrumentationWithActivitySource : IDisposable
 {
     private const string RequestPath = "/api/request";
     private readonly SampleServer server = new();
@@ -27,7 +27,7 @@ internal class InstrumentationWithActivitySource : IDisposable
         this.server.Dispose();
     }
 
-    private class SampleServer : IDisposable
+    private sealed class SampleServer : IDisposable
     {
         private readonly HttpListener listener = new();
 
@@ -66,7 +66,7 @@ internal class InstrumentationWithActivitySource : IDisposable
                         }
 
                         activity?.SetTag("request.content", requestContent);
-                        activity?.SetTag("request.length", requestContent.Length.ToString());
+                        activity?.SetTag("request.length", requestContent.Length);
 
                         var echo = Encoding.UTF8.GetBytes("echo: " + requestContent);
                         context.Response.ContentEncoding = Encoding.UTF8;
@@ -88,7 +88,7 @@ internal class InstrumentationWithActivitySource : IDisposable
         }
     }
 
-    private class SampleClient : IDisposable
+    private sealed class SampleClient : IDisposable
     {
         private CancellationTokenSource? cts;
         private Task? requestTask;
@@ -114,7 +114,7 @@ internal class InstrumentationWithActivitySource : IDisposable
                             count++;
 
                             activity?.AddEvent(new ActivityEvent("PostAsync:Started"));
-                            using var response = await client.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
+                            using var response = await client.PostAsync(new Uri(url, UriKind.Absolute), content, cancellationToken).ConfigureAwait(false);
                             activity?.AddEvent(new ActivityEvent("PostAsync:Ended"));
 
                             activity?.SetTag("http.status_code", (int)response.StatusCode);
