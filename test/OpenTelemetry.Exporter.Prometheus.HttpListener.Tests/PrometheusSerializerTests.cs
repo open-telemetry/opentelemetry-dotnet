@@ -655,6 +655,6 @@ public sealed class PrometheusSerializerTests
 
     private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false)
     {
-        return PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false), useOpenMetrics);
+        return PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false, false), useOpenMetrics);
     }
 }
