@@ -16,7 +16,6 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.PersistentStorage.Abstractions;
 using OpenTelemetry.Proto.Collector.Trace.V1;
 using OpenTelemetry.Tests;
