@@ -5,9 +5,7 @@ using Utils.Messaging;
 
 namespace WorkerService;
 
-#pragma warning disable CA1812 // Avoid uninstantiated internal classes
 internal sealed class Worker : BackgroundService
-#pragma warning restore CA1812 // Avoid uninstantiated internal classes
 {
     private readonly MessageReceiver messageReceiver;
 
