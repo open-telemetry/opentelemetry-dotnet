@@ -21,12 +21,4 @@ public class CallbackMiddleware
             await this.next(context).ConfigureAwait(true);
         }
     }
-
-    public class CallbackMiddlewareCore
-    {
-        public virtual Task<bool> ProcessAsync(HttpContext context)
-        {
-            return Task.FromResult(true);
-        }
-    }
 }

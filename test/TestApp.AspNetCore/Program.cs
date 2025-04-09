@@ -18,11 +18,9 @@ builder.Services.AddMvc();
 
 builder.Services.AddSingleton<HttpClient>();
 
-builder.Services.AddSingleton(
-    new CallbackMiddleware.CallbackMiddlewareCore());
+builder.Services.AddSingleton(new CallbackMiddlewareCore());
 
-builder.Services.AddSingleton(
-    new ActivityMiddleware.ActivityMiddlewareCore());
+builder.Services.AddSingleton(new ActivityMiddlewareCore());
 
 var app = builder.Build();
 
