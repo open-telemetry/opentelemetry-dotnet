@@ -23,6 +23,7 @@ internal static class OtlpExporterOptionsExtensions
     private const string LogsHttpServicePath = "v1/logs";
 
 #if NET462_OR_GREATER || NETSTANDARD2_0
+    // These methods are conditionally compiled for platforms that support gRPC.
     public static Channel CreateChannel(this OtlpExporterOptions options)
     {
         if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
@@ -169,7 +170,7 @@ internal static class OtlpExporterOptionsExtensions
 
             _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
         };
-#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+#pragma warning restore CS0618
     }
 
     public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
@@ -194,45 +195,4 @@ internal static class OtlpExporterOptionsExtensions
                             modifiers: null);
                         if (createClientMethod != null)
                         {
-                            HttpClient? client = (HttpClient?)createClientMethod.Invoke(httpClientFactory, [httpClientName]);
-
-                            if (client != null)
-                            {
-                                client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
-
-                                return client;
-                            }
-                        }
-                    }
-                }
-
-                return options.DefaultHttpClientFactory();
-            };
-        }
-    }
-
-    internal static Uri AppendPathIfNotPresent(this Uri uri, string path)
-    {
-        var absoluteUri = uri.AbsoluteUri;
-        var separator = string.Empty;
-
-        if (absoluteUri.EndsWith("/"))
-        {
-            if (absoluteUri.EndsWith(string.Concat(path, "/"), StringComparison.OrdinalIgnoreCase))
-            {
-                return uri;
-            }
-        }
-        else
-        {
-            if (absoluteUri.EndsWith(path, StringComparison.OrdinalIgnoreCase))
-            {
-                return uri;
-            }
-
-            separator = "/";
-        }
-
-        return new Uri(string.Concat(uri.AbsoluteUri, separator, path));
-    }
-}
+                            HttpClient? client = (HttpClient
