@@ -1,11 +1,10 @@
-ARG SDK_VERSION=8.0
-
+ARG SDK_VERSION=9.0
 FROM mcr.microsoft.com/dotnet/sdk:8.0.407@sha256:2d7f935b8c7fe032cd3d36b5ce9c82c24413881e6dad1b4fbdf36cf369e4244f AS dotnet-sdk-8.0
 FROM mcr.microsoft.com/dotnet/sdk:9.0.202@sha256:d7f4691d11f610d9b94bb75517c9e78ac5799447b5b3e82af9e4625d8c8d1d53 AS dotnet-sdk-9.0
 
 FROM dotnet-sdk-${SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net8.0
+ARG PUBLISH_FRAMEWORK=net9.0
 WORKDIR /app
 COPY . ./
 RUN dotnet publish ./examples/MicroserviceExample/WebApi -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /out -p:IntegrationBuild=true
