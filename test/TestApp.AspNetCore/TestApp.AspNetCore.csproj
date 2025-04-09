@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(TargetFrameworksForAspNetCoreTests)</TargetFrameworks>
     <AnalysisLevel>latest-all</AnalysisLevel>
+    <NoWarn>$(NoWarn);CA1515</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

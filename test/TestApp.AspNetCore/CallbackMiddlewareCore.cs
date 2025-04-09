@@ -3,7 +3,7 @@
 
 namespace TestApp.AspNetCore;
 
-public class CallbackMiddlewareCore
+internal class CallbackMiddlewareCore
 {
     public virtual Task<bool> ProcessAsync(HttpContext context)
     {

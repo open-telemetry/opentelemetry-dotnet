@@ -3,7 +3,7 @@
 
 namespace TestApp.AspNetCore;
 
-public class ActivityMiddlewareCore
+internal class ActivityMiddlewareCore
 {
     public virtual void PreProcess(HttpContext context)
     {
