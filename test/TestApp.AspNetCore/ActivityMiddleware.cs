@@ -3,7 +3,7 @@
 
 namespace TestApp.AspNetCore;
 
-internal class ActivityMiddleware
+internal sealed class ActivityMiddleware
 {
     private readonly ActivityMiddlewareCore core;
     private readonly RequestDelegate next;

@@ -3,14 +3,14 @@
 
 namespace TestApp.AspNetCore;
 
-internal class ActivityMiddlewareCore
+internal sealed class ActivityMiddlewareCore
 {
-    public virtual void PreProcess(HttpContext context)
+    public void PreProcess(HttpContext context)
     {
         // Do nothing
     }
 
-    public virtual void PostProcess(HttpContext context)
+    public void PostProcess(HttpContext context)
     {
         // Do nothing
     }

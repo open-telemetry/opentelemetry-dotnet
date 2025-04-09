@@ -3,9 +3,9 @@
 
 namespace TestApp.AspNetCore;
 
-internal class CallbackMiddlewareCore
+internal sealed class CallbackMiddlewareCore
 {
-    public virtual Task<bool> ProcessAsync(HttpContext context)
+    public Task<bool> ProcessAsync(HttpContext context)
     {
         return Task.FromResult(true);
     }
