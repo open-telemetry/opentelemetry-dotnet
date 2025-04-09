@@ -3,42 +3,29 @@
 
 namespace TestApp.AspNetCore;
 
-public class ActivityMiddleware
+internal sealed class ActivityMiddleware
 {
-    private readonly ActivityMiddlewareImpl impl;
+    private readonly ActivityMiddlewareCore core;
     private readonly RequestDelegate next;
 
-    public ActivityMiddleware(RequestDelegate next, ActivityMiddlewareImpl impl)
+    public ActivityMiddleware(RequestDelegate next, ActivityMiddlewareCore core)
     {
         this.next = next;
-        this.impl = impl;
+        this.core = core;
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (this.impl != null)
+        if (this.core != null)
         {
-            this.impl.PreProcess(context);
+            this.core.PreProcess(context);
         }
 
-        await this.next(context);
+        await this.next(context).ConfigureAwait(true);
 
-        if (this.impl != null)
+        if (this.core != null)
         {
-            this.impl.PostProcess(context);
-        }
-    }
-
-    public class ActivityMiddlewareImpl
-    {
-        public virtual void PreProcess(HttpContext context)
-        {
-            // Do nothing
-        }
-
-        public virtual void PostProcess(HttpContext context)
-        {
-            // Do nothing
+            this.core.PostProcess(context);
         }
     }
 }
