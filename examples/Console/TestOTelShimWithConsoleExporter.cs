@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace Examples.Console;
 
-internal class TestOTelShimWithConsoleExporter
+internal sealed class TestOTelShimWithConsoleExporter
 {
     internal static int Run(OpenTelemetryShimOptions options)
     {

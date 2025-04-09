@@ -10,7 +10,7 @@ using OpenTelemetry.Resources;
 
 namespace Examples.Console;
 
-internal class TestMetrics
+internal sealed class TestMetrics
 {
     internal static int Run(MetricsOptions options)
     {
@@ -97,7 +97,7 @@ internal class TestMetrics
             {
                 return new List<Measurement<int>>()
                 {
-                    new Measurement<int>(
+                    new(
                         (int)Process.GetCurrentProcess().PrivateMemorySize64,
                         new KeyValuePair<string, object?>("tag1", "value1")),
                 };

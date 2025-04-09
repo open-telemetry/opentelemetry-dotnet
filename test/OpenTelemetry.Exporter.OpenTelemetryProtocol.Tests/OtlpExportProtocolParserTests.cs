@@ -8,7 +8,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 public class OtlpExportProtocolParserTests
 {
     [Theory]
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
     [InlineData("grpc", true, OtlpExportProtocol.Grpc)]
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     [InlineData("http/protobuf", true, OtlpExportProtocol.HttpProtobuf)]
     [InlineData("unsupported", false, default(OtlpExportProtocol))]
     public void TryParse_Protocol_MapsToCorrectValue(string protocol, bool expectedResult, OtlpExportProtocol expectedExportProtocol)
