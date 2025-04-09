@@ -23,7 +23,6 @@ internal static class OtlpExporterOptionsExtensions
     private const string LogsHttpServicePath = "v1/logs";
 
 #if NET462_OR_GREATER || NETSTANDARD2_0
-    // These methods are conditionally compiled for platforms that support gRPC.
     public static Channel CreateChannel(this OtlpExporterOptions options)
     {
         if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
@@ -121,6 +120,9 @@ internal static class OtlpExporterOptionsExtensions
     {
         var exportClient = GetExportClient(options, otlpSignalType);
 
+        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
+        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
+        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
         double timeoutMilliseconds = exportClient is OtlpHttpExportClient httpTraceExportClient
             ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
@@ -170,7 +172,7 @@ internal static class OtlpExporterOptionsExtensions
 
             _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
         };
-#pragma warning restore CS0618
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     }
 
     public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
@@ -195,4 +197,47 @@ internal static class OtlpExporterOptionsExtensions
                             modifiers: null);
                         if (createClientMethod != null)
                         {
-                            HttpClient? client = (HttpClient
+                            HttpClient? client = (HttpClient?)createClientMethod.Invoke(httpClientFactory, [httpClientName]);
+
+                            if (client != null)
+                            {
+                                client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
+
+                                return client;
+                            }
+                        }
+                    }
+                }
+
+                return options.DefaultHttpClientFactory();
+            };
+        }
+    }
+
+    internal static Uri AppendPathIfNotPresent(this Uri uri, string path)
+    {
+        var absoluteUri = uri.AbsoluteUri;
+        var separator = string.Empty;
+
+        if (absoluteUri.EndsWith("/"))
+        {
+            // Endpoint already ends with 'path/'
+            if (absoluteUri.EndsWith(string.Concat(path, "/"), StringComparison.OrdinalIgnoreCase))
+            {
+                return uri;
+            }
+        }
+        else
+        {
+            // Endpoint already ends with 'path'
+            if (absoluteUri.EndsWith(path, StringComparison.OrdinalIgnoreCase))
+            {
+                return uri;
+            }
+
+            separator = "/";
+        }
+
+        return new Uri(string.Concat(uri.AbsoluteUri, separator, path));
+    }
+}
