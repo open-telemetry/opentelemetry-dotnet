@@ -7,6 +7,16 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change**: .NET Framework and .NET Standard builds now default to
+  exporting over OTLP/HTTP instead of OTLP/gRPC. **This change could result in a
+  failure to export telemetry unless appropriate measures are taken.**
+  Additionally, if you explicitly configure the exporter to use OTLP/gRPC it may
+  result in a `NotSupportedException` without further configuration. Please
+  carefully review issue
+  ([#6209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6209))
+  for additional information and workarounds.
+  ([#6229](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6229))
+
 ## 1.11.2
 
 Released 2025-Mar-04

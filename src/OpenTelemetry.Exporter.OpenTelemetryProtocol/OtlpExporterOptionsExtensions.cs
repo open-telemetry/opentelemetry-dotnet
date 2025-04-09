@@ -9,9 +9,6 @@ using System.Reflection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
-#if NET462_OR_GREATER || NETSTANDARD2_0
-using Grpc.Core;
-#endif
 
 namespace OpenTelemetry.Exporter;
 
@@ -69,7 +66,8 @@ internal static class OtlpExporterOptionsExtensions
         return new Channel(options.Endpoint.Authority, channelCredentials);
     }
 
-    public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options) => options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
+    public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options) =>
+        options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
 #endif
 
     public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
@@ -122,9 +120,6 @@ internal static class OtlpExporterOptionsExtensions
     {
         var exportClient = GetExportClient(options, otlpSignalType);
 
-        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
-        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
-        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
         double timeoutMilliseconds = exportClient is OtlpHttpExportClient httpTraceExportClient
             ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
@@ -152,24 +147,11 @@ internal static class OtlpExporterOptionsExtensions
     {
         var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
 
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         if (options.Protocol != OtlpExportProtocol.Grpc && options.Protocol != OtlpExportProtocol.HttpProtobuf)
         {
             throw new NotSupportedException($"Protocol {options.Protocol} is not supported.");
         }
-
-#if NET462_OR_GREATER || NETSTANDARD2_0
-        if (options.Protocol == OtlpExportProtocol.Grpc)
-        {
-            var servicePath = otlpSignalType switch
-            {
-                OtlpSignalType.Traces => TraceGrpcServicePath,
-                OtlpSignalType.Metrics => MetricsGrpcServicePath,
-                OtlpSignalType.Logs => LogsGrpcServicePath,
-                _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
-            };
-            return new GrpcExportClient(options, servicePath);
-        }
-#endif
 
         return otlpSignalType switch
         {
@@ -187,6 +169,7 @@ internal static class OtlpExporterOptionsExtensions
 
             _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
         };
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     }
 
     public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
@@ -235,7 +218,6 @@ internal static class OtlpExporterOptionsExtensions
 
         if (absoluteUri.EndsWith("/"))
         {
-            // Endpoint already ends with 'path/'
             if (absoluteUri.EndsWith(string.Concat(path, "/"), StringComparison.OrdinalIgnoreCase))
             {
                 return uri;
@@ -243,7 +225,6 @@ internal static class OtlpExporterOptionsExtensions
         }
         else
         {
-            // Endpoint already ends with 'path'
             if (absoluteUri.EndsWith(path, StringComparison.OrdinalIgnoreCase))
             {
                 return uri;
