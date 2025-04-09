@@ -21,7 +21,7 @@ public class ActivityMiddleware
             this.impl.PreProcess(context);
         }
 
-        await this.next(context);
+        await this.next(context).ConfigureAwait(true);
 
         if (this.impl != null)
         {

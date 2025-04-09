@@ -16,17 +16,17 @@ public class CallbackMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (this.impl == null || await this.impl.ProcessAsync(context))
+        if (this.impl == null || await this.impl.ProcessAsync(context).ConfigureAwait(true))
         {
-            await this.next(context);
+            await this.next(context).ConfigureAwait(true);
         }
     }
 
     public class CallbackMiddlewareImpl
     {
-        public virtual async Task<bool> ProcessAsync(HttpContext context)
+        public virtual Task<bool> ProcessAsync(HttpContext context)
         {
-            return await Task.FromResult(true);
+            return Task.FromResult(true);
         }
     }
 }
