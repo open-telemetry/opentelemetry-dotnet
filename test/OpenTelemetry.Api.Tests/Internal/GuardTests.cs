@@ -166,14 +166,14 @@ public class GuardTests
         [InlineData(null)]
         [InlineData("")]
         [InlineData("paramName")]
-        public static void Ctor_ParameterName_Roundtrip(string? value)
+        public void Ctor_ParameterName_Roundtrip(string? value)
         {
             var caea = new CallerArgumentExpressionAttribute(value);
             Assert.Equal(value, caea.ParameterName);
         }
 
         [Fact]
-        public static void BasicTest()
+        public void BasicTest()
         {
             Assert.Equal("null", GetValue(null));
             Assert.Equal("\"hello\"", GetValue("hello"));
