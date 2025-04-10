@@ -5,7 +5,7 @@ using Xunit;
 
 namespace OpenTelemetry.Context.Tests;
 
-public class RuntimeContextTests : IDisposable
+public sealed class RuntimeContextTests : IDisposable
 {
     public RuntimeContextTests()
     {

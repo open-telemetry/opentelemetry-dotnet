@@ -10,7 +10,7 @@ using Xunit.Abstractions;
 
 namespace OpenTelemetry.Trace.Tests;
 
-public class TracerTests : IDisposable
+public sealed class TracerTests : IDisposable
 {
     private readonly ITestOutputHelper output;
     private readonly Tracer tracer;
