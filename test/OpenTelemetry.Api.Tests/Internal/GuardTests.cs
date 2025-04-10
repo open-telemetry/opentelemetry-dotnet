@@ -151,7 +151,7 @@ public class GuardTests
         Assert.Equal("0", ex1.ParamName);
     }
 
-    internal class Thing
+    internal sealed class Thing
     {
         public string? Bar { get; set; }
     }

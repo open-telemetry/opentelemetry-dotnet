@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Context.Propagation.Tests;
 
-internal class TestPropagator : TextMapPropagator
+internal sealed class TestPropagator : TextMapPropagator
 {
     private readonly string idHeaderName;
     private readonly string stateHeaderName;
