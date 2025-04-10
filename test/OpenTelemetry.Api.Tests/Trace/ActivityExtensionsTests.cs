@@ -134,7 +134,7 @@ public class ActivityExtensionsTests
     public void CheckRecordException()
     {
         var message = "message";
-        var exception = new ArgumentNullException(message, new Exception(message));
+        var exception = new ArgumentNullException(message, new InvalidOperationException(message));
         using var activity = new Activity("test-activity");
         activity.RecordException(exception);
 
@@ -147,7 +147,7 @@ public class ActivityExtensionsTests
     public void RecordExceptionWithAdditionalTags()
     {
         var message = "message";
-        var exception = new ArgumentNullException(message, new Exception(message));
+        var exception = new ArgumentNullException(message, new InvalidOperationException(message));
         using var activity = new Activity("test-activity");
 
         var tags = new TagList

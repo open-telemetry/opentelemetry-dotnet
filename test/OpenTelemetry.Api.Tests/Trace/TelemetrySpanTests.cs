@@ -15,7 +15,7 @@ public class TelemetrySpanTests
 
         using Activity activity = new Activity("exception-test");
         using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
-        telemetrySpan.RecordException(new ArgumentNullException(message, new Exception("new-exception")));
+        telemetrySpan.RecordException(new ArgumentNullException(message, new InvalidOperationException("new-exception")));
         Assert.Single(activity.Events);
 
         Assert.NotNull(telemetrySpan.Activity);

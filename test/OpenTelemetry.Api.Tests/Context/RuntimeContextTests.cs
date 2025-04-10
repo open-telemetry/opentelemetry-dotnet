@@ -178,7 +178,7 @@ public sealed class RuntimeContextTests : IDisposable
             {
                 RuntimeContext.GetSlot<int>(slotName);
 
-                throw new Exception("Should not have found an existing slot: " + slotName);
+                throw new InvalidOperationException("Should not have found an existing slot: " + slotName);
             }
             catch (ArgumentException)
             {
