@@ -169,7 +169,7 @@ public class BaggageTests
         var tag2 = enumerator.Current;
         Assert.False(enumerator.MoveNext());
 
-        Assert.Equal(list, new List<KeyValuePair<string, string>> { tag1, tag2 });
+        Assert.Equal(list, [tag1, tag2]);
 
         Baggage.ClearBaggage();
 

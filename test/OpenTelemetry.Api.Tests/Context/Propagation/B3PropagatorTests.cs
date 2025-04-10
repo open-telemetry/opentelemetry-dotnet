@@ -359,7 +359,7 @@ public class B3PropagatorTests
     {
         ContainsExactly(
             this.b3propagator.Fields,
-            new List<string> { B3Propagator.XB3TraceId, B3Propagator.XB3SpanId, B3Propagator.XB3ParentSpanId, B3Propagator.XB3Sampled, B3Propagator.XB3Flags });
+            [B3Propagator.XB3TraceId, B3Propagator.XB3SpanId, B3Propagator.XB3ParentSpanId, B3Propagator.XB3Sampled, B3Propagator.XB3Flags]);
     }
 
     private static void ContainsExactly(ISet<string> list, List<string> items)

@@ -141,11 +141,11 @@ public class CompositePropagatorTests
     [Fact]
     public void CompositePropagator_ActivityContext_Baggage()
     {
-        var compositePropagator = new CompositeTextMapPropagator(new List<TextMapPropagator>
-        {
+        var compositePropagator = new CompositeTextMapPropagator(
+        [
             new TraceContextPropagator(),
             new BaggagePropagator(),
-        });
+        ]);
 
         var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null, isRemote: true);
         var baggage = new Dictionary<string, string> { ["key1"] = "value1" };
@@ -159,12 +159,12 @@ public class CompositePropagatorTests
         var extractedContext = compositePropagator.Extract(default, carrier, Getter);
         Assert.Equal(propagationContextActivityOnly, extractedContext);
 
-        carrier = new Dictionary<string, string>();
+        carrier = [];
         compositePropagator.Inject(propagationContextBaggageOnly, carrier, Setter);
         extractedContext = compositePropagator.Extract(default, carrier, Getter);
         Assert.Equal(propagationContextBaggageOnly, extractedContext);
 
-        carrier = new Dictionary<string, string>();
+        carrier = [];
         compositePropagator.Inject(propagationContextBoth, carrier, Setter);
         extractedContext = compositePropagator.Extract(default, carrier, Getter);
         Assert.Equal(propagationContextBoth, extractedContext);
