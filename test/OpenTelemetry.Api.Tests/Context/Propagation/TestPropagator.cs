@@ -11,8 +11,8 @@ public class TestPropagator : TextMapPropagator
     private readonly string stateHeaderName;
     private readonly bool defaultContext;
 
-    private int extractCount = 0;
-    private int injectCount = 0;
+    private int extractCount;
+    private int injectCount;
 
     public TestPropagator(string idHeaderName, string stateHeaderName, bool defaultContext = false)
     {

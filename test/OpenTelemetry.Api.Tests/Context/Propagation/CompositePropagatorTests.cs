@@ -25,7 +25,7 @@ public class CompositePropagatorTests
         carrier[name] = value;
     };
 
-    private static int count = 0;
+    private static int count;
 
     private readonly ActivityTraceId traceId = ActivityTraceId.CreateRandom();
     private readonly ActivitySpanId spanId = ActivitySpanId.CreateRandom();
