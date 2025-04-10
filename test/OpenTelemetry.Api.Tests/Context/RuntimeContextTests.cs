@@ -170,7 +170,9 @@ public sealed class RuntimeContextTests : IDisposable
 #if NETFRAMEWORK
     private class RemoteObject : ContextBoundObject
     {
+#pragma warning disable CA1822 // Mark members as static
         public int GetValueFromContextSlot(string slotName)
+#pragma warning restore CA1822 // Mark members as static
         {
             // Slot is not propagated across AppDomains, attempting to get
             // an existing slot here should throw an ArgumentException.
