@@ -168,7 +168,7 @@ public sealed class RuntimeContextTests : IDisposable
     }
 
 #if NETFRAMEWORK
-    private class RemoteObject : ContextBoundObject
+    private sealed class RemoteObject : ContextBoundObject
     {
 #pragma warning disable CA1822 // Mark members as static
         public int GetValueFromContextSlot(string slotName)
