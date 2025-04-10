@@ -330,7 +330,7 @@ public sealed class TracerTests : IDisposable
             .WithTestingIterations(100)
             .WithMemoryAccessRaceCheckingEnabled(true);
 
-        var test = TestingEngine.Create(config, InnerTest);
+        using var test = TestingEngine.Create(config, InnerTest);
 
         test.Run();
 
