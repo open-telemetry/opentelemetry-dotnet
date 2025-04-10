@@ -1,19 +1,36 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-namespace WebApi;
+using OpenTelemetry.Trace;
+using Utils.Messaging;
 
-internal static class Program
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+
+builder.Services.AddSingleton<MessageSender>();
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(b => b
+        .AddAspNetCoreInstrumentation()
+        .AddSource(nameof(MessageSender))
+        .AddZipkinExporter(o =>
+        {
+            var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
+            o.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
+        }));
+
+builder.WebHost.UseUrls("http://*:5000");
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
 {
-    public static void Main(string[] args)
-    {
-        CreateHostBuilder(args).Build().Run();
-    }
-
-    public static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
-            .ConfigureWebHostDefaults(webBuilder =>
-            {
-                webBuilder.UseUrls("http://*:5000").UseStartup<Startup>();
-            });
+    app.UseDeveloperExceptionPage();
 }
+
+app.UseRouting();
+
+app.MapControllers();
+
+app.Run();
