@@ -151,37 +151,39 @@ public class GuardTests
         Assert.Equal("0", ex1.ParamName);
     }
 
-    public class Thing
+    internal class Thing
     {
         public string? Bar { get; set; }
     }
+}
 
 #if !NET
-    /// <summary>
-    /// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System.Runtime.Tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
-    /// </summary>
-    public class CallerArgumentExpressionAttributeTests
+/// <summary>
+/// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System.Runtime.Tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
+/// </summary>
+#pragma warning disable SA1402 // File may only contain a single type
+public class CallerArgumentExpressionAttributeTests
+#pragma warning restore SA1402 // File may only contain a single type
+{
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("paramName")]
+    public void Ctor_ParameterName_Roundtrip(string? value)
     {
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("paramName")]
-        public void Ctor_ParameterName_Roundtrip(string? value)
-        {
-            var caea = new CallerArgumentExpressionAttribute(value);
-            Assert.Equal(value, caea.ParameterName);
-        }
-
-        [Fact]
-        public void BasicTest()
-        {
-            Assert.Equal("null", GetValue(null));
-            Assert.Equal("\"hello\"", GetValue("hello"));
-            Assert.Equal("3 + 2", GetValue(3 + 2));
-            Assert.Equal("new object()", GetValue(new object()));
-        }
-
-        private static string? GetValue(object? argument, [CallerArgumentExpression(nameof(argument))] string? expr = null) => expr;
+        var caea = new CallerArgumentExpressionAttribute(value);
+        Assert.Equal(value, caea.ParameterName);
     }
-#endif
+
+    [Fact]
+    public void BasicTest()
+    {
+        Assert.Equal("null", GetValue(null));
+        Assert.Equal("\"hello\"", GetValue("hello"));
+        Assert.Equal("3 + 2", GetValue(3 + 2));
+        Assert.Equal("new object()", GetValue(new object()));
+    }
+
+    private static string? GetValue(object? argument, [CallerArgumentExpression(nameof(argument))] string? expr = null) => expr;
 }
+#endif
