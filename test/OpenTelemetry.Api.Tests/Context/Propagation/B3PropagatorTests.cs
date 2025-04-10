@@ -371,7 +371,7 @@ public class B3PropagatorTests
         }
     }
 
-    private void ContainsExactly(IDictionary<string, string> dict, IDictionary<string, string> items)
+    private void ContainsExactly(Dictionary<string, string> dict, Dictionary<string, string> items)
     {
         foreach (var d in dict)
         {
