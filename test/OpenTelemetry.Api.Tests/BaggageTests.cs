@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using Xunit;
 
 namespace OpenTelemetry.Tests;
@@ -39,8 +40,8 @@ public class BaggageTests
         Assert.Equal(list, Baggage.GetBaggage(Baggage.Current));
 
         Assert.Equal(V1, Baggage.GetBaggage(K1));
-        Assert.Equal(V1, Baggage.GetBaggage(K1.ToLower()));
-        Assert.Equal(V1, Baggage.GetBaggage(K1.ToUpper()));
+        Assert.Equal(V1, Baggage.GetBaggage(K1.ToLower(CultureInfo.InvariantCulture)));
+        Assert.Equal(V1, Baggage.GetBaggage(K1.ToUpper(CultureInfo.InvariantCulture)));
         Assert.Null(Baggage.GetBaggage("NO_KEY"));
         Assert.Equal(V2, Baggage.Current.GetBaggage(K2));
 
