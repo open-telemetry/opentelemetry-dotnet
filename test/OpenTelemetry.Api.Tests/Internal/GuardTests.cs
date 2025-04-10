@@ -151,7 +151,9 @@ public class GuardTests
         Assert.Equal("0", ex1.ParamName);
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     internal sealed class Thing
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         public string? Bar { get; set; }
     }
