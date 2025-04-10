@@ -168,7 +168,9 @@ public sealed class RuntimeContextTests : IDisposable
     }
 
 #if NETFRAMEWORK
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class RemoteObject : ContextBoundObject
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
 #pragma warning disable CA1822 // Mark members as static
         public int GetValueFromContextSlot(string slotName)
