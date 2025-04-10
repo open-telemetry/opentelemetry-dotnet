@@ -8,7 +8,7 @@ namespace OpenTelemetry.Context.Propagation.Tests;
 
 public class CompositePropagatorTests
 {
-    private static readonly string[] Empty = Array.Empty<string>();
+    private static readonly string[] Empty = [];
     private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter = (headers, name) =>
     {
         count++;
