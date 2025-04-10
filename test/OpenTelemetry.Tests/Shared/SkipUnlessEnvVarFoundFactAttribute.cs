@@ -9,11 +9,14 @@ internal class SkipUnlessEnvVarFoundFactAttribute : FactAttribute
 {
     public SkipUnlessEnvVarFoundFactAttribute(string environmentVariable)
     {
+        this.EnvironmentVariable = environmentVariable;
         if (string.IsNullOrEmpty(GetEnvironmentVariable(environmentVariable)))
         {
             this.Skip = $"Skipped because {environmentVariable} environment variable was not configured.";
         }
     }
+
+    public string EnvironmentVariable { get; }
 
     public static string? GetEnvironmentVariable(string environmentVariableName)
     {
