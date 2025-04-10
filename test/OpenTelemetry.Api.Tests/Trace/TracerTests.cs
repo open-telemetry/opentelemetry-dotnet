@@ -561,5 +561,15 @@ public sealed class TracerTests : IDisposable
         public int ExpectedNumberOfThreads;
         public int NumberOfThreads;
         public EventWaitHandle StartHandle = new ManualResetEvent(false);
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.StartHandle.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
     }
 }
