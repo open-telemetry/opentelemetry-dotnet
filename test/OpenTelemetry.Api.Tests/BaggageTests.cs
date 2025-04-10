@@ -40,7 +40,9 @@ public class BaggageTests
         Assert.Equal(list, Baggage.GetBaggage(Baggage.Current));
 
         Assert.Equal(V1, Baggage.GetBaggage(K1));
+#pragma warning disable CA1308 // Normalize strings to uppercase
         Assert.Equal(V1, Baggage.GetBaggage(K1.ToLower(CultureInfo.InvariantCulture)));
+#pragma warning restore CA1308 // Normalize strings to uppercase
         Assert.Equal(V1, Baggage.GetBaggage(K1.ToUpper(CultureInfo.InvariantCulture)));
         Assert.Null(Baggage.GetBaggage("NO_KEY"));
         Assert.Equal(V2, Baggage.Current.GetBaggage(K2));
