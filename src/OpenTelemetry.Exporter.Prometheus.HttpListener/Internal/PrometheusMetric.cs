@@ -21,7 +21,7 @@ internal sealed class PrometheusMetric
         PrometheusType.Untyped, PrometheusType.Counter, PrometheusType.Gauge, PrometheusType.Summary, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Gauge,
     ];
 
-    public PrometheusMetric(string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters)
+    public PrometheusMetric(string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters, bool disableAppendingUnitName)
     {
         // The metric name is
         // required to match the regex: `[a-zA-Z_:]([a-zA-Z0-9_:])*`. Invalid characters
@@ -32,7 +32,7 @@ internal sealed class PrometheusMetric
         var openMetricsName = SanitizeOpenMetricsName(sanitizedName);
 
         string? sanitizedUnit = null;
-        if (!string.IsNullOrEmpty(unit))
+        if (!disableAppendingUnitName && !string.IsNullOrEmpty(unit))
         {
             sanitizedUnit = GetUnit(unit);
 
@@ -86,9 +86,9 @@ internal sealed class PrometheusMetric
 
     public PrometheusType Type { get; }
 
-    public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
+    public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters, bool disableAppendingUnitName)
     {
-        return new PrometheusMetric(metric.Name, metric.Unit, GetPrometheusType(metric), disableTotalNameSuffixForCounters);
+        return new PrometheusMetric(metric.Name, metric.Unit, GetPrometheusType(metric), disableTotalNameSuffixForCounters, disableAppendingUnitName);
     }
 
     internal static string SanitizeMetricName(string metricName)

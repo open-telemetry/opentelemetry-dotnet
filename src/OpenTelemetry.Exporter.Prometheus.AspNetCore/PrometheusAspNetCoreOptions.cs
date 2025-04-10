@@ -38,5 +38,14 @@ public class PrometheusAspNetCoreOptions
         set => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds = value;
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether addition of the unit name for metric names is disabled. Default value: <see langword="false"/>.
+    /// </summary>
+    public bool DisableAppendingUnitName
+    {
+        get => this.ExporterOptions.DisableAppendingUnitName;
+        set => this.ExporterOptions.DisableAppendingUnitName = value;
+    }
+
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
 }

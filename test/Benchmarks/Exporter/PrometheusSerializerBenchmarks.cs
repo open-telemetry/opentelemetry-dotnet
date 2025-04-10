@@ -66,7 +66,7 @@ public class PrometheusSerializerBenchmarks
     {
         if (!this.cache.TryGetValue(metric, out var prometheusMetric))
         {
-            prometheusMetric = PrometheusMetric.Create(metric, false);
+            prometheusMetric = PrometheusMetric.Create(metric, false, false);
             this.cache[metric] = prometheusMetric;
         }
 

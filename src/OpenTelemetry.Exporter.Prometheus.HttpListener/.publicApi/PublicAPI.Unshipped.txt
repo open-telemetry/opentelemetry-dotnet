@@ -1,4 +1,6 @@
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.DisableAppendingUnitName.get -> bool
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.DisableAppendingUnitName.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.DisableTotalNameSuffixForCounters.get -> bool
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.DisableTotalNameSuffixForCounters.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.UriPrefixes.get -> System.Collections.Generic.IReadOnlyCollection<string!>!

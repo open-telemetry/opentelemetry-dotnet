@@ -33,4 +33,9 @@ internal sealed class PrometheusExporterOptions
     /// Gets or sets a value indicating whether addition of _total suffix for counter metric names is disabled. Default value: <see langword="false"/>.
     /// </summary>
     public bool DisableTotalNameSuffixForCounters { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether addition of the unit name for metric names is disabled. Default value: <see langword="false"/>.
+    /// </summary>
+    public bool DisableAppendingUnitName { get; set; }
 }
