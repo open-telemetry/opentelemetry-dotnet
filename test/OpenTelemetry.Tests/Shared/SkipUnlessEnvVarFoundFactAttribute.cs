@@ -5,7 +5,7 @@ using Xunit;
 
 namespace OpenTelemetry.Tests;
 
-internal class SkipUnlessEnvVarFoundFactAttribute : FactAttribute
+internal sealed class SkipUnlessEnvVarFoundFactAttribute : FactAttribute
 {
     public SkipUnlessEnvVarFoundFactAttribute(string environmentVariable)
     {
