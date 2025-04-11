@@ -5,14 +5,14 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Context.Propagation.Tests;
 
-public class TestPropagator : TextMapPropagator
+internal sealed class TestPropagator : TextMapPropagator
 {
     private readonly string idHeaderName;
     private readonly string stateHeaderName;
     private readonly bool defaultContext;
 
-    private int extractCount = 0;
-    private int injectCount = 0;
+    private int extractCount;
+    private int injectCount;
 
     public TestPropagator(string idHeaderName, string stateHeaderName, bool defaultContext = false)
     {

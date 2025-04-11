@@ -22,17 +22,17 @@ public class GuardTests
         // Invalid
         object? potato = null;
         var ex1 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(potato));
-        Assert.Contains("Must not be null", ex1.Message);
+        Assert.Contains("Must not be null", ex1.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("potato", ex1.ParamName);
 
         object? @event = null;
         var ex2 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(@event));
-        Assert.Contains("Must not be null", ex2.Message);
+        Assert.Contains("Must not be null", ex2.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("@event", ex2.ParamName);
 
         Thing? thing = null;
         var ex3 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(thing?.Bar));
-        Assert.Contains("Must not be null", ex3.Message);
+        Assert.Contains("Must not be null", ex3.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("thing?.Bar", ex3.ParamName);
     }
 
@@ -45,16 +45,16 @@ public class GuardTests
 
         // Invalid
         var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(null));
-        Assert.Contains("Must not be null or empty", ex1.Message);
+        Assert.Contains("Must not be null or empty", ex1.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("null", ex1.ParamName);
 
         var ex2 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(string.Empty));
-        Assert.Contains("Must not be null or empty", ex2.Message);
+        Assert.Contains("Must not be null or empty", ex2.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("string.Empty", ex2.ParamName);
 
         var x = string.Empty;
         var ex3 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(x));
-        Assert.Contains("Must not be null or empty", ex3.Message);
+        Assert.Contains("Must not be null or empty", ex3.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("x", ex3.ParamName);
     }
 
@@ -66,15 +66,15 @@ public class GuardTests
 
         // Invalid
         var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(null));
-        Assert.Contains("Must not be null or whitespace", ex1.Message);
+        Assert.Contains("Must not be null or whitespace", ex1.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("null", ex1.ParamName);
 
         var ex2 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(string.Empty));
-        Assert.Contains("Must not be null or whitespace", ex2.Message);
+        Assert.Contains("Must not be null or whitespace", ex2.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("string.Empty", ex2.ParamName);
 
         var ex3 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(" \t\n\r"));
-        Assert.Contains("Must not be null or whitespace", ex3.Message);
+        Assert.Contains("Must not be null or whitespace", ex3.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("\" \\t\\n\\r\"", ex3.ParamName);
     }
 
@@ -88,7 +88,7 @@ public class GuardTests
 
         // Invalid
         var ex1 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.ThrowIfInvalidTimeout(-100));
-        Assert.Contains("Must be non-negative or 'Timeout.Infinite'", ex1.Message);
+        Assert.Contains("Must be non-negative or 'Timeout.Infinite'", ex1.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("-100", ex1.ParamName);
     }
 
@@ -104,10 +104,10 @@ public class GuardTests
 
         // Invalid
         var ex1 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.ThrowIfOutOfRange(-1, min: 0, max: 100, minName: "empty", maxName: "full"));
-        Assert.Contains("Must be in the range: [0: empty, 100: full]", ex1.Message);
+        Assert.Contains("Must be in the range: [0: empty, 100: full]", ex1.Message, StringComparison.OrdinalIgnoreCase);
 
         var ex2 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.ThrowIfOutOfRange(-1, min: 0, max: 100, message: "error"));
-        Assert.Contains("error", ex2.Message);
+        Assert.Contains("error", ex2.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -120,10 +120,10 @@ public class GuardTests
 
         // Invalid
         var ex3 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.ThrowIfOutOfRange(-1.1, min: 0.1, max: 99.9, minName: "empty", maxName: "full"));
-        Assert.Contains("Must be in the range: [0.1: empty, 99.9: full]", ex3.Message);
+        Assert.Contains("Must be in the range: [0.1: empty, 99.9: full]", ex3.Message, StringComparison.OrdinalIgnoreCase);
 
         var ex4 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.ThrowIfOutOfRange(-1.1, min: 0.0, max: 100.0));
-        Assert.Contains("Must be in the range: [0, 100]", ex4.Message);
+        Assert.Contains("Must be in the range: [0, 100]", ex4.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -147,41 +147,45 @@ public class GuardTests
 
         // Invalid
         var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfZero(0));
-        Assert.Contains("Must not be zero", ex1.Message);
+        Assert.Contains("Must not be zero", ex1.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("0", ex1.ParamName);
     }
 
-    public class Thing
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+    internal sealed class Thing
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         public string? Bar { get; set; }
     }
+}
 
 #if !NET
-    /// <summary>
-    /// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System.Runtime.Tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
-    /// </summary>
-    public class CallerArgumentExpressionAttributeTests
+/// <summary>
+/// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System.Runtime.Tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
+/// </summary>
+#pragma warning disable SA1402 // File may only contain a single type
+public class CallerArgumentExpressionAttributeTests
+#pragma warning restore SA1402 // File may only contain a single type
+{
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("paramName")]
+    public void Ctor_ParameterName_Roundtrip(string? value)
     {
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("paramName")]
-        public static void Ctor_ParameterName_Roundtrip(string? value)
-        {
-            var caea = new CallerArgumentExpressionAttribute(value);
-            Assert.Equal(value, caea.ParameterName);
-        }
-
-        [Fact]
-        public static void BasicTest()
-        {
-            Assert.Equal("null", GetValue(null));
-            Assert.Equal("\"hello\"", GetValue("hello"));
-            Assert.Equal("3 + 2", GetValue(3 + 2));
-            Assert.Equal("new object()", GetValue(new object()));
-        }
-
-        private static string? GetValue(object? argument, [CallerArgumentExpression(nameof(argument))] string? expr = null) => expr;
+        var caea = new CallerArgumentExpressionAttribute(value);
+        Assert.Equal(value, caea.ParameterName);
     }
-#endif
+
+    [Fact]
+    public void BasicTest()
+    {
+        Assert.Equal("null", GetValue(null));
+        Assert.Equal("\"hello\"", GetValue("hello"));
+        Assert.Equal("3 + 2", GetValue(3 + 2));
+        Assert.Equal("new object()", GetValue(new object()));
+    }
+
+    private static string? GetValue(object? argument, [CallerArgumentExpression(nameof(argument))] string? expr = null) => expr;
 }
+#endif

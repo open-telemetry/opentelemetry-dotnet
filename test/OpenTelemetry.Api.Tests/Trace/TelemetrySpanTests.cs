@@ -15,7 +15,7 @@ public class TelemetrySpanTests
 
         using Activity activity = new Activity("exception-test");
         using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
-        telemetrySpan.RecordException(new ArgumentNullException(message, new Exception("new-exception")));
+        telemetrySpan.RecordException(new ArgumentNullException(message, new InvalidOperationException("new-exception")));
         Assert.Single(activity.Events);
 
         Assert.NotNull(telemetrySpan.Activity);
@@ -66,7 +66,8 @@ public class TelemetrySpanTests
         Assert.Equal(default, parentSpan.ParentSpanId);
         Assert.NotNull(parentActivity.Id);
 
-        using var childActivity = new Activity("childOperation").SetParentId(parentActivity.Id);
+        using var childActivity = new Activity("childOperation");
+        childActivity.SetParentId(parentActivity.Id);
         using var childSpan = new TelemetrySpan(childActivity);
 
         Assert.Equal(parentSpan.Context.SpanId, childSpan.ParentSpanId);

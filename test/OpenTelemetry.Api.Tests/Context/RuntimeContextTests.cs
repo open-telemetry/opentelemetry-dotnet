@@ -5,7 +5,7 @@ using Xunit;
 
 namespace OpenTelemetry.Context.Tests;
 
-public class RuntimeContextTests : IDisposable
+public sealed class RuntimeContextTests : IDisposable
 {
     public RuntimeContextTests()
     {
@@ -168,9 +168,13 @@ public class RuntimeContextTests : IDisposable
     }
 
 #if NETFRAMEWORK
-    private class RemoteObject : ContextBoundObject
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+    private sealed class RemoteObject : ContextBoundObject
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
+#pragma warning disable CA1822 // Mark members as static
         public int GetValueFromContextSlot(string slotName)
+#pragma warning restore CA1822 // Mark members as static
         {
             // Slot is not propagated across AppDomains, attempting to get
             // an existing slot here should throw an ArgumentException.
@@ -178,7 +182,7 @@ public class RuntimeContextTests : IDisposable
             {
                 RuntimeContext.GetSlot<int>(slotName);
 
-                throw new Exception("Should not have found an existing slot: " + slotName);
+                throw new InvalidOperationException("Should not have found an existing slot: " + slotName);
             }
             catch (ArgumentException)
             {
