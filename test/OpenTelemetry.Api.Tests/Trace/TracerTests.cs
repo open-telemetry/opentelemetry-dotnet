@@ -370,7 +370,7 @@ public sealed class TracerTests : IDisposable
             Thread[] getTracerThreads = new Thread[testTracerProvider.ExpectedNumberOfThreads];
             for (int i = 0; i < testTracerProvider.ExpectedNumberOfThreads; i++)
             {
-                getTracerThreads[i] = new Thread((object? state) =>
+                getTracerThreads[i] = new Thread(state =>
                 {
                     var testTracerProvider = state as TestTracerProvider;
                     Assert.NotNull(testTracerProvider);
@@ -397,12 +397,12 @@ public sealed class TracerTests : IDisposable
 
             testTracerProvider.StartHandle.WaitOne();
 
-            testTracerProvider.Dispose();
-
             foreach (var getTracerThread in getTracerThreads)
             {
                 getTracerThread.Join();
             }
+
+            testTracerProvider.Dispose();
 
             Assert.Empty(tracers);
         }
