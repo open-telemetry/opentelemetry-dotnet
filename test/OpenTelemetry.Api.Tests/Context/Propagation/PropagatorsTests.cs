@@ -5,7 +5,7 @@ using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests;
 
-public class PropagatorsTests : IDisposable
+public sealed class PropagatorsTests : IDisposable
 {
     public PropagatorsTests()
     {
