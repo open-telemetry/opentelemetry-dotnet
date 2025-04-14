@@ -104,7 +104,7 @@ public class OtlpRetryTests
 
     public class GrpcRetryTestCase
     {
-        private string testRunnerName;
+        private readonly string testRunnerName;
 
         private GrpcRetryTestCase(string testRunnerName, GrpcRetryAttempt[] retryAttempts, int expectedRetryAttempts = 1)
         {
@@ -237,7 +237,7 @@ public class OtlpRetryTests
 
     public class HttpRetryTestCase
     {
-        private string testRunnerName;
+        private readonly string testRunnerName;
 
         private HttpRetryTestCase(string testRunnerName, HttpRetryAttempt[] retryAttempts, int expectedRetryAttempts = 1)
         {
