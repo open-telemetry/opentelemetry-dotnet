@@ -148,7 +148,7 @@ public class OtlpLogExporterTests
         Assert.True(optionsValidated);
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+        logger.LogInformation("Hello from {Name} {Price}.", "tomato", 2.99);
         Assert.Single(logRecords);
         var logRecord = logRecords[0];
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -261,8 +261,8 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-
+        logger.LogInformation("Hello from {Name} {Price}.", "tomato", 2.99);
+            
         Assert.Single(logRecords);
 
         var logRecord = logRecords[0];
@@ -274,16 +274,16 @@ public class OtlpLogExporterTests
         var index = 0;
         var attribute = otlpLogRecord.Attributes[index];
 
-        Assert.Equal("name", attribute.Key);
+        Assert.Equal("Name", attribute.Key);
         Assert.Equal("tomato", attribute.Value.StringValue);
 
         attribute = otlpLogRecord.Attributes[++index];
-        Assert.Equal("price", attribute.Key);
+        Assert.Equal("Price", attribute.Key);
         Assert.Equal(2.99, attribute.Value.DoubleValue);
 
         attribute = otlpLogRecord.Attributes[++index];
         Assert.Equal("{OriginalFormat}", attribute.Key);
-        Assert.Equal("Hello from {name} {price}.", attribute.Value.StringValue);
+        Assert.Equal("Hello from {Name} {Price}.", attribute.Value.StringValue);
     }
 
     [Theory]
@@ -305,7 +305,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation(new EventId(10, null), "Hello from {name} {price}.", "tomato", 2.99);
+        logger.LogInformation(new EventId(10, null), "Hello from {Name} {Price}.", "tomato", 2.99);
         Assert.Single(logRecords);
 
         var configuration = new ConfigurationBuilder()
@@ -332,7 +332,7 @@ public class OtlpLogExporterTests
 
         logRecords.Clear();
 
-        logger.LogInformation(new EventId(10, "MyEvent10"), "Hello from {name} {price}.", "tomato", 2.99);
+        logger.LogInformation(new EventId(10, "MyEvent10"), "Hello from {Name} {Price}.", "tomato", 2.99);
         Assert.Single(logRecords);
 
         logRecord = logRecords[0];
@@ -451,7 +451,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("CheckToOtlpLogRecordSeverityLevelAndText");
-        logger.Log(logLevel, "Hello from {name} {price}.", "tomato", 2.99);
+        logger.Log(logLevel, "Hello from {Name} {Price}.", "tomato", 2.99);
         Assert.Single(logRecords);
 
         var logRecord = logRecords[0];

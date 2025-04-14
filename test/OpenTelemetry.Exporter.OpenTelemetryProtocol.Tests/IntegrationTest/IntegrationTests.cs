@@ -265,7 +265,7 @@ public sealed class IntegrationTests : IDisposable
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+        logger.LogInformation("Hello from {Name} {Price}.", "tomato", 2.99);
 
         switch (processorOptions.ExportProcessorType)
         {
