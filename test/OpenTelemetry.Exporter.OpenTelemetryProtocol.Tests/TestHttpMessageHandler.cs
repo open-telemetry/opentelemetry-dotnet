@@ -16,7 +16,11 @@ internal class TestHttpMessageHandler : HttpMessageHandler
     public virtual HttpResponseMessage InternalSend(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         this.HttpRequestMessage = request;
+#if NET
+        this.HttpRequestContent = request.Content!.ReadAsByteArrayAsync(cancellationToken).Result;
+#else
         this.HttpRequestContent = request.Content!.ReadAsByteArrayAsync().Result;
+#endif
         return new HttpResponseMessage();
     }
 
