@@ -7,7 +7,7 @@ using Xunit;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 [Collection("EnvVars")]
-public class OtlpExporterOptionsTests : IDisposable
+public sealed class OtlpExporterOptionsTests : IDisposable
 {
     public OtlpExporterOptionsTests()
     {
