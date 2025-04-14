@@ -302,7 +302,7 @@ public class OtlpRetryTests
             return this.testRunnerName;
         }
 
-        internal class HttpRetryAttempt
+        internal sealed class HttpRetryAttempt
         {
             public ExportClientHttpResponse Response;
             public TimeSpan? ThrottleDelay;
