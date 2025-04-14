@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <!-- Add MSBuild Task to Generate Certificates -->
