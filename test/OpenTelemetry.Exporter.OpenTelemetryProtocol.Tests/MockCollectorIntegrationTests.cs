@@ -70,7 +70,7 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
 
         var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
         var exportResults = new List<ExportResult>();
         using var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri($"http://localhost:{testGrpcPort}") });
@@ -171,7 +171,7 @@ public sealed class MockCollectorIntegrationTests
 
         // First reply with failure and then Ok
         var codes = new[] { initialStatusCode, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
         var endpoint = new Uri($"http://localhost:{testGrpcPort}");
 
@@ -259,7 +259,7 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
 
         var codes = new[] { initialHttpStatusCode, HttpStatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
         var endpoint = new Uri($"http://localhost:{testHttpPort}/v1/traces");
 
@@ -345,7 +345,7 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
 
         var codes = new[] { initialHttpStatusCode, HttpStatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
         var endpoint = new Uri($"http://localhost:{testHttpPort}/v1/traces");
 
@@ -478,7 +478,7 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
 
         var codes = new[] { initialgrpcStatusCode, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
         var endpoint = new Uri($"http://localhost:{testGrpcPort}");
 
