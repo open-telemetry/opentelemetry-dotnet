@@ -104,9 +104,6 @@ public class OtlpRetryTests
 
     public class GrpcRetryTestCase
     {
-        public int ExpectedRetryAttempts;
-        public GrpcRetryAttempt[] RetryAttempts;
-
         private string testRunnerName;
 
         private GrpcRetryTestCase(string testRunnerName, GrpcRetryAttempt[] retryAttempts, int expectedRetryAttempts = 1)
@@ -115,6 +112,10 @@ public class OtlpRetryTests
             this.RetryAttempts = retryAttempts;
             this.testRunnerName = testRunnerName;
         }
+
+        public int ExpectedRetryAttempts { get; }
+
+        public GrpcRetryAttempt[] RetryAttempts { get; }
 
         public static IEnumerable<object[]> GetGrpcTestCases()
         {
@@ -212,11 +213,6 @@ public class OtlpRetryTests
 
         public struct GrpcRetryAttempt
         {
-            public string? ThrottleDelay;
-            public int? ExpectedNextRetryDelayMilliseconds;
-            public bool ExpectedSuccess;
-            internal ExportClientGrpcResponse Response;
-
             internal GrpcRetryAttempt(
                 StatusCode statusCode,
                 bool deadlineExceeded = false,
@@ -237,14 +233,19 @@ public class OtlpRetryTests
 
                 this.ExpectedSuccess = expectedSuccess;
             }
+
+            public string? ThrottleDelay { get; }
+
+            public int? ExpectedNextRetryDelayMilliseconds { get; }
+
+            public bool ExpectedSuccess { get; }
+
+            internal ExportClientGrpcResponse Response { get; }
         }
     }
 
     public class HttpRetryTestCase
     {
-        public int ExpectedRetryAttempts;
-        internal HttpRetryAttempt[] RetryAttempts;
-
         private string testRunnerName;
 
         private HttpRetryTestCase(string testRunnerName, HttpRetryAttempt[] retryAttempts, int expectedRetryAttempts = 1)
@@ -253,6 +254,10 @@ public class OtlpRetryTests
             this.RetryAttempts = retryAttempts;
             this.testRunnerName = testRunnerName;
         }
+
+        public int ExpectedRetryAttempts { get; }
+
+        internal HttpRetryAttempt[] RetryAttempts { get; }
 
         public static IEnumerable<object[]> GetHttpTestCases()
         {
