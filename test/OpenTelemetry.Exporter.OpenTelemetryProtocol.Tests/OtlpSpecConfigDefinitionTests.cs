@@ -291,7 +291,11 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
 
         public void AssertMatches(MetricReaderOptions metricReaderOptions)
         {
+#if NET
+            Assert.Equal(Enum.Parse<MetricReaderTemporalityPreference>(this.TemporalityValue), metricReaderOptions.TemporalityPreference);
+#else
             Assert.Equal(Enum.Parse(typeof(MetricReaderTemporalityPreference), this.TemporalityValue), metricReaderOptions.TemporalityPreference);
+#endif
         }
 
         protected override void OnSetEnvVars()
