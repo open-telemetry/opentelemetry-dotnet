@@ -29,7 +29,7 @@ internal static class ProtobufOtlpMetricSerializer
             var metricName = metric.MeterName;
             if (!scopeMetricsList.TryGetValue(metricName, out var metrics))
             {
-                metrics = metricListPool.Count > 0 ? metricListPool.Pop() : new List<Metric>();
+                metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
                 scopeMetricsList[metricName] = metrics;
             }
 
