@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Logs;
@@ -307,7 +308,7 @@ public sealed class IntegrationTests : IDisposable
             string? message;
             if (eventData.Message != null && eventData.Payload != null && eventData.Payload.Count > 0)
             {
-                message = string.Format(eventData.Message, eventData.Payload.ToArray());
+                message = string.Format(CultureInfo.InvariantCulture, eventData.Message, eventData.Payload.ToArray());
             }
             else
             {

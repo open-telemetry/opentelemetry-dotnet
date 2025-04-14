@@ -3,6 +3,7 @@
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -908,7 +909,7 @@ public class OtlpLogExporterTests
         Assert.NotNull(actualScope);
         Assert.Equal(scopeKey, actualScope.Key);
         Assert.Equal(ValueOneofCase.IntValue, actualScope.Value.ValueCase);
-        Assert.Equal(scopeValue.ToString(), actualScope.Value.IntValue.ToString());
+        Assert.Equal(scopeValue.ToString(), actualScope.Value.IntValue.ToString(CultureInfo.InvariantCulture));
     }
 
     [Theory]
@@ -948,7 +949,7 @@ public class OtlpLogExporterTests
         Assert.NotNull(actualScope);
         Assert.Equal(scopeKey, actualScope.Key);
         Assert.Equal(ValueOneofCase.DoubleValue, actualScope.Value.ValueCase);
-        Assert.Equal(((double)scopeValue).ToString(), actualScope.Value.DoubleValue.ToString());
+        Assert.Equal(scopeValue, actualScope.Value.DoubleValue);
     }
 
     [Theory]
@@ -986,7 +987,7 @@ public class OtlpLogExporterTests
         var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
         Assert.NotNull(actualScope);
         Assert.Equal(scopeKey, actualScope.Key);
-        Assert.Equal(scopeValue.ToString(), actualScope.Value.DoubleValue.ToString());
+        Assert.Equal(scopeValue, actualScope.Value.DoubleValue);
     }
 
     [Fact]

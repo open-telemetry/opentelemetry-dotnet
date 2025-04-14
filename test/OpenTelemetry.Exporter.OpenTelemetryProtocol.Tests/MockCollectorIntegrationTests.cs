@@ -4,6 +4,7 @@
 #if !NETFRAMEWORK
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net;
 using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
@@ -58,7 +59,7 @@ public sealed class MockCollectorIntegrationTests
                            "/MockCollector/SetResponseCodes/{responseCodesCsv}",
                            (MockCollectorState collectorState, string responseCodesCsv) =>
                            {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                                collectorState.SetStatusCodes(codes);
                            });
 
@@ -158,7 +159,7 @@ public sealed class MockCollectorIntegrationTests
                            "/MockCollector/SetResponseCodes/{responseCodesCsv}",
                            (MockCollectorState collectorState, string responseCodesCsv) =>
                            {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                                collectorState.SetStatusCodes(codes);
                            });
 
@@ -241,7 +242,7 @@ public sealed class MockCollectorIntegrationTests
                            "/MockCollector/SetResponseCodes/{responseCodesCsv}",
                            (MockCollectorHttpState collectorState, string responseCodesCsv) =>
                            {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                                collectorState.SetStatusCodes(codes);
                            });
 
@@ -327,7 +328,7 @@ public sealed class MockCollectorIntegrationTests
                            "/MockCollector/SetResponseCodes/{responseCodesCsv}",
                            (MockCollectorHttpState collectorState, string responseCodesCsv) =>
                            {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                                collectorState.SetStatusCodes(codes);
                            });
 
@@ -466,7 +467,7 @@ public sealed class MockCollectorIntegrationTests
                            "/MockCollector/SetResponseCodes/{responseCodesCsv}",
                            (MockCollectorState collectorState, string responseCodesCsv) =>
                            {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                                collectorState.SetStatusCodes(codes);
                            });
 

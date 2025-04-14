@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections;
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Metrics;
 using Xunit;
@@ -228,7 +229,7 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         {
             Assert.Equal(new Uri(this.EndpointValue), otlpExporterOptions.Endpoint);
             Assert.Equal(this.HeadersValue, otlpExporterOptions.Headers);
-            Assert.Equal(int.Parse(this.TimeoutValue), otlpExporterOptions.TimeoutMilliseconds);
+            Assert.Equal(int.Parse(this.TimeoutValue, CultureInfo.InvariantCulture), otlpExporterOptions.TimeoutMilliseconds);
 
             if (!OtlpExportProtocolParser.TryParse(this.ProtocolValue, out var protocol))
             {
