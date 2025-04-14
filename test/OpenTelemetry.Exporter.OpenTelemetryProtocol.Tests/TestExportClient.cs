@@ -17,7 +17,7 @@ internal class TestExportClient(bool throwException = false) : IExportClient
     {
         if (this.ThrowException)
         {
-            throw new Exception("Exception thrown from SendExportRequest");
+            throw new InvalidOperationException("Exception thrown from SendExportRequest");
         }
 
         this.SendExportRequestCalled = true;

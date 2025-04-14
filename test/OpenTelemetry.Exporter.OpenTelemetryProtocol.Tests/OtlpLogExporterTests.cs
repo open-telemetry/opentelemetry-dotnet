@@ -621,7 +621,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation(new Exception("Exception Message"), "Exception Occurred");
+        logger.LogInformation(new InvalidOperationException("Exception Message"), "Exception Occurred");
 
         var logRecord = logRecords[0];
         var loggedException = logRecord.Exception;
@@ -1240,7 +1240,7 @@ public class OtlpLogExporterTests
                 LogLevel.Error,
                 new EventId(1),
                 new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey2, scopeValue2) },
-                exception: new Exception("Some exception message"),
+                exception: new InvalidOperationException("Some exception message"),
                 formatter: (s, e) => string.Empty);
         }
 

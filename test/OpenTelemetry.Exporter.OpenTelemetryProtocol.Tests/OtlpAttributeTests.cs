@@ -302,7 +302,7 @@ public class OtlpAttributeTests
     {
         public override string ToString()
         {
-            throw new Exception("Nope.");
+            throw new InvalidOperationException("Nope.");
         }
     }
 }
