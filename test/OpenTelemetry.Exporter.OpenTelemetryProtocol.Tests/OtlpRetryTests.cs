@@ -15,9 +15,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
 public class OtlpRetryTests
 {
-    public static IEnumerable<object[]> GrpcRetryTestData => GrpcRetryTestCase.GetGrpcTestCases();
+    public static TheoryData<GrpcRetryTestCase> GrpcRetryTestData => GrpcRetryTestCase.GetGrpcTestCases();
 
-    public static IEnumerable<object[]> HttpRetryTestData => HttpRetryTestCase.GetHttpTestCases();
+    public static TheoryData<HttpRetryTestCase> HttpRetryTestData => HttpRetryTestCase.GetHttpTestCases();
 
     [Theory]
     [MemberData(nameof(GrpcRetryTestData))]
@@ -117,75 +117,66 @@ public class OtlpRetryTests
 
         public GrpcRetryAttempt[] RetryAttempts { get; }
 
-        public static IEnumerable<object[]> GetGrpcTestCases()
+        public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases()
         {
-            yield return new[] { new GrpcRetryTestCase("Cancelled", new GrpcRetryAttempt[] { new(StatusCode.Cancelled) }) };
-            yield return new[] { new GrpcRetryTestCase("DeadlineExceeded", new GrpcRetryAttempt[] { new(StatusCode.DeadlineExceeded) }) };
-            yield return new[] { new GrpcRetryTestCase("Aborted", new GrpcRetryAttempt[] { new(StatusCode.Aborted) }) };
-            yield return new[] { new GrpcRetryTestCase("OutOfRange", new GrpcRetryAttempt[] { new(StatusCode.OutOfRange) }) };
-            yield return new[] { new GrpcRetryTestCase("DataLoss", new GrpcRetryAttempt[] { new(StatusCode.DataLoss) }) };
-            yield return new[] { new GrpcRetryTestCase("Unavailable", new GrpcRetryAttempt[] { new(StatusCode.Unavailable) }) };
+            return
+            [
+            new("Cancelled", [new(StatusCode.Cancelled)]),
+            new("DeadlineExceeded", [new(StatusCode.DeadlineExceeded)]),
+            new("Aborted", [new(StatusCode.Aborted)]),
+            new("OutOfRange", [new(StatusCode.OutOfRange)]),
+            new("DataLoss", [new(StatusCode.DataLoss)]),
+            new("Unavailable", [new(StatusCode.Unavailable)]),
 
-            yield return new[] { new GrpcRetryTestCase("OK", new GrpcRetryAttempt[] { new(StatusCode.OK, expectedSuccess: false) }) };
-            yield return new[] { new GrpcRetryTestCase("PermissionDenied", new GrpcRetryAttempt[] { new(StatusCode.PermissionDenied, expectedSuccess: false) }) };
-            yield return new[] { new GrpcRetryTestCase("Unknown", new GrpcRetryAttempt[] { new(StatusCode.Unknown, expectedSuccess: false) }) };
+            new("OK", [new(StatusCode.OK, expectedSuccess: false)]),
+            new("PermissionDenied", [new(StatusCode.PermissionDenied, expectedSuccess: false)]),
+            new("Unknown", [new(StatusCode.Unknown, expectedSuccess: false)]),
 
-            yield return new[] { new GrpcRetryTestCase("ResourceExhausted w/o RetryInfo", new GrpcRetryAttempt[] { new(StatusCode.ResourceExhausted, expectedSuccess: false) }) };
-            yield return new[] { new GrpcRetryTestCase("ResourceExhausted w/ RetryInfo", new GrpcRetryAttempt[] { new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(new Duration { Seconds = 2 }), expectedNextRetryDelayMilliseconds: 3000) }) };
+            new("ResourceExhausted w/o RetryInfo", [new(StatusCode.ResourceExhausted, expectedSuccess: false)]),
+            new("ResourceExhausted w/ RetryInfo", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(new Duration { Seconds = 2 }), expectedNextRetryDelayMilliseconds: 3000)]),
 
-            yield return new[] { new GrpcRetryTestCase("Unavailable w/ RetryInfo", new GrpcRetryAttempt[] { new(StatusCode.Unavailable, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromMilliseconds(2000))), expectedNextRetryDelayMilliseconds: 3000) }) };
+            new("Unavailable w/ RetryInfo", [new(StatusCode.Unavailable, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromMilliseconds(2000))), expectedNextRetryDelayMilliseconds: 3000)]),
 
-            yield return new[] { new GrpcRetryTestCase("Expired deadline", new GrpcRetryAttempt[] { new(StatusCode.Unavailable, deadlineExceeded: true, expectedSuccess: false) }) };
+            new("Expired deadline", [new(StatusCode.Unavailable, deadlineExceeded: true, expectedSuccess: false)]),
 
-            yield return new[]
-            {
-                new GrpcRetryTestCase(
-                    "Exponential backoff",
-                    new GrpcRetryAttempt[]
-                    {
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1500),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2250),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 3375),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
-                    },
-                    expectedRetryAttempts: 5),
-            };
+            new(
+                "Exponential backoff",
+                [
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1500),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2250),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 3375),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000)
+                ],
+                expectedRetryAttempts: 5),
 
-            yield return new[]
-            {
-                new GrpcRetryTestCase(
-                    "Retry until non-retryable status code encountered",
-                    new GrpcRetryAttempt[]
-                    {
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1500),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2250),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 3375),
-                        new(StatusCode.PermissionDenied, expectedSuccess: false),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
-                    },
-                    expectedRetryAttempts: 4),
-            };
+            new(
+                "Retry until non-retryable status code encountered",
+                [
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1500),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2250),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 3375),
+                    new(StatusCode.PermissionDenied, expectedSuccess: false),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000)
+                ],
+                expectedRetryAttempts: 4),
 
             // Test throttling affects exponential backoff.
-            yield return new[]
-            {
-                new GrpcRetryTestCase(
-                    "Exponential backoff after throttling",
-                    new GrpcRetryAttempt[]
-                    {
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1500),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2250),
-                        new(StatusCode.Unavailable, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromMilliseconds(500))), expectedNextRetryDelayMilliseconds: 750),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1125),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1688),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2532),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 3798),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
-                        new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
-                    },
-                    expectedRetryAttempts: 9),
-            };
+            new(
+                "Exponential backoff after throttling",
+                [
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1500),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2250),
+                    new(StatusCode.Unavailable, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromMilliseconds(500))), expectedNextRetryDelayMilliseconds: 750),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1125),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1688),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2532),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 3798),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000)
+                ],
+                expectedRetryAttempts: 9),
+            ];
         }
 
         public override string ToString()
@@ -259,45 +250,42 @@ public class OtlpRetryTests
 
         internal HttpRetryAttempt[] RetryAttempts { get; }
 
-        public static IEnumerable<object[]> GetHttpTestCases()
+        public static TheoryData<HttpRetryTestCase> GetHttpTestCases()
         {
-            yield return new[] { new HttpRetryTestCase("NetworkError", [new(statusCode: null)]) };
-            yield return new[] { new HttpRetryTestCase("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]) };
+            return
+            [
+                new("NetworkError", [new(statusCode: null)]),
+                new("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
 #if NETSTANDARD2_1_OR_GREATER || NET
-            yield return new[] { new HttpRetryTestCase("ServiceUnavailable", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1))]) };
+                new("ServiceUnavailable", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1))]),
 #endif
 
-            yield return new[]
-            {
-                new HttpRetryTestCase(
+                new(
                     "Exponential Backoff",
-                    new HttpRetryAttempt[]
-                    {
+                    [
                         new(statusCode: null, expectedNextRetryDelayMilliseconds: 1500),
                         new(statusCode: null, expectedNextRetryDelayMilliseconds: 2250),
                         new(statusCode: null, expectedNextRetryDelayMilliseconds: 3375),
                         new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000),
-                        new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000),
-                    },
+                        new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000)
+                    ],
                     expectedRetryAttempts: 5),
-            };
-
-            yield return new[]
-            {
-                new HttpRetryTestCase(
+                new(
                     "Retry until non-retryable status code encountered",
-                    new HttpRetryAttempt[]
-                    {
+                    [
                         new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 1500),
                         new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 2250),
                         new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 3375),
                         new(statusCode: HttpStatusCode.BadRequest, expectedSuccess: false),
-                        new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000),
-                    },
+                        new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000)
+                    ],
                     expectedRetryAttempts: 4),
-            };
-
-            yield return new[] { new HttpRetryTestCase("Expired deadline", new HttpRetryAttempt[] { new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false) }) };
+                new(
+                    "Expired deadline",
+                    [
+                        new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
+                    ]),
+            ];
 
             // TODO: Add more cases.
         }
