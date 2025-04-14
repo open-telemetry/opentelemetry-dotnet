@@ -363,7 +363,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
             Assert.Equal(3, scope.Attributes.Count);
             Assert.Equal(1u, scope.DroppedAttributesCount);
             Assert.Equal("1234", scope.Attributes[0].Value.StringValue);
-            this.ArrayValueAsserts(scope.Attributes[1].Value.ArrayValue.Values);
+            ArrayValueAsserts(scope.Attributes[1].Value.ArrayValue.Values);
             Assert.Equal(new object().ToString()!.Substring(0, 4), scope.Attributes[2].Value.StringValue);
         }
     }
@@ -410,7 +410,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         Assert.Equal(3, otlpSpan.Attributes.Count);
         Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
         Assert.Equal("1234", otlpSpan.Attributes[0].Value.StringValue);
-        this.ArrayValueAsserts(otlpSpan.Attributes[1].Value.ArrayValue.Values);
+        ArrayValueAsserts(otlpSpan.Attributes[1].Value.ArrayValue.Values);
         Assert.Equal(new object().ToString()!.Substring(0, 4), otlpSpan.Attributes[2].Value.StringValue);
 
         Assert.Single(otlpSpan.Events);
@@ -418,7 +418,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         Assert.Equal(3, otlpSpan.Events[0].Attributes.Count);
         Assert.Equal(1u, otlpSpan.Events[0].DroppedAttributesCount);
         Assert.Equal("1234", otlpSpan.Events[0].Attributes[0].Value.StringValue);
-        this.ArrayValueAsserts(otlpSpan.Events[0].Attributes[1].Value.ArrayValue.Values);
+        ArrayValueAsserts(otlpSpan.Events[0].Attributes[1].Value.ArrayValue.Values);
         Assert.Equal(new object().ToString()!.Substring(0, 4), otlpSpan.Events[0].Attributes[2].Value.StringValue);
 
         Assert.Single(otlpSpan.Links);
@@ -426,7 +426,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         Assert.Equal(3, otlpSpan.Links[0].Attributes.Count);
         Assert.Equal(1u, otlpSpan.Links[0].DroppedAttributesCount);
         Assert.Equal("1234", otlpSpan.Links[0].Attributes[0].Value.StringValue);
-        this.ArrayValueAsserts(otlpSpan.Links[0].Attributes[1].Value.ArrayValue.Values);
+        ArrayValueAsserts(otlpSpan.Links[0].Attributes[1].Value.ArrayValue.Values);
         Assert.Equal(new object().ToString()!.Substring(0, 4), otlpSpan.Links[0].Attributes[2].Value.StringValue);
     }
 
@@ -1030,7 +1030,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         return request;
     }
 
-    private void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)
+    private static void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)
     {
         var expectedStringArray = new string?[] { "1234", "1234", string.Empty, null };
         for (var i = 0; i < expectedStringArray.Length; ++i)

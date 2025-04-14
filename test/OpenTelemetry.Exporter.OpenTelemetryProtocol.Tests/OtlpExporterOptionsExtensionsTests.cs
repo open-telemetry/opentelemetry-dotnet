@@ -41,7 +41,7 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("key1")]
     public void GetHeaders_InvalidOptionHeaders_ThrowsArgumentException(string inputOptionHeaders)
     {
-        this.VerifyHeaders(inputOptionHeaders, string.Empty, true);
+        VerifyHeaders(inputOptionHeaders, string.Empty, true);
     }
 
     [Theory]
@@ -57,7 +57,7 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("key1=value1%2Ckey2=value2%2Ckey3=value3", "key1=value1,key2=value2,key3=value3")]
     public void GetHeaders_ValidAndUrlEncodedHeaders_ReturnsCorrectHeaders(string inputOptionHeaders, string expectedNormalizedOptional)
     {
-        this.VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);
+        VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);
     }
 
     [Theory]
@@ -163,7 +163,7 @@ public class OtlpExporterOptionsExtensionsTests
     /// This will be parsed into a dictionary and compared with the actual extracted headers.</param>
     /// <param name="expectException">If `true`, the method expects `GetHeaders` to throw an `ArgumentException`
     /// when processing `inputOptionHeaders`.</param>
-    private void VerifyHeaders(string inputOptionHeaders, string expectedNormalizedOptional, bool expectException = false)
+    private static void VerifyHeaders(string inputOptionHeaders, string expectedNormalizedOptional, bool expectException = false)
     {
         var options = new OtlpExporterOptions { Headers = inputOptionHeaders };
 
