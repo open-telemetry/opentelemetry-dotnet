@@ -43,7 +43,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         // Assert
         Assert.NotNull(arrayState.Buffer);
         Assert.Equal(0, arrayState.WritePosition);
-        Assert.True(arrayState.Buffer.Length == 2048);
+        Assert.Equal(2048, arrayState.Buffer.Length);
     }
 
     [Fact]
@@ -181,7 +181,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         var otlpSpan = ToOtlpSpanWithExtendedBuffer(new SdkLimitOptions(), activity);
 
         Assert.NotNull(otlpSpan);
-        Assert.True(otlpSpan.Attributes.Count == 3);
+        Assert.Equal(3, otlpSpan.Attributes.Count);
         var keyValue = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "StringArray");
         Assert.NotNull(keyValue);
         Assert.Equal("12345", keyValue.Value.ArrayValue.Values[0].StringValue);

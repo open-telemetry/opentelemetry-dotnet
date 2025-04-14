@@ -262,7 +262,6 @@ public class OtlpLogExporterTests
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
         logger.LogInformation("Hello from {Name} {Price}.", "tomato", 2.99);
-            
         Assert.Single(logRecords);
 
         var logRecord = logRecords[0];
