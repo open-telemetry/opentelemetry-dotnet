@@ -93,6 +93,8 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
 
             this.disposed = true;
         }
+
+        base.Dispose(disposing);
     }
 
     private void RetryStoredRequests()
