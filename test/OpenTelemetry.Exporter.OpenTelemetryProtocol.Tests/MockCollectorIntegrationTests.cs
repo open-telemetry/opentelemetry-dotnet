@@ -549,7 +549,7 @@ public sealed class MockCollectorIntegrationTests
 
     private class MockCollectorState
     {
-        private Grpc.Core.StatusCode[] statusCodes = { };
+        private Grpc.Core.StatusCode[] statusCodes = [];
         private int statusCodeIndex;
 
         public void SetStatusCodes(int[] statusCodes)
@@ -568,7 +568,7 @@ public sealed class MockCollectorIntegrationTests
 
     private class MockCollectorHttpState
     {
-        private HttpStatusCode[] statusCodes = { };
+        private HttpStatusCode[] statusCodes = [];
         private int statusCodeIndex;
 
         public void SetStatusCodes(int[] statusCodes)
