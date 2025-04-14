@@ -174,7 +174,7 @@ internal static class OtlpExporterOptionsExtensions
 #if NET || NETSTANDARD2_1_OR_GREATER
         if (absoluteUri.EndsWith('/'))
 #else
-        if (absoluteUri.EndsWith("/"))
+        if (absoluteUri.EndsWith("/", StringComparison.Ordinal))
 #endif
         {
             // Endpoint already ends with 'path/'
