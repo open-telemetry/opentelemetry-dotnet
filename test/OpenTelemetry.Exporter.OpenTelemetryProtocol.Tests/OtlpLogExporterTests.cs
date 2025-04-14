@@ -322,12 +322,12 @@ public class OtlpLogExporterTests
         var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
         if (emitLogEventAttributes == "true")
         {
-            Assert.Contains(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
-            Assert.Contains("10", otlpLogRecordAttributes);
+            Assert.Contains(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes, StringComparison.Ordinal);
+            Assert.Contains("10", otlpLogRecordAttributes, StringComparison.Ordinal);
         }
         else
         {
-            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
+            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes, StringComparison.Ordinal);
         }
 
         logRecords.Clear();
@@ -346,15 +346,15 @@ public class OtlpLogExporterTests
         otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
         if (emitLogEventAttributes == "true")
         {
-            Assert.Contains(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
-            Assert.Contains("10", otlpLogRecordAttributes);
-            Assert.Contains(ExperimentalOptions.LogRecordEventNameAttribute, otlpLogRecordAttributes);
-            Assert.Contains("MyEvent10", otlpLogRecordAttributes);
+            Assert.Contains(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes, StringComparison.Ordinal);
+            Assert.Contains("10", otlpLogRecordAttributes, StringComparison.Ordinal);
+            Assert.Contains(ExperimentalOptions.LogRecordEventNameAttribute, otlpLogRecordAttributes, StringComparison.Ordinal);
+            Assert.Contains("MyEvent10", otlpLogRecordAttributes, StringComparison.Ordinal);
         }
         else
         {
-            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
-            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventNameAttribute, otlpLogRecordAttributes);
+            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes, StringComparison.Ordinal);
+            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventNameAttribute, otlpLogRecordAttributes, StringComparison.Ordinal);
         }
     }
 
@@ -630,15 +630,15 @@ public class OtlpLogExporterTests
         Assert.NotNull(otlpLogRecord);
         var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
 
-        Assert.Contains(SemanticConventions.AttributeExceptionType, otlpLogRecordAttributes);
+        Assert.Contains(SemanticConventions.AttributeExceptionType, otlpLogRecordAttributes, StringComparison.Ordinal);
         Assert.NotNull(logRecord.Exception);
-        Assert.Contains(logRecord.Exception.GetType().Name, otlpLogRecordAttributes);
+        Assert.Contains(logRecord.Exception.GetType().Name, otlpLogRecordAttributes, StringComparison.Ordinal);
 
-        Assert.Contains(SemanticConventions.AttributeExceptionMessage, otlpLogRecordAttributes);
-        Assert.Contains(logRecord.Exception.Message, otlpLogRecordAttributes);
+        Assert.Contains(SemanticConventions.AttributeExceptionMessage, otlpLogRecordAttributes, StringComparison.Ordinal);
+        Assert.Contains(logRecord.Exception.Message, otlpLogRecordAttributes, StringComparison.Ordinal);
 
-        Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes);
-        Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes);
+        Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes, StringComparison.Ordinal);
+        Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes, StringComparison.Ordinal);
     }
 
     [Fact]
