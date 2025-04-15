@@ -46,7 +46,7 @@ internal static class OtlpRetry
     private const double BackoffMultiplier = 1.5;
 
 #if !NET
-    private static readonly Random Random = new Random();
+    private static readonly Random Random = new();
 #endif
 
     public static bool TryGetHttpRetryResult(ExportClientHttpResponse response, int retryDelayInMilliSeconds, out RetryResult retryResult)
