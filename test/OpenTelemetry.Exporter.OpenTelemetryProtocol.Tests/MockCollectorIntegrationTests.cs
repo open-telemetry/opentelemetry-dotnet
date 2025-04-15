@@ -548,7 +548,7 @@ public sealed class MockCollectorIntegrationTests
         transmissionHandler.Dispose();
     }
 
-    private class MockCollectorState
+    private sealed class MockCollectorState
     {
         private Grpc.Core.StatusCode[] statusCodes = [];
         private int statusCodeIndex;

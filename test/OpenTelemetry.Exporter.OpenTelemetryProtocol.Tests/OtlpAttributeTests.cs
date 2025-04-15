@@ -298,7 +298,7 @@ public class OtlpAttributeTests
         return false;
     }
 
-    private class MyToStringMethodThrowsAnException
+    private sealed class MyToStringMethodThrowsAnException
     {
         public override string ToString()
         {
