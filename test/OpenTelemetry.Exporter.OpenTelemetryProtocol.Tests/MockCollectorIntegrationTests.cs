@@ -642,7 +642,7 @@ public sealed class MockCollectorIntegrationTests
     {
         private readonly List<PersistentBlob> mockStorage;
 
-        private byte[] buffer = Array.Empty<byte>();
+        private byte[] buffer = [];
 
         public MockFileBlob(List<PersistentBlob> mockStorage)
         {
