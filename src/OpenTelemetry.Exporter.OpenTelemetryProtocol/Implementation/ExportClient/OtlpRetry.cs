@@ -3,6 +3,9 @@
 
 using System.Net;
 using System.Net.Http.Headers;
+#if NET
+using System.Security.Cryptography;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -245,13 +248,15 @@ internal static class OtlpRetry
     private static int GetRandomNumber(int min, int max)
     {
 #if NET
-        return Random.Shared.Next(min, max);
+        return RandomNumberGenerator.GetInt32(min, max);
 #else
         // TODO: Implement this better to minimize lock contention.
         // Consider pulling in Random.Shared implementation.
         lock (Random)
         {
+#pragma warning disable CA5394 // Do not use insecure randomness
             return Random.Next(min, max);
+#pragma warning restore CA5394 // Do not use insecure randomness
         }
 #endif
     }
