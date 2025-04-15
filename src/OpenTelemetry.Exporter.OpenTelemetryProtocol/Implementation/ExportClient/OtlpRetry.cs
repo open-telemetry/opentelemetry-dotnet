@@ -158,9 +158,7 @@ internal static class OtlpRetry
             return false;
         }
 
-        var delayDuration = throttleDelay.HasValue
-            ? throttleDelay.Value
-            : TimeSpan.FromMilliseconds(GetRandomNumber(0, nextRetryDelayMilliseconds));
+        var delayDuration = throttleDelay ?? TimeSpan.FromMilliseconds(GetRandomNumber(0, nextRetryDelayMilliseconds));
 
         if (deadline.HasValue && IsDeadlineExceeded(deadline + delayDuration))
         {
