@@ -191,12 +191,13 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
 
         public ConfigurationBuilder AddToConfiguration(ConfigurationBuilder configurationBuilder)
         {
-            Dictionary<string, string?> dictionary = new();
-
-            dictionary[this.EndpointKeyName] = this.EndpointValue;
-            dictionary[this.HeadersKeyName] = this.HeadersValue;
-            dictionary[this.TimeoutKeyName] = this.TimeoutValue;
-            dictionary[this.ProtocolKeyName] = this.ProtocolValue;
+            Dictionary<string, string?> dictionary = new()
+            {
+                [this.EndpointKeyName] = this.EndpointValue,
+                [this.HeadersKeyName] = this.HeadersValue,
+                [this.TimeoutKeyName] = this.TimeoutValue,
+                [this.ProtocolKeyName] = this.ProtocolValue,
+            };
 
             this.OnAddToDictionary(dictionary);
 

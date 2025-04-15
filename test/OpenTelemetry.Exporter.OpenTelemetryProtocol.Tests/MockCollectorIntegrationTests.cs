@@ -609,7 +609,7 @@ public sealed class MockCollectorIntegrationTests
 
     private class MockFileProvider : PersistentBlobProvider
     {
-        private readonly List<PersistentBlob> mockStorage = new();
+        private readonly List<PersistentBlob> mockStorage = [];
 
         public IEnumerable<PersistentBlob> TryGetBlobs() => this.mockStorage.AsEnumerable();
 
