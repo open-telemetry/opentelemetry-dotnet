@@ -148,7 +148,7 @@ public class OtlpLogExporterTests
         Assert.True(optionsValidated);
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation("Hello from {Name} {Price}.", "tomato", 2.99);
+        logger.HelloFrom("tomato", 2.99);
         Assert.Single(logRecords);
         var logRecord = logRecords[0];
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -261,7 +261,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation("Hello from {Name} {Price}.", "tomato", 2.99);
+        logger.HelloFrom("tomato", 2.99);
         Assert.Single(logRecords);
 
         var logRecord = logRecords[0];
@@ -304,7 +304,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation(new EventId(10, null), "Hello from {Name} {Price}.", "tomato", 2.99);
+        logger.HelloFromWithEventId("tomato", 2.99);
         Assert.Single(logRecords);
 
         var configuration = new ConfigurationBuilder()
@@ -331,7 +331,7 @@ public class OtlpLogExporterTests
 
         logRecords.Clear();
 
-        logger.LogInformation(new EventId(10, "MyEvent10"), "Hello from {Name} {Price}.", "tomato", 2.99);
+        logger.HelloFromWithEventIdAndEventName("tomato", 2.99);
         Assert.Single(logRecords);
 
         logRecord = logRecords[0];
@@ -367,7 +367,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation("Log message");
+        logger.LogMessage();
 
         var logRecord = logRecords[0];
         OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
@@ -387,7 +387,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation("Log when there is no activity.");
+        logger.LogWhenThereIsNoActivity();
 
         var logRecord = logRecords[0];
         OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
@@ -414,7 +414,7 @@ public class OtlpLogExporterTests
         ActivitySpanId expectedSpanId = default;
         using (var activity = new Activity(Utils.GetCurrentMethodName()).Start())
         {
-            logger.LogInformation("Log within an activity.");
+            logger.LogWithinAnActivity();
 
             expectedTraceId = activity.TraceId;
             expectedSpanId = activity.SpanId;
@@ -450,7 +450,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("CheckToOtlpLogRecordSeverityLevelAndText");
-        logger.Log(logLevel, "Hello from {Name} {Price}.", "tomato", 2.99);
+        logger.HelloFrom(logLevel, "tomato", 2.99);
         Assert.Single(logRecords);
 
         var logRecord = logRecords[0];
@@ -505,7 +505,7 @@ public class OtlpLogExporterTests
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
 
         // Scenario 1 - Using ExtensionMethods on ILogger.Log
-        logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+        logger.OpenTelemetryGreeting("Hello", "World");
         Assert.Single(logRecords);
 
         var logRecord = logRecords[0];
@@ -619,7 +619,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation(new InvalidOperationException("Exception Message"), "Exception Occurred");
+        logger.ExceptionOccured(new InvalidOperationException("Exception Message"));
 
         var logRecord = logRecords[0];
         var loggedException = logRecord.Exception;
@@ -658,7 +658,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger(string.Empty);
-        logger.LogInformation("OpenTelemetry {AttributeOne} {AttributeTwo} {AttributeThree}!", "I'm an attribute", "I too am an attribute", "I get dropped :(");
+        logger.OpenTelemetryWithAttributes("I'm an attribute", "I too am an attribute", "I get dropped :(");
 
         var logRecord = logRecords[0];
         OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(sdkLimitOptions, new(), logRecord);
@@ -769,7 +769,7 @@ public class OtlpLogExporterTests
             new KeyValuePair<string, object>(expectedScopeKey, expectedScopeValue),
         }))
         {
-            logger.LogInformation("Some log information message.");
+            logger.SomeLogInformation();
         }
 
         // Assert.
@@ -804,7 +804,7 @@ public class OtlpLogExporterTests
             new KeyValuePair<string, object>(scopeKey, scopeValue),
         }))
         {
-            logger.LogInformation("Some log information message.");
+            logger.SomeLogInformation();
         }
 
         // Assert.
@@ -843,7 +843,7 @@ public class OtlpLogExporterTests
             new KeyValuePair<string, object>(scopeKey, scopeValue),
         }))
         {
-            logger.LogInformation("Some log information message.");
+            logger.SomeLogInformation();
         }
 
         // Assert.
@@ -894,7 +894,7 @@ public class OtlpLogExporterTests
             new KeyValuePair<string, object>(scopeKey, scopeValue),
         }))
         {
-            logger.LogInformation("Some log information message.");
+            logger.SomeLogInformation();
         }
 
         // Assert.
@@ -933,7 +933,7 @@ public class OtlpLogExporterTests
             new(scopeKey, scopeValue),
         }))
         {
-            logger.LogInformation("Some log information message.");
+            logger.SomeLogInformation();
         }
 
         // Assert.
@@ -973,7 +973,7 @@ public class OtlpLogExporterTests
             new(scopeKey, scopeValue),
         }))
         {
-            logger.LogInformation("Some log information message.");
+            logger.SomeLogInformation();
         }
 
         // Assert.
@@ -1006,7 +1006,7 @@ public class OtlpLogExporterTests
         // Act.
         using (logger.BeginScope(scopeState))
         {
-            logger.LogInformation("Some log information message.");
+            logger.SomeLogInformation();
         }
 
         // Assert.
@@ -1041,7 +1041,7 @@ public class OtlpLogExporterTests
         // Act.
         using (logger.BeginScope(scopeState))
         {
-            logger.LogInformation("Some log information message.");
+            logger.SomeLogInformation();
         }
 
         // Assert.
@@ -1072,7 +1072,7 @@ public class OtlpLogExporterTests
         // Act.
         using (logger.BeginScope(scopeState))
         {
-            logger.LogInformation("Some log information message.");
+            logger.SomeLogInformation();
         }
 
         // Assert.
@@ -1112,7 +1112,7 @@ public class OtlpLogExporterTests
         Assert.NotNull(scopeState);
         using (logger.BeginScope(scopeState))
         {
-            logger.LogInformation("Some log information message.");
+            logger.SomeLogInformation();
         }
 
         // Assert.
@@ -1152,7 +1152,7 @@ public class OtlpLogExporterTests
             new KeyValuePair<string, object>(scopeKey2, scopeValue2),
         }))
         {
-            logger.LogInformation("Some log information message.");
+            logger.SomeLogInformation();
         }
 
         // Assert.
@@ -1192,7 +1192,7 @@ public class OtlpLogExporterTests
         {
             using (logger.BeginScope(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey2, scopeValue2) }))
             {
-                logger.LogInformation("Some log information message.");
+                logger.SomeLogInformation();
             }
         }
 
@@ -1335,10 +1335,10 @@ public class OtlpLogExporterTests
         });
 
         var logger1 = loggerFactory.CreateLogger("OtlpLogExporterTests-A");
-        logger1.LogInformation("Hello from red-tomato");
+        logger1.HelloFromRedTomato();
 
         var logger2 = loggerFactory.CreateLogger("OtlpLogExporterTests-B");
-        logger2.LogInformation("Hello from green-tomato");
+        logger2.HelloFromGreenTomato();
 
         Assert.Equal(2, logRecords.Count);
 
