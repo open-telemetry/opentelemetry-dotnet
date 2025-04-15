@@ -24,13 +24,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
 internal static class TrailingHeadersHelpers
 {
-    public static readonly string ResponseTrailersKey = "__ResponseTrailers";
+#if NETSTANDARD2_0 || NET462
+    private const string ResponseTrailersKey = "__ResponseTrailers";
+#endif
 
     public static HttpHeaders TrailingHeaders(this HttpResponseMessage responseMessage)
     {
-#if !NETSTANDARD2_0 && !NET462
-        return responseMessage.TrailingHeaders;
-#else
+#if NETSTANDARD2_0 || NET462
+
         if (responseMessage.RequestMessage.Properties.TryGetValue(ResponseTrailersKey, out var headers) &&
             headers is HttpHeaders httpHeaders)
         {
@@ -41,13 +42,15 @@ internal static class TrailingHeadersHelpers
         // in RequestMessage.Properties with known key. Return empty collection.
         // Client call will likely fail because it is unable to get a grpc-status.
         return ResponseTrailers.Empty;
+#else
+        return responseMessage.TrailingHeaders;
 #endif
     }
 
 #if NETSTANDARD2_0 || NET462
     private class ResponseTrailers : HttpHeaders
     {
-        public static readonly ResponseTrailers Empty = new ResponseTrailers();
+        public static readonly ResponseTrailers Empty = new();
     }
 #endif
 }
