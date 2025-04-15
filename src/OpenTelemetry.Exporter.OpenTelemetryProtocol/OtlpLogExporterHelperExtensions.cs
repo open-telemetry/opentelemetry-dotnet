@@ -316,10 +316,12 @@ public static class OtlpLogExporterHelperExtensions
          * "OtlpLogExporter");
          */
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
             exporterOptions!,
             sdkLimitOptions!,
             experimentalOptions!);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         if (configureExporterInstance != null)
         {
