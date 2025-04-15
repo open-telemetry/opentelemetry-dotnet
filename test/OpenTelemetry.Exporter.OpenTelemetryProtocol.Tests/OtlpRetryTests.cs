@@ -46,8 +46,7 @@ public class OtlpRetryTests
 
             if (retryResult.Throttled)
             {
-                Assert.Equal(GrpcStatusDeserializer.TryGetGrpcRetryDelay(retryAttempt.ThrottleDelay),
-                    retryResult.RetryDelay);
+                Assert.Equal(GrpcStatusDeserializer.TryGetGrpcRetryDelay(retryAttempt.ThrottleDelay), retryResult.RetryDelay);
             }
             else
             {

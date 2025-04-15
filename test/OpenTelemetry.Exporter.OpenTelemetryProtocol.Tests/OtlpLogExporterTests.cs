@@ -768,7 +768,7 @@ public class OtlpLogExporterTests
         // Act.
         using (logger.BeginScope(new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>(expectedScopeKey, expectedScopeValue),
+            new(expectedScopeKey, expectedScopeValue),
         }))
         {
             logger.SomeLogInformation();
@@ -812,7 +812,7 @@ public class OtlpLogExporterTests
         // Act.
         using (logger.BeginScope(new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>(scopeKey, scopeValue),
+            new(scopeKey, scopeValue),
         }))
         {
             logger.SomeLogInformation();
@@ -851,7 +851,7 @@ public class OtlpLogExporterTests
         // Act.
         using (logger.BeginScope(new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>(scopeKey, scopeValue),
+            new(scopeKey, scopeValue),
         }))
         {
             logger.SomeLogInformation();
@@ -911,7 +911,7 @@ public class OtlpLogExporterTests
         // Act.
         using (logger.BeginScope(new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>(scopeKey, scopeValue),
+            new(scopeKey, scopeValue),
         }))
         {
             logger.SomeLogInformation();
@@ -1168,8 +1168,8 @@ public class OtlpLogExporterTests
         // Act.
         using (logger.BeginScope(new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>(scopeKey1, scopeValue1),
-            new KeyValuePair<string, object>(scopeKey2, scopeValue2),
+            new(scopeKey1, scopeValue1),
+            new(scopeKey2, scopeValue2),
         }))
         {
             logger.SomeLogInformation();
@@ -1208,9 +1208,9 @@ public class OtlpLogExporterTests
         const string scopeValue2 = "Some other scope value";
 
         // Act.
-        using (logger.BeginScope(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey1, scopeValue1) }))
+        using (logger.BeginScope(new List<KeyValuePair<string, object>> { new(scopeKey1, scopeValue1) }))
         {
-            using (logger.BeginScope(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey2, scopeValue2) }))
+            using (logger.BeginScope(new List<KeyValuePair<string, object>> { new(scopeKey2, scopeValue2) }))
             {
                 logger.SomeLogInformation();
             }
@@ -1251,13 +1251,13 @@ public class OtlpLogExporterTests
         // Act.
         using (logger.BeginScope(new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>(scopeKey1, scopeValue1),
+            new(scopeKey1, scopeValue1),
         }))
         {
             logger.Log(
                 LogLevel.Error,
                 new EventId(1),
-                new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey2, scopeValue2) },
+                new List<KeyValuePair<string, object>> { new(scopeKey2, scopeValue2) },
                 exception: new InvalidOperationException("Some exception message"),
                 formatter: (s, e) => string.Empty);
         }

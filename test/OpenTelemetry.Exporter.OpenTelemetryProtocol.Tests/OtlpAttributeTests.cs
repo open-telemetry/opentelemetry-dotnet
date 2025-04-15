@@ -220,7 +220,7 @@ public class OtlpAttributeTests
             (nint)int.MaxValue,
             (nuint)uint.MaxValue,
             decimal.MaxValue,
-            new object(),
+            new(),
         };
 
         var testArrayValues = new object[]
@@ -228,7 +228,7 @@ public class OtlpAttributeTests
             new nint[] { 1, 2, 3 },
             new nuint[] { 1, 2, 3 },
             new decimal[] { 1, 2, 3 },
-            new object?[] { new object[3], new object(), null },
+            new object?[] { new object[3], new(), null },
         };
 
         foreach (var value in testValues)
