@@ -306,12 +306,20 @@ internal static class ZipkinActivityConversionExtensions
 
     private static PooledList<ZipkinAnnotation> ExtractActivityEvents(Activity activity)
     {
+        var enumerator = activity.EnumerateEvents().GetEnumerator();
+        if (!enumerator.MoveNext())
+        {
+            return default;
+        }
+
         var annotations = PooledList<ZipkinAnnotation>.Create();
 
-        foreach (ref readonly var @event in activity.EnumerateEvents())
+        do
         {
+            var @event = enumerator.Current;
             PooledList<ZipkinAnnotation>.Add(ref annotations, new ZipkinAnnotation(@event.Timestamp.ToEpochMicroseconds(), @event.Name));
         }
+        while (enumerator.MoveNext());
 
         return annotations;
     }
