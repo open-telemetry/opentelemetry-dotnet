@@ -45,14 +45,6 @@ internal static class TrailingHeadersHelpers
     }
 
 #if NETSTANDARD2_0 || NET462
-    public static void EnsureTrailingHeaders(this HttpResponseMessage responseMessage)
-    {
-        if (!responseMessage.RequestMessage.Properties.ContainsKey(ResponseTrailersKey))
-        {
-            responseMessage.RequestMessage.Properties[ResponseTrailersKey] = new ResponseTrailers();
-        }
-    }
-
     private class ResponseTrailers : HttpHeaders
     {
         public static readonly ResponseTrailers Empty = new ResponseTrailers();
