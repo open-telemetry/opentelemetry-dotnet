@@ -16,6 +16,14 @@ public class OtlpRetryTests
     [MemberData(nameof(GrpcRetryTestData))]
     public void TryGetGrpcRetryResultTest(GrpcRetryTestCase testCase)
     {
+#if NET
+        Assert.NotNull(testCase);
+#else
+        if (testCase == null)
+        {
+            throw new ArgumentNullException(nameof(testCase));
+        }
+#endif
         var attempts = 0;
         var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
 
@@ -26,8 +34,7 @@ public class OtlpRetryTests
             var statusCode = retryAttempt.Response.Status.Value.StatusCode;
             var deadline = retryAttempt.Response.DeadlineUtc;
             var trailers = retryAttempt.Response.GrpcStatusDetailsHeader;
-            var success = OtlpRetry.TryGetGrpcRetryResult(retryAttempt.Response, nextRetryDelayMilliseconds,
-                out var retryResult);
+            var success = OtlpRetry.TryGetGrpcRetryResult(retryAttempt.Response, nextRetryDelayMilliseconds, out var retryResult);
 
             Assert.Equal(retryAttempt.ExpectedSuccess, success);
 
@@ -60,6 +67,14 @@ public class OtlpRetryTests
     [MemberData(nameof(HttpRetryTestData))]
     public void TryGetHttpRetryResultTest(HttpRetryTestCase testCase)
     {
+#if NET
+        Assert.NotNull(testCase);
+#else
+        if (testCase == null)
+        {
+            throw new ArgumentNullException(nameof(testCase));
+        }
+#endif
         var attempts = 0;
         var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
 
@@ -69,8 +84,7 @@ public class OtlpRetryTests
             var statusCode = retryAttempt.Response.StatusCode;
             var deadline = retryAttempt.Response.DeadlineUtc;
             var headers = retryAttempt.Response.Headers;
-            var success = OtlpRetry.TryGetHttpRetryResult(retryAttempt.Response, nextRetryDelayMilliseconds,
-                out var retryResult);
+            var success = OtlpRetry.TryGetHttpRetryResult(retryAttempt.Response, nextRetryDelayMilliseconds, out var retryResult);
 
             Assert.Equal(retryAttempt.ExpectedSuccess, success);
 

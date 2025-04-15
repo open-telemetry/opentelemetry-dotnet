@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -787,6 +788,15 @@ public class OtlpLogExporterTests
     [InlineData('a')]
     public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_ContainsScopeAttributeStringValue(object scopeValue)
     {
+#if NET
+        Assert.NotNull(scopeValue);
+#else
+        if (scopeValue == null)
+        {
+            throw new ArgumentNullException(nameof(scopeValue));
+        }
+#endif
+
         // Arrange.
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
@@ -877,6 +887,15 @@ public class OtlpLogExporterTests
     [InlineData(long.MaxValue)]
     public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_ContainsScopeAttributeIntValue(object scopeValue)
     {
+#if NET
+        Assert.NotNull(scopeValue);
+#else
+        if (scopeValue == null)
+        {
+            throw new ArgumentNullException(nameof(scopeValue));
+        }
+#endif
+
         // Arrange.
         var logRecords = new List<LogRecord>(1);
         using var loggerFactory = LoggerFactory.Create(builder =>
