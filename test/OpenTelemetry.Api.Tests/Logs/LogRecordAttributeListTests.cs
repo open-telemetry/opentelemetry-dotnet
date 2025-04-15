@@ -133,4 +133,28 @@ public sealed class LogRecordAttributeListTests
             index++;
         }
     }
+
+    [Fact]
+    public void InitializerAddSyntaxTest()
+    {
+        LogRecordAttributeList list = new LogRecordAttributeList
+        {
+            { "key1", new object() },
+            { "key2", 2 },
+        };
+
+        Assert.Equal(2, list.Count);
+    }
+
+    [Fact]
+    public void InitializerIndexesSyntaxTest()
+    {
+        LogRecordAttributeList list = new LogRecordAttributeList
+        {
+            ["key1"] = new object(),
+            ["key2"] = 2,
+        };
+
+        Assert.Equal(2, list.Count);
+    }
 }

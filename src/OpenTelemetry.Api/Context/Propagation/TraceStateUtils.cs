@@ -10,7 +10,7 @@ namespace OpenTelemetry.Context.Propagation;
 /// <summary>
 /// Extension methods to extract TraceState from string.
 /// </summary>
-internal static class TraceStateUtilsNew
+internal static class TraceStateUtils
 {
     private const int KeyMaxSize = 256;
     private const int ValueMaxSize = 256;
@@ -98,6 +98,7 @@ internal static class TraceStateUtilsNew
 
     internal static string GetString(IEnumerable<KeyValuePair<string, string>>? traceState)
     {
+#pragma warning disable CA1851 // Possible multiple enumerations of 'IEnumerable' collection
         if (traceState == null || !traceState.Any())
         {
             return string.Empty;
@@ -125,6 +126,7 @@ internal static class TraceStateUtilsNew
                     .Append(',');
             }
         }
+#pragma warning restore CA1851 // Possible multiple enumerations of 'IEnumerable' collection
 
         return sb.Remove(sb.Length - 1, 1).ToString();
     }
@@ -153,7 +155,7 @@ internal static class TraceStateUtilsNew
             return false;
         }
 
-        value = pair.Slice(valueStartIdx, pair.Length - valueStartIdx).Trim();
+        value = pair.Slice(valueStartIdx).Trim();
         if (!ValidateValue(value))
         {
             OpenTelemetryApiEventSource.Log.TracestateValueIsInvalid(value);
