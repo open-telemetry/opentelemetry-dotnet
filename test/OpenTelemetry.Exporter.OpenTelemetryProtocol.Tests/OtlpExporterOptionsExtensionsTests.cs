@@ -93,13 +93,13 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("http://test:8888/", "http://test:8888/v1/traces")]
     [InlineData("http://test:8888/v1/traces", "http://test:8888/v1/traces")]
     [InlineData("http://test:8888/v1/traces/", "http://test:8888/v1/traces/")]
-    public void AppendPathIfNotPresent_TracesPath_AppendsCorrectly(string inputUri, string expectedUri)
+    public void AppendPathIfNotPresent_TracesPath_AppendsCorrectly(string input, string expected)
     {
-        var uri = new Uri(inputUri, UriKind.Absolute);
+        var uri = new Uri(input, UriKind.Absolute);
 
         var resultUri = uri.AppendPathIfNotPresent("v1/traces");
 
-        Assert.Equal(expectedUri, resultUri.AbsoluteUri);
+        Assert.Equal(expected, resultUri.AbsoluteUri);
     }
 
     [Theory]
