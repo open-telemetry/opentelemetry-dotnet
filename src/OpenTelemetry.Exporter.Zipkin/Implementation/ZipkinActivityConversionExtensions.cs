@@ -109,10 +109,7 @@ internal static class ZipkinActivityConversionExtensions
                 PooledList<KeyValuePair<string, object?>>.Add(ref tags, tag);
             }
 
-            if (tag.Key != null && !cachedTags.ContainsKey(tag.Key))
-            {
-                cachedTags[tag.Key] = tag.Value;
-            }
+            cachedTags[tag.Key] = tag.Value;
         }
     }
 
