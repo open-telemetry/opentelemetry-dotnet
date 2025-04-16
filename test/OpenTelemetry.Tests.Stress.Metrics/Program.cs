@@ -97,6 +97,7 @@ internal static class Program
             if (this.Options.TestType == MetricsStressTestType.Histogram)
             {
                 TestHistogram.Record(
+#pragma warning disable CA5394 // Do not use random number generators in secure applications
                     random.Next(MaxHistogramMeasurement),
                     new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
                     new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
@@ -109,6 +110,7 @@ internal static class Program
                    new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
                    new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
                    new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
+#pragma warning restore CA5394 // Do not use random number generators in secure applications
             }
         }
     }
