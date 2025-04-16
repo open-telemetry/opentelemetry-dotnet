@@ -72,7 +72,7 @@ jobs:
       run: dotnet-coverage merge -f cobertura -o ./TestResults/Cobertura.xml ./TestResults/**/*.coverage
 
     - name: Upload code coverage ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-      uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5.28.13
+      uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
       continue-on-error: true # Note: Don't fail for upload failures
       env:
         OS: ${{ matrix.os }}
