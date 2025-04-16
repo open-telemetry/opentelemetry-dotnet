@@ -16,7 +16,6 @@ internal static class Program
     private sealed class LogsStressTest : StressTests<StressTestOptions>
 #pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
-        private static readonly Payload Payload = new();
         private readonly ILoggerFactory loggerFactory;
         private readonly ILogger logger;
 
