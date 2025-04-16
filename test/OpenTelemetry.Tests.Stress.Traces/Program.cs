@@ -6,7 +6,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests.Stress;
 
-public static class Program
+internal static class Program
 {
     public static int Main(string[] args)
     {
