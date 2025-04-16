@@ -8,7 +8,7 @@ using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests.Stress;
 
-public static class Program
+internal static class Program
 {
     private enum MetricsStressTestType
     {
