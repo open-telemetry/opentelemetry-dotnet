@@ -26,8 +26,11 @@ public static class Program
                 .Build();
         }
 
-        public override void Dispose() =>
+        public override void Dispose()
+        {
             this.tracerProvider.Dispose();
+            base.Dispose();
+        }
 
         protected override void RunWorkItemInParallel()
         {
