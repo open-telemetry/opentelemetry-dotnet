@@ -102,12 +102,12 @@ public abstract class PersistentBlobProvider
     {
         try
         {
-            return this.OnGetBlobs() ?? Enumerable.Empty<PersistentBlob>();
+            return this.OnGetBlobs() ?? [];
         }
         catch (Exception ex)
         {
             PersistentStorageAbstractionsEventSource.Log.PersistentStorageAbstractionsException(nameof(PersistentBlobProvider), "Failed to get all the blobs", ex);
-            return Enumerable.Empty<PersistentBlob>();
+            return [];
         }
     }
 

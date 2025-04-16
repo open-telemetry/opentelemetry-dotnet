@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using Xunit;
 
 namespace OpenTelemetry.Tests;
@@ -39,8 +40,10 @@ public class BaggageTests
         Assert.Equal(list, Baggage.GetBaggage(Baggage.Current));
 
         Assert.Equal(V1, Baggage.GetBaggage(K1));
-        Assert.Equal(V1, Baggage.GetBaggage(K1.ToLower()));
-        Assert.Equal(V1, Baggage.GetBaggage(K1.ToUpper()));
+#pragma warning disable CA1308 // Normalize strings to uppercase
+        Assert.Equal(V1, Baggage.GetBaggage(K1.ToLower(CultureInfo.InvariantCulture)));
+#pragma warning restore CA1308 // Normalize strings to uppercase
+        Assert.Equal(V1, Baggage.GetBaggage(K1.ToUpper(CultureInfo.InvariantCulture)));
         Assert.Null(Baggage.GetBaggage("NO_KEY"));
         Assert.Equal(V2, Baggage.Current.GetBaggage(K2));
 
@@ -166,7 +169,7 @@ public class BaggageTests
         var tag2 = enumerator.Current;
         Assert.False(enumerator.MoveNext());
 
-        Assert.Equal(list, new List<KeyValuePair<string, string>> { tag1, tag2 });
+        Assert.Equal(list, [tag1, tag2]);
 
         Baggage.ClearBaggage();
 

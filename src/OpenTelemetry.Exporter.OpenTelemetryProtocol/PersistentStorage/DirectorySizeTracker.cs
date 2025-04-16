@@ -56,16 +56,16 @@ internal sealed class DirectorySizeTracker
         long directorySize = 0;
         try
         {
-            foreach (string file in Directory.EnumerateFiles(path))
+            foreach (var file in Directory.EnumerateFiles(path))
             {
                 if (File.Exists(file))
                 {
-                    FileInfo fileInfo = new FileInfo(file);
+                    var fileInfo = new FileInfo(file);
                     directorySize += fileInfo.Length;
                 }
             }
 
-            foreach (string dir in Directory.GetDirectories(path))
+            foreach (var dir in Directory.GetDirectories(path))
             {
                 directorySize += CalculateFolderSize(dir);
             }
