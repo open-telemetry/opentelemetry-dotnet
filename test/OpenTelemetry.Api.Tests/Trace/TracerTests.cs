@@ -10,7 +10,7 @@ using Xunit.Abstractions;
 
 namespace OpenTelemetry.Trace.Tests;
 
-public class TracerTests : IDisposable
+public sealed class TracerTests : IDisposable
 {
     private readonly ITestOutputHelper output;
     private readonly Tracer tracer;
@@ -330,7 +330,7 @@ public class TracerTests : IDisposable
             .WithTestingIterations(100)
             .WithMemoryAccessRaceCheckingEnabled(true);
 
-        var test = TestingEngine.Create(config, InnerTest);
+        using var test = TestingEngine.Create(config, InnerTest);
 
         test.Run();
 
@@ -370,7 +370,7 @@ public class TracerTests : IDisposable
             Thread[] getTracerThreads = new Thread[testTracerProvider.ExpectedNumberOfThreads];
             for (int i = 0; i < testTracerProvider.ExpectedNumberOfThreads; i++)
             {
-                getTracerThreads[i] = new Thread((object? state) =>
+                getTracerThreads[i] = new Thread(state =>
                 {
                     var testTracerProvider = state as TestTracerProvider;
                     Assert.NotNull(testTracerProvider);
@@ -397,12 +397,12 @@ public class TracerTests : IDisposable
 
             testTracerProvider.StartHandle.WaitOne();
 
-            testTracerProvider.Dispose();
-
             foreach (var getTracerThread in getTracerThreads)
             {
                 getTracerThread.Join();
             }
+
+            testTracerProvider.Dispose();
 
             Assert.Empty(tracers);
         }
@@ -561,5 +561,15 @@ public class TracerTests : IDisposable
         public int ExpectedNumberOfThreads;
         public int NumberOfThreads;
         public EventWaitHandle StartHandle = new ManualResetEvent(false);
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.StartHandle.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
     }
 }

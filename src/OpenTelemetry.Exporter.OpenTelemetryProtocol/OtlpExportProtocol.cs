@@ -11,6 +11,9 @@ public enum OtlpExportProtocol : byte
     /// <summary>
     /// OTLP over gRPC (corresponds to 'grpc' Protocol configuration option). Used as default.
     /// </summary>
+#if NET462_OR_GREATER || NETSTANDARD2_0
+    [Obsolete("CAUTION: OTLP/gRPC is no longer supported for .NET Framework or .NET Standard targets without supplying a properly configured HttpClientFactory. It is strongly encouraged that you migrate to using OTLP/HTTPPROTOBUF.")]
+#endif
     Grpc = 0,
 
     /// <summary>

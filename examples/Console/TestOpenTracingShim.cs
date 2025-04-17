@@ -10,7 +10,7 @@ using OpenTracing;
 
 namespace Examples.Console;
 
-internal class TestOpenTracingShim
+internal sealed class TestOpenTracingShim
 {
     internal static int Run(OpenTracingShimOptions options)
     {

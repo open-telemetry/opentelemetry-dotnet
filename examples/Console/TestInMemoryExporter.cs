@@ -8,7 +8,7 @@ using OpenTelemetry.Trace;
 
 namespace Examples.Console;
 
-internal class TestInMemoryExporter
+internal sealed class TestInMemoryExporter
 {
     // To run this example, run the following command from
     // the reporoot\examples\Console\.
