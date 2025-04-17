@@ -84,7 +84,7 @@ public class MetricsViewBenchmarks
     {
         this.meter = new Meter(Utils.GetCurrentMethodName());
         this.counter = this.meter.CreateCounter<long>("counter");
-        this.metrics = new List<Metric>();
+        this.metrics = [];
 
         if (this.ViewConfig == ViewConfiguration.NoView)
         {
