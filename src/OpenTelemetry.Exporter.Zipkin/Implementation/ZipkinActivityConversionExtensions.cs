@@ -131,7 +131,11 @@ internal static class ZipkinActivityConversionExtensions
             // activity.Status is Error
             else
             {
-                string statusDescription = (activity.StatusDescription ?? GetTag(ZipkinErrorFlagTagName)) ?? string.Empty;
+                string statusDescription =
+                    activity.StatusDescription
+                    ?? GetTag(SpanAttributeConstants.StatusDescriptionKey)
+                    ?? GetTag(ZipkinErrorFlagTagName)
+                    ?? string.Empty;
                 PooledList<KeyValuePair<string, object?>>.Add(
                     ref tags,
                     new KeyValuePair<string, object?>(
@@ -162,7 +166,12 @@ internal static class ZipkinActivityConversionExtensions
                 }
                 else if (status == "ERROR")
                 {
-                    string statusDescription = (activity.StatusDescription ?? GetTag(ZipkinErrorFlagTagName)) ?? string.Empty;
+                    string statusDescription =
+                        activity.StatusDescription
+                        ?? GetTag(SpanAttributeConstants.StatusDescriptionKey)
+                        ?? GetTag(ZipkinErrorFlagTagName)
+                        ?? string.Empty;
+
                     activity.SetStatus(ActivityStatusCode.Error);
 
                     PooledList<KeyValuePair<string, object?>>.Add(
