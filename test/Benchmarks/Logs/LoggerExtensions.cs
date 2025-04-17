@@ -15,4 +15,7 @@ internal static partial class LoggerExtensions
         string productType,
         string recallReasonDescription,
         string companyName);
+
+    [LoggerMessage(LogLevel.Information, "Hello from {Food} {Price}.")]
+    public static partial void HelloFrom(this ILogger logger, string food, double price);
 }

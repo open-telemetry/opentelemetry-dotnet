@@ -95,13 +95,19 @@ public class LogBenchmarks
     [Benchmark]
     public void NoListenerStringInterpolation()
     {
+#pragma warning disable CA2254 // Template should be a static expression
+#pragma warning disable CA1848 // Use the LoggerMessage delegates
         this.loggerWithNoListener.LogInformation($"Hello from {FoodName} {FoodPrice}.");
+#pragma warning restore CA1848 // Use the LoggerMessage delegates
+#pragma warning restore CA2254 // Template should be a static expression
     }
 
     [Benchmark]
     public void NoListenerExtensionMethod()
     {
+#pragma warning disable CA1848 // Use the LoggerMessage delegates
         this.loggerWithNoListener.LogInformation("Hello from {Name} {Price}.", FoodName, FoodPrice);
+#pragma warning restore CA1848 // Use the LoggerMessage delegates
     }
 
     [Benchmark]
