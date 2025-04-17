@@ -63,7 +63,7 @@ public class ActivityCreationBenchmarks
     [Benchmark]
     public void CreateActivity_WithAddTags_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAddTags(this.benchmarkSource);
 
-    internal class NoopActivityProcessor : BaseProcessor<Activity>
+    internal sealed class NoopActivityProcessor : BaseProcessor<Activity>
     {
     }
 }
