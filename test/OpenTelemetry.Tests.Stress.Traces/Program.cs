@@ -28,10 +28,14 @@ internal static class Program
                 .Build();
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            this.tracerProvider.Dispose();
-            base.Dispose();
+            if (disposing)
+            {
+                this.tracerProvider.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
 
         protected override void RunWorkItemInParallel()

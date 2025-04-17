@@ -33,10 +33,14 @@ internal static class Program
             this.logger = this.loggerFactory.CreateLogger<LogsStressTest>();
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            this.loggerFactory.Dispose();
-            base.Dispose();
+            if (disposing)
+            {
+                this.loggerFactory.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
 
         protected override void RunWorkItemInParallel()

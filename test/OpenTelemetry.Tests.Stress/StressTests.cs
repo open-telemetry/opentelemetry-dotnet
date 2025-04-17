@@ -23,8 +23,10 @@ public abstract class StressTests<T> : IDisposable
 
     public T Options { get; }
 
-    public virtual void Dispose()
+    public void Dispose()
     {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
     public void RunSynchronously()
@@ -194,6 +196,10 @@ public abstract class StressTests<T> : IDisposable
 #if !NETFRAMEWORK
         Console.WriteLine($"* GC Total Allocated Bytes: {GC.GetTotalAllocatedBytes()}");
 #endif
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
     }
 
     protected virtual void WriteRunInformationToConsole()

@@ -79,10 +79,14 @@ internal static class Program
             this.meterProvider = builder.Build();
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            this.meterProvider.Dispose();
-            base.Dispose();
+            if (disposing)
+            {
+                this.meterProvider.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
 
         protected override void WriteRunInformationToConsole()
