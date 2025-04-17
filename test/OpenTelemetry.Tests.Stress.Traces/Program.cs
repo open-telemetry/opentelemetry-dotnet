@@ -13,7 +13,9 @@ internal static class Program
         return StressTestFactory.RunSynchronously<TracesStressTest>(args);
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class TracesStressTest : StressTests<StressTestOptions>
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private static readonly ActivitySource ActivitySource = new("OpenTelemetry.Tests.Stress");
         private readonly TracerProvider tracerProvider;
