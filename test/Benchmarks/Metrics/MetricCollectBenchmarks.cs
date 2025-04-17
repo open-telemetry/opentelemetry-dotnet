@@ -23,7 +23,9 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 
 namespace Benchmarks.Metrics;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class MetricCollectBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     private readonly string[] dimensionValues = ["DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10"];
 
@@ -42,7 +44,9 @@ public class MetricCollectBenchmarks
     [GlobalSetup]
     public void Setup()
     {
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var metricExporter = new TestExporter<Metric>(ProcessExport);
+#pragma warning restore CA2000 // Dispose objects before losing scope
         void ProcessExport(Batch<Metric> batch)
         {
             double sum = 0;

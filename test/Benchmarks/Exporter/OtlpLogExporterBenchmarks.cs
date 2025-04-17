@@ -34,7 +34,9 @@ AMD EPYC 7763, 1 CPU, 16 logical and 8 physical cores
 
 namespace Benchmarks.Exporter;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class OtlpLogExporterBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     private OtlpLogExporter? exporter;
     private LogRecord? logRecord;

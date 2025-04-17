@@ -25,7 +25,9 @@ BenchmarkDotNet v0.13.10, Windows 11 (10.0.22621.2861)
 
 namespace Benchmarks.Trace;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class ActivityCreationBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     private readonly ActivitySource benchmarkSource = new("Benchmark");
     private readonly ActivityContext parentCtx = new(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
@@ -36,7 +38,9 @@ public class ActivityCreationBenchmarks
     {
         this.tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("BenchMark")
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new NoopActivityProcessor())
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .Build();
     }
 

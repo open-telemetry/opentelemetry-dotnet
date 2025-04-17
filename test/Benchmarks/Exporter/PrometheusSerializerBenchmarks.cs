@@ -10,7 +10,9 @@ using OpenTelemetry.Tests;
 
 namespace Benchmarks.Exporter;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class PrometheusSerializerBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     private readonly List<Metric> metrics = new();
     private readonly byte[] buffer = new byte[85000];

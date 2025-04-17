@@ -38,6 +38,7 @@ public class TraceShimBenchmarks
         Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
             .AddSource("Benchmark.OneProcessor")
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new DummyActivityProcessor())
             .Build();
 
@@ -54,6 +55,7 @@ public class TraceShimBenchmarks
             .AddProcessor(new DummyActivityProcessor())
             .AddProcessor(new DummyActivityProcessor())
             .AddProcessor(new DummyActivityProcessor())
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .Build();
     }
 
