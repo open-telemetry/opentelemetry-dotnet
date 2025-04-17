@@ -181,13 +181,15 @@ public class TraceBenchmarks
     [Benchmark]
     public void LegacyActivity_ExactMatchMode()
     {
-        using var activity = new Activity("ExactMatch.OperationName1").Start();
+        using var activity = new Activity("ExactMatch.OperationName1");
+        activity.Start();
     }
 
     [Benchmark]
     public void LegacyActivity_WildcardMatchMode()
     {
-        using var activity = new Activity("WildcardMatch.OperationName1").Start();
+        using var activity = new Activity("WildcardMatch.OperationName1");
+        activity.Start();
     }
 
     internal class DummyActivityProcessor : BaseProcessor<Activity>
