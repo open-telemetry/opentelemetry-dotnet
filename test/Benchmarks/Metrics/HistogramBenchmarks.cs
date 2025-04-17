@@ -91,6 +91,7 @@ public class HistogramBenchmarks
     [Benchmark]
     public void HistogramHotPath()
     {
+#pragma warning disable CA5394 // Do not use insecure randomness
         this.histogram!.Record(this.random.Next(MaxValue));
     }
 
@@ -138,5 +139,6 @@ public class HistogramBenchmarks
             { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
         };
         this.histogram!.Record(this.random.Next(MaxValue), tags);
+#pragma warning restore CA5394 // Do not use insecure randomness
     }
 }

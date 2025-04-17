@@ -72,6 +72,8 @@ public class Base2ExponentialHistogramScaleBenchmarks
     [Benchmark]
     public void HistogramHotPath()
     {
+#pragma warning disable CA5394 // Do not use insecure randomness
         this.histogram!.Record(this.random.Next(MaxValue));
+#pragma warning restore CA5394 // Do not use insecure randomness
     }
 }

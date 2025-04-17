@@ -125,6 +125,7 @@ public class ExemplarBenchmarks
         var random = ThreadLocalRandom.Value!;
         var tags = new TagList
         {
+#pragma warning disable CA5394 // Do not use insecure randomness
             { "DimName1", this.dimensionValues[random.Next(0, 2)] },
             { "DimName2", this.dimensionValues[random.Next(0, 2)] },
             { "DimName3", this.dimensionValues[random.Next(0, 5)] },
@@ -181,6 +182,7 @@ public class ExemplarBenchmarks
         };
 
         this.counterWithTagReduction!.Add(random.Next(1000), tags);
+#pragma warning restore CA5394 // Do not use insecure randomness
     }
 
     private sealed class HighValueExemplarReservoir : FixedSizeExemplarReservoir

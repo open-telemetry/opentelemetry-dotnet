@@ -101,6 +101,7 @@ public class MetricsBenchmarks
     [Benchmark]
     public void CounterWith1LabelsHotPath()
     {
+#pragma warning disable CA5394 // Do not use insecure randomness
         var tag1 = new KeyValuePair<string, object?>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
         this.counter!.Add(100, tag1);
     }
@@ -290,6 +291,7 @@ public class MetricsBenchmarks
             { "DimName7", this.dimensionValues[this.random.Next(0, 5)] },
             { "DimName8", this.dimensionValues[this.random.Next(0, 5)] },
             { "DimName9", this.dimensionValues[this.random.Next(0, 5)] },
+#pragma warning restore CA5394 // Do not use insecure randomness
         };
         this.counter!.Add(100, tags);
     }

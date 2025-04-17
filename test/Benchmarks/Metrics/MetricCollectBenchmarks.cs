@@ -86,9 +86,11 @@ public class MetricCollectBenchmarks
         {
             while (!this.token.IsCancellationRequested)
             {
+#pragma warning disable CA5394 // Do not use insecure randomness
                 var tag1 = new KeyValuePair<string, object?>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
                 var tag2 = new KeyValuePair<string, object?>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
                 var tag3 = new KeyValuePair<string, object?>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
+#pragma warning restore CA5394 // Do not use insecure randomness
                 this.counter.Add(100.00, tag1, tag2, tag3);
             }
         });

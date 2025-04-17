@@ -138,11 +138,13 @@ public class MetricsViewBenchmarks
         var random = ThreadLocalRandom.Value!;
         var tags = new TagList
         {
+#pragma warning disable CA5394 // Do not use insecure randomness
             { "DimName1", DimensionValues[random.Next(0, 2)] },
             { "DimName2", DimensionValues[random.Next(0, 2)] },
             { "DimName3", DimensionValues[random.Next(0, 5)] },
             { "DimName4", DimensionValues[random.Next(0, 5)] },
             { "DimName5", DimensionValues[random.Next(0, 10)] },
+#pragma warning restore CA5394 // Do not use insecure randomness
         };
 
         this.counter?.Add(
