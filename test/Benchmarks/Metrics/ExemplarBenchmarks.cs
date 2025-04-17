@@ -82,7 +82,11 @@ public class ExemplarBenchmarks
             .SetExemplarFilter(exemplarFilter)
             .AddView(i =>
             {
+#if NET
+                if (i.Name.Contains("WithTagReduction", StringComparison.Ordinal))
+#else
                 if (i.Name.Contains("WithTagReduction"))
+#endif
                 {
                     return new MetricStreamConfiguration()
                     {
