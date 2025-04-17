@@ -191,11 +191,11 @@ public class LogBenchmarks
                 companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
-    internal class NoopLogProcessor : BaseProcessor<LogRecord>
+    internal sealed class NoopLogProcessor : BaseProcessor<LogRecord>
     {
     }
 
-    internal class NoopExporter : BaseExporter<LogRecord>
+    internal sealed class NoopExporter : BaseExporter<LogRecord>
     {
         public override ExportResult Export(in Batch<LogRecord> batch)
         {

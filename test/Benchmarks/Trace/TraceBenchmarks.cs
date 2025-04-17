@@ -255,7 +255,5 @@ public class TraceBenchmarks
         activity.Start();
     }
 
-    internal class DummyActivityProcessor : BaseProcessor<Activity>
-    {
-    }
+    internal sealed class DummyActivityProcessor : BaseProcessor<Activity>;
 }

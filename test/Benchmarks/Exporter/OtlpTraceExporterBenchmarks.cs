@@ -132,7 +132,9 @@ public class OtlpTraceExporterBenchmarks
         this.exporter!.Export(new Batch<Activity>(this.activityBatch!, 1));
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MockTraceService : OtlpCollector.TraceService.TraceServiceBase
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private static readonly OtlpCollector.ExportTraceServiceResponse Response = new();
 

@@ -130,7 +130,9 @@ public class OtlpLogExporterBenchmarks
         this.exporter!.Export(new Batch<LogRecord>(this.logRecordBatch!, 1));
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MockLogService : OtlpCollector.LogsService.LogsServiceBase
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private static readonly OtlpCollector.ExportLogsServiceResponse Response = new();
 
