@@ -90,7 +90,7 @@ public class SamplerBenchmarks
         using var activity = this.sourceAppendTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
     }
 
-    internal class TestSampler : Sampler
+    internal sealed class TestSampler : Sampler
     {
         public Func<SamplingParameters, SamplingResult>? SamplingAction { get; set; }
 

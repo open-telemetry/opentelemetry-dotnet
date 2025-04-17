@@ -82,7 +82,5 @@ public class TraceShimBenchmarks
         using var activity = this.tracerWithThreeProcessors.StartActiveSpan("Benchmark");
     }
 
-    internal class DummyActivityProcessor : BaseProcessor<Activity>
-    {
-    }
+    internal sealed class DummyActivityProcessor : BaseProcessor<Activity>;
 }

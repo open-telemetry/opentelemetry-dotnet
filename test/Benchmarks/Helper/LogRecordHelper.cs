@@ -6,7 +6,7 @@ using OpenTelemetry.Logs;
 
 namespace Benchmarks.Helper;
 
-internal class LogRecordHelper
+internal static class LogRecordHelper
 {
     internal static LogRecord CreateTestLogRecord()
     {
