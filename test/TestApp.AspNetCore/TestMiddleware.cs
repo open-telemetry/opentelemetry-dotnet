@@ -3,7 +3,7 @@
 
 namespace TestApp.AspNetCore;
 
-public static class TestMiddleware
+internal static class TestMiddleware
 {
     private static readonly AsyncLocal<Action<IApplicationBuilder>?> Current = new();
 

@@ -15,7 +15,7 @@ public class ChildActivityController : Controller
     public Dictionary<string, string> GetChildActivityTraceContext()
     {
         var result = new Dictionary<string, string>();
-        var activity = new Activity("ActivityInsideHttpRequest");
+        using var activity = new Activity("ActivityInsideHttpRequest");
         activity.Start();
         result["TraceId"] = activity.Context.TraceId.ToString();
         result["ParentSpanId"] = activity.ParentSpanId.ToString();

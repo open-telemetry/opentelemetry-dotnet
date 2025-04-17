@@ -52,7 +52,7 @@ public class BaggagePropagator : TextMapPropagator
             var baggageCollection = getter(carrier, BaggageHeaderName);
             if (baggageCollection?.Any() ?? false)
             {
-                if (TryExtractBaggage(baggageCollection.ToArray(), out var baggage))
+                if (TryExtractBaggage([.. baggageCollection], out var baggage))
                 {
                     return new PropagationContext(context.ActivityContext, new Baggage(baggage!));
                 }
@@ -138,7 +138,11 @@ public class BaggagePropagator : TextMapPropagator
                     break;
                 }
 
+#if NET
+                if (pair.IndexOf('=', StringComparison.Ordinal) < 0)
+#else
                 if (pair.IndexOf('=') < 0)
+#endif
                 {
                     continue;
                 }
@@ -157,10 +161,7 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                if (baggageDictionary == null)
-                {
-                    baggageDictionary = new Dictionary<string, string>();
-                }
+                baggageDictionary ??= [];
 
                 baggageDictionary[key] = value;
             }
