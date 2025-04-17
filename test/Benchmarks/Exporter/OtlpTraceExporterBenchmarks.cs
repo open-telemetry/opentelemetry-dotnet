@@ -134,7 +134,7 @@ public class OtlpTraceExporterBenchmarks
 
     private sealed class MockTraceService : OtlpCollector.TraceService.TraceServiceBase
     {
-        private static OtlpCollector.ExportTraceServiceResponse response = new OtlpCollector.ExportTraceServiceResponse();
+        private static OtlpCollector.ExportTraceServiceResponse response = new();
 
         public override Task<OtlpCollector.ExportTraceServiceResponse> Export(OtlpCollector.ExportTraceServiceRequest request, ServerCallContext context)
         {

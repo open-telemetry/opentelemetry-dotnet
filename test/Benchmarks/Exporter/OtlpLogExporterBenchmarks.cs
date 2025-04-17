@@ -132,7 +132,7 @@ public class OtlpLogExporterBenchmarks
 
     private sealed class MockLogService : OtlpCollector.LogsService.LogsServiceBase
     {
-        private static OtlpCollector.ExportLogsServiceResponse response = new OtlpCollector.ExportLogsServiceResponse();
+        private static OtlpCollector.ExportLogsServiceResponse response = new();
 
         public override Task<OtlpCollector.ExportLogsServiceResponse> Export(OtlpCollector.ExportLogsServiceRequest request, ServerCallContext context)
         {
