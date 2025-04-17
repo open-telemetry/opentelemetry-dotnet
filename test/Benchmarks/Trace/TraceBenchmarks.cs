@@ -238,14 +238,18 @@ public class TraceBenchmarks
     }
 
     [Benchmark]
+#pragma warning disable CA1822 // Mark members as static
     public void LegacyActivity_ExactMatchMode()
+#pragma warning restore CA1822 // Mark members as static
     {
         using var activity = new Activity("ExactMatch.OperationName1");
         activity.Start();
     }
 
     [Benchmark]
+#pragma warning disable CA1822 // Mark members as static
     public void LegacyActivity_WildcardMatchMode()
+#pragma warning restore CA1822 // Mark members as static
     {
         using var activity = new Activity("WildcardMatch.OperationName1");
         activity.Start();
