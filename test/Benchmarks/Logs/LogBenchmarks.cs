@@ -32,7 +32,7 @@ namespace Benchmarks.Logs;
 public class LogBenchmarks
 {
     private const double FoodPrice = 2.99;
-    private static readonly string FoodName = "tomato";
+    private const string FoodName = "tomato";
 
     private readonly ILogger loggerWithNoListener;
     private readonly ILogger loggerWithOneProcessor;
