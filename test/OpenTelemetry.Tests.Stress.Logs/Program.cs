@@ -12,7 +12,9 @@ public static class Program
         return StressTestFactory.RunSynchronously<LogsStressTest>(args);
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class LogsStressTest : StressTests<StressTestOptions>
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private static readonly Payload Payload = new();
         private readonly ILoggerFactory loggerFactory;
