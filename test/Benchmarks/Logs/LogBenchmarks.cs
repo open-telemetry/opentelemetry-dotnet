@@ -101,7 +101,7 @@ public class LogBenchmarks
     [Benchmark]
     public void NoListenerExtensionMethod()
     {
-        this.loggerWithNoListener.LogInformation("Hello from {name} {price}.", FoodName, FoodPrice);
+        this.loggerWithNoListener.LogInformation("Hello from {Name} {Price}.", FoodName, FoodPrice);
     }
 
     [Benchmark]
