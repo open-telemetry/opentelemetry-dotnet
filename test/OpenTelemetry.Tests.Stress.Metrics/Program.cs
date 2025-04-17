@@ -24,7 +24,9 @@ internal static class Program
         return StressTestFactory.RunSynchronously<MetricsStressTest, MetricsStressTestOptions>(args);
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MetricsStressTest : StressTests<MetricsStressTestOptions>
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private const int ArraySize = 10;
         private const int MaxHistogramMeasurement = 1000;
@@ -115,7 +117,9 @@ internal static class Program
         }
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MetricsStressTestOptions : StressTestOptions
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         [JsonConverter(typeof(JsonStringEnumConverter))]
         [Option('t', "type", HelpText = "The metrics stress test type to run. Valid values: [Histogram, Counter]. Default value: Histogram.", Required = false)]
