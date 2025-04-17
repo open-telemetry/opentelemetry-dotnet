@@ -16,9 +16,9 @@ public class PrometheusSerializerBenchmarks
 {
     private readonly List<Metric> metrics = [];
     private readonly byte[] buffer = new byte[85000];
+    private readonly Dictionary<Metric, PrometheusMetric> cache = [];
     private Meter? meter;
     private MeterProvider? meterProvider;
-    private Dictionary<Metric, PrometheusMetric> cache = [];
 
     [Params(1, 1000, 10000)]
     public int NumberOfSerializeCalls { get; set; }
