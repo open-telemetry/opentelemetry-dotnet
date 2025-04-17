@@ -121,7 +121,7 @@ public class MetricsViewBenchmarks
         {
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
-                .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = Array.Empty<string>() })
+                .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = [] })
                 .AddInMemoryExporter(this.metrics)
                 .Build();
         }
