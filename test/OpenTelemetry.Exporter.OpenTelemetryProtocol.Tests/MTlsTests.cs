@@ -13,7 +13,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class MTlsTests : IDisposable
+    public class MtlsTests : IDisposable
     {
         private readonly string tempDir;
         private readonly string caCertPath;
@@ -21,7 +21,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         private readonly string clientKeyPath;
         private readonly string invalidCertPath;
 
-        public MTlsTests()
+        public MtlsTests()
         {
             // Create temporary directory for test certificates
             tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
