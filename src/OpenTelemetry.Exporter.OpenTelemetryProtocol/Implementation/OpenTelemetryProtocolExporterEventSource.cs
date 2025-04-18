@@ -104,6 +104,24 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         }
     }
 
+    [NonEvent]
+    public void MTlsCertificateLoadError(Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.MTlsCertificateLoadError(ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void MTlsPermissionCheckWarning(string filePath, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.MTlsPermissionCheckWarning(filePath, ex.ToInvariantString());
+        }
+    }
+
     [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
     public void FailedToReachCollector(string rawCollectorUri, string ex)
     {
@@ -234,6 +252,30 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     public void ArrayBufferExceededMaxSize()
     {
         this.WriteEvent(25);
+    }
+
+    [Event(26, Message = "Failed to load mTLS certificate. Exception: {0}", Level = EventLevel.Error)]
+    public void MTlsCertificateLoadError(string exception)
+    {
+        this.WriteEvent(26, exception);
+    }
+
+    [Event(27, Message = "Certificate permission check warning for file {0}. Exception: {1}", Level = EventLevel.Warning)]
+    public void MTlsPermissionCheckWarning(string filePath, string exception)
+    {
+        this.WriteEvent(27, filePath, exception);
+    }
+
+    [Event(28, Message = "Certificate chain validation error. Status: {0}, Details: {1}", Level = EventLevel.Error)]
+    public void MTlsCertificateChainValidationError(string status, string details)
+    {
+        this.WriteEvent(28, status, details);
+    }
+
+    [Event(29, Message = "Successfully configured mTLS for {0}", Level = EventLevel.Informational)]
+    public void MTlsConfigurationSuccess(string protocol)
+    {
+        this.WriteEvent(29, protocol);
     }
 
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
