@@ -9,175 +9,205 @@ using System.Security;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
+using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 /// <summary>
-/// Utility class for handling mTLS (mutual TLS) operations.
+/// Utility class for mTLS certificate operations.
 /// </summary>
 internal static class MTlsUtility
 {
     /// <summary>
-    /// Loads a certificate from a PEM file with validation.
+    /// Loads a certificate from a PEM file with validation checks.
     /// </summary>
-    /// <param name="certificateFilePath">The path to the certificate PEM file.</param>
-    /// <param name="keyFilePath">Optional path to the private key PEM file.</param>
-    /// <returns>The loaded X509Certificate2.</returns>
+    /// <param name="certificateFilePath">Path to the certificate file.</param>
+    /// <returns>The loaded certificate.</returns>
     /// <exception cref="FileNotFoundException">Thrown when the certificate file is not found.</exception>
-    /// <exception cref="SecurityException">Thrown when the certificate file has invalid permissions.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the certificate cannot be loaded or is invalid.</exception>
-    public static X509Certificate2 LoadCertificateWithValidation(string certificateFilePath, string? keyFilePath = null)
+    /// <exception cref="UnauthorizedAccessException">Thrown when there's insufficient permission to read the file.</exception>
+    /// <exception cref="CryptographicException">Thrown when the certificate is invalid.</exception>
+    public static X509Certificate2 LoadCertificateWithValidation(string certificateFilePath)
     {
-        // Check if certificate file exists
+        // Check if file exists
         if (!File.Exists(certificateFilePath))
         {
+            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateFileNotFound(certificateFilePath);
             throw new FileNotFoundException($"Certificate file not found: {certificateFilePath}");
         }
 
-        // If key file is provided, check if it exists
-        if (!string.IsNullOrEmpty(keyFilePath) && !File.Exists(keyFilePath))
-        {
-            throw new FileNotFoundException($"Private key file not found: {keyFilePath}");
-        }
-
         // Check file permissions
-        ValidateFilePermissions(certificateFilePath);
-        if (!string.IsNullOrEmpty(keyFilePath))
-        {
-            ValidateFilePermissions(keyFilePath);
-        }
+        CheckFilePermissions(certificateFilePath);
 
+        // Load the certificate
         try
         {
-            // Load the certificate
-            if (string.IsNullOrEmpty(keyFilePath))
+            var certificate = X509Certificate2.CreateFromPemFile(certificateFilePath);
+
+            // Validate certificate
+            if (!IsCertificateValid(certificate))
             {
-                return X509Certificate2.CreateFromPemFile(certificateFilePath);
+                OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateValidationFailed("Certificate validation failed");
+                throw new CryptographicException("Certificate validation failed");
             }
-            else
-            {
-                return X509Certificate2.CreateFromPemFile(certificateFilePath, keyFilePath);
-            }
+
+            return certificate;
         }
-        catch (Exception ex)
+        catch (CryptographicException ex)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
-            throw new InvalidOperationException($"Failed to load certificate: {ex.Message}", ex);
+            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateInvalid(ex);
+            throw;
         }
     }
 
     /// <summary>
-    /// Validates the chain of a certificate.
+    /// Loads a certificate with its private key from PEM files with validation checks.
     /// </summary>
-    /// <param name="certificate">The certificate to validate.</param>
-    /// <param name="trustedRoot">Optional trusted root certificate.</param>
-    /// <returns>True if validation succeeds, false otherwise.</returns>
-    public static bool ValidateCertificateChain(X509Certificate2 certificate, X509Certificate2? trustedRoot = null)
+    /// <param name="certificateFilePath">Path to the certificate file.</param>
+    /// <param name="keyFilePath">Path to the private key file.</param>
+    /// <returns>The loaded certificate with private key.</returns>
+    /// <exception cref="FileNotFoundException">Thrown when either file is not found.</exception>
+    /// <exception cref="UnauthorizedAccessException">Thrown when there's insufficient permission to read either file.</exception>
+    /// <exception cref="CryptographicException">Thrown when the certificate or key is invalid.</exception>
+    public static X509Certificate2 LoadCertificateWithValidation(string certificateFilePath, string keyFilePath)
     {
-        using var chain = new X509Chain();
-
-        if (trustedRoot != null)
+        // Check if files exist
+        if (!File.Exists(certificateFilePath))
         {
-            chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
-            chain.ChainPolicy.CustomTrustStore.Add(trustedRoot);
+            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateFileNotFound(certificateFilePath);
+            throw new FileNotFoundException($"Certificate file not found: {certificateFilePath}");
         }
 
-        // Validate the certificate chain
+        if (!File.Exists(keyFilePath))
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateFileNotFound(keyFilePath);
+            throw new FileNotFoundException($"Private key file not found: {keyFilePath}");
+        }
+
+        // Check file permissions for both files
+        CheckFilePermissions(certificateFilePath);
+        CheckFilePermissions(keyFilePath);
+
+        // Load the certificate with private key
+        try
+        {
+            var certificate = X509Certificate2.CreateFromPemFile(certificateFilePath, keyFilePath);
+
+            // Validate certificate
+            if (!IsCertificateValid(certificate))
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateValidationFailed("Certificate validation failed");
+                throw new CryptographicException("Certificate validation failed");
+            }
+
+            return certificate;
+        }
+        catch (CryptographicException ex)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateInvalid(ex);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Validates a certificate chain against a trusted root certificate.
+    /// </summary>
+    /// <param name="certificate">The certificate to validate.</param>
+    /// <param name="trustedRoot">The trusted root certificate.</param>
+    /// <returns>True if the chain is valid, false otherwise.</returns>
+    public static bool ValidateCertificateChain(X509Certificate2 certificate, X509Certificate2 trustedRoot)
+    {
+        using var chain = new X509Chain();
+        chain.ChainPolicy.ExtraStore.Add(trustedRoot);
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
         bool isValid = chain.Build(certificate);
 
         if (!isValid)
         {
-            // Log detailed error information
             foreach (var status in chain.ChainStatus)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateChainValidationError(status.Status.ToString(), status.StatusInformation);
+                OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateChainValidationFailed(
+                    status.StatusInformation);
             }
         }
 
         return isValid;
     }
 
-    /// <summary>
-    /// Validates file permissions to ensure they are secure.
-    /// </summary>
-    /// <param name="filePath">The path to the file to validate.</param>
-    /// <exception cref="SecurityException">Thrown when the file has insecure permissions.</exception>
-    public static void ValidateFilePermissions(string filePath)
+    private static bool IsCertificateValid(X509Certificate2 certificate)
+    {
+        // Check that certificate is within its validity period
+        var now = DateTime.Now;
+        if (now < certificate.NotBefore || now > certificate.NotAfter)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateValidationFailed(
+                $"Certificate is not valid at the current time. Valid from {certificate.NotBefore} to {certificate.NotAfter}");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static void CheckFilePermissions(string filePath)
     {
         try
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                ValidateWindowsFilePermissions(filePath);
+                CheckWindowsFilePermissions(filePath);
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
                      RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                ValidateUnixFilePermissions(filePath);
+                CheckUnixFilePermissions(filePath);
             }
         }
-        catch (Exception ex) when (!(ex is SecurityException))
+        catch (Exception ex)
         {
-            // Log but don't fail on permission check errors
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsPermissionCheckWarning(filePath, ex);
+            OpenTelemetryProtocolExporterEventSource.Log.MTlsFilePermissionCheckFailed(filePath, ex);
+            // Log but don't throw, as this is a security best practice check, not a requirement
         }
     }
 
-    private static void ValidateWindowsFilePermissions(string filePath)
+    private static void CheckWindowsFilePermissions(string filePath)
     {
         var fileSecurity = File.GetAccessControl(filePath);
         var accessRules = fileSecurity.GetAccessRules(true, true, typeof(SecurityIdentifier));
 
-        // Get current user's SID
         var currentUser = WindowsIdentity.GetCurrent().User;
-
-        bool hasUserReadAccess = false;
-        bool hasEveryoneReadAccess = false;
+        bool hasUserAccess = false;
 
         foreach (FileSystemAccessRule rule in accessRules)
         {
-            if (rule.IdentityReference is SecurityIdentifier sid)
+            if (rule.IdentityReference.Equals(currentUser) &&
+                (rule.FileSystemRights & FileSystemRights.Read) == FileSystemRights.Read &&
+                rule.AccessControlType == AccessControlType.Allow)
             {
-                // Check if current user has read access
-                if (sid.Equals(currentUser) &&
-                    (rule.FileSystemRights & FileSystemRights.Read) == FileSystemRights.Read &&
-                    rule.AccessControlType == AccessControlType.Allow)
-                {
-                    hasUserReadAccess = true;
-                }
-
-                // Check if Everyone group has access
-                if (sid.Equals(new SecurityIdentifier(WellKnownSidType.WorldSid, null)) &&
-                    (rule.FileSystemRights & FileSystemRights.Read) == FileSystemRights.Read &&
-                    rule.AccessControlType == AccessControlType.Allow)
-                {
-                    hasEveryoneReadAccess = true;
-                }
+                hasUserAccess = true;
+                break;
             }
         }
 
-        // If Everyone has read access, this is insecure
-        if (hasEveryoneReadAccess)
+        if (!hasUserAccess)
         {
-            throw new SecurityException($"Insecure file permissions: '{filePath}' is readable by Everyone group");
-        }
-
-        // Ensure current user has read access
-        if (!hasUserReadAccess)
-        {
-            throw new SecurityException($"Current user does not have read access to '{filePath}'");
+            OpenTelemetryProtocolExporterEventSource.Log.MTlsFilePermissionCheckFailed(
+                filePath, new UnauthorizedAccessException("Current user does not have read access to the file"));
         }
     }
 
-    private static void ValidateUnixFilePermissions(string filePath)
+    private static void CheckUnixFilePermissions(string filePath)
     {
         var fileInfo = new FileInfo(filePath);
-        var permissions = (int)fileInfo.UnixFileMode;
+        var permissions = fileInfo.UnixFileMode;
 
-        // Check if file is world-readable (permissions & 4) or world-writable (permissions & 2)
-        if ((permissions & 4) != 0 || (permissions & 2) != 0)
+        // Check if permissions are too open (e.g., world readable)
+        if ((permissions & UnixFileMode.OtherRead) != 0)
         {
-            throw new SecurityException($"Insecure file permissions: '{filePath}' has world-readable or world-writable permissions");
+            OpenTelemetryProtocolExporterEventSource.Log.MTlsFilePermissionCheckFailed(
+                filePath,
+                new UnauthorizedAccessException("Certificate file has permissions that are too permissive. " +
+                                                "Consider restricting with 'chmod 600' or similar"));
         }
     }
 }

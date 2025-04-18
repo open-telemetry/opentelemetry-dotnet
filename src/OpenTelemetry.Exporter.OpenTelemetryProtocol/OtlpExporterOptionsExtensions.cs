@@ -56,37 +56,49 @@ internal static class OtlpExporterOptionsExtensions
             try
             {
                 string? rootCertPem = null;
-                if (!string.IsNullOrEmpty(options.CertificateFilePath) && File.Exists(options.CertificateFilePath))
+                KeyCertificatePair? clientCerts = null;
+
+                // Load server certificate for validation if provided
+                if (!string.IsNullOrEmpty(options.CertificateFilePath))
                 {
-                    rootCertPem = File.ReadAllText(options.CertificateFilePath);
-                    MTlsUtility.ValidateFilePermissions(options.CertificateFilePath);
+                    try
+                    {
+                        var trustedCertificate = MTlsUtility.LoadCertificateWithValidation(options.CertificateFilePath);
+                        rootCertPem = File.ReadAllText(options.CertificateFilePath);
+                        OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("gRPC server validation");
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+                    }
                 }
 
-                KeyCertificatePair? clientCerts = null;
+                // Load client certificate and key if both are provided
                 if (!string.IsNullOrEmpty(options.ClientCertificateFilePath) &&
-                    !string.IsNullOrEmpty(options.ClientKeyFilePath) &&
-                    File.Exists(options.ClientCertificateFilePath) &&
-                    File.Exists(options.ClientKeyFilePath))
+                    !string.IsNullOrEmpty(options.ClientKeyFilePath))
                 {
-                    MTlsUtility.ValidateFilePermissions(options.ClientCertificateFilePath);
-                    MTlsUtility.ValidateFilePermissions(options.ClientKeyFilePath);
+                    try
+                    {
+                        var clientCertificate = MTlsUtility.LoadCertificateWithValidation(
+                            options.ClientCertificateFilePath,
+                            options.ClientKeyFilePath);
 
-                    string clientCertPem = File.ReadAllText(options.ClientCertificateFilePath);
-                    string clientKeyPem = File.ReadAllText(options.ClientKeyFilePath);
-                    clientCerts = new KeyCertificatePair(clientCertPem, clientKeyPem);
+                        string clientCertPem = File.ReadAllText(options.ClientCertificateFilePath);
+                        string clientKeyPem = File.ReadAllText(options.ClientKeyFilePath);
+                        clientCerts = new KeyCertificatePair(clientCertPem, clientKeyPem);
 
-                    OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("gRPC client authentication");
+                        OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("gRPC client authentication");
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+                    }
                 }
 
                 // Create SSL credentials with the loaded certificates
                 sslCredentials = clientCerts != null
                     ? new SslCredentials(rootCertPem, clientCerts)
                     : new SslCredentials(rootCertPem);
-
-                if (rootCertPem != null)
-                {
-                    OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("gRPC server validation");
-                }
             }
             catch (Exception ex)
             {

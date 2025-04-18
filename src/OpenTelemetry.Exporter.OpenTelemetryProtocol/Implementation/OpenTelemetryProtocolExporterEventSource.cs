@@ -288,4 +288,111 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     {
         this.InvalidConfigurationValue(key, value);
     }
+
+    [NonEvent]
+    public void ConfigurationError(string message)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.ConfigurationError_(message);
+        }
+    }
+
+    [Event(2, Message = "Environment variable is invalid, key = {0}, value = {1}, error = {2}", Level = EventLevel.Warning)]
+    public void EnvVarInvalid(string key, string value, string error)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.WriteEvent(2, key, value, error);
+        }
+    }
+
+    [Event(3, Message = "Unsupported action '{0}'", Level = EventLevel.Warning)]
+    public void UnsupportedAction(string action)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.WriteEvent(3, action);
+        }
+    }
+
+    [Event(4, Message = "Exporter HTTP request failed with status {0}. Error message: {1}", Level = EventLevel.Warning)]
+    public void ExportHttpFailure(int responseStatusCode, string error)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.WriteEvent(4, responseStatusCode, error);
+        }
+    }
+
+    [Event(5, Message = "Configuration error: {0}", Level = EventLevel.Error)]
+    private void ConfigurationError_(string message)
+    {
+        this.WriteEvent(5, message);
+    }
+
+    // mTLS Events
+
+    [Event(10, Message = "mTLS certificate file not found: {0}", Level = EventLevel.Error)]
+    public void MTlsCertificateFileNotFound(string filePath)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.WriteEvent(10, filePath);
+        }
+    }
+
+    [Event(11, Message = "mTLS certificate load error: {0}", Level = EventLevel.Error)]
+    public void MTlsCertificateLoadError(Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.WriteEvent(11, ex.ToString());
+        }
+    }
+
+    [Event(12, Message = "mTLS certificate invalid: {0}", Level = EventLevel.Error)]
+    public void MTlsCertificateInvalid(Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.WriteEvent(12, ex.ToString());
+        }
+    }
+
+    [Event(13, Message = "mTLS certificate validation failed: {0}", Level = EventLevel.Error)]
+    public void MTlsCertificateValidationFailed(string message)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.WriteEvent(13, message);
+        }
+    }
+
+    [Event(14, Message = "mTLS certificate chain validation failed: {0}", Level = EventLevel.Error)]
+    public void MTlsCertificateChainValidationFailed(string statusInformation)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.WriteEvent(14, statusInformation);
+        }
+    }
+
+    [Event(15, Message = "mTLS file permission check failed for {0}: {1}", Level = EventLevel.Warning)]
+    public void MTlsFilePermissionCheckFailed(string filePath, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.WriteEvent(15, filePath, ex.ToString());
+        }
+    }
+
+    [Event(16, Message = "mTLS configuration succeeded for {0}", Level = EventLevel.Informational)]
+    public void MTlsConfigurationSuccess(string component)
+    {
+        if (this.IsEnabled(EventLevel.Informational, EventKeywords.All))
+        {
+            this.WriteEvent(16, component);
+        }
+    }
 }

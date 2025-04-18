@@ -29,16 +29,20 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
 #if NET8_0_OR_GREATER
     private readonly ChannelBase? secureChannel;
+    private readonly bool useMtls;
 #endif
 
     public OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
         : base(options, httpClient, signalPath)
     {
 #if NET8_0_OR_GREATER
-        // If we're on HTTPS and have certificate files, create a secure channel
-        if (options.Endpoint.Scheme == Uri.UriSchemeHttps &&
+        // Determine if we should use mTLS based on certificate configuration and endpoint
+        this.useMtls = options.Endpoint.Scheme == Uri.UriSchemeHttps &&
             (!string.IsNullOrEmpty(options.CertificateFilePath) ||
-             (!string.IsNullOrEmpty(options.ClientCertificateFilePath) && !string.IsNullOrEmpty(options.ClientKeyFilePath))))
+            (!string.IsNullOrEmpty(options.ClientCertificateFilePath) && !string.IsNullOrEmpty(options.ClientKeyFilePath)));
+
+        // Create a secure channel if mTLS is enabled
+        if (this.useMtls)
         {
             try
             {
@@ -48,6 +52,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             {
                 OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
                 this.secureChannel = null;
+                this.useMtls = false;
             }
         }
 #endif
@@ -61,16 +66,40 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
 #if NET8_0_OR_GREATER
-        // If we have a secure channel and we're using mTLS, use it instead of HTTP
-        if (this.secureChannel != null)
+        // Use the secure channel for mTLS if available
+        if (this.useMtls && this.secureChannel != null)
         {
             try
             {
-                // For gRPC secure channel, we need to create a client and call it
-                // This would depend on your specific gRPC service implementation
-                // This is a placeholder for the actual implementation
-                OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint.ToString(), "Export with mTLS completed successfully.");
+                // Create a deadline for the gRPC call
+                var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
+
+                // Create a gRPC client call
+                var call = new CallOptions(deadline: deadline, cancellationToken: cancellationToken);
+
+                // Create a gRPC method
+                var method = new Method<byte[], byte[]>(
+                    MethodType.Unary,
+                    this.ExportServicePath,
+                    "ProtoMethod",
+                    Marshallers.Create(x => x, x => x));
+
+                // Call the gRPC service
+                var response = this.secureChannel.CreateCallInvoker().BlockingUnaryCall(method, null, call, buffer);
+
+                OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint.ToString(), "mTLS gRPC export completed successfully.");
                 return SuccessExportResponse;
+            }
+            catch (RpcException ex)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.ExportFailure(this.Endpoint, "mTLS gRPC export failed.", new Status(ex.StatusCode, ex.Message));
+
+                return new ExportClientGrpcResponse(
+                    success: false,
+                    deadlineUtc: deadlineUtc,
+                    exception: ex,
+                    status: new Status(ex.StatusCode, ex.Message),
+                    grpcStatusDetailsHeader: null);
             }
             catch (Exception ex)
             {
@@ -80,6 +109,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
 #endif
 
+        // Fallback to HTTP-based gRPC
         try
         {
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
