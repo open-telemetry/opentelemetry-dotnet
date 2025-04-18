@@ -50,9 +50,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     private Uri? endpoint;
     private int? timeoutMilliseconds;
     private Func<HttpClient>? httpClientFactory;
+#if NET8_0_OR_GREATER
     private string certificateFilePath = string.Empty;
     private string clientKeyFilePath = string.Empty;
     private string clientCertificateFilePath = string.Empty;
+#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
@@ -78,8 +80,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     {
         Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
 
-        this.ApplyConfiguration(configuration, configurationType);
-
         this.DefaultHttpClientFactory = () =>
         {
 #if NET8_0_OR_GREATER
@@ -98,10 +98,14 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;
 
+        this.ApplyConfiguration(configuration, configurationType);
+
+#if NET8_0_OR_GREATER
         // Load certificate-related environment variables
         this.CertificateFilePath = Environment.GetEnvironmentVariable(CertificateFileEnvVarName) ?? string.Empty;
         this.ClientKeyFilePath = Environment.GetEnvironmentVariable(ClientKeyFileEnvVarName) ?? string.Empty;
         this.ClientCertificateFilePath = Environment.GetEnvironmentVariable(ClientCertificateFileEnvVarName) ?? string.Empty;
+#endif
     }
 
     /// <inheritdoc/>
@@ -171,18 +175,15 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         }
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets or sets the path to the trusted certificate file to use when verifying a server's TLS credentials.
     /// </summary>
     /// <remarks>
     /// This certificate will be used to validate the server's certificate. It must be in PEM format.
-    /// This property is supported in .NET 8.0 or greater only. It will be ignored in earlier versions.
+    /// This property is supported in .NET 8.0 or greater only.
     /// </remarks>
-#if NET8_0_OR_GREATER
     public string CertificateFilePath
-#else
-    internal string CertificateFilePath
-#endif
     {
         get => this.certificateFilePath;
         set => this.certificateFilePath = value ?? string.Empty;
@@ -193,13 +194,9 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// </summary>
     /// <remarks>
     /// This private key will be used for client authentication. It must be in PEM format.
-    /// This property is supported in .NET 8.0 or greater only. It will be ignored in earlier versions.
+    /// This property is supported in .NET 8.0 or greater only.
     /// </remarks>
-#if NET8_0_OR_GREATER
     public string ClientKeyFilePath
-#else
-    internal string ClientKeyFilePath
-#endif
     {
         get => this.clientKeyFilePath;
         set => this.clientKeyFilePath = value ?? string.Empty;
@@ -210,17 +207,14 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// </summary>
     /// <remarks>
     /// This certificate will be presented to the server for client authentication. It must be in PEM format.
-    /// This property is supported in .NET 8.0 or greater only. It will be ignored in earlier versions.
+    /// This property is supported in .NET 8.0 or greater only.
     /// </remarks>
-#if NET8_0_OR_GREATER
     public string ClientCertificateFilePath
-#else
-    internal string ClientCertificateFilePath
-#endif
     {
         get => this.clientCertificateFilePath;
         set => this.clientCertificateFilePath = value ?? string.Empty;
     }
+#endif
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
@@ -255,14 +249,13 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         string headersEnvVarKey,
         string timeoutEnvVarKey)
     {
-        if (configuration.TryGetUriValue(OpenTelemetryProtocolExporterEventSource.Log, endpointEnvVarKey, out var endpoint))
+        if (configuration.TryGetUriValue(endpointEnvVarKey, out var endpoint))
         {
             this.endpoint = endpoint;
             this.AppendSignalPathToEndpoint = appendSignalPathToEndpoint;
         }
 
         if (configuration.TryGetValue<OtlpExportProtocol>(
-            OpenTelemetryProtocolExporterEventSource.Log,
             protocolEnvVarKey,
             OtlpExportProtocolParser.TryParse,
             out var protocol))
@@ -275,7 +268,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             this.Headers = headers;
         }
 
-        if (configuration.TryGetIntValue(OpenTelemetryProtocolExporterEventSource.Log, timeoutEnvVarKey, out var timeout))
+        if (configuration.TryGetIntValue(timeoutEnvVarKey, out var timeout))
         {
             this.TimeoutMilliseconds = timeout;
         }
@@ -308,32 +301,46 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             // Configure server certificate validation if CertificateFilePath is provided
             if (!string.IsNullOrEmpty(this.CertificateFilePath))
             {
-                // Load the certificate with validation
-                var trustedCertificate = MTlsUtility.LoadCertificateWithValidation(this.CertificateFilePath);
-
-                // Set custom server certificate validation callback
-                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+                try
                 {
-                    if (cert != null && chain != null)
+                    // Load the certificate with validation
+                    var trustedCertificate = MTlsUtility.LoadCertificateWithValidation(this.CertificateFilePath);
+
+                    // Set custom server certificate validation callback
+                    handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
                     {
-                        return MTlsUtility.ValidateCertificateChain(cert, trustedCertificate);
-                    }
+                        if (cert != null && chain != null)
+                        {
+                            return MTlsUtility.ValidateCertificateChain(cert, trustedCertificate);
+                        }
 
-                    return false;
-                };
+                        return false;
+                    };
 
-                OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("HTTPS server validation");
+                    OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("HTTPS server validation");
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+                }
             }
 
             // Add client certificate if both files are provided
             if (!string.IsNullOrEmpty(this.ClientCertificateFilePath) && !string.IsNullOrEmpty(this.ClientKeyFilePath))
             {
-                var clientCertificate = MTlsUtility.LoadCertificateWithValidation(
-                    this.ClientCertificateFilePath,
-                    this.ClientKeyFilePath);
+                try
+                {
+                    var clientCertificate = MTlsUtility.LoadCertificateWithValidation(
+                        this.ClientCertificateFilePath,
+                        this.ClientKeyFilePath);
 
-                handler.ClientCertificates.Add(clientCertificate);
-                OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("HTTPS client authentication");
+                    handler.ClientCertificates.Add(clientCertificate);
+                    OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("HTTPS client authentication");
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+                }
             }
 
             // Create and return an HttpClient with the modified handler
@@ -362,19 +369,13 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         // Ref: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.23.0/specification/protocol/exporter.md#configuration-options
 
         // Apply OTLP level environment variables.
-        if (configurationType == OtlpExporterOptionsConfigurationType.Default
-            || configurationType == OtlpExporterOptionsConfigurationType.Traces
-            || configurationType == OtlpExporterOptionsConfigurationType.Metrics
-            || configurationType == OtlpExporterOptionsConfigurationType.Logs)
-        {
-            ApplyConfigurationUsingSpecificationEnvVars(
-                configuration,
-                OtlpSpecConfigDefinitions.EndpointEnvVarName,
-                appendSignalPathToEndpoint: true,
-                OtlpSpecConfigDefinitions.ProtocolEnvVarName,
-                OtlpSpecConfigDefinitions.HeadersEnvVarName,
-                OtlpSpecConfigDefinitions.TimeoutEnvVarName);
-        }
+        ApplyConfigurationUsingSpecificationEnvVars(
+            configuration,
+            OtlpSpecConfigDefinitions.EndpointEnvVarName,
+            appendSignalPathToEndpoint: true,
+            OtlpSpecConfigDefinitions.ProtocolEnvVarName,
+            OtlpSpecConfigDefinitions.HeadersEnvVarName,
+            OtlpSpecConfigDefinitions.TimeoutEnvVarName);
 
         if (configurationType == OtlpExporterOptionsConfigurationType.Traces)
         {

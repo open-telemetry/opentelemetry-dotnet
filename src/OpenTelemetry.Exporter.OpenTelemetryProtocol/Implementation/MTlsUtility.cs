@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -101,7 +102,7 @@ internal static class MTlsUtility
     /// </summary>
     /// <param name="filePath">The path to the file to validate.</param>
     /// <exception cref="SecurityException">Thrown when the file has insecure permissions.</exception>
-    private static void ValidateFilePermissions(string filePath)
+    public static void ValidateFilePermissions(string filePath)
     {
         try
         {

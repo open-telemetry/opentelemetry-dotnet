@@ -1,10 +1,10 @@
 # mTLS Support in OpenTelemetry .NET OTLP Exporter
 
-Starting with .NET 8.0, the OpenTelemetry .NET OTLP exporter supports mutual TLS (mTLS) for secure communications. This document explains how to configure and use mTLS with the OTLP exporter.
+The OpenTelemetry .NET OTLP exporter supports mutual TLS (mTLS) for secure communications **ONLY in .NET 8.0 or later**. This document explains how to configure and use mTLS with the OTLP exporter.
 
 ## Prerequisites
 
-- .NET 8.0 or later
+- **.NET 8.0 or later** (there is no support for earlier versions)
 - PEM-formatted certificates and keys
 
 ## Features
@@ -114,7 +114,7 @@ The mTLS implementation logs all relevant events through the OpenTelemetry event
 
 ## Compatibility
 
-- **Supported in .NET 8.0+**: The mTLS features are only available when running on .NET 8.0 or later. On earlier versions, these settings are ignored.
+- **Supported ONLY in .NET 8.0+**: The mTLS features are exclusively available when running on .NET 8.0 or later. In earlier versions, these settings will be completely ignored, and attempting to use them will result in a `PlatformNotSupportedException`.
 - **Protocol Compatibility**: Both HTTP and gRPC protocols are supported with mTLS.
 
 ## Testing Your Configuration
@@ -122,6 +122,7 @@ The mTLS implementation logs all relevant events through the OpenTelemetry event
 A simple way to test your mTLS configuration is to use the following code:
 
 ```csharp
+// Note: This code requires .NET 8.0 or later
 var options = new OtlpExporterOptions
 {
     Endpoint = new Uri("https://your-collector:4317"),
@@ -159,5 +160,6 @@ If you encounter issues with mTLS:
 4. Ensure the private key matches the client certificate
 5. Look for error logs in your application's log output
 6. Try enabling more verbose logging for OpenTelemetry
+7. Verify you're running on .NET 8.0 or later, as mTLS is not supported on earlier versions
 
 For more detailed troubleshooting, enable debug logging on your application to see detailed error messages from the OpenTelemetry exporter.

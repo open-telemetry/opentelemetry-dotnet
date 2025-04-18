@@ -19,6 +19,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         private readonly string caCertPath;
         private readonly string clientCertPath;
         private readonly string clientKeyPath;
+        private readonly string invalidCertPath;
 
         public MTlsTests()
         {
@@ -30,6 +31,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             caCertPath = Path.Combine(tempDir, "ca.pem");
             clientCertPath = Path.Combine(tempDir, "client.pem");
             clientKeyPath = Path.Combine(tempDir, "client-key.pem");
+            invalidCertPath = Path.Combine(tempDir, "invalid.pem");
 
             // Create test certificates
             CreateTestCertificates();
@@ -72,6 +74,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
+        public void LoadCertificateWithValidation_InvalidCertificate_ThrowsInvalidOperationException()
+        {
+            // Arrange - create an invalid certificate file
+            File.WriteAllText(invalidCertPath, "This is not a valid certificate");
+
+            // Act & Assert
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                MTlsUtility.LoadCertificateWithValidation(invalidCertPath));
+
+            Assert.Contains("Failed to load certificate", ex.Message);
+        }
+
+        [Fact]
         public void OtlpExporterOptions_WithValidCertificates_ConfiguresHttpClient()
         {
             // Arrange
@@ -102,6 +117,25 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             // Assert
             Assert.True(isValid);
+        }
+
+        [Fact]
+        public void CreateSecureChannel_WithValidCertificates_CreatesChannel()
+        {
+            // Arrange
+            var options = new OtlpExporterOptions
+            {
+                Endpoint = new Uri("https://localhost:4317"),
+                CertificateFilePath = caCertPath,
+                ClientCertificateFilePath = clientCertPath,
+                ClientKeyFilePath = clientKeyPath
+            };
+
+            // Act
+            var channel = options.CreateSecureChannel();
+
+            // Assert
+            Assert.NotNull(channel);
         }
 
         private void CreateTestCertificates()
