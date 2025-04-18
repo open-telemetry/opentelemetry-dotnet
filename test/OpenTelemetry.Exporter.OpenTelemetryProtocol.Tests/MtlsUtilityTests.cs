@@ -9,7 +9,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public class MTlsUtilityTests : IDisposable
+public class MtlsUtilityTests : IDisposable
 {
     private readonly string tempFolder;
     private readonly string validCertPath;
@@ -17,7 +17,7 @@ public class MTlsUtilityTests : IDisposable
     private readonly string invalidCertPath;
     private readonly string nonExistentPath;
 
-    public MTlsUtilityTests()
+    public MtlsUtilityTests()
     {
         // Create a temporary folder for test certificates
         this.tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -45,7 +45,7 @@ public class MTlsUtilityTests : IDisposable
     public void LoadCertificateWithValidation_WithValidCertificate_ShouldSucceed()
     {
         // Act
-        var certificate = MTlsUtility.LoadCertificateWithValidation(this.validCertPath);
+        var certificate = MtlsUtility.LoadCertificateWithValidation(this.validCertPath);
 
         // Assert
         Assert.NotNull(certificate);
@@ -56,7 +56,7 @@ public class MTlsUtilityTests : IDisposable
     public void LoadCertificateWithValidation_WithValidCertificateAndKey_ShouldSucceed()
     {
         // Act
-        var certificate = MTlsUtility.LoadCertificateWithValidation(this.validCertPath, this.validKeyPath);
+        var certificate = MtlsUtility.LoadCertificateWithValidation(this.validCertPath, this.validKeyPath);
 
         // Assert
         Assert.NotNull(certificate);
@@ -67,7 +67,7 @@ public class MTlsUtilityTests : IDisposable
     public void LoadCertificateWithValidation_WithNonExistentCertificate_ShouldThrowFileNotFoundException()
     {
         // Act & Assert
-        Assert.Throws<FileNotFoundException>(() => MTlsUtility.LoadCertificateWithValidation(this.nonExistentPath));
+        Assert.Throws<FileNotFoundException>(() => MtlsUtility.LoadCertificateWithValidation(this.nonExistentPath));
     }
 
     [Fact]
@@ -75,24 +75,24 @@ public class MTlsUtilityTests : IDisposable
     {
         // Act & Assert
         Assert.Throws<FileNotFoundException>(() =>
-            MTlsUtility.LoadCertificateWithValidation(this.validCertPath, this.nonExistentPath));
+            MtlsUtility.LoadCertificateWithValidation(this.validCertPath, this.nonExistentPath));
     }
 
     [Fact]
     public void LoadCertificateWithValidation_WithInvalidCertificate_ShouldThrowCryptographicException()
     {
         // Act & Assert
-        Assert.Throws<CryptographicException>(() => MTlsUtility.LoadCertificateWithValidation(this.invalidCertPath));
+        Assert.Throws<CryptographicException>(() => MtlsUtility.LoadCertificateWithValidation(this.invalidCertPath));
     }
 
     [Fact]
     public void ValidateCertificateChain_WithSelfSignedCertificate_ShouldSucceed()
     {
         // Arrange
-        var cert = MTlsUtility.LoadCertificateWithValidation(this.validCertPath);
+        var cert = MtlsUtility.LoadCertificateWithValidation(this.validCertPath);
 
         // Act
-        var result = MTlsUtility.ValidateCertificateChain(cert, cert);
+        var result = MtlsUtility.ValidateCertificateChain(cert, cert);
 
         // Assert
         Assert.True(result);

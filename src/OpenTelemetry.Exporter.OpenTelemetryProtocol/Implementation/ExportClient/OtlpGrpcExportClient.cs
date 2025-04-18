@@ -50,7 +50,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             }
             catch (Exception ex)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
                 this.secureChannel = null;
                 this.useMtls = false;
             }

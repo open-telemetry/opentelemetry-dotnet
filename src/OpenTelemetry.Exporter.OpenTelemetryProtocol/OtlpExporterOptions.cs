@@ -82,24 +82,24 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                     try
                     {
                         // Load the certificate with validation
-                        var trustedCertificate = MTlsUtility.LoadCertificateWithValidation(this.CertificateFilePath);
+                        var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(this.CertificateFilePath);
 
                         // Set custom server certificate validation callback
                         handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
                         {
                             if (cert != null && chain != null)
                             {
-                                return MTlsUtility.ValidateCertificateChain(cert, trustedCertificate);
+                                return MtlsUtility.ValidateCertificateChain(cert, trustedCertificate);
                             }
 
                             return false;
                         };
 
-                        OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("HTTPS server validation");
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationSuccess("HTTPS server validation");
                     }
                     catch (Exception ex)
                     {
-                        OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
                     }
                 }
 
@@ -108,16 +108,16 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 {
                     try
                     {
-                        var clientCertificate = MTlsUtility.LoadCertificateWithValidation(
+                        var clientCertificate = MtlsUtility.LoadCertificateWithValidation(
                             this.ClientCertificateFilePath,
                             this.ClientKeyFilePath);
 
                         handler.ClientCertificates.Add(clientCertificate);
-                        OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("HTTPS client authentication");
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationSuccess("HTTPS client authentication");
                     }
                     catch (Exception ex)
                     {
-                        OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
                     }
                 }
 
@@ -128,7 +128,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             }
             catch (Exception ex)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
                 return new HttpClient
                 {
                     Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),

@@ -14,9 +14,9 @@ using Microsoft.Extensions.Logging;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 /// <summary>
-/// Utility class for mTLS certificate operations.
+/// Utility class for mutual TLS (mTLS) certificate operations.
 /// </summary>
-internal static class MTlsUtility
+internal static class MtlsUtility
 {
     /// <summary>
     /// Loads a certificate from a PEM file with validation checks.
@@ -31,7 +31,7 @@ internal static class MTlsUtility
         // Check if file exists
         if (!File.Exists(certificateFilePath))
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateFileNotFound(certificateFilePath);
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateFileNotFound(certificateFilePath);
             throw new FileNotFoundException($"Certificate file not found: {certificateFilePath}");
         }
 
@@ -46,7 +46,7 @@ internal static class MTlsUtility
             // Validate certificate
             if (!IsCertificateValid(certificate))
             {
-                OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateValidationFailed("Certificate validation failed");
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateValidationFailed("Certificate validation failed");
                 throw new CryptographicException("Certificate validation failed");
             }
 
@@ -54,7 +54,7 @@ internal static class MTlsUtility
         }
         catch (CryptographicException ex)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateInvalid(ex);
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateInvalid(ex);
             throw;
         }
     }
@@ -73,13 +73,13 @@ internal static class MTlsUtility
         // Check if files exist
         if (!File.Exists(certificateFilePath))
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateFileNotFound(certificateFilePath);
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateFileNotFound(certificateFilePath);
             throw new FileNotFoundException($"Certificate file not found: {certificateFilePath}");
         }
 
         if (!File.Exists(keyFilePath))
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateFileNotFound(keyFilePath);
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateFileNotFound(keyFilePath);
             throw new FileNotFoundException($"Private key file not found: {keyFilePath}");
         }
 
@@ -95,7 +95,7 @@ internal static class MTlsUtility
             // Validate certificate
             if (!IsCertificateValid(certificate))
             {
-                OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateValidationFailed("Certificate validation failed");
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateValidationFailed("Certificate validation failed");
                 throw new CryptographicException("Certificate validation failed");
             }
 
@@ -103,7 +103,7 @@ internal static class MTlsUtility
         }
         catch (CryptographicException ex)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateInvalid(ex);
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateInvalid(ex);
             throw;
         }
     }
@@ -127,7 +127,7 @@ internal static class MTlsUtility
         {
             foreach (var status in chain.ChainStatus)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateChainValidationFailed(
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateChainValidationFailed(
                     status.StatusInformation);
             }
         }
@@ -141,7 +141,7 @@ internal static class MTlsUtility
         var now = DateTime.Now;
         if (now < certificate.NotBefore || now > certificate.NotAfter)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateValidationFailed(
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateValidationFailed(
                 $"Certificate is not valid at the current time. Valid from {certificate.NotBefore} to {certificate.NotAfter}");
             return false;
         }
@@ -165,7 +165,7 @@ internal static class MTlsUtility
         }
         catch (Exception ex)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsFilePermissionCheckFailed(filePath, ex);
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsFilePermissionCheckFailed(filePath, ex);
             // Log but don't throw, as this is a security best practice check, not a requirement
         }
     }
@@ -191,7 +191,7 @@ internal static class MTlsUtility
 
         if (!hasUserAccess)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsFilePermissionCheckFailed(
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsFilePermissionCheckFailed(
                 filePath, new UnauthorizedAccessException("Current user does not have read access to the file"));
         }
     }
@@ -204,7 +204,7 @@ internal static class MTlsUtility
         // Check if permissions are too open (e.g., world readable)
         if ((permissions & UnixFileMode.OtherRead) != 0)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsFilePermissionCheckFailed(
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsFilePermissionCheckFailed(
                 filePath,
                 new UnauthorizedAccessException("Certificate file has permissions that are too permissive. " +
                                                 "Consider restricting with 'chmod 600' or similar"));

@@ -63,13 +63,13 @@ internal static class OtlpExporterOptionsExtensions
                 {
                     try
                     {
-                        var trustedCertificate = MTlsUtility.LoadCertificateWithValidation(options.CertificateFilePath);
+                        var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(options.CertificateFilePath);
                         rootCertPem = File.ReadAllText(options.CertificateFilePath);
-                        OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("gRPC server validation");
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationSuccess("gRPC server validation");
                     }
                     catch (Exception ex)
                     {
-                        OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
                     }
                 }
 
@@ -79,7 +79,7 @@ internal static class OtlpExporterOptionsExtensions
                 {
                     try
                     {
-                        var clientCertificate = MTlsUtility.LoadCertificateWithValidation(
+                        var clientCertificate = MtlsUtility.LoadCertificateWithValidation(
                             options.ClientCertificateFilePath,
                             options.ClientKeyFilePath);
 
@@ -87,11 +87,11 @@ internal static class OtlpExporterOptionsExtensions
                         string clientKeyPem = File.ReadAllText(options.ClientKeyFilePath);
                         clientCerts = new KeyCertificatePair(clientCertPem, clientKeyPem);
 
-                        OpenTelemetryProtocolExporterEventSource.Log.MTlsConfigurationSuccess("gRPC client authentication");
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationSuccess("gRPC client authentication");
                     }
                     catch (Exception ex)
                     {
-                        OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
                     }
                 }
 
@@ -102,7 +102,7 @@ internal static class OtlpExporterOptionsExtensions
             }
             catch (Exception ex)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
                 return new Channel(options.Endpoint.Authority, ChannelCredentials.Insecure);
             }
 
@@ -110,7 +110,7 @@ internal static class OtlpExporterOptionsExtensions
         }
         catch (Exception ex)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MTlsCertificateLoadError(ex);
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
             return new Channel(options.Endpoint.Authority, ChannelCredentials.Insecure);
         }
     }

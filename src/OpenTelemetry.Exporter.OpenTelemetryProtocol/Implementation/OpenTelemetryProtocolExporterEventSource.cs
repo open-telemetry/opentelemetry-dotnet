@@ -109,7 +109,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     {
         if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            this.MTlsCertificateLoadError(ex.ToInvariantString());
+            this.MtlsCertificateLoadError(ex.ToInvariantString());
         }
     }
 
@@ -118,7 +118,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     {
         if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
         {
-            this.MTlsPermissionCheckWarning(filePath, ex.ToInvariantString());
+            this.MtlsPermissionCheckWarning(filePath, ex.ToInvariantString());
         }
     }
 
@@ -261,13 +261,13 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(26, Message = "Failed to load mTLS certificate. Exception: {0}", Level = EventLevel.Error)]
-    public void MTlsCertificateLoadError(string exception)
+    public void MtlsCertificateLoadError(string exception)
     {
         this.WriteEvent(26, exception);
     }
 
     [Event(27, Message = "Certificate permission check warning for file {0}. Exception: {1}", Level = EventLevel.Warning)]
-    public void MTlsPermissionCheckWarning(string filePath, string exception)
+    public void MtlsPermissionCheckWarning(string filePath, string exception)
     {
         this.WriteEvent(27, filePath, exception);
     }
@@ -334,7 +334,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     // mTLS Events
 
     [Event(10, Message = "mTLS certificate file not found: {0}", Level = EventLevel.Error)]
-    public void MTlsCertificateFileNotFound(string filePath)
+    public void MtlsCertificateFileNotFound(string filePath)
     {
         if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
@@ -343,16 +343,16 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(11, Message = "mTLS certificate load error: {0}", Level = EventLevel.Error)]
-    public void MTlsCertificateLoadError(Exception ex)
+    public void MtlsCertificateLoadError(string exception)
     {
         if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            this.WriteEvent(11, ex.ToString());
+            this.WriteEvent(11, exception);
         }
     }
 
     [Event(12, Message = "mTLS certificate invalid: {0}", Level = EventLevel.Error)]
-    public void MTlsCertificateInvalid(Exception ex)
+    public void MtlsCertificateInvalid(Exception ex)
     {
         if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
@@ -361,7 +361,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(13, Message = "mTLS certificate validation failed: {0}", Level = EventLevel.Error)]
-    public void MTlsCertificateValidationFailed(string message)
+    public void MtlsCertificateValidationFailed(string message)
     {
         if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
@@ -370,7 +370,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(14, Message = "mTLS certificate chain validation failed: {0}", Level = EventLevel.Error)]
-    public void MTlsCertificateChainValidationFailed(string statusInformation)
+    public void MtlsCertificateChainValidationFailed(string statusInformation)
     {
         if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
@@ -379,7 +379,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(15, Message = "mTLS file permission check failed for {0}: {1}", Level = EventLevel.Warning)]
-    public void MTlsFilePermissionCheckFailed(string filePath, Exception ex)
+    public void MtlsFilePermissionCheckFailed(string filePath, Exception ex)
     {
         if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
         {
@@ -388,7 +388,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(16, Message = "mTLS configuration succeeded for {0}", Level = EventLevel.Informational)]
-    public void MTlsConfigurationSuccess(string component)
+    public void MtlsConfigurationSuccess(string component)
     {
         if (this.IsEnabled(EventLevel.Informational, EventKeywords.All))
         {
