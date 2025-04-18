@@ -146,7 +146,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         this.WriteEvent(5, className, methodName);
     }
 
-    [Event(7, Message = "Timeout value configured for Otel Exporter was {0}, but was overriden to {1} due to MaxTimeoutValue: {2}.", Level = EventLevel.Warning)]
+    [Event(7, Message = "Timeout value configured for Otel Exporter was {0}, but was overridden to {1} due to MaxTimeoutValue: {2}.", Level = EventLevel.Warning)]
     public void TimeoutOverrideWarning(int configuredTimeout, int effectiveTimeout, int maxTimeoutValue)
     {
         this.WriteEvent(7, configuredTimeout, effectiveTimeout, maxTimeoutValue);
