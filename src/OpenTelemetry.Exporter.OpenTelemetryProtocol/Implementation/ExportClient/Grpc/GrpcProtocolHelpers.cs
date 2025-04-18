@@ -80,7 +80,7 @@ internal static class GrpcProtocolHelpers
             return null;
         }
 
-#if NET8_0_OR_GREATER
+#if NET6_0_OR_GREATER
         if (!headers.NonValidated.TryGetValues(name, out var values))
         {
             return null;

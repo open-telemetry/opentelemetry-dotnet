@@ -80,7 +80,7 @@ internal abstract class OtlpExportClient : IExportClient
         {
             request.Version = Http2RequestVersion;
 
-#if NET8_0_OR_GREATER
+#if NET6_0_OR_GREATER
             request.VersionPolicy = HttpVersionPolicy.RequestVersionExact;
 #endif
         }
