@@ -228,7 +228,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     }
 
     /// <inheritdoc/>
-    public override bool Shutdown(int timeoutMilliseconds)
+    public new bool Shutdown(int timeoutMilliseconds)
     {
 #if NET8_0_OR_GREATER
         if (this.secureChannel != null)

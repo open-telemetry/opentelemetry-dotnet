@@ -109,7 +109,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     {
         if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            this.MtlsCertificateLoadError(ex.ToInvariantString());
+            this.MtlsCertificateLoadError_(ex.ToInvariantString());
         }
     }
 
@@ -343,7 +343,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(11, Message = "mTLS certificate load error: {0}", Level = EventLevel.Error)]
-    public void MtlsCertificateLoadError(string exception)
+    private void MtlsCertificateLoadError_(string exception)
     {
         if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
@@ -388,11 +388,20 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(16, Message = "mTLS configuration succeeded for {0}", Level = EventLevel.Informational)]
-    public void MtlsConfigurationSuccess(string component)
+    private void MtlsConfigurationSuccess_(string component)
     {
         if (this.IsEnabled(EventLevel.Informational, EventKeywords.All))
         {
             this.WriteEvent(16, component);
+        }
+    }
+
+    [NonEvent]
+    public void MtlsConfigurationSuccess(string component)
+    {
+        if (Log.IsEnabled(EventLevel.Informational, EventKeywords.All))
+        {
+            this.MtlsConfigurationSuccess_(component);
         }
     }
 }
