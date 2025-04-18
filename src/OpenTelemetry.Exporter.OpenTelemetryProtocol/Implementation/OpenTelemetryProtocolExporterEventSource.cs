@@ -105,7 +105,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [NonEvent]
-    public void MTlsCertificateLoadError(Exception ex)
+    public void MtlsCertificateLoadError(Exception ex)
     {
         if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
@@ -114,7 +114,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [NonEvent]
-    public void MTlsPermissionCheckWarning(string filePath, Exception ex)
+    public void MtlsPermissionCheckWarning(string filePath, Exception ex)
     {
         if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
         {
@@ -273,13 +273,13 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(28, Message = "Certificate chain validation error. Status: {0}, Details: {1}", Level = EventLevel.Error)]
-    public void MTlsCertificateChainValidationError(string status, string details)
+    public void MtlsCertificateChainValidationError(string status, string details)
     {
         this.WriteEvent(28, status, details);
     }
 
     [Event(29, Message = "Successfully configured mTLS for {0}", Level = EventLevel.Informational)]
-    public void MTlsConfigurationSuccess(string protocol)
+    public void MtlsConfigurationSuccess(string protocol)
     {
         this.WriteEvent(29, protocol);
     }

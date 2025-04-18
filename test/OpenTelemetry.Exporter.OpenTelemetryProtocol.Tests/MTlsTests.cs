@@ -56,10 +56,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void LoadCertificateWithValidation_ValidCertificates_LoadsSuccessfully()
         {
             // Act & Assert - no exception should be thrown
-            var caCert = MTlsUtility.LoadCertificateWithValidation(caCertPath);
+            var caCert = MtlsUtility.LoadCertificateWithValidation(caCertPath);
             Assert.NotNull(caCert);
 
-            var clientCert = MTlsUtility.LoadCertificateWithValidation(clientCertPath, clientKeyPath);
+            var clientCert = MtlsUtility.LoadCertificateWithValidation(clientCertPath, clientKeyPath);
             Assert.NotNull(clientCert);
         }
 
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             // Act & Assert
             var ex = Assert.Throws<FileNotFoundException>(() =>
-                MTlsUtility.LoadCertificateWithValidation(Path.Combine(tempDir, "nonexistent.pem")));
+                MtlsUtility.LoadCertificateWithValidation(Path.Combine(tempDir, "nonexistent.pem")));
 
             Assert.Contains("Certificate file not found", ex.Message);
         }
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             // Act & Assert
             var ex = Assert.Throws<InvalidOperationException>(() =>
-                MTlsUtility.LoadCertificateWithValidation(invalidCertPath));
+                MtlsUtility.LoadCertificateWithValidation(invalidCertPath));
 
             Assert.Contains("Failed to load certificate", ex.Message);
         }
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var clientCert = new X509Certificate2(clientCertPath);
 
             // Act
-            bool isValid = MTlsUtility.ValidateCertificateChain(clientCert, caCert);
+            bool isValid = MtlsUtility.ValidateCertificateChain(clientCert, caCert);
 
             // Assert
             Assert.True(isValid);
