@@ -158,6 +158,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         return ex.InnerException is System.Net.Sockets.SocketException socketEx
             && (socketEx.SocketErrorCode == System.Net.Sockets.SocketError.TimedOut
                 || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionReset
-                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.HostUnreachable);
+                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.HostUnreachable
+                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionRefused);
     }
 }
