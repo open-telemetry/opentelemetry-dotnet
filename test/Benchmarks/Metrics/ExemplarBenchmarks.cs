@@ -38,7 +38,9 @@ BenchmarkDotNet v0.13.10, Windows 11 (10.0.22631.3155/23H2/2023Update/SunValley3
 
 namespace Benchmarks.Metrics;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class ExemplarBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
     private readonly string[] dimensionValues = ["DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10"];
@@ -82,7 +84,11 @@ public class ExemplarBenchmarks
             .SetExemplarFilter(exemplarFilter)
             .AddView(i =>
             {
+#if NET
+                if (i.Name.Contains("WithTagReduction", StringComparison.Ordinal))
+#else
                 if (i.Name.Contains("WithTagReduction"))
+#endif
                 {
                     return new MetricStreamConfiguration()
                     {
@@ -125,6 +131,7 @@ public class ExemplarBenchmarks
         var random = ThreadLocalRandom.Value!;
         var tags = new TagList
         {
+#pragma warning disable CA5394 // Do not use insecure randomness
             { "DimName1", this.dimensionValues[random.Next(0, 2)] },
             { "DimName2", this.dimensionValues[random.Next(0, 2)] },
             { "DimName3", this.dimensionValues[random.Next(0, 5)] },
@@ -181,6 +188,7 @@ public class ExemplarBenchmarks
         };
 
         this.counterWithTagReduction!.Add(random.Next(1000), tags);
+#pragma warning restore CA5394 // Do not use insecure randomness
     }
 
     private sealed class HighValueExemplarReservoir : FixedSizeExemplarReservoir
