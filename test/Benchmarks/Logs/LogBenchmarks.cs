@@ -32,7 +32,7 @@ namespace Benchmarks.Logs;
 public class LogBenchmarks
 {
     private const double FoodPrice = 2.99;
-    private static readonly string FoodName = "tomato";
+    private const string FoodName = "tomato";
 
     private readonly ILogger loggerWithNoListener;
     private readonly ILogger loggerWithOneProcessor;
@@ -95,13 +95,19 @@ public class LogBenchmarks
     [Benchmark]
     public void NoListenerStringInterpolation()
     {
+#pragma warning disable CA2254 // Template should be a static expression
+#pragma warning disable CA1848 // Use the LoggerMessage delegates
         this.loggerWithNoListener.LogInformation($"Hello from {FoodName} {FoodPrice}.");
+#pragma warning restore CA1848 // Use the LoggerMessage delegates
+#pragma warning restore CA2254 // Template should be a static expression
     }
 
     [Benchmark]
     public void NoListenerExtensionMethod()
     {
-        this.loggerWithNoListener.LogInformation("Hello from {name} {price}.", FoodName, FoodPrice);
+#pragma warning disable CA1848 // Use the LoggerMessage delegates
+        this.loggerWithNoListener.LogInformation("Hello from {Name} {Price}.", FoodName, FoodPrice);
+#pragma warning restore CA1848 // Use the LoggerMessage delegates
     }
 
     [Benchmark]
@@ -185,11 +191,11 @@ public class LogBenchmarks
                 companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
-    internal class NoopLogProcessor : BaseProcessor<LogRecord>
+    internal sealed class NoopLogProcessor : BaseProcessor<LogRecord>
     {
     }
 
-    internal class NoopExporter : BaseExporter<LogRecord>
+    internal sealed class NoopExporter : BaseExporter<LogRecord>
     {
         public override ExportResult Export(in Batch<LogRecord> batch)
         {
