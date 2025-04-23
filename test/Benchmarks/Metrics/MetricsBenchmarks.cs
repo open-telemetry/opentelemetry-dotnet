@@ -56,7 +56,9 @@ BenchmarkDotNet v0.13.10, Windows 11 (10.0.22621.3007/22H2/2022Update/SunValley2
 
 namespace Benchmarks.Metrics;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class MetricsBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     private readonly Random random = new();
     private readonly string[] dimensionValues = ["DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10"];
@@ -101,6 +103,7 @@ public class MetricsBenchmarks
     [Benchmark]
     public void CounterWith1LabelsHotPath()
     {
+#pragma warning disable CA5394 // Do not use insecure randomness
         var tag1 = new KeyValuePair<string, object?>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
         this.counter!.Add(100, tag1);
     }
@@ -290,6 +293,7 @@ public class MetricsBenchmarks
             { "DimName7", this.dimensionValues[this.random.Next(0, 5)] },
             { "DimName8", this.dimensionValues[this.random.Next(0, 5)] },
             { "DimName9", this.dimensionValues[this.random.Next(0, 5)] },
+#pragma warning restore CA5394 // Do not use insecure randomness
         };
         this.counter!.Add(100, tags);
     }

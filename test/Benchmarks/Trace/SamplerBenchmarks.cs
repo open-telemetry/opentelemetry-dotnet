@@ -23,15 +23,26 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 
 namespace Benchmarks.Trace;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class SamplerBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
-    private readonly ActivitySource sourceNotModifyTracestate = new("SamplerNotModifyingTraceState");
-    private readonly ActivitySource sourceModifyTracestate = new("SamplerModifyingTraceState");
-    private readonly ActivitySource sourceAppendTracestate = new("SamplerAppendingTraceState");
-    private readonly ActivityContext parentContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, "a=b", true);
+    private ActivitySource? sourceNotModifyTracestate;
+    private ActivitySource? sourceModifyTracestate;
+    private ActivitySource? sourceAppendTracestate;
+    private ActivityContext parentContext;
+    private TracerProvider? tracerProviderNotModifyTracestate;
+    private TracerProvider? tracerProviderModifyTracestate;
+    private TracerProvider? tracerProviderAppendTracestate;
 
-    public SamplerBenchmarks()
+    [GlobalSetup]
+    public void Setup()
     {
+        this.sourceNotModifyTracestate = new("SamplerNotModifyingTraceState");
+        this.sourceModifyTracestate = new("SamplerModifyingTraceState");
+        this.sourceAppendTracestate = new("SamplerAppendingTraceState");
+        this.parentContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, "a=b", true);
+
         var testSamplerNotModifyTracestate = new TestSampler
         {
             SamplingAction = (samplingParams) =>
@@ -56,41 +67,52 @@ public class SamplerBenchmarks
             },
         };
 
-        Sdk.CreateTracerProviderBuilder()
+        this.tracerProviderNotModifyTracestate = Sdk.CreateTracerProviderBuilder()
             .SetSampler(testSamplerNotModifyTracestate)
             .AddSource(this.sourceNotModifyTracestate.Name)
             .Build();
 
-        Sdk.CreateTracerProviderBuilder()
+        this.tracerProviderModifyTracestate = Sdk.CreateTracerProviderBuilder()
             .SetSampler(testSamplerModifyTracestate)
             .AddSource(this.sourceModifyTracestate.Name)
             .Build();
 
-        Sdk.CreateTracerProviderBuilder()
+        this.tracerProviderAppendTracestate = Sdk.CreateTracerProviderBuilder()
             .SetSampler(testSamplerAppendTracestate)
             .AddSource(this.sourceAppendTracestate.Name)
             .Build();
     }
 
+    [GlobalCleanup]
+    public void Cleanup()
+    {
+        this.sourceNotModifyTracestate?.Dispose();
+        this.sourceModifyTracestate?.Dispose();
+        this.sourceAppendTracestate?.Dispose();
+        this.tracerProviderNotModifyTracestate?.Dispose();
+        this.tracerProviderModifyTracestate?.Dispose();
+        this.tracerProviderAppendTracestate?.Dispose();
+    }
+
     [Benchmark]
     public void SamplerNotModifyingTraceState()
     {
-        using var activity = this.sourceNotModifyTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
+        using var activity = this.sourceNotModifyTracestate!.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
     }
 
     [Benchmark]
     public void SamplerModifyingTraceState()
     {
-        using var activity = this.sourceModifyTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
+        using var activity = this.sourceModifyTracestate!.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
     }
 
     [Benchmark]
     public void SamplerAppendingTraceState()
     {
-        using var activity = this.sourceAppendTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
+        using var activity = this.sourceAppendTracestate!.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
     }
 
-    internal class TestSampler : Sampler
+    internal sealed class TestSampler : Sampler
     {
         public Func<SamplingParameters, SamplingResult>? SamplingAction { get; set; }
 

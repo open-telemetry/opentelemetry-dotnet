@@ -5,7 +5,7 @@ using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Tests.Stress;
 
-internal class DummyProcessor : BaseProcessor<LogRecord>
+internal sealed class DummyProcessor : BaseProcessor<LogRecord>
 {
     public override void OnEnd(LogRecord record)
     {

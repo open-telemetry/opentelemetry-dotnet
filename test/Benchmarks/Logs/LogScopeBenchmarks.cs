@@ -39,24 +39,21 @@ public class LogScopeBenchmarks
     public LogScopeBenchmarks()
     {
         this.scopeProvider.Push(new ReadOnlyCollection<KeyValuePair<string, object>>(
-            new List<KeyValuePair<string, object>>
-            {
+            [
                 new("item1", "value1"),
                 new("item2", "value2"),
-            }));
+            ]));
 
         this.scopeProvider.Push(new ReadOnlyCollection<KeyValuePair<string, object>>(
-            new List<KeyValuePair<string, object>>
-            {
+            [
                 new("item3", "value3"),
-            }));
+            ]));
 
         this.scopeProvider.Push(new ReadOnlyCollection<KeyValuePair<string, object>>(
-            new List<KeyValuePair<string, object>>
-            {
+            [
                 new("item4", "value4"),
                 new("item5", "value5"),
-            }));
+            ]));
 
 #pragma warning disable CS0618 // Type or member is obsolete
         this.logRecord = new LogRecord(
