@@ -15,7 +15,7 @@ public class MetricStreamConfiguration
 {
     private string? name;
 
-    private int? cardinalityLimit = null;
+    private int? cardinalityLimit;
 
     /// <summary>
     /// Gets the drop configuration.

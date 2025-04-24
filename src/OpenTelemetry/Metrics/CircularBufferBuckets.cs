@@ -13,7 +13,7 @@ namespace OpenTelemetry.Metrics;
 internal sealed class CircularBufferBuckets
 {
     private long[]? trait;
-    private int begin = 0;
+    private int begin;
     private int end = -1;
 
     public CircularBufferBuckets(int capacity)
