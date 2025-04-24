@@ -8,7 +8,7 @@ using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests.Stress;
 
-public static class Program
+internal static class Program
 {
     private enum MetricsStressTestType
     {
@@ -24,7 +24,9 @@ public static class Program
         return StressTestFactory.RunSynchronously<MetricsStressTest, MetricsStressTestOptions>(args);
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MetricsStressTest : StressTests<MetricsStressTestOptions>
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private const int ArraySize = 10;
         private const int MaxHistogramMeasurement = 1000;
@@ -77,10 +79,14 @@ public static class Program
             this.meterProvider = builder.Build();
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            this.meterProvider.Dispose();
-            base.Dispose();
+            if (disposing)
+            {
+                this.meterProvider.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
 
         protected override void WriteRunInformationToConsole()
@@ -97,6 +103,7 @@ public static class Program
             if (this.Options.TestType == MetricsStressTestType.Histogram)
             {
                 TestHistogram.Record(
+#pragma warning disable CA5394 // Do not use random number generators in secure applications
                     random.Next(MaxHistogramMeasurement),
                     new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
                     new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
@@ -109,11 +116,14 @@ public static class Program
                    new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
                    new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
                    new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
+#pragma warning restore CA5394 // Do not use random number generators in secure applications
             }
         }
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MetricsStressTestOptions : StressTestOptions
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         [JsonConverter(typeof(JsonStringEnumConverter))]
         [Option('t', "type", HelpText = "The metrics stress test type to run. Valid values: [Histogram, Counter]. Default value: Histogram.", Required = false)]

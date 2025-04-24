@@ -23,6 +23,7 @@ internal static class StressTestNativeMethods
     }
 
     [DllImport("kernel32.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool QueryProcessCycleTime(IntPtr hProcess, out ulong cycles);
 }
