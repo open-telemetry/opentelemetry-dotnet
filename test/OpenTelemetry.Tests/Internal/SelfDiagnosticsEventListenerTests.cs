@@ -97,7 +97,7 @@ public class SelfDiagnosticsEventListenerTests
         string[] results = new string[datetimes.Length];
         for (int i = 0; i < datetimes.Length; i++)
         {
-            int len = listener.DateTimeGetBytes(datetimes[i], buffer, pos);
+            int len = SelfDiagnosticsEventListener.DateTimeGetBytes(datetimes[i], buffer, pos);
             results[i] = Encoding.Default.GetString(buffer, pos, len);
             pos += len;
         }

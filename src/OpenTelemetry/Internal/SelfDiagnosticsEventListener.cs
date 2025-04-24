@@ -111,61 +111,6 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         return position;
     }
 
-    internal void WriteEvent(string? eventMessage, ReadOnlyCollection<object?>? payload)
-    {
-        try
-        {
-            var buffer = this.writeBuffer.Value;
-            if (buffer == null)
-            {
-                buffer = new byte[BUFFERSIZE];
-                this.writeBuffer.Value = buffer;
-            }
-
-            var pos = this.DateTimeGetBytes(DateTime.UtcNow, buffer, 0);
-            buffer[pos++] = (byte)':';
-            pos = EncodeInBuffer(eventMessage, false, buffer, pos);
-            if (payload != null)
-            {
-                // Not using foreach because it can cause allocations
-                for (int i = 0; i < payload.Count; ++i)
-                {
-                    object? obj = payload[i];
-                    if (obj != null)
-                    {
-                        pos = EncodeInBuffer(obj.ToString() ?? "null", true, buffer, pos);
-                    }
-                    else
-                    {
-                        pos = EncodeInBuffer("null", true, buffer, pos);
-                    }
-                }
-            }
-
-            buffer[pos++] = (byte)'\n';
-            int byteCount = pos - 0;
-            if (this.configRefresher.TryGetLogStream(byteCount, out Stream? stream, out int availableByteCount))
-            {
-                if (availableByteCount >= byteCount)
-                {
-                    stream.Write(buffer, 0, byteCount);
-                }
-                else
-                {
-                    stream.Write(buffer, 0, availableByteCount);
-                    stream.Seek(0, SeekOrigin.Begin);
-                    stream.Write(buffer, availableByteCount, byteCount - availableByteCount);
-                }
-            }
-        }
-        catch (Exception)
-        {
-            // Fail to allocate memory for buffer, or
-            // A concurrent condition: memory mapped file is disposed in other thread after TryGetLogStream() finishes.
-            // In this case, silently fail.
-        }
-    }
-
     /// <summary>
     /// Write the <c>datetime</c> formatted string into <c>bytes</c> byte-array starting at <c>byteIndex</c> position.
     /// <para>
@@ -188,7 +133,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     /// <param name="bytes">Array of bytes to write.</param>
     /// <param name="byteIndex">Starting index into bytes array.</param>
     /// <returns>The number of bytes written.</returns>
-    internal int DateTimeGetBytes(DateTime datetime, byte[] bytes, int byteIndex)
+    internal static int DateTimeGetBytes(DateTime datetime, byte[] bytes, int byteIndex)
     {
         int num;
         int pos = byteIndex;
@@ -269,6 +214,61 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         }
 
         return pos - byteIndex;
+    }
+
+    internal void WriteEvent(string? eventMessage, ReadOnlyCollection<object?>? payload)
+    {
+        try
+        {
+            var buffer = this.writeBuffer.Value;
+            if (buffer == null)
+            {
+                buffer = new byte[BUFFERSIZE];
+                this.writeBuffer.Value = buffer;
+            }
+
+            var pos = DateTimeGetBytes(DateTime.UtcNow, buffer, 0);
+            buffer[pos++] = (byte)':';
+            pos = EncodeInBuffer(eventMessage, false, buffer, pos);
+            if (payload != null)
+            {
+                // Not using foreach because it can cause allocations
+                for (int i = 0; i < payload.Count; ++i)
+                {
+                    object? obj = payload[i];
+                    if (obj != null)
+                    {
+                        pos = EncodeInBuffer(obj.ToString() ?? "null", true, buffer, pos);
+                    }
+                    else
+                    {
+                        pos = EncodeInBuffer("null", true, buffer, pos);
+                    }
+                }
+            }
+
+            buffer[pos++] = (byte)'\n';
+            int byteCount = pos - 0;
+            if (this.configRefresher.TryGetLogStream(byteCount, out Stream? stream, out int availableByteCount))
+            {
+                if (availableByteCount >= byteCount)
+                {
+                    stream.Write(buffer, 0, byteCount);
+                }
+                else
+                {
+                    stream.Write(buffer, 0, availableByteCount);
+                    stream.Seek(0, SeekOrigin.Begin);
+                    stream.Write(buffer, availableByteCount, byteCount - availableByteCount);
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Fail to allocate memory for buffer, or
+            // A concurrent condition: memory mapped file is disposed in other thread after TryGetLogStream() finishes.
+            // In this case, silently fail.
+        }
     }
 
     protected override void OnEventSourceCreated(EventSource eventSource)
