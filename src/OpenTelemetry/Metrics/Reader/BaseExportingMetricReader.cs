@@ -15,7 +15,9 @@ public class BaseExportingMetricReader : MetricReader
     /// <summary>
     /// Gets the exporter used by the metric reader.
     /// </summary>
+#pragma warning disable CA1051 // Do not declare visible instance fields
     protected readonly BaseExporter<Metric> exporter;
+#pragma warning restore CA1051 // Do not declare visible instance fields
 
     private readonly string exportCalledMessage;
     private readonly string exportSucceededMessage;
