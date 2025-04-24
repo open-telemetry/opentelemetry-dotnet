@@ -85,7 +85,7 @@ internal static class GrpcStatusDeserializer
 
         foreach (var detail in status.Value.Details)
         {
-            if (detail.TypeUrl != null && detail.TypeUrl.EndsWith("/google.rpc.RetryInfo", StringComparison.Ordinal))
+            if (detail.TypeUrl != null && detail.TypeUrl.EndsWith("/google.rpc.RetryInfo"))
             {
                 return DeserializeRetryInfo(detail.Value!);
             }
