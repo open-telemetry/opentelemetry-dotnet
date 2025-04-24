@@ -49,7 +49,9 @@ public class TraceContextPropagatorBenchmarks
             // We want a unique key for each member
             for (var j = 0; j < length - 2; j++)
             {
+#pragma warning disable CA5394 // Do not use insecure randomness
                 keyBuffer[j] = (char)('a' + Random.Next(0, 26));
+#pragma warning restore CA5394 // Do not use insecure randomness
             }
 
             var key = keyBuffer.ToString();

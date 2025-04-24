@@ -10,13 +10,15 @@ using OpenTelemetry.Tests;
 
 namespace Benchmarks.Exporter;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class PrometheusSerializerBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
-    private readonly List<Metric> metrics = new();
+    private readonly List<Metric> metrics = [];
     private readonly byte[] buffer = new byte[85000];
+    private readonly Dictionary<Metric, PrometheusMetric> cache = [];
     private Meter? meter;
     private MeterProvider? meterProvider;
-    private Dictionary<Metric, PrometheusMetric> cache = new Dictionary<Metric, PrometheusMetric>();
 
     [Params(1, 1000, 10000)]
     public int NumberOfSerializeCalls { get; set; }

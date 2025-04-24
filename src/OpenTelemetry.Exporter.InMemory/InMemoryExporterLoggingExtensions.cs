@@ -6,7 +6,9 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public static class InMemoryExporterLoggingExtensions
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     /// <summary>
     /// Adds InMemory exporter to the OpenTelemetryLoggerOptions.
