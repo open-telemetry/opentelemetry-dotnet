@@ -12,7 +12,7 @@ namespace OpenTelemetry.Metrics;
 public readonly struct ReadOnlyExemplarCollection
 #pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
-    internal static readonly ReadOnlyExemplarCollection Empty = new(Array.Empty<Exemplar>());
+    internal static readonly ReadOnlyExemplarCollection Empty = new([]);
     private readonly Exemplar[] exemplars;
 
     internal ReadOnlyExemplarCollection(Exemplar[] exemplars)

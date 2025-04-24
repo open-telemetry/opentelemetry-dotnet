@@ -24,7 +24,7 @@ public class Resource
         if (attributes == null)
         {
             OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attributes", "are null");
-            this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
+            this.Attributes = [];
             return;
         }
 
@@ -35,7 +35,7 @@ public class Resource
     /// <summary>
     /// Gets an empty Resource.
     /// </summary>
-    public static Resource Empty { get; } = new Resource(Enumerable.Empty<KeyValuePair<string, object>>());
+    public static Resource Empty { get; } = new([]);
 
     /// <summary>
     /// Gets the collection of key-value pairs describing the resource.

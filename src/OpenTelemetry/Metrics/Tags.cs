@@ -11,7 +11,7 @@ namespace OpenTelemetry.Metrics;
 
 internal readonly struct Tags : IEquatable<Tags>
 {
-    public static readonly Tags EmptyTags = new(Array.Empty<KeyValuePair<string, object?>>());
+    public static readonly Tags EmptyTags = new([]);
 
     private readonly int hashCode;
 

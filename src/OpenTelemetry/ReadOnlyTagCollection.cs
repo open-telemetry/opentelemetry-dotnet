@@ -16,7 +16,7 @@ public readonly struct ReadOnlyTagCollection
 
     internal ReadOnlyTagCollection(KeyValuePair<string, object?>[]? keyAndValues)
     {
-        this.KeyAndValues = keyAndValues ?? Array.Empty<KeyValuePair<string, object?>>();
+        this.KeyAndValues = keyAndValues ?? [];
     }
 
     /// <summary>
