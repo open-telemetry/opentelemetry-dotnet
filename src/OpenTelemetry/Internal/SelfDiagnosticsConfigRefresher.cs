@@ -194,7 +194,11 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
         {
             Directory.CreateDirectory(newLogDirectory);
             var fileName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "OpenTelemetrySdk") + "."
+#if NET
+                + Environment.ProcessId + ".log";
+#else
                 + Process.GetCurrentProcess().Id + ".log";
+#endif
             var filePath = Path.Combine(newLogDirectory, fileName);
 
             // Because the API [MemoryMappedFile.CreateFromFile][1](the string version) behaves differently on
