@@ -8,7 +8,9 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 [Flags]
 #pragma warning disable CA1028 // Enum storage should be Int32
+#pragma warning disable CA2217 // Do not mark enums with FlagsAttribute
 public enum MetricType : byte
+#pragma warning restore CA2217 // Do not mark enums with FlagsAttribute
 #pragma warning restore CA1028 // Enum storage should be Int32
 {
     /*
