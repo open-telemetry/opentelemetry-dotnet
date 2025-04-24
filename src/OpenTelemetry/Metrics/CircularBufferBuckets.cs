@@ -246,9 +246,7 @@ internal sealed class CircularBufferBuckets
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void Exchange(long[] array, uint src, uint dst)
         {
-            var value = array[dst];
-            array[dst] = array[src];
-            array[src] = value;
+            (array[dst], array[src]) = (array[src], array[dst]);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
