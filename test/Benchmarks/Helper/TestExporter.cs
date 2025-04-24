@@ -3,7 +3,7 @@
 
 namespace OpenTelemetry.Tests;
 
-internal class TestExporter<T> : BaseExporter<T>
+internal sealed class TestExporter<T> : BaseExporter<T>
     where T : class
 {
     private readonly Action<Batch<T>> processBatchAction;
