@@ -139,7 +139,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
         if (this.configParser.TryGetConfiguration(out string? newLogDirectory, out int fileSizeInKB, out EventLevel newEventLevel))
         {
             int newFileSize = fileSizeInKB * 1024;
-            if (!newLogDirectory.Equals(this.logDirectory) || this.logFileSize != newFileSize)
+            if (!newLogDirectory.Equals(this.logDirectory, StringComparison.Ordinal) || this.logFileSize != newFileSize)
             {
                 this.CloseLogFile();
                 this.OpenLogFile(newLogDirectory, newFileSize);
