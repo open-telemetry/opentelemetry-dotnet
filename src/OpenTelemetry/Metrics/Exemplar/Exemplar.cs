@@ -5,6 +5,7 @@
 using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
+using System.Globalization;
 
 namespace OpenTelemetry.Metrics;
 
@@ -115,7 +116,7 @@ public struct Exemplar
         else
         {
             Debug.Fail("Invalid value type");
-            this.DoubleValue = Convert.ToDouble(measurement.Value);
+            this.DoubleValue = Convert.ToDouble(measurement.Value, CultureInfo.InvariantCulture);
         }
 
         var currentActivity = Activity.Current;
