@@ -11,7 +11,7 @@ namespace OpenTelemetry.Resources;
 /// </summary>
 public class ResourceBuilder
 {
-    internal readonly List<IResourceDetector> ResourceDetectors = new();
+    internal readonly List<IResourceDetector> ResourceDetectors = [];
     private static readonly Resource DefaultResource;
 
     static ResourceBuilder()

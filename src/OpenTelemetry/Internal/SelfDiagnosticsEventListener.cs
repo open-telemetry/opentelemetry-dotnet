@@ -20,7 +20,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     private readonly EventLevel logLevel;
     private readonly SelfDiagnosticsConfigRefresher configRefresher;
     private readonly ThreadLocal<byte[]?> writeBuffer = new(() => null);
-    private readonly List<EventSource>? eventSourcesBeforeConstructor = new();
+    private readonly List<EventSource>? eventSourcesBeforeConstructor = [];
 
     private bool disposedValue;
 
