@@ -122,7 +122,7 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         this.compositeMetricReader = this.reader as CompositeMetricReader;
 
-        if (state.Instrumentation.Any())
+        if (state.Instrumentation.Count > 0)
         {
             foreach (var instrumentation in state.Instrumentation)
             {
