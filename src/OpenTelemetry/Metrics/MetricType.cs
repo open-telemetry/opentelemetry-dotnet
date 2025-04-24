@@ -7,7 +7,9 @@ namespace OpenTelemetry.Metrics;
 /// Enumeration used to define the type of a <see cref="Metric"/>.
 /// </summary>
 [Flags]
+#pragma warning disable CA1028 // Enum storage should be Int32
 public enum MetricType : byte
+#pragma warning restore CA1028 // Enum storage should be Int32
 {
     /*
     Type:

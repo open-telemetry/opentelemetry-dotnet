@@ -8,7 +8,9 @@ namespace OpenTelemetry.Metrics;
 /// cref="Metric"/>.
 /// </summary>
 #pragma warning disable CA1008 // Enums should have zero value
+#pragma warning disable CA1028 // Enum storage should be Int32
 public enum AggregationTemporality : byte
+#pragma warning restore CA1028 // Enum storage should be Int32
 #pragma warning enable CA1008 // Enums should have zero value
 {
     /// <summary>
