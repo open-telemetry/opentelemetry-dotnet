@@ -190,7 +190,7 @@ public class MetricPointReclaimTests
 
     private sealed class CustomExporter : BaseExporter<Metric>
     {
-        public long Sum = 0;
+        public long Sum;
 
         private readonly bool assertNoDroppedMeasurements;
 
