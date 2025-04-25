@@ -22,7 +22,7 @@ public class LogRecordStateProcessorTests
         {
             var logger = loggerFactory.CreateLogger("TestLogger");
 
-            logger.LogInformation("Hello world {data}", 1234);
+            logger.LogInformation("Hello world {Data}", 1234);
         }
 
         Assert.Single(exportedItems);
@@ -63,7 +63,7 @@ public class LogRecordStateProcessorTests
         {
             var logger = loggerFactory.CreateLogger("TestLogger");
 
-            logger.LogInformation("Hello world {data}", 1234);
+            logger.LogInformation("Hello world {Data}", 1234);
         }
 
         Assert.Single(exportedItems);

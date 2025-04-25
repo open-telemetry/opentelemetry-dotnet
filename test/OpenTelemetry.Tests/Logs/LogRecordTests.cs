@@ -46,7 +46,7 @@ public sealed class LogRecordTests
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        const string message = "Log {logLevel}";
+        const string message = "Log {LogLevel}";
         logger.Log(logLevel, message, logLevel);
 
         var logLevelRecorded = exportedItems[0].LogLevel;
@@ -123,7 +123,7 @@ public sealed class LogRecordTests
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        const string message = "Hello from {name} {price}.";
+        const string message = "Hello from {Name} {Price}.";
         logger.LogInformation(message, "tomato", 2.99);
 
         Assert.NotNull(exportedItems[0].State);
@@ -135,12 +135,12 @@ public sealed class LogRecordTests
         Assert.Equal(3, attributes.Count);
 
         // Check if state has name
-        Assert.Contains(attributes, item => item.Key == "name");
-        Assert.Equal("tomato", attributes.First(item => item.Key == "name").Value);
+        Assert.Contains(attributes, item => item.Key == "Name");
+        Assert.Equal("tomato", attributes.First(item => item.Key == "Name").Value);
 
         // Check if state has price
-        Assert.Contains(attributes, item => item.Key == "price");
-        Assert.Equal(2.99, attributes.First(item => item.Key == "price").Value);
+        Assert.Contains(attributes, item => item.Key == "Price");
+        Assert.Equal(2.99, attributes.First(item => item.Key == "Price").Value);
 
         // Check if state has OriginalFormat
         Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
@@ -166,7 +166,7 @@ public sealed class LogRecordTests
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         var food = new Food { Name = "artichoke", Price = 3.99 };
-        logger.LogInformation("{food}", food);
+        logger.LogInformation("{Food}", food);
 
         Assert.NotNull(exportedItems[0].State);
 
@@ -177,18 +177,18 @@ public sealed class LogRecordTests
         Assert.Equal(2, attributes.Count);
 
         // Check if state has food
-        Assert.Contains(attributes, item => item.Key == "food");
+        Assert.Contains(attributes, item => item.Key == "Food");
 
-        var foodParameter = attributes.First(item => item.Key == "food").Value as Food?;
+        var foodParameter = attributes.First(item => item.Key == "Food").Value as Food?;
         Assert.NotNull(foodParameter);
         Assert.Equal(food.Name, foodParameter.Value.Name);
         Assert.Equal(food.Price, foodParameter.Value.Price);
 
         // Check if state has OriginalFormat
         Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
-        Assert.Equal("{food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
+        Assert.Equal("{Food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
 
-        Assert.Equal("{food}", exportedItems[0].Body);
+        Assert.Equal("{Food}", exportedItems[0].Body);
         if (includeFormattedMessage)
         {
             Assert.Equal(food.ToString(), exportedItems[0].FormattedMessage);
@@ -208,7 +208,7 @@ public sealed class LogRecordTests
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         var anonymousType = new { Name = "pumpkin", Price = 5.99 };
-        logger.LogInformation("{food}", anonymousType);
+        logger.LogInformation("{Food}", anonymousType);
 
         Assert.NotNull(exportedItems[0].State);
 
@@ -219,18 +219,18 @@ public sealed class LogRecordTests
         Assert.Equal(2, attributes.Count);
 
         // Check if state has food
-        Assert.Contains(attributes, item => item.Key == "food");
+        Assert.Contains(attributes, item => item.Key == "Food");
 
-        var foodParameter = attributes.First(item => item.Key == "food").Value as dynamic;
+        var foodParameter = attributes.First(item => item.Key == "Food").Value as dynamic;
         Assert.NotNull(foodParameter);
         Assert.Equal(anonymousType.Name, foodParameter!.Name);
         Assert.Equal(anonymousType.Price, foodParameter!.Price);
 
         // Check if state has OriginalFormat
         Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
-        Assert.Equal("{food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
+        Assert.Equal("{Food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
 
-        Assert.Equal("{food}", exportedItems[0].Body);
+        Assert.Equal("{Food}", exportedItems[0].Body);
         if (includeFormattedMessage)
         {
             Assert.Equal(anonymousType.ToString(), exportedItems[0].FormattedMessage);
@@ -254,7 +254,7 @@ public sealed class LogRecordTests
             ["Name"] = "truffle",
             ["Price"] = 299.99,
         };
-        logger.LogInformation("{food}", food);
+        logger.LogInformation("{Food}", food);
 
         Assert.NotNull(exportedItems[0].State);
 
@@ -265,17 +265,17 @@ public sealed class LogRecordTests
         Assert.Equal(2, attributes.Count);
 
         // Check if state has food
-        Assert.Contains(attributes, item => item.Key == "food");
+        Assert.Contains(attributes, item => item.Key == "Food");
 
-        var foodParameter = attributes.First(item => item.Key == "food").Value as Dictionary<string, object>;
+        var foodParameter = attributes.First(item => item.Key == "Food").Value as Dictionary<string, object>;
         Assert.NotNull(foodParameter);
         Assert.True(food.Count == foodParameter.Count && !food.Except(foodParameter).Any());
 
         // Check if state has OriginalFormat
         Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
-        Assert.Equal("{food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
+        Assert.Equal("{Food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
 
-        Assert.Equal("{food}", exportedItems[0].Body);
+        Assert.Equal("{Food}", exportedItems[0].Body);
         if (includeFormattedMessage)
         {
             var prevCulture = CultureInfo.CurrentCulture;
@@ -917,7 +917,7 @@ public sealed class LogRecordTests
             });
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        logger.LogInformation("Hello {world}", "earth");
+        logger.LogInformation("Hello {World}", "earth");
 
         var logRecord = exportedItems[0];
 
