@@ -53,7 +53,6 @@ internal readonly struct Tags : IEquatable<Tags>
             ref var theirs = ref MemoryMarshal.GetArrayDataReference(theirKvps);
             while (true)
             {
-                // Note: string.Equals performs an ordinal comparison
                 if (!ours.Key.Equals(theirs.Key, StringComparison.Ordinal))
                 {
                     return false;
