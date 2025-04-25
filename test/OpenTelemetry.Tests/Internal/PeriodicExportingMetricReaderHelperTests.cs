@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
@@ -78,7 +79,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     public void CreatePeriodicExportingMetricReader_ExportIntervalMilliseconds_FromEnvVar()
     {
         var value = 789;
-        Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey, value.ToString());
+        Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey, value.ToString(CultureInfo.InvariantCulture));
         var reader = CreatePeriodicExportingMetricReader();
 
         Assert.Equal(value, reader.ExportIntervalMilliseconds);
@@ -88,7 +89,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     public void CreatePeriodicExportingMetricReader_ExportTimeoutMilliseconds_FromEnvVar()
     {
         var value = 246;
-        Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey, value.ToString());
+        Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey, value.ToString(CultureInfo.InvariantCulture));
         var reader = CreatePeriodicExportingMetricReader();
 
         Assert.Equal(value, reader.ExportTimeoutMilliseconds);

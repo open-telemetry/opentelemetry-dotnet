@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using System.IO.MemoryMappedFiles;
 using System.Text;
 using OpenTelemetry.Tests;
@@ -76,9 +77,9 @@ public class SelfDiagnosticsEventListenerTests
         // Check DateTimeKind of Utc, Local, and Unspecified
         DateTime[] datetimes =
         [
-            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Utc),
-            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Local),
-            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Unspecified),
+            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00", CultureInfo.InvariantCulture), DateTimeKind.Utc),
+            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00", CultureInfo.InvariantCulture), DateTimeKind.Local),
+            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00", CultureInfo.InvariantCulture), DateTimeKind.Unspecified),
             DateTime.UtcNow,
             DateTime.Now,
         ];
