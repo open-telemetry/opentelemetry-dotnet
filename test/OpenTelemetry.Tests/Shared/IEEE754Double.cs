@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace OpenTelemetry.Tests;
 
 [StructLayout(LayoutKind.Explicit)]
-public struct IEEE754Double
+internal struct IEEE754Double
 {
     [FieldOffset(0)]
     public double DoubleValue = 0;
