@@ -8,7 +8,7 @@ namespace OpenTelemetry.Trace.Tests;
 
 public sealed class LinkTests : IDisposable
 {
-    private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
+    private readonly Dictionary<string, object> attributesMap = [];
     private readonly SpanContext spanContext;
     private readonly SpanAttributes tags;
 
