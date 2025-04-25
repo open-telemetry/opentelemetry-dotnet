@@ -314,7 +314,7 @@ public class OtlpLogExporterTests
           .Build();
 
         var logRecord = logRecords[0];
-        OtlpLogs.LogRecord? otlpLogRecord = otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new(configuration), logRecord);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new(configuration), logRecord);
 
         Assert.NotNull(otlpLogRecord);
         Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
