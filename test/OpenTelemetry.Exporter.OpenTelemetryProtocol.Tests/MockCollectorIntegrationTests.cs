@@ -75,9 +75,11 @@ public sealed class MockCollectorIntegrationTests
 
         var exportResults = new List<ExportResult>();
         using var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri($"http://localhost:{testGrpcPort}") });
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var delegatingExporter = new DelegatingExporter<Activity>
+#pragma warning disable CA2000 // Dispose objects before losing scope
         {
-            OnExportFunc = (batch) =>
+            OnExportFunc = batch =>
             {
                 var result = otlpExporter.Export(batch);
                 exportResults.Add(result);
@@ -89,7 +91,9 @@ public sealed class MockCollectorIntegrationTests
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource(activitySourceName)
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new SimpleActivityExportProcessor(delegatingExporter))
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .Build();
 
         using var source = new ActivitySource(activitySourceName);
@@ -352,7 +356,8 @@ public sealed class MockCollectorIntegrationTests
 
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
 
-        var exportClient = new OtlpHttpExportClient(exporterOptions, new HttpClient(), "/v1/traces");
+        using var exporterHttpClient = new HttpClient();
+        var exportClient = new OtlpHttpExportClient(exporterOptions, exporterHttpClient, "/v1/traces");
 
         // TODO: update this to configure via experimental environment variable.
         OtlpExporterTransmissionHandler transmissionHandler;
@@ -485,7 +490,8 @@ public sealed class MockCollectorIntegrationTests
 
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
 
-        var exportClient = new OtlpGrpcExportClient(exporterOptions, new HttpClient(), "opentelemetry.proto.collector.trace.v1.TraceService/Export");
+        using var exporterHttpClient = new HttpClient();
+        var exportClient = new OtlpGrpcExportClient(exporterOptions, exporterHttpClient, "opentelemetry.proto.collector.trace.v1.TraceService/Export");
 
         // TODO: update this to configure via experimental environment variable.
         OtlpExporterTransmissionHandler transmissionHandler;

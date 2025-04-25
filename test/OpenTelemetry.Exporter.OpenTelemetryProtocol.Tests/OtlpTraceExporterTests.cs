@@ -161,7 +161,9 @@ public sealed class OtlpTraceExporterTests : IDisposable
             .SetResourceBuilder(resourceBuilder)
             .AddSource(sources[0].Name)
             .AddSource(sources[1].Name)
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         using var openTelemetrySdk = builder.Build();
 
@@ -248,7 +250,9 @@ public sealed class OtlpTraceExporterTests : IDisposable
             .SetResourceBuilder(resourceBuilder)
             .AddSource(activitySourceWithTags.Name)
             .AddSource(activitySourceWithoutTags.Name)
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         using var openTelemetrySdk = builder.Build();
 
@@ -336,7 +340,9 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var builder = Sdk.CreateTracerProviderBuilder()
             .SetResourceBuilder(resourceBuilder)
             .AddSource(activitySource.Name)
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         using var openTelemetrySdk = builder.Build();
 
@@ -766,7 +772,9 @@ public sealed class OtlpTraceExporterTests : IDisposable
     public void UseOpenTelemetryProtocolActivityExporterWithCustomActivityProcessor()
     {
         const string ActivitySourceName = "otlp.test";
+#pragma warning disable CA2000 // Dispose objects before losing scope
         TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         bool startCalled = false;
         bool endCalled = false;
@@ -803,7 +811,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var exportClientMock = new TestExportClient();
 
         var exporterOptions = new OtlpExporterOptions();
-        var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
 
         using var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
         exporter.Shutdown();

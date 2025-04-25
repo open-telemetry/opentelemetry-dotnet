@@ -91,7 +91,9 @@ public class HttpRetryTestCase
             HttpResponseMessage? responseMessage = null;
             if (statusCode != null)
             {
+#pragma warning disable CA2000 // Dispose objects before losing scope
                 responseMessage = new HttpResponseMessage();
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
                 if (throttleDelay != null)
                 {

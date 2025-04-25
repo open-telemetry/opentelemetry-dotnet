@@ -8,7 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -414,8 +413,9 @@ public class OtlpLogExporterTests
 
         ActivityTraceId expectedTraceId = default;
         ActivitySpanId expectedSpanId = default;
-        using (var activity = new Activity(Utils.GetCurrentMethodName()).Start())
+        using (var activity = new Activity(Utils.GetCurrentMethodName()))
         {
+            activity.Start();
             logger.LogWithinAnActivity();
 
             expectedTraceId = activity.TraceId;
@@ -689,10 +689,10 @@ public class OtlpLogExporterTests
         // Arrange.
         var testExportClient = new TestExportClient();
         var exporterOptions = new OtlpExporterOptions();
-        var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
-        var sut = new OtlpLogExporter(
+        using var sut = new OtlpLogExporter(
             exporterOptions,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
@@ -711,10 +711,10 @@ public class OtlpLogExporterTests
         // Arrange.
         var testExportClient = new TestExportClient(throwException: true);
         var exporterOptions = new OtlpExporterOptions();
-        var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
-        var sut = new OtlpLogExporter(
+        using var sut = new OtlpLogExporter(
             exporterOptions,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
@@ -733,10 +733,10 @@ public class OtlpLogExporterTests
         // Arrange.
         var testExportClient = new TestExportClient();
         var exporterOptions = new OtlpExporterOptions();
-        var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
-        var sut = new OtlpLogExporter(
+        using var sut = new OtlpLogExporter(
             exporterOptions,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
