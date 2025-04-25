@@ -17,6 +17,31 @@ internal static class ZipkinActivityConversionExtensions
 
     private static readonly ConcurrentDictionary<(string, int), ZipkinEndpoint> RemoteEndpointCache = new();
 
+    private static readonly HashSet<string> TagKeysToCache =
+    [
+        ZipkinErrorFlagTagName,
+        SemanticConventions.AttributeDbInstance,
+        SemanticConventions.AttributeDbName,
+        SemanticConventions.AttributeHttpHost,
+        SemanticConventions.AttributeNetPeerIp,
+        SemanticConventions.AttributeNetPeerName,
+        SemanticConventions.AttributeNetPeerPort,
+        SemanticConventions.AttributeNetSockPeerAddr,
+        SemanticConventions.AttributeNetSockPeerName,
+        SemanticConventions.AttributeNetSockPeerPort,
+        SemanticConventions.AttributeNetworkPeerAddress,
+        SemanticConventions.AttributeNetworkPeerPort,
+        SemanticConventions.AttributePeerAddress,
+        SemanticConventions.AttributePeerHostname,
+        SemanticConventions.AttributePeerService,
+        SemanticConventions.AttributeServerAddress,
+        SemanticConventions.AttributeServerSocketAddress,
+        SemanticConventions.AttributeServerSocketDomain,
+        SemanticConventions.AttributeServerSocketPort,
+        SpanAttributeConstants.StatusCodeKey,
+        SpanAttributeConstants.StatusDescriptionKey,
+    ];
+
     private static Dictionary<string, object?> cachedTags = [];
 
     internal static ZipkinSpan ToZipkinSpan(this Activity activity, ZipkinEndpoint localEndpoint, bool useShortTraceIds = false)
@@ -109,7 +134,10 @@ internal static class ZipkinActivityConversionExtensions
                 PooledList<KeyValuePair<string, object?>>.Add(ref tags, tag);
             }
 
-            cachedTags[tag.Key] = tag.Value;
+            if (TagKeysToCache.Contains(tag.Key))
+            {
+                cachedTags[tag.Key] = tag.Value;
+            }
         }
     }
 
