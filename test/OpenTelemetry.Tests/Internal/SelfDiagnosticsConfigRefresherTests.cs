@@ -88,7 +88,11 @@ public class SelfDiagnosticsConfigRefresherTests
     private static byte[] ReadFile(string logDirectory, int byteCount)
     {
         var outputFileName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName) + "."
+#if NET
+                + Environment.ProcessId + ".log";
+#else
                 + Process.GetCurrentProcess().Id + ".log";
+#endif
         var outputFilePath = Path.Combine(logDirectory, outputFileName);
         using var file = File.Open(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         byte[] actualBytes = new byte[byteCount];
