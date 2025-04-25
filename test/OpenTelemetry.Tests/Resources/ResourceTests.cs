@@ -184,16 +184,16 @@ public sealed class ResourceTests : IDisposable
 
         // Assert
         Assert.Equal(7, resource.Attributes.Count());
-        Assert.Equal(new string[] { "stringValue" }, resource.Attributes.Where(x => x.Key == "string arr").FirstOrDefault().Value);
-        Assert.Equal(new bool[] { true }, resource.Attributes.Where(x => x.Key == "bool arr").FirstOrDefault().Value);
-        Assert.Equal(new double[] { 0.1d }, resource.Attributes.Where(x => x.Key == "double arr").FirstOrDefault().Value);
-        Assert.Equal(new long[] { 1L }, resource.Attributes.Where(x => x.Key == "long arr").FirstOrDefault().Value);
+        Assert.Equal(new string[] { "stringValue" }, resource.Attributes.FirstOrDefault(x => x.Key == "string arr").Value);
+        Assert.Equal(new bool[] { true }, resource.Attributes.FirstOrDefault(x => x.Key == "bool arr").Value);
+        Assert.Equal(new double[] { 0.1d }, resource.Attributes.FirstOrDefault(x => x.Key == "double arr").Value);
+        Assert.Equal(new long[] { 1L }, resource.Attributes.FirstOrDefault(x => x.Key == "long arr").Value);
 
         var longArr = new long[] { 1 };
         var doubleArr = new double[] { Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture) };
-        Assert.Equal(longArr, resource.Attributes.Where(x => x.Key == "int arr").FirstOrDefault().Value);
-        Assert.Equal(longArr, resource.Attributes.Where(x => x.Key == "short arr").FirstOrDefault().Value);
-        Assert.Equal(doubleArr, resource.Attributes.Where(x => x.Key == "float arr").FirstOrDefault().Value);
+        Assert.Equal(longArr, resource.Attributes.FirstOrDefault(x => x.Key == "int arr").Value);
+        Assert.Equal(longArr, resource.Attributes.FirstOrDefault(x => x.Key == "short arr").Value);
+        Assert.Equal(doubleArr, resource.Attributes.FirstOrDefault(x => x.Key == "float arr").Value);
     }
 
     [Fact]
