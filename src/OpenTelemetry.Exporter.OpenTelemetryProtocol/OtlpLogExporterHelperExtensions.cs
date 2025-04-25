@@ -56,7 +56,9 @@ public static class OtlpLogExporterHelperExtensions
 
         var finalOptionsName = name ?? Options.DefaultName;
 
+#pragma warning disable CA1062 // Validate arguments of public methods
         return loggerOptions.AddProcessor(sp =>
+#pragma warning restore CA1062 // Validate arguments of public methods
         {
             var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
 
@@ -102,7 +104,9 @@ public static class OtlpLogExporterHelperExtensions
 
         var finalOptionsName = name ?? Options.DefaultName;
 
+#pragma warning disable CA1062 // Validate arguments of public methods
         return loggerOptions.AddProcessor(sp =>
+#pragma warning restore CA1062 // Validate arguments of public methods
         {
             var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
 
@@ -316,10 +320,12 @@ public static class OtlpLogExporterHelperExtensions
          * "OtlpLogExporter");
          */
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
             exporterOptions!,
             sdkLimitOptions!,
             experimentalOptions!);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         if (configureExporterInstance != null)
         {

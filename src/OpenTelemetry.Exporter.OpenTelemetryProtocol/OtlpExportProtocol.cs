@@ -6,7 +6,9 @@ namespace OpenTelemetry.Exporter;
 /// <summary>
 /// Supported by OTLP exporter protocol types according to the specification https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md.
 /// </summary>
+#pragma warning disable CA1028 // Enum storage should be Int32
 public enum OtlpExportProtocol : byte
+#pragma warning restore CA1028 // Enum storage should be Int32
 {
     /// <summary>
     /// OTLP over gRPC (corresponds to 'grpc' Protocol configuration option). Used as default.
