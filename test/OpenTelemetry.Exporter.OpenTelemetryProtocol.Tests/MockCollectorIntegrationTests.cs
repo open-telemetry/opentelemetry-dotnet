@@ -4,6 +4,7 @@
 #if !NETFRAMEWORK
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net;
 using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
@@ -58,7 +59,7 @@ public sealed class MockCollectorIntegrationTests
                            "/MockCollector/SetResponseCodes/{responseCodesCsv}",
                            (MockCollectorState collectorState, string responseCodesCsv) =>
                            {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                                collectorState.SetStatusCodes(codes);
                            });
 
@@ -70,13 +71,15 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
 
         var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
         var exportResults = new List<ExportResult>();
         using var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri($"http://localhost:{testGrpcPort}") });
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var delegatingExporter = new DelegatingExporter<Activity>
+#pragma warning disable CA2000 // Dispose objects before losing scope
         {
-            OnExportFunc = (batch) =>
+            OnExportFunc = batch =>
             {
                 var result = otlpExporter.Export(batch);
                 exportResults.Add(result);
@@ -88,7 +91,9 @@ public sealed class MockCollectorIntegrationTests
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource(activitySourceName)
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new SimpleActivityExportProcessor(delegatingExporter))
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .Build();
 
         using var source = new ActivitySource(activitySourceName);
@@ -158,7 +163,7 @@ public sealed class MockCollectorIntegrationTests
                            "/MockCollector/SetResponseCodes/{responseCodesCsv}",
                            (MockCollectorState collectorState, string responseCodesCsv) =>
                            {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                                collectorState.SetStatusCodes(codes);
                            });
 
@@ -171,7 +176,7 @@ public sealed class MockCollectorIntegrationTests
 
         // First reply with failure and then Ok
         var codes = new[] { initialStatusCode, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
         var endpoint = new Uri($"http://localhost:{testGrpcPort}");
 
@@ -241,7 +246,7 @@ public sealed class MockCollectorIntegrationTests
                            "/MockCollector/SetResponseCodes/{responseCodesCsv}",
                            (MockCollectorHttpState collectorState, string responseCodesCsv) =>
                            {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                                collectorState.SetStatusCodes(codes);
                            });
 
@@ -259,7 +264,7 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
 
         var codes = new[] { initialHttpStatusCode, HttpStatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
         var endpoint = new Uri($"http://localhost:{testHttpPort}/v1/traces");
 
@@ -327,7 +332,7 @@ public sealed class MockCollectorIntegrationTests
                            "/MockCollector/SetResponseCodes/{responseCodesCsv}",
                            (MockCollectorHttpState collectorState, string responseCodesCsv) =>
                            {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                                collectorState.SetStatusCodes(codes);
                            });
 
@@ -345,13 +350,14 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
 
         var codes = new[] { initialHttpStatusCode, HttpStatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
         var endpoint = new Uri($"http://localhost:{testHttpPort}/v1/traces");
 
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
 
-        var exportClient = new OtlpHttpExportClient(exporterOptions, new HttpClient(), "/v1/traces");
+        using var exporterHttpClient = new HttpClient();
+        var exportClient = new OtlpHttpExportClient(exporterOptions, exporterHttpClient, "/v1/traces");
 
         // TODO: update this to configure via experimental environment variable.
         OtlpExporterTransmissionHandler transmissionHandler;
@@ -466,7 +472,7 @@ public sealed class MockCollectorIntegrationTests
                            "/MockCollector/SetResponseCodes/{responseCodesCsv}",
                            (MockCollectorState collectorState, string responseCodesCsv) =>
                            {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                                collectorState.SetStatusCodes(codes);
                            });
 
@@ -478,13 +484,14 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
 
         var codes = new[] { initialgrpcStatusCode, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
         var endpoint = new Uri($"http://localhost:{testGrpcPort}");
 
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
 
-        var exportClient = new OtlpGrpcExportClient(exporterOptions, new HttpClient(), "opentelemetry.proto.collector.trace.v1.TraceService/Export");
+        using var exporterHttpClient = new HttpClient();
+        var exportClient = new OtlpGrpcExportClient(exporterOptions, exporterHttpClient, "opentelemetry.proto.collector.trace.v1.TraceService/Export");
 
         // TODO: update this to configure via experimental environment variable.
         OtlpExporterTransmissionHandler transmissionHandler;
@@ -547,10 +554,10 @@ public sealed class MockCollectorIntegrationTests
         transmissionHandler.Dispose();
     }
 
-    private class MockCollectorState
+    private sealed class MockCollectorState
     {
-        private Grpc.Core.StatusCode[] statusCodes = { };
-        private int statusCodeIndex = 0;
+        private Grpc.Core.StatusCode[] statusCodes = [];
+        private int statusCodeIndex;
 
         public void SetStatusCodes(int[] statusCodes)
         {
@@ -566,10 +573,10 @@ public sealed class MockCollectorIntegrationTests
         }
     }
 
-    private class MockCollectorHttpState
+    private sealed class MockCollectorHttpState
     {
-        private HttpStatusCode[] statusCodes = { };
-        private int statusCodeIndex = 0;
+        private HttpStatusCode[] statusCodes = [];
+        private int statusCodeIndex;
 
         public void SetStatusCodes(int[] statusCodes)
         {
@@ -585,7 +592,9 @@ public sealed class MockCollectorIntegrationTests
         }
     }
 
-    private class MockTraceService : TraceService.TraceServiceBase
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+    private sealed class MockTraceService : TraceService.TraceServiceBase
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private readonly MockCollectorState state;
 
@@ -606,9 +615,9 @@ public sealed class MockCollectorIntegrationTests
         }
     }
 
-    private class MockFileProvider : PersistentBlobProvider
+    private sealed class MockFileProvider : PersistentBlobProvider
     {
-        private readonly List<PersistentBlob> mockStorage = new();
+        private readonly List<PersistentBlob> mockStorage = [];
 
         public IEnumerable<PersistentBlob> TryGetBlobs() => this.mockStorage.AsEnumerable();
 
@@ -637,11 +646,11 @@ public sealed class MockCollectorIntegrationTests
         }
     }
 
-    private class MockFileBlob : PersistentBlob
+    private sealed class MockFileBlob : PersistentBlob
     {
         private readonly List<PersistentBlob> mockStorage;
 
-        private byte[] buffer = Array.Empty<byte>();
+        private byte[] buffer = [];
 
         public MockFileBlob(List<PersistentBlob> mockStorage)
         {
