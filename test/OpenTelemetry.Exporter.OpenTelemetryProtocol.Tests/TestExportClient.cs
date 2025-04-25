@@ -30,7 +30,7 @@ internal sealed class TestExportClient(bool throwException = false) : IExportCli
         return true;
     }
 
-    private class TestExportClientResponse : ExportClientResponse
+    private sealed class TestExportClientResponse : ExportClientResponse
     {
         public TestExportClientResponse(bool success, DateTime deadline, Exception? exception)
             : base(success, deadline, exception)

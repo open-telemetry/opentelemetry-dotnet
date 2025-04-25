@@ -567,7 +567,7 @@ public sealed class MockCollectorIntegrationTests
         }
     }
 
-    private class MockCollectorHttpState
+    private sealed class MockCollectorHttpState
     {
         private HttpStatusCode[] statusCodes = [];
         private int statusCodeIndex;
@@ -586,7 +586,7 @@ public sealed class MockCollectorIntegrationTests
         }
     }
 
-    private class MockTraceService : TraceService.TraceServiceBase
+    private sealed class MockTraceService : TraceService.TraceServiceBase
     {
         private readonly MockCollectorState state;
 
@@ -607,7 +607,7 @@ public sealed class MockCollectorIntegrationTests
         }
     }
 
-    private class MockFileProvider : PersistentBlobProvider
+    private sealed class MockFileProvider : PersistentBlobProvider
     {
         private readonly List<PersistentBlob> mockStorage = [];
 
@@ -638,7 +638,7 @@ public sealed class MockCollectorIntegrationTests
         }
     }
 
-    private class MockFileBlob : PersistentBlob
+    private sealed class MockFileBlob : PersistentBlob
     {
         private readonly List<PersistentBlob> mockStorage;
 
