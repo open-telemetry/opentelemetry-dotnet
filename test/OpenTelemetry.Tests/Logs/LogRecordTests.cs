@@ -1086,10 +1086,14 @@ public sealed class LogRecordTests
         {
             get
             {
+#if NET
+                ObjectDisposedException.ThrowIf(this.disposed, this);
+#else
                 if (this.disposed)
                 {
                     throw new ObjectDisposedException(nameof(DisposingState));
                 }
+#endif
 
                 return this.value;
             }
