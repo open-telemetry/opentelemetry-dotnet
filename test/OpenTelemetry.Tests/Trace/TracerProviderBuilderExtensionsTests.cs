@@ -678,14 +678,6 @@ public class TracerProviderBuilderExtensionsTests
         }
     }
 
-    private sealed class MyExporter : BaseExporter<Activity>
-    {
-        public override ExportResult Export(in Batch<Activity> batch)
-        {
-            return ExportResult.Success;
-        }
-    }
-
     private sealed class MyTracerProviderBuilder : TracerProviderBuilder
     {
         public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)

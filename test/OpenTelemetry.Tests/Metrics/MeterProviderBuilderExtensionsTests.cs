@@ -373,14 +373,6 @@ public class MeterProviderBuilderExtensionsTests
     {
     }
 
-    private sealed class MyExporter : BaseExporter<Metric>
-    {
-        public override ExportResult Export(in Batch<Metric> batch)
-        {
-            return ExportResult.Success;
-        }
-    }
-
     private sealed class MyMeterProviderBuilder : MeterProviderBuilder
     {
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
