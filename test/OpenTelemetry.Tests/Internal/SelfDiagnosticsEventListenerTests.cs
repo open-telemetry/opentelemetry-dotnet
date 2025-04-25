@@ -288,7 +288,7 @@ public class SelfDiagnosticsEventListenerTests
 
         string logLine = Encoding.UTF8.GetString(buffer, 0, totalBytesRead);
         string logMessage = ParseLogMessage(logLine);
-        Assert.StartsWith(eventMessage, logMessage);
+        Assert.StartsWith(eventMessage, logMessage, StringComparison.Ordinal);
     }
 
     private static string ParseLogMessage(string logLine)

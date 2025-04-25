@@ -38,7 +38,7 @@ public class SelfDiagnosticsConfigRefresherTests
             byte[] actualBytes = ReadFile(logDirectory, bufferSize);
             string logText = Encoding.UTF8.GetString(actualBytes);
             this.output.WriteLine(logText);  // for debugging in case the test fails
-            Assert.StartsWith(MessageOnNewFileString, logText);
+            Assert.StartsWith(MessageOnNewFileString, logText, StringComparison.Ordinal);
 
             // The event was omitted
             Assert.Equal('\0', (char)actualBytes[MessageOnNewFile.Length]);
@@ -65,12 +65,12 @@ public class SelfDiagnosticsConfigRefresherTests
             int bufferSize = 2 * (MessageOnNewFileString.Length + expectedMessage.Length);
             byte[] actualBytes = ReadFile(logDirectory, bufferSize);
             string logText = Encoding.UTF8.GetString(actualBytes);
-            Assert.StartsWith(MessageOnNewFileString, logText);
+            Assert.StartsWith(MessageOnNewFileString, logText, StringComparison.Ordinal);
 
             // The event was captured
             string logLine = logText.Substring(MessageOnNewFileString.Length);
             string logMessage = ParseLogMessage(logLine);
-            Assert.StartsWith(expectedMessage, logMessage);
+            Assert.StartsWith(expectedMessage, logMessage, StringComparison.Ordinal);
         }
         finally
         {

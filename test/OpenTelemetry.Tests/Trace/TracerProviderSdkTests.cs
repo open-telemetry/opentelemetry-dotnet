@@ -805,7 +805,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-01", activity.Id);
+        Assert.EndsWith("-01", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }
@@ -828,7 +828,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-00", activity.Id);
+        Assert.EndsWith("-00", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }
@@ -856,7 +856,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id);
+        Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }
@@ -935,7 +935,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id);
+        Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id, StringComparison.Ordinal);
         activity.Stop();
     }
 
@@ -970,7 +970,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-01", activity.Id);
+        Assert.EndsWith("-01", activity.Id, StringComparison.Ordinal);
         activity.Stop();
     }
 
@@ -1005,7 +1005,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-00", activity.Id);
+        Assert.EndsWith("-00", activity.Id, StringComparison.Ordinal);
         activity.Stop();
     }
 
@@ -1243,7 +1243,7 @@ public sealed class TracerProviderSdkTests : IDisposable
 
         foreach (var ns in legacySourceNamespaces)
         {
-            var startOpName = ns.Replace("*", "Start");
+            var startOpName = ns.Replace("*", "Start", StringComparison.Ordinal);
             using var startOperation = new Activity(startOpName);
             startOperation.Start();
             startOperation.Stop();
@@ -1251,7 +1251,7 @@ public sealed class TracerProviderSdkTests : IDisposable
             Assert.Contains(startOpName, onStartProcessedActivities); // Processor.OnStart is called since we added a legacy OperationName
             Assert.Contains(startOpName, onStopProcessedActivities);  // Processor.OnEnd is called since we added a legacy OperationName
 
-            var stopOpName = ns.Replace("*", "Stop");
+            var stopOpName = ns.Replace("*", "Stop", StringComparison.Ordinal);
             using var stopOperation = new Activity(stopOpName);
             stopOperation.Start();
             stopOperation.Stop();

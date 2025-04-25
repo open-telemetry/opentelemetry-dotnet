@@ -569,7 +569,7 @@ public sealed class ResourceTests : IDisposable
     {
         var serviceName = attributes.Where(pair => pair.Key.Equals("service.name", StringComparison.Ordinal));
         Assert.Single(serviceName);
-        Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string);
+        Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string, StringComparison.Ordinal);
     }
 
     private static void ClearEnvVars()
