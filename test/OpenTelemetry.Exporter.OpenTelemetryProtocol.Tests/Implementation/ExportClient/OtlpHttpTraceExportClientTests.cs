@@ -90,11 +90,11 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
             Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
         };
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var testHttpHandler = new TestHttpMessageHandler();
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
-        var httpRequestContent = Array.Empty<byte>();
-
-        var httpClient = new HttpClient(testHttpHandler);
+        using var httpClient = new HttpClient(testHttpHandler);
 
         var exportClient = new OtlpHttpExportClient(options, httpClient, string.Empty);
 
@@ -117,7 +117,9 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
         using var openTelemetrySdk = builder.Build();
 
         var exportedItems = new List<Activity>();
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var processor = new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
+#pragma warning restore CA2000 // Dispose objects before losing scope
         const int numOfSpans = 10;
         bool isEven;
         for (var i = 0; i < numOfSpans; i++)
