@@ -561,7 +561,7 @@ public sealed class ResourceTests : IDisposable
     {
         Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
         Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
-        var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
+        var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version", StringComparison.Ordinal));
         Assert.Single(versionAttribute);
     }
 
