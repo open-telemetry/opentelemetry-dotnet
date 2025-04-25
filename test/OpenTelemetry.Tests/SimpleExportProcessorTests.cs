@@ -34,7 +34,7 @@ public class SimpleExportProcessorTests
     /// <summary>
     /// Testable class for abstract <see cref="SimpleExportProcessor{T}"/>.
     /// </summary>
-    public class TestSimpleExportProcessor : SimpleExportProcessor<object>
+    private class TestSimpleExportProcessor : SimpleExportProcessor<object>
     {
         public TestSimpleExportProcessor(BaseExporter<object> exporter)
             : base(exporter)
