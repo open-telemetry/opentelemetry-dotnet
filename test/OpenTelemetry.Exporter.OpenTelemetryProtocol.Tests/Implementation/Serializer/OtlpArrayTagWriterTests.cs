@@ -166,10 +166,11 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
             lessthat1MBArray[i] = "1234";
         }
 
+        string?[] stringArray = ["12345"];
         var tags = new ActivityTagsCollection
         {
             new("lessthat1MBArray", lessthat1MBArray),
-            new("StringArray", new string?[] { "12345" }),
+            new("StringArray", stringArray),
             new("LargeArray", largeArray),
         };
 

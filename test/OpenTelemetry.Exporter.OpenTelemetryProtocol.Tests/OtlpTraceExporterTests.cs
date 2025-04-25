@@ -437,6 +437,11 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         using var rootActivity = activitySource.StartActivity("root", ActivityKind.Producer);
 
+        bool[] boolArray = [true, false];
+        int[] intArray = [1, 2];
+        double[] doubleArray = [1.0, 2.09];
+        string[] stringArray = ["a", "b"];
+
         var attributes = new List<KeyValuePair<string, object?>>
         {
             new("bool", true),
@@ -445,10 +450,10 @@ public sealed class OtlpTraceExporterTests : IDisposable
             new("double", 3.14),
             new("int", 1),
             new("datetime", DateTime.UtcNow),
-            new("bool_array", new bool[] { true, false }),
-            new("int_array", new int[] { 1, 2 }),
-            new("double_array", new double[] { 1.0, 2.09 }),
-            new("string_array", new string[] { "a", "b" }),
+            new("bool_array", boolArray),
+            new("int_array", intArray),
+            new("double_array", doubleArray),
+            new("string_array", stringArray),
             new("datetime_array", new DateTime[] { DateTime.UtcNow, DateTime.Now }),
         };
 

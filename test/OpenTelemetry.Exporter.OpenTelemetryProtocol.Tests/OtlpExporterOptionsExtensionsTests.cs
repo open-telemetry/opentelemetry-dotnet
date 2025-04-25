@@ -179,9 +179,9 @@ public class OtlpExporterOptionsExtensionsTests
 
         if (!string.IsNullOrEmpty(expectedNormalizedOptional))
         {
-            foreach (var segment in expectedNormalizedOptional.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var segment in expectedNormalizedOptional.Split([','], StringSplitOptions.RemoveEmptyEntries))
             {
-                var parts = segment.Split(new[] { '=' }, 2);
+                var parts = segment.Split(['='], 2);
                 expectedOptional.Add(parts[0].Trim(), parts[1].Trim());
             }
         }
