@@ -586,7 +586,9 @@ public sealed class MockCollectorIntegrationTests
         }
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MockTraceService : TraceService.TraceServiceBase
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private readonly MockCollectorState state;
 
