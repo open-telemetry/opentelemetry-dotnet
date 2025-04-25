@@ -6,7 +6,7 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
 
-public class CurrentSpanTests : IDisposable
+public sealed class CurrentSpanTests : IDisposable
 {
     private readonly Tracer tracer;
 

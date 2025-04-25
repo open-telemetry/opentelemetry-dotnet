@@ -6,7 +6,7 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
 
-public class BatchExportActivityProcessorOptionsTests : IDisposable
+public sealed class BatchExportActivityProcessorOptionsTests : IDisposable
 {
     public BatchExportActivityProcessorOptionsTests()
     {

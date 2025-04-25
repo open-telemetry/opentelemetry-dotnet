@@ -6,7 +6,7 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
 
-public class LinkTests : IDisposable
+public sealed class LinkTests : IDisposable
 {
     private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
     private readonly SpanContext spanContext;

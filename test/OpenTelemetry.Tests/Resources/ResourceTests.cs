@@ -6,7 +6,7 @@ using Xunit;
 
 namespace OpenTelemetry.Resources.Tests;
 
-public class ResourceTests : IDisposable
+public sealed class ResourceTests : IDisposable
 {
     private const string KeyName = "key";
     private const string ValueName = "value";

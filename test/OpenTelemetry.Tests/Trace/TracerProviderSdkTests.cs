@@ -11,7 +11,7 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
 
-public class TracerProviderSdkTests : IDisposable
+public sealed class TracerProviderSdkTests : IDisposable
 {
     private static readonly Action<Activity, ActivitySource> SetActivitySourceProperty = CreateActivitySourceSetter();
 
