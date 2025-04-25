@@ -1342,7 +1342,11 @@ public class TracerProviderSdkTests : IDisposable
         var setMethod = typeof(Activity).GetProperty("Source")?.SetMethod
             ?? throw new InvalidOperationException("Could not build Activity.Source setter delegate");
 
+#if NET
+        return setMethod.CreateDelegate<Action<Activity, ActivitySource>>();
+#else
         return (Action<Activity, ActivitySource>)setMethod.CreateDelegate(typeof(Action<Activity, ActivitySource>));
+#endif
     }
 
     private sealed class TestTracerProviderBuilder : TracerProviderBuilderBase
