@@ -92,8 +92,6 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
 
         var testHttpHandler = new TestHttpMessageHandler();
 
-        var httpRequestContent = Array.Empty<byte>();
-
         var httpClient = new HttpClient(testHttpHandler);
 
         var exportClient = new OtlpHttpExportClient(options, httpClient, string.Empty);
