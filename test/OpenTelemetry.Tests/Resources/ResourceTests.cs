@@ -567,7 +567,7 @@ public sealed class ResourceTests : IDisposable
 
     internal static void ValidateDefaultAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
     {
-        var serviceName = attributes.Where(pair => pair.Key.Equals("service.name"));
+        var serviceName = attributes.Where(pair => pair.Key.Equals("service.name", StringComparison.Ordinal));
         Assert.Single(serviceName);
         Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string);
     }

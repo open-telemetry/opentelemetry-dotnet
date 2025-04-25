@@ -20,7 +20,7 @@ public class MeterProviderTests
         Assert.False(meterProvider.TryFindExporter(out MyExporter? myExporter));
     }
 
-    private class MyExporter : BaseExporter<Metric>
+    private sealed class MyExporter : BaseExporter<Metric>
     {
         public override ExportResult Export(in Batch<Metric> batch)
         {

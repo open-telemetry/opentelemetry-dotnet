@@ -54,7 +54,7 @@ public class MetricExporterTests
     }
 
     [ExportModes(ExportModes.Push)]
-    private class PushOnlyMetricExporter : BaseExporter<Metric>
+    private sealed class PushOnlyMetricExporter : BaseExporter<Metric>
     {
         public override ExportResult Export(in Batch<Metric> batch)
         {
@@ -63,7 +63,7 @@ public class MetricExporterTests
     }
 
     [ExportModes(ExportModes.Pull)]
-    private class PullOnlyMetricExporter : BaseExporter<Metric>, IPullMetricExporter
+    private sealed class PullOnlyMetricExporter : BaseExporter<Metric>, IPullMetricExporter
     {
         public Func<int, bool>? Collect { get; set; }
 
