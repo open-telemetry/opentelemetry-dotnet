@@ -11,7 +11,7 @@ namespace OpenTelemetry.Internal.Tests;
 
 public class SelfDiagnosticsConfigRefresherTests
 {
-    private static readonly string ConfigFilePath = SelfDiagnosticsConfigParser.ConfigFileName;
+    private const string ConfigFilePath = SelfDiagnosticsConfigParser.ConfigFileName;
     private static readonly byte[] MessageOnNewFile = SelfDiagnosticsConfigRefresher.MessageOnNewFile;
     private static readonly string MessageOnNewFileString = Encoding.UTF8.GetString(SelfDiagnosticsConfigRefresher.MessageOnNewFile);
 
