@@ -24,16 +24,31 @@ public struct IEEE754Double
 
     public static implicit operator double(IEEE754Double value)
     {
-        return value.DoubleValue;
+        return ToDouble(value);
     }
 
     public static IEEE754Double operator ++(IEEE754Double value)
+    {
+        return Increment(value);
+    }
+
+    public static IEEE754Double operator --(IEEE754Double value)
+    {
+        return Decrement(value);
+    }
+
+    public static double ToDouble(IEEE754Double value)
+    {
+        return value.DoubleValue;
+    }
+
+    public static IEEE754Double Increment(IEEE754Double value)
     {
         value.ULongValue++;
         return value;
     }
 
-    public static IEEE754Double operator --(IEEE754Double value)
+    public static IEEE754Double Decrement(IEEE754Double value)
     {
         value.ULongValue--;
         return value;
