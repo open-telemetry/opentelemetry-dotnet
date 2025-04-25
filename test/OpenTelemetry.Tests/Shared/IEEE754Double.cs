@@ -56,7 +56,11 @@ public struct IEEE754Double
 
     public static IEEE754Double FromString(string value)
     {
+#if NET
         return FromLong(Convert.ToInt64(value.Replace(" ", string.Empty, StringComparison.Ordinal), 2));
+#else
+        return FromLong(Convert.ToInt64(value.Replace(" ", string.Empty), 2));
+#endif
     }
 
     public override string ToString()

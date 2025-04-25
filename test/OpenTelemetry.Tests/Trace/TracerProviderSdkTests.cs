@@ -1243,7 +1243,11 @@ public sealed class TracerProviderSdkTests : IDisposable
 
         foreach (var ns in legacySourceNamespaces)
         {
+#if NET
             var startOpName = ns.Replace("*", "Start", StringComparison.Ordinal);
+#else
+            var startOpName = ns.Replace("*", "Start");
+#endif
             using var startOperation = new Activity(startOpName);
             startOperation.Start();
             startOperation.Stop();
@@ -1251,7 +1255,11 @@ public sealed class TracerProviderSdkTests : IDisposable
             Assert.Contains(startOpName, onStartProcessedActivities); // Processor.OnStart is called since we added a legacy OperationName
             Assert.Contains(startOpName, onStopProcessedActivities);  // Processor.OnEnd is called since we added a legacy OperationName
 
+#if NET
             var stopOpName = ns.Replace("*", "Stop", StringComparison.Ordinal);
+#else
+            var stopOpName = ns.Replace("*", "Stop");
+#endif
             using var stopOperation = new Activity(stopOpName);
             stopOperation.Start();
             stopOperation.Stop();

@@ -16,14 +16,18 @@ public sealed class LinkTests : IDisposable
     {
         this.spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
 
+        long[] longArray = [1L, 2L];
+        string[] stringArray = ["a", "b"];
+        bool[] boolArray = [true, false];
+        double[] doubleArray = [0.1, -0.1];
         this.attributesMap.Add("MyAttributeKey0", "MyStringAttribute");
         this.attributesMap.Add("MyAttributeKey1", 10L);
         this.attributesMap.Add("MyAttributeKey2", true);
         this.attributesMap.Add("MyAttributeKey3", 0.005);
-        this.attributesMap.Add("MyAttributeKey4", new long[] { 1, 2 });
-        this.attributesMap.Add("MyAttributeKey5", new string[] { "a", "b" });
-        this.attributesMap.Add("MyAttributeKey6", new bool[] { true, false });
-        this.attributesMap.Add("MyAttributeKey7", new double[] { 0.1, -0.1 });
+        this.attributesMap.Add("MyAttributeKey4", longArray);
+        this.attributesMap.Add("MyAttributeKey5", stringArray);
+        this.attributesMap.Add("MyAttributeKey6", boolArray);
+        this.attributesMap.Add("MyAttributeKey7", doubleArray);
         this.tags = new SpanAttributes();
         this.tags.Add("MyAttributeKey0", "MyStringAttribute");
         this.tags.Add("MyAttributeKey1", 10L);

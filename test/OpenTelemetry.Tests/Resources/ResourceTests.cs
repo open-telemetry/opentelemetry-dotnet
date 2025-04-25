@@ -165,18 +165,26 @@ public sealed class ResourceTests : IDisposable
     public void CreateResource_SupportedAttributeArrayTypes()
     {
         // Arrange
+        string[] stringArray = ["stringValue"];
+        bool[] boolArray = [true];
+        double[] doubleArray = [0.1D];
+        long[] longArray = [1L];
+        int[] intArray = [1];
+        short[] shortArray = [1];
+        float[] floatArray = [0.1f];
+
         var attributes = new Dictionary<string, object>
         {
             // natively supported array types
-            { "string arr", new string[] { "stringValue" } },
-            { "bool arr", new bool[] { true } },
-            { "double arr", new double[] { 0.1d } },
-            { "long arr", new long[] { 1L } },
+            { "string arr", stringArray },
+            { "bool arr", boolArray },
+            { "double arr", doubleArray },
+            { "long arr", longArray },
 
             // have to convert to other primitive array types
-            { "int arr", new int[] { 1 } },
-            { "short arr", new short[] { (short)1 } },
-            { "float arr", new float[] { 0.1f } },
+            { "int arr", intArray },
+            { "short arr", shortArray },
+            { "float arr", floatArray },
         };
 
         // Act
@@ -184,16 +192,15 @@ public sealed class ResourceTests : IDisposable
 
         // Assert
         Assert.Equal(7, resource.Attributes.Count());
-        Assert.Equal(new string[] { "stringValue" }, resource.Attributes.FirstOrDefault(x => x.Key == "string arr").Value);
-        Assert.Equal(new bool[] { true }, resource.Attributes.FirstOrDefault(x => x.Key == "bool arr").Value);
-        Assert.Equal(new double[] { 0.1d }, resource.Attributes.FirstOrDefault(x => x.Key == "double arr").Value);
-        Assert.Equal(new long[] { 1L }, resource.Attributes.FirstOrDefault(x => x.Key == "long arr").Value);
+        Assert.Equal(stringArray, resource.Attributes.FirstOrDefault(x => x.Key == "string arr").Value);
+        Assert.Equal(boolArray, resource.Attributes.FirstOrDefault(x => x.Key == "bool arr").Value);
+        Assert.Equal(doubleArray, resource.Attributes.FirstOrDefault(x => x.Key == "double arr").Value);
+        Assert.Equal(longArray, resource.Attributes.FirstOrDefault(x => x.Key == "long arr").Value);
 
-        var longArr = new long[] { 1 };
-        var doubleArr = new double[] { Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture) };
-        Assert.Equal(longArr, resource.Attributes.FirstOrDefault(x => x.Key == "int arr").Value);
-        Assert.Equal(longArr, resource.Attributes.FirstOrDefault(x => x.Key == "short arr").Value);
-        Assert.Equal(doubleArr, resource.Attributes.FirstOrDefault(x => x.Key == "float arr").Value);
+        double[] nonNativeDoubleArray = [Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture)];
+        Assert.Equal(longArray, resource.Attributes.FirstOrDefault(x => x.Key == "int arr").Value);
+        Assert.Equal(longArray, resource.Attributes.FirstOrDefault(x => x.Key == "short arr").Value);
+        Assert.Equal(nonNativeDoubleArray, resource.Attributes.FirstOrDefault(x => x.Key == "float arr").Value);
     }
 
     [Fact]
