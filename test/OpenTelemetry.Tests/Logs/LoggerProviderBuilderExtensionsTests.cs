@@ -103,7 +103,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
         using var provider = Sdk.CreateLoggerProviderBuilder()
             .SetResourceBuilder(ResourceBuilder
                 .CreateEmpty()
-                .AddAttributes(new[] { new KeyValuePair<string, object>("key1", "value1") }))
+                .AddAttributes([new KeyValuePair<string, object>("key1", "value1")]))
             .Build() as LoggerProviderSdk;
 
         Assert.NotNull(provider);
@@ -118,7 +118,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
         using var provider = Sdk.CreateLoggerProviderBuilder()
             .ConfigureResource(resource => resource
                 .Clear()
-                .AddAttributes(new[] { new KeyValuePair<string, object>("key1", "value1") }))
+                .AddAttributes([new KeyValuePair<string, object>("key1", "value1")]))
             .Build() as LoggerProviderSdk;
 
         Assert.NotNull(provider);

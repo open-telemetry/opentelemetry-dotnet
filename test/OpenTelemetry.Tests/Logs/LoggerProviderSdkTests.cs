@@ -106,12 +106,12 @@ public sealed class LoggerProviderSdkTests
 
         using var provider3 = Sdk.CreateLoggerProviderBuilder()
             .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
-            .AddProcessor(new CompositeProcessor<LogRecord>(new BaseProcessor<LogRecord>[]
-            {
+            .AddProcessor(new CompositeProcessor<LogRecord>(
+            [
                     new SimpleLogRecordExportProcessor(new NoopExporter()),
                     new BatchLogRecordExportProcessor(new NoopExporter()),
 #pragma warning restore CA2000 // Dispose objects before losing scope
-            }))
+            ]))
             .Build() as LoggerProviderSdk;
 
         Assert.NotNull(provider3);
