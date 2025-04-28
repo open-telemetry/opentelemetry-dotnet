@@ -266,19 +266,18 @@ public sealed class TracerProviderSdkTests : IDisposable
 
         ActivityContext ctx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, isRemote: true);
 
-        using (var activity = activitySource.StartActivity("root", ActivityKind.Server, ctx))
-        {
-            // Even if sampling returns false, for activities with remote parent,
-            // activity is still created with PropagationOnly.
-            Assert.NotNull(activity);
-            Assert.False(activity.IsAllDataRequested);
-            Assert.False(activity.Recorded);
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, ctx);
 
-            // This is not a root activity and parent is not remote.
-            // If sampling returns false, no activity is created at all.
-            using var innerActivity = activitySource.StartActivity("inner");
-            Assert.Null(innerActivity);
-        }
+        // Even if sampling returns false, for activities with remote parent,
+        // activity is still created with PropagationOnly.
+        Assert.NotNull(activity);
+        Assert.False(activity.IsAllDataRequested);
+        Assert.False(activity.Recorded);
+
+        // This is not a root activity and parent is not remote.
+        // If sampling returns false, no activity is created at all.
+        using var innerActivity = activitySource.StartActivity("inner");
+        Assert.Null(innerActivity);
     }
 
     [Fact]
