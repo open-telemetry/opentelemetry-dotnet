@@ -300,7 +300,7 @@ public sealed class LogRecordTests
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         var exceptionMessage = "Exception Message";
-        var exception = new Exception(exceptionMessage);
+        var exception = new InvalidOperationException(exceptionMessage);
 
         logger.LogException(exception);
 
@@ -1100,7 +1100,9 @@ public sealed class LogRecordTests
         public KeyValuePair<string, object?> this[int index] => index switch
         {
             0 => new KeyValuePair<string, object?>(nameof(this.Value), this.Value),
+#pragma warning disable CA2201 // Do not raise reserved exception types
             _ => throw new IndexOutOfRangeException(nameof(index)),
+#pragma warning restore CA2201 // Do not raise reserved exception types
         };
 
         public void Dispose()

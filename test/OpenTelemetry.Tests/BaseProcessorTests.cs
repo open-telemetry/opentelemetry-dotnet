@@ -15,7 +15,7 @@ public class BaseProcessorTests
         Assert.True(testProcessor.ForceFlush());
 
         // BaseExporter should catch any exceptions and return false.
-        testProcessor.OnForceFlushFunc = (timeout) => throw new Exception("test exception");
+        testProcessor.OnForceFlushFunc = _ => throw new InvalidOperationException("test exception");
         Assert.False(testProcessor.ForceFlush());
     }
 
@@ -36,7 +36,7 @@ public class BaseProcessorTests
         // BaseExporter should catch any exceptions and return false.
         var exceptionTestProcessor = new DelegatingProcessor<object>
         {
-            OnShutdownFunc = (timeout) => throw new Exception("test exception"),
+            OnShutdownFunc = _ => throw new InvalidOperationException("test exception"),
         };
         Assert.False(exceptionTestProcessor.Shutdown());
     }

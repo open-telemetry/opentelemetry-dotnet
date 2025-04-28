@@ -15,10 +15,10 @@ public class SimpleExportProcessorTests
         // here our exporter will throw an exception.
         var testExporter = new DelegatingExporter<object>
         {
-            OnExportFunc = (batch) =>
+            OnExportFunc = batch =>
             {
                 counter++;
-                throw new Exception("test exception");
+                throw new InvalidOperationException("test exception");
             },
         };
 

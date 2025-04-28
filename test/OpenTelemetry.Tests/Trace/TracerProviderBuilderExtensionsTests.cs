@@ -35,7 +35,7 @@ public class TracerProviderBuilderExtensionsTests
         {
             using (activity = activitySource.StartActivity("Activity"))
             {
-                throw new Exception("Oops!");
+                throw new InvalidOperationException("Oops!");
             }
         }
         catch (Exception)
@@ -65,7 +65,7 @@ public class TracerProviderBuilderExtensionsTests
         {
             using (activity = activitySource.StartActivity("Activity"))
             {
-                throw new Exception("Oops!");
+                throw new InvalidOperationException("Oops!");
             }
         }
         catch (Exception)
@@ -93,7 +93,7 @@ public class TracerProviderBuilderExtensionsTests
         {
             using (activity = activitySource.StartActivity("Activity"))
             {
-                throw new Exception("Oops!");
+                throw new InvalidOperationException("Oops!");
             }
         }
         catch (Exception)

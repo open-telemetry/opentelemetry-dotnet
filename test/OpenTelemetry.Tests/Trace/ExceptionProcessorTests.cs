@@ -32,7 +32,7 @@ public class ExceptionProcessorTests
             {
                 using (activity2 = activitySource.StartActivity("Activity2"))
                 {
-                    throw new Exception("Oops!");
+                    throw new InvalidOperationException("Oops!");
                 }
             }
         }
@@ -51,7 +51,7 @@ public class ExceptionProcessorTests
 
         try
         {
-            throw new Exception("Oops!");
+            throw new InvalidOperationException("Oops!");
         }
         catch (Exception)
         {
@@ -120,7 +120,7 @@ public class ExceptionProcessorTests
         {
             using (activity = activitySource.StartActivity("Activity"))
             {
-                throw new Exception("Oops!");
+                throw new InvalidOperationException("Oops!");
             }
         }
         catch (Exception)
