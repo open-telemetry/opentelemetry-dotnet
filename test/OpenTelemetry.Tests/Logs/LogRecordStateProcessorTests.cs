@@ -226,7 +226,7 @@ public class LogRecordStateProcessorTests
         else
         {
             Assert.Null(state);
-            state = Array.Empty<KeyValuePair<string, object?>>();
+            state = [];
         }
 
         if (attributesExpectedCount > 0)
@@ -237,7 +237,7 @@ public class LogRecordStateProcessorTests
         else
         {
             Assert.Null(attributes);
-            attributes = Array.Empty<KeyValuePair<string, object?>>();
+            attributes = [];
         }
     }
 

@@ -13,7 +13,7 @@ public class CompositeActivityProcessorTests
     public void CompositeActivityProcessor_BadArgs()
     {
         Assert.Throws<ArgumentNullException>(() => new CompositeProcessor<Activity>(null!));
-        Assert.Throws<ArgumentException>(() => new CompositeProcessor<Activity>(Array.Empty<BaseProcessor<Activity>>()));
+        Assert.Throws<ArgumentException>(() => new CompositeProcessor<Activity>([]));
 
         using var p1 = new TestActivityProcessor(null, null);
         using var processor = new CompositeProcessor<Activity>([p1]);
