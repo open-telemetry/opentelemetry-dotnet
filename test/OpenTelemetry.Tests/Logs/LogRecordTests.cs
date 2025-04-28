@@ -1125,7 +1125,7 @@ public sealed class LogRecordTests
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
     }
 
-    private class RedactionProcessor : BaseProcessor<LogRecord>
+    private sealed class RedactionProcessor : BaseProcessor<LogRecord>
     {
         private readonly Field fieldToUpdate;
 
@@ -1151,7 +1151,7 @@ public sealed class LogRecordTests
         }
     }
 
-    private class ListState : IEnumerable<KeyValuePair<string, object>>
+    private sealed class ListState : IEnumerable<KeyValuePair<string, object>>
     {
         private readonly List<KeyValuePair<string, object>> list;
 
@@ -1171,7 +1171,7 @@ public sealed class LogRecordTests
         }
     }
 
-    private class CustomState
+    private sealed class CustomState
     {
         public const string ToStringValue = "CustomState.ToString";
 
@@ -1181,7 +1181,7 @@ public sealed class LogRecordTests
             => ToStringValue;
     }
 
-    private class ScopeProcessor : BaseProcessor<LogRecord>
+    private sealed class ScopeProcessor : BaseProcessor<LogRecord>
     {
         private readonly bool buffer;
 
