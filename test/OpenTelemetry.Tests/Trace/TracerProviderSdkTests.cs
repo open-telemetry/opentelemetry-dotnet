@@ -185,11 +185,12 @@ public sealed class TracerProviderSdkTests : IDisposable
 
         // Validate that when StartActivity is called using Parent as string,
         // Sampling is called correctly.
-        using var act = new Activity("anything").Start();
-        act.Stop();
-        var customContextAsString = act.Id;
-        var expectedTraceId = act.TraceId;
-        var expectedParentSpanId = act.SpanId;
+        using var activity = new Activity("anything");
+        activity.Start();
+        activity.Stop();
+        var customContextAsString = activity.Id;
+        var expectedTraceId = activity.TraceId;
+        var expectedParentSpanId = activity.SpanId;
 
         using (var fromCustomContextAsString =
             activitySource.StartActivity("customContext", ActivityKind.Client, customContextAsString))
@@ -384,7 +385,8 @@ public sealed class TracerProviderSdkTests : IDisposable
 
         using (SuppressInstrumentationScope.Begin(true))
         {
-            using var activity = new Activity(operationNameForLegacyActivity).Start();
+            using var activity = new Activity(operationNameForLegacyActivity);
+            activity.Start();
             Assert.False(activity.IsAllDataRequested);
         }
 
@@ -924,7 +926,8 @@ public sealed class TracerProviderSdkTests : IDisposable
         // The sampling parameters are expected to be that of the
         // parent context i.e the remote parent.
 
-        using var activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+        using var activity = new Activity(operationNameForLegacyActivity);
+        activity.SetParentId(remoteParentId);
         activity.TraceStateString = tracestate;
 
         // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
@@ -960,7 +963,8 @@ public sealed class TracerProviderSdkTests : IDisposable
         // The sampling parameters are expected to be that of the
         // parent context i.e the remote parent.
 
-        using var activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+        using var activity = new Activity(operationNameForLegacyActivity);
+        activity.SetParentId(remoteParentId);
 
         // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
         activity.Start();
@@ -995,7 +999,8 @@ public sealed class TracerProviderSdkTests : IDisposable
         // The sampling parameters are expected to be that of the
         // parent context i.e the remote parent.
 
-        using var activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+        using var activity = new Activity(operationNameForLegacyActivity);
+        activity.SetParentId(remoteParentId);
 
         // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
         activity.Start();

@@ -27,7 +27,8 @@ public sealed class CurrentSpanTests : IDisposable
     [Fact]
     public void CurrentSpan_WhenActivityExists()
     {
-        using var activity = new Activity("foo").Start();
+        using var activity = new Activity("foo");
+        activity.Start();
         Assert.True(Tracer.CurrentSpan.Context.IsValid);
     }
 

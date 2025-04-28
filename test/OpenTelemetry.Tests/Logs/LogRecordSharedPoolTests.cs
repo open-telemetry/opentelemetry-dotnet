@@ -168,7 +168,9 @@ public sealed class LogRecordSharedPoolTests
             }
         }
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         using BatchLogRecordExportProcessor processor = new(new NoopExporter());
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         List<Task> tasks = [];
 

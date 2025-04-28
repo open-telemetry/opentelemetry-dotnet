@@ -13,11 +13,12 @@ public class MetricExporterTests
     [InlineData(ExportModes.Pull | ExportModes.Push)]
     public void FlushMetricExporterTest(ExportModes mode)
     {
-        BaseExporter<Metric>? exporter = null;
+        BaseExporter<Metric>? exporter;
 
         switch (mode)
         {
             case ExportModes.Push:
+#pragma warning disable CA2000 // Dispose objects before losing scope
                 exporter = new PushOnlyMetricExporter();
                 break;
             case ExportModes.Pull:
@@ -31,6 +32,7 @@ public class MetricExporterTests
         }
 
         var reader = new BaseExportingMetricReader(exporter);
+#pragma warning restore CA2000 // Dispose objects before losing scope
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddReader(reader)
             .Build();

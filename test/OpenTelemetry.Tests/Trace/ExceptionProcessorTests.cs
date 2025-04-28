@@ -17,7 +17,9 @@ public class ExceptionProcessorTests
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource(activitySourceName)
             .SetSampler(new AlwaysOnSampler())
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new ExceptionProcessor())
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .Build();
 
         Activity? activity1 = null;

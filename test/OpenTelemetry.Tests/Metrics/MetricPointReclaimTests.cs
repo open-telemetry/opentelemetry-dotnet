@@ -14,7 +14,7 @@ public class MetricPointReclaimTests
     [InlineData(true)]
     public void MeasurementsAreNotDropped(bool emitMetricWithNoDimensions)
     {
-        var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName());
         var counter = meter.CreateCounter<long>("MyFruitCounter");
 
         int numberOfUpdateThreads = 25;
@@ -102,7 +102,7 @@ public class MetricPointReclaimTests
     [InlineData(true)]
     public void MeasurementsAreAggregatedEvenAfterTheyAreDropped(bool emitMetricWithNoDimension)
     {
-        var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName());
         var counter = meter.CreateCounter<long>("MyFruitCounter");
 
         long sum = 0;

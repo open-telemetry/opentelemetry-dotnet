@@ -78,7 +78,9 @@ public class MeterProviderBuilderExtensionsTests
         using (var provider = Sdk.CreateMeterProviderBuilder()
             .AddInstrumentation<MyInstrumentation>()
             .AddInstrumentation((sp, provider) => new MyInstrumentation() { Provider = provider })
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddInstrumentation(new MyInstrumentation())
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .AddInstrumentation(() => (object?)null)
             .Build() as MeterProviderSdk)
         {

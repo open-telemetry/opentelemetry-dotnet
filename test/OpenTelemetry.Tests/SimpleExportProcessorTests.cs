@@ -13,6 +13,7 @@ public class SimpleExportProcessorTests
         int counter = 0;
 
         // here our exporter will throw an exception.
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var testExporter = new DelegatingExporter<object>
         {
             OnExportFunc = batch =>
@@ -21,8 +22,9 @@ public class SimpleExportProcessorTests
                 throw new InvalidOperationException("test exception");
             },
         };
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
-        var testSimpleExportProcessor = new TestSimpleExportProcessor(testExporter);
+        using var testSimpleExportProcessor = new TestSimpleExportProcessor(testExporter);
 
         // Verify that the Processor catches and suppresses the exception.
         testSimpleExportProcessor.OnEnd(new object());

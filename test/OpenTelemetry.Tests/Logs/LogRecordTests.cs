@@ -381,7 +381,9 @@ public sealed class LogRecordTests
     public void CheckStateCanBeSetByProcessor()
     {
         var exportedItems = new List<LogRecord>();
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var exporter = new InMemoryExporter<LogRecord>(exportedItems);
+#pragma warning restore CA2000 // Dispose objects before losing scope
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddOpenTelemetry(options =>
@@ -404,7 +406,6 @@ public sealed class LogRecordTests
     public void CheckStateValuesCanBeSetByProcessor()
     {
         var exportedItems = new List<LogRecord>();
-        var exporter = new InMemoryExporter<LogRecord>(exportedItems);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddOpenTelemetry(options =>
@@ -428,7 +429,6 @@ public sealed class LogRecordTests
     public void CheckFormattedMessageCanBeSetByProcessor()
     {
         var exportedItems = new List<LogRecord>();
-        var exporter = new InMemoryExporter<LogRecord>(exportedItems);
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddOpenTelemetry(options =>
@@ -876,7 +876,9 @@ public sealed class LogRecordTests
     [InlineData(false)]
     public void ReusedLogRecordScopeTest(bool buffer)
     {
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var processor = new ScopeProcessor(buffer);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -1008,7 +1010,9 @@ public sealed class LogRecordTests
 
         var exportedItems = new List<LogRecord>();
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)))
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .Build())
         {
             var logger = loggerProvider.GetLogger("TestName");

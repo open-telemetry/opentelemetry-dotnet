@@ -37,7 +37,9 @@ public sealed class LoggerProviderSdkTests
 
         List<LogRecord> exportedItems = new();
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         provider.AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)));
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         var logger = provider.GetLogger("TestLogger");
 
@@ -60,7 +62,9 @@ public sealed class LoggerProviderSdkTests
         Assert.Equal(LogRecordThreadStaticPool.Instance, provider1.LogRecordPool);
 
         using var provider2 = Sdk.CreateLoggerProviderBuilder()
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .Build() as LoggerProviderSdk;
 
         Assert.NotNull(provider2);
@@ -68,8 +72,10 @@ public sealed class LoggerProviderSdkTests
         Assert.Equal(LogRecordThreadStaticPool.Instance, provider2.LogRecordPool);
 
         using var provider3 = Sdk.CreateLoggerProviderBuilder()
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
             .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .Build() as LoggerProviderSdk;
 
         Assert.NotNull(provider3);
@@ -81,6 +87,7 @@ public sealed class LoggerProviderSdkTests
     public void SharedPoolUsedByProviderTests()
     {
         using var provider1 = Sdk.CreateLoggerProviderBuilder()
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter()))
             .Build() as LoggerProviderSdk;
 
@@ -103,6 +110,7 @@ public sealed class LoggerProviderSdkTests
             {
                     new SimpleLogRecordExportProcessor(new NoopExporter()),
                     new BatchLogRecordExportProcessor(new NoopExporter()),
+#pragma warning restore CA2000 // Dispose objects before losing scope
             }))
             .Build() as LoggerProviderSdk;
 
@@ -120,12 +128,16 @@ public sealed class LoggerProviderSdkTests
         Assert.NotNull(provider);
         Assert.Null(provider.Processor);
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         provider.AddProcessor(new NoopProcessor());
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         Assert.NotNull(provider.Processor);
         Assert.True(provider.Processor is NoopProcessor);
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         provider.AddProcessor(new NoopProcessor());
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         Assert.NotNull(provider.Processor);
         Assert.True(provider.Processor is CompositeProcessor<LogRecord>);

@@ -24,7 +24,9 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     [Fact]
     public void CreatePeriodicExportingMetricReader_Defaults()
     {
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var reader = CreatePeriodicExportingMetricReader();
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         Assert.Equal(60000, reader.ExportIntervalMilliseconds);
         Assert.Equal(30000, reader.ExportTimeoutMilliseconds);
@@ -35,7 +37,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     public void CreatePeriodicExportingMetricReader_TemporalityPreference_FromOptions()
     {
         var value = MetricReaderTemporalityPreference.Delta;
-        var reader = CreatePeriodicExportingMetricReader(new()
+        using var reader = CreatePeriodicExportingMetricReader(new()
         {
             TemporalityPreference = value,
         });
@@ -48,7 +50,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     {
         Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey, "88888"); // should be ignored, as value set via options has higher priority
         var value = 123;
-        var reader = CreatePeriodicExportingMetricReader(new()
+        using var reader = CreatePeriodicExportingMetricReader(new()
         {
             PeriodicExportingMetricReaderOptions = new()
             {
@@ -64,7 +66,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     {
         Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey, "99999"); // should be ignored, as value set via options has higher priority
         var value = 456;
-        var reader = CreatePeriodicExportingMetricReader(new()
+        using var reader = CreatePeriodicExportingMetricReader(new()
         {
             PeriodicExportingMetricReaderOptions = new()
             {
@@ -80,7 +82,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     {
         var value = 789;
         Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey, value.ToString(CultureInfo.InvariantCulture));
-        var reader = CreatePeriodicExportingMetricReader();
+        using var reader = CreatePeriodicExportingMetricReader();
 
         Assert.Equal(value, reader.ExportIntervalMilliseconds);
     }
@@ -90,7 +92,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     {
         var value = 246;
         Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey, value.ToString(CultureInfo.InvariantCulture));
-        var reader = CreatePeriodicExportingMetricReader();
+        using var reader = CreatePeriodicExportingMetricReader();
 
         Assert.Equal(value, reader.ExportTimeoutMilliseconds);
     }
@@ -132,7 +134,9 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     {
         options ??= new();
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         var dummyMetricExporter = new InMemoryExporter<Metric>(Array.Empty<Metric>());
+#pragma warning restore CA2000 // Dispose objects before losing scope
         return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(dummyMetricExporter, options);
     }
 }

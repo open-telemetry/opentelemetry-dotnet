@@ -17,7 +17,9 @@ public sealed class LoggerProviderBuilderExtensionsTests
         using (var provider = Sdk.CreateLoggerProviderBuilder()
             .AddInstrumentation<CustomInstrumentation>()
             .AddInstrumentation((sp, provider) => new CustomInstrumentation() { Provider = provider })
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddInstrumentation(new CustomInstrumentation())
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .AddInstrumentation(() => (object?)null)
             .Build() as LoggerProviderSdk)
         {

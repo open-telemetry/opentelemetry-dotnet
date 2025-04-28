@@ -174,7 +174,9 @@ public class BatchExportActivityProcessorTests
     public void CheckExportDrainsBatchOnFailure()
     {
         using var processor = new BatchActivityExportProcessor(
+#pragma warning disable CA2000 // Dispose objects before losing scope
             exporter: new FailureExporter<Activity>(),
+#pragma warning restore CA2000 // Dispose objects before losing scope
             maxQueueSize: 3,
             maxExportBatchSize: 3);
 
