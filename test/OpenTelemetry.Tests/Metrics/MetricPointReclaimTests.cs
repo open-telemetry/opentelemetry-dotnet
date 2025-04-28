@@ -47,7 +47,9 @@ public class MetricPointReclaimTests
                     }
 
                     // There are separate code paths for single dimension vs multiple dimensions
+#pragma warning disable CA5394 // Do not use insecure randomness
                     if (random.Next(2) == 0)
+#pragma warning restore CA5394 // Do not use insecure randomness
                     {
                         counter.Add(100, new KeyValuePair<string, object?>("key", $"value{i}"));
                     }
@@ -150,7 +152,9 @@ public class MetricPointReclaimTests
                         Interlocked.Add(ref sum, 25);
                     }
 
+#pragma warning disable CA5394 // Do not use insecure randomness
                     var index = random.Next(measurementValues.Length);
+#pragma warning restore CA5394 // Do not use insecure randomness
                     var measurement = measurementValues[index];
                     counter.Add(measurement, new KeyValuePair<string, object?>("key", $"value{index}"));
                     Interlocked.Add(ref sum, measurement);

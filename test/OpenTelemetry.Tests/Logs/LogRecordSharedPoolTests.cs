@@ -178,7 +178,9 @@ public sealed class LogRecordSharedPoolTests
             {
                 Random random = new Random();
 
+#pragma warning disable CA5394 // Do not use insecure randomness
                 await Task.Delay(random.Next(100, 150));
+#pragma warning restore CA5394 // Do not use insecure randomness
 
                 for (int i = 0; i < 1000; i++)
                 {
@@ -189,7 +191,9 @@ public sealed class LogRecordSharedPoolTests
                     // This should no-op mostly.
                     pool.Return(logRecord);
 
+#pragma warning disable CA5394 // Do not use insecure randomness
                     await Task.Delay(random.Next(0, 20));
+#pragma warning restore CA5394 // Do not use insecure randomness
                 }
             }));
         }
