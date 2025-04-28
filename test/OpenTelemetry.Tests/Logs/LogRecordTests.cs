@@ -352,12 +352,12 @@ public sealed class LogRecordTests
         logger.Log(
             LogLevel.Information,
             0,
-            new List<KeyValuePair<string, object?>> { new KeyValuePair<string, object?>("Key1", "Value1") },
+            new List<KeyValuePair<string, object?>> { new("Key1", "Value1") },
             null,
             (s, e) => "OpenTelemetry!");
 
         var logRecord = exportedItems[0];
-        var expectedStateValues = new List<KeyValuePair<string, object?>> { new KeyValuePair<string, object?>("Key2", "Value2") };
+        var expectedStateValues = new List<KeyValuePair<string, object?>> { new("Key2", "Value2") };
         logRecord.StateValues = expectedStateValues;
 
         Assert.Equal(expectedStateValues, logRecord.StateValues);
@@ -780,7 +780,7 @@ public sealed class LogRecordTests
         logger.Log(
             LogLevel.Information,
             0,
-            new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key1", "Value1") },
+            new List<KeyValuePair<string, object>> { new("Key1", "Value1") },
             null,
             (s, e) => "OpenTelemetry!");
         var logRecord = exportedItems[0];
@@ -1138,11 +1138,11 @@ public sealed class LogRecordTests
         {
             if (this.fieldToUpdate == Field.State)
             {
-                logRecord.State = new List<KeyValuePair<string, object?>> { new KeyValuePair<string, object?>("newStateKey", "newStateValue") };
+                logRecord.State = new List<KeyValuePair<string, object?>> { new("newStateKey", "newStateValue") };
             }
             else if (this.fieldToUpdate == Field.StateValues)
             {
-                logRecord.StateValues = new List<KeyValuePair<string, object?>> { new KeyValuePair<string, object?>("newStateValueKey", "newStateValueValue") };
+                logRecord.StateValues = new List<KeyValuePair<string, object?>> { new("newStateValueKey", "newStateValueValue") };
             }
             else
             {

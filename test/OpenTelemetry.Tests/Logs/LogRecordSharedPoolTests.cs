@@ -118,8 +118,8 @@ public sealed class LogRecordSharedPoolTests
         var logRecord1 = pool.Rent();
         logRecord1.AttributeStorage = new List<KeyValuePair<string, object?>>(16)
         {
-            new KeyValuePair<string, object?>("key1", "value1"),
-            new KeyValuePair<string, object?>("key2", "value2"),
+            new("key1", "value1"),
+            new("key2", "value2"),
         };
         logRecord1.ScopeStorage = new List<object?>(8) { null, null };
 
