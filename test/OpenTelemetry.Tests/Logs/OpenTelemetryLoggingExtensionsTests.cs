@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -405,7 +406,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         protected override void Dispose(bool disposing)
         {
-            this.logger.LogInformation("Dispose called");
+            this.logger.DisposedCalled();
 
             base.Dispose(disposing);
         }

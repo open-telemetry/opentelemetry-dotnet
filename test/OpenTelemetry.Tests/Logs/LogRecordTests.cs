@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -28,7 +27,7 @@ public sealed class LogRecordTests
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        logger.LogInformation("Log");
+        logger.Log();
         var categoryName = exportedItems[0].CategoryName;
 
         Assert.Equal(typeof(LogRecordTests).FullName, categoryName);
@@ -46,8 +45,7 @@ public sealed class LogRecordTests
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        const string message = "Log {LogLevel}";
-        logger.Log(logLevel, message, logLevel);
+        logger.Log(logLevel);
 
         var logLevelRecorded = exportedItems[0].LogLevel;
         Assert.Equal(logLevel, logLevelRecorded);
@@ -61,8 +59,7 @@ public sealed class LogRecordTests
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        const string message = "Hello, World!";
-        logger.LogInformation(message);
+        logger.HelloWorld();
 
         Assert.NotNull(exportedItems[0].State);
 
@@ -72,10 +69,10 @@ public sealed class LogRecordTests
         // state only has {OriginalFormat}
         Assert.Single(attributes);
 
-        Assert.Equal(message, exportedItems[0].Body);
+        Assert.Equal("Hello, World!", exportedItems[0].Body);
         if (includeFormattedMessage)
         {
-            Assert.Equal(message, exportedItems[0].FormattedMessage);
+            Assert.Equal("Hello, World!", exportedItems[0].FormattedMessage);
         }
         else
         {
@@ -92,8 +89,10 @@ public sealed class LogRecordTests
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
 #pragma warning disable CA2254 // Template should be a static expression
+#pragma warning disable CA1848 // Use the LoggerMessage delegates
         var message = $"Hello from potato {0.99}.";
         logger.LogInformation(message);
+#pragma warning restore CA1848 // Use the LoggerMessage delegates
 #pragma warning restore CA2254 // Template should be a static expression
 
         Assert.NotNull(exportedItems[0].State);
@@ -123,8 +122,7 @@ public sealed class LogRecordTests
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        const string message = "Hello from {Name} {Price}.";
-        logger.LogInformation(message, "tomato", 2.99);
+        logger.HelloFrom("tomato", 2.99);
 
         Assert.NotNull(exportedItems[0].State);
 
@@ -144,9 +142,9 @@ public sealed class LogRecordTests
 
         // Check if state has OriginalFormat
         Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
-        Assert.Equal(message, attributes.First(item => item.Key == "{OriginalFormat}").Value);
+        Assert.Equal("Hello from {Name} {Price}.", attributes.First(item => item.Key == "{OriginalFormat}").Value);
 
-        Assert.Equal(message, exportedItems[0].Body);
+        Assert.Equal("Hello from {Name} {Price}.", exportedItems[0].Body);
         if (includeFormattedMessage)
         {
             Assert.Equal("Hello from tomato 2.99.", exportedItems[0].FormattedMessage);
@@ -166,7 +164,7 @@ public sealed class LogRecordTests
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         var food = new Food { Name = "artichoke", Price = 3.99 };
-        logger.LogInformation("{Food}", food);
+        logger.Food(food);
 
         Assert.NotNull(exportedItems[0].State);
 
@@ -208,7 +206,7 @@ public sealed class LogRecordTests
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         var anonymousType = new { Name = "pumpkin", Price = 5.99 };
-        logger.LogInformation("{Food}", anonymousType);
+        logger.Food(anonymousType);
 
         Assert.NotNull(exportedItems[0].State);
 
@@ -254,7 +252,7 @@ public sealed class LogRecordTests
             ["Name"] = "truffle",
             ["Price"] = 299.99,
         };
-        logger.LogInformation("{Food}", food);
+        logger.Food(food);
 
         Assert.NotNull(exportedItems[0].State);
 
@@ -304,8 +302,7 @@ public sealed class LogRecordTests
         var exceptionMessage = "Exception Message";
         var exception = new Exception(exceptionMessage);
 
-        const string message = "Exception Occurred";
-        logger.LogInformation(exception, message);
+        logger.LogException(exception);
 
         Assert.NotNull(exportedItems[0].State);
 
@@ -326,8 +323,8 @@ public sealed class LogRecordTests
         Assert.NotNull(loggedException);
         Assert.Equal(exceptionMessage, loggedException.Message);
 
-        Assert.Equal(message, exportedItems[0].Body);
-        Assert.Equal(message, state.ToString());
+        Assert.Equal("Exception Occurred", exportedItems[0].Body);
+        Assert.Equal("Exception Occurred", state.ToString());
         Assert.Null(exportedItems[0].FormattedMessage);
     }
 
@@ -337,7 +334,7 @@ public sealed class LogRecordTests
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        logger.LogInformation("This does not matter.");
+        logger.Log();
 
         var logRecord = exportedItems[0];
         logRecord.State = "newState";
@@ -372,7 +369,7 @@ public sealed class LogRecordTests
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+        logger.HelloFrom("tomato", 3.0);
         var logRecord = exportedItems[0];
         var expectedFormattedMessage = "OpenTelemetry Good Night!";
         logRecord.FormattedMessage = expectedFormattedMessage;
@@ -395,7 +392,7 @@ public sealed class LogRecordTests
         });
 
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
-        logger.LogInformation($"This does not matter.");
+        logger.Log();
 
         var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
         Assert.NotNull(state);
@@ -419,7 +416,7 @@ public sealed class LogRecordTests
         });
 
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
-        logger.LogInformation("This does not matter.");
+        logger.Log();
 
         var stateValue = exportedItems[0];
         Assert.NotNull(stateValue.StateValues);
@@ -443,7 +440,7 @@ public sealed class LogRecordTests
         });
 
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
-        logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+        logger.HelloFrom("potato", 2.99);
 
         var item = exportedItems[0];
         Assert.Equal("OpenTelemetry Good Night!", item.FormattedMessage);
@@ -455,7 +452,7 @@ public sealed class LogRecordTests
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        logger.LogInformation("Log within a dropped activity");
+        logger.LogWithinADroppedActivity();
         var logRecord = exportedItems[0];
 
         Assert.Null(Activity.Current);
@@ -486,7 +483,7 @@ public sealed class LogRecordTests
         Assert.NotNull(activity);
         activity.TraceStateString = "key1=value1";
 
-        logger.LogInformation("Log within activity marked as RecordOnly");
+        logger.LogWithinRecordOnlyActivity();
         var logRecord = exportedItems[0];
 
         var currentActivity = Activity.Current;
@@ -523,7 +520,7 @@ public sealed class LogRecordTests
 
         using var activity = activitySource.StartActivity("Activity");
 
-        logger.LogInformation("Log within activity marked as RecordAndSample");
+        logger.LogWithinRecordAndSampleActivity();
         var logRecord = exportedItems[0];
 
         var currentActivity = Activity.Current;
@@ -539,7 +536,7 @@ public sealed class LogRecordTests
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = false);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        logger.LogInformation("OpenTelemetry!");
+        logger.Log();
         var logRecord = exportedItems[0];
         Assert.Null(logRecord.FormattedMessage);
     }
@@ -550,13 +547,13 @@ public sealed class LogRecordTests
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        logger.LogInformation("OpenTelemetry!");
+        logger.Log();
         var logRecord = exportedItems[0];
-        Assert.Equal("OpenTelemetry!", logRecord.FormattedMessage);
+        Assert.Equal("Log", logRecord.FormattedMessage);
 
-        logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+        logger.HelloFrom("tomato", 3.11);
         logRecord = exportedItems[1];
-        Assert.Equal("OpenTelemetry Hello World!", logRecord.FormattedMessage);
+        Assert.Equal("Hello from tomato 3.11.", logRecord.FormattedMessage);
     }
 
     [Fact]
@@ -590,7 +587,7 @@ public sealed class LogRecordTests
 
         using var scope = logger.BeginScope("string_scope");
 
-        logger.LogInformation("OpenTelemetry!");
+        logger.Log();
         var logRecord = exportedItems[0];
 
         List<object?> scopes = [];
@@ -606,12 +603,12 @@ public sealed class LogRecordTests
 
         using var scope = logger.BeginScope("string_scope");
 
-        logger.LogInformation("OpenTelemetry!");
+        logger.Log();
         var logRecord = exportedItems[0];
 
         List<object?> scopes = [];
 
-        logger.LogInformation("OpenTelemetry!");
+        logger.Log();
         logRecord = exportedItems[1];
 
         int reachedDepth = -1;
@@ -640,7 +637,7 @@ public sealed class LogRecordTests
         ];
         using var scope2 = logger.BeginScope(expectedScope2);
 
-        logger.LogInformation("OpenTelemetry!");
+        logger.Log();
         logRecord = exportedItems[2];
 
         reachedDepth = -1;
@@ -671,7 +668,7 @@ public sealed class LogRecordTests
         ];
         using var scope3 = logger.BeginScope(expectedScope3);
 
-        logger.LogInformation("OpenTelemetry!");
+        logger.Log();
         logRecord = exportedItems[3];
 
         reachedDepth = -1;
@@ -705,7 +702,7 @@ public sealed class LogRecordTests
 
         // Tests state parsing with standard extensions.
 
-        logger.LogInformation("{Product} {Year}!", "OpenTelemetry", 2021);
+        logger.LogProduct("OpenTelemetry", 2021);
         var logRecord = exportedItems[0];
 
         Assert.NotNull(logRecord.StateValues);
@@ -726,7 +723,7 @@ public sealed class LogRecordTests
 
         var complex = new { Property = "Value" };
 
-        logger.LogInformation("{Product} {Year} {Complex}!", "OpenTelemetry", 2021, complex);
+        logger.LogProduct("OpenTelemetry", 2021, complex);
         logRecord = exportedItems[1];
 
         Assert.NotNull(logRecord.StateValues);
@@ -894,12 +891,12 @@ public sealed class LogRecordTests
 
         using (var scope1 = logger.BeginScope("scope1"))
         {
-            logger.LogInformation("message1");
+            logger.Log();
         }
 
         using (var scope2 = logger.BeginScope("scope2"))
         {
-            logger.LogInformation("message2");
+            logger.HelloWorld();
         }
 
         Assert.Equal(2, processor.Scopes.Count);
@@ -917,14 +914,14 @@ public sealed class LogRecordTests
             });
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        logger.LogInformation("Hello {World}", "earth");
+        logger.HelloWorld("Earth");
 
         var logRecord = exportedItems[0];
 
         Assert.Null(logRecord.State);
         Assert.Null(logRecord.Attributes);
 
-        Assert.Equal("Hello earth", logRecord.Body);
+        Assert.Equal("Hello world Earth", logRecord.Body);
     }
 
     [Theory]
@@ -981,7 +978,7 @@ public sealed class LogRecordTests
 
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        logger.LogInformation("Hello world!");
+        logger.HelloWorld();
 
         var logRecord = exportedItems.FirstOrDefault();
 
