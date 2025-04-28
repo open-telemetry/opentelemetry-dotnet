@@ -74,7 +74,7 @@ public class MetricExporterTests
     }
 
     [ExportModes(ExportModes.Pull | ExportModes.Push)]
-    private class PushPullMetricExporter : BaseExporter<Metric>
+    private sealed class PushPullMetricExporter : BaseExporter<Metric>
     {
         public override ExportResult Export(in Batch<Metric> batch)
         {

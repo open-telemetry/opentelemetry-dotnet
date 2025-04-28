@@ -1365,7 +1365,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         }
     }
 
-    private class TestInstrumentation : IDisposable
+    private sealed class TestInstrumentation : IDisposable
     {
         public bool IsDisposed;
 
