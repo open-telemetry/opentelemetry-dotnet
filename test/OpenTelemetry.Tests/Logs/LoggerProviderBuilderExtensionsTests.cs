@@ -335,14 +335,6 @@ public sealed class LoggerProviderBuilderExtensionsTests
         }
     }
 
-    private sealed class CustomExporter : BaseExporter<LogRecord>
-    {
-        public override ExportResult Export(in Batch<LogRecord> batch)
-        {
-            return ExportResult.Success;
-        }
-    }
-
     private sealed class CustomLoggerProviderBuilder : LoggerProviderBuilder
     {
         public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
