@@ -112,7 +112,7 @@ public sealed class TracerProviderSdkTests : IDisposable
             .Build();
 
         // OpenTelemetry Sdk is expected to set default to W3C.
-        Assert.True(Activity.DefaultIdFormat == ActivityIdFormat.W3C);
+        Assert.Equal(ActivityIdFormat.W3C, Activity.DefaultIdFormat);
 
         using (var rootActivity = activitySource.StartActivity("root"))
         {
