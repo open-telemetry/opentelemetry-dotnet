@@ -22,7 +22,9 @@ public class MeterProviderTests
 #pragma warning restore CA2000 // Dispose objects before losing scope
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MyExporter : BaseExporter<Metric>
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         public override ExportResult Export(in Batch<Metric> batch)
         {

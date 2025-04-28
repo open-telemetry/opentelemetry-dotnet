@@ -390,7 +390,9 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         }
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class TestLogProcessorWithILoggerFactoryDependency : BaseProcessor<LogRecord>
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private readonly ILogger logger;
 
