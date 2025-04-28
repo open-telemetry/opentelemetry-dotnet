@@ -36,7 +36,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
             Assert.Null(((CustomInstrumentation)provider.Instrumentations[2]).Provider);
             Assert.False(((CustomInstrumentation)provider.Instrumentations[2]).Disposed);
 
-            instrumentation = new List<object>(provider.Instrumentations);
+            instrumentation = [.. provider.Instrumentations];
         }
 
         Assert.True(((CustomInstrumentation)instrumentation[0]).Disposed);

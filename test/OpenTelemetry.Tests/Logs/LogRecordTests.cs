@@ -1053,7 +1053,7 @@ public sealed class LogRecordTests
 
         public StructState(params KeyValuePair<string, object>[] items)
         {
-            this.list = new List<KeyValuePair<string, object>>(items);
+            this.list = [.. items];
         }
 
         public int Count => this.list.Count;
@@ -1157,7 +1157,7 @@ public sealed class LogRecordTests
 
         public ListState(params KeyValuePair<string, object>[] items)
         {
-            this.list = new List<KeyValuePair<string, object>>(items);
+            this.list = [..items];
         }
 
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
