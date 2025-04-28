@@ -1157,7 +1157,7 @@ public sealed class LogRecordTests
 
         public ListState(params KeyValuePair<string, object>[] items)
         {
-            this.list = [..items];
+            this.list = [.. items];
         }
 
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()

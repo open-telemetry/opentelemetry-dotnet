@@ -97,7 +97,7 @@ public class MeterProviderBuilderExtensionsTests
             Assert.Null(((MyInstrumentation)provider.Instrumentations[2]).Provider);
             Assert.False(((MyInstrumentation)provider.Instrumentations[2]).Disposed);
 
-            instrumentation = [..provider.Instrumentations];
+            instrumentation = [.. provider.Instrumentations];
         }
 
         Assert.NotNull(instrumentation);
