@@ -32,6 +32,10 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     private bool disposed;
 #endif
 
+    internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
+
+    internal override bool RequireHttp2 => true;
+
     public OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
         : base(options, httpClient, signalPath)
     {
@@ -86,9 +90,13 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 #endif
     }
 
-    internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
-
-    internal override bool RequireHttp2 => true;
+    private static bool IsTransientNetworkError(HttpRequestException ex)
+    {
+        return ex.InnerException is System.Net.Sockets.SocketException socketEx
+            && (socketEx.SocketErrorCode == System.Net.Sockets.SocketError.TimedOut
+                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionReset
+                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.HostUnreachable);
+    }
 
     /// <inheritdoc />
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
@@ -240,7 +248,11 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Shuts down the exporter and cleans up any resources.
+    /// </summary>
+    /// <param name="timeoutMilliseconds">The maximum time to wait for the shutdown to complete.</param>
+    /// <returns>True if shutdown succeeded. False otherwise.</returns>
     public new bool Shutdown(int timeoutMilliseconds)
     {
 #if NET8_0_OR_GREATER
@@ -259,7 +271,9 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         return base.Shutdown(timeoutMilliseconds);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Releases all resources used by the current instance.
+    /// </summary>
     public void Dispose()
     {
 #if NET8_0_OR_GREATER
@@ -282,12 +296,4 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
     }
 #endif
-
-    private static bool IsTransientNetworkError(HttpRequestException ex)
-    {
-        return ex.InnerException is System.Net.Sockets.SocketException socketEx
-            && (socketEx.SocketErrorCode == System.Net.Sockets.SocketError.TimedOut
-                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionReset
-                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.HostUnreachable);
-    }
 }

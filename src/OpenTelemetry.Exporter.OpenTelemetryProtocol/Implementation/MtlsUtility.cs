@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #if NET8_0_OR_GREATER
-using System;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;

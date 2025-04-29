@@ -342,15 +342,6 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         }
     }
 
-    [Event(11, Message = "mTLS certificate load error: {0}", Level = EventLevel.Error)]
-    private void MtlsCertificateLoadError_(string exception)
-    {
-        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-        {
-            this.WriteEvent(11, exception);
-        }
-    }
-
     [Event(12, Message = "mTLS certificate invalid: {0}", Level = EventLevel.Error)]
     public void MtlsCertificateInvalid(Exception ex)
     {
@@ -384,6 +375,15 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
         {
             this.WriteEvent(15, filePath, ex.ToString());
+        }
+    }
+
+    [Event(11, Message = "mTLS certificate load error: {0}", Level = EventLevel.Error)]
+    private void MtlsCertificateLoadError_(string exception)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.WriteEvent(11, exception);
         }
     }
 

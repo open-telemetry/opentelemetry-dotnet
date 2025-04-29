@@ -129,6 +129,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             catch (Exception ex)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
+                handler.Dispose();
                 return new HttpClient
                 {
                     Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
@@ -201,6 +202,18 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// <remarks>Note: This only applies when exporting traces.</remarks>
     public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
+    /// <inheritdoc/>
+    public Func<HttpClient> HttpClientFactory
+    {
+        get => this.httpClientFactory ?? this.DefaultHttpClientFactory;
+        set
+        {
+            Guard.ThrowIfNull(value);
+
+            this.httpClientFactory = value;
+        }
+    }
+
     /// <summary>
     /// Gets or sets the path to a PEM-encoded CA certificate file used to verify server identity.
     /// This option is only supported on .NET 8.0 or later.
@@ -230,18 +243,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// The file must be readable by the application and contain a valid PEM-encoded private key.
     /// </remarks>
     internal string? ClientKeyFilePath { get; set; }
-
-    /// <inheritdoc/>
-    public Func<HttpClient> HttpClientFactory
-    {
-        get => this.httpClientFactory ?? this.DefaultHttpClientFactory;
-        set
-        {
-            Guard.ThrowIfNull(value);
-
-            this.httpClientFactory = value;
-        }
-    }
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
