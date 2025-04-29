@@ -10,7 +10,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.G
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 /// <summary>Base class for sending OTLP export request over gRPC.</summary>
-internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
+internal sealed class OtlpGrpcExportClient : OtlpExportClient
 {
     public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
@@ -159,6 +159,11 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
                         grpcStatusDetailsHeader: null);
                 }
 
+                // Note: Trailing headers might not be fully available until the
+                // response stream is consumed. gRPC often sends critical
+                // information like error details or final statuses in trailing
+                // headers which can only be reliably accessed after reading
+                // the response body.
                 trailingHeaders = httpResponse.TrailingHeaders();
                 status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
             }
@@ -186,6 +191,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
         }
         catch (HttpRequestException ex) when (ex.InnerException is TimeoutException || IsTransientNetworkError(ex))
         {
+            // Handle transient HTTP errors (retryable)
             OpenTelemetryProtocolExporterEventSource.Log.TransientHttpError(this.Endpoint, ex);
             return new ExportClientGrpcResponse(
                 success: false,
@@ -196,6 +202,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
         }
         catch (HttpRequestException ex)
         {
+            // Handle non-retryable HTTP errors.
             OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, ex);
             return new ExportClientGrpcResponse(
                 success: false,
@@ -206,6 +213,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
+            // Handle unexpected cancellation.
             OpenTelemetryProtocolExporterEventSource.Log.OperationUnexpectedlyCanceled(this.Endpoint, ex);
             return new ExportClientGrpcResponse(
                 success: false,
@@ -216,6 +224,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
         {
+            // Handle TaskCanceledException caused by TimeoutException.
             OpenTelemetryProtocolExporterEventSource.Log.RequestTimedOut(this.Endpoint, ex);
             return new ExportClientGrpcResponse(
                 success: false,
