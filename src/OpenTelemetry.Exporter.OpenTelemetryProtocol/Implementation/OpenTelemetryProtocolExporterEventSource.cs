@@ -13,6 +13,11 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
 {
     public static readonly OpenTelemetryProtocolExporterEventSource Log = new();
 
+    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
+    {
+        this.InvalidConfigurationValue(key, value);
+    }
+
     [NonEvent]
     public void FailedToReachCollector(Uri collectorUri, Exception ex)
     {
@@ -269,33 +274,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         this.WriteEvent(25);
     }
 
-    [Event(5, Message = "Configuration error: {0}", Level = EventLevel.Error)]
-    private void ConfigurationError_(string message)
-    {
-        this.WriteEvent(5, message);
-    }
-
     // mTLS Events
-
-    [Event(11, Message = "mTLS certificate load error: {0}", Level = EventLevel.Error)]
-    private void MtlsCertificateLoadError_(string exception)
-    {
-        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-        {
-            this.WriteEvent(11, exception);
-        }
-    }
-
-    [Event(16, Message = "mTLS configuration succeeded for {0}", Level = EventLevel.Informational)]
-    private void MtlsConfigurationSuccess_(string component)
-    {
-        this.WriteEvent(16, component);
-    }
-
-    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
-    {
-        this.InvalidConfigurationValue(key, value);
-    }
 
     [Event(10, Message = "mTLS certificate file not found: {0}", Level = EventLevel.Error)]
     public void MtlsCertificateFileNotFound(string filePath)
@@ -382,5 +361,26 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         {
             this.WriteEvent(4, responseStatusCode, error);
         }
+    }
+
+    [Event(5, Message = "Configuration error: {0}", Level = EventLevel.Error)]
+    private void ConfigurationError_(string message)
+    {
+        this.WriteEvent(5, message);
+    }
+
+    [Event(11, Message = "mTLS certificate load error: {0}", Level = EventLevel.Error)]
+    private void MtlsCertificateLoadError_(string exception)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.WriteEvent(11, exception);
+        }
+    }
+
+    [Event(16, Message = "mTLS configuration succeeded for {0}", Level = EventLevel.Informational)]
+    private void MtlsConfigurationSuccess_(string component)
+    {
+        this.WriteEvent(16, component);
     }
 }
