@@ -122,6 +122,15 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         }
     }
 
+    [NonEvent]
+    public void MtlsConfigurationSuccess(string component)
+    {
+        if (this.IsEnabled(EventLevel.Informational, EventKeywords.All))
+        {
+            this.MtlsConfigurationSuccess_(component);
+        }
+    }
+
     [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
     public void FailedToReachCollector(string rawCollectorUri, string ex)
     {
@@ -260,71 +269,6 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         this.WriteEvent(25);
     }
 
-    [Event(26, Message = "Failed to load mTLS certificate. Exception: {0}", Level = EventLevel.Error)]
-    public void MtlsCertificateLoadError(string exception)
-    {
-        this.WriteEvent(26, exception);
-    }
-
-    [Event(27, Message = "Certificate permission check warning for file {0}. Exception: {1}", Level = EventLevel.Warning)]
-    public void MtlsPermissionCheckWarning(string filePath, string exception)
-    {
-        this.WriteEvent(27, filePath, exception);
-    }
-
-    [Event(28, Message = "Certificate chain validation error. Status: {0}, Details: {1}", Level = EventLevel.Error)]
-    public void MtlsCertificateChainValidationError(string status, string details)
-    {
-        this.WriteEvent(28, status, details);
-    }
-
-    [Event(29, Message = "Successfully configured mTLS for {0}", Level = EventLevel.Informational)]
-    public void MtlsConfigurationSuccess(string protocol)
-    {
-        this.WriteEvent(29, protocol);
-    }
-
-    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
-    {
-        this.InvalidConfigurationValue(key, value);
-    }
-
-    [NonEvent]
-    public void ConfigurationError(string message)
-    {
-        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-        {
-            this.ConfigurationError_(message);
-        }
-    }
-
-    [Event(2, Message = "Environment variable is invalid, key = {0}, value = {1}, error = {2}", Level = EventLevel.Warning)]
-    public void EnvVarInvalid(string key, string value, string error)
-    {
-        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-        {
-            this.WriteEvent(2, key, value, error);
-        }
-    }
-
-    [Event(3, Message = "Unsupported action '{0}'", Level = EventLevel.Warning)]
-    public void UnsupportedAction(string action)
-    {
-        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-        {
-            this.WriteEvent(3, action);
-        }
-    }
-
-    [Event(4, Message = "Exporter HTTP request failed with status {0}. Error message: {1}", Level = EventLevel.Warning)]
-    public void ExportHttpFailure(int responseStatusCode, string error)
-    {
-        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-        {
-            this.WriteEvent(4, responseStatusCode, error);
-        }
-    }
-
     [Event(5, Message = "Configuration error: {0}", Level = EventLevel.Error)]
     private void ConfigurationError_(string message)
     {
@@ -332,6 +276,26 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     // mTLS Events
+
+    [Event(11, Message = "mTLS certificate load error: {0}", Level = EventLevel.Error)]
+    private void MtlsCertificateLoadError_(string exception)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.WriteEvent(11, exception);
+        }
+    }
+
+    [Event(16, Message = "mTLS configuration succeeded for {0}", Level = EventLevel.Informational)]
+    private void MtlsConfigurationSuccess_(string component)
+    {
+        this.WriteEvent(16, component);
+    }
+
+    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
+    {
+        this.InvalidConfigurationValue(key, value);
+    }
 
     [Event(10, Message = "mTLS certificate file not found: {0}", Level = EventLevel.Error)]
     public void MtlsCertificateFileNotFound(string filePath)
@@ -378,18 +342,45 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         }
     }
 
-    [Event(11, Message = "mTLS certificate load error: {0}", Level = EventLevel.Error)]
-    private void MtlsCertificateLoadError_(string exception)
+    [Event(27, Message = "Certificate permission check warning for file {0}. Exception: {1}", Level = EventLevel.Warning)]
+    public void MtlsPermissionCheckWarning(string filePath, string exception)
+    {
+        this.WriteEvent(27, filePath, exception);
+    }
+
+    [NonEvent]
+    public void ConfigurationError(string message)
     {
         if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            this.WriteEvent(11, exception);
+            this.ConfigurationError_(message);
         }
     }
 
-    [Event(16, Message = "mTLS configuration succeeded for {0}", Level = EventLevel.Informational)]
-    private void MtlsConfigurationSuccess_(string component)
+    [Event(2, Message = "Environment variable is invalid, key = {0}, value = {1}, error = {2}", Level = EventLevel.Warning)]
+    public void EnvVarInvalid(string key, string value, string error)
     {
-        this.WriteEvent(16, component);
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.WriteEvent(2, key, value, error);
+        }
+    }
+
+    [Event(3, Message = "Unsupported action '{0}'", Level = EventLevel.Warning)]
+    public void UnsupportedAction(string action)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.WriteEvent(3, action);
+        }
+    }
+
+    [Event(4, Message = "Exporter HTTP request failed with status {0}. Error message: {1}", Level = EventLevel.Warning)]
+    public void ExportHttpFailure(int responseStatusCode, string error)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.WriteEvent(4, responseStatusCode, error);
+        }
     }
 }

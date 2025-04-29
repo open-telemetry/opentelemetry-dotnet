@@ -32,10 +32,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     private bool disposed;
 #endif
 
-    internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
-
-    internal override bool RequireHttp2 => true;
-
     public OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
         : base(options, httpClient, signalPath)
     {
@@ -90,13 +86,9 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 #endif
     }
 
-    private static bool IsTransientNetworkError(HttpRequestException ex)
-    {
-        return ex.InnerException is System.Net.Sockets.SocketException socketEx
-            && (socketEx.SocketErrorCode == System.Net.Sockets.SocketError.TimedOut
-                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionReset
-                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.HostUnreachable);
-    }
+    internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
+
+    internal override bool RequireHttp2 => true;
 
     /// <inheritdoc />
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
@@ -280,6 +272,14 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         this.Dispose(true);
         GC.SuppressFinalize(this);
 #endif
+    }
+
+    private static bool IsTransientNetworkError(HttpRequestException ex)
+    {
+        return ex.InnerException is System.Net.Sockets.SocketException socketEx
+            && (socketEx.SocketErrorCode == System.Net.Sockets.SocketError.TimedOut
+                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionReset
+                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.HostUnreachable);
     }
 
 #if NET8_0_OR_GREATER
