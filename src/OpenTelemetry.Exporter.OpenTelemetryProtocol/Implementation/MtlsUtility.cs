@@ -4,13 +4,9 @@
 #if NET8_0_OR_GREATER
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Security;
-using System.Security.AccessControl;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Principal;
-using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
@@ -29,10 +25,7 @@ internal static class MtlsUtility
     /// <exception cref="CryptographicException">Thrown when the certificate is invalid.</exception>
     public static X509Certificate2 LoadCertificateWithValidation(string certificateFilePath)
     {
-        if (string.IsNullOrEmpty(certificateFilePath))
-        {
-            throw new ArgumentNullException(nameof(certificateFilePath));
-        }
+        ArgumentNullException.ThrowIfNull(certificateFilePath);
 
         if (!File.Exists(certificateFilePath))
         {
@@ -40,6 +33,19 @@ internal static class MtlsUtility
             throw new FileNotFoundException("Certificate file not found.", certificateFilePath);
         }
 
+#if NET9_0_OR_GREATER
+        try
+        {
+            var certificate = X509Certificate2.CreateFromPemFile(certificateFilePath);
+            ValidateCertificate(certificate);
+            return certificate;
+        }
+        catch (CryptographicException ex)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateInvalid(ex);
+            throw;
+        }
+#else
         try
         {
             var certificate = new X509Certificate2(certificateFilePath);
@@ -51,6 +57,7 @@ internal static class MtlsUtility
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateInvalid(ex);
             throw;
         }
+#endif
     }
 
     /// <summary>
@@ -64,15 +71,8 @@ internal static class MtlsUtility
     /// <exception cref="CryptographicException">Thrown when the certificate or key is invalid.</exception>
     public static X509Certificate2 LoadCertificateWithValidation(string certificateFilePath, string keyFilePath)
     {
-        if (string.IsNullOrEmpty(certificateFilePath))
-        {
-            throw new ArgumentNullException(nameof(certificateFilePath));
-        }
-
-        if (string.IsNullOrEmpty(keyFilePath))
-        {
-            throw new ArgumentNullException(nameof(keyFilePath));
-        }
+        ArgumentNullException.ThrowIfNull(certificateFilePath);
+        ArgumentNullException.ThrowIfNull(keyFilePath);
 
         if (!File.Exists(certificateFilePath))
         {
@@ -128,10 +128,7 @@ internal static class MtlsUtility
 
     private static void ValidateCertificate(X509Certificate2 certificate)
     {
-        if (certificate == null)
-        {
-            throw new ArgumentNullException(nameof(certificate));
-        }
+        ArgumentNullException.ThrowIfNull(certificate);
 
         if (!certificate.HasPrivateKey)
         {
@@ -139,19 +136,12 @@ internal static class MtlsUtility
             throw new InvalidOperationException("Certificate does not have a private key.");
         }
 
-        var chain = new X509Chain();
-        try
+        using var chain = new X509Chain();
+        if (!chain.Build(certificate))
         {
-            if (!chain.Build(certificate))
-            {
-                var statusInformation = string.Join(", ", chain.ChainStatus.Select(s => $"{s.StatusInformation} ({s.Status})"));
-                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateChainValidationFailed(statusInformation);
-                throw new InvalidOperationException($"Certificate chain validation failed: {statusInformation}");
-            }
-        }
-        finally
-        {
-            chain.Dispose();
+            var statusInformation = string.Join(", ", chain.ChainStatus.Select(s => $"{s.StatusInformation} ({s.Status})"));
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateChainValidationFailed(statusInformation);
+            throw new InvalidOperationException($"Certificate chain validation failed: {statusInformation}");
         }
     }
 

@@ -209,7 +209,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// When specified, this certificate will be used to validate the server's certificate.
     /// The file must be readable by the application and contain a valid PEM-encoded certificate.
     /// </remarks>
-    public string? CertificateFilePath { get; set; }
+    internal string? CertificateFilePath { get; set; }
 
     /// <summary>
     /// Gets or sets the path to a PEM-encoded client certificate file used for client authentication.
@@ -219,7 +219,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// When specified along with <see cref="ClientKeyFilePath"/>, this certificate will be used for client authentication.
     /// The file must be readable by the application and contain a valid PEM-encoded certificate.
     /// </remarks>
-    public string? ClientCertificateFilePath { get; set; }
+    internal string? ClientCertificateFilePath { get; set; }
 
     /// <summary>
     /// Gets or sets the path to a PEM-encoded private key file for the client certificate.
@@ -229,7 +229,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// This private key will be used with the <see cref="ClientCertificateFilePath"/> for client authentication.
     /// The file must be readable by the application and contain a valid PEM-encoded private key.
     /// </remarks>
-    public string? ClientKeyFilePath { get; set; }
+    internal string? ClientKeyFilePath { get; set; }
 
     /// <inheritdoc/>
     public Func<HttpClient> HttpClientFactory

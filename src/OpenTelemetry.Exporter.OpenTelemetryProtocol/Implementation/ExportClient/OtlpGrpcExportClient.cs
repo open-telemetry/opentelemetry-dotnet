@@ -10,7 +10,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.G
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 /// <summary>Base class for sending OTLP export request over gRPC.</summary>
-internal sealed class OtlpGrpcExportClient : OtlpExportClient
+internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
 {
     public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
@@ -29,6 +29,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     private readonly bool useMtls;
     private readonly OtlpExporterOptions options;
     private readonly string signalPath;
+    private bool disposed;
 #endif
 
     public OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
@@ -37,6 +38,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 #if NET8_0_OR_GREATER
         this.options = options;
         this.signalPath = signalPath;
+
         // Determine if we should use mTLS based on certificate configuration and endpoint
         this.useMtls = options.Endpoint.Scheme == Uri.UriSchemeHttps &&
             (!string.IsNullOrEmpty(options.CertificateFilePath) ||
@@ -47,11 +49,15 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         {
             try
             {
-                var handler = new HttpClientHandler();
+                var handler = new HttpClientHandler
+                {
+                    CheckCertificateRevocationList = true,
+                };
+
                 if (!string.IsNullOrEmpty(options.CertificateFilePath))
                 {
-                    var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(options.CertificateFilePath);
-                    handler.ServerCertificateCustomValidationCallback = (_, cert, __, ___) =>
+                    using var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(options.CertificateFilePath);
+                    handler.ServerCertificateCustomValidationCallback = (_, cert, __, unexpectedErrors) =>
                     {
                         return cert?.Thumbprint == trustedCertificate.Thumbprint;
                     };
@@ -65,8 +71,10 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                     handler.ClientCertificates.Add(clientCertificate);
                 }
 
-                this.secureClient = new HttpClient(handler);
-                this.secureClient.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
+                this.secureClient = new HttpClient(handler)
+                {
+                    Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds),
+                };
             }
             catch (Exception ex)
             {
@@ -82,7 +90,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
     internal override bool RequireHttp2 => true;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
 #if NET8_0_OR_GREATER
@@ -94,8 +102,11 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 {
                     Content = new ByteArrayContent(buffer, 0, contentLength)
                     {
-                        Headers = { ContentType = MediaTypeHeader }
-                    }
+                        Headers =
+                        {
+                            ContentType = this.MediaTypeHeader,
+                        },
+                    },
                 };
 
                 using var response = this.secureClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
@@ -220,7 +231,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public new bool Shutdown(int timeoutMilliseconds)
     {
 #if NET8_0_OR_GREATER
@@ -238,6 +249,30 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 #endif
         return base.Shutdown(timeoutMilliseconds);
     }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+#if NET8_0_OR_GREATER
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+#endif
+    }
+
+#if NET8_0_OR_GREATER
+    private void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                this.secureClient?.Dispose();
+            }
+
+            this.disposed = true;
+        }
+    }
+#endif
 
     private static bool IsTransientNetworkError(HttpRequestException ex)
     {
