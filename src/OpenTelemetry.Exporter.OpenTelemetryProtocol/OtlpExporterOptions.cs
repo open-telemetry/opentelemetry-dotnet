@@ -73,29 +73,27 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         this.DefaultHttpClientFactory = () =>
         {
 #if NET8_0_OR_GREATER
-            var handler = new HttpClientHandler();
+            // For .NET 8 and later, we can load certificates from PEM files
+            HttpClientHandler handler = new HttpClientHandler
+            {
+                CheckCertificateRevocationList = true,
+            };
+
             try
             {
-                // Configure server certificate validation if CertificateFilePath is provided
+                // Add trusted root certificate if provided
                 if (!string.IsNullOrEmpty(this.CertificateFilePath))
                 {
                     try
                     {
-                        // Load the certificate with validation
                         var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(this.CertificateFilePath);
 
-                        // Set custom server certificate validation callback
-                        handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+                        handler.ServerCertificateCustomValidationCallback = (_, cert, __, unexpectedErrors) =>
                         {
-                            if (cert != null && chain != null)
-                            {
-                                return MtlsUtility.ValidateCertificateChain(cert, trustedCertificate);
-                            }
-
-                            return false;
+                            return MtlsUtility.ValidateCertificateChain(cert!, trustedCertificate);
                         };
 
-                        OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationSuccess("HTTPS server validation");
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationSuccess("server validation");
                     }
                     catch (Exception ex)
                     {
@@ -130,14 +128,29 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             {
                 OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
                 handler.Dispose();
-                return new HttpClient
+
+                var fallbackHandler = new HttpClientHandler();
+
+                #if !NET462
+                // CheckCertificateRevocationList is not available in .NET 4.6.2
+                fallbackHandler.CheckCertificateRevocationList = true;
+                #endif
+
+                return new HttpClient(fallbackHandler)
                 {
                     Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
                 };
             }
 #else
             // For earlier .NET versions
-            return new HttpClient
+            var handler = new HttpClientHandler();
+
+            #if !NET462
+            // CheckCertificateRevocationList is not available in .NET 4.6.2
+            handler.CheckCertificateRevocationList = true;
+            #endif
+
+            return new HttpClient(handler)
             {
                 Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
             };

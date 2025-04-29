@@ -10,7 +10,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.G
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 /// <summary>Base class for sending OTLP export request over gRPC.</summary>
-internal sealed class OtlpGrpcExportClient : OtlpExportClient
+internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
 {
     public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
@@ -47,9 +47,10 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         // Create a secure client if mTLS is enabled
         if (this.useMtls)
         {
+            HttpClientHandler? handler = null;
             try
             {
-                var handler = new HttpClientHandler
+                handler = new HttpClientHandler
                 {
                     CheckCertificateRevocationList = true,
                 };
@@ -75,10 +76,14 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 {
                     Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds),
                 };
+
+                // Handler is now owned by HttpClient, don't dispose it here
+                handler = null;
             }
             catch (Exception ex)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
+                handler?.Dispose();
                 this.secureClient = null;
                 this.useMtls = false;
             }
@@ -270,7 +275,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     {
 #if NET8_0_OR_GREATER
         this.Dispose(true);
-        GC.SuppressFinalize(this);
 #endif
     }
 
@@ -283,6 +287,10 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     }
 
 #if NET8_0_OR_GREATER
+    /// <summary>
+    /// Releases the unmanaged resources used by the instance and optionally releases the managed resources.
+    /// </summary>
+    /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
     private void Dispose(bool disposing)
     {
         if (!this.disposed)
@@ -294,6 +302,8 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
             this.disposed = true;
         }
+
+        GC.SuppressFinalize(this);
     }
 #endif
 }
