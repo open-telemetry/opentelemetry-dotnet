@@ -6,9 +6,6 @@ using System.Net.Http;
 #endif
 using System.Net.Http.Headers;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
-#if NET8_0_OR_GREATER
-using Grpc.Core;
-#endif
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
@@ -28,30 +25,53 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             grpcStatusDetailsHeader: null);
 
 #if NET8_0_OR_GREATER
-    private readonly ChannelBase? secureChannel;
+    private readonly HttpClient? secureClient;
     private readonly bool useMtls;
+    private readonly OtlpExporterOptions options;
+    private readonly string signalPath;
 #endif
 
     public OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
         : base(options, httpClient, signalPath)
     {
 #if NET8_0_OR_GREATER
+        this.options = options;
+        this.signalPath = signalPath;
         // Determine if we should use mTLS based on certificate configuration and endpoint
         this.useMtls = options.Endpoint.Scheme == Uri.UriSchemeHttps &&
             (!string.IsNullOrEmpty(options.CertificateFilePath) ||
             (!string.IsNullOrEmpty(options.ClientCertificateFilePath) && !string.IsNullOrEmpty(options.ClientKeyFilePath)));
 
-        // Create a secure channel if mTLS is enabled
+        // Create a secure client if mTLS is enabled
         if (this.useMtls)
         {
             try
             {
-                this.secureChannel = options.CreateSecureChannel();
+                var handler = new HttpClientHandler();
+                if (!string.IsNullOrEmpty(options.CertificateFilePath))
+                {
+                    var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(options.CertificateFilePath);
+                    handler.ServerCertificateCustomValidationCallback = (_, cert, __, ___) =>
+                    {
+                        return cert?.Thumbprint == trustedCertificate.Thumbprint;
+                    };
+                }
+
+                if (!string.IsNullOrEmpty(options.ClientCertificateFilePath) && !string.IsNullOrEmpty(options.ClientKeyFilePath))
+                {
+                    var clientCertificate = MtlsUtility.LoadCertificateWithValidation(
+                        options.ClientCertificateFilePath,
+                        options.ClientKeyFilePath);
+                    handler.ClientCertificates.Add(clientCertificate);
+                }
+
+                this.secureClient = new HttpClient(handler);
+                this.secureClient.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
             }
             catch (Exception ex)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
-                this.secureChannel = null;
+                this.secureClient = null;
                 this.useMtls = false;
             }
         }
@@ -66,40 +86,23 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
 #if NET8_0_OR_GREATER
-        // Use the secure channel for mTLS if available
-        if (this.useMtls && this.secureChannel != null)
+        if (this.useMtls && this.secureClient != null)
         {
             try
             {
-                // Create a deadline for the gRPC call
-                var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
+                using var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint)
+                {
+                    Content = new ByteArrayContent(buffer, 0, contentLength)
+                    {
+                        Headers = { ContentType = MediaTypeHeader }
+                    }
+                };
 
-                // Create a gRPC client call
-                var call = new CallOptions(deadline: deadline, cancellationToken: cancellationToken);
+                using var response = this.secureClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
+                response.EnsureSuccessStatusCode();
 
-                // Create a gRPC method
-                var method = new Method<byte[], byte[]>(
-                    MethodType.Unary,
-                    this.ExportServicePath,
-                    "ProtoMethod",
-                    Marshallers.Create(x => x, x => x));
-
-                // Call the gRPC service
-                var response = this.secureChannel.CreateCallInvoker().BlockingUnaryCall(method, null, call, buffer);
-
-                OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint.ToString(), "mTLS gRPC export completed successfully.");
+                OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint.ToString(), "mTLS export completed successfully.");
                 return SuccessExportResponse;
-            }
-            catch (RpcException ex)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.ExportFailure(this.Endpoint, "mTLS gRPC export failed.", new Status(ex.StatusCode, ex.Message));
-
-                return new ExportClientGrpcResponse(
-                    success: false,
-                    deadlineUtc: deadlineUtc,
-                    exception: ex,
-                    status: new Status(ex.StatusCode, ex.Message),
-                    grpcStatusDetailsHeader: null);
             }
             catch (Exception ex)
             {
@@ -109,7 +112,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
 #endif
 
-        // Fallback to HTTP-based gRPC
         try
         {
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
@@ -118,7 +120,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             httpResponse.EnsureSuccessStatusCode();
 
             var trailingHeaders = httpResponse.TrailingHeaders();
-            Status status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
+            var status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
 
             if (status.Detail.Equals(Status.NoReplyDetailMessage))
             {
@@ -146,11 +148,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                         grpcStatusDetailsHeader: null);
                 }
 
-                // Note: Trailing headers might not be fully available until the
-                // response stream is consumed. gRPC often sends critical
-                // information like error details or final statuses in trailing
-                // headers which can only be reliably accessed after reading
-                // the response body.
                 trailingHeaders = httpResponse.TrailingHeaders();
                 status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
             }
@@ -178,7 +175,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
         catch (HttpRequestException ex) when (ex.InnerException is TimeoutException || IsTransientNetworkError(ex))
         {
-            // Handle transient HTTP errors (retryable)
             OpenTelemetryProtocolExporterEventSource.Log.TransientHttpError(this.Endpoint, ex);
             return new ExportClientGrpcResponse(
                 success: false,
@@ -189,7 +185,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
         catch (HttpRequestException ex)
         {
-            // Handle non-retryable HTTP errors.
             OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, ex);
             return new ExportClientGrpcResponse(
                 success: false,
@@ -200,7 +195,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            // Handle unexpected cancellation.
             OpenTelemetryProtocolExporterEventSource.Log.OperationUnexpectedlyCanceled(this.Endpoint, ex);
             return new ExportClientGrpcResponse(
                 success: false,
@@ -211,7 +205,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
         {
-            // Handle TaskCanceledException caused by TimeoutException.
             OpenTelemetryProtocolExporterEventSource.Log.RequestTimedOut(this.Endpoint, ex);
             return new ExportClientGrpcResponse(
                 success: false,
@@ -231,11 +224,11 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     public new bool Shutdown(int timeoutMilliseconds)
     {
 #if NET8_0_OR_GREATER
-        if (this.secureChannel != null)
+        if (this.secureClient != null)
         {
             try
             {
-                this.secureChannel.ShutdownAsync().Wait(timeoutMilliseconds);
+                this.secureClient.Dispose();
             }
             catch
             {

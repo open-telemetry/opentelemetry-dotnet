@@ -10,6 +10,7 @@ using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
@@ -28,28 +29,21 @@ internal static class MtlsUtility
     /// <exception cref="CryptographicException">Thrown when the certificate is invalid.</exception>
     public static X509Certificate2 LoadCertificateWithValidation(string certificateFilePath)
     {
-        // Check if file exists
+        if (string.IsNullOrEmpty(certificateFilePath))
+        {
+            throw new ArgumentNullException(nameof(certificateFilePath));
+        }
+
         if (!File.Exists(certificateFilePath))
         {
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateFileNotFound(certificateFilePath);
-            throw new FileNotFoundException($"Certificate file not found: {certificateFilePath}");
+            throw new FileNotFoundException("Certificate file not found.", certificateFilePath);
         }
 
-        // Check file permissions
-        CheckFilePermissions(certificateFilePath);
-
-        // Load the certificate
         try
         {
-            var certificate = X509Certificate2.CreateFromPemFile(certificateFilePath);
-
-            // Validate certificate
-            if (!IsCertificateValid(certificate))
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateValidationFailed("Certificate validation failed");
-                throw new CryptographicException("Certificate validation failed");
-            }
-
+            var certificate = new X509Certificate2(certificateFilePath);
+            ValidateCertificate(certificate);
             return certificate;
         }
         catch (CryptographicException ex)
@@ -70,35 +64,32 @@ internal static class MtlsUtility
     /// <exception cref="CryptographicException">Thrown when the certificate or key is invalid.</exception>
     public static X509Certificate2 LoadCertificateWithValidation(string certificateFilePath, string keyFilePath)
     {
-        // Check if files exist
+        if (string.IsNullOrEmpty(certificateFilePath))
+        {
+            throw new ArgumentNullException(nameof(certificateFilePath));
+        }
+
+        if (string.IsNullOrEmpty(keyFilePath))
+        {
+            throw new ArgumentNullException(nameof(keyFilePath));
+        }
+
         if (!File.Exists(certificateFilePath))
         {
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateFileNotFound(certificateFilePath);
-            throw new FileNotFoundException($"Certificate file not found: {certificateFilePath}");
+            throw new FileNotFoundException("Certificate file not found.", certificateFilePath);
         }
 
         if (!File.Exists(keyFilePath))
         {
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateFileNotFound(keyFilePath);
-            throw new FileNotFoundException($"Private key file not found: {keyFilePath}");
+            throw new FileNotFoundException("Key file not found.", keyFilePath);
         }
 
-        // Check file permissions for both files
-        CheckFilePermissions(certificateFilePath);
-        CheckFilePermissions(keyFilePath);
-
-        // Load the certificate with private key
         try
         {
             var certificate = X509Certificate2.CreateFromPemFile(certificateFilePath, keyFilePath);
-
-            // Validate certificate
-            if (!IsCertificateValid(certificate))
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateValidationFailed("Certificate validation failed");
-                throw new CryptographicException("Certificate validation failed");
-            }
-
+            ValidateCertificate(certificate);
             return certificate;
         }
         catch (CryptographicException ex)
@@ -135,79 +126,48 @@ internal static class MtlsUtility
         return isValid;
     }
 
-    private static bool IsCertificateValid(X509Certificate2 certificate)
+    private static void ValidateCertificate(X509Certificate2 certificate)
     {
-        // Check that certificate is within its validity period
-        var now = DateTime.Now;
-        if (now < certificate.NotBefore || now > certificate.NotAfter)
+        if (certificate == null)
         {
-            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateValidationFailed(
-                $"Certificate is not valid at the current time. Valid from {certificate.NotBefore} to {certificate.NotAfter}");
-            return false;
+            throw new ArgumentNullException(nameof(certificate));
         }
 
-        return true;
+        if (!certificate.HasPrivateKey)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateValidationFailed("Certificate does not have a private key.");
+            throw new InvalidOperationException("Certificate does not have a private key.");
+        }
+
+        var chain = new X509Chain();
+        try
+        {
+            if (!chain.Build(certificate))
+            {
+                var statusInformation = string.Join(", ", chain.ChainStatus.Select(s => $"{s.StatusInformation} ({s.Status})"));
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateChainValidationFailed(statusInformation);
+                throw new InvalidOperationException($"Certificate chain validation failed: {statusInformation}");
+            }
+        }
+        finally
+        {
+            chain.Dispose();
+        }
     }
 
-    private static void CheckFilePermissions(string filePath)
+    private static void ValidateFilePermissions(string filePath)
     {
         try
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            // Check if file exists and is readable
+            using (File.OpenRead(filePath))
             {
-                CheckWindowsFilePermissions(filePath);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
-                     RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                CheckUnixFilePermissions(filePath);
             }
         }
         catch (Exception ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.MtlsFilePermissionCheckFailed(filePath, ex);
-            // Log but don't throw, as this is a security best practice check, not a requirement
-        }
-    }
-
-    private static void CheckWindowsFilePermissions(string filePath)
-    {
-        var fileSecurity = File.GetAccessControl(filePath);
-        var accessRules = fileSecurity.GetAccessRules(true, true, typeof(SecurityIdentifier));
-
-        var currentUser = WindowsIdentity.GetCurrent().User;
-        bool hasUserAccess = false;
-
-        foreach (FileSystemAccessRule rule in accessRules)
-        {
-            if (rule.IdentityReference.Equals(currentUser) &&
-                (rule.FileSystemRights & FileSystemRights.Read) == FileSystemRights.Read &&
-                rule.AccessControlType == AccessControlType.Allow)
-            {
-                hasUserAccess = true;
-                break;
-            }
-        }
-
-        if (!hasUserAccess)
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.MtlsFilePermissionCheckFailed(
-                filePath, new UnauthorizedAccessException("Current user does not have read access to the file"));
-        }
-    }
-
-    private static void CheckUnixFilePermissions(string filePath)
-    {
-        var fileInfo = new FileInfo(filePath);
-        var permissions = fileInfo.UnixFileMode;
-
-        // Check if permissions are too open (e.g., world readable)
-        if ((permissions & UnixFileMode.OtherRead) != 0)
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.MtlsFilePermissionCheckFailed(
-                filePath,
-                new UnauthorizedAccessException("Certificate file has permissions that are too permissive. " +
-                                                "Consider restricting with 'chmod 600' or similar"));
+            throw;
         }
     }
 }

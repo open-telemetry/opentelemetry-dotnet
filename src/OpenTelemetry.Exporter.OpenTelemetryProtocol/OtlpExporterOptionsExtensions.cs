@@ -11,7 +11,6 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 #if NET8_0_OR_GREATER
 using System.Security.Cryptography.X509Certificates;
-using Grpc.Core;
 #endif
 
 namespace OpenTelemetry.Exporter;
@@ -25,96 +24,6 @@ internal static class OtlpExporterOptionsExtensions
     private const string TraceHttpServicePath = "v1/traces";
     private const string MetricsHttpServicePath = "v1/metrics";
     private const string LogsHttpServicePath = "v1/logs";
-
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Creates a channel with mTLS support if certificate files are provided.
-    /// </summary>
-    /// <param name="options">The OTLP exporter options.</param>
-    /// <returns>A gRPC channel.</returns>
-    public static ChannelBase CreateSecureChannel(this OtlpExporterOptions options)
-    {
-        if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
-        {
-            throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
-        }
-
-        try
-        {
-            // For insecure connections or when no certificates are provided
-            if (options.Endpoint.Scheme == Uri.UriSchemeHttp ||
-                (string.IsNullOrEmpty(options.CertificateFilePath) &&
-                 (string.IsNullOrEmpty(options.ClientCertificateFilePath) || string.IsNullOrEmpty(options.ClientKeyFilePath))))
-            {
-                return new Channel(options.Endpoint.Authority, ChannelCredentials.Insecure);
-            }
-
-            // For secure connections with mTLS
-            SslCredentials sslCredentials;
-
-            // Load certificates only if file paths are provided
-            try
-            {
-                string? rootCertPem = null;
-                KeyCertificatePair? clientCerts = null;
-
-                // Load server certificate for validation if provided
-                if (!string.IsNullOrEmpty(options.CertificateFilePath))
-                {
-                    try
-                    {
-                        var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(options.CertificateFilePath);
-                        rootCertPem = File.ReadAllText(options.CertificateFilePath);
-                        OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationSuccess("gRPC server validation");
-                    }
-                    catch (Exception ex)
-                    {
-                        OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
-                    }
-                }
-
-                // Load client certificate and key if both are provided
-                if (!string.IsNullOrEmpty(options.ClientCertificateFilePath) &&
-                    !string.IsNullOrEmpty(options.ClientKeyFilePath))
-                {
-                    try
-                    {
-                        var clientCertificate = MtlsUtility.LoadCertificateWithValidation(
-                            options.ClientCertificateFilePath,
-                            options.ClientKeyFilePath);
-
-                        string clientCertPem = File.ReadAllText(options.ClientCertificateFilePath);
-                        string clientKeyPem = File.ReadAllText(options.ClientKeyFilePath);
-                        clientCerts = new KeyCertificatePair(clientCertPem, clientKeyPem);
-
-                        OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationSuccess("gRPC client authentication");
-                    }
-                    catch (Exception ex)
-                    {
-                        OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
-                    }
-                }
-
-                // Create SSL credentials with the loaded certificates
-                sslCredentials = clientCerts != null
-                    ? new SslCredentials(rootCertPem, clientCerts)
-                    : new SslCredentials(rootCertPem);
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
-                return new Channel(options.Endpoint.Authority, ChannelCredentials.Insecure);
-            }
-
-            return new Channel(options.Endpoint.Authority, sslCredentials);
-        }
-        catch (Exception ex)
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
-            return new Channel(options.Endpoint.Authority, ChannelCredentials.Insecure);
-        }
-    }
-#endif
 
     public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
         where THeaders : new()
