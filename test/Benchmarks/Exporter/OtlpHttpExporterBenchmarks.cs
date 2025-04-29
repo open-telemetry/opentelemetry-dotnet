@@ -16,7 +16,9 @@ using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implem
 
 namespace Benchmarks.Exporter;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class OtlpHttpExporterBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     private readonly byte[] buffer = new byte[1024 * 1024];
     private IDisposable? server;
@@ -63,7 +65,9 @@ public class OtlpHttpExporterBenchmarks
             options,
             new SdkLimitOptions(),
             new ExperimentalOptions(),
+#pragma warning disable CA2000 // Dispose objects before losing scope
             new OtlpExporterTransmissionHandler(new OtlpHttpExportClient(options, options.HttpClientFactory(), "v1/traces"), options.TimeoutMilliseconds));
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         this.activity = ActivityHelper.CreateTestActivity();
         this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
@@ -72,6 +76,7 @@ public class OtlpHttpExporterBenchmarks
     [GlobalCleanup]
     public void GlobalCleanup()
     {
+        this.activity?.Dispose();
         this.exporter?.Shutdown();
         this.exporter?.Dispose();
         this.server?.Dispose();

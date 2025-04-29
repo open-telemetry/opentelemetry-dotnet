@@ -8,7 +8,9 @@ namespace OpenTelemetry.Benchmarks;
 public class SuppressInstrumentationScopeBenchmarks
 {
     [Benchmark]
+#pragma warning disable CA1822 // Mark members as static
     public void Begin()
+#pragma warning restore CA1822 // Mark members as static
     {
         using var scope1 = SuppressInstrumentationScope.Begin();
 
@@ -18,7 +20,9 @@ public class SuppressInstrumentationScopeBenchmarks
     }
 
     [Benchmark]
+#pragma warning disable CA1822 // Mark members as static
     public void Enter()
+#pragma warning restore CA1822 // Mark members as static
     {
         SuppressInstrumentationScope.Enter();
 
