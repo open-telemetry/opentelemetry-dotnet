@@ -275,6 +275,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
     {
 #if NET8_0_OR_GREATER
         this.Dispose(true);
+        GC.SuppressFinalize(this);
 #endif
     }
 
@@ -302,8 +303,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
 
             this.disposed = true;
         }
-
-        GC.SuppressFinalize(this);
     }
 #endif
 }

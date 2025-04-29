@@ -74,10 +74,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         {
 #if NET8_0_OR_GREATER
             // For .NET 8 and later, we can load certificates from PEM files
-            HttpClientHandler handler = new HttpClientHandler
-            {
-                CheckCertificateRevocationList = true,
-            };
+            HttpClientHandler handler = new HttpClientHandler();
+
+            #if !NET462
+            handler.CheckCertificateRevocationList = true;
+            #endif
 
             try
             {
