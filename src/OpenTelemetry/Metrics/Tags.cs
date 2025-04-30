@@ -80,7 +80,6 @@ internal readonly struct Tags : IEquatable<Tags>
             // Note: Bounds check happens here for theirKvps element access
             ref var theirs = ref theirKvps[i];
 
-            // Note: string.Equals performs an ordinal comparison
             if (!ours.Key.Equals(theirs.Key, StringComparison.Ordinal))
             {
                 return false;
