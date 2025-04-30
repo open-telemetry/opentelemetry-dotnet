@@ -47,47 +47,33 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
         // Create a secure client if mTLS is enabled
         if (this.useMtls)
         {
-            HttpClientHandler? handler = null;
-            try
+            using var handler = new HttpClientHandler();
+
+            #if !NET462
+            handler.CheckCertificateRevocationList = true;
+            #endif
+
+            if (!string.IsNullOrEmpty(options.CertificateFilePath))
             {
-                handler = new HttpClientHandler();
-
-                #if !NET462
-                handler.CheckCertificateRevocationList = true;
-                #endif
-
-                if (!string.IsNullOrEmpty(options.CertificateFilePath))
+                using var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(options.CertificateFilePath);
+                handler.ServerCertificateCustomValidationCallback = (_, cert, __, unexpectedErrors) =>
                 {
-                    using var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(options.CertificateFilePath);
-                    handler.ServerCertificateCustomValidationCallback = (_, cert, __, unexpectedErrors) =>
-                    {
-                        return cert?.Thumbprint == trustedCertificate.Thumbprint;
-                    };
-                }
-
-                if (!string.IsNullOrEmpty(options.ClientCertificateFilePath) && !string.IsNullOrEmpty(options.ClientKeyFilePath))
-                {
-                    var clientCertificate = MtlsUtility.LoadCertificateWithValidation(
-                        options.ClientCertificateFilePath,
-                        options.ClientKeyFilePath);
-                    handler.ClientCertificates.Add(clientCertificate);
-                }
-
-                this.secureClient = new HttpClient(handler)
-                {
-                    Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds),
+                    return cert?.Thumbprint == trustedCertificate.Thumbprint;
                 };
+            }
 
-                // Handler is now owned by HttpClient, don't dispose it here
-                handler = null;
-            }
-            catch (Exception ex)
+            if (!string.IsNullOrEmpty(options.ClientCertificateFilePath) && !string.IsNullOrEmpty(options.ClientKeyFilePath))
             {
-                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
-                handler?.Dispose();
-                this.secureClient = null;
-                this.useMtls = false;
+                var clientCertificate = MtlsUtility.LoadCertificateWithValidation(
+                    options.ClientCertificateFilePath,
+                    options.ClientKeyFilePath);
+                handler.ClientCertificates.Add(clientCertificate);
             }
+
+            this.secureClient = new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds),
+            };
         }
 #endif
     }
