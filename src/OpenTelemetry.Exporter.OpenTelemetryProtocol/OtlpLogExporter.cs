@@ -69,7 +69,9 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
 
     /// <inheritdoc/>
+#pragma warning disable CA1725 // Parameter names should match base declaration
     public override ExportResult Export(in Batch<LogRecord> logRecordBatch)
+#pragma warning restore CA1725 // Parameter names should match base declaration
     {
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();

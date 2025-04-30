@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
 * Extended remote endpoint calculation to align with the [opentelemetry-specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.40.0/specification/trace/sdk_exporters/zipkin.md#otlp---zipkin).
   ([#6191](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6191))
 
+## 1.12.0
+
+Released 2025-Apr-29
+
 ## 1.11.2
 
 Released 2025-Mar-04
