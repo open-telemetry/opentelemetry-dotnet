@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using Xunit;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
@@ -64,14 +65,14 @@ public class OtlpAttributeTests
                 var expectedArray = new long[array.Length];
                 for (var i = 0; i < array.Length; i++)
                 {
-                    expectedArray[i] = Convert.ToInt64(array.GetValue(i));
+                    expectedArray[i] = Convert.ToInt64(array.GetValue(i), CultureInfo.InvariantCulture);
                 }
 
                 Assert.Equal(expectedArray, attribute.Value.ArrayValue.Values.Select(x => x.IntValue));
                 break;
             default:
                 Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.IntValue, attribute.Value.ValueCase);
-                Assert.Equal(Convert.ToInt64(value), attribute.Value.IntValue);
+                Assert.Equal(Convert.ToInt64(value, CultureInfo.InvariantCulture), attribute.Value.IntValue);
                 break;
         }
     }
@@ -93,14 +94,14 @@ public class OtlpAttributeTests
                 var expectedArray = new double[array.Length];
                 for (var i = 0; i < array.Length; i++)
                 {
-                    expectedArray[i] = Convert.ToDouble(array.GetValue(i));
+                    expectedArray[i] = Convert.ToDouble(array.GetValue(i), CultureInfo.InvariantCulture);
                 }
 
                 Assert.Equal(expectedArray, attribute.Value.ArrayValue.Values.Select(x => x.DoubleValue));
                 break;
             default:
                 Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.DoubleValue, attribute.Value.ValueCase);
-                Assert.Equal(Convert.ToDouble(value), attribute.Value.DoubleValue);
+                Assert.Equal(Convert.ToDouble(value, CultureInfo.InvariantCulture), attribute.Value.DoubleValue);
                 break;
         }
     }
@@ -120,14 +121,14 @@ public class OtlpAttributeTests
                 var expectedArray = new bool[array.Length];
                 for (var i = 0; i < array.Length; i++)
                 {
-                    expectedArray[i] = Convert.ToBoolean(array.GetValue(i));
+                    expectedArray[i] = Convert.ToBoolean(array.GetValue(i), CultureInfo.InvariantCulture);
                 }
 
                 Assert.Equal(expectedArray, attribute.Value.ArrayValue.Values.Select(x => x.BoolValue));
                 break;
             default:
                 Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.BoolValue, attribute.Value.ValueCase);
-                Assert.Equal(Convert.ToBoolean(value), attribute.Value.BoolValue);
+                Assert.Equal(Convert.ToBoolean(value, CultureInfo.InvariantCulture), attribute.Value.BoolValue);
                 break;
         }
     }
@@ -140,7 +141,7 @@ public class OtlpAttributeTests
         var kvp = new KeyValuePair<string, object?>("key", value);
         Assert.True(TryTransformTag(kvp, out var attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
-        Assert.Equal(Convert.ToString(value), attribute.Value.StringValue);
+        Assert.Equal(Convert.ToString(value, CultureInfo.InvariantCulture), attribute.Value.StringValue);
     }
 
     [Fact]
@@ -219,7 +220,7 @@ public class OtlpAttributeTests
             (nint)int.MaxValue,
             (nuint)uint.MaxValue,
             decimal.MaxValue,
-            new object(),
+            new(),
         };
 
         var testArrayValues = new object[]
@@ -227,7 +228,7 @@ public class OtlpAttributeTests
             new nint[] { 1, 2, 3 },
             new nuint[] { 1, 2, 3 },
             new decimal[] { 1, 2, 3 },
-            new object?[] { new object[3], new object(), null },
+            new object?[] { new object[3], new(), null },
         };
 
         foreach (var value in testValues)
@@ -297,11 +298,11 @@ public class OtlpAttributeTests
         return false;
     }
 
-    private class MyToStringMethodThrowsAnException
+    private sealed class MyToStringMethodThrowsAnException
     {
         public override string ToString()
         {
-            throw new Exception("Nope.");
+            throw new InvalidOperationException("Nope.");
         }
     }
 }

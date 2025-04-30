@@ -36,7 +36,9 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     /// <returns>Supplied <see cref="IOpenTelemetryBuilder"/> for chaining calls.</returns>
     public static IOpenTelemetryBuilder UseOtlpExporter(
         this IOpenTelemetryBuilder builder)
+#pragma warning disable CA1062 // Validate arguments of public methods
         => UseOtlpExporter(builder, name: null, configuration: null, configure: null);
+#pragma warning restore CA1062 // Validate arguments of public methods
 
     /// <summary><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)"/></summary>
     /// <remarks><inheritdoc cref="UseOtlpExporter(IOpenTelemetryBuilder)" path="/remarks"/></remarks>
@@ -56,7 +58,9 @@ public static class OpenTelemetryBuilderOtlpExporterExtensions
     {
         Guard.ThrowIfNull(baseUrl);
 
+#pragma warning disable CA1062 // Validate arguments of public methods
         return UseOtlpExporter(builder, name: null, configuration: null, configure: otlpBuilder =>
+#pragma warning restore CA1062 // Validate arguments of public methods
         {
             otlpBuilder.ConfigureDefaultExporterOptions(o =>
             {

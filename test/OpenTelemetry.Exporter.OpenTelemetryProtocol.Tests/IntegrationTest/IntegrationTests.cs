@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Logs;
@@ -265,7 +266,7 @@ public sealed class IntegrationTests : IDisposable
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+        logger.HelloFrom("tomato", 2.99);
 
         switch (processorOptions.ExportProcessorType)
         {
@@ -307,7 +308,7 @@ public sealed class IntegrationTests : IDisposable
             string? message;
             if (eventData.Message != null && eventData.Payload != null && eventData.Payload.Count > 0)
             {
-                message = string.Format(eventData.Message, eventData.Payload.ToArray());
+                message = string.Format(CultureInfo.InvariantCulture, eventData.Message, eventData.Payload.ToArray());
             }
             else
             {

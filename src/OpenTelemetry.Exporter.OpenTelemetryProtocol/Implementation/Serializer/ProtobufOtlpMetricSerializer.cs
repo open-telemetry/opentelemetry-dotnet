@@ -29,7 +29,7 @@ internal static class ProtobufOtlpMetricSerializer
             var metricName = metric.MeterName;
             if (!scopeMetricsList.TryGetValue(metricName, out var metrics))
             {
-                metrics = metricListPool.Count > 0 ? metricListPool.Pop() : new List<Metric>();
+                metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
                 scopeMetricsList[metricName] = metrics;
             }
 
@@ -117,7 +117,7 @@ internal static class ProtobufOtlpMetricSerializer
         int instrumentationScopeLengthPosition = writePosition;
         writePosition += ReserveSizeForLength;
 
-        Debug.Assert(metrics.Any(), "Metrics collection is not expected to be empty.");
+        Debug.Assert(metrics.Count > 0, "Metrics collection is not expected to be empty.");
         var meterVersion = metrics[0].MeterVersion;
         var meterTags = metrics[0].MeterTags;
 
