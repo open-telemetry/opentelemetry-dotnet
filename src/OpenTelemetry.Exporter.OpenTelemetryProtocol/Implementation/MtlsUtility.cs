@@ -46,11 +46,19 @@ internal static class MtlsUtility
 #else
         try
         {
-            using var rsa = RSA.Create();
-            using var certificate = new X509Certificate2(certificateFilePath);
-            var certWithKey = certificate.CopyWithPrivateKey(rsa);
-            ValidateCertificate(certWithKey);
-            return certWithKey;
+            var certificate = new X509Certificate2(certificateFilePath);
+            var rsa = RSA.Create();
+            try
+            {
+                var certWithKey = certificate.CopyWithPrivateKey(rsa);
+                ValidateCertificate(certWithKey);
+                return certWithKey;
+            }
+            catch
+            {
+                rsa.Dispose();
+                throw;
+            }
         }
         catch (CryptographicException ex)
         {
@@ -103,11 +111,19 @@ internal static class MtlsUtility
 #else
         try
         {
-            using var rsa = RSA.Create();
-            using var certificate = new X509Certificate2(certificateFilePath);
-            var certWithKey = certificate.CopyWithPrivateKey(rsa);
-            ValidateCertificate(certWithKey);
-            return certWithKey;
+            var certificate = new X509Certificate2(certificateFilePath);
+            var rsa = RSA.Create();
+            try
+            {
+                var certWithKey = certificate.CopyWithPrivateKey(rsa);
+                ValidateCertificate(certWithKey);
+                return certWithKey;
+            }
+            catch
+            {
+                rsa.Dispose();
+                throw;
+            }
         }
         catch (CryptographicException ex)
         {
