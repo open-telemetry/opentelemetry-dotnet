@@ -149,6 +149,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             #if !NET462
             // CheckCertificateRevocationList is not available in .NET 4.6.2
             handler.CheckCertificateRevocationList = true;
+            #else
+            #pragma warning disable CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
             #endif
 
             return new HttpClient(handler)
