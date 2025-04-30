@@ -135,64 +135,66 @@ public class MtlsTests : IDisposable
     private void CreateTestCertificates()
     {
         // Generate a simple self-signed certificate for testing
-        using var rsa = RSA.Create(2048);
-        var distinguishedName = new X500DistinguishedName("CN=Test CA");
-        var certRequest = new CertificateRequest(
-            distinguishedName,
-            rsa,
-            HashAlgorithmName.SHA256,
-            RSASignaturePadding.Pkcs1);
-
-        certRequest.CertificateExtensions.Add(
-            new X509BasicConstraintsExtension(true, false, 0, true));
-
-        certRequest.CertificateExtensions.Add(
-            new X509KeyUsageExtension(
-                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyCertSign,
-                false));
-
-        // Create CA certificate
-        var caCert = certRequest.CreateSelfSigned(
-            DateTimeOffset.UtcNow.AddDays(-1),
-            DateTimeOffset.UtcNow.AddYears(1));
-
-        // Create client certificate signed by the CA
-        var clientKeyRsa = RSA.Create(2048);
-        var clientDistinguishedName = new X500DistinguishedName("CN=Test Client");
-        var clientCertRequest = new CertificateRequest(
-            clientDistinguishedName,
-            clientKeyRsa,
-            HashAlgorithmName.SHA256,
-            RSASignaturePadding.Pkcs1);
-
-        clientCertRequest.CertificateExtensions.Add(
-            new X509BasicConstraintsExtension(false, false, 0, false));
-
-        clientCertRequest.CertificateExtensions.Add(
-            new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, false));
-
-        // Create client certificate signed by CA
-        byte[] serialNumber = new byte[8];
-        using (var rng = RandomNumberGenerator.Create())
+        using (var rsa = RSA.Create(2048))
         {
-            rng.GetBytes(serialNumber);
+            var distinguishedName = new X500DistinguishedName("CN=Test CA");
+            var certRequest = new CertificateRequest(
+                distinguishedName,
+                rsa,
+                HashAlgorithmName.SHA256,
+                RSASignaturePadding.Pkcs1);
+
+            certRequest.CertificateExtensions.Add(
+                new X509BasicConstraintsExtension(true, false, 0, true));
+
+            certRequest.CertificateExtensions.Add(
+                new X509KeyUsageExtension(
+                    X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyCertSign,
+                    false));
+
+            // Create CA certificate
+            var caCert = certRequest.CreateSelfSigned(
+                DateTimeOffset.UtcNow.AddDays(-1),
+                DateTimeOffset.UtcNow.AddYears(1));
+
+            // Create client certificate signed by the CA
+            var clientKeyRsa = RSA.Create(2048);
+            var clientDistinguishedName = new X500DistinguishedName("CN=Test Client");
+            var clientCertRequest = new CertificateRequest(
+                clientDistinguishedName,
+                clientKeyRsa,
+                HashAlgorithmName.SHA256,
+                RSASignaturePadding.Pkcs1);
+
+            clientCertRequest.CertificateExtensions.Add(
+                new X509BasicConstraintsExtension(false, false, 0, false));
+
+            clientCertRequest.CertificateExtensions.Add(
+                new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, false));
+
+            // Create client certificate signed by CA
+            byte[] serialNumber = new byte[8];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(serialNumber);
+            }
+
+            var clientCert = clientCertRequest.Create(
+                caCert,
+                DateTimeOffset.UtcNow.AddDays(-1),
+                DateTimeOffset.UtcNow.AddYears(1),
+                serialNumber);
+
+            // Save certificates to files in PEM format
+            File.WriteAllText(caCertPath, PemEncodeX509Certificate(caCert));
+            File.WriteAllText(clientCertPath, PemEncodeX509Certificate(clientCert));
+            File.WriteAllText(clientKeyPath, PemEncodePrivateKey(clientKeyRsa));
+
+            // Set appropriate file permissions
+            MakeFileSecure(caCertPath);
+            MakeFileSecure(clientCertPath);
+            MakeFileSecure(clientKeyPath);
         }
-
-        var clientCert = clientCertRequest.Create(
-            caCert,
-            DateTimeOffset.UtcNow.AddDays(-1),
-            DateTimeOffset.UtcNow.AddYears(1),
-            serialNumber);
-
-        // Save certificates to files in PEM format
-        File.WriteAllText(caCertPath, PemEncodeX509Certificate(caCert));
-        File.WriteAllText(clientCertPath, PemEncodeX509Certificate(clientCert));
-        File.WriteAllText(clientKeyPath, PemEncodePrivateKey(clientKeyRsa));
-
-        // Set appropriate file permissions
-        MakeFileSecure(caCertPath);
-        MakeFileSecure(clientCertPath);
-        MakeFileSecure(clientKeyPath);
     }
 
     private static string PemEncodeX509Certificate(X509Certificate2 cert)

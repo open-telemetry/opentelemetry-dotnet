@@ -109,6 +109,7 @@ public class MtlsUtilityTests : IDisposable
         {
             // Ignore cleanup errors
         }
+        GC.SuppressFinalize(this);
     }
 
     private X509Certificate2 GenerateTestCertificate(RSA rsa)

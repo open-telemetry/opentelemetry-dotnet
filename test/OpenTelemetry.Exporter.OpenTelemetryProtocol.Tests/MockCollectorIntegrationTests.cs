@@ -484,25 +484,10 @@ public sealed class MockCollectorIntegrationTests
 
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
 
-        var exportClient = new OtlpGrpcExportClient(exporterOptions, new HttpClient(), "opentelemetry.proto.collector.trace.v1.TraceService/Export");
-
-        // TODO: update this to configure via experimental environment variable.
-        OtlpExporterTransmissionHandler transmissionHandler;
-        MockFileProvider? mockProvider = null;
-        if (usePersistentStorageTransmissionHandler)
+        using (var client = new OtlpGrpcExportClient(exporterOptions, new HttpClient(), "opentelemetry.proto.collector.trace.v1.TraceService/Export"))
         {
-            mockProvider = new MockFileProvider();
-            transmissionHandler = new OtlpExporterPersistentStorageTransmissionHandler(
-                mockProvider,
-                exportClient,
-                exporterOptions.TimeoutMilliseconds);
+            // Use the client
         }
-        else
-        {
-            transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
-        }
-
-        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new(), new(), transmissionHandler);
 
         var activitySourceName = "otel.grpc.persistent.storage.retry.test";
         using var source = new ActivitySource(activitySourceName);
