@@ -50,10 +50,11 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
             HttpClientHandler? handler = null;
             try
             {
-                handler = new HttpClientHandler
-                {
-                    CheckCertificateRevocationList = true,
-                };
+                handler = new HttpClientHandler();
+
+                #if !NET462
+                handler.CheckCertificateRevocationList = true;
+                #endif
 
                 if (!string.IsNullOrEmpty(options.CertificateFilePath))
                 {
