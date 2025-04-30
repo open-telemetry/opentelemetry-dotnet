@@ -34,8 +34,8 @@ public class MtlsUtilityTests : IDisposable
         using var cert = MtlsUtilityTests.GenerateTestCertificate(rsa);
 
         // Export the certificate and key to PEM files
-        File.WriteAllText(this.validCertPath, Convert.ToBase64String(cert.RawData));
-        File.WriteAllText(this.validKeyPath, Convert.ToBase64String(rsa.ExportPkcs8PrivateKey()));
+        File.WriteAllText(this.validCertPath, PemEncodeX509Certificate(cert));
+        File.WriteAllText(this.validKeyPath, PemEncodePrivateKey(rsa));
 
         // Create an invalid certificate file
         File.WriteAllText(this.invalidCertPath, "This is not a valid certificate");
@@ -133,6 +133,23 @@ public class MtlsUtilityTests : IDisposable
 
         var now = DateTimeOffset.UtcNow;
         return certRequest.CreateSelfSigned(now, now.AddYears(1));
+    }
+
+    private static string PemEncodeX509Certificate(X509Certificate2 cert)
+    {
+        string pemEncodedCert = "-----BEGIN CERTIFICATE-----\n";
+        pemEncodedCert += Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks);
+        pemEncodedCert += "\n-----END CERTIFICATE-----";
+        return pemEncodedCert;
+    }
+
+    private static string PemEncodePrivateKey(RSA rsa)
+    {
+        var privateKey = rsa.ExportPkcs8PrivateKey();
+        string pemEncodedKey = "-----BEGIN PRIVATE KEY-----\n";
+        pemEncodedKey += Convert.ToBase64String(privateKey, Base64FormattingOptions.InsertLineBreaks);
+        pemEncodedKey += "\n-----END PRIVATE KEY-----";
+        return pemEncodedKey;
     }
 }
 #endif

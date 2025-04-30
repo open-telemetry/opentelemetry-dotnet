@@ -127,12 +127,6 @@ internal static class MtlsUtility
     {
         ArgumentNullException.ThrowIfNull(certificate);
 
-        if (!certificate.HasPrivateKey)
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateValidationFailed("Certificate does not have a private key.");
-            throw new InvalidOperationException("Certificate does not have a private key.");
-        }
-
         using var chain = new X509Chain();
         if (!chain.Build(certificate))
         {
