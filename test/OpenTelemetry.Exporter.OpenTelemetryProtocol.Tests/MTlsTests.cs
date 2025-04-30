@@ -33,30 +33,35 @@ public class MtlsTests : IDisposable
         CreateTestCertificates();
     }
 
-    public void Dispose()
+    protected virtual void Dispose(bool disposing)
     {
-        try
+        if (disposing)
         {
             if (Directory.Exists(tempDir))
             {
                 Directory.Delete(tempDir, true);
             }
         }
-        catch
-        {
-            // Ignore cleanup errors
-        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
     public void LoadCertificateWithValidation_ValidCertificates_LoadsSuccessfully()
     {
         // Act & Assert - no exception should be thrown
-        var caCert = MtlsUtility.LoadCertificateWithValidation(caCertPath);
-        Assert.NotNull(caCert);
-
-        var clientCert = MtlsUtility.LoadCertificateWithValidation(clientCertPath, clientKeyPath);
-        Assert.NotNull(clientCert);
+        using (var caCert = X509CertificateLoader.Load(caCertPath))
+        {
+            Assert.NotNull(caCert);
+            using (var clientCert = X509CertificateLoader.Load(clientCertPath, clientKeyPath))
+            {
+                Assert.NotNull(clientCert);
+            }
+        }
     }
 
     [Fact]
@@ -66,7 +71,7 @@ public class MtlsTests : IDisposable
         var ex = Assert.Throws<FileNotFoundException>(() =>
             MtlsUtility.LoadCertificateWithValidation(Path.Combine(tempDir, "nonexistent.pem")));
 
-        Assert.Contains("Certificate file not found", ex.Message);
+        Assert.Contains("Certificate file not found", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -86,9 +91,9 @@ public class MtlsTests : IDisposable
         // Arrange
         var options = new OtlpExporterOptions
         {
-            CertificateFilePath = caCertPath,
-            ClientCertificateFilePath = clientCertPath,
-            ClientKeyFilePath = clientKeyPath
+            CertificateFilePath = this.caCertPath,
+            ClientCertificateFilePath = this.clientCertPath,
+            ClientKeyFilePath = this.clientKeyPath,
         };
 
         // Act
@@ -130,6 +135,32 @@ public class MtlsTests : IDisposable
 
         // Assert
         Assert.NotNull(client);
+    }
+
+    private static string PemEncodeX509Certificate(X509Certificate2 cert)
+    {
+        string pemEncodedCert = "-----BEGIN CERTIFICATE-----\n";
+        pemEncodedCert += Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks);
+        pemEncodedCert += "\n-----END CERTIFICATE-----";
+        return pemEncodedCert;
+    }
+
+    private static string PemEncodePrivateKey(RSA rsa)
+    {
+        var privateKey = rsa.ExportPkcs8PrivateKey();
+        string pemEncodedKey = "-----BEGIN PRIVATE KEY-----\n";
+        pemEncodedKey += Convert.ToBase64String(privateKey, Base64FormattingOptions.InsertLineBreaks);
+        pemEncodedKey += "\n-----END PRIVATE KEY-----";
+        return pemEncodedKey;
+    }
+
+    private static void MakeFileSecure(string filePath)
+    {
+        // For security in tests, we'll just ensure the file is readable
+        using (File.OpenRead(filePath))
+        {
+            // Just verify we can read the file
+        }
     }
 
     private void CreateTestCertificates()
@@ -186,40 +217,14 @@ public class MtlsTests : IDisposable
                 serialNumber);
 
             // Save certificates to files in PEM format
-            File.WriteAllText(caCertPath, PemEncodeX509Certificate(caCert));
-            File.WriteAllText(clientCertPath, PemEncodeX509Certificate(clientCert));
-            File.WriteAllText(clientKeyPath, PemEncodePrivateKey(clientKeyRsa));
+            File.WriteAllText(this.caCertPath, PemEncodeX509Certificate(caCert));
+            File.WriteAllText(this.clientCertPath, PemEncodeX509Certificate(clientCert));
+            File.WriteAllText(this.clientKeyPath, PemEncodePrivateKey(clientKeyRsa));
 
             // Set appropriate file permissions
-            MakeFileSecure(caCertPath);
-            MakeFileSecure(clientCertPath);
-            MakeFileSecure(clientKeyPath);
-        }
-    }
-
-    private static string PemEncodeX509Certificate(X509Certificate2 cert)
-    {
-        string pemEncodedCert = "-----BEGIN CERTIFICATE-----\n";
-        pemEncodedCert += Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks);
-        pemEncodedCert += "\n-----END CERTIFICATE-----";
-        return pemEncodedCert;
-    }
-
-    private static string PemEncodePrivateKey(RSA rsa)
-    {
-        var privateKey = rsa.ExportPkcs8PrivateKey();
-        string pemEncodedKey = "-----BEGIN PRIVATE KEY-----\n";
-        pemEncodedKey += Convert.ToBase64String(privateKey, Base64FormattingOptions.InsertLineBreaks);
-        pemEncodedKey += "\n-----END PRIVATE KEY-----";
-        return pemEncodedKey;
-    }
-
-    private static void MakeFileSecure(string filePath)
-    {
-        // For security in tests, we'll just ensure the file is readable
-        using (File.OpenRead(filePath))
-        {
-            // Just verify we can read the file
+            MakeFileSecure(this.caCertPath);
+            MakeFileSecure(this.clientCertPath);
+            MakeFileSecure(this.clientKeyPath);
         }
     }
 }

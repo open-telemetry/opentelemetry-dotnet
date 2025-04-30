@@ -31,7 +31,7 @@ public class MtlsUtilityTests : IDisposable
 
         // Generate a test certificate and key
         using var rsa = RSA.Create(2048);
-        using var cert = this.GenerateTestCertificate(rsa);
+        using var cert = MtlsUtilityTests.GenerateTestCertificate(rsa);
 
         // Export the certificate and key to PEM files
         File.WriteAllText(this.validCertPath, PemEncoding.Write("CERTIFICATE", cert.RawData));
@@ -98,21 +98,24 @@ public class MtlsUtilityTests : IDisposable
         Assert.True(result);
     }
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            if (Directory.Exists(this.tempFolder))
+            {
+                Directory.Delete(this.tempFolder, true);
+            }
+        }
+    }
+
     public void Dispose()
     {
-        // Clean up test files
-        try
-        {
-            Directory.Delete(this.tempFolder, true);
-        }
-        catch
-        {
-            // Ignore cleanup errors
-        }
+        Dispose(true);
         GC.SuppressFinalize(this);
     }
 
-    private X509Certificate2 GenerateTestCertificate(RSA rsa)
+    private static X509Certificate2 GenerateTestCertificate(RSA rsa)
     {
         var certRequest = new CertificateRequest(
             new X500DistinguishedName("CN=Test Certificate"),
