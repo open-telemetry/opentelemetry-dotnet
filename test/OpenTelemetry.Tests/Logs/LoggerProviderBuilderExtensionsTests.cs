@@ -17,7 +17,9 @@ public sealed class LoggerProviderBuilderExtensionsTests
         using (var provider = Sdk.CreateLoggerProviderBuilder()
             .AddInstrumentation<CustomInstrumentation>()
             .AddInstrumentation((sp, provider) => new CustomInstrumentation() { Provider = provider })
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddInstrumentation(new CustomInstrumentation())
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .AddInstrumentation(() => (object?)null)
             .Build() as LoggerProviderSdk)
         {
@@ -34,7 +36,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
             Assert.Null(((CustomInstrumentation)provider.Instrumentations[2]).Provider);
             Assert.False(((CustomInstrumentation)provider.Instrumentations[2]).Disposed);
 
-            instrumentation = new List<object>(provider.Instrumentations);
+            instrumentation = [.. provider.Instrumentations];
         }
 
         Assert.True(((CustomInstrumentation)instrumentation[0]).Disposed);
@@ -101,7 +103,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
         using var provider = Sdk.CreateLoggerProviderBuilder()
             .SetResourceBuilder(ResourceBuilder
                 .CreateEmpty()
-                .AddAttributes(new[] { new KeyValuePair<string, object>("key1", "value1") }))
+                .AddAttributes([new KeyValuePair<string, object>("key1", "value1")]))
             .Build() as LoggerProviderSdk;
 
         Assert.NotNull(provider);
@@ -116,7 +118,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
         using var provider = Sdk.CreateLoggerProviderBuilder()
             .ConfigureResource(resource => resource
                 .Clear()
-                .AddAttributes(new[] { new KeyValuePair<string, object>("key1", "value1") }))
+                .AddAttributes([new KeyValuePair<string, object>("key1", "value1")]))
             .Build() as LoggerProviderSdk;
 
         Assert.NotNull(provider);
@@ -332,14 +334,6 @@ public sealed class LoggerProviderBuilderExtensionsTests
             this.Disposed = true;
 
             base.Dispose(disposing);
-        }
-    }
-
-    private sealed class CustomExporter : BaseExporter<LogRecord>
-    {
-        public override ExportResult Export(in Batch<LogRecord> batch)
-        {
-            return ExportResult.Success;
         }
     }
 

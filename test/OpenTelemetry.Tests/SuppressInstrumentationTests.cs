@@ -56,12 +56,17 @@ public class SuppressInstrumentationTests
         Assert.False(Sdk.SuppressInstrumentation);
 
         // SuppressInstrumentationScope.Enter called inside the task is only applicable to this async flow
-        await Task.Factory.StartNew(() =>
-        {
-            Assert.False(Sdk.SuppressInstrumentation);
-            Assert.Equal(1, SuppressInstrumentationScope.Enter());
-            Assert.True(Sdk.SuppressInstrumentation);
-        });
+
+        await Task.Factory.StartNew(
+            () =>
+            {
+                Assert.False(Sdk.SuppressInstrumentation);
+                Assert.Equal(1, SuppressInstrumentationScope.Enter());
+                Assert.True(Sdk.SuppressInstrumentation);
+            },
+            CancellationToken.None,
+            TaskCreationOptions.None,
+            TaskScheduler.Default);
 
         Assert.False(Sdk.SuppressInstrumentation); // Changes made by SuppressInstrumentationScope.Enter in the task above are not reflected here as it's not part of the same async flow
     }

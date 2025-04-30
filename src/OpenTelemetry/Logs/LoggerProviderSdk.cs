@@ -125,10 +125,10 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             processorAdded.Append(processor);
             processorAdded.Append('\'');
 
-            var newCompositeProcessor = new CompositeProcessor<LogRecord>(new[]
-            {
+            var newCompositeProcessor = new CompositeProcessor<LogRecord>(
+            [
                 this.Processor,
-            });
+            ]);
             newCompositeProcessor.SetParentProvider(this);
             newCompositeProcessor.AddProcessor(processor);
             this.Processor = newCompositeProcessor;

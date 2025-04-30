@@ -6,7 +6,7 @@ using Xunit;
 
 namespace OpenTelemetry.Resources.Tests;
 
-public class OtelServiceNameEnvVarDetectorTests : IDisposable
+public sealed class OtelServiceNameEnvVarDetectorTests : IDisposable
 {
     public OtelServiceNameEnvVarDetectorTests()
     {
