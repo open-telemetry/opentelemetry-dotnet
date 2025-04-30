@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using System.IO.MemoryMappedFiles;
 using System.Text;
 using OpenTelemetry.Tests;
@@ -28,8 +29,8 @@ public class SelfDiagnosticsEventListenerTests
     [Fact]
     public void SelfDiagnosticsEventListener_EventSourceSetup_LowerSeverity()
     {
-        var configRefresher = new TestSelfDiagnosticsConfigRefresher();
-        _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
+        using var configRefresher = new TestSelfDiagnosticsConfigRefresher();
+        using var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
 
         // Emitting a Verbose event. Or any EventSource event with lower severity than Error.
         OpenTelemetrySdkEventSource.Log.ActivityStarted("Activity started", "1");
@@ -39,8 +40,8 @@ public class SelfDiagnosticsEventListenerTests
     [Fact]
     public void SelfDiagnosticsEventListener_EventSourceSetup_HigherSeverity()
     {
-        var configRefresher = new TestSelfDiagnosticsConfigRefresher();
-        _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
+        using var configRefresher = new TestSelfDiagnosticsConfigRefresher();
+        using var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
 
         // Emitting an Error event. Or any EventSource event with higher than or equal to to Error severity.
         OpenTelemetrySdkEventSource.Log.TracerProviderException("TestEvent", "Exception Details");
@@ -53,9 +54,9 @@ public class SelfDiagnosticsEventListenerTests
         // Arrange
         var memoryMappedFile = MemoryMappedFile.CreateFromFile(LOGFILEPATH, FileMode.Create, null, 1024);
         Stream stream = memoryMappedFile.CreateViewStream();
-        var configRefresher = new TestSelfDiagnosticsConfigRefresher(stream);
+        using var configRefresher = new TestSelfDiagnosticsConfigRefresher(stream);
         string eventMessage = "Event Message";
-        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
+        using var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
 
         // Act: call WriteEvent method directly
         listener.WriteEvent(eventMessage, null);
@@ -70,15 +71,15 @@ public class SelfDiagnosticsEventListenerTests
     [Fact]
     public void SelfDiagnosticsEventListener_DateTimeGetBytes()
     {
-        var configRefresher = new TestSelfDiagnosticsConfigRefresher();
-        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
+        using var configRefresher = new TestSelfDiagnosticsConfigRefresher();
+        using var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
 
         // Check DateTimeKind of Utc, Local, and Unspecified
         DateTime[] datetimes =
         [
-            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Utc),
-            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Local),
-            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Unspecified),
+            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00", CultureInfo.InvariantCulture), DateTimeKind.Utc),
+            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00", CultureInfo.InvariantCulture), DateTimeKind.Local),
+            DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00", CultureInfo.InvariantCulture), DateTimeKind.Unspecified),
             DateTime.UtcNow,
             DateTime.Now,
         ];
@@ -109,10 +110,10 @@ public class SelfDiagnosticsEventListenerTests
     public void SelfDiagnosticsEventListener_EmitEvent_OmitAsConfigured()
     {
         // Arrange
-        var configRefresher = new TestSelfDiagnosticsConfigRefresher();
+        using var configRefresher = new TestSelfDiagnosticsConfigRefresher();
         var memoryMappedFile = MemoryMappedFile.CreateFromFile(LOGFILEPATH, FileMode.Create, null, 1024);
         Stream stream = memoryMappedFile.CreateViewStream();
-        _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
+        using var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
 
         // Act: emit an event with severity lower than configured
         OpenTelemetrySdkEventSource.Log.ActivityStarted("ActivityStart", "123");
@@ -148,8 +149,8 @@ public class SelfDiagnosticsEventListenerTests
         // Arrange
         var memoryMappedFile = MemoryMappedFile.CreateFromFile(LOGFILEPATH, FileMode.Create, null, 1024);
         Stream stream = memoryMappedFile.CreateViewStream();
-        var configRefresher = new TestSelfDiagnosticsConfigRefresher(stream);
-        _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
+        using var configRefresher = new TestSelfDiagnosticsConfigRefresher(stream);
+        using var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
 
         // Act: emit an event with severity equal to configured
         OpenTelemetrySdkEventSource.Log.TracerProviderException("TestEvent", "Exception Details");
@@ -287,7 +288,7 @@ public class SelfDiagnosticsEventListenerTests
 
         string logLine = Encoding.UTF8.GetString(buffer, 0, totalBytesRead);
         string logMessage = ParseLogMessage(logLine);
-        Assert.StartsWith(eventMessage, logMessage);
+        Assert.StartsWith(eventMessage, logMessage, StringComparison.Ordinal);
     }
 
     private static string ParseLogMessage(string logLine)

@@ -10,7 +10,9 @@ namespace OpenTelemetry.Benchmarks;
 public class EventSourceBenchmarks
 {
     [Benchmark]
+#pragma warning disable CA1822 // Mark members as static
     public void EventWithIdAllocation()
+#pragma warning restore CA1822 // Mark members as static
     {
         using var activity = new Activity("TestActivity");
         activity.SetIdFormat(ActivityIdFormat.W3C);
@@ -21,7 +23,9 @@ public class EventSourceBenchmarks
     }
 
     [Benchmark]
+#pragma warning disable CA1822 // Mark members as static
     public void EventWithCheck()
+#pragma warning restore CA1822 // Mark members as static
     {
         using var activity = new Activity("TestActivity");
         activity.SetIdFormat(ActivityIdFormat.W3C);

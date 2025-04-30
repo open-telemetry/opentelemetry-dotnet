@@ -3,6 +3,9 @@
 
 using System.Net;
 using System.Net.Http.Headers;
+#if NET
+using System.Security.Cryptography;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -40,13 +43,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 /// </summary>
 internal static class OtlpRetry
 {
-    public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
     public const int InitialBackoffMilliseconds = 1000;
     private const int MaxBackoffMilliseconds = 5000;
     private const double BackoffMultiplier = 1.5;
 
 #if !NET
-    private static readonly Random Random = new Random();
+    private static readonly Random Random = new();
 #endif
 
     public static bool TryGetHttpRetryResult(ExportClientHttpResponse response, int retryDelayInMilliSeconds, out RetryResult retryResult)
@@ -156,9 +158,7 @@ internal static class OtlpRetry
             return false;
         }
 
-        var delayDuration = throttleDelay.HasValue
-            ? throttleDelay.Value
-            : TimeSpan.FromMilliseconds(GetRandomNumber(0, nextRetryDelayMilliseconds));
+        var delayDuration = throttleDelay ?? TimeSpan.FromMilliseconds(GetRandomNumber(0, nextRetryDelayMilliseconds));
 
         if (deadline.HasValue && IsDeadlineExceeded(deadline + delayDuration))
         {
@@ -246,13 +246,15 @@ internal static class OtlpRetry
     private static int GetRandomNumber(int min, int max)
     {
 #if NET
-        return Random.Shared.Next(min, max);
+        return RandomNumberGenerator.GetInt32(min, max);
 #else
         // TODO: Implement this better to minimize lock contention.
         // Consider pulling in Random.Shared implementation.
         lock (Random)
         {
+#pragma warning disable CA5394 // Do not use insecure randomness
             return Random.Next(min, max);
+#pragma warning restore CA5394 // Do not use insecure randomness
         }
 #endif
     }

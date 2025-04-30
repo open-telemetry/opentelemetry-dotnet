@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections;
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Metrics;
 using Xunit;
@@ -190,12 +191,13 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
 
         public ConfigurationBuilder AddToConfiguration(ConfigurationBuilder configurationBuilder)
         {
-            Dictionary<string, string?> dictionary = new();
-
-            dictionary[this.EndpointKeyName] = this.EndpointValue;
-            dictionary[this.HeadersKeyName] = this.HeadersValue;
-            dictionary[this.TimeoutKeyName] = this.TimeoutValue;
-            dictionary[this.ProtocolKeyName] = this.ProtocolValue;
+            Dictionary<string, string?> dictionary = new()
+            {
+                [this.EndpointKeyName] = this.EndpointValue,
+                [this.HeadersKeyName] = this.HeadersValue,
+                [this.TimeoutKeyName] = this.TimeoutValue,
+                [this.ProtocolKeyName] = this.ProtocolValue,
+            };
 
             this.OnAddToDictionary(dictionary);
 
@@ -228,7 +230,7 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         {
             Assert.Equal(new Uri(this.EndpointValue), otlpExporterOptions.Endpoint);
             Assert.Equal(this.HeadersValue, otlpExporterOptions.Headers);
-            Assert.Equal(int.Parse(this.TimeoutValue), otlpExporterOptions.TimeoutMilliseconds);
+            Assert.Equal(int.Parse(this.TimeoutValue, CultureInfo.InvariantCulture), otlpExporterOptions.TimeoutMilliseconds);
 
             if (!OtlpExportProtocolParser.TryParse(this.ProtocolValue, out var protocol))
             {
@@ -291,7 +293,11 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
 
         public void AssertMatches(MetricReaderOptions metricReaderOptions)
         {
+#if NET
+            Assert.Equal(Enum.Parse<MetricReaderTemporalityPreference>(this.TemporalityValue), metricReaderOptions.TemporalityPreference);
+#else
             Assert.Equal(Enum.Parse(typeof(MetricReaderTemporalityPreference), this.TemporalityValue), metricReaderOptions.TemporalityPreference);
+#endif
         }
 
         protected override void OnSetEnvVars()

@@ -27,11 +27,12 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 
 namespace Benchmarks.Metrics;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class MetricsViewBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
     private static readonly string[] DimensionValues = ["DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10"];
-    private static readonly int DimensionsValuesLength = DimensionValues.Length;
     private List<Metric>? metrics;
     private Counter<long>? counter;
     private MeterProvider? meterProvider;
@@ -83,7 +84,7 @@ public class MetricsViewBenchmarks
     {
         this.meter = new Meter(Utils.GetCurrentMethodName());
         this.counter = this.meter.CreateCounter<long>("counter");
-        this.metrics = new List<Metric>();
+        this.metrics = [];
 
         if (this.ViewConfig == ViewConfiguration.NoView)
         {
@@ -120,7 +121,7 @@ public class MetricsViewBenchmarks
         {
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
-                .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = Array.Empty<string>() })
+                .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = [] })
                 .AddInMemoryExporter(this.metrics)
                 .Build();
         }
@@ -139,11 +140,13 @@ public class MetricsViewBenchmarks
         var random = ThreadLocalRandom.Value!;
         var tags = new TagList
         {
+#pragma warning disable CA5394 // Do not use insecure randomness
             { "DimName1", DimensionValues[random.Next(0, 2)] },
             { "DimName2", DimensionValues[random.Next(0, 2)] },
             { "DimName3", DimensionValues[random.Next(0, 5)] },
             { "DimName4", DimensionValues[random.Next(0, 5)] },
             { "DimName5", DimensionValues[random.Next(0, 10)] },
+#pragma warning restore CA5394 // Do not use insecure randomness
         };
 
         this.counter?.Add(

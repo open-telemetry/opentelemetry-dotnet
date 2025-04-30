@@ -34,7 +34,9 @@ AMD EPYC 7763, 1 CPU, 16 logical and 8 physical cores
 
 namespace Benchmarks.Exporter;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class OtlpTraceExporterBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     private OtlpTraceExporter? exporter;
     private Activity? activity;
@@ -130,13 +132,15 @@ public class OtlpTraceExporterBenchmarks
         this.exporter!.Export(new Batch<Activity>(this.activityBatch!, 1));
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MockTraceService : OtlpCollector.TraceService.TraceServiceBase
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
-        private static OtlpCollector.ExportTraceServiceResponse response = new OtlpCollector.ExportTraceServiceResponse();
+        private static readonly OtlpCollector.ExportTraceServiceResponse Response = new();
 
         public override Task<OtlpCollector.ExportTraceServiceResponse> Export(OtlpCollector.ExportTraceServiceRequest request, ServerCallContext context)
         {
-            return Task.FromResult(response);
+            return Task.FromResult(Response);
         }
     }
 }

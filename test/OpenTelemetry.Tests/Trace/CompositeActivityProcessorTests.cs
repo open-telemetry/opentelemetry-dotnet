@@ -13,7 +13,7 @@ public class CompositeActivityProcessorTests
     public void CompositeActivityProcessor_BadArgs()
     {
         Assert.Throws<ArgumentNullException>(() => new CompositeProcessor<Activity>(null!));
-        Assert.Throws<ArgumentException>(() => new CompositeProcessor<Activity>(Array.Empty<BaseProcessor<Activity>>()));
+        Assert.Throws<ArgumentException>(() => new CompositeProcessor<Activity>([]));
 
         using var p1 = new TestActivityProcessor(null, null);
         using var processor = new CompositeProcessor<Activity>([p1]);
@@ -47,14 +47,14 @@ public class CompositeActivityProcessorTests
     public void CompositeActivityProcessor_ProcessorThrows()
     {
         using var p1 = new TestActivityProcessor(
-            activity => { throw new Exception("Start exception"); },
-            activity => { throw new Exception("End exception"); });
+            _ => throw new InvalidOperationException("Start exception"),
+            _ => throw new InvalidOperationException("End exception"));
 
         using var activity = new Activity("test");
 
         using var processor = new CompositeProcessor<Activity>([p1]);
-        Assert.Throws<Exception>(() => { processor.OnStart(activity); });
-        Assert.Throws<Exception>(() => { processor.OnEnd(activity); });
+        Assert.Throws<InvalidOperationException>(() => { processor.OnStart(activity); });
+        Assert.Throws<InvalidOperationException>(() => { processor.OnEnd(activity); });
     }
 
     [Fact]

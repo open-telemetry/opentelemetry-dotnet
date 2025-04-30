@@ -174,7 +174,9 @@ public class BatchExportActivityProcessorTests
     public void CheckExportDrainsBatchOnFailure()
     {
         using var processor = new BatchActivityExportProcessor(
+#pragma warning disable CA2000 // Dispose objects before losing scope
             exporter: new FailureExporter<Activity>(),
+#pragma warning restore CA2000 // Dispose objects before losing scope
             maxQueueSize: 3,
             maxExportBatchSize: 3);
 
@@ -191,7 +193,7 @@ public class BatchExportActivityProcessorTests
         Assert.Equal(3, processor.ProcessedCount); // Verify batch was drained even though nothing was exported.
     }
 
-    private class FailureExporter<T> : BaseExporter<T>
+    private sealed class FailureExporter<T> : BaseExporter<T>
         where T : class
     {
         public override ExportResult Export(in Batch<T> batch) => ExportResult.Failure;

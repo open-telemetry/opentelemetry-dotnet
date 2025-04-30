@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using OpenTelemetry.Metrics;
@@ -22,8 +23,10 @@ public abstract class StressTests<T> : IDisposable
 
     public T Options { get; }
 
-    public virtual void Dispose()
+    public void Dispose()
     {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
     public void RunSynchronously()
@@ -109,7 +112,7 @@ public abstract class StressTests<T> : IDisposable
                         switch (key)
                         {
                             case ConsoleKey.Enter:
-                                Console.WriteLine(string.Format("{0} {1}", DateTime.UtcNow.ToString("O"), this.output));
+                                Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1}", DateTime.UtcNow.ToString("O"), this.output));
                                 break;
                             case ConsoleKey.Escape:
                                 this.bContinue = false;
@@ -193,6 +196,10 @@ public abstract class StressTests<T> : IDisposable
 #if !NETFRAMEWORK
         Console.WriteLine($"* GC Total Allocated Bytes: {GC.GetTotalAllocatedBytes()}");
 #endif
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
     }
 
     protected virtual void WriteRunInformationToConsole()
