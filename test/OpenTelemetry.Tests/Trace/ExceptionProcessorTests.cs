@@ -17,7 +17,9 @@ public class ExceptionProcessorTests
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource(activitySourceName)
             .SetSampler(new AlwaysOnSampler())
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new ExceptionProcessor())
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .Build();
 
         Activity? activity1 = null;
@@ -32,7 +34,7 @@ public class ExceptionProcessorTests
             {
                 using (activity2 = activitySource.StartActivity("Activity2"))
                 {
-                    throw new Exception("Oops!");
+                    throw new InvalidOperationException("Oops!");
                 }
             }
         }
@@ -51,7 +53,7 @@ public class ExceptionProcessorTests
 
         try
         {
-            throw new Exception("Oops!");
+            throw new InvalidOperationException("Oops!");
         }
         catch (Exception)
         {
@@ -120,7 +122,7 @@ public class ExceptionProcessorTests
         {
             using (activity = activitySource.StartActivity("Activity"))
             {
-                throw new Exception("Oops!");
+                throw new InvalidOperationException("Oops!");
             }
         }
         catch (Exception)

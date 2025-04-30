@@ -25,7 +25,7 @@ public class AssemblyVersionExtensionsTests
         Assert.Equal(expectedVersion, actualVersion);
     }
 
-    private class TestAssembly(string informationalVersion) : Assembly
+    private sealed class TestAssembly(string informationalVersion) : Assembly
     {
         public override object[] GetCustomAttributes(Type attributeType, bool inherit)
         {
