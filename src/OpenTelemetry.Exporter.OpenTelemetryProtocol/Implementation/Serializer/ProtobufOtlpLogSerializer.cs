@@ -223,7 +223,7 @@ internal static class ProtobufOtlpLogSerializer
                 // Special casing {OriginalFormat}
                 // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                 // for explanation.
-                if (attribute.Key.Equals("{OriginalFormat}") && !bodyPopulatedFromFormattedMessage)
+                if (attribute.Key.Equals("{OriginalFormat}", StringComparison.Ordinal) && !bodyPopulatedFromFormattedMessage)
                 {
                     otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, (attribute.Value as string).AsSpan());
                     isLogRecordBodySet = true;
@@ -270,7 +270,7 @@ internal static class ProtobufOtlpLogSerializer
         {
             foreach (var scopeItem in scope)
             {
-                if (scopeItem.Key.Equals("{OriginalFormat}") || string.IsNullOrEmpty(scopeItem.Key))
+                if (scopeItem.Key.Equals("{OriginalFormat}", StringComparison.Ordinal) || string.IsNullOrEmpty(scopeItem.Key))
                 {
                     // Ignore if the scope key is empty.
                     // Ignore if the scope key is {OriginalFormat}

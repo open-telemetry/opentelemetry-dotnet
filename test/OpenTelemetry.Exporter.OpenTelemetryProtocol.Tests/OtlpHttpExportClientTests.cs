@@ -30,7 +30,8 @@ public class OtlpHttpExportClientTests
                 options.Endpoint = new Uri(optionEndpoint);
             }
 
-            var exporterClient = new OtlpHttpExportClient(options, new HttpClient(), "signal/path");
+            using var httpClient = new HttpClient();
+            var exporterClient = new OtlpHttpExportClient(options, httpClient, "signal/path");
             Assert.Equal(new Uri(expectedExporterEndpoint), exporterClient.Endpoint);
         }
         finally

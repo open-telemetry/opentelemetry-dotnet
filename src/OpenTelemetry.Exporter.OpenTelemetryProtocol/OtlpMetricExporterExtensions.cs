@@ -186,7 +186,9 @@ public static class OtlpMetricExporterExtensions
 
         exporterOptions!.TryEnableIHttpClientFactoryIntegration(serviceProvider!, "OtlpMetricExporter");
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions!, experimentalOptions!);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         if (configureExporterInstance != null)
         {
