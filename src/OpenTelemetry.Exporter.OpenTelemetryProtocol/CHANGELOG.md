@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.12.0
+
+Released 2025-Apr-29
+
 * **Breaking Change**: .NET Framework and .NET Standard builds now default to
   exporting over OTLP/HTTP instead of OTLP/gRPC. **This change could result in a
   failure to export telemetry unless appropriate measures are taken.**
