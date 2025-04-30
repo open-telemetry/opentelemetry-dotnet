@@ -58,7 +58,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
                 using var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(options.CertificateFilePath);
                 handler.ServerCertificateCustomValidationCallback = (_, cert, __, unexpectedErrors) =>
                 {
-                    return cert?.Thumbprint == trustedCertificate.Thumbprint;
+                    return MtlsUtility.ValidateCertificateChain(cert!, trustedCertificate);
                 };
             }
 
