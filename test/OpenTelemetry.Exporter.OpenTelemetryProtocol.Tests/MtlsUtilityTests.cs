@@ -34,8 +34,8 @@ public class MtlsUtilityTests : IDisposable
         using var cert = MtlsUtilityTests.GenerateTestCertificate(rsa);
 
         // Export the certificate and key to PEM files
-        File.WriteAllText(this.validCertPath, PemEncoding.Write("CERTIFICATE", cert.RawData));
-        File.WriteAllText(this.validKeyPath, PemEncoding.Write("PRIVATE KEY", rsa.ExportPkcs8PrivateKey()));
+        File.WriteAllText(this.validCertPath, Convert.ToBase64String(cert.RawData));
+        File.WriteAllText(this.validKeyPath, Convert.ToBase64String(rsa.ExportPkcs8PrivateKey()));
 
         // Create an invalid certificate file
         File.WriteAllText(this.invalidCertPath, "This is not a valid certificate");
