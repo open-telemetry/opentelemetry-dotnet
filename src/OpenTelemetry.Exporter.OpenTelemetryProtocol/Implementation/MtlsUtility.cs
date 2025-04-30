@@ -33,7 +33,8 @@ internal static class MtlsUtility
 #if NET9_0_OR_GREATER
         try
         {
-            var certificate = X509Certificate2.CreateFromPemFile(certificateFilePath);
+            var pemContent = File.ReadAllText(certificateFilePath);
+            var certificate = X509Certificate2.CreateFromPem(pemContent);
             ValidateCertificate(certificate);
             return certificate;
         }
@@ -83,9 +84,12 @@ internal static class MtlsUtility
             throw new FileNotFoundException("Key file not found.", keyFilePath);
         }
 
+#if NET9_0_OR_GREATER
         try
         {
-            var certificate = X509Certificate2.CreateFromPemFile(certificateFilePath, keyFilePath);
+            var certPem = File.ReadAllText(certificateFilePath);
+            var keyPem = File.ReadAllText(keyFilePath);
+            var certificate = X509Certificate2.CreateFromPem(certPem, keyPem);
             ValidateCertificate(certificate);
             return certificate;
         }
@@ -94,6 +98,20 @@ internal static class MtlsUtility
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateInvalid(ex);
             throw;
         }
+#else
+        try
+        {
+            var certificate = new X509Certificate2(certificateFilePath);
+            certificate = certificate.CopyWithPrivateKey(RSA.Create());
+            ValidateCertificate(certificate);
+            return certificate;
+        }
+        catch (CryptographicException ex)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateInvalid(ex);
+            throw;
+        }
+#endif
     }
 
     /// <summary>
@@ -128,6 +146,9 @@ internal static class MtlsUtility
         ArgumentNullException.ThrowIfNull(certificate);
 
         using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
         if (!chain.Build(certificate))
         {
             var statusInformation = string.Join(", ", chain.ChainStatus.Select(s => $"{s.StatusInformation} ({s.Status})"));

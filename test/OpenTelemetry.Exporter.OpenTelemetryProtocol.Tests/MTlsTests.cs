@@ -184,9 +184,10 @@ public class MtlsTests : IDisposable
                 false));
 
         // Create CA certificate
+        var now = DateTimeOffset.UtcNow;
         var caCert = certRequest.CreateSelfSigned(
-            DateTimeOffset.UtcNow.AddDays(-1),
-            DateTimeOffset.UtcNow.AddYears(1));
+            now,
+            now.AddYears(1));
 
         // Create client certificate signed by the CA
         using var clientKeyRsa = RSA.Create(2048);
@@ -205,17 +206,19 @@ public class MtlsTests : IDisposable
                 X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment,
                 false));
 
-        var clientCert = clientCertRequest.Create(caCert, DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1), new byte[] { 1, 2, 3, 4 });
+        var clientCert = clientCertRequest.Create(
+            caCert,
+            now,
+            now.AddYears(1),
+            new byte[] { 1, 2, 3, 4 });
 
-        // Export certificates and keys to files
+        // Export certificates and keys to PEM files
         File.WriteAllText(this.caCertPath, PemEncodeX509Certificate(caCert));
         File.WriteAllText(this.clientCertPath, PemEncodeX509Certificate(clientCert));
         File.WriteAllText(this.clientKeyPath, PemEncodePrivateKey(clientKeyRsa));
 
-        // Make files secure
-        MakeFileSecure(this.caCertPath);
-        MakeFileSecure(this.clientCertPath);
-        MakeFileSecure(this.clientKeyPath);
+        // Create an invalid certificate file
+        File.WriteAllText(this.invalidCertPath, "This is not a valid certificate");
     }
 }
 #endif
