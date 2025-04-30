@@ -20,33 +20,22 @@ public class MtlsTests : IDisposable
     public MtlsTests()
     {
         // Create temporary directory for test certificates
-        tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDir);
+        this.tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(this.tempDir);
 
         // Set up paths
-        caCertPath = Path.Combine(tempDir, "ca.pem");
-        clientCertPath = Path.Combine(tempDir, "client.pem");
-        clientKeyPath = Path.Combine(tempDir, "client-key.pem");
-        invalidCertPath = Path.Combine(tempDir, "invalid.pem");
+        this.caCertPath = Path.Combine(this.tempDir, "ca.pem");
+        this.clientCertPath = Path.Combine(this.tempDir, "client.pem");
+        this.clientKeyPath = Path.Combine(this.tempDir, "client-key.pem");
+        this.invalidCertPath = Path.Combine(this.tempDir, "invalid.pem");
 
         // Create test certificates
-        CreateTestCertificates();
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            if (Directory.Exists(tempDir))
-            {
-                Directory.Delete(tempDir, true);
-            }
-        }
+        this.CreateTestCertificates();
     }
 
     public void Dispose()
     {
-        Dispose(true);
+        this.Dispose(true);
         GC.SuppressFinalize(this);
     }
 
@@ -54,10 +43,10 @@ public class MtlsTests : IDisposable
     public void LoadCertificateWithValidation_ValidCertificates_LoadsSuccessfully()
     {
         // Act & Assert - no exception should be thrown
-        using (var caCert = X509CertificateLoader.Load(caCertPath))
+        using (var caCert = MtlsUtility.LoadCertificateWithValidation(this.caCertPath))
         {
             Assert.NotNull(caCert);
-            using (var clientCert = X509CertificateLoader.Load(clientCertPath, clientKeyPath))
+            using (var clientCert = MtlsUtility.LoadCertificateWithValidation(this.clientCertPath, this.clientKeyPath))
             {
                 Assert.NotNull(clientCert);
             }
@@ -69,7 +58,7 @@ public class MtlsTests : IDisposable
     {
         // Act & Assert
         var ex = Assert.Throws<FileNotFoundException>(() =>
-            MtlsUtility.LoadCertificateWithValidation(Path.Combine(tempDir, "nonexistent.pem")));
+            MtlsUtility.LoadCertificateWithValidation(Path.Combine(this.tempDir, "nonexistent.pem")));
 
         Assert.Contains("Certificate file not found", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -78,11 +67,11 @@ public class MtlsTests : IDisposable
     public void LoadCertificateWithValidation_InvalidCertificate_ThrowsException()
     {
         // Arrange - create an invalid certificate file
-        File.WriteAllText(invalidCertPath, "This is not a valid certificate");
+        File.WriteAllText(this.invalidCertPath, "This is not a valid certificate");
 
         // Act & Assert
         Assert.ThrowsAny<Exception>(() =>
-            MtlsUtility.LoadCertificateWithValidation(invalidCertPath));
+            MtlsUtility.LoadCertificateWithValidation(this.invalidCertPath));
     }
 
     [Fact]
@@ -101,6 +90,7 @@ public class MtlsTests : IDisposable
 
         // Assert
         Assert.NotNull(client);
+
         // Note: We can't directly check the certificates in the handler, but at least we confirm no exception is thrown
     }
 
@@ -108,8 +98,8 @@ public class MtlsTests : IDisposable
     public void ValidateCertificateChain_ValidChain_ReturnsTrue()
     {
         // Arrange
-        var caCert = new X509Certificate2(caCertPath);
-        var clientCert = new X509Certificate2(clientCertPath);
+        using var caCert = MtlsUtility.LoadCertificateWithValidation(this.caCertPath);
+        using var clientCert = MtlsUtility.LoadCertificateWithValidation(this.clientCertPath);
 
         // Act
         bool isValid = MtlsUtility.ValidateCertificateChain(clientCert, caCert);
@@ -125,9 +115,9 @@ public class MtlsTests : IDisposable
         var options = new OtlpExporterOptions
         {
             Endpoint = new Uri("https://localhost:4317"),
-            CertificateFilePath = caCertPath,
-            ClientCertificateFilePath = clientCertPath,
-            ClientKeyFilePath = clientKeyPath
+            CertificateFilePath = this.caCertPath,
+            ClientCertificateFilePath = this.clientCertPath,
+            ClientKeyFilePath = this.clientKeyPath,
         };
 
         // Act
@@ -135,6 +125,17 @@ public class MtlsTests : IDisposable
 
         // Assert
         Assert.NotNull(client);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            if (Directory.Exists(this.tempDir))
+            {
+                Directory.Delete(this.tempDir, true);
+            }
+        }
     }
 
     private static string PemEncodeX509Certificate(X509Certificate2 cert)
@@ -166,66 +167,55 @@ public class MtlsTests : IDisposable
     private void CreateTestCertificates()
     {
         // Generate a simple self-signed certificate for testing
-        using (var rsa = RSA.Create(2048))
-        {
-            var distinguishedName = new X500DistinguishedName("CN=Test CA");
-            var certRequest = new CertificateRequest(
-                distinguishedName,
-                rsa,
-                HashAlgorithmName.SHA256,
-                RSASignaturePadding.Pkcs1);
+        using var rsa = RSA.Create(2048);
+        var distinguishedName = new X500DistinguishedName("CN=Test CA");
+        var certRequest = new CertificateRequest(
+            distinguishedName,
+            rsa,
+            HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pkcs1);
 
-            certRequest.CertificateExtensions.Add(
-                new X509BasicConstraintsExtension(true, false, 0, true));
+        certRequest.CertificateExtensions.Add(
+            new X509BasicConstraintsExtension(true, false, 0, true));
 
-            certRequest.CertificateExtensions.Add(
-                new X509KeyUsageExtension(
-                    X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyCertSign,
-                    false));
+        certRequest.CertificateExtensions.Add(
+            new X509KeyUsageExtension(
+                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyCertSign,
+                false));
 
-            // Create CA certificate
-            var caCert = certRequest.CreateSelfSigned(
-                DateTimeOffset.UtcNow.AddDays(-1),
-                DateTimeOffset.UtcNow.AddYears(1));
+        // Create CA certificate
+        var caCert = certRequest.CreateSelfSigned(
+            DateTimeOffset.UtcNow.AddDays(-1),
+            DateTimeOffset.UtcNow.AddYears(1));
 
-            // Create client certificate signed by the CA
-            var clientKeyRsa = RSA.Create(2048);
-            var clientDistinguishedName = new X500DistinguishedName("CN=Test Client");
-            var clientCertRequest = new CertificateRequest(
-                clientDistinguishedName,
-                clientKeyRsa,
-                HashAlgorithmName.SHA256,
-                RSASignaturePadding.Pkcs1);
+        // Create client certificate signed by the CA
+        using var clientKeyRsa = RSA.Create(2048);
+        var clientDistinguishedName = new X500DistinguishedName("CN=Test Client");
+        var clientCertRequest = new CertificateRequest(
+            clientDistinguishedName,
+            clientKeyRsa,
+            HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pkcs1);
 
-            clientCertRequest.CertificateExtensions.Add(
-                new X509BasicConstraintsExtension(false, false, 0, false));
+        clientCertRequest.CertificateExtensions.Add(
+            new X509BasicConstraintsExtension(false, false, 0, true));
 
-            clientCertRequest.CertificateExtensions.Add(
-                new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, false));
+        clientCertRequest.CertificateExtensions.Add(
+            new X509KeyUsageExtension(
+                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment,
+                false));
 
-            // Create client certificate signed by CA
-            byte[] serialNumber = new byte[8];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(serialNumber);
-            }
+        var clientCert = clientCertRequest.Create(caCert, DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1), new byte[] { 1, 2, 3, 4 });
 
-            var clientCert = clientCertRequest.Create(
-                caCert,
-                DateTimeOffset.UtcNow.AddDays(-1),
-                DateTimeOffset.UtcNow.AddYears(1),
-                serialNumber);
+        // Export certificates and keys to files
+        File.WriteAllText(this.caCertPath, PemEncodeX509Certificate(caCert));
+        File.WriteAllText(this.clientCertPath, PemEncodeX509Certificate(clientCert));
+        File.WriteAllText(this.clientKeyPath, PemEncodePrivateKey(clientKeyRsa));
 
-            // Save certificates to files in PEM format
-            File.WriteAllText(this.caCertPath, PemEncodeX509Certificate(caCert));
-            File.WriteAllText(this.clientCertPath, PemEncodeX509Certificate(clientCert));
-            File.WriteAllText(this.clientKeyPath, PemEncodePrivateKey(clientKeyRsa));
-
-            // Set appropriate file permissions
-            MakeFileSecure(this.caCertPath);
-            MakeFileSecure(this.clientCertPath);
-            MakeFileSecure(this.clientKeyPath);
-        }
+        // Make files secure
+        MakeFileSecure(this.caCertPath);
+        MakeFileSecure(this.clientCertPath);
+        MakeFileSecure(this.clientKeyPath);
     }
 }
 #endif

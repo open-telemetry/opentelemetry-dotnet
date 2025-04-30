@@ -98,6 +98,12 @@ public class MtlsUtilityTests : IDisposable
         Assert.True(result);
     }
 
+    public void Dispose()
+    {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)
@@ -107,12 +113,6 @@ public class MtlsUtilityTests : IDisposable
                 Directory.Delete(this.tempFolder, true);
             }
         }
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     private static X509Certificate2 GenerateTestCertificate(RSA rsa)
