@@ -17,37 +17,8 @@ internal static class ZipkinActivityConversionExtensions
 
     private static readonly ConcurrentDictionary<(string, int), ZipkinEndpoint> RemoteEndpointCache = new();
 
-    private static readonly HashSet<string> TagKeysToCache =
-    [
-        ZipkinErrorFlagTagName,
-        SemanticConventions.AttributeDbInstance,
-        SemanticConventions.AttributeDbName,
-        SemanticConventions.AttributeHttpHost,
-        SemanticConventions.AttributeNetPeerIp,
-        SemanticConventions.AttributeNetPeerName,
-        SemanticConventions.AttributeNetPeerPort,
-        SemanticConventions.AttributeNetSockPeerAddr,
-        SemanticConventions.AttributeNetSockPeerName,
-        SemanticConventions.AttributeNetSockPeerPort,
-        SemanticConventions.AttributeNetworkPeerAddress,
-        SemanticConventions.AttributeNetworkPeerPort,
-        SemanticConventions.AttributePeerAddress,
-        SemanticConventions.AttributePeerHostname,
-        SemanticConventions.AttributePeerService,
-        SemanticConventions.AttributeServerAddress,
-        SemanticConventions.AttributeServerSocketAddress,
-        SemanticConventions.AttributeServerSocketDomain,
-        SemanticConventions.AttributeServerSocketPort,
-        SpanAttributeConstants.StatusCodeKey,
-        SpanAttributeConstants.StatusDescriptionKey,
-    ];
-
-    private static Dictionary<string, object?> cachedTags = [];
-
     internal static ZipkinSpan ToZipkinSpan(this Activity activity, ZipkinEndpoint localEndpoint, bool useShortTraceIds = false)
     {
-        cachedTags = [];
-
         var context = activity.Context;
         string? parentId = activity.ParentSpanId == default ? null : EncodeSpanId(activity.ParentSpanId);
 
@@ -125,6 +96,14 @@ internal static class ZipkinActivityConversionExtensions
         };
     }
 
+    private static string ExtractStatusDescription(Activity activity)
+    {
+        return activity.StatusDescription
+               ?? activity.GetTagItem(SpanAttributeConstants.StatusDescriptionKey) as string
+               ?? activity.GetTagItem(ZipkinErrorFlagTagName) as string
+               ?? string.Empty;
+    }
+
     private static void ExtractActivityTags(Activity activity, ref PooledList<KeyValuePair<string, object?>> tags)
     {
         foreach (ref readonly var tag in activity.EnumerateTagObjects())
@@ -132,11 +111,6 @@ internal static class ZipkinActivityConversionExtensions
             if (tag.Key != ZipkinErrorFlagTagName && tag.Key != SpanAttributeConstants.StatusCodeKey)
             {
                 PooledList<KeyValuePair<string, object?>>.Add(ref tags, tag);
-            }
-
-            if (TagKeysToCache.Contains(tag.Key))
-            {
-                cachedTags[tag.Key] = tag.Value;
             }
         }
     }
@@ -159,11 +133,7 @@ internal static class ZipkinActivityConversionExtensions
             // activity.Status is Error
             else
             {
-                string statusDescription =
-                    activity.StatusDescription
-                    ?? GetTag(SpanAttributeConstants.StatusDescriptionKey)
-                    ?? GetTag(ZipkinErrorFlagTagName)
-                    ?? string.Empty;
+                string statusDescription = ExtractStatusDescription(activity);
                 PooledList<KeyValuePair<string, object?>>.Add(
                     ref tags,
                     new KeyValuePair<string, object?>(
@@ -180,7 +150,7 @@ internal static class ZipkinActivityConversionExtensions
         }
         else
         {
-            if (GetTag(SpanAttributeConstants.StatusCodeKey) is string status)
+            if (activity.GetTagItem(SpanAttributeConstants.StatusCodeKey) is string status)
             {
                 if (status == "OK")
                 {
@@ -194,11 +164,7 @@ internal static class ZipkinActivityConversionExtensions
                 }
                 else if (status == "ERROR")
                 {
-                    string statusDescription =
-                        activity.StatusDescription
-                        ?? GetTag(SpanAttributeConstants.StatusDescriptionKey)
-                        ?? GetTag(ZipkinErrorFlagTagName)
-                        ?? string.Empty;
+                    string statusDescription = ExtractStatusDescription(activity);
 
                     activity.SetStatus(ActivityStatusCode.Error);
 
@@ -249,103 +215,98 @@ internal static class ZipkinActivityConversionExtensions
         {
             if (remoteEndpoint != null)
             {
-                return RemoteEndpointCache.GetOrAdd((remoteEndpoint, default), ZipkinEndpoint.Create);
+                var endpoint = RemoteEndpointCache.GetOrAdd((remoteEndpoint, default), ZipkinEndpoint.Create);
+                return endpoint;
             }
 
             return null;
         }
 
-        var endpoint = TryCreateEndpoint(GetTag(SemanticConventions.AttributePeerService));
+        string? remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributePeerService) as string;
+        var endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
             return endpoint;
         }
 
-        endpoint = TryCreateEndpoint(GetTag(SemanticConventions.AttributeServerAddress));
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeServerAddress) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
             return endpoint;
         }
 
-        endpoint = TryCreateEndpoint(GetTag(SemanticConventions.AttributeNetPeerName));
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeNetPeerName) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
             return endpoint;
         }
 
-        var peerAddress = GetTag(SemanticConventions.AttributeNetworkPeerAddress);
-        var peerPort = GetTag(SemanticConventions.AttributeNetworkPeerPort);
-        if (!string.IsNullOrEmpty(peerAddress))
-        {
-            var remoteEndpoint = !string.IsNullOrEmpty(peerPort) ? $"{peerAddress}:{peerPort}" : peerAddress;
-            endpoint = TryCreateEndpoint(remoteEndpoint);
-            if (endpoint != null)
-            {
-                return endpoint;
-            }
-        }
-
-        endpoint = TryCreateEndpoint(GetTag(SemanticConventions.AttributeServerSocketDomain));
+        var peerAddress = activity.GetTagItem(SemanticConventions.AttributeNetworkPeerAddress) as string;
+        var peerPort = activity.GetTagItem(SemanticConventions.AttributeNetworkPeerPort) as string;
+        remoteEndpoint = peerPort != null ? $"{peerAddress}:{peerPort}" : peerAddress;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
             return endpoint;
         }
 
-        var serverAddress = GetTag(SemanticConventions.AttributeServerSocketAddress);
-        var serverPort = GetTag(SemanticConventions.AttributeServerSocketPort);
-        if (!string.IsNullOrEmpty(serverAddress))
-        {
-            var remoteEndpoint = !string.IsNullOrEmpty(serverPort) ? $"{serverAddress}:{serverPort}" : serverAddress;
-            endpoint = TryCreateEndpoint(remoteEndpoint);
-            if (endpoint != null)
-            {
-                return endpoint;
-            }
-        }
-
-        endpoint = TryCreateEndpoint(GetTag(SemanticConventions.AttributeNetSockPeerName));
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeServerSocketDomain) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
             return endpoint;
         }
 
-        var sockAddr = GetTag(SemanticConventions.AttributeNetSockPeerAddr);
-        var sockPort = GetTag(SemanticConventions.AttributeNetSockPeerPort);
-        if (!string.IsNullOrEmpty(sockAddr))
-        {
-            var remoteEndpoint = !string.IsNullOrEmpty(sockPort) ? $"{sockAddr}:{sockPort}" : sockAddr;
-            endpoint = TryCreateEndpoint(remoteEndpoint);
-            if (endpoint != null)
-            {
-                return endpoint;
-            }
-        }
-
-        endpoint = TryCreateEndpoint(GetTag(SemanticConventions.AttributePeerHostname));
+        var serverAddress = activity.GetTagItem(SemanticConventions.AttributeServerSocketAddress) as string;
+        var serverPort = activity.GetTagItem(SemanticConventions.AttributeServerSocketPort) as string;
+        remoteEndpoint = serverPort != null ? $"{serverAddress}:{serverPort}" : serverAddress;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
             return endpoint;
         }
 
-        endpoint = TryCreateEndpoint(GetTag(SemanticConventions.AttributePeerAddress));
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeNetSockPeerName) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
             return endpoint;
         }
 
-        endpoint = TryCreateEndpoint(GetTag(SemanticConventions.AttributeDbName));
+        var socketAddress = activity.GetTagItem(SemanticConventions.AttributeNetSockPeerAddr) as string;
+        var socketPort = activity.GetTagItem(SemanticConventions.AttributeNetSockPeerPort) as string;
+        remoteEndpoint = socketPort != null ? $"{socketAddress}:{socketPort}" : socketAddress;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
             return endpoint;
         }
 
-        endpoint = TryCreateEndpoint(GetTag(SemanticConventions.AttributeDbName));
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributePeerHostname) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
             return endpoint;
         }
 
-        endpoint = TryCreateEndpoint(GetTag(SemanticConventions.AttributeHttpHost));
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributePeerAddress) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
+        {
+            return endpoint;
+        }
+
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeDbName) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
+        if (endpoint != null)
+        {
+            return endpoint;
+        }
+
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeHttpHost) as string;
+        endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
             return endpoint;
@@ -373,6 +334,4 @@ internal static class ZipkinActivityConversionExtensions
 
         return annotations;
     }
-
-    private static string? GetTag(string key) => cachedTags.TryGetValue(key, out var value) ? value as string : null;
 }
