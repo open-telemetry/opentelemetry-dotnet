@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.12.0
+
+Released 2025-Apr-29
+
 * Added a new overload for `TracerProvider.GetTracer` which accepts an optional
   `IEnumerable<KeyValuePair<string, object?>>? tags` parameter, allowing
   additional attributes to be associated with the `Tracer`.

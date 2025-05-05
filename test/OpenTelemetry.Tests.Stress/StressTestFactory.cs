@@ -5,7 +5,9 @@ using CommandLine;
 
 namespace OpenTelemetry.Tests.Stress;
 
+#pragma warning disable CA1515 // Consider making public types internal
 public static class StressTestFactory
+#pragma warning restore CA1515 // Consider making public types internal
 {
     public static int RunSynchronously<TStressTest>(string[] commandLineArguments)
         where TStressTest : StressTests<StressTestOptions>

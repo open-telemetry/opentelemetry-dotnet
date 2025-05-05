@@ -147,7 +147,9 @@ public static class OtlpTraceExporterHelperExtensions
 
         exporterOptions!.TryEnableIHttpClientFactoryIntegration(serviceProvider!, "OtlpTraceExporter");
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions!, sdkLimitOptions!, experimentalOptions!);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         if (configureExporterInstance != null)
         {

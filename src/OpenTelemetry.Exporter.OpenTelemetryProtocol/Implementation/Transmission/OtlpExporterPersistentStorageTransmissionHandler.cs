@@ -19,7 +19,9 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
     private bool disposed;
 
     public OtlpExporterPersistentStorageTransmissionHandler(IExportClient exportClient, double timeoutMilliseconds, string storagePath)
+#pragma warning disable CA2000 // Dispose objects before losing scope
         : this(new FileBlobProvider(storagePath), exportClient, timeoutMilliseconds)
+#pragma warning restore CA2000 // Dispose objects before losing scope
     {
     }
 
@@ -93,6 +95,8 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
 
             this.disposed = true;
         }
+
+        base.Dispose(disposing);
     }
 
     private void RetryStoredRequests()

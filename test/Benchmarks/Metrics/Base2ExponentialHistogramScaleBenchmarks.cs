@@ -24,7 +24,9 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 
 namespace Benchmarks.Metrics;
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 public class Base2ExponentialHistogramScaleBenchmarks
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     private const int MaxValue = 10000;
     private readonly Random random = new();
@@ -72,6 +74,8 @@ public class Base2ExponentialHistogramScaleBenchmarks
     [Benchmark]
     public void HistogramHotPath()
     {
+#pragma warning disable CA5394 // Do not use insecure randomness
         this.histogram!.Record(this.random.Next(MaxValue));
+#pragma warning restore CA5394 // Do not use insecure randomness
     }
 }
