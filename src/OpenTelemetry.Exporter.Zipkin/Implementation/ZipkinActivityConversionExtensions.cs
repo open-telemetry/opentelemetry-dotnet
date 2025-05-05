@@ -21,14 +21,11 @@ internal static class ZipkinActivityConversionExtensions
     {
         var context = activity.Context;
 
-        string? parentId = activity.ParentSpanId == default ?
-            null
+        string? parentId = activity.ParentSpanId == default
+            ? null
             : EncodeSpanId(activity.ParentSpanId);
 
-        var tagState = new TagEnumerationState
-        {
-            Tags = PooledList<KeyValuePair<string, object?>>.Create(),
-        };
+        var tagState = new TagEnumerationState { Tags = PooledList<KeyValuePair<string, object?>>.Create(), };
 
         tagState.EnumerateTags(activity);
 
@@ -39,10 +36,10 @@ internal static class ZipkinActivityConversionExtensions
             if (activity.Status == ActivityStatusCode.Ok)
             {
                 PooledList<KeyValuePair<string, object?>>.Add(
-                ref tagState.Tags,
-                new KeyValuePair<string, object?>(
-                    SpanAttributeConstants.StatusCodeKey,
-                    "OK"));
+                    ref tagState.Tags,
+                    new KeyValuePair<string, object?>(
+                        SpanAttributeConstants.StatusCodeKey,
+                        "OK"));
             }
 
             // activity.Status is Error
@@ -204,6 +201,35 @@ internal static class ZipkinActivityConversionExtensions
 
         public void EnumerateTags(Activity activity)
         {
+            this.ProcessSourceTags(activity);
+            this.ProcessActivityTags(activity);
+        }
+
+        private void ProcessSourceTags(Activity activity)
+        {
+            if (activity.Source.Tags is null || !activity.Source.Tags.Any())
+            {
+                return;
+            }
+
+            foreach (var sourceTag in activity.Source.Tags)
+            {
+                if (sourceTag.Value == null)
+                {
+                    continue; // Skip null values instead of returning
+                }
+
+                if (this.ProcessSpecialTag(sourceTag.Key, sourceTag.Value))
+                {
+                    continue;
+                }
+
+                PooledList<KeyValuePair<string, object?>>.Add(ref this.Tags, new KeyValuePair<string, object?>($"instrumentation.scope.{sourceTag.Key}", sourceTag.Value));
+            }
+        }
+
+        private void ProcessActivityTags(Activity activity)
+        {
             foreach (ref readonly var tag in activity.EnumerateTagObjects())
             {
                 if (tag.Value == null)
@@ -211,36 +237,49 @@ internal static class ZipkinActivityConversionExtensions
                     continue;
                 }
 
-                string key = tag.Key;
-
-                if (tag.Value is string strVal)
+                if (this.ProcessSpecialTag(tag.Key, tag.Value))
                 {
-                    PeerServiceResolver.InspectTag(ref this, key, strVal);
-
-                    if (key == SpanAttributeConstants.StatusCodeKey)
-                    {
-                        this.StatusCode = StatusHelper.GetStatusCodeForTagValue(strVal);
-                        continue;
-                    }
-                    else if (key == SpanAttributeConstants.StatusDescriptionKey)
-                    {
-                        // Description is sent as `error` but only if StatusCode is Error. See: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
-                        this.StatusDescription = strVal;
-                        continue;
-                    }
-                    else if (key == ZipkinErrorFlagTagName)
-                    {
-                        // Ignore `error` tag if it exists, it will be added based on StatusCode + StatusDescription.
-                        continue;
-                    }
-                }
-                else if (tag.Value is int intVal && tag.Key == SemanticConventions.AttributeNetPeerPort)
-                {
-                    PeerServiceResolver.InspectTag(ref this, key, intVal);
+                    continue;
                 }
 
                 PooledList<KeyValuePair<string, object?>>.Add(ref this.Tags, tag);
             }
+        }
+
+        private bool ProcessSpecialTag(string key, object? value)
+        {
+            // Process peer service related values
+            if (value is string strVal)
+            {
+                PeerServiceResolver.InspectTag(ref this, key, strVal);
+
+                // Handle status related tags
+                if (key == SpanAttributeConstants.StatusCodeKey)
+                {
+                    this.StatusCode = StatusHelper.GetStatusCodeForTagValue(strVal);
+                    return true;
+                }
+
+                if (key == SpanAttributeConstants.StatusDescriptionKey)
+                {
+                    // Description is sent as `error` but only if StatusCode is Error
+                    this.StatusDescription = strVal;
+                    return true;
+                }
+
+                if (key == ZipkinErrorFlagTagName)
+                {
+                    // Ignore `error` tag; it will be added based on StatusCode + StatusDescription
+                    return true;
+                }
+            }
+            else if (value is int intVal && key == SemanticConventions.AttributeNetPeerPort)
+            {
+                PeerServiceResolver.InspectTag(ref this, key, intVal);
+            }
+
+            // Tag was not special or fully processed
+            return false;
         }
     }
 
