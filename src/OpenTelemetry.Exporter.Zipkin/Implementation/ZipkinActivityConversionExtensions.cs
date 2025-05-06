@@ -240,7 +240,7 @@ internal static class ZipkinActivityConversionExtensions
                 if (this.ProcessSpecialTag(tag.Key, tag.Value))
                 {
                     continue;
-                }
+               }
 
                 PooledList<KeyValuePair<string, object?>>.Add(ref this.Tags, tag);
             }
