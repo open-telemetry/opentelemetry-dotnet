@@ -325,7 +325,9 @@ internal static class ProtobufSerializer
         {
             // Note: Validate there is enough space in the buffer to hold the
             // string otherwise throw to trigger a resize of the buffer.
+#pragma warning disable CA2201 // Do not raise reserved exception types
             throw new IndexOutOfRangeException();
+#pragma warning restore CA2201 // Do not raise reserved exception types
         }
 
         unsafe

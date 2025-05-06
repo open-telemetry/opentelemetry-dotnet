@@ -40,7 +40,7 @@ internal static class OtlpExporterOptionsExtensions
                 if (commaIndex == -1)
                 {
                     pair = headersSpan;
-                    headersSpan = ReadOnlySpan<char>.Empty;
+                    headersSpan = [];
                 }
                 else
                 {
@@ -171,7 +171,11 @@ internal static class OtlpExporterOptionsExtensions
         var absoluteUri = uri.AbsoluteUri;
         var separator = string.Empty;
 
-        if (absoluteUri.EndsWith("/"))
+#if NET || NETSTANDARD2_1_OR_GREATER
+        if (absoluteUri.EndsWith('/'))
+#else
+        if (absoluteUri.EndsWith("/", StringComparison.Ordinal))
+#endif
         {
             // Endpoint already ends with 'path/'
             if (absoluteUri.EndsWith(string.Concat(path, "/"), StringComparison.OrdinalIgnoreCase))

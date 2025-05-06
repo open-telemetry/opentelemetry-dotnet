@@ -22,7 +22,9 @@ public class LoggerProviderExtensionsTests
 
         Assert.Null(providerSdk.Processor);
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         provider.AddProcessor(new TestProcessor());
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         Assert.NotNull(providerSdk.Processor);
     }
@@ -33,8 +35,10 @@ public class LoggerProviderExtensionsTests
         List<LogRecord> exportedItems = new();
         using var provider = Sdk.CreateLoggerProviderBuilder()
             .AddProcessor(
+#pragma warning disable CA2000 // Dispose objects before losing scope
                 new BatchLogRecordExportProcessor(
                     new InMemoryExporter<LogRecord>(exportedItems),
+#pragma warning restore CA2000 // Dispose objects before losing scope
                     scheduledDelayMilliseconds: int.MaxValue))
             .Build();
 

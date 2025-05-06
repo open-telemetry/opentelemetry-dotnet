@@ -3,6 +3,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -22,7 +23,7 @@ public class LogRecordStateProcessorTests
         {
             var logger = loggerFactory.CreateLogger("TestLogger");
 
-            logger.LogInformation("Hello world {data}", 1234);
+            logger.HelloWorld(1234);
         }
 
         Assert.Single(exportedItems);
@@ -63,7 +64,7 @@ public class LogRecordStateProcessorTests
         {
             var logger = loggerFactory.CreateLogger("TestLogger");
 
-            logger.LogInformation("Hello world {data}", 1234);
+            logger.HelloWorld(1234);
         }
 
         Assert.Single(exportedItems);
@@ -103,7 +104,7 @@ public class LogRecordStateProcessorTests
         {
             var logger = loggerFactory.CreateLogger("TestLogger");
 
-            logger.LogInformation("Hello world {data}", 1234);
+            logger.HelloWorld(1234);
         }
 
         Assert.Single(exportedItems);
@@ -148,7 +149,7 @@ public class LogRecordStateProcessorTests
         {
             var logger = loggerFactory.CreateLogger("TestLogger");
 
-            logger.LogInformation("Hello world {data}", 1234);
+            logger.HelloWorld(1234);
         }
 
         Assert.Single(exportedItems);
@@ -225,7 +226,7 @@ public class LogRecordStateProcessorTests
         else
         {
             Assert.Null(state);
-            state = Array.Empty<KeyValuePair<string, object?>>();
+            state = [];
         }
 
         if (attributesExpectedCount > 0)
@@ -236,7 +237,7 @@ public class LogRecordStateProcessorTests
         else
         {
             Assert.Null(attributes);
-            attributes = Array.Empty<KeyValuePair<string, object?>>();
+            attributes = [];
         }
     }
 

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -389,7 +390,9 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         }
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class TestLogProcessorWithILoggerFactoryDependency : BaseProcessor<LogRecord>
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private readonly ILogger logger;
 
@@ -405,7 +408,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         protected override void Dispose(bool disposing)
         {
-            this.logger.LogInformation("Dispose called");
+            this.logger.DisposedCalled();
 
             base.Dispose(disposing);
         }

@@ -11,7 +11,7 @@ namespace OpenTelemetry.Internal.Tests;
 
 public class SelfDiagnosticsConfigRefresherTests
 {
-    private static readonly string ConfigFilePath = SelfDiagnosticsConfigParser.ConfigFileName;
+    private const string ConfigFilePath = SelfDiagnosticsConfigParser.ConfigFileName;
     private static readonly byte[] MessageOnNewFile = SelfDiagnosticsConfigRefresher.MessageOnNewFile;
     private static readonly string MessageOnNewFileString = Encoding.UTF8.GetString(SelfDiagnosticsConfigRefresher.MessageOnNewFile);
 
@@ -38,7 +38,7 @@ public class SelfDiagnosticsConfigRefresherTests
             byte[] actualBytes = ReadFile(logDirectory, bufferSize);
             string logText = Encoding.UTF8.GetString(actualBytes);
             this.output.WriteLine(logText);  // for debugging in case the test fails
-            Assert.StartsWith(MessageOnNewFileString, logText);
+            Assert.StartsWith(MessageOnNewFileString, logText, StringComparison.Ordinal);
 
             // The event was omitted
             Assert.Equal('\0', (char)actualBytes[MessageOnNewFile.Length]);
@@ -65,12 +65,12 @@ public class SelfDiagnosticsConfigRefresherTests
             int bufferSize = 2 * (MessageOnNewFileString.Length + expectedMessage.Length);
             byte[] actualBytes = ReadFile(logDirectory, bufferSize);
             string logText = Encoding.UTF8.GetString(actualBytes);
-            Assert.StartsWith(MessageOnNewFileString, logText);
+            Assert.StartsWith(MessageOnNewFileString, logText, StringComparison.Ordinal);
 
             // The event was captured
             string logLine = logText.Substring(MessageOnNewFileString.Length);
             string logMessage = ParseLogMessage(logLine);
-            Assert.StartsWith(expectedMessage, logMessage);
+            Assert.StartsWith(expectedMessage, logMessage, StringComparison.Ordinal);
         }
         finally
         {
@@ -88,7 +88,11 @@ public class SelfDiagnosticsConfigRefresherTests
     private static byte[] ReadFile(string logDirectory, int byteCount)
     {
         var outputFileName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName) + "."
+#if NET
+                + Environment.ProcessId + ".log";
+#else
                 + Process.GetCurrentProcess().Id + ".log";
+#endif
         var outputFilePath = Path.Combine(logDirectory, outputFileName);
         using var file = File.Open(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         byte[] actualBytes = new byte[byteCount];

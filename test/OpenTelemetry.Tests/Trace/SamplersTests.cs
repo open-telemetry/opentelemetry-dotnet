@@ -9,7 +9,6 @@ namespace OpenTelemetry.Trace.Tests;
 
 public class SamplersTests
 {
-    private static readonly ActivityKind ActivityKindServer = ActivityKind.Server;
     private readonly ActivityTraceId traceId;
     private readonly ActivitySpanId parentSpanId;
 
@@ -29,7 +28,7 @@ public class SamplersTests
 
         Assert.Equal(
             SamplingDecision.RecordAndSample,
-            new AlwaysOnSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKindServer, null, new List<ActivityLink> { link })).Decision);
+            new AlwaysOnSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKind.Server, null, new List<ActivityLink> { link })).Decision);
     }
 
     [Fact]
@@ -48,7 +47,7 @@ public class SamplersTests
 
         Assert.Equal(
             SamplingDecision.Drop,
-            new AlwaysOffSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKindServer, null, new List<ActivityLink> { link })).Decision);
+            new AlwaysOffSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKind.Server, null, new List<ActivityLink> { link })).Decision);
     }
 
     [Fact]

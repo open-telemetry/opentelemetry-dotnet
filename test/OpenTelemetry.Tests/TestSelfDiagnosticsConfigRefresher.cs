@@ -6,7 +6,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tests;
 
-internal class TestSelfDiagnosticsConfigRefresher(Stream? stream = null) : SelfDiagnosticsConfigRefresher
+internal sealed class TestSelfDiagnosticsConfigRefresher(Stream? stream = null) : SelfDiagnosticsConfigRefresher
 {
     private readonly Stream? stream = stream;
 

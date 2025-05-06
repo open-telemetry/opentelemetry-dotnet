@@ -5,7 +5,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-internal class TestExportClient(bool throwException = false) : IExportClient
+internal sealed class TestExportClient(bool throwException = false) : IExportClient
 {
     public bool SendExportRequestCalled { get; private set; }
 
@@ -17,7 +17,7 @@ internal class TestExportClient(bool throwException = false) : IExportClient
     {
         if (this.ThrowException)
         {
-            throw new Exception("Exception thrown from SendExportRequest");
+            throw new InvalidOperationException("Exception thrown from SendExportRequest");
         }
 
         this.SendExportRequestCalled = true;
@@ -30,7 +30,7 @@ internal class TestExportClient(bool throwException = false) : IExportClient
         return true;
     }
 
-    private class TestExportClientResponse : ExportClientResponse
+    private sealed class TestExportClientResponse : ExportClientResponse
     {
         public TestExportClientResponse(bool success, DateTime deadline, Exception? exception)
             : base(success, deadline, exception)
