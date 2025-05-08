@@ -103,12 +103,16 @@ public static class MeterProviderBuilderExtensions
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, string name)
     {
+        Guard.ThrowIfNull(instrumentName);
+
         if (!MeterProviderBuilderSdk.IsValidInstrumentName(name))
         {
             throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
         }
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         if (instrumentName.Contains('*'))
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         {
             throw new ArgumentException(
                 $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +

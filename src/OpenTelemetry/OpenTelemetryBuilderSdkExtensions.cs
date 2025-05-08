@@ -189,7 +189,11 @@ public static class OpenTelemetryBuilderSdkExtensions
         Action<LoggerProviderBuilder>? configureBuilder,
         Action<OpenTelemetryLoggerOptions>? configureOptions)
     {
+        Guard.ThrowIfNull(builder);
+
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         builder.Services.AddLogging(
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
             logging => logging.UseOpenTelemetry(configureBuilder, configureOptions));
 
         return builder;
