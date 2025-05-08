@@ -79,7 +79,9 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
     internal IExternalScopeProvider? ScopeProvider { get; private set; }
 
     /// <inheritdoc/>
+#pragma warning disable CA1033 // Interface methods should be callable by child types
     void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
+#pragma warning restore CA1033 // Interface methods should be callable by child types
     {
         this.ScopeProvider = scopeProvider;
 
