@@ -4,7 +4,6 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <ReferenceSystemTextJsonPackages>true</ReferenceSystemTextJsonPackages>
-    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>

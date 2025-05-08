@@ -4,7 +4,6 @@
     <Description>Unit test project for Prometheus Exporter HttpListener for OpenTelemetry</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);PROMETHEUS_HTTP_LISTENER</DefineConstants>
-    <AnalysisLevel>latest-all</AnalysisLevel>
     <!-- Avoid conflicting port registrations if TFMs tested in parallel -->
     <TestTfmsInParallel>false</TestTfmsInParallel>
   </PropertyGroup>
