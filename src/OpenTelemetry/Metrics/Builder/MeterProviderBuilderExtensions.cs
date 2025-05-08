@@ -111,7 +111,11 @@ public static class MeterProviderBuilderExtensions
         }
 
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
+#if NET || NETSTANDARD2_1_OR_GREATER
+        if (instrumentName.Contains('*', StringComparison.Ordinal))
+#else
         if (instrumentName.Contains('*'))
+#endif
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         {
             throw new ArgumentException(
@@ -140,9 +144,13 @@ public static class MeterProviderBuilderExtensions
         Guard.ThrowIfNullOrWhitespace(instrumentName);
         Guard.ThrowIfNull(metricStreamConfiguration);
 
+#if NET || NETSTANDARD2_1_OR_GREATER
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
-        if (metricStreamConfiguration.Name != null && instrumentName.Contains('*'))
+        if (metricStreamConfiguration.Name != null && instrumentName.Contains('*', StringComparison.Ordinal))
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
+#else
+        if (metricStreamConfiguration.Name != null && instrumentName.Contains('*'))
+#endif
         {
             throw new ArgumentException(
                 $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
@@ -155,9 +163,17 @@ public static class MeterProviderBuilderExtensions
         {
             if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
+#if NET || NETSTANDARD2_1_OR_GREATER
+                if (instrumentName.Contains('*', StringComparison.Ordinal))
+#else
                 if (instrumentName.Contains('*'))
+#endif
                 {
+#if NET || NETSTANDARD2_1_OR_GREATER
+                    var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*", StringComparison.Ordinal);
+#else
                     var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
+#endif
                     var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
                     meterProviderBuilderSdk.AddView(instrument => regex.IsMatch(instrument.Name) ? metricStreamConfiguration : null);
                 }
