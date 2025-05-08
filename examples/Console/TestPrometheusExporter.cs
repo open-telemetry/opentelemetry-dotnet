@@ -57,7 +57,7 @@ internal sealed class TestPrometheusExporter
                 Counter.Add(99.9, new("name", "lemon"), new("color", "yellow"));
 #if NETFRAMEWORK
 #pragma warning disable CA5394
-                var value = new Random().Next(1, 1500);;
+                var value = new Random().Next(1, 1500);
 #pragma warning restore CA5394
 #else
                 var value = System.Security.Cryptography.RandomNumberGenerator.GetInt32(1, 1500);
