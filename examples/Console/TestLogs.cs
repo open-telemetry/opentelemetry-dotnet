@@ -46,7 +46,7 @@ internal sealed class TestLogs
 
                     if (!string.IsNullOrEmpty(options.Protocol))
                     {
-                        switch (options.Protocol.Trim())
+                        switch (options.Protocol!.Trim())
                         {
                             case "grpc":
                                 protocol = default;
@@ -68,7 +68,7 @@ internal sealed class TestLogs
 
                     if (!string.IsNullOrEmpty(options.ProcessorType))
                     {
-                        switch (options.ProcessorType.Trim())
+                        switch (options.ProcessorType!.Trim())
                         {
                             case "batch":
                                 processorType = ExportProcessorType.Batch;
@@ -108,7 +108,7 @@ internal sealed class TestLogs
 #endif
                         if (!string.IsNullOrWhiteSpace(options.Endpoint))
                         {
-                            exporterOptions.Endpoint = new Uri(options.Endpoint);
+                            exporterOptions.Endpoint = new Uri(options.Endpoint!);
                         }
 
                         if (processorType == ExportProcessorType.Simple)
