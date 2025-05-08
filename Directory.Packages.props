@@ -46,6 +46,7 @@
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="[$(OTelLatestStableVer),2.0)" />
     <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="[$(OTelLatestStableVer),2.0)" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
+    <PackageVersion Include="PolySharp" Version="1.15.0" />
 
     <!--
         Typically, the latest stable version of System.Diagnostics.DiagnosticSource should be used here because:
@@ -57,6 +58,7 @@
           even during major version bumps, so compatibility is not a concern here.
     -->
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(LatestRuntimeOutOfBandVer)" />
+    <PackageVersion Include="System.Net.Http.WinHttpHandler" Version="9.0.4" />
   </ItemGroup>
 
   <ItemGroup>
