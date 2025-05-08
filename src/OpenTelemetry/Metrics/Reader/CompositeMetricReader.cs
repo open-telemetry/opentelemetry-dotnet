@@ -24,7 +24,7 @@ internal sealed partial class CompositeMetricReader : MetricReader
         using var iter = readers.GetEnumerator();
         if (!iter.MoveNext())
         {
-            throw new ArgumentException($"'{iter}' is null or empty", nameof(iter));
+            throw new ArgumentException($"'{iter}' is null or empty", nameof(readers));
         }
 
         this.Head = new DoublyLinkedListNode(iter.Current);

@@ -8,13 +8,15 @@ namespace OpenTelemetry;
 /// </summary>
 // Note: Does not implement IReadOnlyCollection<> or IEnumerable<> to
 // prevent accidental boxing.
+#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
 public readonly struct ReadOnlyTagCollection
+#pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
     internal readonly KeyValuePair<string, object?>[] KeyAndValues;
 
     internal ReadOnlyTagCollection(KeyValuePair<string, object?>[]? keyAndValues)
     {
-        this.KeyAndValues = keyAndValues ?? Array.Empty<KeyValuePair<string, object?>>();
+        this.KeyAndValues = keyAndValues ?? [];
     }
 
     /// <summary>
