@@ -164,7 +164,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     private void CloseLogFile()
     {
-        MemoryMappedFile? mmf = Interlocked.CompareExchange(ref this.memoryMappedFile, null, this.memoryMappedFile);
+        MemoryMappedFile? mmf = Interlocked.Exchange(ref this.memoryMappedFile, null);
         if (mmf != null)
         {
             // Each thread has its own MemoryMappedViewStream created from the only one MemoryMappedFile.
@@ -181,10 +181,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
             mmf.Dispose();
         }
 
-        FileStream? fs = Interlocked.CompareExchange(
-            ref this.underlyingFileStreamForMemoryMappedFile,
-            null,
-            this.underlyingFileStreamForMemoryMappedFile);
+        FileStream? fs = Interlocked.Exchange(ref this.underlyingFileStreamForMemoryMappedFile, null);
         fs?.Dispose();
     }
 

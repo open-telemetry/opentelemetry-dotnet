@@ -37,7 +37,7 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
         // Reset internal state irrespective of temporality.
         // This ensures incoming measurements have fair chance
         // of making it to the reservoir.
-        this.measurementState = DefaultMeasurementState;
+        Volatile.Write(ref this.measurementState, DefaultMeasurementState);
     }
 
     private void Offer<T>(in ExemplarMeasurement<T> measurement)
