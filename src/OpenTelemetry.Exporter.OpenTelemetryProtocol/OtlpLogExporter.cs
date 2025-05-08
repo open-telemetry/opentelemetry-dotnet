@@ -58,11 +58,9 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 
         this.experimentalOptions = experimentalOptions!;
         this.sdkLimitOptions = sdkLimitOptions!;
-#if NET462_OR_GREATER || NETSTANDARD2_0
-        this.startWritePosition = 0;
-#else
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
-#endif
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
         this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Logs);
     }
 
