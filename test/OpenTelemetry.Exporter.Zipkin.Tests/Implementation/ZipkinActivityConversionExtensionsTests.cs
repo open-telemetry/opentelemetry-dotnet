@@ -82,7 +82,7 @@ public class ZipkinActivityConversionExtensionsTests : IDisposable
 
         // Assert
         Assert.Contains(attributeEnumerationState.Tags, tag =>
-            tag.Key == "instrumentation.scope.source-tag" && tag.Value?.ToString() == "source-value");
+            tag.Key == "otel.scope.source-tag" && tag.Value?.ToString() == "source-value");
     }
 
     [Fact]

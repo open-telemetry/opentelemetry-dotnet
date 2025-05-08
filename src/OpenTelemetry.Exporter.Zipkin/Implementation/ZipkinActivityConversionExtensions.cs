@@ -224,7 +224,7 @@ internal static class ZipkinActivityConversionExtensions
                     continue;
                 }
 
-                PooledList<KeyValuePair<string, object?>>.Add(ref this.Tags, new KeyValuePair<string, object?>($"instrumentation.scope.{sourceTag.Key}", sourceTag.Value));
+                PooledList<KeyValuePair<string, object?>>.Add(ref this.Tags, new KeyValuePair<string, object?>($"otel.scope.{sourceTag.Key}", sourceTag.Value));
             }
         }
 
@@ -240,7 +240,7 @@ internal static class ZipkinActivityConversionExtensions
                 if (this.ProcessSpecialTag(tag.Key, tag.Value))
                 {
                     continue;
-               }
+                }
 
                 PooledList<KeyValuePair<string, object?>>.Add(ref this.Tags, tag);
             }
