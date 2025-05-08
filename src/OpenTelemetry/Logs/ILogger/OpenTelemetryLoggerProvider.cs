@@ -37,7 +37,9 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
     {
         Guard.ThrowIfNull(options);
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         var optionsInstance = options.CurrentValue;
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
         this.Provider = Sdk
             .CreateLoggerProviderBuilder()

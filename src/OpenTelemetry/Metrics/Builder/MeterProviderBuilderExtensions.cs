@@ -136,7 +136,9 @@ public static class MeterProviderBuilderExtensions
         Guard.ThrowIfNullOrWhitespace(instrumentName);
         Guard.ThrowIfNull(metricStreamConfiguration);
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         if (metricStreamConfiguration.Name != null && instrumentName.Contains('*'))
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         {
             throw new ArgumentException(
                 $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +

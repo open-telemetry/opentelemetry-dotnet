@@ -52,7 +52,9 @@ public abstract class BaseExportProcessor<T> : BaseProcessor<T>
     {
         Guard.ThrowIfNull(exporter);
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         this.friendlyTypeName = $"{this.GetType().Name}{{{exporter.GetType().Name}}}";
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         this.exporter = exporter;
     }
 
