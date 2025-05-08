@@ -10,7 +10,9 @@ namespace OpenTelemetry.Metrics;
 /// MetricReader implementation which exports metrics to the configured
 /// MetricExporter upon <see cref="MetricReader.Collect(int)"/>.
 /// </summary>
+#pragma warning disable CA1708 // Identifiers should differ by more than case
 public class BaseExportingMetricReader : MetricReader
+#pragma warning restore CA1708 // Identifiers should differ by more than case
 {
     /// <summary>
     /// Gets the exporter used by the metric reader.

@@ -29,7 +29,9 @@ public enum ExportProcessorType
 /// Implements processor that exports telemetry objects.
 /// </summary>
 /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
+#pragma warning disable CA1708 // Identifiers should differ by more than case
 public abstract class BaseExportProcessor<T> : BaseProcessor<T>
+#pragma warning restore CA1708 // Identifiers should differ by more than case
     where T : class
 {
     /// <summary>
