@@ -15,7 +15,7 @@ public class MetricStreamConfiguration
 {
     private string? name;
 
-    private int? cardinalityLimit = null;
+    private int? cardinalityLimit;
 
     /// <summary>
     /// Gets the drop configuration.
@@ -69,7 +69,9 @@ public class MetricStreamConfiguration
     /// <item>A copy is made of the provided array.</item>
     /// </list>
     /// </remarks>
+#pragma warning disable CA1819 // Properties should not return arrays
     public string[]? TagKeys
+#pragma warning restore CA1819 // Properties should not return arrays
     {
         get => this.CopiedTagKeys?.ToArray();
         set => this.CopiedTagKeys = value?.ToArray();

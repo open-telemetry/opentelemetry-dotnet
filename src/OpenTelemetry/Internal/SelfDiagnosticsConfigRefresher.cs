@@ -139,7 +139,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
         if (this.configParser.TryGetConfiguration(out string? newLogDirectory, out int fileSizeInKB, out EventLevel newEventLevel))
         {
             int newFileSize = fileSizeInKB * 1024;
-            if (!newLogDirectory.Equals(this.logDirectory) || this.logFileSize != newFileSize)
+            if (!newLogDirectory.Equals(this.logDirectory, StringComparison.Ordinal) || this.logFileSize != newFileSize)
             {
                 this.CloseLogFile();
                 this.OpenLogFile(newLogDirectory, newFileSize);
@@ -194,7 +194,11 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
         {
             Directory.CreateDirectory(newLogDirectory);
             var fileName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "OpenTelemetrySdk") + "."
+#if NET
+                + Environment.ProcessId + ".log";
+#else
                 + Process.GetCurrentProcess().Id + ".log";
+#endif
             var filePath = Path.Combine(newLogDirectory, fileName);
 
             // Because the API [MemoryMappedFile.CreateFromFile][1](the string version) behaves differently on

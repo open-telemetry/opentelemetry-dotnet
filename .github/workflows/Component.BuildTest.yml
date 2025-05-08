@@ -63,7 +63,18 @@ jobs:
       run: dotnet build ${{ inputs.project-name }} --configuration Release --no-restore ${{ inputs.project-build-commands }}
 
     - name: dotnet test ${{ inputs.project-name }}
-      run: dotnet test ${{ inputs.project-name }} --collect:"Code Coverage" --results-directory:TestResults --framework ${{ matrix.version }} --configuration Release --no-restore --no-build --logger:"console;verbosity=detailed" -- RunConfiguration.DisableAppDomain=true
+      run: >
+        dotnet test ${{ inputs.project-name }}
+        --collect:"Code Coverage"
+        --results-directory:TestResults
+        --framework ${{ matrix.version }}
+        --configuration Release
+        --no-restore
+        --no-build
+        --logger:"console;verbosity=detailed"
+        --logger:"GitHubActions;report-warnings=false"
+        --logger:"junit;LogFilePath=TestResults/junit.xml"
+        -- RunConfiguration.DisableAppDomain=true
 
     - name: Install coverage tool
       run: dotnet tool install -g dotnet-coverage
@@ -77,10 +88,19 @@ jobs:
       env:
         OS: ${{ matrix.os }}
         TFM: ${{ matrix.version }}
-        token: ${{ secrets.CODECOV_TOKEN }}
       with:
         files: TestResults/Cobertura.xml
         env_vars: OS,TFM
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
         name: Code Coverage for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
         codecov_yml_path: .github/codecov.yml
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Upload test results ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
+      if: ${{ !cancelled() && hashFiles('./**/TestResults/junit.xml') != '' }}
+      uses: codecov/test-results-action@f2dba722c67b86c6caa034178c6e4d35335f6706 # v1.1.0
+      with:
+        env_vars: OS,TFM
+        flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
+        name: Test results for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
+        token: ${{ secrets.CODECOV_TOKEN }}
