@@ -34,7 +34,9 @@ public readonly struct ReadOnlyTagCollection
     /// Enumerates the elements of a <see cref="ReadOnlyTagCollection"/>.
     /// </summary>
     // Note: Does not implement IEnumerator<> to prevent accidental boxing.
+#pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     public struct Enumerator
+#pragma warning restore CA1034 // Nested types should not be visible - already part of public API
     {
         private readonly ReadOnlyTagCollection source;
         private int index;

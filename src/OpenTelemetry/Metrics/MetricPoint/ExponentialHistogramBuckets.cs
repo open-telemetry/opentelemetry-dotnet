@@ -55,7 +55,9 @@ public sealed class ExponentialHistogramBuckets
     /// Enumerates the bucket counts of an exponential histogram.
     /// </summary>
     // Note: Does not implement IEnumerator<> to prevent accidental boxing.
+#pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     public struct Enumerator
+#pragma warning restore CA1034 // Nested types should not be visible - already part of public API
     {
         private readonly long[] buckets;
         private readonly int size;
