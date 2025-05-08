@@ -491,7 +491,7 @@ public sealed class MockCollectorIntegrationTests
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
 
         using var exporterHttpClient = new HttpClient();
-        var exportClient = new OtlpGrpcExportClient(exporterOptions, exporterHttpClient, "opentelemetry.proto.collector.trace.v1.TraceService/Export");
+        using var exportClient = new OtlpGrpcExportClient(exporterOptions, exporterHttpClient, "opentelemetry.proto.collector.trace.v1.TraceService/Export");
 
         // TODO: update this to configure via experimental environment variable.
         OtlpExporterTransmissionHandler transmissionHandler;

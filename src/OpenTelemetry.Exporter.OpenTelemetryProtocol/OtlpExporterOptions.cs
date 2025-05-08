@@ -72,10 +72,92 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.DefaultHttpClientFactory = () =>
         {
-            return new HttpClient
+#if NET8_0_OR_GREATER
+            // For .NET 8 and later, we can load certificates from PEM files
+            HttpClientHandler handler = new HttpClientHandler();
+
+            #if !NET462
+            handler.CheckCertificateRevocationList = true;
+            #endif
+
+            try
+            {
+                // Add trusted root certificate if provided
+                if (!string.IsNullOrEmpty(this.CertificateFilePath))
+                {
+                    try
+                    {
+                        var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(this.CertificateFilePath);
+
+                        handler.ServerCertificateCustomValidationCallback = (_, cert, __, unexpectedErrors) =>
+                        {
+                            return MtlsUtility.ValidateCertificateChain(cert!, trustedCertificate);
+                        };
+
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationSuccess("server validation");
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
+                    }
+                }
+
+                // Add client certificate if both files are provided
+                if (!string.IsNullOrEmpty(this.ClientCertificateFilePath) && !string.IsNullOrEmpty(this.ClientKeyFilePath))
+                {
+                    try
+                    {
+                        var clientCertificate = MtlsUtility.LoadCertificateWithValidation(
+                            this.ClientCertificateFilePath,
+                            this.ClientKeyFilePath);
+
+                        handler.ClientCertificates.Add(clientCertificate);
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationSuccess("HTTPS client authentication");
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
+                    }
+                }
+
+                return new HttpClient(handler)
+                {
+                    Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
+                };
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadError(ex);
+                handler.Dispose();
+
+                var fallbackHandler = new HttpClientHandler();
+
+                #if !NET462
+                // CheckCertificateRevocationList is not available in .NET 4.6.2
+                fallbackHandler.CheckCertificateRevocationList = true;
+                #endif
+
+                return new HttpClient(fallbackHandler)
+                {
+                    Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
+                };
+            }
+#else
+            // For earlier .NET versions
+            var handler = new HttpClientHandler();
+
+            #if !NET462
+            // CheckCertificateRevocationList is not available in .NET 4.6.2
+            handler.CheckCertificateRevocationList = true;
+            #else
+            #pragma warning disable CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
+            #endif
+
+            return new HttpClient(handler)
             {
                 Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
             };
+#endif
         };
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;
@@ -147,6 +229,36 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             this.httpClientFactory = value;
         }
     }
+
+    /// <summary>
+    /// Gets or sets the path to a PEM-encoded CA certificate file used to verify server identity.
+    /// This option is only supported on .NET 8.0 or later.
+    /// </summary>
+    /// <remarks>
+    /// When specified, this certificate will be used to validate the server's certificate.
+    /// The file must be readable by the application and contain a valid PEM-encoded certificate.
+    /// </remarks>
+    internal string? CertificateFilePath { get; set; }
+
+    /// <summary>
+    /// Gets or sets the path to a PEM-encoded client certificate file used for client authentication.
+    /// This option is only supported on .NET 8.0 or later and must be used with <see cref="ClientKeyFilePath"/>.
+    /// </summary>
+    /// <remarks>
+    /// When specified along with <see cref="ClientKeyFilePath"/>, this certificate will be used for client authentication.
+    /// The file must be readable by the application and contain a valid PEM-encoded certificate.
+    /// </remarks>
+    internal string? ClientCertificateFilePath { get; set; }
+
+    /// <summary>
+    /// Gets or sets the path to a PEM-encoded private key file for the client certificate.
+    /// This option is only supported on .NET 8.0 or later and must be used with <see cref="ClientCertificateFilePath"/>.
+    /// </summary>
+    /// <remarks>
+    /// This private key will be used with the <see cref="ClientCertificateFilePath"/> for client authentication.
+    /// The file must be readable by the application and contain a valid PEM-encoded private key.
+    /// </remarks>
+    internal string? ClientKeyFilePath { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should

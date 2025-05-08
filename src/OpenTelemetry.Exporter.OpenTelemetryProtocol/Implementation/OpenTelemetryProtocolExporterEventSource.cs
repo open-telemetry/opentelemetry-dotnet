@@ -13,6 +13,11 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
 {
     public static readonly OpenTelemetryProtocolExporterEventSource Log = new();
 
+    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
+    {
+        this.InvalidConfigurationValue(key, value);
+    }
+
     [NonEvent]
     public void FailedToReachCollector(Uri collectorUri, Exception ex)
     {
@@ -104,6 +109,33 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         }
     }
 
+    [NonEvent]
+    public void MtlsCertificateLoadError(Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.MtlsCertificateLoadError_(ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void MtlsPermissionCheckWarning(string filePath, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.MtlsPermissionCheckWarning(filePath, ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void MtlsConfigurationSuccess(string component)
+    {
+        if (this.IsEnabled(EventLevel.Informational, EventKeywords.All))
+        {
+            this.MtlsConfigurationSuccess_(component);
+        }
+    }
+
     [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
     public void FailedToReachCollector(string rawCollectorUri, string ex)
     {
@@ -126,6 +158,12 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     public void CouldNotTranslateMetric(string className, string methodName)
     {
         this.WriteEvent(5, className, methodName);
+    }
+
+    [Event(7, Message = "Timeout value configured for Otel Exporter was {0}, but was overridden to {1} due to MaxTimeoutValue: {2}.", Level = EventLevel.Warning)]
+    public void TimeoutOverrideWarning(int configuredTimeout, int effectiveTimeout, int maxTimeoutValue)
+    {
+        this.WriteEvent(7, configuredTimeout, effectiveTimeout, maxTimeoutValue);
     }
 
     [Event(8, Message = "Unsupported value for protocol '{0}' is configured, default protocol 'grpc' will be used.", Level = EventLevel.Warning)]
@@ -236,8 +274,98 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         this.WriteEvent(25);
     }
 
-    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
+    // mTLS Events
+
+    [Event(26, Message = "mTLS certificate file not found: {0}", Level = EventLevel.Error)]
+    public void MtlsCertificateFileNotFound(string filePath)
     {
-        this.InvalidConfigurationValue(key, value);
+        this.WriteEvent(26, filePath);
+    }
+
+    [Event(27, Message = "mTLS certificate invalid: {0}", Level = EventLevel.Error)]
+    public void MtlsCertificateInvalid(Exception ex)
+    {
+        this.WriteEvent(27, ex.ToInvariantString());
+    }
+
+    [Event(28, Message = "mTLS certificate validation failed: {0}", Level = EventLevel.Error)]
+    public void MtlsCertificateValidationFailed(string message)
+    {
+        this.WriteEvent(28, message);
+    }
+
+    [Event(29, Message = "mTLS certificate chain validation failed: {0}", Level = EventLevel.Error)]
+    public void MtlsCertificateChainValidationFailed(string statusInformation)
+    {
+        this.WriteEvent(29, statusInformation);
+    }
+
+    [Event(30, Message = "mTLS file permission check failed for {0}: {1}", Level = EventLevel.Warning)]
+    public void MtlsFilePermissionCheckFailed(string filePath, Exception ex)
+    {
+        this.WriteEvent(30, filePath, ex.ToInvariantString());
+    }
+
+    [Event(31, Message = "Certificate permission check warning for file {0}. Exception: {1}", Level = EventLevel.Warning)]
+    public void MtlsPermissionCheckWarning(string filePath, string exception)
+    {
+        this.WriteEvent(31, filePath, exception);
+    }
+
+    [NonEvent]
+    public void ConfigurationError(string message)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.ConfigurationError_(message);
+        }
+    }
+
+    [Event(2, Message = "Environment variable is invalid, key = {0}, value = {1}, error = {2}", Level = EventLevel.Warning)]
+    public void EnvVarInvalid(string key, string value, string error)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.WriteEvent(2, key, value, error);
+        }
+    }
+
+    [Event(3, Message = "Unsupported action '{0}'", Level = EventLevel.Warning)]
+    public void UnsupportedAction(string action)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.WriteEvent(3, action);
+        }
+    }
+
+    [Event(4, Message = "Exporter HTTP request failed with status {0}. Error message: {1}", Level = EventLevel.Warning)]
+    public void ExportHttpFailure(int responseStatusCode, string error)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.WriteEvent(4, responseStatusCode, error);
+        }
+    }
+
+    [Event(5, Message = "Configuration error: {0}", Level = EventLevel.Error)]
+    private void ConfigurationError_(string message)
+    {
+        this.WriteEvent(5, message);
+    }
+
+    [Event(11, Message = "mTLS certificate load error: {0}", Level = EventLevel.Error)]
+    private void MtlsCertificateLoadError_(string exception)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.WriteEvent(11, exception);
+        }
+    }
+
+    [Event(16, Message = "mTLS configuration succeeded for {0}", Level = EventLevel.Informational)]
+    private void MtlsConfigurationSuccess_(string component)
+    {
+        this.WriteEvent(16, component);
     }
 }
