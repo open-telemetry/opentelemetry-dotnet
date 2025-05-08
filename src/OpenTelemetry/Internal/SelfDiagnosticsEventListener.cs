@@ -285,7 +285,9 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
             {
                 lock (this.lockObj)
                 {
+#pragma warning disable CA1508 // Avoid dead conditional code - see previous comment
                     if (this.eventSourcesBeforeConstructor != null)
+#pragma warning restore CA1508 // Avoid dead conditional code - see previous comment
                     {
                         this.eventSourcesBeforeConstructor.Add(eventSource);
                         return;

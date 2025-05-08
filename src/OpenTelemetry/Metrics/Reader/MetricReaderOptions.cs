@@ -26,7 +26,9 @@ public class MetricReaderOptions
     {
         Debug.Assert(defaultPeriodicExportingMetricReaderOptions != null, "defaultPeriodicExportingMetricReaderOptions was null");
 
+#pragma warning disable CA1508 // Avoid dead conditional code
         this.periodicExportingMetricReaderOptions = defaultPeriodicExportingMetricReaderOptions ?? new();
+#pragma warning restore CA1508 // Avoid dead conditional code
     }
 
     /// <summary>

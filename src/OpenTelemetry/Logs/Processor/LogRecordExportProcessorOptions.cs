@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
@@ -24,9 +23,7 @@ public class LogRecordExportProcessorOptions
     internal LogRecordExportProcessorOptions(
         BatchExportLogRecordProcessorOptions defaultBatchExportLogRecordProcessorOptions)
     {
-        Debug.Assert(defaultBatchExportLogRecordProcessorOptions != null, "defaultBatchExportLogRecordProcessorOptions was null");
-
-        this.batchExportProcessorOptions = defaultBatchExportLogRecordProcessorOptions ?? new();
+        this.batchExportProcessorOptions = defaultBatchExportLogRecordProcessorOptions;
     }
 
     /// <summary>

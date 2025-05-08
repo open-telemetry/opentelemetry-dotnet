@@ -189,7 +189,9 @@ public class ResourceBuilder
 
             Debug.Assert(detector != null, "detector was null");
 
+#pragma warning disable CA1508 // Avoid dead conditional code
             return detector?.Detect() ?? Resource.Empty;
+#pragma warning restore CA1508 // Avoid dead conditional code
         }
     }
 }
