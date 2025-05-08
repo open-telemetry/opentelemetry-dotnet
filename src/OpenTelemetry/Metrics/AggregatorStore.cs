@@ -26,7 +26,7 @@ internal sealed class AggregatorStore
     internal long DroppedMeasurements;
 
     private const ExemplarFilterType DefaultExemplarFilter = ExemplarFilterType.AlwaysOff;
-    private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
+    private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => string.Compare(x.Key, y.Key, StringComparison.Ordinal);
 
     private readonly Lock lockZeroTags = new();
     private readonly Lock lockOverflowTag = new();
