@@ -7,7 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Fixed a bug related to gRPC protocol errors in .NET Framework: OtlpLogExporter, OtlpMetricExporter, and OtlpTraceExporter did not set startWritePosition using GrpcStartWritePosition.
+* Fixed a bug related to gRPC protocol errors in .NET Framework: OtlpLogExporter,
+  OtlpMetricExporter, and OtlpTraceExporter did not set startWritePosition
+  using GrpcStartWritePosition.
   ([#6277](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6277))
 
 ## 1.12.0
