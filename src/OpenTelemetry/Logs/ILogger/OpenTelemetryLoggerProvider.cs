@@ -18,7 +18,7 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
 {
     internal readonly LoggerProvider Provider;
     private readonly bool ownsProvider;
-    private readonly Hashtable loggers = new();
+    private readonly Hashtable loggers = [];
     private bool disposed;
 
     static OpenTelemetryLoggerProvider()

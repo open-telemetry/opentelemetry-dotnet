@@ -108,7 +108,7 @@ public static class MeterProviderBuilderExtensions
             throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
         }
 
-        if (instrumentName.IndexOf('*') != -1)
+        if (instrumentName.Contains('*'))
         {
             throw new ArgumentException(
                 $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
@@ -136,7 +136,7 @@ public static class MeterProviderBuilderExtensions
         Guard.ThrowIfNullOrWhitespace(instrumentName);
         Guard.ThrowIfNull(metricStreamConfiguration);
 
-        if (metricStreamConfiguration.Name != null && instrumentName.IndexOf('*') != -1)
+        if (metricStreamConfiguration.Name != null && instrumentName.Contains('*'))
         {
             throw new ArgumentException(
                 $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
@@ -149,7 +149,7 @@ public static class MeterProviderBuilderExtensions
         {
             if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                if (instrumentName.IndexOf('*') != -1)
+                if (instrumentName.Contains('*'))
                 {
                     var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
                     var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
