@@ -54,8 +54,24 @@ internal sealed class TestMetrics
             providerBuilder
                 .AddOtlpExporter((exporterOptions, metricReaderOptions) =>
                 {
-                    exporterOptions.Protocol = options.UseGrpc ? OtlpExportProtocol.Grpc : OtlpExportProtocol.HttpProtobuf;
+                    exporterOptions.Protocol = options.UseGrpc ? default : OtlpExportProtocol.HttpProtobuf;
+#if NETFRAMEWORK
+                    if (exporterOptions.Protocol == default)
+                    {
+                        exporterOptions.HttpClientFactory = () =>
+                        {
+                            var handler = new WinHttpHandler
+                            {
+                                ServerCertificateValidationCallback = (_, _, _, _) => true,
+                            };
 
+                            return new HttpClient(handler)
+                            {
+                                Timeout = TimeSpan.FromMilliseconds(exporterOptions.TimeoutMilliseconds),
+                            };
+                        };
+                    }
+#endif
                     if (!string.IsNullOrWhiteSpace(options.Endpoint))
                     {
                         exporterOptions.Endpoint = new Uri(options.Endpoint);

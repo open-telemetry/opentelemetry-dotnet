@@ -45,7 +45,7 @@ internal static class TestOtlpExporter
         if (!otlpExportProtocol.HasValue)
         {
             System.Console.WriteLine($"Export protocol {options.Protocol} is not supported. Default protocol 'grpc' will be used.");
-            otlpExportProtocol = OtlpExportProtocol.Grpc;
+            otlpExportProtocol = default(OtlpExportProtocol);
         }
 
         // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
@@ -62,7 +62,23 @@ internal static class TestOtlpExporter
                 }
 
                 opt.Protocol = otlpExportProtocol.Value;
+#if NETFRAMEWORK
+                if (opt.Protocol == default)
+                {
+                    opt.HttpClientFactory = () =>
+                    {
+                        var handler = new WinHttpHandler
+                        {
+                            ServerCertificateValidationCallback = (_, _, _, _) => true,
+                        };
 
+                        return new HttpClient(handler)
+                        {
+                            Timeout = TimeSpan.FromMilliseconds(opt.TimeoutMilliseconds),
+                        };
+                    };
+                }
+#endif
                 System.Console.WriteLine($"OTLP Exporter is using {opt.Protocol} protocol and endpoint {opt.Endpoint}");
             })
             .Build();
@@ -83,7 +99,7 @@ internal static class TestOtlpExporter
     private static OtlpExportProtocol? ToOtlpExportProtocol(string? protocol) =>
         protocol?.Trim().ToUpperInvariant() switch
         {
-            "GRPC" => OtlpExportProtocol.Grpc,
+            "GRPC" => default(OtlpExportProtocol),
             "HTTP/PROTOBUF" => OtlpExportProtocol.HttpProtobuf,
             _ => null,
         };

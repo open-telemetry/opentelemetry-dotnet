@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>$(DefaultTargetFrameworkForExampleApps)</TargetFramework>
+    <TargetFrameworks>$(DefaultTargetFrameworkForExampleApps);net48</TargetFrameworks>
     <NoWarn>$(NoWarn),CA1812</NoWarn>
     <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
@@ -22,6 +22,13 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.GrpcNetClient" />
 
     <Compile Include="$(RepoRoot)\src\Shared\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
+    <Using Include="System.Net.Http" />
+
+    <PackageReference Include="PolySharp" PrivateAssets="all" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" />
   </ItemGroup>
 
   <ItemGroup>

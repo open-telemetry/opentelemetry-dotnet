@@ -56,7 +56,12 @@ internal sealed class TestPrometheusExporter
             {
                 Counter.Add(9.9, new("name", "apple"), new("color", "red"));
                 Counter.Add(99.9, new("name", "lemon"), new("color", "yellow"));
-                MyHistogram.Record(RandomNumberGenerator.GetInt32(1, 1500), new("tag1", "value1"), new("tag2", "value2"));
+#if NETFRAMEWORK
+                MyHistogram.Record(new Random().Next(1, 1500),
+#else
+                MyHistogram.Record(RandomNumberGenerator.GetInt32(1, 1500),
+#endif
+                    new("tag1", "value1"), new("tag2", "value2"));
                 Task.Delay(10).Wait();
             }
         });

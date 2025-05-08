@@ -14,16 +14,17 @@ internal static class Program
     /// Main method - invoke this using command line.
     /// For example:
     ///
-    /// dotnet run --project Examples.Console.csproj -- console
-    /// dotnet run --project Examples.Console.csproj -- inmemory
-    /// dotnet run --project Examples.Console.csproj -- zipkin -u http://localhost:9411/api/v2/spans
-    /// dotnet run --project Examples.Console.csproj -- prometheus -p 9464
-    /// dotnet run --project Examples.Console.csproj -- otlp -e "http://localhost:4317" -p "grpc"
-    /// dotnet run --project Examples.Console.csproj -- metrics --help
+    /// dotnet run -f net9.0 --project Examples.Console.csproj -- console
+    /// dotnet run -f net9.0 --project Examples.Console.csproj -- inmemory
+    /// dotnet run -f net9.0 --project Examples.Console.csproj -- zipkin -u http://localhost:9411/api/v2/spans
+    /// dotnet run -f net9.0 --project Examples.Console.csproj -- prometheus -p 9464
+    /// dotnet run -f net9.0 --project Examples.Console.csproj -- otlp -e "http://localhost:4317" -p "grpc"
+    /// dotnet run -f net48 --project Examples.Console.csproj -- otlp -e "https://localhost:4317" -p "grpc"
+    /// dotnet run -f net9.0 --project Examples.Console.csproj -- metrics --help
     ///
     /// To see all available examples in the project run:
     ///
-    /// dotnet run --project Examples.Console.csproj -- --help
+    /// dotnet run -f net9.0 --project Examples.Console.csproj -- --help
     ///
     /// The above must be run from the project root folder
     /// (eg: C:\repos\opentelemetry-dotnet\examples\Console\).
