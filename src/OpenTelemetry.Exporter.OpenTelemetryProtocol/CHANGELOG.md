@@ -13,6 +13,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed an issue in .NET Framework where OTLP export of traces, logs, and
   metrics using `OtlpExportProtocol.Grpc` did not correctly set the initial
   write position, resulting in gRPC protocol errors.
+  ([#6280](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6280))
 
 ## 1.12.0
 
