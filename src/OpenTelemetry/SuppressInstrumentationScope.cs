@@ -73,10 +73,12 @@ public sealed class SuppressInstrumentationScope : IDisposable
         if (currentScope == null)
         {
             Slot.Set(
+#pragma warning disable CA2000 // Dispose objects before losing scope
                 new SuppressInstrumentationScope()
                 {
                     Depth = 1,
                 });
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
             return 1;
         }
