@@ -102,13 +102,13 @@ internal readonly struct Tags : IEquatable<Tags>
     {
         Debug.Assert(keyValuePairs != null, "keyValuePairs was null");
 
-#if NET
+#if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
 
         for (int i = 0; i < keyValuePairs.Length; i++)
         {
             ref var item = ref keyValuePairs[i];
-            hashCode.Add(item.Key.GetHashCode());
+            hashCode.Add(item.Key.GetHashCode(StringComparison.Ordinal));
             hashCode.Add(item.Value);
         }
 

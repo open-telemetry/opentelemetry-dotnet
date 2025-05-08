@@ -18,7 +18,11 @@ internal static class WildcardHelper
             return false;
         }
 
+#if NET || NETSTANDARD2_1_OR_GREATER
+        return value.Contains('*', StringComparison.Ordinal) || value.Contains('?', StringComparison.Ordinal);
+#else
         return value.Contains('*') || value.Contains('?');
+#endif
     }
 
     public static Regex GetWildcardRegex(IEnumerable<string> patterns)
@@ -27,7 +31,11 @@ internal static class WildcardHelper
 
         var convertedPattern = string.Join(
             "|",
+#if NET || NETSTANDARD2_1_OR_GREATER
+            from p in patterns select "(?:" + Regex.Escape(p).Replace("\\*", ".*", StringComparison.Ordinal).Replace("\\?", ".", StringComparison.Ordinal) + ')');
+#else
             from p in patterns select "(?:" + Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", ".") + ')');
+#endif
 
         return new Regex("^(?:" + convertedPattern + ")$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     }

@@ -28,7 +28,9 @@ public static class OpenTelemetrySdkExtensions
     {
         Guard.ThrowIfNull(sdk);
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         return (ILoggerFactory?)sdk.Services.GetService(typeof(ILoggerFactory))
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
             ?? NullLoggerFactory.Instance;
     }
 }

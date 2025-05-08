@@ -29,7 +29,9 @@ public readonly struct Batch<T> : IDisposable
     public Batch(T[] items, int count)
     {
         Guard.ThrowIfNull(items);
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         Guard.ThrowIfOutOfRange(count, min: 0, max: items.Length);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
         this.items = items;
         this.Count = this.targetCount = count;

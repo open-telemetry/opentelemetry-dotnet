@@ -74,7 +74,9 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
     }
 
     /// <inheritdoc />
+#pragma warning disable CA1033 // Interface methods should be callable by child types
     MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
+#pragma warning restore CA1033 // Interface methods should be callable by child types
     {
         this.innerBuilder.ConfigureBuilder(configure);
 
