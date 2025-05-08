@@ -5,6 +5,7 @@
 using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
+using System.Globalization;
 
 namespace OpenTelemetry.Metrics;
 
@@ -23,7 +24,7 @@ public struct Exemplar
     internal HashSet<string>? ViewDefinedTagKeys;
 #endif
 
-    private static readonly ReadOnlyFilteredTagCollection Empty = new(excludedKeys: null, Array.Empty<KeyValuePair<string, object?>>(), count: 0);
+    private static readonly ReadOnlyFilteredTagCollection Empty = new(excludedKeys: null, [], count: 0);
     private int tagCount;
     private KeyValuePair<string, object?>[]? tagStorage;
     private MetricPointValueStorage valueStorage;
@@ -115,7 +116,7 @@ public struct Exemplar
         else
         {
             Debug.Fail("Invalid value type");
-            this.DoubleValue = Convert.ToDouble(measurement.Value);
+            this.DoubleValue = Convert.ToDouble(measurement.Value, CultureInfo.InvariantCulture);
         }
 
         var currentActivity = Activity.Current;

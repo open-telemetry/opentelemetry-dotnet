@@ -7,7 +7,9 @@ namespace OpenTelemetry.Metrics;
 /// Describes the mode of a metric exporter.
 /// </summary>
 [Flags]
+#pragma warning disable CA1028 // Enum storage should be Int32
 public enum ExportModes : byte
+#pragma warning restore CA1028 // Enum storage should be Int32
 {
     /*
     0 0 0 0 0 0 0 0
