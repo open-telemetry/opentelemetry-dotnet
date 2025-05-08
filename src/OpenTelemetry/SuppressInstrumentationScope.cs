@@ -17,7 +17,9 @@ public sealed class SuppressInstrumentationScope : IDisposable
     // * Depth = [1, int.MaxValue]: instrumentation is suppressed in a reference-counting mode
     private static readonly RuntimeContextSlot<SuppressInstrumentationScope?> Slot = RuntimeContext.RegisterSlot<SuppressInstrumentationScope?>("otel.suppress_instrumentation");
 
+#pragma warning disable CA2213 // Disposable fields should be disposed
     private readonly SuppressInstrumentationScope? previousScope;
+#pragma warning restore CA2213 // Disposable fields should be disposed
     private bool disposed;
 
     internal SuppressInstrumentationScope(bool value = true)
