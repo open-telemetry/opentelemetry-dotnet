@@ -76,7 +76,7 @@ public class ZipkinActivityConversionTests
 
     [Theory]
     [InlineData(StatusCode.Unset, "unset")]
-    [InlineData(StatusCode.Ok, "Ok")]
+    [InlineData(StatusCode.Ok, "OK")]
     [InlineData(StatusCode.Error, "ERROR")]
     [InlineData(StatusCode.Unset, "iNvAlId")]
     [Obsolete("Remove when ActivityExtensions status APIs are removed")]
@@ -106,11 +106,11 @@ public class ZipkinActivityConversionTests
 
         if (expectedStatusCode == StatusCode.Error)
         {
-            Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && ((string?)t.Value)?.Length == 0);
+            Assert.Contains(zipkinSpan.Tags, t => t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName && ((string?)t.Value)?.Length == 0);
         }
         else
         {
-            Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "error");
+            Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName);
         }
     }
 
@@ -157,6 +157,45 @@ public class ZipkinActivityConversionTests
                 zipkinSpan.Tags, t =>
                 t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName);
         }
+    }
+
+    [Theory]
+    [InlineData("FromStatusDescription", null, null, "FromStatusDescription")]
+    [InlineData(null, "FromStatusDescriptionKeyTag", null, "FromStatusDescriptionKeyTag")]
+    [InlineData(null, null, "FromZipkinErrorFlagTag", "FromZipkinErrorFlagTag")]
+    [InlineData(null, null, null, "")]
+    public void ToZipkinSpan_StatusDescription_ErrorTagTest(
+        string? statusDescription,
+        string? statusDescriptionTag,
+        string? zipkinErrorTag,
+        string expectedErrorTagValue)
+    {
+        // Arrange
+        using var activity = ZipkinActivitySource.CreateTestActivity();
+        activity.SetStatus(ActivityStatusCode.Error);
+
+        if (statusDescription != null)
+        {
+            activity.SetStatus(ActivityStatusCode.Error, statusDescription);
+        }
+
+        if (statusDescriptionTag != null)
+        {
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, statusDescriptionTag);
+        }
+
+        if (zipkinErrorTag != null)
+        {
+            activity.SetTag(ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName, zipkinErrorTag);
+        }
+
+        // Act
+        var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
+
+        // Assert
+        var errorTag = zipkinSpan.Tags.FirstOrDefault(t => t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName);
+
+        Assert.Equal(expectedErrorTagValue, errorTag.Value);
     }
 
     [Fact]
