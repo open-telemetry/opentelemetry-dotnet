@@ -305,13 +305,6 @@ internal static class ZipkinActivityConversionExtensions
             return endpoint;
         }
 
-        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeHttpHost) as string;
-        endpoint = TryCreateEndpoint(remoteEndpoint);
-        if (endpoint != null)
-        {
-            return endpoint;
-        }
-
         return null;
     }
 

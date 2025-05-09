@@ -145,12 +145,6 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributePeerService] = "PeerService",
             },
         },
-        new()
-        {
-            Name = "Backward compatibility(http.host)",
-            ExpectedResult = "http://localhost:44312/",
-            RemoteEndpointAttributes = [],
-        },
     ];
 
     public string? Name { get; private set; }

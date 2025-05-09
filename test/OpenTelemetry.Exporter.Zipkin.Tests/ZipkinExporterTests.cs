@@ -359,6 +359,8 @@ public sealed class ZipkinExporterTests : IDisposable
             exporter.SetLocalEndpointFromResource(Resource.Empty);
         }
 
+        activity.SetTag(SemanticConventions.AttributePeerService, "http://localhost:44312/");
+
         if (addErrorTag)
         {
             activity.SetTag(ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName, "This should be removed.");
@@ -438,6 +440,7 @@ public sealed class ZipkinExporterTests : IDisposable
                 + @"""http.host"":""http://localhost:44312/"","
                 + $@"""dateTimeKey"":""{Convert.ToString(dateTime, CultureInfo.InvariantCulture)}"","
                 + $@"""dateTimeArrayKey"":""[\u0022{Convert.ToString(dateTime, CultureInfo.InvariantCulture)}\u0022]"","
+                + $@"""peer.service"":""http://localhost:44312/"","
                 + statusTag
                 + errorTag
                 + @"""otel.scope.name"":""ZipkinActivitySource"","
