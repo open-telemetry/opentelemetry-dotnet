@@ -23,7 +23,7 @@ internal sealed class AggregatorStore
     internal readonly int NumberOfMetricPoints;
     internal readonly ConcurrentDictionary<Tags, LookupData>? TagsToMetricPointIndexDictionaryDelta;
     internal readonly Func<ExemplarReservoir?>? ExemplarReservoirFactory;
-    internal long DroppedMeasurements = 0;
+    internal long DroppedMeasurements;
 
     private const ExemplarFilterType DefaultExemplarFilter = ExemplarFilterType.AlwaysOff;
     private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
@@ -50,8 +50,8 @@ internal sealed class AggregatorStore
     private readonly ExemplarFilterType exemplarFilter;
     private readonly Func<KeyValuePair<string, object?>[], int, int> lookupAggregatorStore;
 
-    private int metricPointIndex = 0;
-    private int batchSize = 0;
+    private int metricPointIndex;
+    private int batchSize;
     private bool zeroTagMetricPointInitialized;
     private bool overflowTagMetricPointInitialized;
 

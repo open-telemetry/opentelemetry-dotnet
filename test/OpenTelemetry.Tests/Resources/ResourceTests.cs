@@ -6,7 +6,7 @@ using Xunit;
 
 namespace OpenTelemetry.Resources.Tests;
 
-public class ResourceTests : IDisposable
+public sealed class ResourceTests : IDisposable
 {
     private const string KeyName = "key";
     private const string ValueName = "value";
@@ -165,18 +165,26 @@ public class ResourceTests : IDisposable
     public void CreateResource_SupportedAttributeArrayTypes()
     {
         // Arrange
+        string[] stringArray = ["stringValue"];
+        bool[] boolArray = [true];
+        double[] doubleArray = [0.1D];
+        long[] longArray = [1L];
+        int[] intArray = [1];
+        short[] shortArray = [1];
+        float[] floatArray = [0.1f];
+
         var attributes = new Dictionary<string, object>
         {
             // natively supported array types
-            { "string arr", new string[] { "stringValue" } },
-            { "bool arr", new bool[] { true } },
-            { "double arr", new double[] { 0.1d } },
-            { "long arr", new long[] { 1L } },
+            { "string arr", stringArray },
+            { "bool arr", boolArray },
+            { "double arr", doubleArray },
+            { "long arr", longArray },
 
             // have to convert to other primitive array types
-            { "int arr", new int[] { 1 } },
-            { "short arr", new short[] { (short)1 } },
-            { "float arr", new float[] { 0.1f } },
+            { "int arr", intArray },
+            { "short arr", shortArray },
+            { "float arr", floatArray },
         };
 
         // Act
@@ -184,16 +192,15 @@ public class ResourceTests : IDisposable
 
         // Assert
         Assert.Equal(7, resource.Attributes.Count());
-        Assert.Equal(new string[] { "stringValue" }, resource.Attributes.Where(x => x.Key == "string arr").FirstOrDefault().Value);
-        Assert.Equal(new bool[] { true }, resource.Attributes.Where(x => x.Key == "bool arr").FirstOrDefault().Value);
-        Assert.Equal(new double[] { 0.1d }, resource.Attributes.Where(x => x.Key == "double arr").FirstOrDefault().Value);
-        Assert.Equal(new long[] { 1L }, resource.Attributes.Where(x => x.Key == "long arr").FirstOrDefault().Value);
+        Assert.Equal(stringArray, resource.Attributes.FirstOrDefault(x => x.Key == "string arr").Value);
+        Assert.Equal(boolArray, resource.Attributes.FirstOrDefault(x => x.Key == "bool arr").Value);
+        Assert.Equal(doubleArray, resource.Attributes.FirstOrDefault(x => x.Key == "double arr").Value);
+        Assert.Equal(longArray, resource.Attributes.FirstOrDefault(x => x.Key == "long arr").Value);
 
-        var longArr = new long[] { 1 };
-        var doubleArr = new double[] { Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture) };
-        Assert.Equal(longArr, resource.Attributes.Where(x => x.Key == "int arr").FirstOrDefault().Value);
-        Assert.Equal(longArr, resource.Attributes.Where(x => x.Key == "short arr").FirstOrDefault().Value);
-        Assert.Equal(doubleArr, resource.Attributes.Where(x => x.Key == "float arr").FirstOrDefault().Value);
+        double[] nonNativeDoubleArray = [Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture)];
+        Assert.Equal(longArray, resource.Attributes.FirstOrDefault(x => x.Key == "int arr").Value);
+        Assert.Equal(longArray, resource.Attributes.FirstOrDefault(x => x.Key == "short arr").Value);
+        Assert.Equal(nonNativeDoubleArray, resource.Attributes.FirstOrDefault(x => x.Key == "float arr").Value);
     }
 
     [Fact]
@@ -561,15 +568,15 @@ public class ResourceTests : IDisposable
     {
         Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
         Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
-        var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
+        var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version", StringComparison.Ordinal));
         Assert.Single(versionAttribute);
     }
 
     internal static void ValidateDefaultAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
     {
-        var serviceName = attributes.Where(pair => pair.Key.Equals("service.name"));
+        var serviceName = attributes.Where(pair => pair.Key.Equals("service.name", StringComparison.Ordinal));
         Assert.Single(serviceName);
-        Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string);
+        Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string, StringComparison.Ordinal);
     }
 
     private static void ClearEnvVars()

@@ -25,7 +25,9 @@
   </Target>
 
   <ItemGroup>
+    <PackageReference Include="GitHubActionsTestLogger" />
     <PackageReference Include="Grpc.AspNetCore.Server" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
+    <PackageReference Include="JunitXml.TestLogger" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Http" />

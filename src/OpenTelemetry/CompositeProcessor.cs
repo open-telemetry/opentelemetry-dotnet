@@ -27,7 +27,7 @@ public class CompositeProcessor<T> : BaseProcessor<T>
         using var iter = processors.GetEnumerator();
         if (!iter.MoveNext())
         {
-            throw new ArgumentException($"'{iter}' is null or empty", nameof(iter));
+            throw new ArgumentException($"'{iter}' is null or empty", nameof(processors));
         }
 
         this.Head = new DoublyLinkedListNode(iter.Current);

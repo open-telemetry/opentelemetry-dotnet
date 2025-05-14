@@ -16,20 +16,26 @@ public class Base2ExponentialBucketHistogramHelperTests
         this.output = output;
     }
 
-    public static IEnumerable<object[]> GetNonPositiveScales()
+    public static TheoryData<int> GetNonPositiveScales()
     {
+        TheoryData<int> theoryData = [];
         for (var i = -11; i <= 0; ++i)
         {
-            yield return new object[] { i };
+            theoryData.Add(i);
         }
+
+        return theoryData;
     }
 
-    public static IEnumerable<object[]> GetPositiveScales()
+    public static TheoryData<int> GetPositiveScales()
     {
+        TheoryData<int> theoryData = [];
         for (var i = 1; i <= 20; ++i)
         {
-            yield return new object[] { i };
+            theoryData.Add(i);
         }
+
+        return theoryData;
     }
 
     [Theory]

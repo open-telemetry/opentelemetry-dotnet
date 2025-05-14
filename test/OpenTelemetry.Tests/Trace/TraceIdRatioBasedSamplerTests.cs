@@ -9,7 +9,6 @@ namespace OpenTelemetry.Trace.Tests;
 public class TraceIdRatioBasedSamplerTests
 {
     private const string ActivityDisplayName = "MyActivityName";
-    private static readonly ActivityKind ActivityKindServer = ActivityKind.Server;
 
     [Fact]
     public void OutOfRangeHighProbability()
@@ -52,7 +51,7 @@ public class TraceIdRatioBasedSamplerTests
             ]);
         Assert.Equal(
             SamplingDecision.Drop,
-            defaultProbability.ShouldSample(new SamplingParameters(default, notSampledtraceId, ActivityDisplayName, ActivityKindServer, null, null)).Decision);
+            defaultProbability.ShouldSample(new SamplingParameters(default, notSampledtraceId, ActivityDisplayName, ActivityKind.Server, null, null)).Decision);
 
         // This traceId will be sampled by the TraceIdRatioBasedSampler because the first 8 bytes as long
         // is less than probability * Long.MAX_VALUE;
@@ -78,7 +77,7 @@ public class TraceIdRatioBasedSamplerTests
             ]);
         Assert.Equal(
             SamplingDecision.RecordAndSample,
-            defaultProbability.ShouldSample(new SamplingParameters(default, sampledtraceId, ActivityDisplayName, ActivityKindServer, null, null)).Decision);
+            defaultProbability.ShouldSample(new SamplingParameters(default, sampledtraceId, ActivityDisplayName, ActivityKind.Server, null, null)).Decision);
     }
 
     [Fact]

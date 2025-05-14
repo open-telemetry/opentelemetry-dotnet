@@ -28,7 +28,7 @@ public class MetricsConcurrencyTests
             .WithTestingIterations(100)
             .WithMemoryAccessRaceCheckingEnabled(true);
 
-        var test = TestingEngine.Create(config, this.aggregatorTests.MultiThreadedHistogramUpdateAndSnapShotTest);
+        using var test = TestingEngine.Create(config, this.aggregatorTests.MultiThreadedHistogramUpdateAndSnapShotTest);
 
         test.Run();
 
