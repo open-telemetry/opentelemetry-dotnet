@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Globalization;
 
 namespace OpenTelemetry.Metrics;
 
@@ -190,7 +191,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
             for (int i = 0; i < adviceExplicitBucketBoundaries.Count; i++)
             {
-                explicitBucketBoundaries[i] = Convert.ToDouble(adviceExplicitBucketBoundaries[i]);
+                explicitBucketBoundaries[i] = Convert.ToDouble(adviceExplicitBucketBoundaries[i], CultureInfo.InvariantCulture);
             }
 
             return explicitBucketBoundaries;

@@ -35,7 +35,9 @@ public abstract class BaseExportProcessor<T> : BaseProcessor<T>
     /// <summary>
     /// Gets the exporter used by the processor.
     /// </summary>
+#pragma warning disable CA1051 // Do not declare visible instance fields
     protected readonly BaseExporter<T> exporter;
+#pragma warning restore CA1051 // Do not declare visible instance fields
 
     private readonly string friendlyTypeName;
     private bool disposed;

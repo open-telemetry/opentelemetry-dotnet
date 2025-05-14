@@ -351,3 +351,6 @@ tempo-data/
 
 # Coyote Rewrite Files
 rewrite.coyote.json
+
+# Test results
+TestResults/

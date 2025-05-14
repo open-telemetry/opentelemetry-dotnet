@@ -7,7 +7,9 @@ namespace OpenTelemetry.Metrics;
 /// Defines the behavior of a <see cref="MetricReader" />
 /// with respect to <see cref="AggregationTemporality" />.
 /// </summary>
+#pragma warning disable CA1008 // Enums should have zero value
 public enum MetricReaderTemporalityPreference
+#pragma warning restore CA1008 // Enums should have zero value
 {
     /// <summary>
     /// All aggregations are performed using cumulative temporality.
