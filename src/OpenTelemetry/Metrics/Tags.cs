@@ -11,7 +11,7 @@ namespace OpenTelemetry.Metrics;
 
 internal readonly struct Tags : IEquatable<Tags>
 {
-    public static readonly Tags EmptyTags = new(Array.Empty<KeyValuePair<string, object?>>());
+    public static readonly Tags EmptyTags = new([]);
 
     private readonly int hashCode;
 
@@ -53,8 +53,7 @@ internal readonly struct Tags : IEquatable<Tags>
             ref var theirs = ref MemoryMarshal.GetArrayDataReference(theirKvps);
             while (true)
             {
-                // Note: string.Equals performs an ordinal comparison
-                if (!ours.Key.Equals(theirs.Key))
+                if (!ours.Key.Equals(theirs.Key, StringComparison.Ordinal))
                 {
                     return false;
                 }
@@ -81,8 +80,7 @@ internal readonly struct Tags : IEquatable<Tags>
             // Note: Bounds check happens here for theirKvps element access
             ref var theirs = ref theirKvps[i];
 
-            // Note: string.Equals performs an ordinal comparison
-            if (!ours.Key.Equals(theirs.Key))
+            if (!ours.Key.Equals(theirs.Key, StringComparison.Ordinal))
             {
                 return false;
             }

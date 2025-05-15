@@ -95,7 +95,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             }
             else
             {
-                this.reader = new CompositeMetricReader(new[] { this.reader, reader });
+                this.reader = new CompositeMetricReader([this.reader, reader]);
             }
 
             if (reader is PeriodicExportingMetricReader periodicExportingMetricReader)
@@ -122,7 +122,7 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         this.compositeMetricReader = this.reader as CompositeMetricReader;
 
-        if (state.Instrumentation.Any())
+        if (state.Instrumentation.Count > 0)
         {
             foreach (var instrumentation in state.Instrumentation)
             {

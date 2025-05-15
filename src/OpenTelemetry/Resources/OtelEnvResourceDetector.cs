@@ -31,7 +31,7 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
         return resource;
     }
 
-    private static IEnumerable<KeyValuePair<string, object>> ParseResourceAttributes(string resourceAttributes)
+    private static List<KeyValuePair<string, object>> ParseResourceAttributes(string resourceAttributes)
     {
         var attributes = new List<KeyValuePair<string, object>>();
 

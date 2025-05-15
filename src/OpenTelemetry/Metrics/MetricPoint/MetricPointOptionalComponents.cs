@@ -22,7 +22,7 @@ internal sealed class MetricPointOptionalComponents
 
     public ReadOnlyExemplarCollection Exemplars = ReadOnlyExemplarCollection.Empty;
 
-    private int isCriticalSectionOccupied = 0;
+    private int isCriticalSectionOccupied;
 
     public MetricPointOptionalComponents Copy()
     {
