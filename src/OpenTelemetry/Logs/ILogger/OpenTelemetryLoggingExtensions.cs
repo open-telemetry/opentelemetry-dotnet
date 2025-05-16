@@ -42,7 +42,9 @@ public static class OpenTelemetryLoggingExtensions
     [Obsolete("Call UseOpenTelemetry instead this method will be removed in a future version.")] */
     public static ILoggingBuilder AddOpenTelemetry(
         this ILoggingBuilder builder)
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         => AddOpenTelemetryInternal(builder, configureBuilder: null, configureOptions: null);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
     /// <summary>
     /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
@@ -58,7 +60,9 @@ public static class OpenTelemetryLoggingExtensions
     public static ILoggingBuilder AddOpenTelemetry(
         this ILoggingBuilder builder,
         Action<OpenTelemetryLoggerOptions>? configure)
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         => AddOpenTelemetryInternal(builder, configureBuilder: null, configureOptions: configure);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -80,7 +84,9 @@ public static class OpenTelemetryLoggingExtensions
 #endif
         static ILoggingBuilder UseOpenTelemetry(
         this ILoggingBuilder builder)
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         => AddOpenTelemetryInternal(builder, configureBuilder: null, configureOptions: null);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -103,7 +109,9 @@ public static class OpenTelemetryLoggingExtensions
     {
         Guard.ThrowIfNull(configure);
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         return AddOpenTelemetryInternal(builder, configureBuilder: configure, configureOptions: null);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
     }
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
@@ -126,7 +134,9 @@ public static class OpenTelemetryLoggingExtensions
         this ILoggingBuilder builder,
         Action<LoggerProviderBuilder>? configureBuilder,
         Action<OpenTelemetryLoggerOptions>? configureOptions)
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         => AddOpenTelemetryInternal(builder, configureBuilder, configureOptions);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
     private static ILoggingBuilder AddOpenTelemetryInternal(
         ILoggingBuilder builder,

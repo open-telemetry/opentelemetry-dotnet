@@ -46,7 +46,7 @@ internal static class AssemblyVersionExtensions
         // The following parts are optional: pre-release label, pre-release version, git height, Git SHA of current commit
         // For package version, value of AssemblyInformationalVersionAttribute without commit hash is returned.
 
-#if NET
+#if NET || NETSTANDARD2_1_OR_GREATER
         var indexOfPlusSign = informationalVersion.IndexOf('+', StringComparison.Ordinal);
 #else
         var indexOfPlusSign = informationalVersion.IndexOf('+');

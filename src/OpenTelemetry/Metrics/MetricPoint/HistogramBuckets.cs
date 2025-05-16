@@ -162,7 +162,9 @@ public class HistogramBuckets
     /// Enumerates the elements of a <see cref="HistogramBuckets"/>.
     /// </summary>
     // Note: Does not implement IEnumerator<> to prevent accidental boxing.
+#pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     public struct Enumerator
+#pragma warning restore CA1034 // Nested types should not be visible - already part of public API
     {
         private readonly int numberOfBuckets;
         private readonly HistogramBuckets histogramMeasurements;

@@ -33,7 +33,9 @@ public sealed class ParentBasedSampler : Sampler
         Guard.ThrowIfNull(rootSampler);
 
         this.rootSampler = rootSampler;
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         this.Description = $"ParentBased{{{rootSampler.Description}}}";
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
         this.remoteParentSampled = new AlwaysOnSampler();
         this.remoteParentNotSampled = new AlwaysOffSampler();

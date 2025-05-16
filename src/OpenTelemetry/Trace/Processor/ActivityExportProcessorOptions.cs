@@ -26,7 +26,9 @@ public class ActivityExportProcessorOptions
     {
         Debug.Assert(defaultBatchExportActivityProcessorOptions != null, "defaultBatchExportActivityProcessorOptions was null");
 
+#pragma warning disable CA1508 // Avoid dead conditional code
         this.batchExportProcessorOptions = defaultBatchExportActivityProcessorOptions ?? new();
+#pragma warning restore CA1508 // Avoid dead conditional code
     }
 
     /// <summary>
