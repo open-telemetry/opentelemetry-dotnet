@@ -5,6 +5,9 @@ name: Publish & Verify AOT Compatibility
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   run-verify-aot-compat:
 
