@@ -18,3 +18,338 @@ updates:
         update-types:
           - "version-update:semver-major"
           - "version-update:semver-minor"
+
+  - package-ecosystem: nuget
+    directory: /docs/logs/complex-objects
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/logs/correlation
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/logs/customizing-the-sdk
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/logs/dedicated-pipeline
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/logs/extending-the-sdk
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/logs/getting-started-aspnetcore
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/logs/getting-started-console
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/logs/redaction
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/metrics/customizing-the-sdk
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/metrics/exemplars
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/metrics/extending-the-sdk
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/metrics/getting-started-aspnetcore
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/metrics/getting-started-console
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/metrics/getting-started-prometheus-grafana
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/metrics/learning-more-instruments
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/resources/extending-the-sdk
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/trace/customizing-the-sdk
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/trace/extending-the-sdk
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/trace/getting-started-aspnetcore
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/trace/getting-started-console
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/trace/getting-started-jaeger
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/trace/links-based-sampler
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/trace/links-creation-with-new-activities
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/trace/reporting-exceptions
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/trace/stratified-sampling-example
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /docs/trace/tail-based-sampling-span-level
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /examples/AspNetCore
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /examples/Console
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /examples/GrpcService
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /examples/MicroserviceExample/Utils
+    schedule:
+      interval: daily
+
+  - package-ecosystem: docker
+    directory: /examples/MicroserviceExample/WebApi
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /examples/MicroserviceExample/WebApi
+    schedule:
+      interval: daily
+
+  - package-ecosystem: docker
+    directory: /examples/MicroserviceExample/WorkerService
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /examples/MicroserviceExample/WorkerService
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry.Api.ProviderBuilderExtensions
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry.Api
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry.Exporter.Console
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry.Exporter.InMemory
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry.Exporter.OpenTelemetryProtocol
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry.Exporter.Prometheus.AspNetCore
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry.Exporter.Prometheus.HttpListener
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry.Exporter.Zipkin
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry.Extensions.Hosting
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry.Extensions.Propagators
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry.Shims.OpenTracing
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/OpenTelemetry
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/Benchmarks
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.AotCompatibility.TestApp
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Api.ProviderBuilderExtensions.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Api.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Exporter.Console.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: docker
+    directory: /test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Exporter.Prometheus.HttpListener.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Exporter.Zipkin.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Extensions.Hosting.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Extensions.Propagators.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: docker
+    directory: /test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Shims.OpenTracing.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Tests.Stress.Logs
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Tests.Stress.Metrics
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Tests.Stress.Traces
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Tests.Stress
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/OpenTelemetry.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /test/TestApp.AspNetCore
+    schedule:
+      interval: daily
