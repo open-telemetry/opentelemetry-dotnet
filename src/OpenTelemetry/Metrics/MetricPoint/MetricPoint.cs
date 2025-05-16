@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -10,6 +11,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Represents a metric data point.
 /// </summary>
+[StructLayout(LayoutKind.Auto)]
 public struct MetricPoint
 {
     // Represents the number of update threads using this MetricPoint at any given point of time.
@@ -22,8 +24,9 @@ public struct MetricPoint
     private const int DefaultSimpleReservoirPoolSize = 1;
 
     private readonly AggregatorStore aggregatorStore;
+    private readonly byte type;
 
-    private readonly AggregationType aggType;
+    private byte status;
 
     private MetricPointOptionalComponents? mpComponents;
 
@@ -48,7 +51,7 @@ public struct MetricPoint
         Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
         Debug.Assert(!aggregatorStore!.OutputDelta || lookupData != null, "LookupData was null.");
 
-        this.aggType = aggType;
+        this.type = (byte)aggType;
         this.Tags = new ReadOnlyTagCollection(tagKeysAndValues);
         this.runningValue = default;
         this.snapshotValue = default;
@@ -145,11 +148,8 @@ public struct MetricPoint
 
     internal MetricPointStatus MetricPointStatus
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        readonly get;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private set;
+        readonly get => (MetricPointStatus)this.status;
+        private set => this.status = (byte)value;
     }
 
     // When the AggregatorStore is reclaiming MetricPoints, this serves the purpose of validating the a given thread is using the right
@@ -159,6 +159,10 @@ public struct MetricPoint
     internal LookupData? LookupData { readonly get; private set; }
 
     internal readonly bool IsInitialized => this.aggregatorStore != null;
+
+#pragma warning disable SA1300 // TEMP naming supression (will rename to Type)
+    private readonly AggregationType aggType => (AggregationType)this.type;
+#pragma warning restore SA1300
 
     /// <summary>
     /// Gets the sum long value associated with the metric point.
@@ -394,7 +398,7 @@ public struct MetricPoint
             case AggregationType.LongSumIncomingCumulative:
             case AggregationType.LongGauge:
                 {
-                    Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                    Volatile.Write(ref this.runningValue.AsLong, number);
                     break;
                 }
 
@@ -451,7 +455,7 @@ public struct MetricPoint
             case AggregationType.LongSumIncomingCumulative:
             case AggregationType.LongGauge:
                 {
-                    Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                    Volatile.Write(ref this.runningValue.AsLong, number);
                     break;
                 }
 
@@ -510,7 +514,7 @@ public struct MetricPoint
             case AggregationType.DoubleSumIncomingCumulative:
             case AggregationType.DoubleGauge:
                 {
-                    Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                    Volatile.Write(ref this.runningValue.AsDouble, number);
                     break;
                 }
 
@@ -567,7 +571,7 @@ public struct MetricPoint
             case AggregationType.DoubleSumIncomingCumulative:
             case AggregationType.DoubleGauge:
                 {
-                    Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                    Volatile.Write(ref this.runningValue.AsDouble, number);
                     break;
                 }
 
@@ -622,7 +626,7 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
-                        long initValue = Interlocked.Read(ref this.runningValue.AsLong);
+                        long initValue = Volatile.Read(ref this.runningValue.AsLong);
                         this.snapshotValue.AsLong = initValue - this.deltaLastValue.AsLong;
                         this.deltaLastValue.AsLong = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
@@ -631,12 +635,12 @@ public struct MetricPoint
                         // This ensures no Updates get Lost.
                         if (initValue != Interlocked.Read(ref this.runningValue.AsLong))
                         {
-                            this.MetricPointStatus = MetricPointStatus.CollectPending;
+                            Volatile.Write(ref this.status, (byte)MetricPointStatus.CollectPending);
                         }
                     }
                     else
                     {
-                        this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
+                        this.snapshotValue.AsLong = Volatile.Read(ref this.runningValue.AsLong);
                     }
 
                     break;
@@ -647,51 +651,38 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
-                        double initValue = InterlockedHelper.Read(ref this.runningValue.AsDouble);
+                        double initValue = Volatile.Read(ref this.runningValue.AsDouble);
                         this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
                         this.deltaLastValue.AsDouble = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                         // Check again if value got updated, if yes reset status.
                         // This ensures no Updates get Lost.
-                        if (initValue != InterlockedHelper.Read(ref this.runningValue.AsDouble))
+                        long initValueLong = BitConverter.DoubleToInt64Bits(initValue);
+                        if (initValueLong != Interlocked.Read(ref this.runningValue.AsLong))
                         {
-                            this.MetricPointStatus = MetricPointStatus.CollectPending;
+                            Volatile.Write(ref this.status, (byte)MetricPointStatus.CollectPending);
                         }
                     }
                     else
                     {
-                        this.snapshotValue.AsDouble = InterlockedHelper.Read(ref this.runningValue.AsDouble);
+                        this.snapshotValue.AsLong = Volatile.Read(ref this.runningValue.AsLong);
                     }
 
                     break;
                 }
 
             case AggregationType.LongGauge:
+            case AggregationType.DoubleGauge:
                 {
-                    this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
+                    this.snapshotValue.AsLong = Volatile.Read(ref this.runningValue.AsLong);
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     // Check again if value got updated, if yes reset status.
                     // This ensures no Updates get Lost.
                     if (this.snapshotValue.AsLong != Interlocked.Read(ref this.runningValue.AsLong))
                     {
-                        this.MetricPointStatus = MetricPointStatus.CollectPending;
-                    }
-
-                    break;
-                }
-
-            case AggregationType.DoubleGauge:
-                {
-                    this.snapshotValue.AsDouble = InterlockedHelper.Read(ref this.runningValue.AsDouble);
-                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                    // Check again if value got updated, if yes reset status.
-                    // This ensures no Updates get Lost.
-                    if (this.snapshotValue.AsDouble != InterlockedHelper.Read(ref this.runningValue.AsDouble))
-                    {
-                        this.MetricPointStatus = MetricPointStatus.CollectPending;
+                        Volatile.Write(ref this.status, (byte)MetricPointStatus.CollectPending);
                     }
 
                     break;
@@ -1078,7 +1069,7 @@ public struct MetricPoint
         // it had no update.
         // TODO: For Delta, this can be mitigated
         // by ignoring Zero points
-        this.MetricPointStatus = MetricPointStatus.CollectPending;
+        Volatile.Write(ref this.status, (byte)MetricPointStatus.CollectPending);
 
         this.CompleteUpdateWithoutMeasurement();
     }
