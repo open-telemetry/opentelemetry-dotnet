@@ -24,4 +24,22 @@ internal static class SemanticConventions
     public const string AttributeExceptionType = "exception.type";
     public const string AttributeExceptionMessage = "exception.message";
     public const string AttributeExceptionStacktrace = "exception.stacktrace";
+
+    public const string AttributeServerAddress = "server.address";
+
+    public const string AttributeNetworkPeerAddress = "network.peer.address";
+    public const string AttributeNetworkPeerPort = "network.peer.port";
+
+    public const string AttributeServerSocketDomain = "server.socket.domain";
+    public const string AttributeServerSocketAddress = "server.socket.address";
+    public const string AttributeServerSocketPort = "server.socket.port";
+
+    public const string AttributeNetSockPeerName = "net.sock.peer.name";
+    public const string AttributeNetSockPeerAddr = "net.sock.peer.addr";
+    public const string AttributeNetSockPeerPort = "net.sock.peer.port";
+
+    public const string AttributePeerHostname = "peer.hostname";
+    public const string AttributePeerAddress = "peer.address";
+
+    public const string AttributeDbName = "db.name";
 }
