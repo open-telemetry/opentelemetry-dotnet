@@ -33,6 +33,7 @@ public class HistogramBuckets
 
     internal HistogramBuckets(double[]? explicitBounds)
     {
+        explicitBounds = CleanUpInfinitiesFromExplicitBounds(explicitBounds);
         this.ExplicitBounds = explicitBounds;
         this.findHistogramBucketIndex = this.FindBucketIndexLinear;
         if (explicitBounds != null && explicitBounds.Length >= DefaultBoundaryCountForBinarySearch)
@@ -61,6 +62,9 @@ public class HistogramBuckets
 
         this.BucketCounts = explicitBounds != null ? new HistogramBucketValues[explicitBounds.Length + 1] : Array.Empty<HistogramBucketValues>();
     }
+
+    private static double[]? CleanUpInfinitiesFromExplicitBounds(double[]? explicitBounds) => explicitBounds
+        ?.Where(b => !double.IsNegativeInfinity(b) && !double.IsPositiveInfinity(b)).ToArray();
 
     /// <summary>
     /// Returns an enumerator that iterates through the <see cref="HistogramBuckets"/>.

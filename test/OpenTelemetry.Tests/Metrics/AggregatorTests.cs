@@ -450,6 +450,85 @@ public class AggregatorTests
         Assert.Equal(expectedScale, metricPoint.GetExponentialHistogramData().Scale);
     }
 
+    [Theory]
+    [MemberData(nameof(HistogramInfinityBoundariesTestCases))]
+    public void HistogramBucketBoundariesTest(HistogramBoundaryTestCase boundaryTestCase)
+    {
+        // Arrange
+        var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null,
+            boundaryTestCase.InputBoundaries, Metric.DefaultExponentialHistogramMaxBuckets,
+            Metric.DefaultExponentialHistogramMaxScale);
+        var expectedTotalBuckets = boundaryTestCase.ExpectedBucketCounts.Length;
+
+        // Act
+        foreach (var value in boundaryTestCase.InputValues)
+        {
+            histogramPoint.Update(value);
+        }
+
+        histogramPoint.TakeSnapshot(true);
+
+        // Assert
+        var count = histogramPoint.GetHistogramCount();
+        Assert.Equal(boundaryTestCase.InputValues.Length, count);
+
+        int bucketIndex = 0;
+        int actualBucketCount = 0;
+
+        foreach (var histogramBucket in histogramPoint.GetHistogramBuckets())
+        {
+            Assert.Equal(boundaryTestCase.ExpectedBucketCounts[bucketIndex], histogramBucket.BucketCount);
+            Assert.Equal(boundaryTestCase.ExpectedBucketBounds[bucketIndex], histogramBucket.ExplicitBound);
+            bucketIndex++;
+            actualBucketCount++;
+        }
+
+        Assert.Equal(expectedTotalBuckets, actualBucketCount);
+    }
+
+    public static TheoryData<HistogramBoundaryTestCase> HistogramInfinityBoundariesTestCases()
+    {
+        var data = new TheoryData<HistogramBoundaryTestCase>
+        {
+            new(
+                testName: "Custom boundaries with no infinity in explicit boundaries",
+                inputBoundaries: [0, 10],
+                inputValues: [-10, 0, 5, 10, 100],
+                expectedBucketCounts: [2, 2, 1],
+                expectedBucketBounds: [0, 10, double.PositiveInfinity]),
+
+            new(
+                testName: "Custom boundaries with positive infinity",
+                inputBoundaries: [0, double.PositiveInfinity],
+                inputValues: [-10, 0, 10, 100],
+                expectedBucketCounts: [2, 2],
+                expectedBucketBounds: [0, double.PositiveInfinity]),
+
+            new(
+                testName: "Custom boundaries with negative infinity",
+                inputBoundaries: [double.NegativeInfinity, 0, 10],
+                inputValues: [-100, -10, 0, 5, 10, 100],
+                expectedBucketCounts: [3, 2, 1],
+                expectedBucketBounds: [0, 10, double.PositiveInfinity]),
+
+            new(
+                testName: "Custom boundaries with both infinities",
+                inputBoundaries: [double.NegativeInfinity, 0, 10, double.PositiveInfinity],
+                inputValues: [-100, -10, 0, 5, 10, 100],
+                expectedBucketCounts: [3, 2, 1],
+                expectedBucketBounds: [0, 10, double.PositiveInfinity]),
+
+            new(
+                testName: "Custom boundaries with infinities only",
+                inputBoundaries: [double.NegativeInfinity, double.PositiveInfinity],
+                inputValues: [-10, 0, 10],
+                expectedBucketCounts: [3],
+                expectedBucketBounds: [double.PositiveInfinity]),
+        };
+
+        return data;
+    }
+
     private static void HistogramSnapshotThread(object? obj)
     {
         var args = obj as ThreadArguments;
