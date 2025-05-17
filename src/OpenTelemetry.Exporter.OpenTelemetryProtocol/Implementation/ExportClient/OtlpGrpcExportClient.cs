@@ -10,7 +10,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.G
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 /// <summary>Base class for sending OTLP export request over gRPC.</summary>
-internal sealed class OtlpGrpcExportClient : OtlpExportClient
+internal sealed class OtlpGrpcExportClient : OtlpExportClient, IDisposable
 {
     public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
@@ -24,18 +24,97 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             status: null,
             grpcStatusDetailsHeader: null);
 
+#if NET8_0_OR_GREATER
+    private readonly HttpClient? secureClient;
+    private readonly bool useMtls;
+    private readonly OtlpExporterOptions options;
+    private readonly string signalPath;
+    private bool disposed;
+#endif
+
     public OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
         : base(options, httpClient, signalPath)
     {
+#if NET8_0_OR_GREATER
+        this.options = options;
+        this.signalPath = signalPath;
+
+        // Determine if we should use mTLS based on certificate configuration and endpoint
+        this.useMtls = options.Endpoint.Scheme == Uri.UriSchemeHttps &&
+            (!string.IsNullOrEmpty(options.CertificateFilePath) ||
+            (!string.IsNullOrEmpty(options.ClientCertificateFilePath) && !string.IsNullOrEmpty(options.ClientKeyFilePath)));
+
+        // Create a secure client if mTLS is enabled
+        if (this.useMtls)
+        {
+            using var handler = new HttpClientHandler();
+
+            #if !NET462
+            handler.CheckCertificateRevocationList = true;
+            #endif
+
+            if (!string.IsNullOrEmpty(options.CertificateFilePath))
+            {
+                using var trustedCertificate = MtlsUtility.LoadCertificateWithValidation(options.CertificateFilePath);
+                handler.ServerCertificateCustomValidationCallback = (_, cert, __, unexpectedErrors) =>
+                {
+                    return MtlsUtility.ValidateCertificateChain(cert!, trustedCertificate);
+                };
+            }
+
+            if (!string.IsNullOrEmpty(options.ClientCertificateFilePath) && !string.IsNullOrEmpty(options.ClientKeyFilePath))
+            {
+                var clientCertificate = MtlsUtility.LoadCertificateWithValidation(
+                    options.ClientCertificateFilePath,
+                    options.ClientKeyFilePath);
+                handler.ClientCertificates.Add(clientCertificate);
+            }
+
+            this.secureClient = new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds),
+            };
+        }
+#endif
     }
 
     internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
 
     internal override bool RequireHttp2 => true;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
+#if NET8_0_OR_GREATER
+        if (this.useMtls && this.secureClient != null)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint)
+                {
+                    Content = new ByteArrayContent(buffer, 0, contentLength)
+                    {
+                        Headers =
+                        {
+                            ContentType = this.MediaTypeHeader,
+                        },
+                    },
+                };
+
+                using var response = this.secureClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
+                response.EnsureSuccessStatusCode();
+
+                OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint.ToString(), "mTLS export completed successfully.");
+                return SuccessExportResponse;
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
+                return DefaultExceptionExportClientGrpcResponse;
+            }
+        }
+#endif
+
         try
         {
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
@@ -44,7 +123,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             httpResponse.EnsureSuccessStatusCode();
 
             var trailingHeaders = httpResponse.TrailingHeaders();
-            Status status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
+            var status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
 
             if (status.Detail.Equals(Status.NoReplyDetailMessage, StringComparison.Ordinal))
             {
@@ -153,6 +232,40 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
     }
 
+    /// <summary>
+    /// Shuts down the exporter and cleans up any resources.
+    /// </summary>
+    /// <param name="timeoutMilliseconds">The maximum time to wait for the shutdown to complete.</param>
+    /// <returns>True if shutdown succeeded. False otherwise.</returns>
+    public new bool Shutdown(int timeoutMilliseconds)
+    {
+#if NET8_0_OR_GREATER
+        if (this.secureClient != null)
+        {
+            try
+            {
+                this.secureClient.Dispose();
+            }
+            catch
+            {
+                // Ignore shutdown errors
+            }
+        }
+#endif
+        return base.Shutdown(timeoutMilliseconds);
+    }
+
+    /// <summary>
+    /// Releases all resources used by the current instance.
+    /// </summary>
+    public void Dispose()
+    {
+#if NET8_0_OR_GREATER
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+#endif
+    }
+
     private static bool IsTransientNetworkError(HttpRequestException ex)
     {
         return ex.InnerException is System.Net.Sockets.SocketException socketEx
@@ -160,4 +273,23 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionReset
                 || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.HostUnreachable);
     }
+
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Releases the unmanaged resources used by the instance and optionally releases the managed resources.
+    /// </summary>
+    /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+    private void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                this.secureClient?.Dispose();
+            }
+
+            this.disposed = true;
+        }
+    }
+#endif
 }
