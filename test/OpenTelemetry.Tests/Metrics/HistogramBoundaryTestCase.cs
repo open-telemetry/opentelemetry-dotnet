@@ -68,4 +68,3 @@ public class HistogramBoundaryTestCase(
         return data;
     }
 }
-
