@@ -82,7 +82,9 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     }
 
     /// <inheritdoc />
+#pragma warning disable CA1033 // Interface methods should be callable by child types
     TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
+#pragma warning restore CA1033 // Interface methods should be callable by child types
     {
         this.innerBuilder.ConfigureBuilder(configure);
 

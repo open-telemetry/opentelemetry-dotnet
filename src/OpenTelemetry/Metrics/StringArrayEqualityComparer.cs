@@ -41,7 +41,7 @@ internal sealed class StringArrayEqualityComparer : IEqualityComparer<string[]>
     {
         Debug.Assert(strings != null, "strings was null");
 
-#if NET
+#if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
 
         for (int i = 0; i < strings.Length; i++)

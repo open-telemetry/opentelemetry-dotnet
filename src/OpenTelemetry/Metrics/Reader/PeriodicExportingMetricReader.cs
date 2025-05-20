@@ -50,7 +50,9 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
         {
             IsBackground = true,
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
             Name = $"OpenTelemetry-{nameof(PeriodicExportingMetricReader)}-{exporter.GetType().Name}",
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         };
         this.exporterThread.Start();
     }

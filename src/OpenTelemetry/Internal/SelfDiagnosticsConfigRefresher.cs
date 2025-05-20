@@ -35,8 +35,10 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     // Once the configuration file is valid, an eventListener object will be created.
     private SelfDiagnosticsEventListener? eventListener;
+#pragma warning disable CA2213 // Disposable fields should be disposed
     private volatile FileStream? underlyingFileStreamForMemoryMappedFile;
     private volatile MemoryMappedFile? memoryMappedFile;
+#pragma warning restore CA2213 // Disposable fields should be disposed
     private string? logDirectory;  // Log directory for log files
     private int logFileSize;  // Log file size in bytes
     private long logFilePosition;  // The logger will write into the byte at this position

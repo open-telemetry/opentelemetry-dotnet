@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry;
 
@@ -22,7 +23,10 @@ public class SimpleActivityExportProcessor : SimpleExportProcessor<Activity>
     /// <inheritdoc />
     public override void OnEnd(Activity data)
     {
+        Guard.ThrowIfNull(data);
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         if (!data.Recorded)
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         {
             return;
         }

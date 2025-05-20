@@ -4,7 +4,8 @@
     <TargetFrameworks>$(TargetFrameworksForLibrariesExtended)</TargetFrameworks>
     <Description>OpenTelemetry .NET SDK</Description>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
-    <!--<AnalysisLevel>latest-all</AnalysisLevel>-->
+    <NoWarn>$(NoWarn);CA1815</NoWarn> <!-- CA1815: Override equals and operator equals on value types - https://github.com/open-telemetry/opentelemetry-dotnet/issues/6278 -->
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>

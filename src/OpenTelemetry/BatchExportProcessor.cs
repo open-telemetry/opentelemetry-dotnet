@@ -60,7 +60,9 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         this.exporterThread = new Thread(this.ExporterProc)
         {
             IsBackground = true,
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
             Name = $"OpenTelemetry-{nameof(BatchExportProcessor<T>)}-{exporter.GetType().Name}",
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         };
         this.exporterThread.Start();
     }

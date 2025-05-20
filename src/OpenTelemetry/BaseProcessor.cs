@@ -9,7 +9,9 @@ namespace OpenTelemetry;
 /// Base processor base class.
 /// </summary>
 /// <typeparam name="T">The type of object to be processed.</typeparam>
+#pragma warning disable CA1012 // Abstract types should not have public constructors
 public abstract class BaseProcessor<T> : IDisposable
+#pragma warning restore CA1012 // Abstract types should not have public constructors
 {
     private readonly string typeName;
     private int shutdownCount;
@@ -17,9 +19,7 @@ public abstract class BaseProcessor<T> : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseProcessor{T}"/> class.
     /// </summary>
-#pragma warning disable CA1012 // Abstract types should not have public constructors
     public BaseProcessor()
-#pragma warning restore CA1012 // Abstract types should not have public constructors
     {
         this.typeName = this.GetType().Name;
     }
