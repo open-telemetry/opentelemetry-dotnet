@@ -51,11 +51,9 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
-#if NET462_OR_GREATER || NETSTANDARD2_0
-        this.startWritePosition = 0;
-#else
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
-#endif
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
         this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Metrics);
     }
 
