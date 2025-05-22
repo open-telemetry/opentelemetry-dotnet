@@ -118,8 +118,8 @@ public sealed class LogRecordSharedPoolTests
         var logRecord1 = pool.Rent();
         logRecord1.AttributeStorage = new List<KeyValuePair<string, object?>>(16)
         {
-            new KeyValuePair<string, object?>("key1", "value1"),
-            new KeyValuePair<string, object?>("key2", "value2"),
+            new("key1", "value1"),
+            new("key2", "value2"),
         };
         logRecord1.ScopeStorage = new List<object?>(8) { null, null };
 
@@ -168,7 +168,9 @@ public sealed class LogRecordSharedPoolTests
             }
         }
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         using BatchLogRecordExportProcessor processor = new(new NoopExporter());
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         List<Task> tasks = [];
 
@@ -178,7 +180,9 @@ public sealed class LogRecordSharedPoolTests
             {
                 Random random = new Random();
 
+#pragma warning disable CA5394 // Do not use insecure randomness
                 await Task.Delay(random.Next(100, 150));
+#pragma warning restore CA5394 // Do not use insecure randomness
 
                 for (int i = 0; i < 1000; i++)
                 {
@@ -189,7 +193,9 @@ public sealed class LogRecordSharedPoolTests
                     // This should no-op mostly.
                     pool.Return(logRecord);
 
+#pragma warning disable CA5394 // Do not use insecure randomness
                     await Task.Delay(random.Next(0, 20));
+#pragma warning restore CA5394 // Do not use insecure randomness
                 }
             }));
         }

@@ -5,7 +5,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests;
 
-internal class RecordOnlySampler : TestSampler
+internal sealed class RecordOnlySampler : TestSampler
 {
     public override SamplingResult ShouldSample(in SamplingParameters param)
     {

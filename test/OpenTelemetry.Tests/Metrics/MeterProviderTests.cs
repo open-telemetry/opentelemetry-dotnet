@@ -16,11 +16,15 @@ public class MeterProviderTests
             .AddInMemoryExporter(exportedItems)
             .Build();
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         Assert.True(meterProvider.TryFindExporter(out InMemoryExporter<Metric>? inMemoryExporter));
         Assert.False(meterProvider.TryFindExporter(out MyExporter? myExporter));
+#pragma warning restore CA2000 // Dispose objects before losing scope
     }
 
-    private class MyExporter : BaseExporter<Metric>
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+    private sealed class MyExporter : BaseExporter<Metric>
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         public override ExportResult Export(in Batch<Metric> batch)
         {

@@ -11,31 +11,8 @@ namespace OpenTelemetry.Resources;
 /// </summary>
 public class ResourceBuilder
 {
-    internal readonly List<IResourceDetector> ResourceDetectors = new();
-    private static readonly Resource DefaultResource;
-
-    static ResourceBuilder()
-    {
-        var defaultServiceName = "unknown_service";
-
-        try
-        {
-            var processName = Process.GetCurrentProcess().ProcessName;
-            if (!string.IsNullOrWhiteSpace(processName))
-            {
-                defaultServiceName = $"{defaultServiceName}:{processName}";
-            }
-        }
-        catch
-        {
-            // GetCurrentProcess can throw PlatformNotSupportedException
-        }
-
-        DefaultResource = new Resource(new Dictionary<string, object>
-        {
-            [ResourceSemanticConventions.AttributeServiceName] = defaultServiceName,
-        });
-    }
+    internal readonly List<IResourceDetector> ResourceDetectors = [];
+    private static readonly Resource DefaultResource = PrepareDefaultResource();
 
     private ResourceBuilder()
     {
@@ -153,6 +130,29 @@ public class ResourceBuilder
         this.ResourceDetectors.Add(new WrapperResourceDetector(resource));
 
         return this;
+    }
+
+    private static Resource PrepareDefaultResource()
+    {
+        var defaultServiceName = "unknown_service";
+
+        try
+        {
+            var processName = Process.GetCurrentProcess().ProcessName;
+            if (!string.IsNullOrWhiteSpace(processName))
+            {
+                defaultServiceName = $"{defaultServiceName}:{processName}";
+            }
+        }
+        catch
+        {
+            // GetCurrentProcess can throw PlatformNotSupportedException
+        }
+
+        return new Resource(new Dictionary<string, object>
+        {
+            [ResourceSemanticConventions.AttributeServiceName] = defaultServiceName,
+        });
     }
 
     internal sealed class WrapperResourceDetector : IResourceDetector

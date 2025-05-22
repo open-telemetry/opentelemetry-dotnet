@@ -14,9 +14,16 @@ public sealed class LoggerFactoryAndResourceBuilderTests
     public void TestLogExporterCanAccessResource()
     {
         VerifyResourceBuilder(
-            assert: (Resource resource) =>
+            assert: resource =>
             {
-                Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString()!.Contains("unknown_service"));
+                Assert.Contains(
+                    resource.Attributes,
+                    kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName &&
+#if NET
+                           kvp.Value.ToString()!.Contains("unknown_service", StringComparison.Ordinal));
+#else
+                           kvp.Value.ToString()!.Contains("unknown_service"));
+#endif
             });
     }
 
@@ -28,9 +35,9 @@ public sealed class LoggerFactoryAndResourceBuilderTests
             Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "MyService");
 
             VerifyResourceBuilder(
-                assert: (Resource resource) =>
+                assert: resource =>
                 {
-                    Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.Equals("MyService"));
+                    Assert.Contains(resource.Attributes, kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.Equals("MyService"));
                 });
         }
         finally

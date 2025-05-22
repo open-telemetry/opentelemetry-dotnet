@@ -23,6 +23,7 @@
     IMetricsBuilder/IMetricsListener API added at the host level in .NET 8
     instead of the direct lower-level MeterListener API added in .NET 6. -->
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\AggregatorTests.cs" Link="Includes\Metrics\AggregatorTests.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\HistogramBoundaryTestCase.cs" Link="Includes\Metrics\HistogramBoundaryTestCase.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\HostingMeterProviderBuilder.cs" Link="Includes\Metrics\HostingMeterProviderBuilder.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\KnownHistogramBuckets.cs" Link="Includes\Metrics\KnownHistogramBuckets.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricApiTests.cs" Link="Includes\Metrics\MetricApiTests.cs" />
@@ -34,6 +35,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="GitHubActionsTestLogger" />
+    <PackageReference Include="JunitXml.TestLogger" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

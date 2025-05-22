@@ -11,7 +11,7 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
 
-public class TracerProviderSdkTests : IDisposable
+public sealed class TracerProviderSdkTests : IDisposable
 {
     private static readonly Action<Activity, ActivitySource> SetActivitySourceProperty = CreateActivitySourceSetter();
 
@@ -112,7 +112,7 @@ public class TracerProviderSdkTests : IDisposable
             .Build();
 
         // OpenTelemetry Sdk is expected to set default to W3C.
-        Assert.True(Activity.DefaultIdFormat == ActivityIdFormat.W3C);
+        Assert.Equal(ActivityIdFormat.W3C, Activity.DefaultIdFormat);
 
         using (var rootActivity = activitySource.StartActivity("root"))
         {
@@ -185,11 +185,12 @@ public class TracerProviderSdkTests : IDisposable
 
         // Validate that when StartActivity is called using Parent as string,
         // Sampling is called correctly.
-        using var act = new Activity("anything").Start();
-        act.Stop();
-        var customContextAsString = act.Id;
-        var expectedTraceId = act.TraceId;
-        var expectedParentSpanId = act.SpanId;
+        using var activity = new Activity("anything");
+        activity.Start();
+        activity.Stop();
+        var customContextAsString = activity.Id;
+        var expectedTraceId = activity.TraceId;
+        var expectedParentSpanId = activity.SpanId;
 
         using (var fromCustomContextAsString =
             activitySource.StartActivity("customContext", ActivityKind.Client, customContextAsString))
@@ -265,19 +266,18 @@ public class TracerProviderSdkTests : IDisposable
 
         ActivityContext ctx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, isRemote: true);
 
-        using (var activity = activitySource.StartActivity("root", ActivityKind.Server, ctx))
-        {
-            // Even if sampling returns false, for activities with remote parent,
-            // activity is still created with PropagationOnly.
-            Assert.NotNull(activity);
-            Assert.False(activity.IsAllDataRequested);
-            Assert.False(activity.Recorded);
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, ctx);
 
-            // This is not a root activity and parent is not remote.
-            // If sampling returns false, no activity is created at all.
-            using var innerActivity = activitySource.StartActivity("inner");
-            Assert.Null(innerActivity);
-        }
+        // Even if sampling returns false, for activities with remote parent,
+        // activity is still created with PropagationOnly.
+        Assert.NotNull(activity);
+        Assert.False(activity.IsAllDataRequested);
+        Assert.False(activity.Recorded);
+
+        // This is not a root activity and parent is not remote.
+        // If sampling returns false, no activity is created at all.
+        using var innerActivity = activitySource.StartActivity("inner");
+        Assert.Null(innerActivity);
     }
 
     [Fact]
@@ -384,7 +384,8 @@ public class TracerProviderSdkTests : IDisposable
 
         using (SuppressInstrumentationScope.Begin(true))
         {
-            using var activity = new Activity(operationNameForLegacyActivity).Start();
+            using var activity = new Activity(operationNameForLegacyActivity);
+            activity.Start();
             Assert.False(activity.IsAllDataRequested);
         }
 
@@ -805,7 +806,7 @@ public class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-01", activity.Id);
+        Assert.EndsWith("-01", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }
@@ -828,7 +829,7 @@ public class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-00", activity.Id);
+        Assert.EndsWith("-00", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }
@@ -856,7 +857,7 @@ public class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id);
+        Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }
@@ -924,7 +925,8 @@ public class TracerProviderSdkTests : IDisposable
         // The sampling parameters are expected to be that of the
         // parent context i.e the remote parent.
 
-        using var activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+        using var activity = new Activity(operationNameForLegacyActivity);
+        activity.SetParentId(remoteParentId);
         activity.TraceStateString = tracestate;
 
         // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
@@ -935,7 +937,7 @@ public class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id);
+        Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id, StringComparison.Ordinal);
         activity.Stop();
     }
 
@@ -960,7 +962,8 @@ public class TracerProviderSdkTests : IDisposable
         // The sampling parameters are expected to be that of the
         // parent context i.e the remote parent.
 
-        using var activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+        using var activity = new Activity(operationNameForLegacyActivity);
+        activity.SetParentId(remoteParentId);
 
         // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
         activity.Start();
@@ -970,7 +973,7 @@ public class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-01", activity.Id);
+        Assert.EndsWith("-01", activity.Id, StringComparison.Ordinal);
         activity.Stop();
     }
 
@@ -995,7 +998,8 @@ public class TracerProviderSdkTests : IDisposable
         // The sampling parameters are expected to be that of the
         // parent context i.e the remote parent.
 
-        using var activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+        using var activity = new Activity(operationNameForLegacyActivity);
+        activity.SetParentId(remoteParentId);
 
         // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
         activity.Start();
@@ -1005,7 +1009,7 @@ public class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-00", activity.Id);
+        Assert.EndsWith("-00", activity.Id, StringComparison.Ordinal);
         activity.Stop();
     }
 
@@ -1174,7 +1178,7 @@ public class TracerProviderSdkTests : IDisposable
         Assert.NotEqual(Resource.Empty, resource);
         Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
         Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
-        var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
+        var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version", StringComparison.Ordinal));
         Assert.Single(versionAttribute);
     }
 
@@ -1243,7 +1247,11 @@ public class TracerProviderSdkTests : IDisposable
 
         foreach (var ns in legacySourceNamespaces)
         {
+#if NET
+            var startOpName = ns.Replace("*", "Start", StringComparison.Ordinal);
+#else
             var startOpName = ns.Replace("*", "Start");
+#endif
             using var startOperation = new Activity(startOpName);
             startOperation.Start();
             startOperation.Stop();
@@ -1251,7 +1259,11 @@ public class TracerProviderSdkTests : IDisposable
             Assert.Contains(startOpName, onStartProcessedActivities); // Processor.OnStart is called since we added a legacy OperationName
             Assert.Contains(startOpName, onStopProcessedActivities);  // Processor.OnEnd is called since we added a legacy OperationName
 
+#if NET
+            var stopOpName = ns.Replace("*", "Stop", StringComparison.Ordinal);
+#else
             var stopOpName = ns.Replace("*", "Stop");
+#endif
             using var stopOperation = new Activity(stopOpName);
             stopOperation.Start();
             stopOperation.Stop();
@@ -1342,7 +1354,11 @@ public class TracerProviderSdkTests : IDisposable
         var setMethod = typeof(Activity).GetProperty("Source")?.SetMethod
             ?? throw new InvalidOperationException("Could not build Activity.Source setter delegate");
 
+#if NET
+        return setMethod.CreateDelegate<Action<Activity, ActivitySource>>();
+#else
         return (Action<Activity, ActivitySource>)setMethod.CreateDelegate(typeof(Action<Activity, ActivitySource>));
+#endif
     }
 
     private sealed class TestTracerProviderBuilder : TracerProviderBuilderBase
@@ -1353,7 +1369,7 @@ public class TracerProviderSdkTests : IDisposable
         }
     }
 
-    private class TestInstrumentation : IDisposable
+    private sealed class TestInstrumentation : IDisposable
     {
         public bool IsDisposed;
 

@@ -88,13 +88,36 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
     public ILogRecordPool LogRecordPool => this.threadStaticPool ?? LogRecordSharedPool.Current;
 
+    public static bool ContainsBatchProcessor(BaseProcessor<LogRecord> processor)
+    {
+        if (processor is BatchExportProcessor<LogRecord>)
+        {
+            return true;
+        }
+        else if (processor is CompositeProcessor<LogRecord> compositeProcessor)
+        {
+            var current = compositeProcessor.Head;
+            while (current != null)
+            {
+                if (ContainsBatchProcessor(current.Value))
+                {
+                    return true;
+                }
+
+                current = current.Next;
+            }
+        }
+
+        return false;
+    }
+
     public void AddProcessor(BaseProcessor<LogRecord> processor)
     {
         Guard.ThrowIfNull(processor);
 
         processor.SetParentProvider(this);
 
-        if (this.threadStaticPool != null && this.ContainsBatchProcessor(processor))
+        if (this.threadStaticPool != null && ContainsBatchProcessor(processor))
         {
             OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("Using shared thread pool.");
 
@@ -125,10 +148,10 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             processorAdded.Append(processor);
             processorAdded.Append('\'');
 
-            var newCompositeProcessor = new CompositeProcessor<LogRecord>(new[]
-            {
+            var newCompositeProcessor = new CompositeProcessor<LogRecord>(
+            [
                 this.Processor,
-            });
+            ]);
             newCompositeProcessor.SetParentProvider(this);
             newCompositeProcessor.AddProcessor(processor);
             this.Processor = newCompositeProcessor;
@@ -166,29 +189,6 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             OpenTelemetrySdkEventSource.Log.LoggerProviderException(nameof(this.Shutdown), ex);
             return false;
         }
-    }
-
-    public bool ContainsBatchProcessor(BaseProcessor<LogRecord> processor)
-    {
-        if (processor is BatchExportProcessor<LogRecord>)
-        {
-            return true;
-        }
-        else if (processor is CompositeProcessor<LogRecord> compositeProcessor)
-        {
-            var current = compositeProcessor.Head;
-            while (current != null)
-            {
-                if (this.ContainsBatchProcessor(current.Value))
-                {
-                    return true;
-                }
-
-                current = current.Next;
-            }
-        }
-
-        return false;
     }
 
     /// <inheritdoc />

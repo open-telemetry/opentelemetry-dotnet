@@ -17,7 +17,9 @@ public abstract class BaseProcessor<T> : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseProcessor{T}"/> class.
     /// </summary>
+#pragma warning disable CA1012 // Abstract types should not have public constructors
     public BaseProcessor()
+#pragma warning restore CA1012 // Abstract types should not have public constructors
     {
         this.typeName = this.GetType().Name;
     }
