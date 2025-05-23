@@ -14,83 +14,135 @@ public class RemoteEndpointPriorityTestCase
     [
         new()
         {
-            Name = "Highest priority name = net.peer.name",
-            ExpectedResult = "RemoteServiceName",
+            Name = "Rank 1: Only peer.service provided",
+            ExpectedResult = "PeerService",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["http.host"] = "DiscardedRemoteServiceName",
-                ["net.peer.name"] = "RemoteServiceName",
-                ["peer.hostname"] = "DiscardedRemoteServiceName",
+                [SemanticConventions.AttributePeerService] = "PeerService",
             },
         },
         new()
         {
-            Name = "Highest priority name = SemanticConventions.AttributePeerService",
-            ExpectedResult = "RemoteServiceName",
+            Name = "Rank 2: Only server.address provided",
+            ExpectedResult = "ServerAddress",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                [SemanticConventions.AttributePeerService] = "RemoteServiceName",
-                ["http.host"] = "DiscardedRemoteServiceName",
-                ["net.peer.name"] = "DiscardedRemoteServiceName",
-                ["net.peer.port"] = "1234",
-                ["peer.hostname"] = "DiscardedRemoteServiceName",
+                [SemanticConventions.AttributeServerAddress] = "ServerAddress",
             },
         },
         new()
         {
-            Name = "Only has net.peer.name and net.peer.port",
-            ExpectedResult = "RemoteServiceName:1234",
+            Name = "Rank 3: Only net.peer.name provided",
+            ExpectedResult = "NetPeerName",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["net.peer.name"] = "RemoteServiceName",
-                ["net.peer.port"] = "1234",
+                [SemanticConventions.AttributeNetPeerName] = "NetPeerName",
             },
         },
         new()
         {
-            Name = "net.peer.port is an int",
-            ExpectedResult = "RemoteServiceName:1234",
+            Name = "Rank 4: network.peer.address and network.peer.port provided",
+            ExpectedResult = "1.2.3.4:5678",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["net.peer.name"] = "RemoteServiceName",
-                ["net.peer.port"] = 1234,
+                [SemanticConventions.AttributeNetworkPeerAddress] = "1.2.3.4",
+                [SemanticConventions.AttributeNetworkPeerPort] = "5678",
             },
         },
         new()
         {
-            Name = "Has net.peer.name and net.peer.port",
-            ExpectedResult = "RemoteServiceName:1234",
+            Name = "Rank 4: Only network.peer.address provided",
+            ExpectedResult = "1.2.3.4",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["http.host"] = "DiscardedRemoteServiceName",
-                ["net.peer.name"] = "RemoteServiceName",
-                ["net.peer.port"] = "1234",
-                ["peer.hostname"] = "DiscardedRemoteServiceName",
+                [SemanticConventions.AttributeNetworkPeerAddress] = "1.2.3.4",
             },
         },
         new()
         {
-            Name = "Has net.peer.ip and net.peer.port",
-            ExpectedResult = "1.2.3.4:1234",
+            Name = "Rank 5: Only server.socket.domain provided",
+            ExpectedResult = "SocketDomain",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["http.host"] = "DiscardedRemoteServiceName",
-                ["net.peer.ip"] = "1.2.3.4",
-                ["net.peer.port"] = "1234",
-                ["peer.hostname"] = "DiscardedRemoteServiceName",
+                [SemanticConventions.AttributeServerSocketDomain] = "SocketDomain",
             },
         },
         new()
         {
-            Name = "Has net.peer.name, net.peer.ip, and net.peer.port",
-            ExpectedResult = "RemoteServiceName:1234",
+            Name = "Rank 6: server.socket.address and server.socket.port provided",
+            ExpectedResult = "SocketAddress:4321",
             RemoteEndpointAttributes = new Dictionary<string, object>
             {
-                ["http.host"] = "DiscardedRemoteServiceName",
-                ["net.peer.name"] = "RemoteServiceName",
-                ["net.peer.ip"] = "1.2.3.4",
-                ["net.peer.port"] = "1234",
-                ["peer.hostname"] = "DiscardedRemoteServiceName",
+                [SemanticConventions.AttributeServerSocketAddress] = "SocketAddress",
+                [SemanticConventions.AttributeServerSocketPort] = "4321",
+            },
+        },
+        new()
+        {
+            Name = "Rank 7: Only net.sock.peer.name provided",
+            ExpectedResult = "NetSockPeerName",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                [SemanticConventions.AttributeNetSockPeerName] = "NetSockPeerName",
+            },
+        },
+        new()
+        {
+            Name = "Rank 8: net.sock.peer.addr and net.sock.peer.port provided",
+            ExpectedResult = "5.6.7.8:8765",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                [SemanticConventions.AttributeNetSockPeerAddr] = "5.6.7.8",
+                [SemanticConventions.AttributeNetSockPeerPort] = "8765",
+            },
+        },
+        new()
+        {
+            Name = "Rank 9: Only peer.hostname provided",
+            ExpectedResult = "PeerHostname",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                [SemanticConventions.AttributePeerHostname] = "PeerHostname",
+            },
+        },
+        new()
+        {
+            Name = "Rank 10: Only peer.address provided",
+            ExpectedResult = "PeerAddress",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                [SemanticConventions.AttributePeerAddress] = "PeerAddress",
+            },
+        },
+        new()
+        {
+            Name = "Rank 11: Only db.name provided",
+            ExpectedResult = "DbName",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                [SemanticConventions.AttributeDbName] = "DbName",
+            },
+        },
+        new()
+        {
+            Name = "Multiple attributes: highest rank wins",
+            ExpectedResult = "PeerService",
+            RemoteEndpointAttributes = new Dictionary<string, object>
+            {
+                [SemanticConventions.AttributeDbName] = "DbName",
+                [SemanticConventions.AttributePeerAddress] = "PeerAddress",
+                [SemanticConventions.AttributePeerHostname] = "PeerHostname",
+                [SemanticConventions.AttributeNetSockPeerAddr] = "5.6.7.8",
+                [SemanticConventions.AttributeNetSockPeerPort] = "8765",
+                [SemanticConventions.AttributeNetSockPeerName] = "NetSockPeerName",
+                [SemanticConventions.AttributeServerSocketAddress] = "SocketAddress",
+                [SemanticConventions.AttributeServerSocketPort] = "4321",
+                [SemanticConventions.AttributeServerSocketDomain] = "SocketDomain",
+                [SemanticConventions.AttributeNetworkPeerAddress] = "1.2.3.4",
+                [SemanticConventions.AttributeNetworkPeerPort] = "5678",
+                [SemanticConventions.AttributeNetPeerName] = "NetPeerName",
+                [SemanticConventions.AttributeServerAddress] = "ServerAddress",
+                [SemanticConventions.AttributePeerService] = "PeerService",
             },
         },
     ];
