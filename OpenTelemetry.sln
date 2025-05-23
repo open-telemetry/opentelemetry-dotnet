@@ -254,7 +254,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 		src\Shared\ExceptionExtensions.cs = src\Shared\ExceptionExtensions.cs
 		src\Shared\Guard.cs = src\Shared\Guard.cs
 		src\Shared\MathHelper.cs = src\Shared\MathHelper.cs
-		src\Shared\PeerServiceResolver.cs = src\Shared\PeerServiceResolver.cs
 		src\Shared\PeriodicExportingMetricReaderHelper.cs = src\Shared\PeriodicExportingMetricReaderHelper.cs
 		src\Shared\PooledList.cs = src\Shared\PooledList.cs
 		src\Shared\ResourceSemanticConventions.cs = src\Shared\ResourceSemanticConventions.cs
