@@ -36,14 +36,14 @@ internal sealed class DirectorySizeTracker
     /// <returns>True if space is available else false.</returns>
     public bool IsSpaceAvailable(out long currentSizeInBytes)
     {
-        currentSizeInBytes = Interlocked.Read(ref this.directoryCurrentSizeInBytes);
+        currentSizeInBytes = Volatile.Read(ref this.directoryCurrentSizeInBytes);
         return currentSizeInBytes < this.maxSizeInBytes;
     }
 
     public void RecountCurrentSize()
     {
         var size = CalculateFolderSize(this.path);
-        Interlocked.Exchange(ref this.directoryCurrentSizeInBytes, size);
+        Volatile.Write(ref this.directoryCurrentSizeInBytes, size);
     }
 
     internal static long CalculateFolderSize(string path)
