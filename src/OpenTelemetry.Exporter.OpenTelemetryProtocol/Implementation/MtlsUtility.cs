@@ -48,6 +48,7 @@ internal static class MtlsUtility
         {
             // Read the PEM content from the certificate file
             var pemContent = File.ReadAllText(certificateFilePath);
+
             // Create the certificate from PEM. If the PEM contains only the certificate,
             // the resulting X509Certificate2 will not have a private key.
             var certificate = X509Certificate2.CreateFromPem(pemContent);
@@ -108,6 +109,7 @@ internal static class MtlsUtility
             // Read the PEM content from the certificate and key files
             var certPem = File.ReadAllText(certificateFilePath);
             var keyPem = File.ReadAllText(keyFilePath);
+
             // Create the certificate from PEM, associating the private key.
             var certificate = X509Certificate2.CreateFromPem(certPem, keyPem);
             ValidateCertificate(certificate);
