@@ -21,7 +21,7 @@ public class TracerProviderExtensionsTests
 
         Assert.True(tracerProvider.ForceFlush());
 
-        testProcessor.OnForceFlushFunc = (timeout) => throw new Exception("test exception");
+        testProcessor.OnForceFlushFunc = _ => throw new InvalidOperationException("test exception");
 
         Assert.False(tracerProvider.ForceFlush());
     }
@@ -44,7 +44,7 @@ public class TracerProviderExtensionsTests
     {
         using var testProcessor = new DelegatingProcessor<Activity>
         {
-            OnShutdownFunc = (timeout) => throw new Exception("test exception"),
+            OnShutdownFunc = _ => throw new InvalidOperationException("test exception"),
         };
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()

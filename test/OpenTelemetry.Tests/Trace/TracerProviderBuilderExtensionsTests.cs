@@ -35,7 +35,7 @@ public class TracerProviderBuilderExtensionsTests
         {
             using (activity = activitySource.StartActivity("Activity"))
             {
-                throw new Exception("Oops!");
+                throw new InvalidOperationException("Oops!");
             }
         }
         catch (Exception)
@@ -65,7 +65,7 @@ public class TracerProviderBuilderExtensionsTests
         {
             using (activity = activitySource.StartActivity("Activity"))
             {
-                throw new Exception("Oops!");
+                throw new InvalidOperationException("Oops!");
             }
         }
         catch (Exception)
@@ -93,7 +93,7 @@ public class TracerProviderBuilderExtensionsTests
         {
             using (activity = activitySource.StartActivity("Activity"))
             {
-                throw new Exception("Oops!");
+                throw new InvalidOperationException("Oops!");
             }
         }
         catch (Exception)
@@ -337,7 +337,9 @@ public class TracerProviderBuilderExtensionsTests
         using (var provider = Sdk.CreateTracerProviderBuilder()
             .AddInstrumentation<MyInstrumentation>()
             .AddInstrumentation((sp, provider) => new MyInstrumentation() { Provider = provider })
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddInstrumentation(new MyInstrumentation())
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .AddInstrumentation(() => (object?)null)
             .Build() as TracerProviderSdk)
         {
@@ -354,7 +356,7 @@ public class TracerProviderBuilderExtensionsTests
             Assert.Null(((MyInstrumentation)provider.Instrumentations[2]).Provider);
             Assert.False(((MyInstrumentation)provider.Instrumentations[2]).Disposed);
 
-            instrumentation = new List<object>(provider.Instrumentations);
+            instrumentation = [.. provider.Instrumentations];
         }
 
         Assert.NotNull(instrumentation);
@@ -675,14 +677,6 @@ public class TracerProviderBuilderExtensionsTests
             this.Disposed = true;
 
             base.Dispose(disposing);
-        }
-    }
-
-    private sealed class MyExporter : BaseExporter<Activity>
-    {
-        public override ExportResult Export(in Batch<Activity> batch)
-        {
-            return ExportResult.Success;
         }
     }
 

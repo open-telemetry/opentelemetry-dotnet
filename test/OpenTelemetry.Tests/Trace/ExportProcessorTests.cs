@@ -16,7 +16,9 @@ public class ExportProcessorTests
         var activitySourceName = Utils.GetCurrentMethodName();
         var sampler = new AlwaysOffSampler();
         var exportedItems = new List<Activity>();
+#pragma warning disable CA2000 // Dispose objects before losing scope
         using var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
+#pragma warning restore CA2000 // Dispose objects before losing scope
         using var activitySource = new ActivitySource(activitySourceName);
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource(activitySourceName)
@@ -40,7 +42,9 @@ public class ExportProcessorTests
         var activitySourceName = Utils.GetCurrentMethodName();
         var sampler = new RecordOnlySampler();
         var exportedItems = new List<Activity>();
+#pragma warning disable CA2000 // Dispose objects before losing scope
         using var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
+#pragma warning restore CA2000 // Dispose objects before losing scope
         using var activitySource = new ActivitySource(activitySourceName);
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource(activitySourceName)
@@ -64,7 +68,9 @@ public class ExportProcessorTests
         var activitySourceName = Utils.GetCurrentMethodName();
         var sampler = new AlwaysOnSampler();
         var exportedItems = new List<Activity>();
+#pragma warning disable CA2000 // Dispose objects before losing scope
         using var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
+#pragma warning restore CA2000 // Dispose objects before losing scope
         using var activitySource = new ActivitySource(activitySourceName);
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource(activitySourceName)

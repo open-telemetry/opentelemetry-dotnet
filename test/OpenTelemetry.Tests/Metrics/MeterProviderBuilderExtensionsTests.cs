@@ -78,7 +78,9 @@ public class MeterProviderBuilderExtensionsTests
         using (var provider = Sdk.CreateMeterProviderBuilder()
             .AddInstrumentation<MyInstrumentation>()
             .AddInstrumentation((sp, provider) => new MyInstrumentation() { Provider = provider })
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddInstrumentation(new MyInstrumentation())
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .AddInstrumentation(() => (object?)null)
             .Build() as MeterProviderSdk)
         {
@@ -95,7 +97,7 @@ public class MeterProviderBuilderExtensionsTests
             Assert.Null(((MyInstrumentation)provider.Instrumentations[2]).Provider);
             Assert.False(((MyInstrumentation)provider.Instrumentations[2]).Disposed);
 
-            instrumentation = new List<object>(provider.Instrumentations);
+            instrumentation = [.. provider.Instrumentations];
         }
 
         Assert.NotNull(instrumentation);
@@ -371,14 +373,6 @@ public class MeterProviderBuilderExtensionsTests
 
     private sealed class MyReader : MetricReader
     {
-    }
-
-    private sealed class MyExporter : BaseExporter<Metric>
-    {
-        public override ExportResult Export(in Batch<Metric> batch)
-        {
-            return ExportResult.Success;
-        }
     }
 
     private sealed class MyMeterProviderBuilder : MeterProviderBuilder
