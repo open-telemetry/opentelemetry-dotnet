@@ -6,6 +6,15 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Removed the peer service resolver, which was based on earlier experimental
+  semantic conventions that are not part of the stable specification. This
+  change ensures that the exporter no longer modifies or assumes the value of
+  peer service attributes.
+  ([#6191](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6191))
+
+* Extended remote endpoint calculation to align with the [opentelemetry-specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.40.0/specification/trace/sdk_exporters/zipkin.md#otlp---zipkin).
+  ([#6191](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6191))
+
 ## 1.12.0
 
 Released 2025-Apr-29
@@ -217,7 +226,7 @@ Released 2022-June-1
   ([#3281](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3281))
 * Fix exporting of array-valued attributes on an `Activity`. Previously, each
   item in the array would result in a new tag on an exported `Activity`. Now,
-  array-valued attributes are serialzed to a JSON-array representation.
+  array-valued attributes are serialized to a JSON-array representation.
   ([#3281](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3281))
 
 ## 1.3.0-beta.2
