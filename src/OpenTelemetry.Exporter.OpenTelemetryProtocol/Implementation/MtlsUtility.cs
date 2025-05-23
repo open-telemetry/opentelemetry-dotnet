@@ -46,11 +46,13 @@ internal static class MtlsUtility
 #else
         try
         {
-            using var certificate = new X509Certificate2(certificateFilePath);
-            using var rsa = RSA.Create();
-            var certWithKey = certificate.CopyWithPrivateKey(rsa);
-            ValidateCertificate(certWithKey);
-            return certWithKey;
+            // Read the PEM content from the certificate file
+            var pemContent = File.ReadAllText(certificateFilePath);
+            // Create the certificate from PEM. If the PEM contains only the certificate,
+            // the resulting X509Certificate2 will not have a private key.
+            var certificate = X509Certificate2.CreateFromPem(pemContent);
+            ValidateCertificate(certificate);
+            return certificate; // Caller is responsible for disposal
         }
         catch (CryptographicException ex)
         {
@@ -67,7 +69,7 @@ internal static class MtlsUtility
     /// <param name="keyFilePath">Path to the private key file.</param>
     /// <returns>The loaded certificate with private key.</returns>
     /// <exception cref="FileNotFoundException">Thrown when either file is not found.</exception>
-    /// <exception cref="UnauthorizedAccessException">Thrown when there's insufficient permission to read either file.</exception>
+    /// <exception cref="UnauthorizedAccessException">Thrown when there\'s insufficient permission to read either file.</exception>
     /// <exception cref="CryptographicException">Thrown when the certificate or key is invalid.</exception>
     public static X509Certificate2 LoadCertificateWithValidation(string certificateFilePath, string keyFilePath)
     {
@@ -103,11 +105,13 @@ internal static class MtlsUtility
 #else
         try
         {
-            using var certificate = new X509Certificate2(certificateFilePath);
-            using var rsa = RSA.Create();
-            var certWithKey = certificate.CopyWithPrivateKey(rsa);
-            ValidateCertificate(certWithKey);
-            return certWithKey;
+            // Read the PEM content from the certificate and key files
+            var certPem = File.ReadAllText(certificateFilePath);
+            var keyPem = File.ReadAllText(keyFilePath);
+            // Create the certificate from PEM, associating the private key.
+            var certificate = X509Certificate2.CreateFromPem(certPem, keyPem);
+            ValidateCertificate(certificate);
+            return certificate; // Caller is responsible for disposal
         }
         catch (CryptographicException ex)
         {
