@@ -98,7 +98,7 @@ jobs:
 
     - name: Upload test results ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
       if: ${{ !cancelled() && hashFiles('./**/TestResults/junit.xml') != '' }}
-      uses: codecov/test-results-action@f2dba722c67b86c6caa034178c6e4d35335f6706 # v1.1.0
+      uses: codecov/test-results-action@47f89e9acb64b76debcd5ea40642d25a4adced9f # v1.1.1
       with:
         env_vars: OS,TFM
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
