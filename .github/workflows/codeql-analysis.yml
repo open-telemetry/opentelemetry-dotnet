@@ -10,8 +10,15 @@ on:
     - cron: '0 0 * * *' # once in a day at 00:00
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   analyze:
+    permissions:
+      actions: read  # for github/codeql-action/init to get workflow details
+      contents: read  # for actions/checkout to fetch code
+      security-events: write  # for github/codeql-action/analyze to upload SARIF results
     name: Analyze
     runs-on: windows-latest
 

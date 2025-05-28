@@ -5,6 +5,9 @@ name: Concurrency Tests
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   run-concurrency-tests:
 

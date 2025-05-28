@@ -5,6 +5,9 @@ name: Package Validation
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   run-package-validation-stable:
     runs-on: windows-latest
