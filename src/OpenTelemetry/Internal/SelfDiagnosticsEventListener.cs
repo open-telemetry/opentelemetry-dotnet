@@ -249,7 +249,9 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
 
             buffer[pos++] = (byte)'\n';
             int byteCount = pos - 0;
+#pragma warning disable CA2000 // Dispose objects before losing scope
             if (this.configRefresher.TryGetLogStream(byteCount, out Stream? stream, out int availableByteCount))
+#pragma warning restore CA2000 // Dispose objects before losing scope
             {
                 if (availableByteCount >= byteCount)
                 {
@@ -283,7 +285,9 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
             {
                 lock (this.lockObj)
                 {
+#pragma warning disable CA1508 // Avoid dead conditional code - see previous comment
                     if (this.eventSourcesBeforeConstructor != null)
+#pragma warning restore CA1508 // Avoid dead conditional code - see previous comment
                     {
                         this.eventSourcesBeforeConstructor.Add(eventSource);
                         return;

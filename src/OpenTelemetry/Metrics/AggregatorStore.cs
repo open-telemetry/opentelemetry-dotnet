@@ -26,7 +26,7 @@ internal sealed class AggregatorStore
     internal long DroppedMeasurements;
 
     private const ExemplarFilterType DefaultExemplarFilter = ExemplarFilterType.AlwaysOff;
-    private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
+    private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => string.Compare(x.Key, y.Key, StringComparison.Ordinal);
 
     private readonly Lock lockZeroTags = new();
     private readonly Lock lockOverflowTag = new();
@@ -243,7 +243,9 @@ internal sealed class AggregatorStore
                     // If the Collect thread now wakes up, it would be able to set the ReferenceCount to `int.MinValue`, thereby, marking the MetricPoint
                     // invalid for newer updates. In such cases, the MetricPoint, should not be reclaimed before taking its Snapshot.
 
+#pragma warning disable CA1508 // Avoid dead conditional code - see previous comment
                     if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
+#pragma warning restore CA1508 // Avoid dead conditional code - see previous comment
                     {
                         this.ReclaimMetricPoint(ref metricPoint, i);
                     }

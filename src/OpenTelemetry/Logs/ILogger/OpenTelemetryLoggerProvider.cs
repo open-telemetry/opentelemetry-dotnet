@@ -37,7 +37,9 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
     {
         Guard.ThrowIfNull(options);
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         var optionsInstance = options.CurrentValue;
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
         this.Provider = Sdk
             .CreateLoggerProviderBuilder()
@@ -77,7 +79,9 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
     internal IExternalScopeProvider? ScopeProvider { get; private set; }
 
     /// <inheritdoc/>
+#pragma warning disable CA1033 // Interface methods should be callable by child types
     void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
+#pragma warning restore CA1033 // Interface methods should be callable by child types
     {
         this.ScopeProvider = scopeProvider;
 
