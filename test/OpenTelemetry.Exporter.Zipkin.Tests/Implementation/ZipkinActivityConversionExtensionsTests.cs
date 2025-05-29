@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using OpenTelemetry.Internal;
 using Xunit;
-using static OpenTelemetry.Exporter.Zipkin.Implementation.ZipkinActivityConversionExtensions;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
 
@@ -17,18 +16,15 @@ public class ZipkinActivityConversionExtensionsTests
     [InlineData("double", 1.0)]
     public void CheckProcessTag(string key, object value)
     {
-        var attributeEnumerationState = new TagEnumerationState
-        {
-            Tags = PooledList<KeyValuePair<string, object?>>.Create(),
-        };
-
         using var activity = new Activity("TestActivity");
         activity.SetTag(key, value);
 
-        attributeEnumerationState.EnumerateTags(activity);
+        var tags = PooledList<KeyValuePair<string, object?>>.Create();
+        ExtractTags(activity, ref tags);
 
-        Assert.Equal(key, attributeEnumerationState.Tags[0].Key);
-        Assert.Equal(value, attributeEnumerationState.Tags[0].Value);
+        var tag = Assert.Single(tags);
+        Assert.Equal(key, tag.Key);
+        Assert.Equal(value, tag.Value);
     }
 
     [Theory]
@@ -38,16 +34,23 @@ public class ZipkinActivityConversionExtensionsTests
     [InlineData("double", null)]
     public void CheckNullValueProcessTag(string key, object? value)
     {
-        var attributeEnumerationState = new TagEnumerationState
-        {
-            Tags = PooledList<KeyValuePair<string, object?>>.Create(),
-        };
-
         using var activity = new Activity("TestActivity");
         activity.SetTag(key, value);
 
-        attributeEnumerationState.EnumerateTags(activity);
+        var tags = PooledList<KeyValuePair<string, object?>>.Create();
+        ExtractTags(activity, ref tags);
 
-        Assert.Empty(attributeEnumerationState.Tags);
+        Assert.Empty(tags);
+    }
+
+    private static void ExtractTags(Activity activity, ref PooledList<KeyValuePair<string, object?>> tags)
+    {
+        foreach (var tag in activity.TagObjects)
+        {
+            if (tag.Value != null)
+            {
+                PooledList<KeyValuePair<string, object?>>.Add(ref tags, new KeyValuePair<string, object?>(tag.Key, tag.Value));
+            }
+        }
     }
 }

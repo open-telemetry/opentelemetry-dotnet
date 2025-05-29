@@ -10,3 +10,6 @@ MD013:
 MD033:
   # Allowed elements
   allowed_elements: [ 'details', 'summary' ]
+
+# MD059/link-text-should-be-descriptive : Inline HTML : https://github.com/DavidAnson/markdownlint/blob/v0.38.0/doc/md059.md
+MD059: false
