@@ -37,7 +37,9 @@ public static class OpenTelemetryBuilderSdkExtensions
         Guard.ThrowIfNull(builder);
         Guard.ThrowIfNull(configure);
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         builder.Services.ConfigureOpenTelemetryMeterProvider(
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
             builder => builder.ConfigureResource(configure));
 
         builder.Services.ConfigureOpenTelemetryTracerProvider(
@@ -84,8 +86,10 @@ public static class OpenTelemetryBuilderSdkExtensions
         Action<MeterProviderBuilder> configure)
     {
         OpenTelemetryMetricsBuilderExtensions.RegisterMetricsListener(
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
             builder.Services,
             configure);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
         return builder;
     }
@@ -119,9 +123,11 @@ public static class OpenTelemetryBuilderSdkExtensions
     {
         Guard.ThrowIfNull(configure);
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         var tracerProviderBuilder = new TracerProviderBuilderBase(builder.Services);
 
         configure(tracerProviderBuilder);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
         return builder;
     }
@@ -183,7 +189,11 @@ public static class OpenTelemetryBuilderSdkExtensions
         Action<LoggerProviderBuilder>? configureBuilder,
         Action<OpenTelemetryLoggerOptions>? configureOptions)
     {
+        Guard.ThrowIfNull(builder);
+
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         builder.Services.AddLogging(
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
             logging => logging.UseOpenTelemetry(configureBuilder, configureOptions));
 
         return builder;

@@ -42,9 +42,10 @@ public static class ResourceBuilderExtensions
         bool autoGenerateServiceInstanceId = true,
         string? serviceInstanceId = null)
     {
-        Dictionary<string, object> resourceAttributes = new Dictionary<string, object>();
-
+        Guard.ThrowIfNull(resourceBuilder);
         Guard.ThrowIfNullOrEmpty(serviceName);
+
+        Dictionary<string, object> resourceAttributes = new Dictionary<string, object>();
 
         resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceName, serviceName);
 
@@ -68,7 +69,9 @@ public static class ResourceBuilderExtensions
             resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceInstance, serviceInstanceId);
         }
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         return resourceBuilder.AddResource(new Resource(resourceAttributes));
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
     }
 
     /// <summary>
@@ -81,7 +84,10 @@ public static class ResourceBuilderExtensions
     /// <returns>Returns <see cref="ResourceBuilder"/> for chaining.</returns>
     public static ResourceBuilder AddTelemetrySdk(this ResourceBuilder resourceBuilder)
     {
+        Guard.ThrowIfNull(resourceBuilder);
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         return resourceBuilder.AddResource(TelemetryResource);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
     }
 
     /// <summary>
@@ -92,7 +98,10 @@ public static class ResourceBuilderExtensions
     /// <returns>Returns <see cref="ResourceBuilder"/> for chaining.</returns>
     public static ResourceBuilder AddAttributes(this ResourceBuilder resourceBuilder, IEnumerable<KeyValuePair<string, object>> attributes)
     {
+        Guard.ThrowIfNull(resourceBuilder);
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         return resourceBuilder.AddResource(new Resource(attributes));
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
     }
 
     /// <summary>
@@ -105,9 +114,12 @@ public static class ResourceBuilderExtensions
     /// <returns>Returns <see cref="ResourceBuilder"/> for chaining.</returns>
     public static ResourceBuilder AddEnvironmentVariableDetector(this ResourceBuilder resourceBuilder)
     {
+        Guard.ThrowIfNull(resourceBuilder);
         Lazy<IConfiguration> configuration = new Lazy<IConfiguration>(() => new ConfigurationBuilder().AddEnvironmentVariables().Build());
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         return resourceBuilder
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
             .AddDetectorInternal(sp => new OtelEnvResourceDetector(sp?.GetService<IConfiguration>() ?? configuration.Value))
             .AddDetectorInternal(sp => new OtelServiceNameEnvVarDetector(sp?.GetService<IConfiguration>() ?? configuration.Value));
     }

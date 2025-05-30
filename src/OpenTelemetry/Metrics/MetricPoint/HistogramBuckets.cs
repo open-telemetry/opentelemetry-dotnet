@@ -33,6 +33,7 @@ public class HistogramBuckets
 
     internal HistogramBuckets(double[]? explicitBounds)
     {
+        explicitBounds = CleanUpInfinitiesFromExplicitBounds(explicitBounds);
         this.ExplicitBounds = explicitBounds;
         this.findHistogramBucketIndex = this.FindBucketIndexLinear;
         if (explicitBounds != null && explicitBounds.Length >= DefaultBoundaryCountForBinarySearch)
@@ -158,11 +159,16 @@ public class HistogramBuckets
         }
     }
 
+    private static double[]? CleanUpInfinitiesFromExplicitBounds(double[]? explicitBounds) => explicitBounds
+        ?.Where(b => !double.IsNegativeInfinity(b) && !double.IsPositiveInfinity(b)).ToArray();
+
     /// <summary>
     /// Enumerates the elements of a <see cref="HistogramBuckets"/>.
     /// </summary>
     // Note: Does not implement IEnumerator<> to prevent accidental boxing.
+#pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     public struct Enumerator
+#pragma warning restore CA1034 // Nested types should not be visible - already part of public API
     {
         private readonly int numberOfBuckets;
         private readonly HistogramBuckets histogramMeasurements;

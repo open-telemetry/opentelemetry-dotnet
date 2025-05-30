@@ -24,7 +24,9 @@ public class CompositeProcessor<T> : BaseProcessor<T>
     {
         Guard.ThrowIfNull(processors);
 
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         using var iter = processors.GetEnumerator();
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         if (!iter.MoveNext())
         {
             throw new ArgumentException($"'{iter}' is null or empty", nameof(processors));
