@@ -264,7 +264,7 @@ you're more than welcome to participate!
 ([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
 
 * [Martin Thwaites](https://github.com/martinjt), Honeycomb
-* [Timothy "Mothra" Lee](https://github.com/TimothyMothra), Microsoft
+* [Timothy "Mothra" Lee](https://github.com/TimothyMothra)
 
 [Emeritus Triagers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
 
