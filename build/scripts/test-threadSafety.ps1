@@ -11,12 +11,12 @@ $env:OTEL_RUN_COYOTE_TESTS = 'true'
 $rootDirectory = Get-Location
 
 Write-Host "Install Coyote CLI."
-dotnet tool install --global Microsoft.Coyote.CLI
+dotnet tool install --global Microsoft.Coyote.CLI --version $coyoteVersion
 
 Write-Host "Build $testProjectName project."
 dotnet build "$rootDirectory/test/$testProjectName/$testProjectName.csproj" --configuration $configuration
 
-$artifactsPath = Join-Path $rootDirectory "test/$testProjectName/bin/$configuration/$targetFramework"
+$artifactsPath = Join-Path $rootDirectory "artifacts/bin/$testProjectName/$($configuration.ToLowerInvariant())_$targetFramework"
 
 Write-Host "Generate Coyote rewriting options JSON file."
 $assemblies = Get-ChildItem $artifactsPath -Filter OpenTelemetry*.dll | ForEach-Object {$_.Name}
@@ -31,4 +31,3 @@ coyote rewrite "$rootDirectory/test/$testProjectName/rewrite.coyote.json"
 
 Write-Host "Execute re-written binary."
 dotnet test "$artifactsPath/$testProjectName.dll" --framework $targetFramework --filter CategoryName=$categoryName
-
