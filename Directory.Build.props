@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <ArtifactsPath>$([System.IO.Path]::Combine('$(MSBuildThisFileDirectory)', 'artifacts'))</ArtifactsPath>
+    <UseArtifactsOutput>true</UseArtifactsOutput>
+  </PropertyGroup>
+</Project>
