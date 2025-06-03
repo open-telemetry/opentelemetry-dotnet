@@ -24,10 +24,9 @@ if ($LastExitCode -ne 0)
     Write-Host $publishOutput
 }
 
-$runtime = $IsWindows ? "win-x64" : ($IsMacOS ? "macos-x64" : "linux-x64")
 $app = $IsWindows ? "./OpenTelemetry.AotCompatibility.TestApp.exe" : "./OpenTelemetry.AotCompatibility.TestApp"
 
-Push-Location $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/bin/Release/$targetNetFramework/$runtime
+Push-Location $rootDirectory/artifacts/publish/OpenTelemetry.AotCompatibility.TestApp/release_$targetNetFramework
 
 Write-Host "Executing test App..."
 $app
