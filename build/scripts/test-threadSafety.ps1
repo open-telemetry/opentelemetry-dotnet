@@ -11,7 +11,7 @@ $env:OTEL_RUN_COYOTE_TESTS = 'true'
 $rootDirectory = Get-Location
 
 Write-Host "Install Coyote CLI."
-dotnet tool install --global Microsoft.Coyote.CLI --version $coyoteVersion
+dotnet tool install --global Microsoft.Coyote.CLI
 
 Write-Host "Build $testProjectName project."
 dotnet build "$rootDirectory/test/$testProjectName/$testProjectName.csproj" --configuration $configuration
