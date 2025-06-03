@@ -28,7 +28,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         this.ExponentialHistogramMaxScale = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxScale ?? 0;
         this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
 
-#if NET
+#if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
         hashCode.Add(this.InstrumentType);
         hashCode.Add(this.MeterName);

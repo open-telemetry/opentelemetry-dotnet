@@ -9,7 +9,9 @@ internal static class ThreadSafeRandom
 #if NET
     public static int Next(int min, int max)
     {
+#pragma warning disable CA5394 // Do not use insecure randomness
         return Random.Shared.Next(min, max);
+#pragma warning restore CA5394 // Do not use insecure randomness
     }
 #else
     private static readonly Random GlobalRandom = new();
@@ -25,6 +27,7 @@ internal static class ThreadSafeRandom
             int seed;
             lock (GlobalRandom)
             {
+#pragma warning disable CA5394 // Do not use insecure randomness
                 seed = GlobalRandom.Next();
             }
 
@@ -32,6 +35,7 @@ internal static class ThreadSafeRandom
         }
 
         return local.Next(min, max);
+#pragma warning restore CA5394 // Do not use insecure randomness
     }
 #endif
 }

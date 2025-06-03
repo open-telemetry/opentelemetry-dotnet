@@ -28,7 +28,9 @@ public static class LoggerProviderExtensions
 
         if (provider is LoggerProviderSdk loggerProviderSdk)
         {
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
             loggerProviderSdk.AddProcessor(processor);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         }
 
         return provider;

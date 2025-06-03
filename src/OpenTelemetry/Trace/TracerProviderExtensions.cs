@@ -24,7 +24,9 @@ public static class TracerProviderExtensions
 
         if (provider is TracerProviderSdk tracerProviderSdk)
         {
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
             tracerProviderSdk.AddProcessor(processor);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         }
 
         return provider;

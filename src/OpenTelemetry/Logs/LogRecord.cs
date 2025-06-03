@@ -434,7 +434,9 @@ public sealed class LogRecord
         {
             foreach (object? scope in bufferedScopes)
             {
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
                 callback(new(scope), state);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
             }
         }
         else

@@ -79,7 +79,9 @@ public readonly struct ReadOnlyExemplarCollection
     /// <summary>
     /// Enumerates the elements of a <see cref="ReadOnlyExemplarCollection"/>.
     /// </summary>
+#pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     public struct Enumerator
+#pragma warning restore CA1034 // Nested types should not be visible - already part of public API
     {
         private readonly Exemplar[] exemplars;
         private int index;
