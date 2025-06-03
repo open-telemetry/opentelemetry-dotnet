@@ -5,5 +5,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>$(TargetFrameworksForDocs)</TargetFrameworks>
+    <!-- Opt-out of Artifacts Output for docs as there are duplicated project names -->
+    <UseArtifactsOutput>false</UseArtifactsOutput>
   </PropertyGroup>
 </Project>
