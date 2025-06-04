@@ -1,0 +1,2 @@
+OpenTelemetry.Logs.LogRecord.EventName.get -> string?
+OpenTelemetry.Logs.LogRecord.EventName.set -> void

@@ -41,6 +41,8 @@ OpenTelemetry.Logs.LogRecordData.TraceFlags.get -> System.Diagnostics.ActivityTr
 OpenTelemetry.Logs.LogRecordData.TraceFlags.set -> void
 OpenTelemetry.Logs.LogRecordData.TraceId.get -> System.Diagnostics.ActivityTraceId
 OpenTelemetry.Logs.LogRecordData.TraceId.set -> void
+OpenTelemetry.Logs.LogRecordData.EventName.get -> string?
+OpenTelemetry.Logs.LogRecordData.EventName.set -> void
 OpenTelemetry.Logs.LogRecordSeverity
 OpenTelemetry.Logs.LogRecordSeverity.Debug = 5 -> OpenTelemetry.Logs.LogRecordSeverity
 OpenTelemetry.Logs.LogRecordSeverity.Debug2 = 6 -> OpenTelemetry.Logs.LogRecordSeverity

@@ -342,6 +342,8 @@ public class OtlpLogExporterTests
         Assert.NotNull(otlpLogRecord);
         Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
 
+        Assert.Equal("MyEvent10", otlpLogRecord.EventName);
+
         // Event
         otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
         if (emitLogEventAttributes == "true")
@@ -1476,6 +1478,49 @@ public class OtlpLogExporterTests
         Assert.Single(request.ResourceLogs[0].ScopeLogs);
 
         Assert.Equal(expectedScopeName, request.ResourceLogs[0].ScopeLogs[0].Scope?.Name);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LogRecordEventNameIsExportedWhenUsingBridgeApi(bool emitEventName)
+    {
+        LogRecordAttributeList attributes = default;
+        attributes.Add("name", "tomato");
+        attributes.Add("price", 2.99);
+        attributes.Add("{OriginalFormat}", "Hello from {name} {price}.");
+
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            var logger = loggerProvider.GetLogger();
+
+            logger.EmitLog(new LogRecordData
+            {
+                Body = "test body",
+                EventName = emitEventName ? "test event" : null,
+            });
+        }
+
+        Assert.Single(logRecords);
+        var logRecord = logRecords[0];
+
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal("test body", otlpLogRecord.Body.StringValue);
+
+        if (!emitEventName)
+        {
+            Assert.Empty(otlpLogRecord.EventName);
+        }
+        else
+        {
+            Assert.Equal("test event", otlpLogRecord.EventName);
+        }
     }
 
     [Fact]
