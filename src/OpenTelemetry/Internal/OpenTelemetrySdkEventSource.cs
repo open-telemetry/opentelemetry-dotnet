@@ -416,7 +416,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
             string? message;
             if (e.Message != null && e.Payload != null && e.Payload.Count > 0)
             {
-                message = string.Format(e.Message, e.Payload.ToArray());
+                message = string.Format(System.Globalization.CultureInfo.CurrentCulture, e.Message, e.Payload.ToArray());
             }
             else
             {
