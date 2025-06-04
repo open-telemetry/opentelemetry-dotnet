@@ -230,18 +230,6 @@ public class TelemetrySpan : IDisposable
     /// Adds a link to another span.
     /// </summary>
     /// <param name="spanContext">Span context to be linked.</param>
-    /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan AddLink(SpanContext spanContext)
-    {
-        this.AddLinkInternal(spanContext.ActivityContext);
-        return this;
-    }
-
-    /// <summary>
-    /// Adds a link to another span.
-    /// </summary>
-    /// <param name="spanContext">Span context to be linked.</param>
     /// <param name="attributes">Attributes for the link.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
