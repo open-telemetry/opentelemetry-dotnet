@@ -22,11 +22,11 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "Build $testProjectName project."
 dotnet build "$rootDirectory/test/$testProjectName/$testProjectName.csproj" --configuration $configuration
 
-$artifactsPath = Join-Path $rootDirectory "artifacts/bin/$testProjectName/$($configuration.ToLowerInvariant())_$targetFramework"
-
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet build failed with exit code $LASTEXITCODE"
 }
+
+$artifactsPath = Join-Path $rootDirectory "artifacts/bin/$testProjectName/$($configuration.ToLowerInvariant())_$targetFramework"
 
 Write-Host "Generate Coyote rewriting options JSON file."
 $assemblies = Get-ChildItem $artifactsPath -Filter OpenTelemetry*.dll | ForEach-Object {$_.Name}
