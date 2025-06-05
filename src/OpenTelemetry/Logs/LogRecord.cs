@@ -255,6 +255,15 @@ public sealed class LogRecord
     }
 
     /// <summary>
+    /// Gets or sets the name of the event associated with the log.
+    /// </summary>
+    public string? EventName
+    {
+        get => this.ILoggerData.EventId.Name;
+        set => this.ILoggerData.EventId = new EventId(this.ILoggerData.EventId.Id, value);
+    }
+
+    /// <summary>
     /// Gets or sets the raw state attached to the log.
     /// </summary>
     /// <remarks>
