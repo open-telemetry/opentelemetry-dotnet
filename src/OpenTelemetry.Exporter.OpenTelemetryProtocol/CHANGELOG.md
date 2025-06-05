@@ -12,6 +12,9 @@ Notes](../../RELEASENOTES.md).
   write position, resulting in gRPC protocol errors.
   ([#6280](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6280))
 
+* **Breaking change**: If `EventName` is specified either through `ILogger` or the log bridge API,
+  it is exported as `EventName` instead of `logrecord.event.name`.
+
 ## 1.12.0
 
 Released 2025-Apr-29
