@@ -16,7 +16,7 @@ Notes](../../RELEASENOTES.md).
   log bridge API, it is exported as `EventName` by default instead of
   `logrecord.event.name` which was previously behind the
   `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES` feature flag.
-  Note that exporting `logrecord.even.id` is still behind that same feature
+  Note that exporting `logrecord.event.id` is still behind that same feature
   flag. ([#6306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6306))
 
 ## 1.12.0
