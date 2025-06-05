@@ -192,11 +192,6 @@ internal static class ProtobufOtlpLogSerializer
             {
                 AddLogAttribute(state, ExperimentalOptions.LogRecordEventIdAttribute, logRecord.EventId.Id);
             }
-
-            if (!string.IsNullOrEmpty(logRecord.EventId.Name))
-            {
-                AddLogAttribute(state, ExperimentalOptions.LogRecordEventNameAttribute, logRecord.EventId.Name!);
-            }
         }
 
         if (logRecord.Exception != null)
