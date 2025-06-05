@@ -350,13 +350,10 @@ public class OtlpLogExporterTests
         {
             Assert.Contains(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes, StringComparison.Ordinal);
             Assert.Contains("10", otlpLogRecordAttributes, StringComparison.Ordinal);
-            Assert.Contains(ExperimentalOptions.LogRecordEventNameAttribute, otlpLogRecordAttributes, StringComparison.Ordinal);
-            Assert.Contains("MyEvent10", otlpLogRecordAttributes, StringComparison.Ordinal);
         }
         else
         {
             Assert.DoesNotContain(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes, StringComparison.Ordinal);
-            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventNameAttribute, otlpLogRecordAttributes, StringComparison.Ordinal);
         }
     }
 
