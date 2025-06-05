@@ -74,7 +74,7 @@ public class TelemetrySpanTests
     }
 
     [Fact]
-    public void AddLink_AddsLinkToActivity()
+    public void CheckAddLinkData()
     {
         using var activity = new Activity("test-activity");
         activity.Start();
@@ -94,7 +94,7 @@ public class TelemetrySpanTests
     }
 
     [Fact]
-    public void AddLink_WithAttributes_AddsLinkWithTags()
+    public void CheckAddLinkAttributes()
     {
         using var activity = new Activity("test-activity");
         activity.Start();
@@ -119,10 +119,11 @@ public class TelemetrySpanTests
     }
 
     [Fact]
-    public void AddLink_DoesNothing_WhenNotRecording()
+    public void CheckAddLinkNotRecording()
     {
         using var activity = new Activity("test-activity");
-        activity.IsAllDataRequested = false; // Simulate not recording
+        // Simulate not recording
+        activity.IsAllDataRequested = false;
         using var span = new TelemetrySpan(activity);
 
         var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
