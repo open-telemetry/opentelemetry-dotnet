@@ -6,6 +6,8 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added the `EventName` property to `LogRecord`. ([#6306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6306))
+
 ## 1.12.0
 
 Released 2025-Apr-29
