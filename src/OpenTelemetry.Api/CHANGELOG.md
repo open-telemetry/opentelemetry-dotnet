@@ -6,7 +6,8 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Experimental (only in pre-release versions): Added the `EventName` property to `LogRecordData`
+* Experimental (only in pre-release versions): Added the `EventName` property
+  to `LogRecordData`
   ([#6306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6306))
 
 * Added `AddLink(SpanContext, SpanAttributes?)` to `TelemetrySpan` to support
