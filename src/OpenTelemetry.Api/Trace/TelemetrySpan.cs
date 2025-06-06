@@ -206,7 +206,7 @@ public class TelemetrySpan : IDisposable
     /// <param name="attributes">Attributes for the event.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan AddEvent(string name, SpanAttributes attributes)
+    public TelemetrySpan AddEvent(string name, SpanAttributes? attributes)
     {
         this.AddEventInternal(name, default, attributes?.Attributes);
         return this;
