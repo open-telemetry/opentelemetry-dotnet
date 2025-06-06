@@ -122,6 +122,7 @@ public class TelemetrySpanTests
     public void CheckAddLinkNotRecording()
     {
         using var activity = new Activity("test-activity");
+
         // Simulate not recording
         activity.IsAllDataRequested = false;
         using var span = new TelemetrySpan(activity);
