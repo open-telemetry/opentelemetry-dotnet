@@ -84,7 +84,7 @@ public class TelemetrySpanTests
         var spanId = ActivitySpanId.CreateRandom();
         var context = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded);
 
-        span.AddLink(context, null);
+        span.AddLink(context);
 
         Assert.Single(activity.Links);
         var link = activity.Links.First();

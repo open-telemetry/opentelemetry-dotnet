@@ -206,7 +206,7 @@ public class TelemetrySpan : IDisposable
     /// <param name="attributes">Attributes for the event.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan AddEvent(string name, SpanAttributes? attributes)
+    public TelemetrySpan AddEvent(string name, SpanAttributes attributes)
     {
         this.AddEventInternal(name, default, attributes?.Attributes);
         return this;
@@ -223,6 +223,18 @@ public class TelemetrySpan : IDisposable
     public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, SpanAttributes? attributes)
     {
         this.AddEventInternal(name, timestamp, attributes?.Attributes);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a link to another span.
+    /// </summary>
+    /// <param name="spanContext">Span context to be linked.</param>
+    /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TelemetrySpan AddLink(SpanContext spanContext)
+    {
+        this.AddLinkInternal(spanContext.ActivityContext);
         return this;
     }
 

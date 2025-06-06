@@ -1,1 +1,2 @@
-OpenTelemetry.Trace.TelemetrySpan.AddLink(OpenTelemetry.Trace.SpanContext spanContext, OpenTelemetry.Trace.SpanAttributes? attributes) -> OpenTelemetry.Trace.TelemetrySpan!
+OpenTelemetry.Trace.TelemetrySpan.AddEvent(string! name, OpenTelemetry.Trace.SpanAttributes! attributes) -> OpenTelemetry.Trace.TelemetrySpan!
+OpenTelemetry.Trace.TelemetrySpan.AddLink(OpenTelemetry.Trace.SpanContext spanContext) -> OpenTelemetry.Trace.TelemetrySpan!
