@@ -2,8 +2,6 @@
 # This should be run from the root of the repo:
 #    docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
 
-version: '3.7'
-
 services:
   init-service:
     image: otel-test-image
