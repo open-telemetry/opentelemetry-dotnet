@@ -30,19 +30,19 @@
     <NetFrameworkSupportedVersions>net481;net48;net472;net471;net47;net462</NetFrameworkSupportedVersions>
 
     <!-- production TFMs -->
-    <TargetFrameworksForLibraries>net9.0;net8.0;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibraries>
-    <TargetFrameworksForLibrariesExtended>net9.0;net8.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibrariesExtended>
-    <TargetFrameworksForPrometheusAspNetCore>net9.0;net8.0</TargetFrameworksForPrometheusAspNetCore>
+    <TargetFrameworksForLibraries>net10.0;net9.0;net8.0;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibraries>
+    <TargetFrameworksForLibrariesExtended>net10.0;net9.0;net8.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibrariesExtended>
+    <TargetFrameworksForPrometheusAspNetCore>net10.0;net9.0;net8.0</TargetFrameworksForPrometheusAspNetCore>
     <TargetFrameworksRequiringSystemTextJsonDirectReference>net8.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksRequiringSystemTextJsonDirectReference>
 
     <!-- non-production TFMs -->
-    <TargetFrameworksForAspNetCoreTests>net9.0;net8.0</TargetFrameworksForAspNetCoreTests>
-    <TargetFrameworksForAotCompatibilityTests>net9.0;net8.0</TargetFrameworksForAotCompatibilityTests>
-    <TargetFrameworksForDocs>net9.0;net8.0</TargetFrameworksForDocs>
+    <TargetFrameworksForAspNetCoreTests>net10.0;net9.0;net8.0</TargetFrameworksForAspNetCoreTests>
+    <TargetFrameworksForAotCompatibilityTests>net10.0;net9.0;net8.0</TargetFrameworksForAotCompatibilityTests>
+    <TargetFrameworksForDocs>net10.0;net9.0;net8.0</TargetFrameworksForDocs>
     <TargetFrameworksForDocs Condition="$(OS) == 'Windows_NT' And '$(UsingMicrosoftNETSdkWeb)' != 'True'">
       $(TargetFrameworksForDocs);$(NetFrameworkSupportedVersions)
     </TargetFrameworksForDocs>
-    <TargetFrameworksForTests>net9.0;net8.0</TargetFrameworksForTests>
+    <TargetFrameworksForTests>net10.0;net9.0;net8.0</TargetFrameworksForTests>
     <TargetFrameworksForTests Condition="$(OS) == 'Windows_NT'">
       $(TargetFrameworksForTests);$(NetFrameworkMinimumSupportedVersion)
     </TargetFrameworksForTests>

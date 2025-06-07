@@ -24,7 +24,7 @@ on:
         required: false
         type: string
       tfm-list:
-        default: '[ "net462", "net8.0", "net9.0" ]'
+        default: '[ "net462", "net8.0", "net9.0", "net10.0" ]'
         required: false
         type: string
 
@@ -45,9 +45,9 @@ jobs:
         - os: ubuntu-22.04-arm
           version: net462
         - os: ubuntu-22.04-arm
-          version: net8.0
+          version: net10.0
         - os: windows-11-arm
-          version: net8.0
+          version: net10.0
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30

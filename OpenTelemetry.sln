@@ -33,6 +33,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\docfx.cmd = build\docfx.cmd
 		build\docker-compose.net8.0.yml = build\docker-compose.net8.0.yml
 		build\docker-compose.net9.0.yml = build\docker-compose.net9.0.yml
+		build\docker-compose.net10.0.yml = build\docker-compose.net10.0.yml
 		build\GlobalAttrExclusions.txt = build\GlobalAttrExclusions.txt
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
 		build\OpenTelemetry.prod.loose.ruleset = build\OpenTelemetry.prod.loose.ruleset
