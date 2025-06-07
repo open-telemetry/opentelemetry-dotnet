@@ -4,4 +4,4 @@ services:
       args:
         PUBLISH_FRAMEWORK: net9.0
         TEST_SDK_VERSION: "9.0"
-        BUILD_SDK_VERSION: "9.0"
+        BUILD_SDK_VERSION: "10.0"
