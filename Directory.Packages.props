@@ -9,7 +9,7 @@
         possible and only deviate (use a specific version) when a package has a
         more specific patch which must be reference directly.
     -->
-    <LatestRuntimeOutOfBandVer>9.0.0</LatestRuntimeOutOfBandVer>
+    <LatestRuntimeOutOfBandVer>10.0.0-preview.4.25258.110</LatestRuntimeOutOfBandVer>
 
     <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
     <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>8.0.0</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
@@ -123,6 +123,10 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.0-preview.4.25258.110" />
   </ItemGroup>
 
 </Project>
