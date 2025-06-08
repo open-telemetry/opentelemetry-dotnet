@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <AnalysisLevel>latest-all</AnalysisLevel>
+    <!-- Avoid conflicting port registrations if TFMs tested in parallel -->
+    <TestTfmsInParallel>false</TestTfmsInParallel>
   </PropertyGroup>
 
   <!-- Add MSBuild Task to Generate Certificates -->
