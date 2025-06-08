@@ -41,6 +41,9 @@ public sealed class W3CTraceContextTests : IDisposable
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters", Justification = "Need to use SkipUnlessEnvVarFoundTheory")]
     public async Task W3CTraceContextTestSuiteAsync(string value)
     {
+        // See https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/10.0/default-trace-context-propagator
+        DistributedContextPropagator.Current = DistributedContextPropagator.CreatePreW3CPropagator();
+
         // configure SDK
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddAspNetCoreInstrumentation()
