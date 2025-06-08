@@ -24,6 +24,12 @@ public sealed class W3CTraceContextTests : IDisposable
     private readonly HttpClient httpClient = new();
     private readonly ITestOutputHelper output;
 
+    static W3CTraceContextTests()
+    {
+        // See https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/10.0/default-trace-context-propagator
+        DistributedContextPropagator.Current = DistributedContextPropagator.CreatePreW3CPropagator();
+    }
+
     public W3CTraceContextTests(ITestOutputHelper output)
     {
         this.output = output;
