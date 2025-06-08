@@ -37,8 +37,13 @@ public sealed class W3CTraceContextTests : IDisposable
     {
         // configure SDK
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-        .AddAspNetCoreInstrumentation()
-        .Build();
+            .AddAspNetCoreInstrumentation()
+            .Build();
+
+#if NET10_0_OR_GREATER
+        // See https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/10.0/default-trace-context-propagator
+        System.Diagnostics.DistributedContextPropagator.Current = System.Diagnostics.DistributedContextPropagator.CreatePreW3CPropagator();
+#endif
 
         var builder = WebApplication.CreateBuilder();
         using var app = builder.Build();
@@ -68,12 +73,23 @@ public sealed class W3CTraceContextTests : IDisposable
 
         app.RunAsync("http://localhost:5000/");
 
-        string result = RunCommand("python", "trace-context/test/test.py http://localhost:5000/");
+        (var stdout, var stderr) = RunCommand("python", "-W ignore trace-context/test/test.py http://localhost:5000/");
 
         // Assert
-        string lastLine = ParseLastLine(result);
+        // TODO: after W3C Trace Context test suite passes, it might go in standard output
+        string lastLine = ParseLastLine(stderr);
 
-        this.output.WriteLine("result:" + result);
+        this.output.WriteLine("[stderr]" + stderr);
+        this.output.WriteLine("[stdout]" + stdout);
+        this.output.WriteLine("[result]" + lastLine);
+
+        Console.WriteLine("[stderr]" + stderr);
+        Console.WriteLine("[stdout]" + stdout);
+        Console.WriteLine("[result]" + lastLine);
+
+        Thread.Sleep(5_000);
+
+        this.output.WriteLine("DONE");
 
         // Assert on the last line
         Assert.StartsWith("OK", lastLine, StringComparison.Ordinal);
@@ -82,9 +98,10 @@ public sealed class W3CTraceContextTests : IDisposable
     public void Dispose()
     {
         this.httpClient.Dispose();
+        Thread.Sleep(5_000);
     }
 
-    private static string RunCommand(string command, string args)
+    private static (string StdOut, string StdErr) RunCommand(string command, string args)
     {
         using var proc = new Process
         {
@@ -101,10 +118,12 @@ public sealed class W3CTraceContextTests : IDisposable
         };
         proc.Start();
 
-        // TODO: after W3C Trace Context test suite passes, it might go in standard output
-        var results = proc.StandardError.ReadToEnd();
+        var stdout = proc.StandardOutput.ReadToEnd();
+        var stderr = proc.StandardError.ReadToEnd();
+
         proc.WaitForExit();
-        return results;
+
+        return (stdout, stderr);
     }
 
     private static string ParseLastLine(string output)
