@@ -1,4 +1,3 @@
-version: "3"
 services:
 
   # OTEL Collector to receive logs, metrics and traces from the application
