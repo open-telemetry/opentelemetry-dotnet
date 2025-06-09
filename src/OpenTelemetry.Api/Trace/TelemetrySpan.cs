@@ -227,6 +227,31 @@ public class TelemetrySpan : IDisposable
     }
 
     /// <summary>
+    /// Adds a link to another span.
+    /// </summary>
+    /// <param name="spanContext">Span context to be linked.</param>
+    /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TelemetrySpan AddLink(SpanContext spanContext)
+    {
+        this.AddLinkInternal(spanContext.ActivityContext);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a link to another span.
+    /// </summary>
+    /// <param name="spanContext">Span context to be linked.</param>
+    /// <param name="attributes">Attributes for the link.</param>
+    /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TelemetrySpan AddLink(SpanContext spanContext, SpanAttributes? attributes)
+    {
+        this.AddLinkInternal(spanContext.ActivityContext, attributes?.Attributes);
+        return this;
+    }
+
+    /// <summary>
     /// End the span.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -340,6 +365,14 @@ public class TelemetrySpan : IDisposable
         if (this.IsRecording)
         {
             this.Activity!.AddEvent(new ActivityEvent(name, timestamp, tags));
+        }
+    }
+
+    private void AddLinkInternal(ActivityContext context, ActivityTagsCollection? tags = null)
+    {
+        if (this.IsRecording)
+        {
+            this.Activity!.AddLink(new ActivityLink(context, tags));
         }
     }
 }
