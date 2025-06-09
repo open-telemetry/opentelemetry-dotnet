@@ -10,6 +10,9 @@ indent_size = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+[*.sh]
+end_of_line = lf
+
 [*.{cs,cshtml,htm,html,md,py,sln,xml}]
 indent_size = 4
 
