@@ -1,6 +1,6 @@
 ARG SDK_VERSION=9.0
-FROM mcr.microsoft.com/dotnet/sdk:8.0.410@sha256:b56053d0a8f4627047740941396e76cd9e7a9421c83b1d81b68f10e5019862d7 AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.300@sha256:c5b188baf837b0180a14f988815b9cc7a55b836dd6cbe1b6e6523cf3098faaa8 AS dotnet-sdk-9.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0.301@sha256:faa2daf2b72cbe787ee1882d9651fa4ef3e938ee56792b8324516f5a448f3abe AS dotnet-sdk-8.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0.301@sha256:faa2daf2b72cbe787ee1882d9651fa4ef3e938ee56792b8324516f5a448f3abe AS dotnet-sdk-9.0
 
 FROM dotnet-sdk-${SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
