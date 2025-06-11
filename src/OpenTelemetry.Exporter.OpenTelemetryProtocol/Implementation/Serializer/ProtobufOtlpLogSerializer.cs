@@ -249,9 +249,9 @@ internal static class ProtobufOtlpLogSerializer
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed32WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Flags, (uint)logRecord.TraceFlags);
         }
 
-        if (logRecord.EventName != null)
+        if (logRecord.EventId.Name != null)
         {
-            otlpTagWriterState.WritePosition = ProtobufSerializer.WriteStringWithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Event_Name, logRecord.EventName!);
+            otlpTagWriterState.WritePosition = ProtobufSerializer.WriteStringWithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Event_Name, logRecord.EventId.Name!);
         }
 
         logRecord.ForEachScope(ProcessScope, state);
