@@ -67,7 +67,7 @@ jobs:
         foreach ($projectFile in $projectFiles) {
             $projectName = [System.IO.Path]::GetFileNameWithoutExtension($projectFile)
 
-            Get-ChildItem -Path src/$projectName/bin/Release/*/$projectName.dll -File | ForEach-Object {
+            Get-ChildItem -Path artifacts/bin/$projectName/release_*/$projectName.dll -File | ForEach-Object {
                 $fileFullPath = $_.FullName
                 Write-Host "Signing $fileFullPath"
 
