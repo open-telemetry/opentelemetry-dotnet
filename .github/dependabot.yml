@@ -13,6 +13,11 @@ updates:
       day: "wednesday"
     labels:
       - "infra"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
   - package-ecosystem: "docker"
     directory: "examples/MicroserviceExample/WorkerService"
     schedule:
@@ -20,6 +25,11 @@ updates:
       day: "wednesday"
     labels:
       - "infra"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
   - package-ecosystem: "docker"
     directory: "test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest"
     schedule:
@@ -27,6 +37,11 @@ updates:
       day: "wednesday"
     labels:
       - "infra"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
   - package-ecosystem: "docker"
     directory: "test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests"
     schedule:
@@ -34,6 +49,11 @@ updates:
       day: "wednesday"
     labels:
       - "infra"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
   - package-ecosystem: "dotnet-sdk"
     directory: "/"
     schedule:
