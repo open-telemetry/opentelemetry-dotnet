@@ -12,14 +12,10 @@
     <RuntimePackageVersions>9.0.0</RuntimePackageVersions>
     <!--
         For modern .NET runtimes, match the major version of packages to the major version of the runtime.
+        This is to ensure that the NuGet packages that users deploy match the support lifetimes of the .NET version they are using (i.e. LTS vs STS).
         See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
-        However, for .NET 8 we unfortunately need to use .NET 9 packages as the following APIs have been
-        used to expose user-facing functionality:
-        - System.Diagnostics.Activity.ctor(string, string, IEnumerable<KeyValuePair<string, object>>)
-        - System.Diagnostics.Activity.AddException()
-        - System.Diagnostics.Activity.AddLink()
     -->
-    <RuntimePackageVersions Condition="'$(TargetFramework)' == 'net8.0'">9.0.0</RuntimePackageVersions>
+    <RuntimePackageVersions Condition="'$(TargetFramework)' == 'net8.0'">8.0.0</RuntimePackageVersions>
     <RuntimePackageVersions Condition="'$(TargetFramework)' == 'net9.0'">9.0.0</RuntimePackageVersions>
 
     <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
@@ -33,15 +29,6 @@
       vulnerability in the NuGet packages that are published from this repository.
   -->
   <ItemGroup>
-    <!--
-        Typically, for the Microsoft.Extensions.* packages relating to DI Abstractions, Hosting Abstractions, and Logging,
-        the latest stable version should be used because:
-        1) Each major version bump will have some new API capabilities (e.g.For Logging, .NET 6 introduced compile-time logging
-          source generation, .NET 8 introduced automatic event id generation).
-        2) Each minor version bump is normally security hotfixes or critical bug fixes.
-        3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
-          these packages even during major version bumps, so compatibility is not a concern here.
-    -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(RuntimePackageVersions)" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="$(RuntimePackageVersions)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(RuntimePackageVersions)" />
@@ -59,15 +46,18 @@
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
 
     <!--
-        Typically, the latest stable version of System.Diagnostics.DiagnosticSource should be used here because:
-        1) Each major version bump will likely have some new OpenTelemetry capabilities (e.g. .NET 6 introduced Meter
-          API, .NET 7 added UpDownCounter, .NET 8 added Meter/Instrument level attributes support, .NET 9 added
-          Advice/Hint API, etc.).
-        2) Each minor version bump is normally security hotfixes or critical bug fixes.
-        3) The .NET runtime team provides extra backward compatibility guarantee to System.Diagnostics.DiagnosticSource
-          even during major version bumps, so compatibility is not a concern here.
+        For modern .NET runtimes, match the major version of packages to the major version of the runtime.
+        This is to ensure that the NuGet packages that users deploy match the support lifetimes of the .NET version they are using (i.e. LTS vs STS).
+        See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
     -->
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(RuntimePackageVersions)" />
+    <!--
+        However, for .NET 8 we need to use the .NET 9 package as the following APIs have been used to expose user-facing functionality:
+        - System.Diagnostics.Activity.ctor(string, string, IEnumerable<KeyValuePair<string, object>>)
+        - System.Diagnostics.Activity.AddException()
+        - System.Diagnostics.Activity.AddLink()
+    -->
+    <PackageVersion Update="System.Diagnostics.DiagnosticSource" Version="9.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
   </ItemGroup>
 
   <ItemGroup>

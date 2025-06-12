@@ -5,6 +5,7 @@
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);BUILDING_HOSTING_TESTS</DefineConstants>
     <AnalysisLevel>latest-all</AnalysisLevel>
+    <ReferenceSystemTextJsonPackages Condition="'$(TargetFramework)' == 'net8.0'">true</ReferenceSystemTextJsonPackages>
   </PropertyGroup>
 
   <ItemGroup>
