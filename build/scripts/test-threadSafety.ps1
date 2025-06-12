@@ -13,7 +13,7 @@ $env:OTEL_RUN_COYOTE_TESTS = 'true'
 $rootDirectory = Get-Location
 
 Write-Host "Install Coyote CLI."
-dotnet tool install --global Microsoft.Coyote.CLI
+dotnet tool install --global Microsoft.Coyote.CLI --version $coyoteVersion
 
 if ($LASTEXITCODE -ne 0) {
     throw "Microsoft.Coyote.CLI installation failed with exit code $LASTEXITCODE"
