@@ -9,7 +9,18 @@
         possible and only deviate (use a specific version) when a package has a
         more specific patch which must be reference directly.
     -->
-    <LatestRuntimeOutOfBandVer>9.0.0</LatestRuntimeOutOfBandVer>
+    <RuntimePackageVersions>9.0.0</RuntimePackageVersions>
+    <!--
+        For modern .NET runtimes, match the major version of packages to the major version of the runtime.
+        See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
+        However, for .NET 8 we unfortunately need to use .NET 9 packages as the following APIs have been
+        used to expose user-facing functionality:
+        - System.Diagnostics.Activity.ctor(string, string, IEnumerable<KeyValuePair<string, object>>)
+        - System.Diagnostics.Activity.AddException()
+        - System.Diagnostics.Activity.AddLink()
+    -->
+    <RuntimePackageVersions Condition="'$(TargetFramework)' == 'net8.0'">9.0.0</RuntimePackageVersions>
+    <RuntimePackageVersions Condition="'$(TargetFramework)' == 'net9.0'">9.0.0</RuntimePackageVersions>
 
     <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
     <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>8.0.0</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
@@ -31,10 +42,10 @@
         3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
           these packages even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(LatestRuntimeOutOfBandVer)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(RuntimePackageVersions)" />
 
     <!--
         OTel packages always point to latest stable release.
@@ -56,7 +67,7 @@
         3) The .NET runtime team provides extra backward compatibility guarantee to System.Diagnostics.DiagnosticSource
           even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(LatestRuntimeOutOfBandVer)" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(RuntimePackageVersions)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -96,10 +107,15 @@
     <PackageVersion Include="Microsoft.CSharp" Version="[4.7.0]" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.11.0-beta1.23525.2]" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(RuntimePackageVersions)" />
+    <!--
+        Microsoft.Extensions.Telemetry.Abstractions is not part of the .NET runtime and is supported
+        at "tip", however the package multi-targets so that its dependencies match the major version
+        of the runtime for each target framework so always uses the latest major version.
+    -->
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="[9.0.0,)" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="[17.13.0,18.0.0)" />
