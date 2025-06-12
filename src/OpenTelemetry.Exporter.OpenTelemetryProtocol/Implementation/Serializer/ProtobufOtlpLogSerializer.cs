@@ -192,11 +192,6 @@ internal static class ProtobufOtlpLogSerializer
             {
                 AddLogAttribute(state, ExperimentalOptions.LogRecordEventIdAttribute, logRecord.EventId.Id);
             }
-
-            if (!string.IsNullOrEmpty(logRecord.EventId.Name))
-            {
-                AddLogAttribute(state, ExperimentalOptions.LogRecordEventNameAttribute, logRecord.EventId.Name!);
-            }
         }
 
         if (logRecord.Exception != null)
@@ -252,6 +247,11 @@ internal static class ProtobufOtlpLogSerializer
             otlpTagWriterState.WritePosition = ProtobufOtlpTraceSerializer.WriteSpanId(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.SpanId);
 
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed32WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Flags, (uint)logRecord.TraceFlags);
+        }
+
+        if (logRecord.EventId.Name != null)
+        {
+            otlpTagWriterState.WritePosition = ProtobufSerializer.WriteStringWithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Event_Name, logRecord.EventId.Name!);
         }
 
         logRecord.ForEachScope(ProcessScope, state);

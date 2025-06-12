@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
@@ -35,6 +36,7 @@ internal sealed class LoggerSdk : Logger
 
             logRecord.Data = data;
             logRecord.ILoggerData = default;
+            logRecord.ILoggerData.EventId = new EventId(default, data.EventName);
 
             logRecord.Logger = this;
 

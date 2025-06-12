@@ -36,6 +36,7 @@ internal static class ProtobufOtlpLogFieldNumberConstants
     internal const int LogRecord_Flags = 8;
     internal const int LogRecord_Trace_Id = 9;
     internal const int LogRecord_Span_Id = 10;
+    internal const int LogRecord_Event_Name = 12;
 
     // SeverityNumber
     internal const int Severity_Number_Unspecified = 0;
