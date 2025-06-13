@@ -27,7 +27,7 @@ public class BatchExportActivityProcessorTests
     }
 
     [Fact]
-    public void CheckIfBatchIsExportingOnQueueLimit()
+    public async Task CheckIfBatchIsExportingOnQueueLimit()
     {
         var exportedItems = new List<Activity>();
         using var exporter = new InMemoryExporter<Activity>(exportedItems);
@@ -44,10 +44,7 @@ public class BatchExportActivityProcessorTests
 
         processor.OnEnd(activity);
 
-        for (int i = 0; i < 10 && exportedItems.Count == 0; i++)
-        {
-            Thread.Sleep(500);
-        }
+        await WaitForMinimumCountAsync(exportedItems, 1);
 
         Assert.Single(exportedItems);
 
@@ -69,7 +66,7 @@ public class BatchExportActivityProcessorTests
     [InlineData(Timeout.Infinite)]
     [InlineData(0)]
     [InlineData(1)]
-    public void CheckForceFlushExport(int timeout)
+    public async Task CheckForceFlushExport(int timeout)
     {
         var exportedItems = new List<Activity>();
         using var exporter = new InMemoryExporter<Activity>(exportedItems);
@@ -95,22 +92,23 @@ public class BatchExportActivityProcessorTests
         Assert.Equal(0, processor.ProcessedCount);
 
         // waiting to see if time is triggering the exporter
-        Thread.Sleep(1_000);
+        await Task.Delay(TimeSpan.FromSeconds(1));
         Assert.Empty(exportedItems);
 
         // forcing flush
-        processor.ForceFlush(timeout);
+        var result = processor.ForceFlush(timeout);
 
-        if (timeout == 0)
-        {
-            // ForceFlush(0) will trigger flush and return immediately, so let's sleep for a while
-            Thread.Sleep(1_000);
-        }
+        Assert.Equal(timeout != 0, result);
 
-        Assert.Equal(2, exportedItems.Count);
+        // Wait for the expected number of items to be exported
+        int expectedCount = 2;
 
-        Assert.Equal(2, processor.ProcessedCount);
-        Assert.Equal(2, processor.ReceivedCount);
+        await WaitForMinimumCountAsync(exportedItems, expectedCount);
+
+        Assert.Equal(expectedCount, exportedItems.Count);
+
+        Assert.Equal(expectedCount, processor.ProcessedCount);
+        Assert.Equal(expectedCount, processor.ReceivedCount);
         Assert.Equal(0, processor.DroppedCount);
     }
 
@@ -118,7 +116,7 @@ public class BatchExportActivityProcessorTests
     [InlineData(Timeout.Infinite)]
     [InlineData(0)]
     [InlineData(1)]
-    public void CheckShutdownExport(int timeoutMilliseconds)
+    public async Task CheckShutdownExport(int timeoutMilliseconds)
     {
         var exportedItems = new List<Activity>();
         using var exporter = new InMemoryExporter<Activity>(exportedItems);
@@ -136,10 +134,7 @@ public class BatchExportActivityProcessorTests
         processor.OnEnd(activity);
         processor.Shutdown(timeoutMilliseconds);
 
-        if (timeoutMilliseconds < 1_000)
-        {
-            Thread.Sleep(1_000 - timeoutMilliseconds);
-        }
+        await WaitForMinimumCountAsync(exportedItems, 1);
 
         Assert.Single(exportedItems);
 
@@ -191,6 +186,21 @@ public class BatchExportActivityProcessorTests
         processor.Shutdown();
 
         Assert.Equal(3, processor.ProcessedCount); // Verify batch was drained even though nothing was exported.
+    }
+
+    private static async Task WaitForMinimumCountAsync(List<Activity> collection, int minimum)
+    {
+        var maximumWait = TimeSpan.FromSeconds(5);
+        var waitInterval = TimeSpan.FromSeconds(0.25);
+
+        using var cts = new CancellationTokenSource(maximumWait);
+
+        // We check for a minimum because if there are too many it's better to
+        // terminate the loop and let the assert in the caller fail immediately
+        while (!cts.IsCancellationRequested && collection.Count < minimum)
+        {
+            await Task.Delay(waitInterval);
+        }
     }
 
     private sealed class FailureExporter<T> : BaseExporter<T>
