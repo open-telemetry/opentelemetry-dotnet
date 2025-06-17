@@ -9,7 +9,7 @@ WORKDIR /app
 COPY . ./
 RUN dotnet publish ./examples/MicroserviceExample/WebApi -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /out -p:IntegrationBuild=true
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0.16@sha256:c149fe7e2be3baccf3cc91e9e6cdcca0ce70f7ca30d5f90796d983ff4f27bd9a AS dotnet-aspnet-8.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.17@sha256:d5c0d91bc8fe887684b97d5409056270ed78cd23a5123436e842a8114a64d584 AS dotnet-aspnet-8.0
 FROM mcr.microsoft.com/dotnet/aspnet:9.0.5@sha256:d5507d8292fb2469ec0b9913f3cd4bb8d5a014bd6dc00c33fd4c4e7310229f07 AS dotnet-aspnet-9.0
 
 FROM dotnet-aspnet-${SDK_VERSION} AS runtime
