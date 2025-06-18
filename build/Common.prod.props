@@ -37,13 +37,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Note: Disable net6.0 target for package validation because it has been
-    removed. It should be possible to remove this once a stable version has been
-    released to NuGet without net6.0. -->
-    <PackageValidationBaselineFrameworkToIgnore Include="net6.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="MinVer" PrivateAssets="All" Condition="'$(IntegrationBuild)' != 'true'" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
   </ItemGroup>
