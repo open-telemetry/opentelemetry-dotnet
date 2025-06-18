@@ -33,7 +33,7 @@ public sealed class W3CTraceContextTests : IDisposable
     [SkipUnlessEnvVarFoundTheory(W3CTraceContextEnvVarName)]
     [InlineData("placeholder")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters", Justification = "Need to use SkipUnlessEnvVarFoundTheory")]
-    public void W3CTraceContextTestSuiteAsync(string value)
+    public async Task W3CTraceContextTestSuiteAsync(string value)
     {
         // configure SDK
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -66,9 +66,9 @@ public sealed class W3CTraceContextTests : IDisposable
             return result;
         });
 
-        app.RunAsync("http://localhost:5000/");
+        _ = app.RunAsync("http://localhost:5000/");
 
-        (var stdout, var stderr) = RunCommand("python", "-W ignore trace-context/test/test.py http://localhost:5000/");
+        (var stdout, var stderr) = await RunCommand("python", "-W ignore trace-context/test/test.py http://localhost:5000/");
 
         // Assert
         // TODO: after W3C Trace Context test suite passes, it might go in standard output
@@ -86,9 +86,9 @@ public sealed class W3CTraceContextTests : IDisposable
         this.httpClient.Dispose();
     }
 
-    private static (string StdOut, string StdErr) RunCommand(string command, string args)
+    private static async Task<(string StdOut, string StdErr)> RunCommand(string command, string args)
     {
-        using var proc = new Process
+        using var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
@@ -101,14 +101,43 @@ public sealed class W3CTraceContextTests : IDisposable
                 WorkingDirectory = ".",
             },
         };
-        proc.Start();
+        process.Start();
 
-        var stdout = proc.StandardOutput.ReadToEnd();
-        var stderr = proc.StandardError.ReadToEnd();
+        // See https://stackoverflow.com/a/16326426/1064169 and
+        // https://learn.microsoft.com/dotnet/api/system.diagnostics.processstartinfo.redirectstandardoutput.
+        using var outputTokenSource = new CancellationTokenSource();
 
-        proc.WaitForExit();
+        var readOutput = ReadOutputAsync(process, outputTokenSource.Token);
 
-        return (stdout, stderr);
+        try
+        {
+            await process.WaitForExitAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            try
+            {
+                process.Kill(entireProcessTree: true);
+            }
+            catch (Exception)
+            {
+                // Ignore
+            }
+        }
+        finally
+        {
+            await outputTokenSource.CancelAsync();
+        }
+
+        try
+        {
+            return await readOutput;
+        }
+        finally
+        {
+            process.Dispose();
+            outputTokenSource.Dispose();
+        }
     }
 
     private static string ParseLastLine(string output)
@@ -121,6 +150,59 @@ public sealed class W3CTraceContextTests : IDisposable
         // The output ends with '\n', which should be ignored.
         var lastNewLineCharacterPos = output.LastIndexOf('\n', output.Length - 2);
         return output.Substring(lastNewLineCharacterPos + 1);
+    }
+
+    private static async Task<(string Output, string Error)> ReadOutputAsync(
+        Process process,
+        CancellationToken cancellationToken)
+    {
+        var processErrors = ConsumeStreamAsync(process.StandardError, process.StartInfo.RedirectStandardError, cancellationToken);
+        var processOutput = ConsumeStreamAsync(process.StandardOutput, process.StartInfo.RedirectStandardOutput, cancellationToken);
+
+        await Task.WhenAll(processErrors, processOutput);
+
+        string error = string.Empty;
+        string output = string.Empty;
+
+        if (processErrors.Status == TaskStatus.RanToCompletion)
+        {
+            error = (await processErrors).ToString();
+        }
+
+        if (processOutput.Status == TaskStatus.RanToCompletion)
+        {
+            output = (await processOutput).ToString();
+        }
+
+        return (output, error);
+    }
+
+    private static Task<StringBuilder> ConsumeStreamAsync(
+        StreamReader reader,
+        bool isRedirected,
+        CancellationToken cancellationToken)
+    {
+        return isRedirected ?
+            Task.Run(() => ProcessStream(reader, cancellationToken), cancellationToken) :
+            Task.FromResult(new StringBuilder(0));
+
+        static async Task<StringBuilder> ProcessStream(
+            StreamReader reader,
+            CancellationToken cancellationToken)
+        {
+            var builder = new StringBuilder();
+
+            try
+            {
+                builder.Append(await reader.ReadToEndAsync(cancellationToken));
+            }
+            catch (OperationCanceledException)
+            {
+                // Ignore
+            }
+
+            return builder;
+        }
     }
 
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes
