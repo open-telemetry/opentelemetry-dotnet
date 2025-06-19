@@ -254,7 +254,10 @@ internal static class ProtobufOtlpLogSerializer
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed32WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Flags, (uint)logRecord.TraceFlags);
         }
 
-        logRecord.ForEachScope(ProcessScope, state);
+        if (!experimentalOptions.DisableAddingScopeLogAttributes)
+        {
+            logRecord.ForEachScope(ProcessScope, state);
+        }
 
         if (otlpTagWriterState.DroppedTagCount > 0)
         {
