@@ -17,6 +17,8 @@ internal sealed class ExperimentalOptions
 
     public const string OtlpDiskRetryDirectoryPathEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH";
 
+    public const string DisableAddingScopeLogAttributesEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISABLE_ADDING_SCOPE_LOG";
+
     public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
     {
@@ -24,6 +26,12 @@ internal sealed class ExperimentalOptions
 
     public ExperimentalOptions(IConfiguration configuration)
     {
+
+        if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, DisableAddingScopeLogAttributesEnvVar, out var disableAddingScopeLogAttributes))
+        {
+            this.DisableAddingScopeLogAttributes = disableAddingScopeLogAttributes;
+        }
+
         if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, EmitLogEventEnvVar, out var emitLogEventAttributes))
         {
             this.EmitLogEventAttributes = emitLogEventAttributes;
@@ -68,6 +76,8 @@ internal sealed class ExperimentalOptions
     /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#retry"/>.
     /// </remarks>
     public bool EnableInMemoryRetry { get; }
+
+    public bool DisableAddingScopeLogAttributes { get; }
 
     /// <summary>
     /// Gets a value indicating whether or not retry via disk should be enabled for transient errors.
