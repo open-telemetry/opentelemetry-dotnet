@@ -263,4 +263,107 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.NotEqual(defaultOptionsWithData.TimeoutMilliseconds, targetOptionsWithData.TimeoutMilliseconds);
         Assert.NotEqual(defaultOptionsWithData.HttpClientFactory, targetOptionsWithData.HttpClientFactory);
     }
+
+#if NET8_0_OR_GREATER
+    [Fact]
+    public void OtlpExporterOptions_MtlsEnvironmentVariables()
+    {
+        // Test CA certificate environment variable
+        Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CERTIFICATE", "/path/to/ca.crt");
+
+        try
+        {
+            var options = new OtlpExporterOptions();
+
+            Assert.NotNull(options.MtlsOptions);
+            Assert.Equal("/path/to/ca.crt", options.MtlsOptions.CaCertificatePath);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CERTIFICATE", null);
+        }
+    }
+
+    [Fact]
+    public void OtlpExporterOptions_MtlsEnvironmentVariables_ClientCertificate()
+    {
+        // Test client certificate and key environment variables
+        Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE", "/path/to/client.crt");
+        Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_KEY", "/path/to/client.key");
+
+        try
+        {
+            var options = new OtlpExporterOptions();
+
+            Assert.NotNull(options.MtlsOptions);
+            Assert.Equal("/path/to/client.crt", options.MtlsOptions.ClientCertificatePath);
+            Assert.Equal("/path/to/client.key", options.MtlsOptions.ClientKeyPath);
+            Assert.True(options.MtlsOptions.IsEnabled);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE", null);
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_KEY", null);
+        }
+    }
+
+    [Fact]
+    public void OtlpExporterOptions_MtlsEnvironmentVariables_AllCertificates()
+    {
+        // Test all mTLS environment variables together
+        Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CERTIFICATE", "/path/to/ca.crt");
+        Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE", "/path/to/client.crt");
+        Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_KEY", "/path/to/client.key");
+
+        try
+        {
+            var options = new OtlpExporterOptions();
+
+            Assert.NotNull(options.MtlsOptions);
+            Assert.Equal("/path/to/ca.crt", options.MtlsOptions.CaCertificatePath);
+            Assert.Equal("/path/to/client.crt", options.MtlsOptions.ClientCertificatePath);
+            Assert.Equal("/path/to/client.key", options.MtlsOptions.ClientKeyPath);
+            Assert.True(options.MtlsOptions.IsEnabled);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CERTIFICATE", null);
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE", null);
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_KEY", null);
+        }
+    }
+
+    [Fact]
+    public void OtlpExporterOptions_MtlsEnvironmentVariables_NoEnvironmentVariables()
+    {
+        // Ensure no mTLS options are set when no environment variables are present
+        var options = new OtlpExporterOptions();
+
+        Assert.Null(options.MtlsOptions);
+    }
+
+    [Fact]
+    public void OtlpExporterOptions_MtlsEnvironmentVariables_UsingIConfiguration()
+    {
+        // Test using IConfiguration instead of environment variables
+        var values = new Dictionary<string, string?>
+        {
+            ["OTEL_EXPORTER_OTLP_CERTIFICATE"] = "/config/path/to/ca.crt",
+            ["OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE"] = "/config/path/to/client.crt",
+            ["OTEL_EXPORTER_OTLP_CLIENT_KEY"] = "/config/path/to/client.key",
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
+
+        var options = new OtlpExporterOptions(configuration, OtlpExporterOptionsConfigurationType.Default, new());
+
+        Assert.NotNull(options.MtlsOptions);
+        Assert.Equal("/config/path/to/ca.crt", options.MtlsOptions.CaCertificatePath);
+        Assert.Equal("/config/path/to/client.crt", options.MtlsOptions.ClientCertificatePath);
+        Assert.Equal("/config/path/to/client.key", options.MtlsOptions.ClientKeyPath);
+        Assert.True(options.MtlsOptions.IsEnabled);
+    }
+#endif
 }

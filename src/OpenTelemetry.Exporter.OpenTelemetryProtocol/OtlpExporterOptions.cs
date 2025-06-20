@@ -55,9 +55,9 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal OtlpExporterOptions(
         OtlpExporterOptionsConfigurationType configurationType)
         : this(
-              configuration: new ConfigurationBuilder().AddEnvironmentVariables().Build(),
-              configurationType,
-              defaultBatchOptions: new())
+            configuration: new ConfigurationBuilder().AddEnvironmentVariables().Build(),
+            configurationType,
+            defaultBatchOptions: new())
     {
     }
 
@@ -72,10 +72,28 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.DefaultHttpClientFactory = () =>
         {
-            return new HttpClient
+            var baseClient = new HttpClient
             {
                 Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
             };
+
+#if NET8_0_OR_GREATER
+            // If mTLS is configured, create an mTLS-enabled client
+            if (this.MtlsOptions?.IsEnabled == true)
+            {
+                var mtlsClient = OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(
+                    this.MtlsOptions,
+                    () =>
+                        new HttpClient
+                        {
+                            Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
+                        });
+                baseClient.Dispose();
+                return mtlsClient;
+            }
+#endif
+
+            return baseClient;
         };
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;
@@ -158,6 +176,14 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// </remarks>
     internal bool AppendSignalPathToEndpoint { get; private set; } = true;
 
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets or sets the mTLS (mutual TLS) configuration options.
+    /// This property is only available on .NET 8.0 and later versions.
+    /// </summary>
+    internal OtlpMtlsOptions? MtlsOptions { get; set; }
+#endif
+
     internal bool HasData
         => this.protocol.HasValue
         || this.endpoint != null
@@ -167,8 +193,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal static OtlpExporterOptions CreateOtlpExporterOptions(
         IServiceProvider serviceProvider,
         IConfiguration configuration,
-        string name)
-        => new(
+        string name) => new(
             configuration,
             OtlpExporterOptionsConfigurationType.Default,
             serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name));
@@ -188,10 +213,10 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         }
 
         if (configuration.TryGetValue<OtlpExportProtocol>(
-            OpenTelemetryProtocolExporterEventSource.Log,
-            protocolEnvVarKey,
-            OtlpExportProtocolParser.TryParse,
-            out var protocol))
+                OpenTelemetryProtocolExporterEventSource.Log,
+                protocolEnvVarKey,
+                OtlpExportProtocolParser.TryParse,
+                out var protocol))
         {
             this.Protocol = protocol;
         }
@@ -286,5 +311,38 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         {
             throw new NotSupportedException($"OtlpExporterOptionsConfigurationType '{configurationType}' is not supported.");
         }
+
+#if NET8_0_OR_GREATER
+        // Apply mTLS configuration from environment variables
+        this.ApplyMtlsConfiguration(configuration);
+#endif
     }
+
+#if NET8_0_OR_GREATER
+    private void ApplyMtlsConfiguration(IConfiguration configuration)
+    {
+        Debug.Assert(configuration != null, "configuration was null");
+
+        // Check and apply CA certificate path from environment variable
+        if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.CertificateEnvVarName, out var caCertPath))
+        {
+            this.MtlsOptions ??= new OtlpMtlsOptions();
+            this.MtlsOptions.CaCertificatePath = caCertPath;
+        }
+
+        // Check and apply client certificate path from environment variable
+        if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.ClientCertificateEnvVarName, out var clientCertPath))
+        {
+            this.MtlsOptions ??= new OtlpMtlsOptions();
+            this.MtlsOptions.ClientCertificatePath = clientCertPath;
+        }
+
+        // Check and apply client key path from environment variable
+        if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.ClientKeyEnvVarName, out var clientKeyPath))
+        {
+            this.MtlsOptions ??= new OtlpMtlsOptions();
+            this.MtlsOptions.ClientKeyPath = clientKeyPath;
+        }
+    }
+#endif
 }
