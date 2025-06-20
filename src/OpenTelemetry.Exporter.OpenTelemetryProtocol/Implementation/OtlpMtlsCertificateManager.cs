@@ -7,6 +7,7 @@ using System.Net.Security;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
@@ -116,7 +117,7 @@ internal static class OtlpMtlsCertificateManager
     }
 
     /// <summary>
-    /// Validates a certificate chain and checks for any errors.
+    /// Validates the certificate chain for a given certificate.
     /// </summary>
     /// <param name="certificate">The certificate to validate.</param>
     /// <param name="certificateType">Type description for logging (e.g., "Client certificate").</param>
@@ -125,14 +126,35 @@ internal static class OtlpMtlsCertificateManager
         X509Certificate2 certificate,
         string certificateType)
     {
+        return ValidateCertificateChain(certificate, certificateType, null);
+    }
+
+    /// <summary>
+    /// Validates the certificate chain for a given certificate with optional configuration.
+    /// </summary>
+    /// <param name="certificate">The certificate to validate.</param>
+    /// <param name="certificateType">Type description for logging (e.g., "Client certificate").</param>
+    /// <param name="configuration">Optional configuration to read environment variables from.</param>
+    /// <returns>True if the certificate chain is valid; otherwise, false.</returns>
+    public static bool ValidateCertificateChain(
+        X509Certificate2 certificate,
+        string certificateType,
+        IConfiguration? configuration)
+    {
         try
         {
             using var chain = new X509Chain();
 
             // Configure chain policy
             chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
-            chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
-            chain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
+
+            // Configure RevocationMode from environment variable or use default
+            var revocationMode = GetRevocationModeFromConfiguration(configuration);
+            chain.ChainPolicy.RevocationMode = revocationMode;
+
+            // Configure RevocationFlag from environment variable or use default
+            var revocationFlag = GetRevocationFlagFromConfiguration(configuration);
+            chain.ChainPolicy.RevocationFlag = revocationFlag;
 
             bool isValid = chain.Build(certificate);
 
@@ -379,6 +401,60 @@ internal static class OtlpMtlsCertificateManager
             fileType,
             filePath,
             "Consider verifying that file permissions are set to 400 (read-only for owner) for enhanced security.");
+    }
+
+    /// <summary>
+    /// Gets the X509RevocationMode from configuration or returns the default value.
+    /// </summary>
+    /// <param name="configuration">Configuration to read from.</param>
+    /// <returns>The configured revocation mode or default (Online).</returns>
+    private static X509RevocationMode GetRevocationModeFromConfiguration(IConfiguration? configuration)
+    {
+        if (configuration == null)
+        {
+            return X509RevocationMode.Online;
+        }
+
+        if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.CertificateRevocationModeEnvVarName, out var modeString))
+        {
+            if (Enum.TryParse<X509RevocationMode>(modeString, true, out var mode))
+            {
+                return mode;
+            }
+
+            ((IConfigurationExtensionsLogger)OpenTelemetryProtocolExporterEventSource.Log).LogInvalidConfigurationValue(
+                OtlpSpecConfigDefinitions.CertificateRevocationModeEnvVarName,
+                modeString);
+        }
+
+        return X509RevocationMode.Online;
+    }
+
+    /// <summary>
+    /// Gets the X509RevocationFlag from configuration or returns the default value.
+    /// </summary>
+    /// <param name="configuration">Configuration to read from.</param>
+    /// <returns>The configured revocation flag or default (ExcludeRoot).</returns>
+    private static X509RevocationFlag GetRevocationFlagFromConfiguration(IConfiguration? configuration)
+    {
+        if (configuration == null)
+        {
+            return X509RevocationFlag.ExcludeRoot;
+        }
+
+        if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.CertificateRevocationFlagEnvVarName, out var flagString))
+        {
+            if (Enum.TryParse<X509RevocationFlag>(flagString, true, out var flag))
+            {
+                return flag;
+            }
+
+            ((IConfigurationExtensionsLogger)OpenTelemetryProtocolExporterEventSource.Log).LogInvalidConfigurationValue(
+                OtlpSpecConfigDefinitions.CertificateRevocationFlagEnvVarName,
+                flagString);
+        }
+
+        return X509RevocationFlag.ExcludeRoot;
     }
 }
 
