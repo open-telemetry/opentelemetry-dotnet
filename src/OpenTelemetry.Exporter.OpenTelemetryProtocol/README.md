@@ -450,6 +450,15 @@ or reader
   | `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`                 |
   | `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (`grpc` or `http/protobuf`)|
 
+  The following environment variables can be used to configure mTLS
+  (mutual TLS) authentication (.NET 8.0+ only):
+
+  | Environment variable                   | `OtlpMtlsOptions` property    | Description                           |
+  | ---------------------------------------| ------------------------------|---------------------------------------|
+  | `OTEL_EXPORTER_OTLP_CERTIFICATE`      | `CaCertificatePath`           | Path to CA certificate file (PEM)    |
+  | `OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE` | `ClientCertificatePath`      | Path to client certificate file (PEM)|
+  | `OTEL_EXPORTER_OTLP_CLIENT_KEY`       | `ClientKeyPath`               | Path to client private key file (PEM)|
+
 * Logs:
 
   The following environment variables can be used to override the default values

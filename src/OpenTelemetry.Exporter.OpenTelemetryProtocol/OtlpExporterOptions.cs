@@ -311,5 +311,38 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         {
             throw new NotSupportedException($"OtlpExporterOptionsConfigurationType '{configurationType}' is not supported.");
         }
+
+#if NET8_0_OR_GREATER
+        // Apply mTLS configuration from environment variables
+        this.ApplyMtlsConfiguration(configuration);
+#endif
     }
+
+#if NET8_0_OR_GREATER
+    private void ApplyMtlsConfiguration(IConfiguration configuration)
+    {
+        Debug.Assert(configuration != null, "configuration was null");
+
+        // Check and apply CA certificate path from environment variable
+        if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.CertificateEnvVarName, out var caCertPath))
+        {
+            this.MtlsOptions ??= new OtlpMtlsOptions();
+            this.MtlsOptions.CaCertificatePath = caCertPath;
+        }
+
+        // Check and apply client certificate path from environment variable
+        if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.ClientCertificateEnvVarName, out var clientCertPath))
+        {
+            this.MtlsOptions ??= new OtlpMtlsOptions();
+            this.MtlsOptions.ClientCertificatePath = clientCertPath;
+        }
+
+        // Check and apply client key path from environment variable
+        if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.ClientKeyEnvVarName, out var clientKeyPath))
+        {
+            this.MtlsOptions ??= new OtlpMtlsOptions();
+            this.MtlsOptions.ClientKeyPath = clientKeyPath;
+        }
+    }
+#endif
 }
