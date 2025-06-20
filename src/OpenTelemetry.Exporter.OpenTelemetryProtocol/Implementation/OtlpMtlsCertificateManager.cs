@@ -15,6 +15,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 /// </summary>
 internal static class OtlpMtlsCertificateManager
 {
+    private const string CaCertificateType = "CA certificate";
+    private const string ClientCertificateType = "Client certificate";
+    private const string ClientPrivateKeyType = "Client private key";
+
     /// <summary>
     /// Loads a CA certificate from a PEM file.
     /// </summary>
@@ -28,11 +32,11 @@ internal static class OtlpMtlsCertificateManager
         string caCertificatePath,
         bool enableFilePermissionChecks = true)
     {
-        ValidateFileExists(caCertificatePath, "CA certificate");
+        ValidateFileExists(caCertificatePath, CaCertificateType);
 
         if (enableFilePermissionChecks)
         {
-            ValidateFilePermissions(caCertificatePath, "CA certificate");
+            ValidateFilePermissions(caCertificatePath, CaCertificateType);
         }
 
         try
@@ -40,7 +44,7 @@ internal static class OtlpMtlsCertificateManager
             var caCertificate = X509Certificate2.CreateFromPemFile(caCertificatePath);
 
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoaded(
-                "CA certificate",
+                CaCertificateType,
                 caCertificatePath);
 
             return caCertificate;
@@ -48,7 +52,7 @@ internal static class OtlpMtlsCertificateManager
         catch (Exception ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadFailed(
-                "CA certificate",
+                CaCertificateType,
                 caCertificatePath,
                 ex.Message);
             throw new InvalidOperationException(
@@ -72,13 +76,13 @@ internal static class OtlpMtlsCertificateManager
         string clientKeyPath,
         bool enableFilePermissionChecks = true)
     {
-        ValidateFileExists(clientCertificatePath, "Client certificate");
-        ValidateFileExists(clientKeyPath, "Client private key");
+        ValidateFileExists(clientCertificatePath, ClientCertificateType);
+        ValidateFileExists(clientKeyPath, ClientPrivateKeyType);
 
         if (enableFilePermissionChecks)
         {
-            ValidateFilePermissions(clientCertificatePath, "Client certificate");
-            ValidateFilePermissions(clientKeyPath, "Client private key");
+            ValidateFilePermissions(clientCertificatePath, ClientCertificateType);
+            ValidateFilePermissions(clientKeyPath, ClientPrivateKeyType);
         }
 
         try
@@ -94,7 +98,7 @@ internal static class OtlpMtlsCertificateManager
             }
 
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoaded(
-                "Client certificate",
+                ClientCertificateType,
                 clientCertificatePath);
 
             return clientCertificate;
@@ -102,7 +106,7 @@ internal static class OtlpMtlsCertificateManager
         catch (Exception ex)
         {
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadFailed(
-                "Client certificate",
+                ClientCertificateType,
                 clientCertificatePath,
                 ex.Message);
             throw new InvalidOperationException(
