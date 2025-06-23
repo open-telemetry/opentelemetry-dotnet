@@ -27,7 +27,7 @@ internal static class Program
             {
                 using (MyActivitySource.StartActivity("Bar"))
                 {
-                    throw new Exception("Oops!");
+                    throw new InvalidOperationException("Oops!");
                 }
             }
         }
