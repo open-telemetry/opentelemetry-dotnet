@@ -33,13 +33,13 @@ internal static class Program
         {
             using (var slow = MyActivitySource.StartActivity("SomethingSlow"))
             {
-                await client.GetStringAsync(new Uri("https://httpstat.us/200?sleep=1000"));
-                await client.GetStringAsync(new Uri("https://httpstat.us/200?sleep=1000"));
+                await client.GetStringAsync(new Uri("https://httpstat.us/200?sleep=1000")).ConfigureAwait(false);
+                await client.GetStringAsync(new Uri("https://httpstat.us/200?sleep=1000")).ConfigureAwait(false);
             }
 
             using (var fast = MyActivitySource.StartActivity("SomethingFast"))
             {
-                await client.GetStringAsync(new Uri("https://httpstat.us/301"));
+                await client.GetStringAsync(new Uri("https://httpstat.us/301")).ConfigureAwait(false);
             }
         }
     }
