@@ -6,6 +6,8 @@ using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 
+namespace GettingStartedPrometheusGrafana;
+
 public static class Program
 {
     private static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");

@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using ComplexObjects;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 

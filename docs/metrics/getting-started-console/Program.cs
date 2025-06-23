@@ -5,6 +5,8 @@ using System.Diagnostics.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
+namespace GettingStartedConsole;
+
 public static class Program
 {
     private static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");
