@@ -237,7 +237,8 @@ internal static class OtlpMtlsCertificateManager
                         // Verify that the chain terminates with our CA
                         var rootCert = chain.ChainElements[^1].Certificate;
                         if (
-                            string.Equals(rootCert.Thumbprint,
+                            string.Equals(
+                                rootCert.Thumbprint,
                                 caCertificate.Thumbprint,
                                 StringComparison.OrdinalIgnoreCase))
                         {
