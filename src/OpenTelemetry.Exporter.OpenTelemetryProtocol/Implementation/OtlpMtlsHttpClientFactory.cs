@@ -47,7 +47,7 @@ internal static class OtlpMtlsHttpClientFactory
                 {
                     OtlpMtlsCertificateManager.ValidateCertificateChain(
                         caCertificate,
-                        "CA certificate");
+                        OtlpMtlsCertificateManager.CaCertificateType);
                 }
             }
 
@@ -73,7 +73,7 @@ internal static class OtlpMtlsHttpClientFactory
                     {
                         OtlpMtlsCertificateManager.ValidateCertificateChain(
                             clientCertificate,
-                            "Client certificate");
+                            OtlpMtlsCertificateManager.ClientCertificateType);
                     }
 
                     OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationEnabled(

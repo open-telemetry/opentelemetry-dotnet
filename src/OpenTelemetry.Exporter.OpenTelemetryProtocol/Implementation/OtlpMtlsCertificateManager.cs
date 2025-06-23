@@ -16,9 +16,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 /// </summary>
 internal static class OtlpMtlsCertificateManager
 {
-    private const string CaCertificateType = "CA certificate";
-    private const string ClientCertificateType = "Client certificate";
-    private const string ClientPrivateKeyType = "Client private key";
+    internal const string CaCertificateType = "CA certificate";
+    internal const string ClientCertificateType = "Client certificate";
+    internal const string ClientPrivateKeyType = "Client private key";
 
     /// <summary>
     /// Loads a CA certificate from a PEM file.
