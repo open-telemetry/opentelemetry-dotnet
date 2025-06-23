@@ -37,7 +37,7 @@ internal class Program
     /// Generates a list of activity links. A linked activity is sampled with a probability of 0.1.
     /// </summary>
     /// <returns>A list of links.</returns>
-    private static IEnumerable<ActivityLink> GetActivityLinks(int seed)
+    private static List<ActivityLink> GetActivityLinks(int seed)
     {
         var random = new Random(seed);
         var linkedActivitiesList = new List<ActivityLink>();
