@@ -8,7 +8,7 @@ using OpenTelemetry.Trace;
 
 namespace ExtendingTheSdk;
 
-public static class Program
+internal static class Program
 {
     private static readonly ActivitySource DemoSource = new("OTel.Demo");
 

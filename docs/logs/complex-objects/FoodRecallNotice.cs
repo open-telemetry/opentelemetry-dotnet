@@ -3,7 +3,7 @@
 
 namespace ComplexObjects;
 
-public struct FoodRecallNotice
+internal struct FoodRecallNotice
 {
     public string? BrandName { get; set; }
 

@@ -6,7 +6,7 @@ using OpenTelemetry;
 
 namespace ExtendingTheSdk;
 
-public static class Program
+internal static class Program
 {
     public static void Main()
     {

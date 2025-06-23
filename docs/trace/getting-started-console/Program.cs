@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace GettingStartedConsole;
 
-public static class Program
+internal static class Program
 {
     private static readonly ActivitySource MyActivitySource = new("MyCompany.MyProduct.MyLibrary");
 
