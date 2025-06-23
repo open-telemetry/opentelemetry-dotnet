@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Text;
 using OpenTelemetry;
 
-internal class MyExporter : BaseExporter<Activity>
+internal sealed class MyExporter : BaseExporter<Activity>
 {
     private readonly string name;
 

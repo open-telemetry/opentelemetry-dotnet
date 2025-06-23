@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace LinksCreationWithNewRootActivitiesDemo;
 
-internal class Program
+internal static class Program
 {
     private static readonly ActivitySource MyActivitySource = new("LinksCreationWithNewRootActivities");
 
