@@ -7,10 +7,14 @@ internal static class MyExporterExtensions
 {
     public static MeterProviderBuilder AddMyExporter(this MeterProviderBuilder builder, int exportIntervalMilliSeconds = Timeout.Infinite)
     {
+#if NET
+        ArgumentNullException.ThrowIfNull(builder);
+#else
         if (builder == null)
         {
             throw new ArgumentNullException(nameof(builder));
         }
+#endif
 
         if (exportIntervalMilliSeconds == Timeout.Infinite)
         {
