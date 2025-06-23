@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if true
+using System.Globalization;
+#endif
 using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
@@ -28,7 +31,11 @@ internal class MyExporter : BaseExporter<LogRecord>
                 sb.Append(", ");
             }
 
+#if NET
+            sb.Append(CultureInfo.InvariantCulture, $"{record}(");
+#else
             sb.Append($"{record}(");
+#endif
 
             int scopeDepth = -1;
 
@@ -41,7 +48,11 @@ internal class MyExporter : BaseExporter<LogRecord>
                     builder.Append(", ");
                 }
 
+#if NET
+                builder.Append(CultureInfo.InvariantCulture, $"{scope.Scope}");
+#else
                 builder.Append($"{scope.Scope}");
+#endif
             }
 
             sb.Append(')');

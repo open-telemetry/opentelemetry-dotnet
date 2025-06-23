@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Globalization;
+#endif
 using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -32,10 +35,18 @@ internal class MyExporter : BaseExporter<Metric>
 
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
+#if NET
+                sb.Append(CultureInfo.InvariantCulture, $"{metricPoint.StartTime}");
+#else
                 sb.Append($"{metricPoint.StartTime}");
+#endif
                 foreach (var metricPointTag in metricPoint.Tags)
                 {
+#if NET
+                    sb.Append(CultureInfo.InvariantCulture, $"{metricPointTag.Key} {metricPointTag.Value}");
+#else
                     sb.Append($"{metricPointTag.Key} {metricPointTag.Value}");
+#endif
                 }
             }
         }
