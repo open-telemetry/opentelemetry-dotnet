@@ -8,12 +8,6 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace OpenTelemetry.Exporter;
 
-/// <summary>
-/// Configuration options for mTLS (mutual TLS) authentication in OTLP exporters.
-/// </summary>
-/// <remarks>
-/// This class is only available on .NET 8.0 and later versions.
-/// </remarks>
 internal class OtlpMtlsOptions
 {
     /// <summary>
