@@ -30,7 +30,9 @@ internal class Program
                 activity?.SetTag("foo", "bar");
 
                 // Simulate a mix of failed and successful spans
+#pragma warning disable CA5394 // Do not use insecure randomness
                 var randomValue = random.Next(5);
+#pragma warning restore CA5394 // Do not use insecure randomness
                 switch (randomValue)
                 {
                     case 0:

@@ -67,6 +67,7 @@ internal static class Program
         var histogram = Meter1.CreateHistogram<long>("MyHistogram");
         for (int i = 0; i < 20000; i++)
         {
+#pragma warning disable CA5394 // Do not use insecure randomness
             histogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
         }
 
@@ -98,6 +99,7 @@ internal static class Program
         for (int i = 0; i < 20000; i++)
         {
             histogram2.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
+#pragma warning restore CA5394 // Do not use insecure randomness
         }
     }
 }

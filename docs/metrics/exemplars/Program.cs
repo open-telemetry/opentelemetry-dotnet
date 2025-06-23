@@ -50,7 +50,9 @@ internal static class Program
                     child?.SetTag("key3", "value3");
                     child?.SetTag("key4", "value4");
 
+#pragma warning disable CA5394 // Do not use insecure randomness
                     MyHistogram.Record(random.NextDouble() * 100, new("tag1", "value1"), new("tag2", "value2"));
+#pragma warning restore CA5394 // Do not use insecure randomness
                 }
             }
 

@@ -32,7 +32,9 @@ internal static class Program
         var random = new Random();
         for (int i = 0; i < 1000; i++)
         {
+#pragma warning disable CA5394 // Do not use insecure randomness
             MyHistogram.Record(random.Next(1, 1000));
+#pragma warning restore CA5394 // Do not use insecure randomness
         }
     }
 
