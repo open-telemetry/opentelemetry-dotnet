@@ -43,6 +43,7 @@ internal sealed class MyExporter : BaseExporter<Activity>
 
     protected override void Dispose(bool disposing)
     {
+        base.Dispose(disposing);
         Console.WriteLine($"{this.name}.Dispose({disposing})");
     }
 }

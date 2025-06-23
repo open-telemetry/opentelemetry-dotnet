@@ -70,6 +70,7 @@ internal class MyExporter : BaseExporter<LogRecord>
 
     protected override void Dispose(bool disposing)
     {
+        base.Dispose(disposing);
         Console.WriteLine($"{this.name}.Dispose({disposing})");
     }
 }
