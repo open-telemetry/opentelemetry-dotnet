@@ -8,7 +8,7 @@ using OpenTelemetry.Resources;
 
 namespace CustomizingTheSdk;
 
-public class Program
+public static class Program
 {
     private static readonly Meter Meter1 = new("CompanyA.ProductA.Library1", "1.0");
     private static readonly Meter Meter2 = new("CompanyA.ProductB.Library2", "1.0");

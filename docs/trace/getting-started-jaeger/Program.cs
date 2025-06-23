@@ -11,7 +11,7 @@ using OpenTelemetry.Trace;
 
 namespace GettingStartedJaeger;
 
-public class Program
+public static class Program
 {
     private static readonly ActivitySource MyActivitySource = new("OpenTelemetry.Demo.Jaeger");
 

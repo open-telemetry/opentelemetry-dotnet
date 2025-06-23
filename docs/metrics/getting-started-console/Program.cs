@@ -5,7 +5,7 @@ using System.Diagnostics.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
-public class Program
+public static class Program
 {
     private static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");
     private static readonly Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
