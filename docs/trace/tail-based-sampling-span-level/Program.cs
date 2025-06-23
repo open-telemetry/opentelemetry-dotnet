@@ -16,7 +16,9 @@ internal class Program
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new ParentBasedElseAlwaysRecordSampler())
             .AddSource("SDK.TailSampling.POC")
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new TailSamplingProcessor())
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .AddConsoleExporter()
             .Build();
 

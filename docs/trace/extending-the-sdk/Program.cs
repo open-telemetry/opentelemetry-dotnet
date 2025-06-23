@@ -18,9 +18,11 @@ internal static class Program
             .SetSampler(new MySampler())
             .AddSource("OTel.Demo")
             .SetResourceBuilder(ResourceBuilder.CreateEmpty().AddDetector(new MyResourceDetector()))
+#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new MyProcessor("ProcessorA"))
             .AddProcessor(new MyProcessor("ProcessorB"))
             .AddProcessor(new SimpleActivityExportProcessor(new MyExporter("ExporterX")))
+#pragma warning restore CA2000 // Dispose objects before losing scope
             .AddMyExporter()
             .Build();
 

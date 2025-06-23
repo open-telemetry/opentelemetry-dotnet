@@ -17,6 +17,8 @@ internal static class LoggerExtensions
         }
 #endif
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
         return options.AddProcessor(new BatchLogRecordExportProcessor(new MyExporter()));
+#pragma warning restore CA2000 // Dispose objects before losing scope
     }
 }
