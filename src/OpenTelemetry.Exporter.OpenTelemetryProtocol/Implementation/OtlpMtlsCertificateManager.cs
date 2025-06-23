@@ -77,6 +77,26 @@ internal static class OtlpMtlsCertificateManager
         string clientKeyPath,
         bool enableFilePermissionChecks = true)
     {
+        return LoadClientCertificate(clientCertificatePath, clientKeyPath, null, enableFilePermissionChecks);
+    }
+
+    /// <summary>
+    /// Loads a client certificate with its private key from PEM files.
+    /// </summary>
+    /// <param name="clientCertificatePath">Path to the client certificate file.</param>
+    /// <param name="clientKeyPath">Path to the client private key file.</param>
+    /// <param name="clientKeyPassword">Password for the client private key file if it is encrypted. Can be null for unencrypted keys.</param>
+    /// <param name="enableFilePermissionChecks">Whether to check file permissions.</param>
+    /// <returns>The loaded client certificate with private key.</returns>
+    /// <exception cref="FileNotFoundException">Thrown when certificate or key files are not found.</exception>
+    /// <exception cref="UnauthorizedAccessException">Thrown when file permissions are inadequate.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the certificate cannot be loaded.</exception>
+    public static X509Certificate2 LoadClientCertificate(
+        string clientCertificatePath,
+        string clientKeyPath,
+        string? clientKeyPassword,
+        bool enableFilePermissionChecks = true)
+    {
         ValidateFileExists(clientCertificatePath, ClientCertificateType);
         ValidateFileExists(clientKeyPath, ClientPrivateKeyType);
 
@@ -88,9 +108,22 @@ internal static class OtlpMtlsCertificateManager
 
         try
         {
-            var clientCertificate = X509Certificate2.CreateFromPemFile(
-                clientCertificatePath,
-                clientKeyPath);
+            X509Certificate2 clientCertificate;
+
+            // Choose the appropriate method based on whether a password is provided
+            if (!string.IsNullOrEmpty(clientKeyPassword))
+            {
+                clientCertificate = X509Certificate2.CreateFromEncryptedPemFile(
+                    clientCertificatePath,
+                    clientKeyPath,
+                    clientKeyPassword);
+            }
+            else
+            {
+                clientCertificate = X509Certificate2.CreateFromPemFile(
+                    clientCertificatePath,
+                    clientKeyPath);
+            }
 
             if (!clientCertificate.HasPrivateKey)
             {

@@ -29,16 +29,6 @@ WXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNO
 PQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFG
 HIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
 ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
-4567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUV
-WXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNO
-PQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFG
-HIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
-ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
-4567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUV
-WXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNO
-PQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFG
-HIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
-ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
 4567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCD
 -----END CERTIFICATE-----";
 
@@ -316,6 +306,35 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
 
         // The method should execute without throwing
         Xunit.Assert.True(result || !result);
+    }
+
+    [Xunit.Fact]
+    public void LoadClientCertificate_AcceptsPasswordParameter()
+    {
+        var tempCertFile = Path.GetTempFileName();
+        var tempKeyFile = Path.GetTempFileName();
+        File.WriteAllText(tempCertFile, TestCertPem);
+        File.WriteAllText(tempKeyFile, "test-key-content");
+
+        try
+        {
+            // This test verifies that the method accepts the password parameter
+            // Note: We expect this to fail because we're using dummy cert/key content
+            // but it should not fail due to the method signature
+            var exception = Xunit.Assert.Throws<InvalidOperationException>(() =>
+                OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadClientCertificate(
+                    tempCertFile,
+                    tempKeyFile,
+                    "test-password"));
+
+            // The exception should be about certificate loading, not method signature
+            Xunit.Assert.Contains("Failed to load client certificate", exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            File.Delete(tempCertFile);
+            File.Delete(tempKeyFile);
+        }
     }
 
     private static System.Security.Cryptography.X509Certificates.X509Certificate2 CreateSelfSignedCertificate()

@@ -36,6 +36,7 @@ internal static class OtlpSpecConfigDefinitions
     public const string CertificateEnvVarName = "OTEL_EXPORTER_OTLP_CERTIFICATE";
     public const string ClientKeyEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_KEY";
     public const string ClientCertificateEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE";
+    public const string ClientKeyPasswordEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_KEY_PASSWORD";
 
     // Certificate validation environment variables
     public const string CertificateRevocationModeEnvVarName = "OTEL_EXPORTER_OTLP_CERTIFICATE_REVOCATION_MODE";

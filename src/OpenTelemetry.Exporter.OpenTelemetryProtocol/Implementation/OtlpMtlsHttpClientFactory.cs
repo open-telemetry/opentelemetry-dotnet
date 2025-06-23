@@ -66,6 +66,7 @@ internal static class OtlpMtlsHttpClientFactory
                     clientCertificate = OtlpMtlsCertificateManager.LoadClientCertificate(
                         mtlsOptions.ClientCertificatePath,
                         mtlsOptions.ClientKeyPath,
+                        mtlsOptions.ClientKeyPassword,
                         mtlsOptions.EnableFilePermissionChecks);
 
                     if (mtlsOptions.EnableCertificateChainValidation)

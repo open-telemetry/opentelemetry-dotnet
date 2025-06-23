@@ -29,6 +29,7 @@ public class OtlpMtlsOptionsTests
         {
             ClientCertificatePath = "/path/to/client.crt",
             ClientKeyPath = "/path/to/client.key",
+            ClientKeyPassword = "secret123",
             CaCertificatePath = "/path/to/ca.crt",
             EnableFilePermissionChecks = false,
             EnableCertificateChainValidation = false,
@@ -36,6 +37,7 @@ public class OtlpMtlsOptionsTests
 
         Assert.Equal("/path/to/client.crt", options.ClientCertificatePath);
         Assert.Equal("/path/to/client.key", options.ClientKeyPath);
+        Assert.Equal("secret123", options.ClientKeyPassword);
         Assert.Equal("/path/to/ca.crt", options.CaCertificatePath);
         Assert.False(options.EnableFilePermissionChecks);
         Assert.False(options.EnableCertificateChainValidation);

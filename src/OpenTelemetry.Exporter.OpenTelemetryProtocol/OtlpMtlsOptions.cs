@@ -26,6 +26,13 @@ internal class OtlpMtlsOptions
     public string? ClientKeyPath { get; set; }
 
     /// <summary>
+    /// Gets or sets the password for the client private key file when it is encrypted.
+    /// This is only used when the private key file is password-protected.
+    /// If not provided and the key file is encrypted, certificate loading will fail.
+    /// </summary>
+    public string? ClientKeyPassword { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether to enable file permission checks.
     /// When enabled, the exporter will verify that certificate files have appropriate permissions.
     /// </summary>

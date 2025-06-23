@@ -458,6 +458,7 @@ or reader
   | `OTEL_EXPORTER_OTLP_CERTIFICATE`              | `CaCertificatePath`           | Path to CA certificate file (PEM)    |
   | `OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE`       | `ClientCertificatePath`       | Path to client certificate file (PEM)|
   | `OTEL_EXPORTER_OTLP_CLIENT_KEY`               | `ClientKeyPath`               | Path to client private key file (PEM)|
+  | `OTEL_EXPORTER_OTLP_CLIENT_KEY_PASSWORD`      | `ClientKeyPassword`           | Password for encrypted client private key file (PEM)|
   | `OTEL_EXPORTER_OTLP_CERTIFICATE_REVOCATION_MODE` | N/A                        | Certificate revocation mode (`Online`, `Offline`, or `NoCheck`). Default: `Online` |
   | `OTEL_EXPORTER_OTLP_CERTIFICATE_REVOCATION_FLAG` | N/A                        | Certificate revocation flag (`ExcludeRoot`, `EntireChain`, or `EndCertificateOnly`). Default: `ExcludeRoot` |
 

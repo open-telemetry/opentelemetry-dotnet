@@ -22,6 +22,12 @@ public class OtlpSpecConfigDefinitionsTests
     }
 
     [Fact]
+    public void ClientKeyPasswordEnvVarName_HasCorrectValue()
+    {
+        Assert.Equal("OTEL_EXPORTER_OTLP_CLIENT_KEY_PASSWORD", OtlpSpecConfigDefinitions.ClientKeyPasswordEnvVarName);
+    }
+
+    [Fact]
     public void AllEnvironmentVariableNames_AreUnique()
     {
         var envVars = new[]
@@ -33,6 +39,7 @@ public class OtlpSpecConfigDefinitionsTests
             OtlpSpecConfigDefinitions.CertificateEnvVarName,
             OtlpSpecConfigDefinitions.ClientKeyEnvVarName,
             OtlpSpecConfigDefinitions.ClientCertificateEnvVarName,
+            OtlpSpecConfigDefinitions.ClientKeyPasswordEnvVarName,
             OtlpSpecConfigDefinitions.CertificateRevocationModeEnvVarName,
             OtlpSpecConfigDefinitions.CertificateRevocationFlagEnvVarName,
         };
