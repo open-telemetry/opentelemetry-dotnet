@@ -133,28 +133,15 @@ internal static class OtlpMtlsHttpClientFactory
                 };
             }
 
-            // Get base HttpClient to copy settings
-            var baseClient = baseFactory();
-            var mtlsClient = new HttpClient(handler, disposeHandler: true);
+            var client = new HttpClient(handler, disposeHandler: true);
 
-            // Copy settings from base client
-            mtlsClient.Timeout = baseClient.Timeout;
-            mtlsClient.BaseAddress = baseClient.BaseAddress;
-
-            // Copy default headers
-            foreach (var header in baseClient.DefaultRequestHeaders)
-            {
-                mtlsClient.DefaultRequestHeaders.Add(header.Key, header.Value);
-            }
-
-            // Dispose the base client as we're not using it
-            baseClient.Dispose();
+            ConfigureHttpClientDefaults(client, baseFactory);
 
             // Dispose certificates as they are no longer needed after being added to the handler
             caCertificate?.Dispose();
             clientCertificate?.Dispose();
 
-            return mtlsClient;
+            return client;
         }
         catch (Exception ex)
         {
@@ -184,6 +171,27 @@ internal static class OtlpMtlsHttpClientFactory
         }
 
         return () => CreateMtlsHttpClient(mtlsOptions, baseFactory);
+    }
+
+    /// <summary>
+    /// Configures the HttpClient with default settings from the base factory.
+    /// </summary>
+    /// <param name="client">The HttpClient to configure.</param>
+    /// <param name="baseFactory">The base HttpClient factory to get settings from.</param>
+    private static void ConfigureHttpClientDefaults(HttpClient client, Func<HttpClient> baseFactory)
+    {
+        // Get base HttpClient to copy settings
+        using var baseClient = baseFactory();
+
+        // Copy settings from base client
+        client.Timeout = baseClient.Timeout;
+        client.BaseAddress = baseClient.BaseAddress;
+
+        // Copy default headers
+        foreach (var header in baseClient.DefaultRequestHeaders)
+        {
+            client.DefaultRequestHeaders.Add(header.Key, header.Value);
+        }
     }
 }
 
