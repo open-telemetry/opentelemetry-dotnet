@@ -177,10 +177,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal bool AppendSignalPathToEndpoint { get; private set; } = true;
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets or sets the mTLS (mutual TLS) configuration options.
-    /// This property is only available on .NET 8.0 and later versions.
-    /// </summary>
     internal OtlpMtlsOptions? MtlsOptions { get; set; }
 #endif
 
