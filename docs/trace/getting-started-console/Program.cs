@@ -20,9 +20,10 @@ internal static class Program
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
+            int[] intArray = [1, 2, 3];
             activity?.SetTag("foo", 1);
             activity?.SetTag("bar", "Hello, World!");
-            activity?.SetTag("baz", new int[] { 1, 2, 3 });
+            activity?.SetTag("baz", intArray);
             activity?.SetStatus(ActivityStatusCode.Ok);
         }
 

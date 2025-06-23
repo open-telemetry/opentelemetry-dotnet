@@ -37,7 +37,9 @@ internal static class DedicatedLoggingServiceCollectionExtensions
         return services;
     }
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class DedicatedLogger<T> : IDedicatedLogger<T>
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private readonly ILogger innerLogger;
 
