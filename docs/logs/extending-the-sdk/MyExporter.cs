@@ -1,14 +1,14 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if true
+#if NET
 using System.Globalization;
 #endif
 using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-internal class MyExporter : BaseExporter<LogRecord>
+internal sealed class MyExporter : BaseExporter<LogRecord>
 {
     private readonly string name;
 

@@ -8,7 +8,7 @@ using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
-internal class MyExporter : BaseExporter<Metric>
+internal sealed class MyExporter : BaseExporter<Metric>
 {
     private readonly string name;
 

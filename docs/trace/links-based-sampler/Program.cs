@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace LinksAndParentBasedSamplerExample;
 
-internal class Program
+internal static class Program
 {
     private static readonly ActivitySource MyActivitySource = new("LinksAndParentBasedSampler.Example");
 

@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace SDKBasedSpanLevelTailSamplingSample;
 
-internal class Program
+internal static class Program
 {
     private static readonly ActivitySource MyActivitySource = new("SDK.TailSampling.POC");
 

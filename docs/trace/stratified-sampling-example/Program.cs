@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace StratifiedSamplingByQueryTypeDemo;
 
-internal class Program
+internal sealed class Program
 {
     private static readonly ActivitySource MyActivitySource = new("StratifiedSampling.POC");
 
