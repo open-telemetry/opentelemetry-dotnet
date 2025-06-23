@@ -279,7 +279,7 @@ internal static class OtlpMtlsCertificateManager
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateFileNotFound(
                 fileType,
                 filePath);
-            throw new FileNotFoundException($"{fileType} file not found at path: {filePath}");
+            throw new FileNotFoundException($"{fileType} file not found at path: {filePath}", filePath);
         }
     }
 
