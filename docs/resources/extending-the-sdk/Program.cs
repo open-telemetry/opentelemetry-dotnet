@@ -55,7 +55,6 @@ internal static class Program
         }
 
         var logger = loggerFactory.CreateLogger("OTel.Demo");
-        logger
-            .LogInformation("Hello from {Name} {Price}", "tomato", 2.99);
+        logger.HelloFrom("tomato", 2.99);
     }
 }
