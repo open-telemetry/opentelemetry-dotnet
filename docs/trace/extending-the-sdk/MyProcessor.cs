@@ -4,7 +4,7 @@
 using System.Diagnostics;
 using OpenTelemetry;
 
-internal class MyProcessor : BaseProcessor<Activity>
+internal sealed class MyProcessor : BaseProcessor<Activity>
 {
     private readonly string name;
 

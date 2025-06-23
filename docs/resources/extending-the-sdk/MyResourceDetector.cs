@@ -3,7 +3,7 @@
 
 using OpenTelemetry.Resources;
 
-internal class MyResourceDetector : IResourceDetector
+internal sealed class MyResourceDetector : IResourceDetector
 {
     public Resource Detect()
     {

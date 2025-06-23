@@ -4,7 +4,7 @@
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-internal class MyProcessor : BaseProcessor<LogRecord>
+internal sealed class MyProcessor : BaseProcessor<LogRecord>
 {
     private readonly string name;
 
