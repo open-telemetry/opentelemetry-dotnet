@@ -149,7 +149,6 @@ internal static class OtlpMtlsHttpClientFactory
 
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             throw;
-
         }
     }
 }
