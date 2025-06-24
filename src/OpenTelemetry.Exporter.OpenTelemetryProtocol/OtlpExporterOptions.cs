@@ -72,10 +72,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.DefaultHttpClientFactory = () =>
         {
-            var baseClient = new HttpClient
-            {
-                Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
-            };
+            var timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds);
 
 #if NET8_0_OR_GREATER
             // If mTLS is configured, create an mTLS-enabled client
@@ -83,17 +80,15 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             {
                 var mtlsClient = OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(
                     this.MtlsOptions,
-                    () =>
-                        new HttpClient
-                        {
-                            Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
-                        });
-                baseClient.Dispose();
+                    client => client.Timeout = timeout);
                 return mtlsClient;
             }
 #endif
 
-            return baseClient;
+            return new HttpClient
+            {
+                Timeout = timeout,
+            };
         };
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;

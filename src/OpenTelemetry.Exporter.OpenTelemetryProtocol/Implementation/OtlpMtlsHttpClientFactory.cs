@@ -16,18 +16,19 @@ internal static class OtlpMtlsHttpClientFactory
     /// Creates an HttpClient configured with mTLS settings.
     /// </summary>
     /// <param name="mtlsOptions">The mTLS configuration options.</param>
-    /// <param name="baseFactory">The base HttpClient factory to use.</param>
+    /// <param name="configureClient">Optional action to configure the client.</param>
     /// <returns>An HttpClient configured for mTLS.</returns>
     public static HttpClient CreateMtlsHttpClient(
         OtlpMtlsOptions mtlsOptions,
-        Func<HttpClient> baseFactory)
+        Action<HttpClient>? configureClient = null)
     {
         ArgumentNullException.ThrowIfNull(mtlsOptions);
-        ArgumentNullException.ThrowIfNull(baseFactory);
 
         if (!mtlsOptions.IsEnabled)
         {
-            return baseFactory();
+            var client = new HttpClient();
+            configureClient?.Invoke(client);
+            return client;
         }
 
         HttpClientHandler? handler = null;
@@ -105,10 +106,8 @@ internal static class OtlpMtlsHttpClientFactory
                         return false;
                     }
 
-                    var serverCertValidationCallback =
-                        OtlpMtlsCertificateManager.CreateServerCertificateValidationCallback(
-                            caCertificate);
-                    return serverCertValidationCallback(cert, chain, sslPolicyErrors);
+                    return OtlpMtlsCertificateManager.ValidateServerCertificate(
+                        cert, chain, sslPolicyErrors, caCertificate);
                 };
             }
             else if (mtlsOptions.ServerCertificateValidationCallback != null)
@@ -133,7 +132,7 @@ internal static class OtlpMtlsHttpClientFactory
 
             var client = new HttpClient(handler, disposeHandler: true);
 
-            ConfigureHttpClientDefaults(client, baseFactory);
+            configureClient?.Invoke(client);
 
             // Dispose certificates as they are no longer needed after being added to the handler
             caCertificate?.Dispose();
@@ -150,47 +149,14 @@ internal static class OtlpMtlsHttpClientFactory
 
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             throw;
+
+<<<<<<< TODO: プロジェクト 'OpenTelemetry.Exporter.OpenTelemetryProtocol(net8.0)' からのマージされていない変更, 前:
+        }}
+=======
         }
     }
-
-    /// <summary>
-    /// Creates an HttpClient factory that supports mTLS configuration.
-    /// </summary>
-    /// <param name="mtlsOptions">The mTLS configuration options.</param>
-    /// <param name="baseFactory">The base HttpClient factory to use.</param>
-    /// <returns>A factory function that creates mTLS-configured HttpClient instances.</returns>
-    public static Func<HttpClient> CreateMtlsHttpClientFactory(
-        OtlpMtlsOptions? mtlsOptions,
-        Func<HttpClient> baseFactory)
-    {
-        if (mtlsOptions == null || !mtlsOptions.IsEnabled)
-        {
-            return baseFactory;
-        }
-
-        return () => CreateMtlsHttpClient(mtlsOptions, baseFactory);
-    }
-
-    /// <summary>
-    /// Configures the HttpClient with default settings from the base factory.
-    /// </summary>
-    /// <param name="client">The HttpClient to configure.</param>
-    /// <param name="baseFactory">The base HttpClient factory to get settings from.</param>
-    private static void ConfigureHttpClientDefaults(HttpClient client, Func<HttpClient> baseFactory)
-    {
-        // Get base HttpClient to copy settings
-        using var baseClient = baseFactory();
-
-        // Copy settings from base client
-        client.Timeout = baseClient.Timeout;
-        client.BaseAddress = baseClient.BaseAddress;
-
-        // Copy default headers
-        foreach (var header in baseClient.DefaultRequestHeaders)
-        {
-            client.DefaultRequestHeaders.Add(header.Key, header.Value);
+>>>>>>> 後
         }
     }
-}
 
 #endif

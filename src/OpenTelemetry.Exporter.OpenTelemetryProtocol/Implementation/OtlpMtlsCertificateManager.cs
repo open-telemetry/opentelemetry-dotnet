@@ -212,68 +212,68 @@ internal static class OtlpMtlsCertificateManager
     }
 
     /// <summary>
-    /// Creates a server certificate validation callback that uses a custom CA certificate.
+    /// Validates a server certificate against the provided CA certificate.
     /// </summary>
-    /// <param name="caCertificate">The CA certificate to use for validation.</param>
-    /// <returns>A validation callback function.</returns>
-    public static Func<
-        X509Certificate2,
-        X509Chain,
-        SslPolicyErrors,
-        bool> CreateServerCertificateValidationCallback(X509Certificate2 caCertificate)
+    /// <param name="serverCert">The server certificate to validate.</param>
+    /// <param name="chain">The certificate chain.</param>
+    /// <param name="sslPolicyErrors">The SSL policy errors.</param>
+    /// <param name="caCertificate">The CA certificate to validate against.</param>
+    /// <returns>True if the certificate is valid; otherwise, false.</returns>
+    internal static bool ValidateServerCertificate(
+        X509Certificate2 serverCert,
+        X509Chain chain,
+        SslPolicyErrors sslPolicyErrors,
+        X509Certificate2 caCertificate)
     {
-        return (serverCert, chain, sslPolicyErrors) =>
+        try
         {
-            try
+            // If there are no SSL policy errors, accept the certificate
+            if (sslPolicyErrors == SslPolicyErrors.None)
             {
-                // If there are no SSL policy errors, accept the certificate
-                if (sslPolicyErrors == SslPolicyErrors.None)
+                return true;
+            }
+
+            // If the only error is an untrusted root, validate against our CA
+            if (sslPolicyErrors == SslPolicyErrors.RemoteCertificateChainErrors)
+            {
+                // Add our CA certificate to the chain
+                chain.ChainPolicy.ExtraStore.Add(caCertificate);
+                chain.ChainPolicy.VerificationFlags =
+                    X509VerificationFlags.AllowUnknownCertificateAuthority;
+
+                bool isValid = chain.Build(serverCert);
+
+                if (isValid)
                 {
-                    return true;
-                }
-
-                // If the only error is an untrusted root, validate against our CA
-                if (sslPolicyErrors == SslPolicyErrors.RemoteCertificateChainErrors)
-                {
-                    // Add our CA certificate to the chain
-                    chain.ChainPolicy.ExtraStore.Add(caCertificate);
-                    chain.ChainPolicy.VerificationFlags =
-                        X509VerificationFlags.AllowUnknownCertificateAuthority;
-
-                    bool isValid = chain.Build(serverCert);
-
-                    if (isValid)
+                    // Verify that the chain terminates with our CA
+                    var rootCert = chain.ChainElements[^1].Certificate;
+                    if (
+                        string.Equals(
+                            rootCert.Thumbprint,
+                            caCertificate.Thumbprint,
+                            StringComparison.OrdinalIgnoreCase))
                     {
-                        // Verify that the chain terminates with our CA
-                        var rootCert = chain.ChainElements[^1].Certificate;
-                        if (
-                            string.Equals(
-                                rootCert.Thumbprint,
-                                caCertificate.Thumbprint,
-                                StringComparison.OrdinalIgnoreCase))
-                        {
-                            OpenTelemetryProtocolExporterEventSource.Log.MtlsServerCertificateValidated(
-                                serverCert.Subject);
-                            return true;
-                        }
+                        OpenTelemetryProtocolExporterEventSource.Log.MtlsServerCertificateValidated(
+                            serverCert.Subject);
+                        return true;
                     }
                 }
-
-                OpenTelemetryProtocolExporterEventSource.Log.MtlsServerCertificateValidationFailed(
-                    serverCert.Subject,
-                    sslPolicyErrors.ToString());
-
-                return false;
             }
-            catch (Exception ex)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.MtlsServerCertificateValidationFailed(
-                    serverCert.Subject,
-                    ex.Message);
 
-                return false;
-            }
-        };
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsServerCertificateValidationFailed(
+                serverCert.Subject,
+                sslPolicyErrors.ToString());
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsServerCertificateValidationFailed(
+                serverCert.Subject,
+                ex.Message);
+
+            return false;
+        }
     }
 
     private static void ValidateFileExists(string filePath, string fileType)
