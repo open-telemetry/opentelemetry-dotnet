@@ -3,9 +3,6 @@
 
 #if NET8_0_OR_GREATER
 
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
-
 namespace OpenTelemetry.Exporter;
 
 internal sealed class OtlpMtlsOptions
