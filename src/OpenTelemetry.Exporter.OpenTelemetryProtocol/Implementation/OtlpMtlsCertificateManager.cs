@@ -423,10 +423,10 @@ internal static class OtlpMtlsCertificateManager
         {
             using var stream = fileInfo.OpenRead();
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException exception)
         {
             throw new UnauthorizedAccessException(
-                $"Current user does not have read access to {fileType} file.", ex);
+                $"Current user does not have read access to {fileType} file.", exception);
         }
 
         // For Unix systems, we recommend checking file permissions externally
