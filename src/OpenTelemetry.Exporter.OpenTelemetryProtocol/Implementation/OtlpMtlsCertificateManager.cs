@@ -329,8 +329,14 @@ internal static class OtlpMtlsCertificateManager
             {
                 ValidateUnixFilePermissions(filePath, fileType);
             }
-
-            // For other platforms, skip permission validation
+            else
+            {
+                // For other platforms, skip permission validation
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsFilePermissionSkipped(
+                    fileType,
+                    filePath,
+                    "File permission validation is not supported on this platform.");
+            }
         }
         catch (Exception ex)
         {
