@@ -426,7 +426,7 @@ internal static class OtlpMtlsCertificateManager
         catch (UnauthorizedAccessException)
         {
             throw new UnauthorizedAccessException(
-                $"Current user does not have read access to {fileType} file.");
+                $"Current user does not have read access to {fileType} file.", ex);
         }
 
         // For Unix systems, we recommend checking file permissions externally
