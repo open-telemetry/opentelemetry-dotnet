@@ -110,25 +110,6 @@ internal static class OtlpMtlsHttpClientFactory
                         cert, chain, sslPolicyErrors, caCertificate);
                 };
             }
-            else if (mtlsOptions.ServerCertificateValidationCallback != null)
-            {
-                handler.ServerCertificateCustomValidationCallback = (
-                    httpRequestMessage,
-                    cert,
-                    chain,
-                    sslPolicyErrors) =>
-                {
-                    if (cert == null || chain == null)
-                    {
-                        return false;
-                    }
-
-                    return mtlsOptions.ServerCertificateValidationCallback(
-                        cert,
-                        chain,
-                        sslPolicyErrors);
-                };
-            }
 
             var client = new HttpClient(handler, disposeHandler: true);
 

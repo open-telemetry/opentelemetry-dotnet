@@ -39,19 +39,6 @@ internal sealed class OtlpMtlsOptions
     public bool EnableCertificateChainValidation { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets the server certificate validation callback.
-    /// This callback is used to validate the server certificate during TLS handshake.
-    /// If not set, the default certificate validation logic will be used.
-    /// </summary>
-    public Func<
-        X509Certificate2,
-        X509Chain,
-        SslPolicyErrors,
-        bool
-    >? ServerCertificateValidationCallback
-    { get; set; }
-
-    /// <summary>
     /// Gets a value indicating whether mTLS is enabled.
     /// mTLS is considered enabled if at least the client certificate path is provided.
     /// </summary>
