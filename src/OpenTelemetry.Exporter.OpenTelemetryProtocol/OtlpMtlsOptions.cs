@@ -33,12 +33,6 @@ internal class OtlpMtlsOptions
     public string? ClientKeyPassword { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether to enable file permission checks.
-    /// When enabled, the exporter will verify that certificate files have appropriate permissions.
-    /// </summary>
-    public bool EnableFilePermissionChecks { get; set; } = true;
-
-    /// <summary>
     /// Gets or sets a value indicating whether to enable certificate chain validation.
     /// When enabled, the exporter will validate the certificate chain and reject invalid certificates.
     /// </summary>

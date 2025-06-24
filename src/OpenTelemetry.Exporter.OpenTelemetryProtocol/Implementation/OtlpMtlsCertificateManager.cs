@@ -4,9 +4,7 @@
 #if NET8_0_OR_GREATER
 
 using System.Net.Security;
-using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
-using System.Security.Principal;
 using Microsoft.Extensions.Configuration;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -24,21 +22,12 @@ internal static class OtlpMtlsCertificateManager
     /// Loads a CA certificate from a PEM file.
     /// </summary>
     /// <param name="caCertificatePath">Path to the CA certificate file.</param>
-    /// <param name="enableFilePermissionChecks">Whether to check file permissions.</param>
     /// <returns>The loaded CA certificate.</returns>
     /// <exception cref="FileNotFoundException">Thrown when the certificate file is not found.</exception>
-    /// <exception cref="UnauthorizedAccessException">Thrown when file permissions are inadequate.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the certificate cannot be loaded.</exception>
-    public static X509Certificate2 LoadCaCertificate(
-        string caCertificatePath,
-        bool enableFilePermissionChecks = true)
+    public static X509Certificate2 LoadCaCertificate(string caCertificatePath)
     {
         ValidateFileExists(caCertificatePath, CaCertificateType);
-
-        if (enableFilePermissionChecks)
-        {
-            ValidateFilePermissions(caCertificatePath, CaCertificateType);
-        }
 
         try
         {
@@ -67,17 +56,14 @@ internal static class OtlpMtlsCertificateManager
     /// </summary>
     /// <param name="clientCertificatePath">Path to the client certificate file.</param>
     /// <param name="clientKeyPath">Path to the client private key file.</param>
-    /// <param name="enableFilePermissionChecks">Whether to check file permissions.</param>
     /// <returns>The loaded client certificate with private key.</returns>
     /// <exception cref="FileNotFoundException">Thrown when certificate or key files are not found.</exception>
-    /// <exception cref="UnauthorizedAccessException">Thrown when file permissions are inadequate.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the certificate cannot be loaded.</exception>
     public static X509Certificate2 LoadClientCertificate(
         string clientCertificatePath,
-        string clientKeyPath,
-        bool enableFilePermissionChecks = true)
+        string clientKeyPath)
     {
-        return LoadClientCertificate(clientCertificatePath, clientKeyPath, null, enableFilePermissionChecks);
+        return LoadClientCertificate(clientCertificatePath, clientKeyPath, null);
     }
 
     /// <summary>
@@ -86,25 +72,16 @@ internal static class OtlpMtlsCertificateManager
     /// <param name="clientCertificatePath">Path to the client certificate file.</param>
     /// <param name="clientKeyPath">Path to the client private key file.</param>
     /// <param name="clientKeyPassword">Password for the client private key file if it is encrypted. Can be null for unencrypted keys.</param>
-    /// <param name="enableFilePermissionChecks">Whether to check file permissions.</param>
     /// <returns>The loaded client certificate with private key.</returns>
     /// <exception cref="FileNotFoundException">Thrown when certificate or key files are not found.</exception>
-    /// <exception cref="UnauthorizedAccessException">Thrown when file permissions are inadequate.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the certificate cannot be loaded.</exception>
     public static X509Certificate2 LoadClientCertificate(
         string clientCertificatePath,
         string clientKeyPath,
-        string? clientKeyPassword,
-        bool enableFilePermissionChecks = true)
+        string? clientKeyPassword)
     {
         ValidateFileExists(clientCertificatePath, ClientCertificateType);
         ValidateFileExists(clientKeyPath, ClientPrivateKeyType);
-
-        if (enableFilePermissionChecks)
-        {
-            ValidateFilePermissions(clientCertificatePath, ClientCertificateType);
-            ValidateFilePermissions(clientKeyPath, ClientPrivateKeyType);
-        }
 
         try
         {
@@ -315,132 +292,6 @@ internal static class OtlpMtlsCertificateManager
                 filePath);
             throw new FileNotFoundException($"{fileType} file not found at path: {filePath}", filePath);
         }
-    }
-
-    private static void ValidateFilePermissions(string filePath, string fileType)
-    {
-        try
-        {
-            if (OperatingSystem.IsWindows())
-            {
-                ValidateWindowsFilePermissions(filePath, fileType);
-            }
-            else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
-            {
-                ValidateUnixFilePermissions(filePath, fileType);
-            }
-            else
-            {
-                // For other platforms, skip permission validation
-                OpenTelemetryProtocolExporterEventSource.Log.MtlsFilePermissionSkipped(
-                    fileType,
-                    filePath,
-                    "File permission validation is not supported on this platform.");
-            }
-        }
-        catch (Exception ex)
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.MtlsFilePermissionCheckFailed(
-                fileType,
-                filePath,
-                ex.Message);
-            throw new UnauthorizedAccessException(
-                $"File permission check failed for {fileType} at '{filePath}': {ex.Message}",
-                ex);
-        }
-    }
-
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-    private static void ValidateWindowsFilePermissions(string filePath, string fileType)
-    {
-        var fileInfo = new FileInfo(filePath);
-        var fileSecurity = fileInfo.GetAccessControl();
-        var accessRules = fileSecurity.GetAccessRules(true, true, typeof(SecurityIdentifier));
-
-        var currentUser = WindowsIdentity.GetCurrent();
-        bool hasReadAccess = false;
-        bool hasRestrictedAccess = true;
-
-        foreach (FileSystemAccessRule rule in accessRules)
-        {
-            var identity = rule.IdentityReference as SecurityIdentifier;
-
-            // Check if current user has read access
-            if (identity != null && (
-                currentUser.User?.Equals(identity) == true
-                || currentUser.Groups?.Contains(identity) == true))
-            {
-                if (
-                    rule.AccessControlType == AccessControlType.Allow
-                    && (rule.FileSystemRights & FileSystemRights.ReadData) != 0)
-                {
-                    hasReadAccess = true;
-                }
-            }
-
-            // Check for overly permissive access (e.g., Everyone, Users group with write access)
-            if (
-                rule.AccessControlType == AccessControlType.Allow
-                && (
-                    rule.FileSystemRights
-                    & (FileSystemRights.WriteData | FileSystemRights.FullControl)) != 0)
-            {
-                var wellKnownSids = new[]
-                {
-                    WellKnownSidType.WorldSid, // Everyone
-                    WellKnownSidType.AuthenticatedUserSid, // Authenticated Users
-                    WellKnownSidType.BuiltinUsersSid, // Users
-                };
-
-                foreach (var sidType in wellKnownSids)
-                {
-                    var wellKnownSid = new SecurityIdentifier(sidType, null);
-                    if (identity?.Equals(wellKnownSid) == true)
-                    {
-                        hasRestrictedAccess = false;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (!hasReadAccess)
-        {
-            throw new UnauthorizedAccessException(
-                $"Current user does not have read access to {fileType} file.");
-        }
-
-        if (!hasRestrictedAccess)
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.MtlsFilePermissionWarning(
-                fileType,
-                filePath,
-                "File has overly permissive access rights. Consider restricting access to improve security.");
-        }
-    }
-
-    private static void ValidateUnixFilePermissions(string filePath, string fileType)
-    {
-        var fileInfo = new FileInfo(filePath);
-
-        // On Unix systems, we can check if the file is readable by the current user
-        // by attempting to open it for reading
-        try
-        {
-            using var stream = fileInfo.OpenRead();
-        }
-        catch (UnauthorizedAccessException exception)
-        {
-            throw new UnauthorizedAccessException(
-                $"Current user does not have read access to {fileType} file.", exception);
-        }
-
-        // For Unix systems, we recommend checking file permissions externally
-        // as .NET doesn't provide detailed Unix permission APIs
-        OpenTelemetryProtocolExporterEventSource.Log.MtlsFilePermissionWarning(
-            fileType,
-            filePath,
-            "Consider verifying that file permissions are set to 400 (read-only for owner) for enhanced security.");
     }
 
     /// <summary>

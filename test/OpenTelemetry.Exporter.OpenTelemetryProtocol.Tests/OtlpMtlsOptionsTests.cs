@@ -17,7 +17,6 @@ public class OtlpMtlsOptionsTests
         Assert.Null(options.ClientCertificatePath);
         Assert.Null(options.ClientKeyPath);
         Assert.Null(options.CaCertificatePath);
-        Assert.True(options.EnableFilePermissionChecks);
         Assert.True(options.EnableCertificateChainValidation);
         Assert.False(options.IsEnabled);
     }
@@ -31,7 +30,6 @@ public class OtlpMtlsOptionsTests
             ClientKeyPath = "/path/to/client.key",
             ClientKeyPassword = "secret123",
             CaCertificatePath = "/path/to/ca.crt",
-            EnableFilePermissionChecks = false,
             EnableCertificateChainValidation = false,
         };
 
@@ -39,7 +37,6 @@ public class OtlpMtlsOptionsTests
         Assert.Equal("/path/to/client.key", options.ClientKeyPath);
         Assert.Equal("secret123", options.ClientKeyPassword);
         Assert.Equal("/path/to/ca.crt", options.CaCertificatePath);
-        Assert.False(options.EnableFilePermissionChecks);
         Assert.False(options.EnableCertificateChainValidation);
         Assert.True(options.IsEnabled);
     }

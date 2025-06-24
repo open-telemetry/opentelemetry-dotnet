@@ -40,8 +40,7 @@ internal static class OtlpMtlsHttpClientFactory
             if (!string.IsNullOrEmpty(mtlsOptions.CaCertificatePath))
             {
                 caCertificate = OtlpMtlsCertificateManager.LoadCaCertificate(
-                    mtlsOptions.CaCertificatePath,
-                    mtlsOptions.EnableFilePermissionChecks);
+                    mtlsOptions.CaCertificatePath);
 
                 if (mtlsOptions.EnableCertificateChainValidation)
                 {
@@ -66,8 +65,7 @@ internal static class OtlpMtlsHttpClientFactory
                     clientCertificate = OtlpMtlsCertificateManager.LoadClientCertificate(
                         mtlsOptions.ClientCertificatePath,
                         mtlsOptions.ClientKeyPath,
-                        mtlsOptions.ClientKeyPassword,
-                        mtlsOptions.EnableFilePermissionChecks);
+                        mtlsOptions.ClientKeyPassword);
 
                     if (mtlsOptions.EnableCertificateChainValidation)
                     {
