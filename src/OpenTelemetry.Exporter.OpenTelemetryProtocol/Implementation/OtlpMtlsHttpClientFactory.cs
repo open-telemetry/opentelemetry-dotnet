@@ -150,13 +150,8 @@ internal static class OtlpMtlsHttpClientFactory
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             throw;
 
-<<<<<<< TODO: プロジェクト 'OpenTelemetry.Exporter.OpenTelemetryProtocol(net8.0)' からのマージされていない変更, 前:
-        }}
-=======
         }
     }
->>>>>>> 後
-        }
-    }
+}
 
 #endif
