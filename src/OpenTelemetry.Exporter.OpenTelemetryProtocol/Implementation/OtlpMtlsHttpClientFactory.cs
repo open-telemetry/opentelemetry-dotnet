@@ -58,7 +58,7 @@ internal static class OtlpMtlsHttpClientFactory
                     // Check if certificate file exists to provide appropriate error message
                     if (!File.Exists(mtlsOptions.ClientCertificatePath))
                     {
-                        throw new FileNotFoundException($"Certificate file not found at path: {mtlsOptions.ClientCertificatePath}");
+                        throw new FileNotFoundException($"Certificate file not found at path: {mtlsOptions.ClientCertificatePath}", mtlsOptions.ClientCertificatePath);
                     }
                 }
                 else
