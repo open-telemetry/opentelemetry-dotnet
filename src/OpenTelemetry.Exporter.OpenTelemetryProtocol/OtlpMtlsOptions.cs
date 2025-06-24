@@ -8,7 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace OpenTelemetry.Exporter;
 
-internal class OtlpMtlsOptions
+internal sealed class OtlpMtlsOptions
 {
     /// <summary>
     /// Gets or sets the path to the CA certificate file in PEM format.
