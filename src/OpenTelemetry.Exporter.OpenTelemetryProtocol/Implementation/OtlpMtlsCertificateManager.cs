@@ -3,7 +3,9 @@
 
 #if NET
 
+using System.IO;
 using System.Net.Security;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
 
@@ -111,7 +113,7 @@ internal static class OtlpMtlsCertificateManager
                         clientCertificate = new X509Certificate2(clientCertificatePath);
 #endif
                     }
-                    catch
+                    catch (Exception ex) when (ex is CryptographicException || ex is InvalidDataException || ex is FormatException)
                     {
                         // If PKCS#12 fails, try PEM format
                         clientCertificate = X509Certificate2.CreateFromPemFile(clientCertificatePath);
