@@ -58,15 +58,13 @@ internal static class OtlpMtlsHttpClientFactory
                     // Load certificate without separate key file (e.g., PKCS#12 format)
                     clientCertificate = OtlpMtlsCertificateManager.LoadClientCertificate(
                         mtlsOptions.ClientCertificatePath,
-                        null,
-                        mtlsOptions.ClientKeyPassword);
+                        null);
                 }
                 else
                 {
                     clientCertificate = OtlpMtlsCertificateManager.LoadClientCertificate(
                         mtlsOptions.ClientCertificatePath,
-                        mtlsOptions.ClientKeyPath,
-                        mtlsOptions.ClientKeyPassword);
+                        mtlsOptions.ClientKeyPath);
                 }
 
                 if (mtlsOptions.EnableCertificateChainValidation)

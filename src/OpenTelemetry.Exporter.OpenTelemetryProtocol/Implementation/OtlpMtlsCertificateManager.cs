@@ -4,8 +4,8 @@
 #if NET
 
 using System.Net.Security;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.Extensions.Configuration;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
@@ -52,34 +52,17 @@ internal static class OtlpMtlsCertificateManager
     }
 
     /// <summary>
-    /// Loads a client certificate with its private key from PEM files.
+    /// Loads a client certificate from a single file (e.g., PKCS#12 format) or from separate certificate and key files.
     /// </summary>
     /// <param name="clientCertificatePath">Path to the client certificate file.</param>
-    /// <param name="clientKeyPath">Path to the client private key file.</param>
-    /// <returns>The loaded client certificate with private key.</returns>
-    /// <exception cref="FileNotFoundException">Thrown when certificate or key files are not found.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the certificate cannot be loaded.</exception>
-    public static X509Certificate2 LoadClientCertificate(
-        string clientCertificatePath,
-        string clientKeyPath)
-    {
-        return LoadClientCertificate(clientCertificatePath, clientKeyPath, null);
-    }
-
-    /// <summary>
-    /// Loads a client certificate from a single file (e.g., PKCS#12 format) with optional password.
-    /// </summary>
-    /// <param name="clientCertificatePath">Path to the client certificate file.</param>
-    /// <param name="clientKeyPath">Must be null for single-file certificates.</param>
-    /// <param name="clientKeyPassword">Password for the certificate file if it is encrypted. Can be null for unencrypted certificates.</param>
+    /// <param name="clientKeyPath">Path to the client private key file. Can be null for single-file certificates.</param>
     /// <returns>The loaded client certificate with private key.</returns>
     /// <exception cref="FileNotFoundException">Thrown when the certificate file is not found.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the certificate cannot be loaded.</exception>
     /// <exception cref="ArgumentException">Thrown when clientKeyPath is not null for single-file certificate loading.</exception>
     public static X509Certificate2 LoadClientCertificate(
         string clientCertificatePath,
-        string? clientKeyPath,
-        string? clientKeyPassword)
+        string? clientKeyPath)
     {
         if (clientKeyPath == null)
         {
@@ -91,31 +74,18 @@ internal static class OtlpMtlsCertificateManager
                 X509Certificate2 clientCertificate;
 
                 // Try to load as PKCS#12 first, then as PEM
-                if (!string.IsNullOrEmpty(clientKeyPassword))
+                try
                 {
-                    // Load PKCS#12 with password
 #if NET9_0_OR_GREATER
-                    clientCertificate = X509CertificateLoader.LoadPkcs12FromFile(clientCertificatePath, clientKeyPassword);
+                    clientCertificate = X509CertificateLoader.LoadPkcs12FromFile(clientCertificatePath, (string?)null);
 #else
-                    clientCertificate = new X509Certificate2(clientCertificatePath, clientKeyPassword);
+                    clientCertificate = new X509Certificate2(clientCertificatePath);
 #endif
                 }
-                else
+                catch (Exception ex) when (ex is CryptographicException || ex is InvalidDataException || ex is FormatException)
                 {
-                    // Try PKCS#12 without password first
-                    try
-                    {
-#if NET9_0_OR_GREATER
-                        clientCertificate = X509CertificateLoader.LoadPkcs12FromFile(clientCertificatePath, (string?)null);
-#else
-                        clientCertificate = new X509Certificate2(clientCertificatePath);
-#endif
-                    }
-                    catch
-                    {
-                        // If PKCS#12 fails, try PEM format
-                        clientCertificate = X509Certificate2.CreateFromPemFile(clientCertificatePath);
-                    }
+                    // If PKCS#12 fails, try PEM format
+                    clientCertificate = X509Certificate2.CreateFromPemFile(clientCertificatePath);
                 }
 
                 if (!clientCertificate.HasPrivateKey)
@@ -148,22 +118,9 @@ internal static class OtlpMtlsCertificateManager
 
         try
         {
-            X509Certificate2 clientCertificate;
-
-            // Choose the appropriate method based on whether a password is provided
-            if (!string.IsNullOrEmpty(clientKeyPassword))
-            {
-                clientCertificate = X509Certificate2.CreateFromEncryptedPemFile(
-                    clientCertificatePath,
-                    clientKeyPath,
-                    clientKeyPassword);
-            }
-            else
-            {
-                clientCertificate = X509Certificate2.CreateFromPemFile(
-                    clientCertificatePath,
-                    clientKeyPath);
-            }
+            X509Certificate2 clientCertificate = X509Certificate2.CreateFromPemFile(
+                clientCertificatePath,
+                clientKeyPath);
 
             if (!clientCertificate.HasPrivateKey)
             {
@@ -199,35 +156,14 @@ internal static class OtlpMtlsCertificateManager
         X509Certificate2 certificate,
         string certificateType)
     {
-        return ValidateCertificateChain(certificate, certificateType, null);
-    }
-
-    /// <summary>
-    /// Validates the certificate chain for a given certificate with optional configuration.
-    /// </summary>
-    /// <param name="certificate">The certificate to validate.</param>
-    /// <param name="certificateType">Type description for logging (e.g., "Client certificate").</param>
-    /// <param name="configuration">Optional configuration to read environment variables from.</param>
-    /// <returns>True if the certificate chain is valid; otherwise, false.</returns>
-    public static bool ValidateCertificateChain(
-        X509Certificate2 certificate,
-        string certificateType,
-        IConfiguration? configuration)
-    {
         try
         {
             using var chain = new X509Chain();
 
             // Configure chain policy
             chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
-
-            // Configure RevocationMode from environment variable or use default
-            var revocationMode = GetRevocationModeFromConfiguration(configuration);
-            chain.ChainPolicy.RevocationMode = revocationMode;
-
-            // Configure RevocationFlag from environment variable or use default
-            var revocationFlag = GetRevocationFlagFromConfiguration(configuration);
-            chain.ChainPolicy.RevocationFlag = revocationFlag;
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
+            chain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
 
             bool isValid = chain.Build(certificate);
 
@@ -355,57 +291,6 @@ internal static class OtlpMtlsCertificateManager
                 filePath);
             throw new FileNotFoundException($"{fileType} file not found at path: {filePath}", filePath);
         }
-    }
-
-    /// <summary>
-    /// Gets the X509RevocationMode from configuration or returns the default value.
-    /// </summary>
-    /// <param name="configuration">Configuration to read from.</param>
-    /// <returns>The configured revocation mode or default (Online).</returns>
-    private static X509RevocationMode GetRevocationModeFromConfiguration(IConfiguration? configuration)
-    {
-        if (configuration == null)
-        {
-            return X509RevocationMode.Online;
-        }
-
-        if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.CertificateRevocationModeEnvVarName, out var modeString))
-        {
-            if (Enum.TryParse<X509RevocationMode>(modeString, true, out var mode))
-            {
-                return mode;
-            }
-
-            ((IConfigurationExtensionsLogger)OpenTelemetryProtocolExporterEventSource.Log).LogInvalidConfigurationValue(
-                OtlpSpecConfigDefinitions.CertificateRevocationModeEnvVarName,
-                modeString);
-        }
-
-        return X509RevocationMode.Online;
-    }
-
-    /// <summary>
-    /// Gets the X509RevocationFlag from configuration or returns the default value.
-    /// </summary>
-    /// <param name="configuration">Configuration to read from.</param>
-    /// <returns>The configured revocation flag or default (ExcludeRoot).</returns>
-    private static X509RevocationFlag GetRevocationFlagFromConfiguration(IConfiguration? configuration)
-    {
-        if (configuration != null && configuration.TryGetStringValue(OtlpSpecConfigDefinitions.CertificateRevocationFlagEnvVarName, out var flagString))
-        {
-            if (Enum.TryParse<X509RevocationFlag>(flagString, true, out var flag))
-            {
-                return flag;
-            }
-
-            ((IConfigurationExtensionsLogger)OpenTelemetryProtocolExporterEventSource.Log).LogInvalidConfigurationValue(
-                OtlpSpecConfigDefinitions.CertificateRevocationFlagEnvVarName,
-                flagString);
-        }
-
-        // Use ExcludeRoot as default to avoid revocation checks on the root CA certificate,
-        // which is typically self-signed and may not have revocation information available
-        return X509RevocationFlag.ExcludeRoot;
     }
 }
 

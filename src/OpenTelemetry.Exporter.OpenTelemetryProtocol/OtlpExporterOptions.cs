@@ -333,13 +333,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             this.MtlsOptions ??= new();
             this.MtlsOptions.ClientKeyPath = clientKeyPath;
         }
-
-        // Check and apply client key password from environment variable
-        if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.ClientKeyPasswordEnvVarName, out var clientKeyPassword))
-        {
-            this.MtlsOptions ??= new();
-            this.MtlsOptions.ClientKeyPassword = clientKeyPassword;
-        }
     }
 #endif
 }

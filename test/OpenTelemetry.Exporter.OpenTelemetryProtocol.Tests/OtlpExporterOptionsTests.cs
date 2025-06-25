@@ -343,32 +343,6 @@ public sealed class OtlpExporterOptionsTests : IDisposable
     }
 
     [Fact]
-    public void OtlpExporterOptions_MtlsEnvironmentVariables_ClientKeyPassword()
-    {
-        // Test client key password environment variable
-        Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE", "/path/to/client.crt");
-        Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_KEY", "/path/to/client.key");
-        Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_KEY_PASSWORD", "secret123");
-
-        try
-        {
-            var options = new OtlpExporterOptions();
-
-            Assert.NotNull(options.MtlsOptions);
-            Assert.Equal("/path/to/client.crt", options.MtlsOptions.ClientCertificatePath);
-            Assert.Equal("/path/to/client.key", options.MtlsOptions.ClientKeyPath);
-            Assert.Equal("secret123", options.MtlsOptions.ClientKeyPassword);
-            Assert.True(options.MtlsOptions.IsEnabled);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE", null);
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_KEY", null);
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_CLIENT_KEY_PASSWORD", null);
-        }
-    }
-
-    [Fact]
     public void OtlpExporterOptions_MtlsEnvironmentVariables_UsingIConfiguration()
     {
         // Test using IConfiguration instead of environment variables

@@ -3,7 +3,6 @@
 
 #if NET
 
-using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
@@ -151,166 +150,7 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
     }
 
     [Fact]
-    public void ValidateCertificateChain_UsesDefaultConfiguration_WhenConfigurationIsNull()
-    {
-        using var cert = CreateSelfSignedCertificate();
-
-        // Both overloads should work
-        var result1 = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate");
-        var result2 = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", null);
-
-        // Results should be the same since both use defaults
-        Assert.Equal(result1, result2);
-    }
-
-    [Fact]
-    public void ValidateCertificateChain_UsesRevocationModeFromConfiguration()
-    {
-        using var cert = CreateSelfSignedCertificate();
-
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new[]
-            {
-                new KeyValuePair<string, string?>(OtlpSpecConfigDefinitions.CertificateRevocationModeEnvVarName, "NoCheck"),
-            })
-            .Build();
-
-        // Should not throw when using NoCheck mode
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
-
-        // The method should execute without throwing
-        Assert.True(result || !result);
-    }
-
-    [Fact]
-    public void ValidateCertificateChain_UsesRevocationFlagFromConfiguration()
-    {
-        using var cert = CreateSelfSignedCertificate();
-
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new[]
-            {
-                new KeyValuePair<string, string?>(OtlpSpecConfigDefinitions.CertificateRevocationFlagEnvVarName, "EntireChain"),
-            })
-            .Build();
-
-        // Should not throw when using EntireChain flag
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
-
-        // The method should execute without throwing
-        Assert.True(result || !result);
-    }
-
-    [Fact]
-    public void ValidateCertificateChain_UsesBothRevocationConfigurationValues()
-    {
-        using var cert = CreateSelfSignedCertificate();
-
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new[]
-            {
-                new KeyValuePair<string, string?>(OtlpSpecConfigDefinitions.CertificateRevocationModeEnvVarName, "Offline"),
-                new KeyValuePair<string, string?>(OtlpSpecConfigDefinitions.CertificateRevocationFlagEnvVarName, "EndCertificateOnly"),
-            })
-            .Build();
-
-        // Should not throw when using both configuration values
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
-
-        // The method should execute without throwing
-        Assert.True(result || !result);
-    }
-
-    [Fact]
-    public void ValidateCertificateChain_UsesDefaultsForInvalidRevocationMode()
-    {
-        using var cert = CreateSelfSignedCertificate();
-
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new[]
-            {
-                new KeyValuePair<string, string?>(OtlpSpecConfigDefinitions.CertificateRevocationModeEnvVarName, "InvalidMode"),
-            })
-            .Build();
-
-        // Should not throw even with invalid configuration value (should use default)
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
-
-        // The method should execute without throwing and use default Online mode
-        Assert.True(result || !result);
-    }
-
-    [Fact]
-    public void ValidateCertificateChain_UsesDefaultsForInvalidRevocationFlag()
-    {
-        using var cert = CreateSelfSignedCertificate();
-
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new[]
-            {
-                new KeyValuePair<string, string?>(OtlpSpecConfigDefinitions.CertificateRevocationFlagEnvVarName, "InvalidFlag"),
-            })
-            .Build();
-
-        // Should not throw even with invalid configuration value (should use default)
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
-
-        // The method should execute without throwing and use default ExcludeRoot flag
-        Assert.True(result || !result);
-    }
-
-    [Theory]
-    [InlineData("Online")]
-    [InlineData("Offline")]
-    [InlineData("NoCheck")]
-    [InlineData("online")]
-    [InlineData("OFFLINE")]
-    [InlineData("nocheck")]
-    public void ValidateCertificateChain_HandlesCaseInsensitiveRevocationMode(string revocationMode)
-    {
-        using var cert = CreateSelfSignedCertificate();
-
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new[]
-            {
-                new KeyValuePair<string, string?>(OtlpSpecConfigDefinitions.CertificateRevocationModeEnvVarName, revocationMode),
-            })
-            .Build();
-
-        // Should handle case-insensitive enum parsing
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
-
-        // The method should execute without throwing
-        Assert.True(result || !result);
-    }
-
-    [Theory]
-    [InlineData("ExcludeRoot")]
-    [InlineData("EntireChain")]
-    [InlineData("EndCertificateOnly")]
-    [InlineData("excluderoot")]
-    [InlineData("ENTIRECHAIN")]
-    [InlineData("endcertificateonly")]
-    public void ValidateCertificateChain_HandlesCaseInsensitiveRevocationFlag(string revocationFlag)
-    {
-        using var cert = CreateSelfSignedCertificate();
-
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new[]
-            {
-                new KeyValuePair<string, string?>(OtlpSpecConfigDefinitions.CertificateRevocationFlagEnvVarName, revocationFlag),
-            })
-            .Build();
-
-        // Should handle case-insensitive enum parsing
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
-
-        // The method should execute without throwing
-        Assert.True(result || !result);
-    }
-
-    [Fact]
-    public void LoadClientCertificate_AcceptsPasswordParameter()
+    public void LoadClientCertificate_LoadsFromSeparateFiles()
     {
         var tempCertFile = Path.GetTempFileName();
         var tempKeyFile = Path.GetTempFileName();
@@ -319,14 +159,13 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
 
         try
         {
-            // This test verifies that the method accepts the password parameter
+            // This test verifies that the method loads from separate files
             // Note: We expect this to fail because we're using dummy cert/key content
             // but it should not fail due to the method signature
             var exception = Assert.Throws<InvalidOperationException>(() =>
                 OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadClientCertificate(
                     tempCertFile,
-                    tempKeyFile,
-                    "test-password"));
+                    tempKeyFile));
 
             // The exception should be about certificate loading, not method signature
             Assert.Contains("Failed to load client certificate", exception.Message, StringComparison.OrdinalIgnoreCase);

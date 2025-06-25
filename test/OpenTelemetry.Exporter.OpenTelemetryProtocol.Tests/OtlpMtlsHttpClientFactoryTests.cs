@@ -39,13 +39,12 @@ public class OtlpMtlsHttpClientFactoryTests
         {
             // Create a self-signed certificate for testing
             using var cert = CreateSelfSignedCertificate();
-            var certBytes = cert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx, "testpassword");
+            var certBytes = cert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx);
             File.WriteAllBytes(tempCertFile, certBytes);
 
             var options = new OtlpMtlsOptions
             {
                 ClientCertificatePath = tempCertFile,
-                ClientKeyPassword = "testpassword",
                 EnableCertificateChainValidation = false, // Ignore validation for test cert
             };
 
