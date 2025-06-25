@@ -67,19 +67,86 @@ internal static class OtlpMtlsCertificateManager
     }
 
     /// <summary>
-    /// Loads a client certificate with its private key from PEM files.
+    /// Loads a client certificate from a single file (e.g., PKCS#12 format) with optional password.
     /// </summary>
     /// <param name="clientCertificatePath">Path to the client certificate file.</param>
-    /// <param name="clientKeyPath">Path to the client private key file.</param>
-    /// <param name="clientKeyPassword">Password for the client private key file if it is encrypted. Can be null for unencrypted keys.</param>
+    /// <param name="clientKeyPath">Must be null for single-file certificates.</param>
+    /// <param name="clientKeyPassword">Password for the certificate file if it is encrypted. Can be null for unencrypted certificates.</param>
     /// <returns>The loaded client certificate with private key.</returns>
-    /// <exception cref="FileNotFoundException">Thrown when certificate or key files are not found.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the certificate file is not found.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the certificate cannot be loaded.</exception>
+    /// <exception cref="ArgumentException">Thrown when clientKeyPath is not null for single-file certificate loading.</exception>
     public static X509Certificate2 LoadClientCertificate(
         string clientCertificatePath,
-        string clientKeyPath,
+        string? clientKeyPath,
         string? clientKeyPassword)
     {
+        if (clientKeyPath == null)
+        {
+            // Load certificate from a single file (e.g., PKCS#12 format)
+            ValidateFileExists(clientCertificatePath, ClientCertificateType);
+
+            try
+            {
+                X509Certificate2 clientCertificate;
+
+                // Try to load as PKCS#12 first, then as PEM
+                if (!string.IsNullOrEmpty(clientKeyPassword))
+                {
+                    // Load PKCS#12 with password
+#if NET9_0_OR_GREATER
+                    clientCertificate = X509CertificateLoader.LoadPkcs12FromFile(clientCertificatePath, clientKeyPassword);
+#else
+#pragma warning disable SYSLIB0057 // X509Certificate2 constructors are obsolete. Use X509CertificateLoader instead.
+                    clientCertificate = new X509Certificate2(clientCertificatePath, clientKeyPassword);
+#pragma warning restore SYSLIB0057
+#endif
+                }
+                else
+                {
+                    // Try PKCS#12 without password first
+                    try
+                    {
+#if NET9_0_OR_GREATER
+                        clientCertificate = X509CertificateLoader.LoadPkcs12FromFile(clientCertificatePath, (string?)null);
+#else
+#pragma warning disable SYSLIB0057 // X509Certificate2 constructors are obsolete. Use X509CertificateLoader instead.
+                        clientCertificate = new X509Certificate2(clientCertificatePath);
+#pragma warning restore SYSLIB0057
+#endif
+                    }
+                    catch
+                    {
+                        // If PKCS#12 fails, try PEM format
+                        clientCertificate = X509Certificate2.CreateFromPemFile(clientCertificatePath);
+                    }
+                }
+
+                if (!clientCertificate.HasPrivateKey)
+                {
+                    throw new InvalidOperationException(
+                        "Client certificate does not have an associated private key.");
+                }
+
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoaded(
+                    ClientCertificateType,
+                    clientCertificatePath);
+
+                return clientCertificate;
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoadFailed(
+                    ClientCertificateType,
+                    clientCertificatePath,
+                    ex.Message);
+                throw new InvalidOperationException(
+                    $"Failed to load client certificate from '{clientCertificatePath}': {ex.Message}",
+                    ex);
+            }
+        }
+
+        // Load certificate and key from separate files
         ValidateFileExists(clientCertificatePath, ClientCertificateType);
         ValidateFileExists(clientKeyPath, ClientPrivateKeyType);
 
