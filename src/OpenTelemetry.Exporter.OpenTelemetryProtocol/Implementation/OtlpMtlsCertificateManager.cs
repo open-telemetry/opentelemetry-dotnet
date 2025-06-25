@@ -97,9 +97,7 @@ internal static class OtlpMtlsCertificateManager
 #if NET9_0_OR_GREATER
                     clientCertificate = X509CertificateLoader.LoadPkcs12FromFile(clientCertificatePath, clientKeyPassword);
 #else
-#pragma warning disable SYSLIB0057 // X509Certificate2 constructors are obsolete. Use X509CertificateLoader instead.
                     clientCertificate = new X509Certificate2(clientCertificatePath, clientKeyPassword);
-#pragma warning restore SYSLIB0057
 #endif
                 }
                 else
@@ -110,9 +108,7 @@ internal static class OtlpMtlsCertificateManager
 #if NET9_0_OR_GREATER
                         clientCertificate = X509CertificateLoader.LoadPkcs12FromFile(clientCertificatePath, (string?)null);
 #else
-#pragma warning disable SYSLIB0057 // X509Certificate2 constructors are obsolete. Use X509CertificateLoader instead.
                         clientCertificate = new X509Certificate2(clientCertificatePath);
-#pragma warning restore SYSLIB0057
 #endif
                     }
                     catch
