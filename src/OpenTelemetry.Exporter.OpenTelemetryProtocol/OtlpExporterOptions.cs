@@ -316,28 +316,28 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         // Check and apply CA certificate path from environment variable
         if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.CertificateEnvVarName, out var caCertPath))
         {
-            this.MtlsOptions ??= new OtlpMtlsOptions();
+            this.MtlsOptions ??= new();
             this.MtlsOptions.CaCertificatePath = caCertPath;
         }
 
         // Check and apply client certificate path from environment variable
         if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.ClientCertificateEnvVarName, out var clientCertPath))
         {
-            this.MtlsOptions ??= new OtlpMtlsOptions();
+            this.MtlsOptions ??= new();
             this.MtlsOptions.ClientCertificatePath = clientCertPath;
         }
 
         // Check and apply client key path from environment variable
         if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.ClientKeyEnvVarName, out var clientKeyPath))
         {
-            this.MtlsOptions ??= new OtlpMtlsOptions();
+            this.MtlsOptions ??= new();
             this.MtlsOptions.ClientKeyPath = clientKeyPath;
         }
 
         // Check and apply client key password from environment variable
         if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.ClientKeyPasswordEnvVarName, out var clientKeyPassword))
         {
-            this.MtlsOptions ??= new OtlpMtlsOptions();
+            this.MtlsOptions ??= new();
             this.MtlsOptions.ClientKeyPassword = clientKeyPassword;
         }
     }
