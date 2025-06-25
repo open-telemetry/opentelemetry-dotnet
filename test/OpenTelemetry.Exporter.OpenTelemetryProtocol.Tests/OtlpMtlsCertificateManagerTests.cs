@@ -4,6 +4,7 @@
 #if NET8_0_OR_GREATER
 
 using Microsoft.Extensions.Configuration;
+using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -32,19 +33,19 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
 4567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCD
 -----END CERTIFICATE-----";
 
-    [Xunit.Fact]
+    [Fact]
     public void LoadClientCertificate_ThrowsFileNotFoundException_WhenCertificateFileDoesNotExist()
     {
-        var exception = Xunit.Assert.Throws<FileNotFoundException>(() =>
+        var exception = Assert.Throws<FileNotFoundException>(() =>
             OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadClientCertificate(
                 "/nonexistent/client.crt",
                 "/nonexistent/client.key"));
 
-        Xunit.Assert.Contains("Certificate file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
-        Xunit.Assert.Contains("/nonexistent/client.crt", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Certificate file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/nonexistent/client.crt", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void LoadClientCertificate_ThrowsFileNotFoundException_WhenPrivateKeyFileDoesNotExist()
     {
         var tempCertFile = Path.GetTempFileName();
@@ -52,13 +53,13 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
 
         try
         {
-            var exception = Xunit.Assert.Throws<FileNotFoundException>(() =>
+            var exception = Assert.Throws<FileNotFoundException>(() =>
                 OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadClientCertificate(
                     tempCertFile,
                     "/nonexistent/client.key"));
 
-            Xunit.Assert.Contains("Private key file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
-            Xunit.Assert.Contains("/nonexistent/client.key", exception.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Private key file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("/nonexistent/client.key", exception.Message, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {
@@ -66,17 +67,17 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         }
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void LoadCaCertificate_ThrowsFileNotFoundException_WhenTrustStoreFileDoesNotExist()
     {
-        var exception = Xunit.Assert.Throws<FileNotFoundException>(() =>
+        var exception = Assert.Throws<FileNotFoundException>(() =>
             OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadCaCertificate("/nonexistent/ca.crt"));
 
-        Xunit.Assert.Contains("CA certificate file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
-        Xunit.Assert.Contains("/nonexistent/ca.crt", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("CA certificate file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/nonexistent/ca.crt", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void LoadClientCertificate_ThrowsInvalidOperationException_WhenCertificateFileIsEmpty()
     {
         var tempCertFile = Path.GetTempFileName();
@@ -86,10 +87,10 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
 
         try
         {
-            var exception = Xunit.Assert.Throws<InvalidOperationException>(() =>
+            var exception = Assert.Throws<InvalidOperationException>(() =>
                 OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadClientCertificate(tempCertFile, tempKeyFile));
 
-            Xunit.Assert.Contains(
+            Assert.Contains(
                 "Failed to load client certificate",
                 exception.Message,
                 StringComparison.OrdinalIgnoreCase);
@@ -101,7 +102,7 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         }
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void LoadCaCertificate_ThrowsInvalidOperationException_WhenTrustStoreFileIsEmpty()
     {
         var tempTrustStoreFile = Path.GetTempFileName();
@@ -109,10 +110,10 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
 
         try
         {
-            var exception = Xunit.Assert.Throws<InvalidOperationException>(() =>
+            var exception = Assert.Throws<InvalidOperationException>(() =>
                 OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadCaCertificate(tempTrustStoreFile));
 
-            Xunit.Assert.Contains(
+            Assert.Contains(
                 "Failed to load CA certificate",
                 exception.Message,
                 StringComparison.OrdinalIgnoreCase);
@@ -123,7 +124,7 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         }
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void ValidateCertificateChain_DoesNotThrow_WithValidCertificate()
     {
         // Create a self-signed certificate for testing
@@ -133,10 +134,10 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate");
 
         // For self-signed certificates, validation may fail, but method should not throw
-        Xunit.Assert.True(result || !result); // Just check that it returns a boolean
+        Assert.True(result || !result); // Just check that it returns a boolean
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void ValidateCertificateChain_ReturnsResult_WithValidCertificate()
     {
         // Create a valid certificate for testing
@@ -146,10 +147,10 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate");
 
         // The result can be true or false, but the method should not throw
-        Xunit.Assert.True(result || !result);
+        Assert.True(result || !result);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void ValidateCertificateChain_UsesDefaultConfiguration_WhenConfigurationIsNull()
     {
         using var cert = CreateSelfSignedCertificate();
@@ -159,10 +160,10 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         var result2 = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", null);
 
         // Results should be the same since both use defaults
-        Xunit.Assert.Equal(result1, result2);
+        Assert.Equal(result1, result2);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void ValidateCertificateChain_UsesRevocationModeFromConfiguration()
     {
         using var cert = CreateSelfSignedCertificate();
@@ -178,10 +179,10 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
 
         // The method should execute without throwing
-        Xunit.Assert.True(result || !result);
+        Assert.True(result || !result);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void ValidateCertificateChain_UsesRevocationFlagFromConfiguration()
     {
         using var cert = CreateSelfSignedCertificate();
@@ -197,10 +198,10 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
 
         // The method should execute without throwing
-        Xunit.Assert.True(result || !result);
+        Assert.True(result || !result);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void ValidateCertificateChain_UsesBothRevocationConfigurationValues()
     {
         using var cert = CreateSelfSignedCertificate();
@@ -217,10 +218,10 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
 
         // The method should execute without throwing
-        Xunit.Assert.True(result || !result);
+        Assert.True(result || !result);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void ValidateCertificateChain_UsesDefaultsForInvalidRevocationMode()
     {
         using var cert = CreateSelfSignedCertificate();
@@ -236,10 +237,10 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
 
         // The method should execute without throwing and use default Online mode
-        Xunit.Assert.True(result || !result);
+        Assert.True(result || !result);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void ValidateCertificateChain_UsesDefaultsForInvalidRevocationFlag()
     {
         using var cert = CreateSelfSignedCertificate();
@@ -255,16 +256,16 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
 
         // The method should execute without throwing and use default ExcludeRoot flag
-        Xunit.Assert.True(result || !result);
+        Assert.True(result || !result);
     }
 
-    [Xunit.Theory]
-    [Xunit.InlineData("Online")]
-    [Xunit.InlineData("Offline")]
-    [Xunit.InlineData("NoCheck")]
-    [Xunit.InlineData("online")]
-    [Xunit.InlineData("OFFLINE")]
-    [Xunit.InlineData("nocheck")]
+    [Theory]
+    [InlineData("Online")]
+    [InlineData("Offline")]
+    [InlineData("NoCheck")]
+    [InlineData("online")]
+    [InlineData("OFFLINE")]
+    [InlineData("nocheck")]
     public void ValidateCertificateChain_HandlesCaseInsensitiveRevocationMode(string revocationMode)
     {
         using var cert = CreateSelfSignedCertificate();
@@ -280,16 +281,16 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
 
         // The method should execute without throwing
-        Xunit.Assert.True(result || !result);
+        Assert.True(result || !result);
     }
 
-    [Xunit.Theory]
-    [Xunit.InlineData("ExcludeRoot")]
-    [Xunit.InlineData("EntireChain")]
-    [Xunit.InlineData("EndCertificateOnly")]
-    [Xunit.InlineData("excluderoot")]
-    [Xunit.InlineData("ENTIRECHAIN")]
-    [Xunit.InlineData("endcertificateonly")]
+    [Theory]
+    [InlineData("ExcludeRoot")]
+    [InlineData("EntireChain")]
+    [InlineData("EndCertificateOnly")]
+    [InlineData("excluderoot")]
+    [InlineData("ENTIRECHAIN")]
+    [InlineData("endcertificateonly")]
     public void ValidateCertificateChain_HandlesCaseInsensitiveRevocationFlag(string revocationFlag)
     {
         using var cert = CreateSelfSignedCertificate();
@@ -305,10 +306,10 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
         var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate", configuration);
 
         // The method should execute without throwing
-        Xunit.Assert.True(result || !result);
+        Assert.True(result || !result);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void LoadClientCertificate_AcceptsPasswordParameter()
     {
         var tempCertFile = Path.GetTempFileName();
@@ -321,14 +322,14 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
             // This test verifies that the method accepts the password parameter
             // Note: We expect this to fail because we're using dummy cert/key content
             // but it should not fail due to the method signature
-            var exception = Xunit.Assert.Throws<InvalidOperationException>(() =>
+            var exception = Assert.Throws<InvalidOperationException>(() =>
                 OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadClientCertificate(
                     tempCertFile,
                     tempKeyFile,
                     "test-password"));
 
             // The exception should be about certificate loading, not method signature
-            Xunit.Assert.Contains("Failed to load client certificate", exception.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Failed to load client certificate", exception.Message, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {

@@ -3,33 +3,35 @@
 
 #if NET8_0_OR_GREATER
 
+using Xunit;
+
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public class OtlpMtlsHttpClientFactoryTests
 {
-    [Xunit.Fact]
+    [Fact]
     public void CreateHttpClient_ReturnsHttpClient_WhenMtlsIsDisabled()
     {
         var options = new OtlpMtlsOptions(); // Disabled by default
 
         using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
 
-        Xunit.Assert.NotNull(httpClient);
-        Xunit.Assert.IsType<HttpClient>(httpClient);
+        Assert.NotNull(httpClient);
+        Assert.IsType<HttpClient>(httpClient);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void CreateHttpClient_ThrowsFileNotFoundException_WhenCertificateFileDoesNotExist()
     {
         var options = new OtlpMtlsOptions { ClientCertificatePath = "/nonexistent/client.crt" };
 
-        var exception = Xunit.Assert.Throws<FileNotFoundException>(() =>
+        var exception = Assert.Throws<FileNotFoundException>(() =>
             OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options));
 
-        Xunit.Assert.Contains("Certificate file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Certificate file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void CreateHttpClient_ConfiguresClientCertificate_WhenValidCertificateProvided()
     {
         var tempCertFile = Path.GetTempFileName();
@@ -50,7 +52,7 @@ public class OtlpMtlsHttpClientFactoryTests
 
             using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
 
-            Xunit.Assert.NotNull(httpClient);
+            Assert.NotNull(httpClient);
 
             // Verify the HttpClientHandler has client certificates configured
             var handlerField = typeof(HttpClient).GetField(
@@ -58,7 +60,7 @@ public class OtlpMtlsHttpClientFactoryTests
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (handlerField?.GetValue(httpClient) is HttpClientHandler handler)
             {
-                Xunit.Assert.NotEmpty(handler.ClientCertificates);
+                Assert.NotEmpty(handler.ClientCertificates);
             }
         }
         finally
@@ -70,7 +72,7 @@ public class OtlpMtlsHttpClientFactoryTests
         }
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void CreateHttpClient_ConfiguresServerCertificateValidation_WhenTrustedRootCertificatesProvided()
     {
         var tempTrustStoreFile = Path.GetTempFileName();
@@ -90,7 +92,7 @@ public class OtlpMtlsHttpClientFactoryTests
 
             using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
 
-            Xunit.Assert.NotNull(httpClient);
+            Assert.NotNull(httpClient);
 
             // Verify the HttpClientHandler has server certificate validation configured
             var handlerField = typeof(HttpClient).GetField(
@@ -98,7 +100,7 @@ public class OtlpMtlsHttpClientFactoryTests
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (handlerField?.GetValue(httpClient) is HttpClientHandler handler)
             {
-                Xunit.Assert.NotNull(handler.ServerCertificateCustomValidationCallback);
+                Assert.NotNull(handler.ServerCertificateCustomValidationCallback);
             }
         }
         finally
@@ -110,13 +112,13 @@ public class OtlpMtlsHttpClientFactoryTests
         }
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void CreateMtlsHttpClient_ThrowsArgumentNullException_WhenOptionsIsNull()
     {
-        var exception = Xunit.Assert.Throws<ArgumentNullException>(() =>
+        var exception = Assert.Throws<ArgumentNullException>(() =>
             OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(null!));
 
-        Xunit.Assert.Equal("mtlsOptions", exception.ParamName);
+        Assert.Equal("mtlsOptions", exception.ParamName);
     }
 
     private static System.Security.Cryptography.X509Certificates.X509Certificate2 CreateSelfSignedCertificate()
