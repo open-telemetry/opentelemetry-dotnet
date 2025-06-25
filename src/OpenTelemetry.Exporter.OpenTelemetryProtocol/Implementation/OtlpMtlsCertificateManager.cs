@@ -3,7 +3,6 @@
 
 #if NET
 
-using System.IO;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
