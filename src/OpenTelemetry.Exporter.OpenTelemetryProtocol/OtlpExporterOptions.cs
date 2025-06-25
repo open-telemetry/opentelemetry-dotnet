@@ -74,7 +74,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         {
             var timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds);
 
-#if NET8_0_OR_GREATER
+#if NET
             // If mTLS is configured, create an mTLS-enabled client
             if (this.MtlsOptions?.IsEnabled == true)
             {
@@ -170,7 +170,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// </remarks>
     internal bool AppendSignalPathToEndpoint { get; private set; } = true;
 
-#if NET8_0_OR_GREATER
+#if NET
     internal OtlpMtlsOptions? MtlsOptions { get; set; }
 #endif
 
@@ -302,13 +302,13 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             throw new NotSupportedException($"OtlpExporterOptionsConfigurationType '{configurationType}' is not supported.");
         }
 
-#if NET8_0_OR_GREATER
+#if NET
         // Apply mTLS configuration from environment variables
         this.ApplyMtlsConfiguration(configuration);
 #endif
     }
 
-#if NET8_0_OR_GREATER
+#if NET
     private void ApplyMtlsConfiguration(IConfiguration configuration)
     {
         Debug.Assert(configuration != null, "configuration was null");

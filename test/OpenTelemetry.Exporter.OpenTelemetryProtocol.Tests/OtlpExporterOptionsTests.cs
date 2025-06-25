@@ -264,7 +264,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.NotEqual(defaultOptionsWithData.HttpClientFactory, targetOptionsWithData.HttpClientFactory);
     }
 
-#if NET8_0_OR_GREATER
+#if NET
     [Fact]
     public void OtlpExporterOptions_MtlsEnvironmentVariables()
     {

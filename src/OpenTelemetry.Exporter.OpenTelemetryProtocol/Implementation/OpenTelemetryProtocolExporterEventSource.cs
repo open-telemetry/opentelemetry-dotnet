@@ -241,7 +241,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         this.InvalidConfigurationValue(key, value);
     }
 
-#if NET8_0_OR_GREATER
+#if NET
     [Event(26, Message = "{0} loaded successfully from '{1}'.", Level = EventLevel.Informational)]
     internal void MtlsCertificateLoaded(string certificateType, string filePath) =>
         this.WriteEvent(26, certificateType, filePath);
