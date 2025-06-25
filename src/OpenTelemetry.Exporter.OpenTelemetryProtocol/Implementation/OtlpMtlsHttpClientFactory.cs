@@ -55,11 +55,11 @@ internal static class OtlpMtlsHttpClientFactory
             {
                 if (string.IsNullOrEmpty(mtlsOptions.ClientKeyPath))
                 {
-                    // Check if certificate file exists to provide appropriate error message
-                    if (!File.Exists(mtlsOptions.ClientCertificatePath))
-                    {
-                        throw new FileNotFoundException($"Certificate file not found at path: {mtlsOptions.ClientCertificatePath}", mtlsOptions.ClientCertificatePath);
-                    }
+                    // Load certificate without separate key file (e.g., PKCS#12 format)
+                    clientCertificate = OtlpMtlsCertificateManager.LoadClientCertificate(
+                        mtlsOptions.ClientCertificatePath,
+                        null,
+                        mtlsOptions.ClientKeyPassword);
                 }
                 else
                 {
@@ -67,17 +67,17 @@ internal static class OtlpMtlsHttpClientFactory
                         mtlsOptions.ClientCertificatePath,
                         mtlsOptions.ClientKeyPath,
                         mtlsOptions.ClientKeyPassword);
-
-                    if (mtlsOptions.EnableCertificateChainValidation)
-                    {
-                        OtlpMtlsCertificateManager.ValidateCertificateChain(
-                            clientCertificate,
-                            OtlpMtlsCertificateManager.ClientCertificateType);
-                    }
-
-                    OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationEnabled(
-                        clientCertificate.Subject);
                 }
+
+                if (mtlsOptions.EnableCertificateChainValidation)
+                {
+                    OtlpMtlsCertificateManager.ValidateCertificateChain(
+                        clientCertificate,
+                        OtlpMtlsCertificateManager.ClientCertificateType);
+                }
+
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationEnabled(
+                    clientCertificate.Subject);
             }
 
             // Create HttpClientHandler with mTLS configuration
