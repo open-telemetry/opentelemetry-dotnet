@@ -115,21 +115,21 @@ internal static class OtlpMtlsHttpClientFactory
 
             configureClient?.Invoke(client);
 
-            // Dispose certificates as they are no longer needed after being added to the handler
-            caCertificate?.Dispose();
-            clientCertificate?.Dispose();
-
             return client;
         }
         catch (Exception ex)
         {
-            // Dispose resources if something went wrong
+            // Dispose handler if something went wrong
             handler?.Dispose();
-            caCertificate?.Dispose();
-            clientCertificate?.Dispose();
 
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             throw;
+        }
+        finally
+        {
+            // Dispose certificates as they are no longer needed after being added to the handler
+            caCertificate?.Dispose();
+            clientCertificate?.Dispose();
         }
     }
 }
