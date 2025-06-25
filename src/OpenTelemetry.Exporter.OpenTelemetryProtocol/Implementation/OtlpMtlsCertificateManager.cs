@@ -328,12 +328,7 @@ internal static class OtlpMtlsCertificateManager
     /// <returns>The configured revocation flag or default (ExcludeRoot).</returns>
     private static X509RevocationFlag GetRevocationFlagFromConfiguration(IConfiguration? configuration)
     {
-        if (configuration == null)
-        {
-            return X509RevocationFlag.ExcludeRoot;
-        }
-
-        if (configuration.TryGetStringValue(OtlpSpecConfigDefinitions.CertificateRevocationFlagEnvVarName, out var flagString))
+        if (configuration != null && configuration.TryGetStringValue(OtlpSpecConfigDefinitions.CertificateRevocationFlagEnvVarName, out var flagString))
         {
             if (Enum.TryParse<X509RevocationFlag>(flagString, true, out var flag))
             {
@@ -345,6 +340,8 @@ internal static class OtlpMtlsCertificateManager
                 flagString);
         }
 
+        // Use ExcludeRoot as default to avoid revocation checks on the root CA certificate,
+        // which is typically self-signed and may not have revocation information available
         return X509RevocationFlag.ExcludeRoot;
     }
 }
