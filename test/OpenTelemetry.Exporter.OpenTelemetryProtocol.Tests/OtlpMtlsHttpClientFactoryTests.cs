@@ -45,8 +45,7 @@ public class OtlpMtlsHttpClientFactoryTests
             var options = new OtlpMtlsOptions
             {
                 ClientCertificatePath = tempCertFile,
-
-                // Note: Password support would need to be added to OtlpMtlsOptions
+                ClientKeyPassword = "testpassword",
                 EnableCertificateChainValidation = false, // Ignore validation for test cert
             };
 
