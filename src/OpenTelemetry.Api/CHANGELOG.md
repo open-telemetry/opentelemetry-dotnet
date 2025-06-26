@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
   linking spans and associating optional attributes for advanced trace relationships.
   ([#6305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6305))
 
+* Experimental (only in pre-release versions): Added the `EventName` property
+  to `LogRecordData`
+  ([#6306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6306))
+
 ## 1.12.0
 
 Released 2025-Apr-29
