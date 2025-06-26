@@ -3,7 +3,6 @@
   <PropertyGroup>
     <Description>Unit test project for Console Exporter for OpenTelemetry</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>

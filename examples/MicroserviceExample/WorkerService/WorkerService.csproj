@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
   <PropertyGroup>
     <TargetFramework>$(DefaultTargetFrameworkForExampleApps)</TargetFramework>
-    <AnalysisLevel>latest-all</AnalysisLevel>
     <NoWarn>$(NoWarn);CA1812</NoWarn>
   </PropertyGroup>
 

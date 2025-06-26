@@ -7,7 +7,9 @@ using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 
-public class Program
+namespace Correlation;
+
+internal sealed class Program
 {
     private static readonly ActivitySource MyActivitySource = new("MyCompany.MyProduct.MyLibrary");
 

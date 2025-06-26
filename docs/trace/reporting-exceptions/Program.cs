@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace ReportingExceptions;
 
-public class Program
+internal static class Program
 {
     private static readonly ActivitySource MyActivitySource = new(
         "MyCompany.MyProduct.MyLibrary");
@@ -27,7 +27,7 @@ public class Program
             {
                 using (MyActivitySource.StartActivity("Bar"))
                 {
-                    throw new Exception("Oops!");
+                    throw new InvalidOperationException("Oops!");
                 }
             }
         }

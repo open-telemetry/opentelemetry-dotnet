@@ -5,7 +5,7 @@ using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-internal class MyExporter : BaseExporter<LogRecord>
+internal sealed class MyExporter : BaseExporter<LogRecord>
 {
     private readonly string name;
 
@@ -59,6 +59,7 @@ internal class MyExporter : BaseExporter<LogRecord>
 
     protected override void Dispose(bool disposing)
     {
+        base.Dispose(disposing);
         Console.WriteLine($"{this.name}.Dispose({disposing})");
     }
 }

@@ -5,7 +5,6 @@
     <Description>Stand-alone HttpListener for hosting OpenTelemetry .NET Prometheus Exporter</Description>
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
     <MinVerTagPrefix>coreunstable-</MinVerTagPrefix>
-    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">

@@ -5,7 +5,6 @@
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <NoWarn>$(NoWarn),CS0618</NoWarn>
     <ReferenceCoyotePackages>true</ReferenceCoyotePackages>
-    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>

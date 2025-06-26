@@ -4,7 +4,7 @@
 using System.Diagnostics;
 using OpenTelemetry;
 
-internal class MyProcessor : BaseProcessor<Activity>
+internal sealed class MyProcessor : BaseProcessor<Activity>
 {
     private readonly string name;
 
@@ -37,6 +37,7 @@ internal class MyProcessor : BaseProcessor<Activity>
 
     protected override void Dispose(bool disposing)
     {
+        base.Dispose(disposing);
         Console.WriteLine($"{this.name}.Dispose({disposing})");
     }
 }

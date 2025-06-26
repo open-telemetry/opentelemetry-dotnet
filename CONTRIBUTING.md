@@ -300,9 +300,6 @@ types](https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-type
 * Pass [static
 analysis](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/overview).
 
-   New projects MUST enable static analysis by specifying
-   `<AnalysisLevel>latest-all</AnalysisLevel>` in the project file (`.csproj`).
-
 > [!NOTE]
 > There are other project-level features enabled automatically via
 [Common.props](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/build/Common.props)
