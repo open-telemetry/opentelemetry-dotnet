@@ -241,7 +241,7 @@ you're more than welcome to participate!
 * [Alan West](https://github.com/alanwest), New Relic
 * [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 
-For more information about the maintainer role, see the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).
+For more information about the maintainer role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer).
 
 ### Approvers
 
@@ -249,14 +249,14 @@ For more information about the maintainer role, see the [community repository](h
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 * [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 
-For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).
+For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
 
 ### Triagers
 
 * [Martin Thwaites](https://github.com/martinjt), Honeycomb
 * [Timothy "Mothra" Lee](https://github.com/TimothyMothra)
 
-For more information about the triager role, see the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#triagers).
+For more information about the triager role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager).
 
 ### Emeritus Maintainers
 
