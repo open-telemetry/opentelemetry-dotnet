@@ -15,7 +15,7 @@ namespace SDKBasedSpanLevelTailSamplingSample;
 ///  changed later by a span processor based on span attributes (e.g., failure) that become
 ///  available only by the end of the span.
 /// </summary>
-internal class ParentBasedElseAlwaysRecordSampler : Sampler
+internal sealed class ParentBasedElseAlwaysRecordSampler : Sampler
 {
     private const double DefaultSamplingProbabilityForRootSpan = 0.1;
     private readonly ParentBasedSampler parentBasedSampler;

@@ -5,7 +5,7 @@ using OpenTelemetry.Trace;
 
 namespace StratifiedSamplingByQueryTypeDemo;
 
-internal class StratifiedSampler : Sampler
+internal sealed class StratifiedSampler : Sampler
 {
     // For this POC, we have two groups.
     // 0 is the group corresponding to user-initiated queries where we want a 100% sampling rate.

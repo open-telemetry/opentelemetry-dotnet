@@ -3,7 +3,7 @@
 
 using OpenTelemetry.Trace;
 
-internal class MySampler : Sampler
+internal sealed class MySampler : Sampler
 {
     public override SamplingResult ShouldSample(in SamplingParameters param)
     {

@@ -1,7 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-public struct FoodRecallNotice
+namespace ComplexObjects;
+
+internal struct FoodRecallNotice
 {
     public string? BrandName { get; set; }
 

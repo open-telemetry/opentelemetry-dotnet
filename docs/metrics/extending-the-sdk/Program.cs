@@ -8,7 +8,7 @@ using OpenTelemetry.Metrics;
 
 namespace ExtendingTheSdk;
 
-public class Program
+internal static class Program
 {
     private static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");
     private static readonly Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");

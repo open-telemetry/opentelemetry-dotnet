@@ -10,7 +10,7 @@ namespace LinksAndParentBasedSamplerExample;
 ///  A non-probabilistic sampler that samples an activity if ANY of the linked activities
 ///  is sampled.
 /// </summary>
-internal class LinksBasedSampler : Sampler
+internal sealed class LinksBasedSampler : Sampler
 {
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {

@@ -4,7 +4,6 @@
     <Description>OpenTracing shim for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);distributed-tracing;OpenTracing</PackageTags>
     <MinVerTagPrefix>coreunstable-</MinVerTagPrefix>
-    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>

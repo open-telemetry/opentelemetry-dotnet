@@ -3,10 +3,10 @@
 
 namespace DedicatedLogging;
 
-public interface IDedicatedLogger : ILogger
+internal interface IDedicatedLogger : ILogger
 {
 }
 
-public interface IDedicatedLogger<out TCategoryName> : IDedicatedLogger
+internal interface IDedicatedLogger<out TCategoryName> : IDedicatedLogger
 {
 }

@@ -6,7 +6,7 @@ using OpenTelemetry;
 
 namespace ExtendingTheSdk;
 
-public class Program
+internal sealed class Program
 {
     public static void Main()
     {
@@ -29,16 +29,16 @@ public class Program
         // logger.LogInformation($"Hello from potato {0.99}.");
 
         // structured log with template
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+        logger.LogInformation("Hello from {Name} {Price}.", "tomato", 2.99);
 
         // structured log with strong type
-        logger.LogInformation("{food}", new Food { Name = "artichoke", Price = 3.99 });
+        logger.LogInformation("{Food}", new Food { Name = "artichoke", Price = 3.99 });
 
         // structured log with anonymous type
-        logger.LogInformation("{food}", new { Name = "pumpkin", Price = 5.99 });
+        logger.LogInformation("{Food}", new { Name = "pumpkin", Price = 5.99 });
 
         // structured log with general type
-        logger.LogInformation("{food}", new Dictionary<string, object>
+        logger.LogInformation("{Food}", new Dictionary<string, object>
         {
             ["Name"] = "truffle",
             ["Price"] = 299.99,
@@ -48,11 +48,11 @@ public class Program
         using (logger.BeginScope("[operation]"))
         using (logger.BeginScope("[hardware]"))
         {
-            logger.LogError("{name} is broken.", "refrigerator");
+            logger.LogError("{Name} is broken.", "refrigerator");
         }
 
         // message will be redacted by MyRedactionProcessor
-        logger.LogInformation("OpenTelemetry {sensitiveString}.", "<secret>");
+        logger.LogInformation("OpenTelemetry {SensitiveString}.", "<secret>");
     }
 
     internal struct Food

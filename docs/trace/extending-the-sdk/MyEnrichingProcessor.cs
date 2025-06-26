@@ -4,7 +4,7 @@
 using System.Diagnostics;
 using OpenTelemetry;
 
-internal class MyEnrichingProcessor : BaseProcessor<Activity>
+internal sealed class MyEnrichingProcessor : BaseProcessor<Activity>
 {
     public override void OnEnd(Activity activity)
     {
