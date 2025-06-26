@@ -236,26 +236,37 @@ regardless of your experience level. Whether you're a seasoned OpenTelemetry
 developer, just starting your journey, or simply curious about the work we do,
 you're more than welcome to participate!
 
-[Maintainers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer)
-([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
+### Maintainers
 
 * [Alan West](https://github.com/alanwest), New Relic
 * [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 
-[Emeritus Maintainers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
+For more information about the maintainer role, see the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).
 
-* [Mike Goldsmith](https://github.com/MikeGoldsmith)
-* [Sergey Kanzhelev](https://github.com/SergeyKanzhelev)
-* [Utkarsh Umesan Pillai](https://github.com/utpilla)
-
-[Approvers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver)
-([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
+### Approvers
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 * [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 
-[Emeritus Approvers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
+For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).
+
+### Triagers
+
+* [Martin Thwaites](https://github.com/martinjt), Honeycomb
+* [Timothy "Mothra" Lee](https://github.com/TimothyMothra)
+
+For more information about the triager role, see the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#triagers).
+
+### Emeritus Maintainers
+
+* [Mike Goldsmith](https://github.com/MikeGoldsmith)
+* [Sergey Kanzhelev](https://github.com/SergeyKanzhelev)
+* [Utkarsh Umesan Pillai](https://github.com/utpilla)
+
+For more information about the emeritus role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager).
+
+### Emeritus Approvers
 
 * [Bruno Garcia](https://github.com/bruno-garcia)
 * [Eddy Nakamura](https://github.com/eddynaka)
@@ -265,15 +276,13 @@ you're more than welcome to participate!
 * [Robert Paj&#x105;k](https://github.com/pellared)
 * [Vishwesh Bankwar](https://github.com/vishweshbankwar)
 
-[Triagers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager)
-([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
+For more information about the emeritus role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager).
 
-* [Martin Thwaites](https://github.com/martinjt), Honeycomb
-* [Timothy "Mothra" Lee](https://github.com/TimothyMothra)
-
-[Emeritus Triagers](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager):
+### Emeritus Triagers
 
 * [Victor Lu](https://github.com/victlu)
+
+For more information about the emeritus role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager).
 
 ### Thanks to all the people who have contributed
 
