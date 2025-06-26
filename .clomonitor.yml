@@ -1,0 +1,4 @@
+# see https://github.com/cncf/clomonitor/blob/main/docs/checks.md#exemptions
+exemptions:
+  - check: artifacthub_badge
+    reason: "Artifact Hub doesn't support .NET packages"
