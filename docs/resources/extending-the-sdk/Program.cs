@@ -11,7 +11,7 @@ using OpenTelemetry.Trace;
 
 namespace ExtendingTheSdk;
 
-public class Program
+internal static class Program
 {
     private static readonly ActivitySource DemoSource = new("OTel.Demo");
     private static readonly Meter MeterDemoSource = new("OTel.Demo");
@@ -55,7 +55,6 @@ public class Program
         }
 
         var logger = loggerFactory.CreateLogger("OTel.Demo");
-        logger
-            .LogInformation("Hello from {Name} {Price}", "tomato", 2.99);
+        logger.HelloFrom("tomato", 2.99);
     }
 }

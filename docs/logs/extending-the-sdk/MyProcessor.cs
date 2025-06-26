@@ -4,7 +4,7 @@
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-internal class MyProcessor : BaseProcessor<LogRecord>
+internal sealed class MyProcessor : BaseProcessor<LogRecord>
 {
     private readonly string name;
 
@@ -32,6 +32,7 @@ internal class MyProcessor : BaseProcessor<LogRecord>
 
     protected override void Dispose(bool disposing)
     {
+        base.Dispose(disposing);
         Console.WriteLine($"{this.name}.Dispose({disposing})");
     }
 }
