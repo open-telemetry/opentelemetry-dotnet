@@ -7,9 +7,7 @@ using OpenTelemetry;
 /// <summary>
 /// A custom processor for filtering <see cref="Activity"/> instances.
 /// </summary>
-#pragma warning disable CA1812 // Avoid uninstantiated internal classes
 internal sealed class MyFilteringProcessor : BaseProcessor<Activity>
-#pragma warning restore CA1812 // Avoid uninstantiated internal classes
 {
     private readonly Func<Activity, bool> filter;
 

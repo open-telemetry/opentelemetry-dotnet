@@ -29,9 +29,7 @@ internal static class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddReader(new BaseExportingMetricReader(new MyExporter("ExporterX")))
-#pragma warning restore CA2000 // Dispose objects before losing scope
             .AddMyExporter()
             .Build();
 

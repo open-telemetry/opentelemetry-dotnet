@@ -37,9 +37,7 @@ internal static class DedicatedLoggingServiceCollectionExtensions
         return services;
     }
 
-#pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class DedicatedLogger<T> : IDedicatedLogger<T>
-#pragma warning restore CA1812 // Avoid uninstantiated internal classes
     {
         private readonly ILogger innerLogger;
 
@@ -62,9 +60,7 @@ internal static class DedicatedLoggingServiceCollectionExtensions
     private sealed class DedicatedLoggerFactory : ILoggerFactory
     {
         private readonly ServiceProvider serviceProvider;
-#pragma warning disable CA2213 // Disposable fields should be disposed - the service provider will handle disposal of the inner logger factory.
         private readonly ILoggerFactory innerLoggerFactory;
-#pragma warning restore CA2213 // Disposable fields should be disposed - the service provider will handle disposal of the inner logger factory.
 
         public DedicatedLoggerFactory(ServiceProvider serviceProvider)
         {

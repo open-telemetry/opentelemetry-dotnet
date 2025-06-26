@@ -44,9 +44,7 @@ internal static class Program
 
         for (var i = 0; i < 5; i++)
         {
-#pragma warning disable CA5394 // Do not use insecure randomness
             int randomValue = random.Next(10);
-#pragma warning restore CA5394 // Do not use insecure randomness
             var traceFlags = (randomValue == 0) ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None;
             var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), traceFlags);
             linkedActivitiesList.Add(new ActivityLink(context));

@@ -31,9 +31,7 @@ internal sealed class Program
         for (var i = 0; i < 20; i++)
         {
             // Simulate a mix of user-initiated (25%) and programmatic (75%) queries
-#pragma warning disable CA5394 // Do not use insecure randomness
             var randomValue = random.Next(4);
-#pragma warning restore CA5394 // Do not use insecure randomness
             switch (randomValue)
             {
                 case 0:

@@ -16,9 +16,7 @@ internal static class Program
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new ParentBasedElseAlwaysRecordSampler())
             .AddSource("SDK.TailSampling.POC")
-#pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new TailSamplingProcessor())
-#pragma warning restore CA2000 // Dispose objects before losing scope
             .AddConsoleExporter()
             .Build();
 
@@ -32,9 +30,7 @@ internal static class Program
                 activity?.SetTag("foo", "bar");
 
                 // Simulate a mix of failed and successful spans
-#pragma warning disable CA5394 // Do not use insecure randomness
                 var randomValue = random.Next(5);
-#pragma warning restore CA5394 // Do not use insecure randomness
                 switch (randomValue)
                 {
                     case 0:

@@ -23,7 +23,6 @@ internal sealed class Program
         var logger = loggerFactory.CreateLogger<Program>();
 
         // unstructured log
-#pragma warning disable CA1848 // Use the LoggerMessage delegates
         logger.LogInformation("Hello, World!");
 
         // String interpolation, as in the below line, results in unstructured logging, and is not recommended
@@ -54,7 +53,6 @@ internal sealed class Program
 
         // message will be redacted by MyRedactionProcessor
         logger.LogInformation("OpenTelemetry {SensitiveString}.", "<secret>");
-#pragma warning restore CA1848 // Use the LoggerMessage delegates
     }
 
     internal struct Food

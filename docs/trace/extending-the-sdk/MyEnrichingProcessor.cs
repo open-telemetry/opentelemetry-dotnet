@@ -4,9 +4,7 @@
 using System.Diagnostics;
 using OpenTelemetry;
 
-#pragma warning disable CA1812 // Avoid uninstantiated internal classes
 internal sealed class MyEnrichingProcessor : BaseProcessor<Activity>
-#pragma warning restore CA1812 // Avoid uninstantiated internal classes
 {
     public override void OnEnd(Activity activity)
     {
