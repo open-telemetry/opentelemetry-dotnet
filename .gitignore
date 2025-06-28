@@ -21,6 +21,7 @@
 x64/
 x86/
 bld/
+[Aa]rtifacts/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
