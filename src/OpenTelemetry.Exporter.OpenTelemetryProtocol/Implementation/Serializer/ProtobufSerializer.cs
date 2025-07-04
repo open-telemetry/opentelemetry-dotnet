@@ -42,42 +42,11 @@ internal static class ProtobufSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void WriteReservedLength(byte[] buffer, int writePosition, int length)
     {
-        int byteLength = 0;
-        byte firstByte = 0;
-        byte secondByte = 0;
-        byte thirdByte = 0;
-        byte fourthByte = 0;
-
-        do
-        {
-            byte value = (byte)(length & 0x7F);
-
-            switch (byteLength)
-            {
-                case 0:
-                    firstByte = value;
-                    break;
-                case 1:
-                    secondByte = value;
-                    break;
-                case 2:
-                    thirdByte = value;
-                    break;
-                case 3:
-                    fourthByte = value;
-                    break;
-            }
-
-            length >>= 7;
-            byteLength++;
-        }
-        while (length > 0);
-
         var slice = buffer.AsSpan(writePosition, 4);
-        slice[0] = (byte)(firstByte | 0x80);
-        slice[1] = (byte)(secondByte | 0x80);
-        slice[2] = (byte)(thirdByte | 0x80);
-        slice[3] = fourthByte;
+        slice[0] = (byte)(((length >> 0) & 0x7F) | 0x80);
+        slice[1] = (byte)(((length >> 7) & 0x7F) | 0x80);
+        slice[2] = (byte)(((length >> 14) & 0x7F) | 0x80);
+        slice[3] = (byte)((length >> 21) & 0x7F);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
