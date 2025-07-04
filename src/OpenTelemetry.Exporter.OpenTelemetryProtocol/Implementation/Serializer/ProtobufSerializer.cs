@@ -42,63 +42,11 @@ internal static class ProtobufSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void WriteReservedLength(byte[] buffer, int writePosition, int length)
     {
-        int byteLength = 0;
-        int? firstByte = null;
-        int? secondByte = null;
-        int? thirdByte = null;
-        int? fourthByte = null;
-
-        do
-        {
-            switch (byteLength)
-            {
-                case 0:
-                    firstByte = length & 0x7F;
-                    break;
-                case 1:
-                    secondByte = length & 0x7F;
-                    break;
-                case 2:
-                    thirdByte = length & 0x7F;
-                    break;
-                case 3:
-                    fourthByte = length & 0x7F;
-                    break;
-            }
-
-            length >>= 7;
-            byteLength++;
-        }
-        while (length > 0);
-
-        if (fourthByte.HasValue)
-        {
-            buffer[writePosition++] = (byte)(firstByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)(secondByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)(thirdByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)fourthByte!.Value;
-        }
-        else if (thirdByte.HasValue)
-        {
-            buffer[writePosition++] = (byte)(firstByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)(secondByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)(thirdByte!.Value | 0x80);
-            buffer[writePosition++] = 0;
-        }
-        else if (secondByte.HasValue)
-        {
-            buffer[writePosition++] = (byte)(firstByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)(secondByte!.Value | 0x80);
-            buffer[writePosition++] = 0x80;
-            buffer[writePosition++] = 0;
-        }
-        else
-        {
-            buffer[writePosition++] = (byte)(firstByte!.Value | 0x80);
-            buffer[writePosition++] = 0x80;
-            buffer[writePosition++] = 0x80;
-            buffer[writePosition++] = 0;
-        }
+        var slice = buffer.AsSpan(writePosition, 4);
+        slice[0] = (byte)(((length >> 0) & 0x7F) | 0x80);
+        slice[1] = (byte)(((length >> 7) & 0x7F) | 0x80);
+        slice[2] = (byte)(((length >> 14) & 0x7F) | 0x80);
+        slice[3] = (byte)((length >> 21) & 0x7F);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
