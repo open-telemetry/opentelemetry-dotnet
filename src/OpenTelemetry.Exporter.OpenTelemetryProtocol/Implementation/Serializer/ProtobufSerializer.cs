@@ -71,33 +71,35 @@ internal static class ProtobufSerializer
         }
         while (length > 0);
 
+        var slice = buffer.AsSpan(writePosition, 4);
+
         if (fourthByte.HasValue)
         {
-            buffer[writePosition++] = (byte)(firstByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)(secondByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)(thirdByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)fourthByte!.Value;
+            slice[0] = (byte)(firstByte.GetValueOrDefault() | 0x80);
+            slice[1] = (byte)(secondByte.GetValueOrDefault() | 0x80);
+            slice[2] = (byte)(thirdByte.GetValueOrDefault() | 0x80);
+            slice[3] = (byte)fourthByte.GetValueOrDefault();
         }
         else if (thirdByte.HasValue)
         {
-            buffer[writePosition++] = (byte)(firstByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)(secondByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)(thirdByte!.Value | 0x80);
-            buffer[writePosition++] = 0;
+            slice[0] = (byte)(firstByte.GetValueOrDefault() | 0x80);
+            slice[1] = (byte)(secondByte.GetValueOrDefault() | 0x80);
+            slice[2] = (byte)(thirdByte.GetValueOrDefault() | 0x80);
+            slice[3] = 0;
         }
         else if (secondByte.HasValue)
         {
-            buffer[writePosition++] = (byte)(firstByte!.Value | 0x80);
-            buffer[writePosition++] = (byte)(secondByte!.Value | 0x80);
-            buffer[writePosition++] = 0x80;
-            buffer[writePosition++] = 0;
+            slice[0] = (byte)(firstByte.GetValueOrDefault() | 0x80);
+            slice[1] = (byte)(secondByte.GetValueOrDefault() | 0x80);
+            slice[2] = 0x80;
+            slice[3] = 0;
         }
         else
         {
-            buffer[writePosition++] = (byte)(firstByte!.Value | 0x80);
-            buffer[writePosition++] = 0x80;
-            buffer[writePosition++] = 0x80;
-            buffer[writePosition++] = 0;
+            slice[0] = (byte)(firstByte.GetValueOrDefault() | 0x80);
+            slice[1] = 0x80;
+            slice[2] = 0x80;
+            slice[3] = 0;
         }
     }
 
