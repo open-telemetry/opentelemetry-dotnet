@@ -209,8 +209,11 @@ public abstract partial class MetricReader
 
     private Batch<Metric> GetMetricsBatch()
     {
-        Debug.Assert(this.metrics != null, "this.metrics was null");
-        Debug.Assert(this.metricsCurrentBatch != null, "this.metricsCurrentBatch was null");
+        if (this.metrics == null || this.metricsCurrentBatch == null)
+        {
+            // The reader has been started but the associated MeterProvider has not applied the provider settings yet
+            return default;
+        }
 
         try
         {
