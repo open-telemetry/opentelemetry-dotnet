@@ -73,18 +73,6 @@ public sealed class LinkTests : IDisposable
         Assert.True(link1.Equals(link3));
     }
 
-    [Fact(Skip = "ActivityLink.Equals is broken in DS7 preview: https://github.com/dotnet/runtime/issues/74026")]
-    public void Equality_WithAttributes()
-    {
-        var link1 = new Link(this.spanContext, this.tags);
-        var link2 = new Link(this.spanContext, this.tags);
-        object link3 = new Link(this.spanContext, this.tags);
-
-        Assert.Equal(link1, link2);
-        Assert.True(link1 == link2);
-        Assert.True(link1.Equals(link3));
-    }
-
     [Fact]
     public void NotEquality()
     {
