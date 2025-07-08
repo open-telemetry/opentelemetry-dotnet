@@ -10,6 +10,7 @@
         more specific patch which must be reference directly.
     -->
     <RuntimePackageVersions>9.0.0</RuntimePackageVersions>
+    <SystemDiagnosticsDiagnosticSourceVersion>$(RuntimePackageVersions)</SystemDiagnosticsDiagnosticSourceVersion>
     <!--
         For modern .NET runtimes, match the major version of packages to the major version of the runtime.
         This is to ensure that the NuGet packages that users deploy match the support lifetimes of the .NET version they are using (i.e. LTS vs STS).
@@ -46,18 +47,11 @@
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
 
     <!--
-        For modern .NET runtimes, match the major version of packages to the major version of the runtime.
-        This is to ensure that the NuGet packages that users deploy match the support lifetimes of the .NET version they are using (i.e. LTS vs STS).
+        System.Diagnostics.DiagnosticSource is exempted from the requirement to match the major version of
+        the runtime so that new APIs and/or semantic conventions are available to all versions of .NET.
         See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
     -->
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(RuntimePackageVersions)" />
-    <!--
-        However, for .NET 8 we need to use the .NET 9 package as the following APIs have been used to expose user-facing functionality:
-        - System.Diagnostics.Activity.ctor(string, string, IEnumerable<KeyValuePair<string, object>>)
-        - System.Diagnostics.Activity.AddException()
-        - System.Diagnostics.Activity.AddLink()
-    -->
-    <PackageVersion Update="System.Diagnostics.DiagnosticSource" Version="9.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
   </ItemGroup>
 
   <ItemGroup>
