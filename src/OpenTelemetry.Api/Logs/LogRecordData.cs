@@ -125,6 +125,11 @@ internal
     /// </summary>
     public string? Body { get; set; } = null;
 
+    /// <summary>
+    /// Gets or sets the name of the event associated with the log.
+    /// </summary>
+    public string? EventName { get; set; } = null;
+
     internal static void SetActivityContext(ref LogRecordData data, Activity? activity)
     {
         if (activity != null)

@@ -8,7 +8,9 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
-public class Program
+namespace Exemplars;
+
+internal static class Program
 {
     private static readonly ActivitySource MyActivitySource = new("OpenTelemetry.Demo.Exemplar");
     private static readonly Meter MyMeter = new("OpenTelemetry.Demo.Exemplar");

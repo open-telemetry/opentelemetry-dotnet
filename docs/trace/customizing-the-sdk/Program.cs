@@ -8,7 +8,7 @@ using OpenTelemetry.Trace;
 
 namespace CustomizingTheSdk;
 
-public class Program
+internal static class Program
 {
     private static readonly ActivitySource MyLibraryActivitySource = new(
         "MyCompany.MyProduct.MyLibrary");

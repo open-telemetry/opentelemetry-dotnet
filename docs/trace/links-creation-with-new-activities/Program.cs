@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace LinksCreationWithNewRootActivitiesDemo;
 
-internal class Program
+internal static class Program
 {
     private static readonly ActivitySource MyActivitySource = new("LinksCreationWithNewRootActivities");
 
@@ -21,7 +21,7 @@ internal class Program
         using (var activity = MyActivitySource.StartActivity("OrchestratingActivity"))
         {
             activity?.SetTag("foo", 1);
-            await DoFanoutAsync();
+            await DoFanoutAsync().ConfigureAwait(false);
 
             using (var nestedActivity = MyActivitySource.StartActivity("WrapUp"))
             {
@@ -77,7 +77,7 @@ internal class Program
         }
 
         // Wait for all tasks to complete
-        await Task.WhenAll(tasks);
+        await Task.WhenAll(tasks).ConfigureAwait(false);
 
         // Reset to the previous activity now that we are done with the fanout
         // This will ensure that the rest of the code executes in the context of the original activity.

@@ -26,7 +26,7 @@ internal sealed class TailSamplingProcessor : BaseProcessor<Activity>
         }
         else
         {
-            this.IncludeForExportIfFailedActivity(activity);
+            IncludeForExportIfFailedActivity(activity);
         }
 
         base.OnEnd(activity);
@@ -42,7 +42,7 @@ internal sealed class TailSamplingProcessor : BaseProcessor<Activity>
     // 2. Traces will not be complete: Since this sampling is at a span level, the generated trace will be partial and won't be complete.
     //     For example, if another part of the call tree is successful, those spans may not be sampled in leading to a partial trace.
     // 3. If multiple exporters are used, this decision will impact all of them: https://github.com/open-telemetry/opentelemetry-dotnet/issues/3861.
-    private void IncludeForExportIfFailedActivity(Activity activity)
+    private static void IncludeForExportIfFailedActivity(Activity activity)
     {
         if (activity.Status == ActivityStatusCode.Error)
         {

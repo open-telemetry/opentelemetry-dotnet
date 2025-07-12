@@ -5,7 +5,7 @@ using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
-internal class MyExporter : BaseExporter<Metric>
+internal sealed class MyExporter : BaseExporter<Metric>
 {
     private readonly string name;
 
@@ -52,6 +52,7 @@ internal class MyExporter : BaseExporter<Metric>
 
     protected override void Dispose(bool disposing)
     {
+        base.Dispose(disposing);
         Console.WriteLine($"{this.name}.Dispose({disposing})");
     }
 }

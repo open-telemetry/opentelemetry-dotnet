@@ -13,7 +13,7 @@ namespace LinksAndParentBasedSamplerExample;
 ///  links based sampler. If either of these samplers decide to sample,
 ///  this composite sampler decides to sample.
 /// </summary>
-internal class LinksAndParentBasedSampler : Sampler
+internal sealed class LinksAndParentBasedSampler : Sampler
 {
     private readonly ParentBasedSampler parentBasedSampler;
     private readonly LinksBasedSampler linksBasedSampler;

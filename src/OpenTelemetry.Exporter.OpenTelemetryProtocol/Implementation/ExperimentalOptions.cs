@@ -9,8 +9,6 @@ internal sealed class ExperimentalOptions
 {
     public const string LogRecordEventIdAttribute = "logrecord.event.id";
 
-    public const string LogRecordEventNameAttribute = "logrecord.event.name";
-
     public const string EmitLogEventEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES";
 
     public const string OtlpRetryEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY";

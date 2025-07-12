@@ -2,7 +2,6 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry .NET dependency injection extensions</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>

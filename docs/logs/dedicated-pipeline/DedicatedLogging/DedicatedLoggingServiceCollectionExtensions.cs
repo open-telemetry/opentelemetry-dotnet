@@ -6,7 +6,7 @@ using OpenTelemetry.Logs;
 
 namespace DedicatedLogging;
 
-public static class DedicatedLoggingServiceCollectionExtensions
+internal static class DedicatedLoggingServiceCollectionExtensions
 {
     public static IServiceCollection AddDedicatedLogging(
         this IServiceCollection services,
