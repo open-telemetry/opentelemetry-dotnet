@@ -43,7 +43,7 @@ internal static class ProtobufSerializer
     internal static void WriteReservedLength(byte[] buffer, int writePosition, int length)
     {
         var slice = buffer.AsSpan(writePosition, 4);
-        slice[0] = (byte)(((length >> 0) & 0x7F) | 0x80);
+        slice[0] = (byte)((length & 0x7F) | 0x80);
         slice[1] = (byte)(((length >> 7) & 0x7F) | 0x80);
         slice[2] = (byte)(((length >> 14) & 0x7F) | 0x80);
         slice[3] = (byte)((length >> 21) & 0x7F);
