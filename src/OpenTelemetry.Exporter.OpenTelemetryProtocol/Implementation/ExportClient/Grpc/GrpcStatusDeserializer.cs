@@ -201,8 +201,8 @@ internal static class GrpcStatusDeserializer
                 throw new EndOfStreamException();
             }
 
-            result |= (long)(b & 0x7F) << shift;
-            if ((b & 0x80) == 0)
+            result |= (long)(b & 0b_0111_1111) << shift;
+            if ((b & 0b_1000_0000) == 0)
             {
                 return result;
             }

@@ -18,6 +18,8 @@ internal static class ProtobufSerializer
     private const ulong ULong128 = 0x80;
     private const int Fixed32Size = 4;
     private const int Fixed64Size = 8;
+    private const int MaskBitsLow = 0b_0111_1111;
+    private const int MaskBitHigh = 0b_1000_0000;
 
     private static readonly Encoding Utf8Encoding = Encoding.UTF8;
 
@@ -43,10 +45,10 @@ internal static class ProtobufSerializer
     internal static void WriteReservedLength(byte[] buffer, int writePosition, int length)
     {
         var slice = buffer.AsSpan(writePosition, 4);
-        slice[0] = (byte)((length & 0x7F) | 0x80);
-        slice[1] = (byte)(((length >> 7) & 0x7F) | 0x80);
-        slice[2] = (byte)(((length >> 14) & 0x7F) | 0x80);
-        slice[3] = (byte)((length >> 21) & 0x7F);
+        slice[0] = (byte)((length & MaskBitsLow) | MaskBitHigh);
+        slice[1] = (byte)(((length >> 7) & MaskBitsLow) | MaskBitHigh);
+        slice[2] = (byte)(((length >> 14) & MaskBitsLow) | MaskBitHigh);
+        slice[3] = (byte)((length >> 21) & MaskBitsLow);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -119,7 +121,7 @@ internal static class ProtobufSerializer
     {
         while (value >= UInt128)
         {
-            buffer[writePosition++] = (byte)(0x80 | (value & 0x7F));
+            buffer[writePosition++] = (byte)(MaskBitHigh | (value & MaskBitsLow));
             value >>= 7;
         }
 
@@ -132,7 +134,7 @@ internal static class ProtobufSerializer
     {
         while (value >= ULong128)
         {
-            buffer[writePosition++] = (byte)(0x80 | (value & 0x7F));
+            buffer[writePosition++] = (byte)(MaskBitHigh | (value & MaskBitsLow));
             value >>= 7;
         }
 
