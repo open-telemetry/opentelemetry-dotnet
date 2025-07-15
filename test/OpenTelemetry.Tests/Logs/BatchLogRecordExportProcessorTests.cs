@@ -10,8 +10,10 @@ namespace OpenTelemetry.Logs.Tests;
 
 public sealed class BatchLogRecordExportProcessorTests
 {
-    [Fact]
-    public void StateValuesAndScopeBufferingTest()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void StateValuesAndScopeBufferingTest(bool useThread)
     {
         var scopeProvider = new LoggerExternalScopeProvider();
 
@@ -21,6 +23,10 @@ public sealed class BatchLogRecordExportProcessorTests
 #pragma warning disable CA2000 // Dispose objects before losing scope
             new InMemoryExporter<LogRecord>(exportedItems),
 #pragma warning restore CA2000 // Dispose objects before losing scope
+            useThreads: useThread,
+            maxQueueSize: BatchLogRecordExportProcessor.DefaultMaxQueueSize,
+            maxExportBatchSize: BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
+            exporterTimeoutMilliseconds: BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
             scheduledDelayMilliseconds: int.MaxValue);
 
         using var scope = scopeProvider.Push(exportedItems);

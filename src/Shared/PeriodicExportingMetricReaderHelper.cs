@@ -12,7 +12,8 @@ internal static class PeriodicExportingMetricReaderHelper
         BaseExporter<Metric> exporter,
         MetricReaderOptions options,
         int defaultExportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
-        int defaultExportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
+        int defaultExportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds,
+        bool useThreads = true)
     {
         var exportInterval =
             options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds ?? defaultExportIntervalMilliseconds;
@@ -20,7 +21,7 @@ internal static class PeriodicExportingMetricReaderHelper
         var exportTimeout =
             options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds ?? defaultExportTimeoutMilliseconds;
 
-        var metricReader = new PeriodicExportingMetricReader(exporter, exportInterval, exportTimeout)
+        var metricReader = new PeriodicExportingMetricReader(exporter, useThreads, exportInterval, exportTimeout)
         {
             TemporalityPreference = options.TemporalityPreference,
         };
