@@ -21,7 +21,7 @@ internal static class PeriodicExportingMetricReaderHelper
         var exportTimeout =
             options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds ?? defaultExportTimeoutMilliseconds;
 
-        var metricReader = new PeriodicExportingMetricReader(exporter, useThreads, exportInterval, exportTimeout)
+        var metricReader = new PeriodicExportingMetricReader(exporter, exportInterval, exportTimeout, useThreads)
         {
             TemporalityPreference = options.TemporalityPreference,
         };
