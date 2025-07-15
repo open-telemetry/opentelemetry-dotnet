@@ -34,6 +34,18 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     }
 
     [Fact]
+    public void CreatePeriodicExportingMetricReader_Defaults_WithTask()
+    {
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var reader = CreatePeriodicExportingMetricReader(useThreads: false);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        Assert.Equal(60000, reader.ExportIntervalMilliseconds);
+        Assert.Equal(30000, reader.ExportTimeoutMilliseconds);
+        Assert.Equal(MetricReaderTemporalityPreference.Cumulative, reader.TemporalityPreference);
+    }
+
+    [Fact]
     public void CreatePeriodicExportingMetricReader_TemporalityPreference_FromOptions()
     {
         var value = MetricReaderTemporalityPreference.Delta;
@@ -130,13 +142,13 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     }
 
     private static PeriodicExportingMetricReader CreatePeriodicExportingMetricReader(
-        MetricReaderOptions? options = null)
+        MetricReaderOptions? options = null, bool useThreads = true)
     {
         options ??= new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var dummyMetricExporter = new InMemoryExporter<Metric>(Array.Empty<Metric>());
 #pragma warning restore CA2000 // Dispose objects before losing scope
-        return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(dummyMetricExporter, options);
+        return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(dummyMetricExporter, options, useThreads: true);
     }
 }
