@@ -43,7 +43,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         int scheduledDelayMilliseconds,
         int exporterTimeoutMilliseconds,
         int maxExportBatchSize)
-        : this(exporter, true, maxQueueSize, scheduledDelayMilliseconds, exporterTimeoutMilliseconds, maxExportBatchSize)
+        : this(exporter, maxQueueSize, scheduledDelayMilliseconds, exporterTimeoutMilliseconds, maxExportBatchSize, true)
     {
     }
 
@@ -58,11 +58,11 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
     protected BatchExportProcessor(
         BaseExporter<T> exporter,
-        bool useThreads = true,
         int maxQueueSize = DefaultMaxQueueSize,
         int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
         int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
-        int maxExportBatchSize = DefaultMaxExportBatchSize)
+        int maxExportBatchSize = DefaultMaxExportBatchSize,
+        bool useThreads = true)
         : base(exporter)
     {
         Guard.ThrowIfOutOfRange(maxQueueSize, min: 1);

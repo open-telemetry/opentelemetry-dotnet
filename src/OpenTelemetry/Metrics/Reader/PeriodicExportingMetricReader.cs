@@ -32,7 +32,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         BaseExporter<Metric> exporter,
         int exportIntervalMilliseconds,
         int exportTimeoutMilliseconds)
-        : this(exporter, true, exportIntervalMilliseconds, exportTimeoutMilliseconds)
+        : this(exporter, exportIntervalMilliseconds, exportTimeoutMilliseconds, true)
     {
     }
 
@@ -45,9 +45,9 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     /// <param name="exportTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
     public PeriodicExportingMetricReader(
         BaseExporter<Metric> exporter,
-        bool useThreads = true,
         int exportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
-        int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
+        int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds,
+        bool useThreads = true)
         : base(exporter)
     {
         Guard.ThrowIfInvalidTimeout(exportIntervalMilliseconds);

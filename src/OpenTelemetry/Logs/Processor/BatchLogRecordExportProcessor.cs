@@ -27,11 +27,11 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
         int maxExportBatchSize)
         : this(
             exporter,
-            true,
             maxQueueSize,
             scheduledDelayMilliseconds,
             exporterTimeoutMilliseconds,
-            maxExportBatchSize)
+            maxExportBatchSize,
+            true)
     {
     }
 
@@ -46,18 +46,18 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
     public BatchLogRecordExportProcessor(
         BaseExporter<LogRecord> exporter,
-        bool useThreads = true,
         int maxQueueSize = DefaultMaxQueueSize,
         int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
         int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
-        int maxExportBatchSize = DefaultMaxExportBatchSize)
+        int maxExportBatchSize = DefaultMaxExportBatchSize,
+        bool useThreads = true)
         : base(
             exporter,
-            useThreads,
             maxQueueSize,
             scheduledDelayMilliseconds,
             exporterTimeoutMilliseconds,
-            maxExportBatchSize)
+            maxExportBatchSize,
+            useThreads)
     {
     }
 
