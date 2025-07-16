@@ -1,7 +1,7 @@
 ARG SDK_VERSION=9.0
 FROM mcr.microsoft.com/dotnet/sdk:8.0.414@sha256:3cef19377b2ef2a0171e930a24627677447c3e41b5f2eab84ff4895f1b15d254 AS dotnet-sdk-8.0
 FROM mcr.microsoft.com/dotnet/sdk:9.0.304@sha256:f57307946b712ecf86561b3a202053cca07ea0004b782bd8223e213b67b517cd AS dotnet-sdk-9.0
-FROM mcr.microsoft.com/dotnet/sdk:10.0.100-preview.5@sha256:d352f0105eda1de563157fae4972b9624235eefebfb1ab04c44b8ebf335aeaf9 AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.100-preview.6@sha256:3deb1cdd2ca8a1d63ee473d868c626e37f3f6629fef65263a60a714916d3da2d AS dotnet-sdk-10.0
 
 FROM dotnet-sdk-${SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
@@ -12,7 +12,7 @@ RUN dotnet publish ./examples/MicroserviceExample/WebApi -c "${PUBLISH_CONFIGURA
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0.20@sha256:e88f90b6d9fd7e9e0d8e231d068fccdbebd3c91892441a85ef35066aea9a4e1e AS dotnet-aspnet-8.0
 FROM mcr.microsoft.com/dotnet/aspnet:9.0.8@sha256:49ae5b354037606b2339b723ff9a3be7827eb53e513dfd683cf39a78cabb6a2b AS dotnet-aspnet-9.0
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.0-preview.5@sha256:0642fe13ed18005e127c669cee7e35d7d8973b27a8b654e6cfe07d20be767db4 AS dotnet-aspnet-10.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.0-preview.6@sha256:3e6f6cce3ea6bbc2671c4f90af97432862434dad051269c83552a9a3601d4f98 AS dotnet-aspnet-10.0
 
 FROM dotnet-aspnet-${SDK_VERSION} AS runtime
 WORKDIR /app
