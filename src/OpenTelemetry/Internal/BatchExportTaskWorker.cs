@@ -180,6 +180,10 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                     this.shutdownCompletionSource.Task,
                     Task.Delay(timeout, combinedTokenSource.Token)).ConfigureAwait(false);
             }
+            catch (ObjectDisposedException)
+            {
+                return false; // The worker has been disposed
+            }
             catch (OperationCanceledException)
             {
                 // Expected when timeout or shutdown occurs
@@ -216,12 +220,12 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                     }
                     catch (OperationCanceledException)
                     {
-                        if (this.isShutdownRequested)
-                        {
-                            break;
-                        }
-
                         // Continue to check if there's data to export before exiting
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // the exporter is somehow disposed before the worker thread could finish its job
+                        return;
                     }
                 }
 

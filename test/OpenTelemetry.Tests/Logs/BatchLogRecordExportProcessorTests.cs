@@ -154,5 +154,44 @@ public sealed class BatchLogRecordExportProcessorTests
         Assert.Single(exportedItems);
         Assert.Same(logRecord, exportedItems[0]);
     }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void DisposeWithoutShutdown(bool useThread)
+    {
+        var scopeProvider = new LoggerExternalScopeProvider();
+
+        List<LogRecord> exportedItems = new();
+
+        var processor = new BatchLogRecordExportProcessor(
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            new InMemoryExporter<LogRecord>(exportedItems),
+#pragma warning restore CA2000 // Dispose objects before losing scope
+            useThreads: useThread,
+            maxQueueSize: BatchLogRecordExportProcessor.DefaultMaxQueueSize,
+            maxExportBatchSize: BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
+            exporterTimeoutMilliseconds: BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
+            scheduledDelayMilliseconds: int.MaxValue);
+
+        processor.Dispose();
+
+        using var scope = scopeProvider.Push(exportedItems);
+
+        var pool = LogRecordSharedPool.Current;
+
+        var logRecord = pool.Rent();
+
+        var state = new LogRecordTests.DisposingState("Hello world");
+
+        logRecord.ILoggerData.ScopeProvider = scopeProvider;
+        logRecord.StateValues = state;
+
+        processor.OnEnd(logRecord);
+
+        state.Dispose();
+
+        Assert.Empty(exportedItems);
+    }
 }
 #endif
