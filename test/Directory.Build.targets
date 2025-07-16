@@ -4,12 +4,8 @@
 
   <ItemGroup Condition="'$(ReferenceCoyotePackages)' == 'true'">
     <PackageReference Include="Microsoft.Coyote" />
-
-    <!-- System.Text.Json is an indirect reference through Coyote. This
-    reference is needed to mitigate:
-    https://github.com/advisories/GHSA-hh2w-p6rv-4g7w. Remove this if Coyote
-    publishes a fixed version. -->
-    <PackageReference Include="System.Text.Json" VersionOverride="$(SystemTextJsonOutOfBandMinimumCoreAppVer)" Condition="$(TargetFrameworksRequiringSystemTextJsonDirectReference.Contains('$(TargetFramework)'))" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-8g4q-xg66-9fp4" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-hh2w-p6rv-4g7w" />
   </ItemGroup>
 
 </Project>
