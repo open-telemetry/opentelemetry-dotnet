@@ -31,4 +31,9 @@
     <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Benchmarks" PublicKey="$(StrongNamePublicKey)" />
+    <InternalsVisibleTo Include="OpenTelemetry.Exporter.Zipkin.Tests" PublicKey="$(StrongNamePublicKey)" />
+  </ItemGroup>
+
 </Project>

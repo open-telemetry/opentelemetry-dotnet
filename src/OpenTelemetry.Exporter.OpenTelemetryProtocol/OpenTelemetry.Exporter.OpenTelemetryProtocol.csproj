@@ -33,4 +33,10 @@
     <Compile Include="$(RepoRoot)\src\Shared\TagWriter\TagWriter.cs" Link="Includes\TagWriter\TagWriter.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Benchmarks" PublicKey="$(StrongNamePublicKey)" />
+    <InternalsVisibleTo Include="MockOpenTelemetryCollector" PublicKey="$(StrongNamePublicKey)" />
+    <InternalsVisibleTo Include="OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests" PublicKey="$(StrongNamePublicKey)" />
+  </ItemGroup>
+
 </Project>

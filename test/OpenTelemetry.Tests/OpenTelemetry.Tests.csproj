@@ -22,12 +22,4 @@
     <Compile Include="$(RepoRoot)\src\Shared\TagWriter\*.cs" Link="Includes\TagWriter\%(Filename).cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="GitHubActionsTestLogger" />
-    <PackageReference Include="JunitXml.TestLogger" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
-  </ItemGroup>
-
 </Project>

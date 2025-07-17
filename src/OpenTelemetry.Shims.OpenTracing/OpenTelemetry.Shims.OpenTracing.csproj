@@ -24,4 +24,8 @@
     <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpenTelemetry.Shims.OpenTracing.Tests" PublicKey="$(StrongNamePublicKey)" />
+  </ItemGroup>
+
 </Project>
