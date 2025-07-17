@@ -40,9 +40,9 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     /// Initializes a new instance of the <see cref="PeriodicExportingMetricReader"/> class.
     /// </summary>
     /// <param name="exporter">Exporter instance to export Metrics to.</param>
-    /// <param name="useThreads">Enables the use of <see cref="Thread" /> when true, <see cref="Task"/> when false.</param>
     /// <param name="exportIntervalMilliseconds">The interval in milliseconds between two consecutive exports. The default value is 60000.</param>
     /// <param name="exportTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
+    /// <param name="useThreads">Enables the use of <see cref="Thread" /> when true, <see cref="Task"/> when false.</param>
     public PeriodicExportingMetricReader(
         BaseExporter<Metric> exporter,
         int exportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
@@ -105,7 +105,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
 
 #pragma warning disable CA1859 // Change return type of method 'CreateWorker' from 'PeriodicExportingMetricReaderWorker' to 'PeriodicExportingMetricReaderThreadWorker' for improved performance
     private PeriodicExportingMetricReaderWorker CreateWorker()
-#pragma warning disable CA1859
+#pragma warning restore CA1859
     {
 #if NET
         // Use task-based worker for browser platform where threading may be limited
