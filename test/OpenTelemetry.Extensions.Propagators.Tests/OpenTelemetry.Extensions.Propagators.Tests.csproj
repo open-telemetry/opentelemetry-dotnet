@@ -10,16 +10,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitHubActionsTestLogger" />
-    <PackageReference Include="JunitXml.TestLogger" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Propagators\OpenTelemetry.Extensions.Propagators.csproj" />
   </ItemGroup>
 
