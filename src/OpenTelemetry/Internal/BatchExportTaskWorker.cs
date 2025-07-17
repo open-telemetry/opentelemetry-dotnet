@@ -237,7 +237,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                     previousTcs.TrySetResult(true);
                 }
 
-                if (this.ShouldShutdown())
+                if (this.ShouldShutdown() || cancellationToken.IsCancellationRequested)
                 {
                     break;
                 }
