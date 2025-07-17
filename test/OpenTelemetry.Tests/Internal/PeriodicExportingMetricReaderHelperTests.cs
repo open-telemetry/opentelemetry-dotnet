@@ -149,6 +149,6 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var dummyMetricExporter = new InMemoryExporter<Metric>(Array.Empty<Metric>());
 #pragma warning restore CA2000 // Dispose objects before losing scope
-        return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(dummyMetricExporter, options, useThreads: true);
+        return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(dummyMetricExporter, options, useThreads: useThreads);
     }
 }
