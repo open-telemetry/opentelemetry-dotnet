@@ -15,7 +15,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly SemaphoreSlim exportTrigger = new(0, 1);
     private readonly TaskCompletionSource<bool> shutdownCompletionSource = new();
-    private TaskCompletionSource<bool> dataExportedNotification = new();
+    private volatile TaskCompletionSource<bool> dataExportedNotification = new();
     private Task? workerTask;
     private bool disposed;
 
