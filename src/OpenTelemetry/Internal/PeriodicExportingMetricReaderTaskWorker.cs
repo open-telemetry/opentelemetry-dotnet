@@ -127,10 +127,13 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
             {
                 var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
 
+                var exportTriggerTask = this.exportTrigger.WaitAsync(cancellationToken);
+                Task? triggeredTask = null;
+
                 try
                 {
-                    await Task.WhenAny(
-                        this.exportTrigger.WaitAsync(cancellationToken),
+                    triggeredTask = await Task.WhenAny(
+                        exportTriggerTask,
                         Task.Delay(timeout, cancellationToken)).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
@@ -151,9 +154,9 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
                 }
 
                 // Check if the trigger was signaled by trying to acquire it with a timeout of 0
-                var wasTriggered = await this.exportTrigger.WaitAsync(0, cancellationToken).ConfigureAwait(false);
+                var exportWasTriggered = triggeredTask == exportTriggerTask;
 
-                if (wasTriggered)
+                if (exportWasTriggered)
                 {
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Export was triggered.");
                 }
