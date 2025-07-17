@@ -15,7 +15,6 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
     private readonly SemaphoreSlim exportTrigger = new(0, 1);
     private readonly TaskCompletionSource<bool> shutdownCompletionSource = new();
     private Task? workerTask;
-    private volatile bool isShutdownRequested;
     private bool disposed;
 
     /// <summary>
@@ -69,8 +68,6 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
     /// <inheritdoc/>
     public override bool Shutdown(int timeoutMilliseconds)
     {
-        this.isShutdownRequested = true;
-
         try
         {
             this.cancellationTokenSource.Cancel();
@@ -123,7 +120,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
 
         try
         {
-            while (!cancellationToken.IsCancellationRequested && !this.isShutdownRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
 
@@ -138,15 +135,10 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
                 }
                 catch (OperationCanceledException)
                 {
-                    if (this.isShutdownRequested)
-                    {
-                        break;
-                    }
-
                     // Continue to check if shutdown was requested
                 }
 
-                if (cancellationToken.IsCancellationRequested || this.isShutdownRequested)
+                if (cancellationToken.IsCancellationRequested)
                 {
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Shutdown was triggered.");
                     this.metricReader.Collect(this.exportTimeoutMilliseconds);
