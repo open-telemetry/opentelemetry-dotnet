@@ -17,7 +17,6 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
     private readonly TaskCompletionSource<bool> shutdownCompletionSource = new();
     private TaskCompletionSource<bool> dataExportedNotification = new();
     private Task? workerTask;
-    private volatile bool isShutdownRequested;
     private bool disposed;
 
     /// <summary>
@@ -100,7 +99,6 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
     public override bool Shutdown(int timeoutMilliseconds)
     {
         this.SetShutdownDrainTarget(this.circularBuffer.AddedCount);
-        this.isShutdownRequested = true;
 
         try
         {
@@ -207,7 +205,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
 
         try
         {
-            while (!cancellationToken.IsCancellationRequested && !this.isShutdownRequested)
+            while (true)
             {
                 // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
                 if (this.circularBuffer.Count < this.maxExportBatchSize)
