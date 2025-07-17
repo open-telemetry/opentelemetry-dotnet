@@ -39,11 +39,11 @@ public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
     /// Initializes a new instance of the <see cref="BatchActivityExportProcessor"/> class.
     /// </summary>
     /// <param name="exporter"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T}, int, int, int, int, bool)" path="/param[@name='exporter']"/></param>
-    /// <param name="useThreads"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T},  int, int, int, int, bool)" path="/param[@name='useThread']"/></param>
     /// <param name="maxQueueSize"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T}, int, int, int, int, bool)" path="/param[@name='maxQueueSize']"/></param>
     /// <param name="scheduledDelayMilliseconds"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T}, int, int, int, int, bool)" path="/param[@name='scheduledDelayMilliseconds']"/></param>
     /// <param name="exporterTimeoutMilliseconds"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T}, int, int, int, int, bool)" path="/param[@name='exporterTimeoutMilliseconds']"/></param>
     /// <param name="maxExportBatchSize"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T}, int, int, int, int, bool)" path="/param[@name='maxExportBatchSize']"/></param>
+    /// <param name="useThreads"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T},  int, int, int, int, bool)" path="/param[@name='useThreads']"/></param>
     public BatchActivityExportProcessor(
         BaseExporter<Activity> exporter,
         int maxQueueSize = DefaultMaxQueueSize,
