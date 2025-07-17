@@ -103,7 +103,10 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         base.Dispose(disposing);
     }
 
+    // The pragma is required by the fact that this method is compiled on both .NET Framework and .NET Core, and the CA1859 warning is only relevant for .NET Framework.
+    // The warning suggests changing the return type to PeriodicExportingMetricReaderThreadWorker for improved performance, but we want to keep the method signature consistent across platforms.
 #pragma warning disable CA1859 // Change return type of method 'CreateWorker' from 'PeriodicExportingMetricReaderWorker' to 'PeriodicExportingMetricReaderThreadWorker' for improved performance
+
     private PeriodicExportingMetricReaderWorker CreateWorker()
 #pragma warning restore CA1859
     {
