@@ -227,7 +227,11 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 }
 
                 msg.AppendLine();
+#if NET
                 msg.AppendLine(CultureInfo.InvariantCulture, $"Metric Type: {metric.MetricType}");
+#else
+                msg.Append($"Metric Type: {metric.MetricType}");
+#endif
                 msg.AppendLine();
 #if NET
                 msg.Append(CultureInfo.InvariantCulture, $"Value: {valueDisplay}");
