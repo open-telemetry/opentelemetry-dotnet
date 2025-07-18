@@ -143,3 +143,98 @@ start from beginning and overwrite existing text.
 * [OpenTelemetry Metrics SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md)
 * [OpenTelemetry Tracing SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md)
 * [OpenTelemetry Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
+
+
+## Example output
+
+```txt
+If you are seeing this message, it means that the OpenTelemetry SDK has successfully created the log file used to write self-diagnostic logs. This file will be appended with logs as they appear. If you do not see any logs following this line, it means no logs of the configured LogLevel is occurring. You may change the LogLevel to show lower log levels, so that logs of lower severities will be shown.
+2025-07-18T18:51:58.1375700Z:MeterProviderSdk event: '{0}'{Building MeterProvider.}
+2025-07-18T18:51:58.1614110Z:MeterProviderSdk event: '{0}'{MeterProvider configuration: {MetricLimit=1000, CardinalityLimit=2000, ExemplarFilter=, ExemplarFilterForHistograms=}.}
+2025-07-18T18:51:58.1615220Z:MeterProviderSdk event: '{0}'{Exporters added = "OpenTelemetry.Exporter.ConsoleMetricExporter (Paired with PeriodicExportingMetricReader exporting at 10000 milliseconds intervals.)".}
+2025-07-18T18:51:58.1616150Z:MeterProviderSdk event: '{0}'{Listening to following meters = "MyCompany.MyProduct.MyLibrary".}
+2025-07-18T18:51:58.1626120Z:MeterProviderSdk event: '{0}'{Number of views configured = 0.}
+2025-07-18T18:51:58.1635770Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.gc.collections}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1635810Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.process.memory.working_set}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1635830Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.gc.heap.total_allocated}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1635850Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.gc.last_collection.memory.committed_size}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1635870Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.gc.last_collection.heap.size}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1635910Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.gc.last_collection.heap.fragmentation.size}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1635930Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.gc.pause.time}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1635950Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.jit.compiled_il.size}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1635970Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.jit.compiled_methods}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1635980Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.jit.compilation.time}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1636000Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.monitor.lock_contentions}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1636010Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.thread_pool.thread.count}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1636040Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.thread_pool.work_item.count}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1636060Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.thread_pool.queue.length}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1636080Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.timer.count}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1636090Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.assembly.count}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1636110Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.exceptions}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1636130Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.process.cpu.count}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1636140Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.process.cpu.time}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+2025-07-18T18:51:58.1636160Z:MeterProviderSdk event: '{0}'{MeterProvider built successfully.}
+2025-07-18T18:51:58.1636680Z:MeterProviderSdk event: '{0}'{Started publishing Instrument = "MyFruitCounter" of Meter = "MyCompany.MyProduct.MyLibrary".}
+2025-07-18T18:51:58.1723180Z:MeterProviderSdk event: '{0}'{Measurements for Instrument = "MyFruitCounter" of Meter = "MyCompany.MyProduct.MyLibrary" will be processed and aggregated by the SDK.}
+2025-07-18T18:51:58.1749620Z:MeterProviderSdk event: '{0}'{MeterProviderSdk.Dispose started.}
+2025-07-18T18:51:58.1750500Z:MetricReader event: '{0}'{MetricReader.Shutdown called.}
+2025-07-18T18:51:58.1751660Z:MetricReader event: '{0}'{PeriodicExportingMetricReader calling MetricReader.Collect because Shutdown was triggered.}
+2025-07-18T18:51:58.1753810Z:MetricReader event: '{0}'{MetricReader.Collect method called.}
+2025-07-18T18:51:58.1755790Z:MetricReader event: '{0}'{MetricReader.OnCollect called.}
+2025-07-18T18:51:58.1756340Z:MetricReader event: '{0}'{Observable instruments collected.}
+2025-07-18T18:51:58.1762760Z:MetricReader event: '{0}'{ProcessMetrics called.}
+2025-07-18T18:51:58.1763400Z:MetricReader event: '{0}'{BaseExportingMetricReader calling OpenTelemetry.Exporter.ConsoleMetricExporter.Export method.}
+2025-07-18T18:51:58.1904710Z:MetricReader event: '{0}'{OpenTelemetry.Exporter.ConsoleMetricExporter.Export succeeded.}
+2025-07-18T18:51:58.1904770Z:MetricReader event: '{0}'{ProcessMetrics succeeded.}
+2025-07-18T18:51:58.1905180Z:MetricReader event: '{0}'{MetricReader.Collect succeeded.}
+2025-07-18T18:51:58.1906090Z:MetricReader event: '{0}'{MetricReader.Shutdown succeeded.}
+2025-07-18T18:51:58.1909330Z:Instrument '{0}', Meter '{1}' has been deactivated.{MyFruitCounter}{MyCompany.MyProduct.MyLibrary}
+2025-07-18T18:51:58.1913770Z:'{0}' Disposed.{MeterProvider}
+```
+
+With `"FormatMessage": "true"`
+
+```txt
+If you are seeing this message, it means that the OpenTelemetry SDK has successfully created the log file used to write self-diagnostic logs. This file will be appended with logs as they appear. If you do not see any logs following this line, it means no logs of the configured LogLevel is occurring. You may change the LogLevel to show lower log levels, so that logs of lower severities will be shown.
+2025-07-18T18:52:53.6028450Z:MeterProviderSdk event: 'Building MeterProvider.'
+2025-07-18T18:52:53.6153970Z:MeterProviderSdk event: 'MeterProvider configuration: {MetricLimit=1000, CardinalityLimit=2000, ExemplarFilter=, ExemplarFilterForHistograms=}.'
+2025-07-18T18:52:53.6154910Z:MeterProviderSdk event: 'Exporters added = "OpenTelemetry.Exporter.ConsoleMetricExporter (Paired with PeriodicExportingMetricReader exporting at 10000 milliseconds intervals.)".'
+2025-07-18T18:52:53.6155730Z:MeterProviderSdk event: 'Listening to following meters = "MyCompany.MyProduct.MyLibrary".'
+2025-07-18T18:52:53.6165340Z:MeterProviderSdk event: 'Number of views configured = 0.'
+2025-07-18T18:52:53.6174630Z:Measurements from Instrument 'dotnet.gc.collections', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174670Z:Measurements from Instrument 'dotnet.process.memory.working_set', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174690Z:Measurements from Instrument 'dotnet.gc.heap.total_allocated', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174710Z:Measurements from Instrument 'dotnet.gc.last_collection.memory.committed_size', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174750Z:Measurements from Instrument 'dotnet.gc.last_collection.heap.size', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174770Z:Measurements from Instrument 'dotnet.gc.last_collection.heap.fragmentation.size', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174790Z:Measurements from Instrument 'dotnet.gc.pause.time', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174810Z:Measurements from Instrument 'dotnet.jit.compiled_il.size', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174830Z:Measurements from Instrument 'dotnet.jit.compiled_methods', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174850Z:Measurements from Instrument 'dotnet.jit.compilation.time', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174870Z:Measurements from Instrument 'dotnet.monitor.lock_contentions', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174890Z:Measurements from Instrument 'dotnet.thread_pool.thread.count', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174910Z:Measurements from Instrument 'dotnet.thread_pool.work_item.count', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174920Z:Measurements from Instrument 'dotnet.thread_pool.queue.length', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174940Z:Measurements from Instrument 'dotnet.timer.count', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174970Z:Measurements from Instrument 'dotnet.assembly.count', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6174980Z:Measurements from Instrument 'dotnet.exceptions', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6175000Z:Measurements from Instrument 'dotnet.process.cpu.count', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6175010Z:Measurements from Instrument 'dotnet.process.cpu.time', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+2025-07-18T18:52:53.6175030Z:MeterProviderSdk event: 'MeterProvider built successfully.'
+2025-07-18T18:52:53.6175510Z:MeterProviderSdk event: 'Started publishing Instrument = "MyFruitCounter" of Meter = "MyCompany.MyProduct.MyLibrary".'
+2025-07-18T18:52:53.6250300Z:MeterProviderSdk event: 'Measurements for Instrument = "MyFruitCounter" of Meter = "MyCompany.MyProduct.MyLibrary" will be processed and aggregated by the SDK.'
+2025-07-18T18:52:53.6275620Z:MeterProviderSdk event: 'MeterProviderSdk.Dispose started.'
+2025-07-18T18:52:53.6276400Z:MetricReader event: 'MetricReader.Shutdown called.'
+2025-07-18T18:52:53.6277310Z:MetricReader event: 'PeriodicExportingMetricReader calling MetricReader.Collect because Shutdown was triggered.'
+2025-07-18T18:52:53.6278990Z:MetricReader event: 'MetricReader.Collect method called.'
+2025-07-18T18:52:53.6280750Z:MetricReader event: 'MetricReader.OnCollect called.'
+2025-07-18T18:52:53.6281240Z:MetricReader event: 'Observable instruments collected.'
+2025-07-18T18:52:53.6287590Z:MetricReader event: 'ProcessMetrics called.'
+2025-07-18T18:52:53.6288190Z:MetricReader event: 'BaseExportingMetricReader calling OpenTelemetry.Exporter.ConsoleMetricExporter.Export method.'
+2025-07-18T18:52:53.6373320Z:MetricReader event: 'OpenTelemetry.Exporter.ConsoleMetricExporter.Export succeeded.'
+2025-07-18T18:52:53.6373360Z:MetricReader event: 'ProcessMetrics succeeded.'
+2025-07-18T18:52:53.6373640Z:MetricReader event: 'MetricReader.Collect succeeded.'
+2025-07-18T18:52:53.6374620Z:MetricReader event: 'MetricReader.Shutdown succeeded.'
+2025-07-18T18:52:53.6377900Z:Instrument 'MyFruitCounter', Meter 'MyCompany.MyProduct.MyLibrary' has been deactivated.
+2025-07-18T18:52:53.6382550Z:'MeterProvider' Disposed.
+```

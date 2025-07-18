@@ -293,7 +293,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     /// </summary>
     /// <param name="eventMessage">The event message.</param>
     /// <param name="payload">The payload collection.</param>
-    internal void WriteEvent(string? eventMessage, System.Collections.ObjectModel.ReadOnlyCollection<object?>? payload)
+    internal void WriteEvent(string? eventMessage, ReadOnlyCollection<object?>? payload)
     {
         try
         {
