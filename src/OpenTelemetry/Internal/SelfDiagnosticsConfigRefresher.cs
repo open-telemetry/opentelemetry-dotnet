@@ -43,6 +43,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     private int logFileSize;  // Log file size in bytes
     private long logFilePosition;  // The logger will write into the byte at this position
     private EventLevel logEventLevel = (EventLevel)(-1);
+    private bool formatMessage;  // Whether to format messages
 
     public SelfDiagnosticsConfigRefresher()
     {
@@ -138,7 +139,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     private void UpdateMemoryMappedFileFromConfiguration()
     {
-        if (this.configParser.TryGetConfiguration(out string? newLogDirectory, out int fileSizeInKB, out EventLevel newEventLevel))
+        if (this.configParser.TryGetConfiguration(out string? newLogDirectory, out int fileSizeInKB, out EventLevel newEventLevel, out bool formatMessage))
         {
             int newFileSize = fileSizeInKB * 1024;
             if (!newLogDirectory.Equals(this.logDirectory, StringComparison.Ordinal) || this.logFileSize != newFileSize)
@@ -147,16 +148,19 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
                 this.OpenLogFile(newLogDirectory, newFileSize);
             }
 
-            if (!newEventLevel.Equals(this.logEventLevel))
+            if (!newEventLevel.Equals(this.logEventLevel) || this.formatMessage != formatMessage)
             {
                 if (this.eventListener != null)
                 {
                     this.eventListener.Dispose();
                 }
 
-                this.eventListener = new SelfDiagnosticsEventListener(newEventLevel, this);
+                this.eventListener = new SelfDiagnosticsEventListener(newEventLevel, this, formatMessage);
                 this.logEventLevel = newEventLevel;
             }
+
+            // Store the formatMessage setting for future use
+            this.formatMessage = formatMessage;
         }
         else
         {
