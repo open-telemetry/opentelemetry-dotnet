@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
+    <ReferenceSystemTextJsonPackages Condition="'$(TargetFramework)' == 'net8.0'">true</ReferenceSystemTextJsonPackages>
     <!-- Avoid conflicting port registrations if TFMs tested in parallel -->
     <TestTfmsInParallel>false</TestTfmsInParallel>
   </PropertyGroup>
