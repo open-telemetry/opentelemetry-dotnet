@@ -7,11 +7,12 @@ on:
     branches: [ 'main*' ]
 
 permissions:
-  issues: write
-  pull-requests: write
+  contents: read
 
 jobs:
   add-labels-on-issues:
+    permissions:
+      issues: write
     if: github.event_name == 'issues' && !github.event.issue.pull_request
 
     runs-on: ubuntu-22.04
@@ -33,6 +34,8 @@ jobs:
           ISSUE_BODY: ${{ github.event.issue.body }}
 
   add-labels-on-pull-requests:
+    permissions:
+      pull-requests: write
     if: github.event_name == 'pull_request_target'
 
     runs-on: ubuntu-22.04
