@@ -20,7 +20,7 @@ public class ProtobufSerializerTests
     public void WriteTag_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteTag(buffer, 0, 1, ProtobufWireType.VARINT);
+        int position = ProtobufSerializer.WriteTag(buffer.AsSpan(0), 1, ProtobufWireType.VARINT);
         Assert.Equal(1, position);
         Assert.Equal(8, buffer[0]);
     }
@@ -29,7 +29,7 @@ public class ProtobufSerializerTests
     public void WriteLength_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteLength(buffer, 0, 300);
+        int position = ProtobufSerializer.WriteLength(buffer.AsSpan(0), 300);
         Assert.Equal(2, position);
         Assert.Equal(0xAC, buffer[0]);
         Assert.Equal(0x02, buffer[1]);
@@ -39,7 +39,7 @@ public class ProtobufSerializerTests
     public void WriteBoolWithTag_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteBoolWithTag(buffer, 0, 1, true);
+        int position = ProtobufSerializer.WriteBoolWithTag(buffer.AsSpan(0), 1, true);
         Assert.Equal(2, position);
         Assert.Equal(8, buffer[0]);
         Assert.Equal(1, buffer[1]);
@@ -49,7 +49,7 @@ public class ProtobufSerializerTests
     public void WriteFixed32WithTag_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteFixed32WithTag(buffer, 0, 1, 0x12345678);
+        int position = ProtobufSerializer.WriteFixed32WithTag(buffer.AsSpan(0), 1, 0x12345678);
         Assert.Equal(5, position);
         Assert.Equal(13, buffer[0]);
         Assert.Equal(0x78, buffer[1]);
@@ -62,7 +62,7 @@ public class ProtobufSerializerTests
     public void WriteFixed64WithTag_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteFixed64WithTag(buffer, 0, 1, 0x123456789ABCDEF0);
+        int position = ProtobufSerializer.WriteFixed64WithTag(buffer.AsSpan(0), 1, 0x123456789ABCDEF0);
         Assert.Equal(9, position);
         Assert.Equal(9, buffer[0]); // Tag
         Assert.Equal(0xF0, buffer[1]);
@@ -79,7 +79,7 @@ public class ProtobufSerializerTests
     public void WriteStringWithTag_WritesCorrectly()
     {
         byte[] buffer = new byte[20];
-        int position = ProtobufSerializer.WriteStringWithTag(buffer, 0, 1, "Hello");
+        int position = ProtobufSerializer.WriteStringWithTag(buffer.AsSpan(0), 1, "Hello");
         Assert.Equal(7, position);
         Assert.Equal(10, buffer[0]);
         Assert.Equal(5, buffer[1]);
@@ -110,7 +110,7 @@ public class ProtobufSerializerTests
         }
 #endif
         byte[] buffer = new byte[10];
-        ProtobufSerializer.WriteReservedLength(buffer, 0, length);
+        ProtobufSerializer.WriteReservedLength(buffer.AsSpan(), length);
 
         for (int i = 0; i < expectedBytes.Length; i++)
         {
@@ -122,7 +122,7 @@ public class ProtobufSerializerTests
     public void WriteTagAndLength_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteTagAndLength(buffer, 0, 300, 1, ProtobufWireType.LEN);
+        int position = ProtobufSerializer.WriteTagAndLength(buffer.AsSpan(0), 300, 1, ProtobufWireType.LEN);
         Assert.Equal(3, position);
         Assert.Equal(10, buffer[0]); // Tag
         Assert.Equal(0xAC, buffer[1]); // Length (300 in varint encoding)
@@ -133,7 +133,7 @@ public class ProtobufSerializerTests
     public void WriteEnumWithTag_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteEnumWithTag(buffer, 0, 1, 5);
+        int position = ProtobufSerializer.WriteEnumWithTag(buffer.AsSpan(0), 1, 5);
         Assert.Equal(2, position);
         Assert.Equal(8, buffer[0]); // Tag
         Assert.Equal(5, buffer[1]); // Enum value
@@ -143,7 +143,7 @@ public class ProtobufSerializerTests
     public void WriteVarInt64_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteVarInt64(buffer, 0, 300);
+        int position = ProtobufSerializer.WriteVarInt64(buffer.AsSpan(0), 300);
         Assert.Equal(2, position);
         Assert.Equal(0xAC, buffer[0]);
         Assert.Equal(0x02, buffer[1]);
@@ -153,7 +153,7 @@ public class ProtobufSerializerTests
     public void WriteInt64WithTag_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteInt64WithTag(buffer, 0, 1, 300);
+        int position = ProtobufSerializer.WriteInt64WithTag(buffer.AsSpan(0), 1, 300);
         Assert.Equal(3, position);
         Assert.Equal(8, buffer[0]); // Tag
         Assert.Equal(0xAC, buffer[1]);
@@ -164,7 +164,7 @@ public class ProtobufSerializerTests
     public void WriteDoubleWithTag_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteDoubleWithTag(buffer, 0, 1, 123.456);
+        int position = ProtobufSerializer.WriteDoubleWithTag(buffer.AsSpan(0), 1, 123.456);
         Assert.Equal(9, position);
         Assert.Equal(9, buffer[0]); // Tag
 
@@ -183,14 +183,14 @@ public class ProtobufSerializerTests
     public void WriteSignedInt32_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteSInt32WithTag(buffer, 0, 1, 300);
+        int position = ProtobufSerializer.WriteSInt32WithTag(buffer.AsSpan(0), 1, 300);
         Assert.Equal(3, position);
         Assert.Equal(8, buffer[0]); // Tag
         Assert.Equal(0xD8, buffer[1]);
         Assert.Equal(0x04, buffer[2]);
 
         buffer = new byte[10];
-        position = ProtobufSerializer.WriteSInt32WithTag(buffer, 0, 1, -300);
+        position = ProtobufSerializer.WriteSInt32WithTag(buffer.AsSpan(0), 1, -300);
         Assert.Equal(3, position);
         Assert.Equal(8, buffer[0]); // Tag
         Assert.Equal(0xD7, buffer[1]);
@@ -201,7 +201,7 @@ public class ProtobufSerializerTests
     public void WriteVarInt32_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteVarInt32(buffer, 0, 300);
+        int position = ProtobufSerializer.WriteVarInt32(buffer.AsSpan(0), 300);
         Assert.Equal(2, position);
         Assert.Equal(0xAC, buffer[0]);
         Assert.Equal(0x02, buffer[1]);
@@ -211,7 +211,7 @@ public class ProtobufSerializerTests
     public void WriteVarInt32_MaxValue_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteVarInt32(buffer, 0, uint.MaxValue);
+        int position = ProtobufSerializer.WriteVarInt32(buffer.AsSpan(0), uint.MaxValue);
         Assert.Equal(5, position);
         Assert.Equal(0xFF, buffer[0]);
         Assert.Equal(0xFF, buffer[1]);
@@ -224,7 +224,7 @@ public class ProtobufSerializerTests
     public void WriteVarInt64_MaxValue_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteVarInt64(buffer, 0, ulong.MaxValue);
+        int position = ProtobufSerializer.WriteVarInt64(buffer.AsSpan(0), ulong.MaxValue);
         Assert.Equal(10, position);
         for (int i = 0; i < 9; i++)
         {
@@ -238,7 +238,7 @@ public class ProtobufSerializerTests
     public void WriteStringWithTag_EmptyString_WritesCorrectly()
     {
         byte[] buffer = new byte[10];
-        int position = ProtobufSerializer.WriteStringWithTag(buffer, 0, 1, string.Empty);
+        int position = ProtobufSerializer.WriteStringWithTag(buffer.AsSpan(0), 1, string.Empty);
         Assert.Equal(2, position);
         Assert.Equal(10, buffer[0]); // Tag
         Assert.Equal(0, buffer[1]); // Length
@@ -248,7 +248,7 @@ public class ProtobufSerializerTests
     public void WriteStringWithTag_ASCIIString_WritesCorrectly()
     {
         byte[] buffer = new byte[20];
-        int position = ProtobufSerializer.WriteStringWithTag(buffer, 0, 1, "Hello");
+        int position = ProtobufSerializer.WriteStringWithTag(buffer.AsSpan(0), 1, "Hello");
         Assert.Equal(7, position);
         Assert.Equal(10, buffer[0]); // Tag
         Assert.Equal(5, buffer[1]); // Length
@@ -264,7 +264,7 @@ public class ProtobufSerializerTests
     {
         byte[] buffer = new byte[20];
         string unicodeString = "\u3053\u3093\u306b\u3061\u306f"; // "Hello" in Japanese
-        int position = ProtobufSerializer.WriteStringWithTag(buffer, 0, 1, unicodeString);
+        int position = ProtobufSerializer.WriteStringWithTag(buffer.AsSpan(0), 1, unicodeString);
         Assert.Equal(17, position);
         Assert.Equal(10, buffer[0]); // Tag
         Assert.Equal(15, buffer[1]); // Length (3 bytes per character in UTF-8)
@@ -280,7 +280,7 @@ public class ProtobufSerializerTests
     {
         string longString = new string('a', 1000);
         byte[] buffer = new byte[1100];
-        int position = ProtobufSerializer.WriteStringWithTag(buffer, 0, 1, longString);
+        int position = ProtobufSerializer.WriteStringWithTag(buffer.AsSpan(0), 1, longString);
         Assert.Equal(1003, position);
         Assert.Equal(10, buffer[0]); // Tag
         Assert.Equal(0xE8, buffer[1]); // Length (1000 in varint encoding)
@@ -297,7 +297,7 @@ public class ProtobufSerializerTests
     {
         byte[] buffer = new byte[30];
         string mixedString = "Hello\u4e16\u754c"; // "Hello World" with "World" in Chinese
-        int position = ProtobufSerializer.WriteStringWithTag(buffer, 0, 1, mixedString);
+        int position = ProtobufSerializer.WriteStringWithTag(buffer.AsSpan(0), 1, mixedString);
         Assert.Equal(13, position);
         Assert.Equal(10, buffer[0]); // Tag
         Assert.Equal(11, buffer[1]); // Length (5 for "Hello" + 6 for Chinese "World" in UTF-8)
@@ -313,7 +313,7 @@ public class ProtobufSerializerTests
     {
         byte[] buffer = new byte[30];
         string specialString = "Hello\n\t\"World\"";
-        int position = ProtobufSerializer.WriteStringWithTag(buffer, 0, 1, specialString);
+        int position = ProtobufSerializer.WriteStringWithTag(buffer.AsSpan(0), 1, specialString);
         Assert.Equal(16, position);
         Assert.Equal(10, buffer[0]); // Tag
         Assert.Equal(14, buffer[1]); // Length
@@ -329,7 +329,7 @@ public class ProtobufSerializerTests
     {
         byte[] buffer = new byte[20];
         string stringWithNull = "Hello\0World";
-        int position = ProtobufSerializer.WriteStringWithTag(buffer, 0, 1, stringWithNull);
+        int position = ProtobufSerializer.WriteStringWithTag(buffer.AsSpan(0), 1, stringWithNull);
         Assert.Equal(13, position);
         Assert.Equal(10, buffer[0]); // Tag
         Assert.Equal(11, buffer[1]); // Length
@@ -345,7 +345,7 @@ public class ProtobufSerializerTests
     {
         byte[] buffer = new byte[20];
         string surrogatePairString = "\uD83D\uDCD6"; // Books emoji
-        int position = ProtobufSerializer.WriteStringWithTag(buffer, 0, 1, surrogatePairString);
+        int position = ProtobufSerializer.WriteStringWithTag(buffer.AsSpan(0), 1, surrogatePairString);
         Assert.Equal(6, position);
         Assert.Equal(10, buffer[0]); // Tag
         Assert.Equal(4, buffer[1]); // Length (4 bytes for the surrogate pair in UTF-8)

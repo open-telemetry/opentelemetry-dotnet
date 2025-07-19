@@ -27,142 +27,138 @@ internal static class ProtobufSerializer
     internal static uint GetTagValue(int fieldNumber, ProtobufWireType wireType) => ((uint)(fieldNumber << 3)) | (uint)wireType;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteTag(byte[] buffer, int writePosition, int fieldNumber, ProtobufWireType type) => WriteVarInt32(buffer, writePosition, GetTagValue(fieldNumber, type));
+    internal static int WriteTag(Span<byte> buffer, int fieldNumber, ProtobufWireType type) => WriteVarInt32(buffer, GetTagValue(fieldNumber, type));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteLength(byte[] buffer, int writePosition, int length) => WriteVarInt32(buffer, writePosition, (uint)length);
+    internal static int WriteLength(Span<byte> buffer, int length) => WriteVarInt32(buffer, (uint)length);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteTagAndLength(byte[] buffer, int writePosition, int contentLength, int fieldNumber, ProtobufWireType type)
+    internal static int WriteTagAndLength(Span<byte> buffer, int contentLength, int fieldNumber, ProtobufWireType type)
     {
-        writePosition = WriteTag(buffer, writePosition, fieldNumber, type);
-        writePosition = WriteLength(buffer, writePosition, contentLength);
-
-        return writePosition;
+        var bytesWritten = WriteTag(buffer, fieldNumber, type);
+        bytesWritten += WriteLength(buffer.Slice(bytesWritten), contentLength);
+        return bytesWritten;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static void WriteReservedLength(byte[] buffer, int writePosition, int length)
+    internal static void WriteReservedLength(Span<byte> buffer, int length)
     {
-        var slice = buffer.AsSpan(writePosition, 4);
-        slice[0] = (byte)((length & MaskBitsLow) | MaskBitHigh);
-        slice[1] = (byte)(((length >> 7) & MaskBitsLow) | MaskBitHigh);
-        slice[2] = (byte)(((length >> 14) & MaskBitsLow) | MaskBitHigh);
-        slice[3] = (byte)((length >> 21) & MaskBitsLow);
+        buffer[0] = (byte)((length & MaskBitsLow) | MaskBitHigh);
+        buffer[1] = (byte)(((length >> 7) & MaskBitsLow) | MaskBitHigh);
+        buffer[2] = (byte)(((length >> 14) & MaskBitsLow) | MaskBitHigh);
+        buffer[3] = (byte)((length >> 21) & MaskBitsLow);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteBoolWithTag(byte[] buffer, int writePosition, int fieldNumber, bool value)
+    internal static int WriteBoolWithTag(Span<byte> buffer, int fieldNumber, bool value)
     {
-        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.VARINT);
-        buffer[writePosition++] = value ? (byte)1 : (byte)0;
-        return writePosition;
+        var bytesWritten = WriteTag(buffer, fieldNumber, ProtobufWireType.VARINT);
+        buffer[bytesWritten] = value ? (byte)1 : (byte)0;
+        return bytesWritten + 1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteEnumWithTag(byte[] buffer, int writePosition, int fieldNumber, int value)
+    internal static int WriteEnumWithTag(Span<byte> buffer, int fieldNumber, int value)
     {
-        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.VARINT);
-        buffer[writePosition++] = (byte)value;
-        return writePosition;
+        var bytesWritten = WriteTag(buffer, fieldNumber, ProtobufWireType.VARINT);
+        buffer[bytesWritten] = (byte)value;
+        return bytesWritten + 1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteFixed32LittleEndianFormat(byte[] buffer, int writePosition, uint value)
+    internal static int WriteFixed32LittleEndianFormat(Span<byte> buffer, uint value)
     {
-        Span<byte> span = new(buffer, writePosition, Fixed32Size);
+        var span = buffer.Slice(0, Fixed32Size);
         BinaryPrimitives.WriteUInt32LittleEndian(span, value);
-        writePosition += Fixed32Size;
 
-        return writePosition;
+        return Fixed32Size;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteFixed64LittleEndianFormat(byte[] buffer, int writePosition, ulong value)
+    internal static int WriteFixed64LittleEndianFormat(Span<byte> buffer, ulong value)
     {
-        Span<byte> span = new(buffer, writePosition, Fixed64Size);
+        var span = buffer.Slice(0, Fixed64Size);
         BinaryPrimitives.WriteUInt64LittleEndian(span, value);
-        writePosition += Fixed64Size;
 
-        return writePosition;
+        return Fixed64Size;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteFixed32WithTag(byte[] buffer, int writePosition, int fieldNumber, uint value)
+    internal static int WriteFixed32WithTag(Span<byte> buffer, int fieldNumber, uint value)
     {
-        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.I32);
-        writePosition = WriteFixed32LittleEndianFormat(buffer, writePosition, value);
+        var bytesWritten = WriteTag(buffer, fieldNumber, ProtobufWireType.I32);
+        bytesWritten += WriteFixed32LittleEndianFormat(buffer.Slice(bytesWritten), value);
 
-        return writePosition;
+        return bytesWritten;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteFixed64WithTag(byte[] buffer, int writePosition, int fieldNumber, ulong value)
+    internal static int WriteFixed64WithTag(Span<byte> buffer, int fieldNumber, ulong value)
     {
-        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.I64);
-        writePosition = WriteFixed64LittleEndianFormat(buffer, writePosition, value);
+        var bytesWritten = WriteTag(buffer, fieldNumber, ProtobufWireType.I64);
+        bytesWritten += WriteFixed64LittleEndianFormat(buffer.Slice(bytesWritten), value);
 
-        return writePosition;
+        return bytesWritten;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteSInt32WithTag(byte[] buffer, int writePosition, int fieldNumber, int value)
+    internal static int WriteSInt32WithTag(Span<byte> buffer, int fieldNumber, int value)
     {
-        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.VARINT);
+        var bytesWritten = WriteTag(buffer, fieldNumber, ProtobufWireType.VARINT);
+        bytesWritten += WriteVarInt32(buffer.Slice(bytesWritten), (uint)((value << 1) ^ (value >> 31)));
 
-        // https://protobuf.dev/programming-guides/encoding/#signed-ints
-        writePosition = WriteVarInt32(buffer, writePosition, (uint)((value << 1) ^ (value >> 31)));
-
-        return writePosition;
+        return bytesWritten;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteVarInt32(byte[] buffer, int writePosition, uint value)
+    internal static int WriteVarInt32(Span<byte> buffer, uint value)
     {
+        var bytesWritten = 0;
         while (value >= UInt128)
         {
-            buffer[writePosition++] = (byte)(MaskBitHigh | (value & MaskBitsLow));
+            buffer[bytesWritten++] = (byte)(MaskBitHigh | (value & MaskBitsLow));
             value >>= 7;
         }
 
-        buffer[writePosition++] = (byte)value;
-        return writePosition;
+        buffer[bytesWritten++] = (byte)value;
+        return bytesWritten;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteVarInt64(byte[] buffer, int writePosition, ulong value)
+    internal static int WriteVarInt64(Span<byte> buffer, ulong value)
     {
+        var bytesWritten = 0;
         while (value >= ULong128)
         {
-            buffer[writePosition++] = (byte)(MaskBitHigh | (value & MaskBitsLow));
+            buffer[bytesWritten++] = (byte)(MaskBitHigh | (value & MaskBitsLow));
             value >>= 7;
         }
 
-        buffer[writePosition++] = (byte)value;
-        return writePosition;
+        buffer[bytesWritten++] = (byte)value;
+        return bytesWritten;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteInt64WithTag(byte[] buffer, int writePosition, int fieldNumber, ulong value)
+    internal static int WriteInt64WithTag(Span<byte> buffer, int fieldNumber, ulong value)
     {
-        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.VARINT);
-        writePosition = WriteVarInt64(buffer, writePosition, value);
+        var bytesWritten = WriteTag(buffer, fieldNumber, ProtobufWireType.VARINT);
+        bytesWritten += WriteVarInt64(buffer.Slice(bytesWritten), value);
 
-        return writePosition;
+        return bytesWritten;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteDoubleWithTag(byte[] buffer, int writePosition, int fieldNumber, double value)
+    internal static int WriteDoubleWithTag(Span<byte> buffer, int fieldNumber, double value)
     {
-        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.I64);
-        writePosition = WriteFixed64LittleEndianFormat(buffer, writePosition, (ulong)BitConverter.DoubleToInt64Bits(value));
+        var bytesWritten = WriteTag(buffer, fieldNumber, ProtobufWireType.I64);
+        bytesWritten += WriteFixed64LittleEndianFormat(buffer.Slice(bytesWritten), (ulong)BitConverter.DoubleToInt64Bits(value));
 
-        return writePosition;
+        return bytesWritten;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteDouble(byte[] buffer, int writePosition, double value)
-        => WriteFixed64LittleEndianFormat(buffer, writePosition, (ulong)BitConverter.DoubleToInt64Bits(value));
+    internal static int WriteDouble(Span<byte> buffer, double value)
+        => WriteFixed64LittleEndianFormat(buffer, (ulong)BitConverter.DoubleToInt64Bits(value));
 
     /// <summary>
     /// Computes the number of bytes required to encode a 64-bit unsigned integer in Protocol Buffers' varint format.
@@ -236,22 +232,22 @@ internal static class ProtobufSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteByteArrayWithTag(byte[] buffer, int writePosition, int fieldNumber, ReadOnlySpan<byte> value)
+    internal static int WriteByteArrayWithTag(Span<byte> buffer, int fieldNumber, ReadOnlySpan<byte> value)
     {
-        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
-        writePosition = WriteLength(buffer, writePosition, value.Length);
-        value.CopyTo(buffer.AsSpan(writePosition));
+        var bytesWritten = WriteTag(buffer, fieldNumber, ProtobufWireType.LEN);
+        bytesWritten += WriteLength(buffer.Slice(bytesWritten), value.Length);
+        value.CopyTo(buffer.Slice(bytesWritten));
 
-        writePosition += value.Length;
-        return writePosition;
+        bytesWritten += value.Length;
+        return bytesWritten;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, string value)
+    internal static int WriteStringWithTag(Span<byte> buffer, int fieldNumber, string value)
     {
         Debug.Assert(value != null, "value was null");
 
-        return WriteStringWithTag(buffer, writePosition, fieldNumber, value.AsSpan());
+        return WriteStringWithTag(buffer, fieldNumber, value.AsSpan());
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -273,20 +269,20 @@ internal static class ProtobufSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, ReadOnlySpan<char> value)
+    internal static int WriteStringWithTag(Span<byte> buffer, int fieldNumber, ReadOnlySpan<char> value)
     {
         var numberOfUtf8CharsInString = GetNumberOfUtf8CharsInString(value);
-        return WriteStringWithTag(buffer, writePosition, fieldNumber, numberOfUtf8CharsInString, value);
+        return WriteStringWithTag(buffer, fieldNumber, numberOfUtf8CharsInString, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, int numberOfUtf8CharsInString, ReadOnlySpan<char> value)
+    internal static int WriteStringWithTag(Span<byte> buffer, int fieldNumber, int numberOfUtf8CharsInString, ReadOnlySpan<char> value)
     {
-        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
-        writePosition = WriteLength(buffer, writePosition, numberOfUtf8CharsInString);
+        var bytesWritten = WriteTag(buffer, fieldNumber, ProtobufWireType.LEN);
+        bytesWritten += WriteLength(buffer.Slice(bytesWritten), numberOfUtf8CharsInString);
 
 #if NETFRAMEWORK || NETSTANDARD2_0
-        if (buffer.Length - writePosition < numberOfUtf8CharsInString)
+        if (buffer.Length - bytesWritten < numberOfUtf8CharsInString)
         {
             // Note: Validate there is enough space in the buffer to hold the
             // string otherwise throw to trigger a resize of the buffer.
@@ -301,18 +297,18 @@ internal static class ProtobufSerializer
             {
                 fixed (byte* bufferPtr = buffer)
                 {
-                    var bytesWritten = Utf8Encoding.GetBytes(strPtr, value.Length, bufferPtr + writePosition, numberOfUtf8CharsInString);
-                    Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
+                    var utf8EncodingBytesWritten = Utf8Encoding.GetBytes(strPtr, value.Length, bufferPtr + bytesWritten, numberOfUtf8CharsInString);
+                    Debug.Assert(utf8EncodingBytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
                 }
             }
         }
 #else
-        var bytesWritten = Utf8Encoding.GetBytes(value, buffer.AsSpan(writePosition));
-        Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
+        var utf8EncodingBytesWritten = Utf8Encoding.GetBytes(value, buffer.Slice(bytesWritten));
+        Debug.Assert(utf8EncodingBytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
 #endif
 
-        writePosition += numberOfUtf8CharsInString;
-        return writePosition;
+        bytesWritten += numberOfUtf8CharsInString;
+        return bytesWritten;
     }
 
     internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
