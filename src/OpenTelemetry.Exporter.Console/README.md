@@ -7,8 +7,11 @@ The console exporter prints data to the Console window.
 ConsoleExporter supports exporting logs, metrics and traces.
 
 > [!WARNING]
-> This component is intended to be used while learning how telemetry data is
-  created and exported. It is not recommended for any production environment.
+> This exporter is intended for debugging and learning purposes. It is not
+  recommended for production use. The output format is not standardized and can
+  change at any time.
+  If a standardized format for exporting telemetry to stdout is desired, upvote on
+  [this feature request](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5920).
 
 ## Installation
 
