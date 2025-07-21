@@ -9,14 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitHubActionsTestLogger" />
-    <PackageReference Include="JunitXml.TestLogger" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj" />
   </ItemGroup>
 
