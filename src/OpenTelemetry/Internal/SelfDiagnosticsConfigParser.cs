@@ -28,6 +28,9 @@ internal sealed class SelfDiagnosticsConfigParser
     private static readonly Regex LogLevelRegex = new(
         @"""LogLevel""\s*:\s*""(?<LogLevel>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    private static readonly Regex FormatMessageRegex = new(
+        @"""FormatMessage""\s*:\s*""?(?<FormatMessage>true|false)""?", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     // This class is called in SelfDiagnosticsConfigRefresher.UpdateMemoryMappedFileFromConfiguration
     // in both main thread and the worker thread.
     // In theory the variable won't be access at the same time because worker thread first Task.Delay for a few seconds.
@@ -36,11 +39,13 @@ internal sealed class SelfDiagnosticsConfigParser
     public bool TryGetConfiguration(
         [NotNullWhen(true)] out string? logDirectory,
         out int fileSizeInKB,
-        out EventLevel logLevel)
+        out EventLevel logLevel,
+        out bool formatMessage)
     {
         logDirectory = null;
         fileSizeInKB = 0;
         logLevel = EventLevel.LogAlways;
+        formatMessage = false;
         try
         {
             var configFilePath = ConfigFileName;
@@ -107,6 +112,8 @@ internal sealed class SelfDiagnosticsConfigParser
                 return false;
             }
 
+            _ = TryParseFormatMessage(configJson, out formatMessage);
+
             return Enum.TryParse(logLevelString, out logLevel);
         }
         catch (Exception)
@@ -140,5 +147,17 @@ internal sealed class SelfDiagnosticsConfigParser
         var logLevelResult = LogLevelRegex.Match(configJson);
         logLevel = logLevelResult.Groups["LogLevel"].Value;
         return logLevelResult.Success && !string.IsNullOrWhiteSpace(logLevel);
+    }
+
+    internal static bool TryParseFormatMessage(string configJson, out bool formatMessage)
+    {
+        var result = FormatMessageRegex.Match(configJson);
+        if (result.Success && bool.TryParse(result.Groups["FormatMessage"].Value, out formatMessage))
+        {
+            return true;
+        }
+
+        formatMessage = false;
+        return false;
     }
 }

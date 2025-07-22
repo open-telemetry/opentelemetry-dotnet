@@ -72,4 +72,17 @@ public class SelfDiagnosticsConfigParserTests
         Assert.True(SelfDiagnosticsConfigParser.TryParseLogLevel(configJson, out string? logLevelString));
         Assert.Equal("Error", logLevelString);
     }
+
+    [Fact]
+    public void SelfDiagnosticsConfigParser_TryParseFormatMessage()
+    {
+        string configJson = @"{
+                    ""LogDirectory"": ""Diagnostics"",
+                    ""FileSize"": 1024,
+                    ""LogLevel"": ""Error"",
+                    ""FormatMessage"": ""true""
+                    }";
+        Assert.True(SelfDiagnosticsConfigParser.TryParseFormatMessage(configJson, out bool formatMessage));
+        Assert.True(formatMessage);
+    }
 }

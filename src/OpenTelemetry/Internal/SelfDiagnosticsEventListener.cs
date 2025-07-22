@@ -3,6 +3,7 @@
 
 using System.Collections.ObjectModel;
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using System.Text;
 
 namespace OpenTelemetry.Internal;
@@ -19,17 +20,19 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     private readonly Lock lockObj = new();
     private readonly EventLevel logLevel;
     private readonly SelfDiagnosticsConfigRefresher configRefresher;
+    private readonly bool formatMessage;
     private readonly ThreadLocal<byte[]?> writeBuffer = new(() => null);
     private readonly List<EventSource>? eventSourcesBeforeConstructor = [];
 
     private bool disposedValue;
 
-    public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher)
+    public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher, bool formatMessage)
     {
         Guard.ThrowIfNull(configRefresher);
 
         this.logLevel = logLevel;
         this.configRefresher = configRefresher;
+        this.formatMessage = formatMessage;
 
         List<EventSource> eventSources;
         lock (this.lockObj)
@@ -216,7 +219,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         return pos - byteIndex;
     }
 
-    internal void WriteEvent(string? eventMessage, ReadOnlyCollection<object?>? payload)
+    internal void WriteEvent(string? eventMessage, ReadOnlyCollection<object?>? payload, bool formatMessage)
     {
         try
         {
@@ -229,20 +232,33 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
 
             var pos = DateTimeGetBytes(DateTime.UtcNow, buffer, 0);
             buffer[pos++] = (byte)':';
-            pos = EncodeInBuffer(eventMessage, false, buffer, pos);
-            if (payload != null)
+            if (formatMessage && eventMessage != null && payload != null && payload.Count > 0)
             {
-                // Not using foreach because it can cause allocations
-                for (int i = 0; i < payload.Count; ++i)
+                var payloadArray = new object?[payload.Count];
+                for (int i = 0; i < payload.Count; i++)
                 {
-                    object? obj = payload[i];
-                    if (obj != null)
+                    payloadArray[i] = payload[i];
+                }
+                var formattedMessage = string.Format(CultureInfo.InvariantCulture, eventMessage, payloadArray);
+                pos = EncodeInBuffer(formattedMessage, false, buffer, pos);
+            }
+            else
+            {
+                pos = EncodeInBuffer(eventMessage, false, buffer, pos);
+                if (payload != null)
+                {
+                    // Not using foreach because it can cause allocations
+                    for (int i = 0; i < payload.Count; ++i)
                     {
-                        pos = EncodeInBuffer(obj.ToString() ?? "null", true, buffer, pos);
-                    }
-                    else
-                    {
-                        pos = EncodeInBuffer("null", true, buffer, pos);
+                        object? obj = payload[i];
+                        if (obj != null)
+                        {
+                            pos = EncodeInBuffer(obj.ToString() ?? "null", true, buffer, pos);
+                        }
+                        else
+                        {
+                            pos = EncodeInBuffer("null", true, buffer, pos);
+                        }
                     }
                 }
             }
@@ -313,7 +329,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         // See: https://github.com/open-telemetry/opentelemetry-dotnet/pull/5046
         if (eventData.EventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.OrdinalIgnoreCase))
         {
-            this.WriteEvent(eventData.Message, eventData.Payload);
+            this.WriteEvent(eventData.Message, eventData.Payload, this.formatMessage);
         }
     }
 
