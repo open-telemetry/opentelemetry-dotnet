@@ -52,4 +52,9 @@ public class PeriodicExportingMetricReaderOptions
     /// associated with the metric reader.
     /// </summary>
     public int? ExportTimeoutMilliseconds { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to use threads. Enables the use of <see cref="Thread" /> when true, <see cref="Task"/> when false. The default value is true.
+    /// </summary>
+    public bool UseThreads { get; set; } = true;
 }

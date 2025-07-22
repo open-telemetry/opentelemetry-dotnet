@@ -29,4 +29,9 @@ public class BatchExportProcessorOptions<T>
     /// Gets or sets the maximum batch size of every export. It must be smaller or equal to <see cref="MaxQueueSize"/>. The default value is 512.
     /// </summary>
     public int MaxExportBatchSize { get; set; } = BatchExportProcessor<T>.DefaultMaxExportBatchSize;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to use threads. Enables the use of <see cref="Thread" /> when true, <see cref="Task"/> when false. The default value is true.
+    /// </summary>
+    public bool UseThreads { get; set; } = true;
 }
