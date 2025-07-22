@@ -30,9 +30,14 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     /// <param name="exportTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
     public PeriodicExportingMetricReader(
         BaseExporter<Metric> exporter,
-        int exportIntervalMilliseconds,
-        int exportTimeoutMilliseconds)
-        : this(exporter, exportIntervalMilliseconds, exportTimeoutMilliseconds, true)
+        int exportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
+        int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
+        : this(exporter, new PeriodicExportingMetricReaderOptions
+        {
+            ExportIntervalMilliseconds = exportIntervalMilliseconds,
+            ExportTimeoutMilliseconds = exportTimeoutMilliseconds,
+            UseThreads = true,
+        })
     {
     }
 
@@ -40,16 +45,19 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     /// Initializes a new instance of the <see cref="PeriodicExportingMetricReader"/> class.
     /// </summary>
     /// <param name="exporter">Exporter instance to export Metrics to.</param>
-    /// <param name="exportIntervalMilliseconds">The interval in milliseconds between two consecutive exports. The default value is 60000.</param>
-    /// <param name="exportTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
-    /// <param name="useThreads">Enables the use of <see cref="Thread" /> when true, <see cref="Task"/> when false.</param>
+    /// <param name="options">Configuration options for the periodic exporting metric reader.</param>
     public PeriodicExportingMetricReader(
         BaseExporter<Metric> exporter,
-        int exportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
-        int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds,
-        bool useThreads = true)
+        PeriodicExportingMetricReaderOptions options)
         : base(exporter)
     {
+        Guard.ThrowIfNull(options);
+
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
+        var exportIntervalMilliseconds = options!.ExportIntervalMilliseconds ?? DefaultExportIntervalMilliseconds;
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
+        var exportTimeoutMilliseconds = options.ExportTimeoutMilliseconds ?? DefaultExportTimeoutMilliseconds;
+
         Guard.ThrowIfInvalidTimeout(exportIntervalMilliseconds);
         Guard.ThrowIfZero(exportIntervalMilliseconds);
         Guard.ThrowIfInvalidTimeout(exportTimeoutMilliseconds);
@@ -61,7 +69,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
 
         this.ExportIntervalMilliseconds = exportIntervalMilliseconds;
         this.ExportTimeoutMilliseconds = exportTimeoutMilliseconds;
-        this.useThreads = useThreads;
+        this.useThreads = options.UseThreads;
 
         this.worker = this.CreateWorker();
         this.worker.Start();
