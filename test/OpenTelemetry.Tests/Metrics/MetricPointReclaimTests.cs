@@ -23,7 +23,13 @@ public class MetricPointReclaimTests
         const int MaxNumberOfDistinctMetricPoints = 4000; // Default max MetricPoints * 2
 
         using var exporter = new CustomExporter(assertNoDroppedMeasurements: true);
-        using var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: 10, useThreads: useThreads)
+        using var metricReader = new PeriodicExportingMetricReader(
+            exporter,
+            new()
+            {
+                ExportIntervalMilliseconds = 10,
+                UseThreads = useThreads,
+            })
         {
             TemporalityPreference = MetricReaderTemporalityPreference.Delta,
         };
