@@ -39,11 +39,18 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
     protected BatchExportProcessor(
         BaseExporter<T> exporter,
-        int maxQueueSize,
-        int scheduledDelayMilliseconds,
-        int exporterTimeoutMilliseconds,
-        int maxExportBatchSize)
-        : this(exporter, maxQueueSize, scheduledDelayMilliseconds, exporterTimeoutMilliseconds, maxExportBatchSize, true)
+        int maxQueueSize = DefaultMaxQueueSize,
+        int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
+        int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
+        int maxExportBatchSize = DefaultMaxExportBatchSize)
+        : this(exporter, new BatchExportProcessorOptions<T>
+        {
+            MaxQueueSize = maxQueueSize,
+            ScheduledDelayMilliseconds = scheduledDelayMilliseconds,
+            ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds,
+            MaxExportBatchSize = maxExportBatchSize,
+            UseThreads = true,
+        })
     {
     }
 
@@ -51,30 +58,25 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     /// Initializes a new instance of the <see cref="BatchExportProcessor{T}"/> class.
     /// </summary>
     /// <param name="exporter">Exporter instance.</param>
-    /// <param name="maxQueueSize">The maximum queue size. After the size is reached data are dropped. The default value is 2048.</param>
-    /// <param name="scheduledDelayMilliseconds">The delay interval in milliseconds between two consecutive exports. The default value is 5000.</param>
-    /// <param name="exporterTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
-    /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
-    /// <param name="useThreads">Enables the use of <see cref="Thread" /> when true, <see cref="Task"/> when false.</param>
+    /// <param name="options">Configuration options for the batch export processor.</param>
     protected BatchExportProcessor(
         BaseExporter<T> exporter,
-        int maxQueueSize = DefaultMaxQueueSize,
-        int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
-        int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
-        int maxExportBatchSize = DefaultMaxExportBatchSize,
-        bool useThreads = true)
+        BatchExportProcessorOptions<T> options)
         : base(exporter)
     {
-        Guard.ThrowIfOutOfRange(maxQueueSize, min: 1);
-        Guard.ThrowIfOutOfRange(maxExportBatchSize, min: 1, max: maxQueueSize, maxName: nameof(maxQueueSize));
-        Guard.ThrowIfOutOfRange(scheduledDelayMilliseconds, min: 1);
-        Guard.ThrowIfOutOfRange(exporterTimeoutMilliseconds, min: 0);
+        Guard.ThrowIfNull(options);
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
+        Guard.ThrowIfOutOfRange(options.MaxQueueSize, min: 1);
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
+        Guard.ThrowIfOutOfRange(options.MaxExportBatchSize, min: 1, max: options.MaxQueueSize, maxName: nameof(options.MaxQueueSize));
+        Guard.ThrowIfOutOfRange(options.ScheduledDelayMilliseconds, min: 1);
+        Guard.ThrowIfOutOfRange(options.ExporterTimeoutMilliseconds, min: 0);
 
-        this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
-        this.ScheduledDelayMilliseconds = scheduledDelayMilliseconds;
-        this.ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
-        this.MaxExportBatchSize = maxExportBatchSize;
-        this.useThreads = useThreads;
+        this.circularBuffer = new CircularBuffer<T>(options.MaxQueueSize);
+        this.ScheduledDelayMilliseconds = options.ScheduledDelayMilliseconds;
+        this.ExporterTimeoutMilliseconds = options.ExporterTimeoutMilliseconds;
+        this.MaxExportBatchSize = options.MaxExportBatchSize;
+        this.useThreads = options.UseThreads;
 
         this.worker = this.CreateWorker();
         this.worker.Start();

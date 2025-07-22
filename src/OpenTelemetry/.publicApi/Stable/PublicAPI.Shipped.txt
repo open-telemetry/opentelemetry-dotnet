@@ -31,9 +31,9 @@ OpenTelemetry.Batch<T>.Enumerator.Enumerator() -> void
 OpenTelemetry.Batch<T>.Enumerator.MoveNext() -> bool
 OpenTelemetry.Batch<T>.Enumerator.Reset() -> void
 OpenTelemetry.BatchActivityExportProcessor
-OpenTelemetry.BatchActivityExportProcessor.BatchActivityExportProcessor(OpenTelemetry.BaseExporter<System.Diagnostics.Activity!>! exporter, int maxQueueSize, int scheduledDelayMilliseconds, int exporterTimeoutMilliseconds, int maxExportBatchSize) -> void
+OpenTelemetry.BatchActivityExportProcessor.BatchActivityExportProcessor(OpenTelemetry.BaseExporter<System.Diagnostics.Activity!>! exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
 OpenTelemetry.BatchExportProcessor<T>
-OpenTelemetry.BatchExportProcessor<T>.BatchExportProcessor(OpenTelemetry.BaseExporter<T!>! exporter, int maxQueueSize, int scheduledDelayMilliseconds, int exporterTimeoutMilliseconds, int maxExportBatchSize) -> void
+OpenTelemetry.BatchExportProcessor<T>.BatchExportProcessor(OpenTelemetry.BaseExporter<T!>! exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
 OpenTelemetry.BatchExportProcessorOptions<T>
 OpenTelemetry.BatchExportProcessorOptions<T>.BatchExportProcessorOptions() -> void
 OpenTelemetry.BatchExportProcessorOptions<T>.ExporterTimeoutMilliseconds.get -> int
@@ -45,7 +45,7 @@ OpenTelemetry.BatchExportProcessorOptions<T>.MaxQueueSize.set -> void
 OpenTelemetry.BatchExportProcessorOptions<T>.ScheduledDelayMilliseconds.get -> int
 OpenTelemetry.BatchExportProcessorOptions<T>.ScheduledDelayMilliseconds.set -> void
 OpenTelemetry.BatchLogRecordExportProcessor
-OpenTelemetry.BatchLogRecordExportProcessor.BatchLogRecordExportProcessor(OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>! exporter, int maxQueueSize, int scheduledDelayMilliseconds, int exporterTimeoutMilliseconds, int maxExportBatchSize) -> void
+OpenTelemetry.BatchLogRecordExportProcessor.BatchLogRecordExportProcessor(OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>! exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
 OpenTelemetry.CompositeProcessor<T>
 OpenTelemetry.CompositeProcessor<T>.AddProcessor(OpenTelemetry.BaseProcessor<T>! processor) -> OpenTelemetry.CompositeProcessor<T>!
 OpenTelemetry.CompositeProcessor<T>.CompositeProcessor(System.Collections.Generic.IEnumerable<OpenTelemetry.BaseProcessor<T>!>! processors) -> void
@@ -256,7 +256,7 @@ OpenTelemetry.Metrics.MetricType.LongSum = 26 -> OpenTelemetry.Metrics.MetricTyp
 OpenTelemetry.Metrics.MetricType.LongSumNonMonotonic = 138 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricTypeExtensions
 OpenTelemetry.Metrics.PeriodicExportingMetricReader
-OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds, int exportTimeoutMilliseconds) -> void
+OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds.get -> int?
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds.set -> void
