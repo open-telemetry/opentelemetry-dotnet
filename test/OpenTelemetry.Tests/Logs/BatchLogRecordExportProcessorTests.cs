@@ -23,11 +23,15 @@ public sealed class BatchLogRecordExportProcessorTests
 #pragma warning disable CA2000 // Dispose objects before losing scope
             new InMemoryExporter<LogRecord>(exportedItems),
 #pragma warning restore CA2000 // Dispose objects before losing scope
-            useThreads: useThread,
-            maxQueueSize: BatchLogRecordExportProcessor.DefaultMaxQueueSize,
-            maxExportBatchSize: BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
-            exporterTimeoutMilliseconds: BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
-            scheduledDelayMilliseconds: int.MaxValue);
+            new()
+            {
+                // Use the default values for the other parameters, but allow overriding useThreads
+                MaxQueueSize = BatchLogRecordExportProcessor.DefaultMaxQueueSize,
+                MaxExportBatchSize = BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
+                ExporterTimeoutMilliseconds = BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
+                ScheduledDelayMilliseconds = int.MaxValue,
+                UseThreads = useThread,
+            });
 
         using var scope = scopeProvider.Push(exportedItems);
 
@@ -168,11 +172,15 @@ public sealed class BatchLogRecordExportProcessorTests
 #pragma warning disable CA2000 // Dispose objects before losing scope
             new InMemoryExporter<LogRecord>(exportedItems),
 #pragma warning restore CA2000 // Dispose objects before losing scope
-            useThreads: useThread,
-            maxQueueSize: BatchLogRecordExportProcessor.DefaultMaxQueueSize,
-            maxExportBatchSize: BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
-            exporterTimeoutMilliseconds: BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
-            scheduledDelayMilliseconds: int.MaxValue);
+            new()
+            {
+                // Use the default values for the other parameters, but allow overriding useThreads
+                MaxQueueSize = BatchLogRecordExportProcessor.DefaultMaxQueueSize,
+                MaxExportBatchSize = BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
+                ExporterTimeoutMilliseconds = BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
+                ScheduledDelayMilliseconds = int.MaxValue,
+                UseThreads = useThread,
+            });
 
         processor.Dispose();
 
