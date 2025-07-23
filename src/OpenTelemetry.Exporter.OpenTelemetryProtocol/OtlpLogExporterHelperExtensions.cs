@@ -327,25 +327,33 @@ public static class OtlpLogExporterHelperExtensions
             experimentalOptions!);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-        if (configureExporterInstance != null)
+        try
         {
-            otlpExporter = configureExporterInstance(otlpExporter);
-        }
+            if (configureExporterInstance != null)
+            {
+                otlpExporter = configureExporterInstance(otlpExporter);
+            }
 
-        if (processorOptions!.ExportProcessorType == ExportProcessorType.Simple)
-        {
-            return new SimpleLogRecordExportProcessor(otlpExporter);
-        }
-        else
-        {
-            var batchOptions = processorOptions.BatchExportProcessorOptions;
+            if (processorOptions!.ExportProcessorType == ExportProcessorType.Simple)
+            {
+                return new SimpleLogRecordExportProcessor(otlpExporter);
+            }
+            else
+            {
+                var batchOptions = processorOptions.BatchExportProcessorOptions;
 
-            return new BatchLogRecordExportProcessor(
-                otlpExporter,
-                batchOptions.MaxQueueSize,
-                batchOptions.ScheduledDelayMilliseconds,
-                batchOptions.ExporterTimeoutMilliseconds,
-                batchOptions.MaxExportBatchSize);
+                return new BatchLogRecordExportProcessor(
+                    otlpExporter,
+                    batchOptions.MaxQueueSize,
+                    batchOptions.ScheduledDelayMilliseconds,
+                    batchOptions.ExporterTimeoutMilliseconds,
+                    batchOptions.MaxExportBatchSize);
+            }
+        }
+        catch (Exception)
+        {
+            otlpExporter.Dispose();
+            throw;
         }
     }
 
