@@ -172,7 +172,7 @@ public static class OtlpTraceExporterHelperExtensions
                     batchExportProcessorOptions.MaxExportBatchSize);
             }
         }
-        catch (Exception)
+        catch
         {
             otlpExporter.Dispose();
             throw;
