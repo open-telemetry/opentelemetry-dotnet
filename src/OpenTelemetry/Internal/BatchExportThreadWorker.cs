@@ -66,8 +66,8 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
     /// <inheritdoc/>
     public override bool WaitForExport(int timeoutMilliseconds)
     {
-        var tail = this.circularBuffer.RemovedCount;
-        var head = this.circularBuffer.AddedCount;
+        var tail = this.CircularBuffer.RemovedCount;
+        var head = this.CircularBuffer.AddedCount;
 
         if (head == tail)
         {
@@ -113,7 +113,7 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
 
                 if (timeout <= 0)
                 {
-                    return this.circularBuffer.RemovedCount >= head;
+                    return this.CircularBuffer.RemovedCount >= head;
                 }
 
                 try
@@ -126,7 +126,7 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
                 }
             }
 
-            if (this.circularBuffer.RemovedCount >= head)
+            if (this.CircularBuffer.RemovedCount >= head)
             {
                 return true;
             }
@@ -141,7 +141,7 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
     /// <inheritdoc/>
     public override bool Shutdown(int timeoutMilliseconds)
     {
-        this.SetShutdownDrainTarget(this.circularBuffer.AddedCount);
+        this.SetShutdownDrainTarget(this.CircularBuffer.AddedCount);
 
         try
         {
@@ -188,11 +188,11 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
         while (true)
         {
             // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
-            if (this.circularBuffer.Count < this.maxExportBatchSize)
+            if (this.CircularBuffer.Count < this.MaxExportBatchSize)
             {
                 try
                 {
-                    WaitHandle.WaitAny(triggers, this.scheduledDelayMilliseconds);
+                    WaitHandle.WaitAny(triggers, this.ScheduledDelayMilliseconds);
                 }
                 catch (ObjectDisposedException)
                 {
