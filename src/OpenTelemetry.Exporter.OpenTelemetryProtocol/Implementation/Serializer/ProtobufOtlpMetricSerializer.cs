@@ -44,30 +44,34 @@ internal static class ProtobufOtlpMetricSerializer
 
     internal static int TryWriteResourceMetrics(ref byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<string, List<Metric>> scopeMetrics)
     {
-        int entryWritePosition = writePosition;
-
-        try
+        while (true)
         {
-            writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.MetricsData_Resource_Metrics, ProtobufWireType.LEN);
-            int mericsDataLengthPosition = writePosition;
-            writePosition += ReserveSizeForLength;
+            int entryWritePosition = writePosition;
 
-            writePosition = WriteResourceMetrics(buffer, writePosition, resource, scopeMetrics);
-
-            ProtobufSerializer.WriteReservedLength(buffer, mericsDataLengthPosition, writePosition - (mericsDataLengthPosition + ReserveSizeForLength));
-        }
-        catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
-        {
-            writePosition = entryWritePosition;
-            if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics))
+            try
             {
-                throw;
+                writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.MetricsData_Resource_Metrics, ProtobufWireType.LEN);
+                int mericsDataLengthPosition = writePosition;
+                writePosition += ReserveSizeForLength;
+
+                writePosition = WriteResourceMetrics(buffer, writePosition, resource, scopeMetrics);
+
+                ProtobufSerializer.WriteReservedLength(buffer, mericsDataLengthPosition, writePosition - (mericsDataLengthPosition + ReserveSizeForLength));
+
+                // Serialization succeeded, return the final write position
+                return writePosition;
             }
+            catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
+            {
+                // Reset write position and attempt to increase the buffer size
+                writePosition = entryWritePosition;
 
-            return TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetrics);
+                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics))
+                {
+                    throw;
+                }
+            }
         }
-
-        return writePosition;
     }
 
     private static void ReturnMetricListToPool()
