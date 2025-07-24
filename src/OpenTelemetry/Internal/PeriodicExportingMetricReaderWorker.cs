@@ -10,10 +10,6 @@ namespace OpenTelemetry.Internal;
 /// </summary>
 internal abstract class PeriodicExportingMetricReaderWorker : IDisposable
 {
-    protected readonly BaseExportingMetricReader metricReader;
-    protected readonly int exportIntervalMilliseconds;
-    protected readonly int exportTimeoutMilliseconds;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="PeriodicExportingMetricReaderWorker"/> class.
     /// </summary>
@@ -25,10 +21,31 @@ internal abstract class PeriodicExportingMetricReaderWorker : IDisposable
         int exportIntervalMilliseconds,
         int exportTimeoutMilliseconds)
     {
-        this.metricReader = metricReader;
-        this.exportIntervalMilliseconds = exportIntervalMilliseconds;
-        this.exportTimeoutMilliseconds = exportTimeoutMilliseconds;
+        this.MetricReader = metricReader;
+        this.ExportIntervalMilliseconds = exportIntervalMilliseconds;
+        this.ExportTimeoutMilliseconds = exportTimeoutMilliseconds;
     }
+
+    ~PeriodicExportingMetricReaderWorker()
+    {
+        // Finalizer to ensure resources are cleaned up if Dispose is not called
+        this.Dispose(false);
+    }
+
+    /// <summary>
+    /// Gets the metric reader instance.
+    /// </summary>
+    protected BaseExportingMetricReader MetricReader { get; }
+
+    /// <summary>
+    /// Gets he interval in milliseconds between two consecutive exports.
+    /// </summary>
+    protected int ExportIntervalMilliseconds { get; }
+
+    /// <summary>
+    /// Gets how long the export can run before it is cancelled.
+    /// </summary>
+    protected int ExportTimeoutMilliseconds { get; }
 
     /// <summary>
     /// Starts the worker.
@@ -38,7 +55,7 @@ internal abstract class PeriodicExportingMetricReaderWorker : IDisposable
     /// <summary>
     /// Triggers an export operation.
     /// </summary>
-    /// <returns>True if the export was triggered successfully; otherwise, false.</returns>
+    /// <returns><see langword="true"/> if the shutdown completed within the timeout; otherwise, <see langword="false"/>.</returns>
     public abstract bool TriggerExport();
 
     /// <summary>
