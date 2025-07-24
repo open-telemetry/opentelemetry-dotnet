@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -20,7 +19,6 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     internal const int DefaultMaxExportBatchSize = 512;
 
     internal readonly int MaxExportBatchSize;
-
     internal readonly int ScheduledDelayMilliseconds;
     internal readonly int ExporterTimeoutMilliseconds;
 
@@ -65,18 +63,19 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         : base(exporter)
     {
         Guard.ThrowIfNull(options);
-#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
-        Guard.ThrowIfOutOfRange(options.MaxQueueSize, min: 1);
-#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
-        Guard.ThrowIfOutOfRange(options.MaxExportBatchSize, min: 1, max: options.MaxQueueSize, maxName: nameof(options.MaxQueueSize));
-        Guard.ThrowIfOutOfRange(options.ScheduledDelayMilliseconds, min: 1);
-        Guard.ThrowIfOutOfRange(options.ExporterTimeoutMilliseconds, min: 0);
 
-        this.circularBuffer = new CircularBuffer<T>(options.MaxQueueSize);
-        this.ScheduledDelayMilliseconds = options.ScheduledDelayMilliseconds;
-        this.ExporterTimeoutMilliseconds = options.ExporterTimeoutMilliseconds;
-        this.MaxExportBatchSize = options.MaxExportBatchSize;
-        this.useThreads = options.UseThreads;
+        var maxQueueSize = options?.MaxQueueSize ?? 0;
+        Guard.ThrowIfOutOfRange(maxQueueSize, min: 1);
+
+        this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
+        this.ScheduledDelayMilliseconds = options?.ScheduledDelayMilliseconds ?? 0;
+        this.ExporterTimeoutMilliseconds = options?.ExporterTimeoutMilliseconds ?? -1;
+        this.MaxExportBatchSize = options?.MaxExportBatchSize ?? 0;
+        this.useThreads = options?.UseThreads ?? true;
+
+        Guard.ThrowIfOutOfRange(this.MaxExportBatchSize, min: 1, max: maxQueueSize, maxName: nameof(options.MaxQueueSize));
+        Guard.ThrowIfOutOfRange(this.ScheduledDelayMilliseconds, min: 1);
+        Guard.ThrowIfOutOfRange(this.ExporterTimeoutMilliseconds, min: 0);
 
         this.worker = this.CreateWorker();
         this.worker.Start();
@@ -145,9 +144,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
             return this.exporter.Shutdown(0) && result;
         }
 
-        var sw = Stopwatch.StartNew();
-        var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-        return this.exporter.Shutdown((int)Math.Max(timeout, 0)) && result;
+        return this.exporter.Shutdown(timeoutMilliseconds) && result;
     }
 
     /// <inheritdoc/>

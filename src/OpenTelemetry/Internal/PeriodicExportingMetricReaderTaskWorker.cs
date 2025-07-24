@@ -36,7 +36,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
     {
         this.workerTask = Task.Factory.StartNew(
             this.ExporterProcAsync,
-            CancellationToken.None,
+            this.cancellationTokenSource.Token,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Default).Unwrap();
     }
@@ -122,7 +122,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
+                var timeout = (int)(this.ExportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.ExportIntervalMilliseconds));
 
                 var exportTriggerTask = this.exportTrigger.WaitAsync(cancellationToken);
                 Task? triggeredTask = null;
@@ -141,7 +141,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
                 if (cancellationToken.IsCancellationRequested)
                 {
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Shutdown was triggered.");
-                    this.metricReader.Collect(this.exportTimeoutMilliseconds);
+                    this.MetricReader.Collect(this.ExportTimeoutMilliseconds);
                     break;
                 }
 
@@ -157,7 +157,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
                 }
 
-                this.metricReader.Collect(this.exportTimeoutMilliseconds);
+                this.MetricReader.Collect(this.ExportTimeoutMilliseconds);
             }
         }
         catch (Exception ex)

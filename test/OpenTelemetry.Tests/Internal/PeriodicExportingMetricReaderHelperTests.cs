@@ -36,9 +36,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     [Fact]
     public void CreatePeriodicExportingMetricReader_Defaults_WithTask()
     {
-#pragma warning disable CA2000 // Dispose objects before losing scope
-        var reader = CreatePeriodicExportingMetricReader(useThreads: false);
-#pragma warning restore CA2000 // Dispose objects before losing scope
+        using var reader = CreatePeriodicExportingMetricReader(useThreads: false);
 
         Assert.Equal(60000, reader.ExportIntervalMilliseconds);
         Assert.Equal(30000, reader.ExportTimeoutMilliseconds);

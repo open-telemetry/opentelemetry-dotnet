@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -53,10 +52,8 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     {
         Guard.ThrowIfNull(options);
 
-#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
-        var exportIntervalMilliseconds = options!.ExportIntervalMilliseconds ?? DefaultExportIntervalMilliseconds;
-#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
-        var exportTimeoutMilliseconds = options.ExportTimeoutMilliseconds ?? DefaultExportTimeoutMilliseconds;
+        var exportIntervalMilliseconds = options?.ExportIntervalMilliseconds ?? DefaultExportIntervalMilliseconds;
+        var exportTimeoutMilliseconds = options?.ExportTimeoutMilliseconds ?? DefaultExportTimeoutMilliseconds;
 
         Guard.ThrowIfInvalidTimeout(exportIntervalMilliseconds);
         Guard.ThrowIfZero(exportIntervalMilliseconds);
@@ -69,7 +66,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
 
         this.ExportIntervalMilliseconds = exportIntervalMilliseconds;
         this.ExportTimeoutMilliseconds = exportTimeoutMilliseconds;
-        this.useThreads = options.UseThreads;
+        this.useThreads = options?.UseThreads ?? false;
 
         this.worker = this.CreateWorker();
         this.worker.Start();
@@ -90,9 +87,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
             return this.exporter.Shutdown(0) && result;
         }
 
-        var sw = Stopwatch.StartNew();
-        var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-        return this.exporter.Shutdown((int)Math.Max(timeout, 0)) && result;
+        return this.exporter.Shutdown(timeoutMilliseconds) && result;
     }
 
     /// <inheritdoc/>
@@ -111,8 +106,6 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         base.Dispose(disposing);
     }
 
-    // The pragma is required by the fact that this method is compiled on both .NET Framework and .NET Core, and the CA1859 warning is only relevant for .NET Framework.
-    // The warning suggests changing the return type to PeriodicExportingMetricReaderThreadWorker for improved performance, but we want to keep the method signature consistent across platforms.
 #pragma warning disable CA1859 // Change return type of method 'CreateWorker' from 'PeriodicExportingMetricReaderWorker' to 'PeriodicExportingMetricReaderThreadWorker' for improved performance
 
     private PeriodicExportingMetricReaderWorker CreateWorker()

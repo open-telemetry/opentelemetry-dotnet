@@ -10,12 +10,6 @@ namespace OpenTelemetry.Internal;
 internal abstract class BatchExportWorker<T> : IDisposable
     where T : class
 {
-    protected readonly CircularBuffer<T> circularBuffer;
-    protected readonly BaseExporter<T> exporter;
-    protected readonly int maxExportBatchSize;
-    protected readonly int scheduledDelayMilliseconds;
-    protected readonly int exporterTimeoutMilliseconds;
-
     private long shutdownDrainTarget = long.MaxValue;
     private long droppedCount;
 
@@ -34,17 +28,48 @@ internal abstract class BatchExportWorker<T> : IDisposable
         int scheduledDelayMilliseconds,
         int exporterTimeoutMilliseconds)
     {
-        this.circularBuffer = circularBuffer;
-        this.exporter = exporter;
-        this.maxExportBatchSize = maxExportBatchSize;
-        this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
-        this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
+        this.CircularBuffer = circularBuffer;
+        this.Exporter = exporter;
+        this.MaxExportBatchSize = maxExportBatchSize;
+        this.ScheduledDelayMilliseconds = scheduledDelayMilliseconds;
+        this.ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
+    }
+
+    ~BatchExportWorker()
+    {
+        // Finalizer to ensure resources are cleaned up if Dispose is not called
+        this.Dispose(false);
     }
 
     /// <summary>
     /// Gets the number of telemetry objects dropped by the processor.
     /// </summary>
     internal long DroppedCount => Volatile.Read(ref this.droppedCount);
+
+    /// <summary>
+    /// Gets the circular buffer for storing telemetry objects.
+    /// </summary>
+    protected CircularBuffer<T> CircularBuffer { get; }
+
+    /// <summary>
+    /// Gets the exporter instance.
+    /// </summary>
+    protected BaseExporter<T> Exporter { get; }
+
+    /// <summary>
+    /// Gets the maximum batch size for exports.
+    /// </summary>
+    protected int MaxExportBatchSize { get; }
+
+    /// <summary>
+    /// Gets the delay between exports in milliseconds.
+    /// </summary>
+    protected int ScheduledDelayMilliseconds { get; }
+
+    /// <summary>
+    /// Gets the timeout for export operations in milliseconds.
+    /// </summary>
+    protected int ExporterTimeoutMilliseconds { get; }
 
     /// <summary>
     /// Gets the shutdown drain target.
@@ -59,7 +84,7 @@ internal abstract class BatchExportWorker<T> : IDisposable
     /// <summary>
     /// Triggers an export operation.
     /// </summary>
-    /// <returns>True if the export was triggered successfully; otherwise, false.</returns>
+    /// <returns><see langword="true"/> if the export was triggered successfully; otherwise, <see langword="false"/>.</returns>
     public abstract bool TriggerExport();
 
     /// <summary>
@@ -105,11 +130,11 @@ internal abstract class BatchExportWorker<T> : IDisposable
     /// </summary>
     protected void PerformExport()
     {
-        if (this.circularBuffer.Count > 0)
+        if (this.CircularBuffer.Count > 0)
         {
-            using (var batch = new Batch<T>(this.circularBuffer, this.maxExportBatchSize))
+            using (var batch = new Batch<T>(this.CircularBuffer, this.MaxExportBatchSize))
             {
-                this.exporter.Export(batch);
+                this.Exporter.Export(batch);
             }
         }
     }
@@ -120,7 +145,7 @@ internal abstract class BatchExportWorker<T> : IDisposable
     /// <returns>True if shutdown should occur; otherwise, false.</returns>
     protected bool ShouldShutdown()
     {
-        return this.circularBuffer.RemovedCount >= this.ShutdownDrainTarget;
+        return this.CircularBuffer.RemovedCount >= this.ShutdownDrainTarget;
     }
 
     /// <summary>

@@ -42,7 +42,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
     {
         this.workerTask = Task.Factory.StartNew(
             this.ExporterProcAsync,
-            CancellationToken.None,
+            this.cancellationTokenSource.Token,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Default).Unwrap();
     }
@@ -74,8 +74,8 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
     /// <inheritdoc/>
     public override bool WaitForExport(int timeoutMilliseconds)
     {
-        var tail = this.circularBuffer.RemovedCount;
-        var head = this.circularBuffer.AddedCount;
+        var tail = this.CircularBuffer.RemovedCount;
+        var head = this.CircularBuffer.AddedCount;
 
         if (head == tail)
         {
@@ -98,7 +98,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
     /// <inheritdoc/>
     public override bool Shutdown(int timeoutMilliseconds)
     {
-        this.SetShutdownDrainTarget(this.circularBuffer.AddedCount);
+        this.SetShutdownDrainTarget(this.CircularBuffer.AddedCount);
 
         try
         {
@@ -160,7 +160,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                 var remaining = timeoutMilliseconds - sw.ElapsedMilliseconds;
                 if (remaining <= 0)
                 {
-                    return this.circularBuffer.RemovedCount >= targetHead;
+                    return this.CircularBuffer.RemovedCount >= targetHead;
                 }
 
                 timeout = Math.Min((int)remaining, pollingMilliseconds);
@@ -187,7 +187,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                 // Expected when timeout or shutdown occurs
             }
 
-            if (this.circularBuffer.RemovedCount >= targetHead)
+            if (this.CircularBuffer.RemovedCount >= targetHead)
             {
                 return true;
             }
@@ -208,13 +208,13 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
             while (true)
             {
                 // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
-                if (this.circularBuffer.Count < this.maxExportBatchSize)
+                if (this.CircularBuffer.Count < this.MaxExportBatchSize)
                 {
                     try
                     {
                         await Task.WhenAny(
                             this.exportTrigger.WaitAsync(cancellationToken),
-                            Task.Delay(this.scheduledDelayMilliseconds, cancellationToken)).ConfigureAwait(false);
+                            Task.Delay(this.ScheduledDelayMilliseconds, cancellationToken)).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException)
                     {
