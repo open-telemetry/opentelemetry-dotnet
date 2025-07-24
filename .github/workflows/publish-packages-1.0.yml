@@ -16,6 +16,9 @@ on:
   schedule:
     - cron: '0 0 * * *' # once in a day at 00:00
 
+permissions:
+  contents: read
+
 jobs:
   automation:
     uses: ./.github/workflows/automation.yml
