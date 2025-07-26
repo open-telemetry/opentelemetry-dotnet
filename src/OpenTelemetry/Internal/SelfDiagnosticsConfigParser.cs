@@ -45,7 +45,7 @@ internal sealed class SelfDiagnosticsConfigParser
         logDirectory = null;
         fileSizeInKB = 0;
         logLevel = EventLevel.LogAlways;
-        formatMessage = false; // Default to false
+        formatMessage = false;
         try
         {
             var configFilePath = ConfigFileName;
@@ -152,7 +152,7 @@ internal sealed class SelfDiagnosticsConfigParser
 
     internal static bool TryParseFormatMessage(string configJson, out bool formatMessage)
     {
-        formatMessage = false; // Default to false
+        formatMessage = false;
         var formatMessageResult = FormatMessageRegex.Match(configJson);
         if (formatMessageResult.Success)
         {
@@ -160,6 +160,6 @@ internal sealed class SelfDiagnosticsConfigParser
             return bool.TryParse(formatMessageValue, out formatMessage);
         }
 
-        return true; // Return true even if not found, as this is optional
+        return true;
     }
 }

@@ -43,7 +43,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     private int logFileSize;  // Log file size in bytes
     private long logFilePosition;  // The logger will write into the byte at this position
     private EventLevel logEventLevel = (EventLevel)(-1);
-    private bool formatMessage;  // Whether to format messages
+    private bool formatMessage;
 
     public SelfDiagnosticsConfigRefresher()
     {
@@ -159,7 +159,6 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
                 this.logEventLevel = newEventLevel;
             }
 
-            // Store the formatMessage setting for future use
             this.formatMessage = formatMessage;
         }
         else
