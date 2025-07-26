@@ -21,6 +21,18 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+    <PackageReference Include="GitHubActionsTestLogger" />
+    <PackageReference Include="JunitXml.TestLogger" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+    <Compile Include="$(RepoRoot)\test\Shared\StrongNameTests.cs" Link="StrongNameTests.cs" />
+  </ItemGroup>
+
   <PropertyGroup>
     <!-- Running unit tests from VSCode does not work with .NET SDK 6.0.200 without ProduceReferenceAssemblyInOutDir -->
     <!-- Related breaking change: https://docs.microsoft.com/en-us/dotnet/core/compatibility/sdk/6.0/write-reference-assemblies-to-obj -->

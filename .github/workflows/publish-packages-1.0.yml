@@ -16,6 +16,9 @@ on:
   schedule:
     - cron: '0 0 * * *' # once in a day at 00:00
 
+permissions:
+  contents: read
+
 jobs:
   automation:
     uses: ./.github/workflows/automation.yml
@@ -46,7 +49,7 @@ jobs:
       uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
 
     - name: Install Cosign
-      uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3.9.1
+      uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       with:
         cosign-release: v2.4.0
 

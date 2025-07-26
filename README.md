@@ -246,6 +246,7 @@ For more information about the maintainer role, see the [community repository](h
 ### Approvers
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
+* [Martin Costello](https://github.com/martincostello), Grafana Labs
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 * [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 

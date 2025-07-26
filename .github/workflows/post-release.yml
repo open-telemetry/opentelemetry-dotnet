@@ -16,6 +16,9 @@ on:
     types:
     - created
 
+permissions:
+  contents: read
+
 jobs:
   automation:
     uses: ./.github/workflows/automation.yml

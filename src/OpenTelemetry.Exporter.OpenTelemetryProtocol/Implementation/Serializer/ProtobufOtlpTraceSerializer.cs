@@ -45,36 +45,38 @@ internal static class ProtobufOtlpTraceSerializer
 
     internal static int TryWriteResourceSpans(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource)
     {
-        int entryWritePosition = writePosition;
-
-        try
+        while (true)
         {
-            writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.TracesData_Resource_Spans, ProtobufWireType.LEN);
-            int resourceSpansScopeSpansLengthPosition = writePosition;
-            writePosition += ReserveSizeForLength;
+            int entryWritePosition = writePosition;
 
-            writePosition = WriteResourceSpans(buffer, writePosition, sdkLimitOptions, resource);
-
-            ProtobufSerializer.WriteReservedLength(buffer, resourceSpansScopeSpansLengthPosition, writePosition - (resourceSpansScopeSpansLengthPosition + ReserveSizeForLength));
-        }
-        catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
-        {
-            writePosition = entryWritePosition;
-
-            // Attempt to increase the buffer size
-            if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces))
+            try
             {
-                throw;
+                writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.TracesData_Resource_Spans, ProtobufWireType.LEN);
+                int resourceSpansScopeSpansLengthPosition = writePosition;
+                writePosition += ReserveSizeForLength;
+
+                writePosition = WriteResourceSpans(buffer, writePosition, sdkLimitOptions, resource);
+
+                ProtobufSerializer.WriteReservedLength(buffer, resourceSpansScopeSpansLengthPosition, writePosition - (resourceSpansScopeSpansLengthPosition + ReserveSizeForLength));
+
+                // Serialization succeeded, return the final write position
+                return writePosition;
             }
+            catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
+            {
+                // Reset write position and attempt to increase the buffer size
+                writePosition = entryWritePosition;
 
-            // Retry serialization after increasing the buffer size.
-            // The recursion depth is limited to a maximum of 7 calls, as the buffer size starts at ~732 KB
-            // and doubles until it reaches the maximum size of 100 MB. This ensures the recursion remains safe
-            // and avoids stack overflow.
-            return TryWriteResourceSpans(ref buffer, writePosition, sdkLimitOptions, resource);
+                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces))
+                {
+                    throw;
+                }
+
+                // Continue the loop to retry serialization with the larger buffer
+                // The loop is limited by the buffer size expansion logic in IncreaseBufferSize,
+                // which stops at a maximum of 100 MB, ensuring this doesn't become an infinite loop
+            }
         }
-
-        return writePosition;
     }
 
     internal static void ReturnActivityListToPool()
