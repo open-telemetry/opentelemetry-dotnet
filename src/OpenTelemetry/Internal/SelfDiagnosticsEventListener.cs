@@ -218,7 +218,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         return pos - byteIndex;
     }
 
-    internal void WriteEvent(EventWrittenEventArgs eventData)
+    internal void WriteEvent(string? eventMessage, ReadOnlyCollection<object?>? payload)
     {
         try
         {
@@ -233,22 +233,22 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
             buffer[pos++] = (byte)':';
 
             string? messageToWrite;
-            if (this.formatMessage && eventData.Message != null && eventData.Payload != null && eventData.Payload.Count > 0)
+            if (this.formatMessage && eventMessage != null && payload != null && payload.Count > 0)
             {
                 // Use string.Format to format the message with parameters
-                messageToWrite = string.Format(System.Globalization.CultureInfo.InvariantCulture, eventData.Message, eventData.Payload.ToArray());
+                messageToWrite = string.Format(System.Globalization.CultureInfo.InvariantCulture, eventMessage, payload.ToArray());
                 pos = EncodeInBuffer(messageToWrite, false, buffer, pos);
             }
             else
             {
                 // Original format: timestamp:message{param1}{param2}...
-                pos = EncodeInBuffer(eventData.Message, false, buffer, pos);
-                if (eventData.Payload != null)
+                pos = EncodeInBuffer(eventMessage, false, buffer, pos);
+                if (payload != null)
                 {
                     // Not using foreach because it can cause allocations
-                    for (int i = 0; i < eventData.Payload.Count; ++i)
+                    for (int i = 0; i < payload.Count; ++i)
                     {
-                        object? obj = eventData.Payload[i];
+                        object? obj = payload[i];
                         if (obj != null)
                         {
                             pos = EncodeInBuffer(obj.ToString() ?? "null", true, buffer, pos);
@@ -257,69 +257,6 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
                         {
                             pos = EncodeInBuffer("null", true, buffer, pos);
                         }
-                    }
-                }
-            }
-
-            buffer[pos++] = (byte)'\n';
-            int byteCount = pos - 0;
-#pragma warning disable CA2000 // Dispose objects before losing scope
-            if (this.configRefresher.TryGetLogStream(byteCount, out Stream? stream, out int availableByteCount))
-#pragma warning restore CA2000 // Dispose objects before losing scope
-            {
-                if (availableByteCount >= byteCount)
-                {
-                    stream.Write(buffer, 0, byteCount);
-                }
-                else
-                {
-                    stream.Write(buffer, 0, availableByteCount);
-                    stream.Seek(0, SeekOrigin.Begin);
-                    stream.Write(buffer, availableByteCount, byteCount - availableByteCount);
-                }
-            }
-        }
-        catch (Exception)
-        {
-            // Fail to allocate memory for buffer, or
-            // A concurrent condition: memory mapped file is disposed in other thread after TryGetLogStream() finishes.
-            // In this case, silently fail.
-        }
-    }
-
-    /// <summary>
-    /// Backward-compatible overload for WriteEvent method.
-    /// This method is kept for compatibility with tests and always uses the original format.
-    /// </summary>
-    /// <param name="eventMessage">The event message.</param>
-    /// <param name="payload">The payload collection.</param>
-    internal void WriteEvent(string? eventMessage, ReadOnlyCollection<object?>? payload)
-    {
-        try
-        {
-            var buffer = this.writeBuffer.Value;
-            if (buffer == null)
-            {
-                buffer = new byte[BUFFERSIZE];
-                this.writeBuffer.Value = buffer;
-            }
-
-            var pos = DateTimeGetBytes(DateTime.UtcNow, buffer, 0);
-            buffer[pos++] = (byte)':';
-            pos = EncodeInBuffer(eventMessage, false, buffer, pos);
-            if (payload != null)
-            {
-                // Not using foreach because it can cause allocations
-                for (int i = 0; i < payload.Count; ++i)
-                {
-                    object? obj = payload[i];
-                    if (obj != null)
-                    {
-                        pos = EncodeInBuffer(obj.ToString() ?? "null", true, buffer, pos);
-                    }
-                    else
-                    {
-                        pos = EncodeInBuffer("null", true, buffer, pos);
                     }
                 }
             }
@@ -390,7 +327,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         // See: https://github.com/open-telemetry/opentelemetry-dotnet/pull/5046
         if (eventData.EventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.OrdinalIgnoreCase))
         {
-            this.WriteEvent(eventData);
+            this.WriteEvent(eventData.Message, eventData.Payload);
         }
     }
 
