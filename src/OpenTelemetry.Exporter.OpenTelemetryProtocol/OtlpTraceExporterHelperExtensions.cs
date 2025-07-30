@@ -151,23 +151,31 @@ public static class OtlpTraceExporterHelperExtensions
         BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions!, sdkLimitOptions!, experimentalOptions!);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-        if (configureExporterInstance != null)
+        try
         {
-            otlpExporter = configureExporterInstance(otlpExporter);
-        }
+            if (configureExporterInstance != null)
+            {
+                otlpExporter = configureExporterInstance(otlpExporter);
+            }
 
-        if (exportProcessorType == ExportProcessorType.Simple)
-        {
-            return new SimpleActivityExportProcessor(otlpExporter);
+            if (exportProcessorType == ExportProcessorType.Simple)
+            {
+                return new SimpleActivityExportProcessor(otlpExporter);
+            }
+            else
+            {
+                return new BatchActivityExportProcessor(
+                    otlpExporter,
+                    batchExportProcessorOptions!.MaxQueueSize,
+                    batchExportProcessorOptions.ScheduledDelayMilliseconds,
+                    batchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                    batchExportProcessorOptions.MaxExportBatchSize);
+            }
         }
-        else
+        catch
         {
-            return new BatchActivityExportProcessor(
-                otlpExporter,
-                batchExportProcessorOptions!.MaxQueueSize,
-                batchExportProcessorOptions.ScheduledDelayMilliseconds,
-                batchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                batchExportProcessorOptions.MaxExportBatchSize);
+            otlpExporter.Dispose();
+            throw;
         }
     }
 }
