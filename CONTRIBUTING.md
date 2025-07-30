@@ -14,9 +14,12 @@ Anyone may contribute but there are benefits of being a member of our community.
 See the [community membership
 document](https://github.com/open-telemetry/community/blob/main/community-membership.md)
 on how to become a
-[**Member**](https://github.com/open-telemetry/community/blob/main/community-membership.md#member),
-[**Approver**](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
+[**Member**](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#member),
+[**Triager**](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager),
+[**Approver**](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver),
 and
+[**Maintainer**](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer).
+
 ## Give feedback
 
 We are always looking for your feedback.
