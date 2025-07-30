@@ -25,7 +25,8 @@ jobs:
         language: ['actions', 'csharp']
 
     steps:
-    - name: configure Pagefile
+    - name: Configure Pagefile
+      if: matrix.language == 'csharp'
       uses: al-cheb/configure-pagefile-action@a3b6ebd6b634da88790d9c58d4b37a7f4a7b8708 # v1.4
       with:
         minimum-size: 8GB
