@@ -126,7 +126,7 @@ jobs:
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
-        token: ${{ env.GH_TOKEN}}
+        token: ${{ env.GH_TOKEN }}
 
     - name: Create release tag
       id: create-tag
