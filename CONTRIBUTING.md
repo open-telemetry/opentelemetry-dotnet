@@ -26,15 +26,15 @@ We are always looking for your feedback.
 
 You can do this by [submitting a GitHub issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/new).
 
-You may also prefer writing on [Slack](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
+You may also prefer writing on [#otel-dotnet Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
 
 ### Report a bug
 
 Reporting bugs is an important contribution. Please make sure to include:
 
-* Expected and actual behavior,
-* OpenTelemetry, OS, and .NET versions you are using,
-* Steps to reproduce,
+* Expected and actual behavior;
+* OpenTelemetry, OS, and .NET versions you are using;
+* Steps to reproduce;
 * [Minimal, reproducible example](https://stackoverflow.com/help/minimal-reproducible-example).
 
 ### Request a feature
