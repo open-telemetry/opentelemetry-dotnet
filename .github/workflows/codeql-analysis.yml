@@ -1,17 +1,15 @@
-# For most projects, this workflow file will not need changing; you simply need
-# to commit it to your repository.
-#
-# You may wish to alter this file to override the set of languages analyzed,
-# or to provide custom queries or build logic.
 name: "CodeQL"
 
 on:
+  push:
+    branches: [ 'main' ]
+  pull_request:
+    branches: [ 'main' ]
   schedule:
     - cron: '0 0 * * *' # once in a day at 00:00
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   analyze:
@@ -19,16 +17,16 @@ jobs:
       actions: read  # for github/codeql-action/init to get workflow details
       contents: read  # for actions/checkout to fetch code
       security-events: write  # for github/codeql-action/analyze to upload SARIF results
-    name: Analyze
     runs-on: windows-latest
 
     strategy:
       fail-fast: false
       matrix:
-        language: ['csharp']
+        language: ['actions', 'csharp']
 
     steps:
-    - name: configure Pagefile
+    - name: Configure Pagefile
+      if: matrix.language == 'csharp'
       uses: al-cheb/configure-pagefile-action@a3b6ebd6b634da88790d9c58d4b37a7f4a7b8708 # v1.4
       with:
         minimum-size: 8GB
@@ -37,17 +35,37 @@ jobs:
 
     - name: Checkout repository
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        filter: 'tree:0'
+        persist-credentials: false
+        show-progress: false
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@4e828ff8d448a8a6e532957b1811f387a63867e8 # v3.29.4
       with:
+        build-mode: none
         languages: ${{ matrix.language }}
-
-    - name: Setup dotnet
-      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
-
-    - name: dotnet pack
-      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@4e828ff8d448a8a6e532957b1811f387a63867e8 # v3.29.4
+      with:
+        category: '/language:${{ matrix.language }}'
+
+  codeql:
+    if: ${{ !cancelled() }}
+    needs: [ analyze ]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Report status
+      shell: bash
+      env:
+        SCAN_SUCCESS: ${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+      run: |
+        if [ "${SCAN_SUCCESS}" == "true" ]
+        then
+          echo 'CodeQL analysis successful'
+        else
+          echo 'CodeQL analysis failed'
+          exit 1
+        fi

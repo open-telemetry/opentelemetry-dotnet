@@ -28,4 +28,5 @@ jobs:
           days-before-pr-close: 7
           days-before-issue-close: 7
           exempt-all-issue-milestones: true
-          exempt-issue-labels: needs-triage
+          exempt-issue-labels: 'keep-open,needs-triage'
+          exempt-pr-labels: 'keep-open'

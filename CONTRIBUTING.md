@@ -14,10 +14,33 @@ Anyone may contribute but there are benefits of being a member of our community.
 See the [community membership
 document](https://github.com/open-telemetry/community/blob/main/community-membership.md)
 on how to become a
-[**Member**](https://github.com/open-telemetry/community/blob/main/community-membership.md#member),
-[**Approver**](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
+[**Member**](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#member),
+[**Triager**](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager),
+[**Approver**](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver),
 and
-[**Maintainer**](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).
+[**Maintainer**](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer).
+
+## Give feedback
+
+We are always looking for your feedback.
+
+You can do this by [submitting a GitHub issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/new).
+
+You may also prefer writing on [#otel-dotnet Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
+
+### Report a bug
+
+Reporting bugs is an important contribution. Please make sure to include:
+
+* Expected and actual behavior;
+* OpenTelemetry, OS, and .NET versions you are using;
+* Steps to reproduce;
+* [Minimal, reproducible example](https://stackoverflow.com/help/minimal-reproducible-example).
+
+### Request a feature
+
+If you would like to work on something that is not listed as an issue
+(e.g. a new feature or enhancement) please create an issue and describe your proposal.
 
 ## Find a buddy and get started quickly
 
