@@ -64,8 +64,8 @@ jobs:
       run: |
         if [ "${SCAN_SUCCESS}" == "true" ]
         then
-          echo 'CodeQL analysis successful ✅'
+          echo 'CodeQL analysis successful'
         else
-          echo 'CodeQL analysis failed ❌'
+          echo 'CodeQL analysis failed'
           exit 1
         fi
