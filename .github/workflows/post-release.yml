@@ -59,13 +59,14 @@ jobs:
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
+        $HasToken = -Not [string]::IsNullOrEmpty($env:NUGET_TOKEN)
         PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -pullRequestNumber ${env:ISSUE_NUMBER} `
           -botUserName ${env:BOT_USER_NAME} `
           -commentUserName ${env:COMMENT_USER_NAME} `
           -artifactDownloadPath "${env:GITHUB_WORKSPACE}/artifacts" `
-          -pushToNuget ${env:NUGET_TOKEN}
+          -pushToNuget $HasToken
 
   post-release-published:
     runs-on: ubuntu-22.04
