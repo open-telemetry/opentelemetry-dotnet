@@ -58,7 +58,7 @@ jobs:
 
     - name: dotnet build
       shell: pwsh
-      run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${env:GITHUB_RUN_NUMBER} -p:RunningDotNetPack=true
+      run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:"BuildNumber=${env:GITHUB_RUN_NUMBER}" -p:RunningDotNetPack=true
 
     - name: Sign DLLs with Cosign Keyless
       shell: pwsh
@@ -80,7 +80,7 @@ jobs:
       shell: pwsh
       env:
         PACK_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
-      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${env:PACK_TAG}
+      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:"PackTag=${env:PACK_TAG}"
 
     - name: Publish Artifacts
       id: upload-artifacts
@@ -138,7 +138,7 @@ jobs:
         CreateDraftRelease `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -tag ${env:GITHUB_REF_NAME} `
-          -releaseFiles '${env:GITHUB_WORKSPACE}/artifacts/${env:GITHUB_REF_NAME}-packages.zip#Packages'
+          -releaseFiles "${env:GITHUB_WORKSPACE}/artifacts/${env:GITHUB_REF_NAME}-packages.zip#Packages"
 
     - name: Post notice when packages are ready
       shell: pwsh
