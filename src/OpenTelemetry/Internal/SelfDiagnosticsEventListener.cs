@@ -232,16 +232,14 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
             var pos = DateTimeGetBytes(DateTime.UtcNow, buffer, 0);
             buffer[pos++] = (byte)':';
 
-            string? messageToWrite;
             if (this.formatMessage && eventMessage != null && payload != null && payload.Count > 0)
             {
                 // Use string.Format to format the message with parameters
-                messageToWrite = string.Format(System.Globalization.CultureInfo.InvariantCulture, eventMessage, payload.ToArray());
+                string messageToWrite = string.Format(System.Globalization.CultureInfo.InvariantCulture, eventMessage, payload.ToArray());
                 pos = EncodeInBuffer(messageToWrite, false, buffer, pos);
             }
             else
             {
-                // Original format: timestamp:message{param1}{param2}...
                 pos = EncodeInBuffer(eventMessage, false, buffer, pos);
                 if (payload != null)
                 {
