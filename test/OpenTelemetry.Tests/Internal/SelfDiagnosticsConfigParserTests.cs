@@ -76,12 +76,14 @@ public class SelfDiagnosticsConfigParserTests
     [Fact]
     public void SelfDiagnosticsConfigParser_TryParseFormatMessage_Success()
     {
-        string configJson = @"{
-                    ""LogDirectory"": ""Diagnostics"",
-                    ""FileSize"": 1024,
-                    ""LogLevel"": ""Error"",
-                    ""FormatMessage"": ""true""
-                    }";
+        string configJson = """
+            {
+                "LogDirectory": "Diagnostics",
+                "FileSize": 1024,
+                "LogLevel": "Error",
+                "FormatMessage": "true"
+            }
+            """;
         Assert.True(SelfDiagnosticsConfigParser.TryParseFormatMessage(configJson, out bool formatMessage));
         Assert.True(formatMessage);
     }
@@ -89,11 +91,13 @@ public class SelfDiagnosticsConfigParserTests
     [Fact]
     public void SelfDiagnosticsConfigParser_TryParseFormatMessage_CaseInsensitive()
     {
-        string configJson = @"{
-                    ""LogDirectory"": ""Diagnostics"",
-                    ""fileSize"": 1024,
-                    ""formatMessage"": ""FALSE""
-                    }";
+        string configJson = """
+            {
+                "LogDirectory": "Diagnostics",
+                "fileSize": 1024,
+                "formatMessage": "FALSE"
+            }
+            """;
         Assert.True(SelfDiagnosticsConfigParser.TryParseFormatMessage(configJson, out bool formatMessage));
         Assert.False(formatMessage);
     }
@@ -101,11 +105,13 @@ public class SelfDiagnosticsConfigParserTests
     [Fact]
     public void SelfDiagnosticsConfigParser_TryParseFormatMessage_MissingField()
     {
-        string configJson = @"{
-                    ""LogDirectory"": ""Diagnostics"",
-                    ""FileSize"": 1024,
-                    ""LogLevel"": ""Error""
-                    }";
+        string configJson = """
+            {
+                "LogDirectory": "Diagnostics",
+                "FileSize": 1024,
+                "LogLevel": "Error"
+            }
+            """;
         Assert.True(SelfDiagnosticsConfigParser.TryParseFormatMessage(configJson, out bool formatMessage));
         Assert.False(formatMessage); // Should default to false
     }
@@ -113,12 +119,14 @@ public class SelfDiagnosticsConfigParserTests
     [Fact]
     public void SelfDiagnosticsConfigParser_TryParseFormatMessage_InvalidValue()
     {
-        string configJson = @"{
-                    ""LogDirectory"": ""Diagnostics"",
-                    ""FileSize"": 1024,
-                    ""LogLevel"": ""Error"",
-                    ""FormatMessage"": ""invalid""
-                    }";
+        string configJson = """
+            {
+                "LogDirectory": "Diagnostics",
+                "FileSize": 1024,
+                "LogLevel": "Error",
+                "FormatMessage": "invalid"
+            }
+            """;
         Assert.False(SelfDiagnosticsConfigParser.TryParseFormatMessage(configJson, out bool formatMessage));
         Assert.False(formatMessage); // Should default to false
     }

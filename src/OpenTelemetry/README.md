@@ -82,7 +82,7 @@ the following content:
 {
     "LogDirectory": ".",
     "FileSize": 32768,
-    "LogLevel": "Warning"
+    "LogLevel": "Warning",
     "FormatMessage": "true"
 }
 ```

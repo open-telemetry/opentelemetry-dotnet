@@ -7,8 +7,8 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Added `FormatMessage` configuration option to self-diagnostics feature. When
-  set to `true`, log messages will be formatted by replacing placeholders with
-  actual parameter values for improved readability.
+  set to `true` (default is false), log messages will be formatted by replacing
+  placeholders with actual parameter values for improved readability.
 
   Example `OTEL_DIAGNOSTICS.json`:
 
