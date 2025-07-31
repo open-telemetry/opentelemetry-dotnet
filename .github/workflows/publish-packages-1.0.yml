@@ -120,11 +120,11 @@ jobs:
     - name: Download Artifacts
       env:
         ARTIFACT_ID: ${{ needs.build-pack-publish.outputs.artifact-id }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        ARTIFACT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         curl \
           -H "Accept: application/vnd.github+json" \
-          -H "Authorization: token ${GITHUB_TOKEN}" \
+          -H "Authorization: token ${ARTIFACT_TOKEN}" \
           -L \
           -o '${GITHUB_WORKSPACE}/artifacts/${GITHUB_REF_NAME}-packages.zip' \
           --create-dirs \
