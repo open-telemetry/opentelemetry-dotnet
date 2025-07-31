@@ -82,7 +82,8 @@ the following content:
 {
     "LogDirectory": ".",
     "FileSize": 32768,
-    "LogLevel": "Warning"
+    "LogLevel": "Warning",
+    "FormatMessage": "true"
 }
 ```
 
@@ -116,6 +117,25 @@ You can also find the exact directory by calling these methods from your code.
    The level signifies the severity of an event. Lower severity levels encompass
    higher severity levels. For example, `Warning` includes the `Error` and
    `Critical` levels.
+
+4. `FormatMessage` is a boolean value that controls whether log messages should
+   be formatted by replacing placeholders (`{0}`, `{1}`, etc.) with their actual
+   parameter values. When set to `false` (default), messages are logged with
+   unformatted placeholders followed by raw parameter values. When set to
+   `true`, placeholders are replaced with formatted parameter values for
+   improved readability.
+
+   **Example with `FormatMessage: false` (default):**
+
+   ```txt
+   2025-07-24T01:45:04.1020880Z:Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'{dotnet.gc.collections}{System.Runtime}{Instrument belongs to a Meter not subscribed by the provider.}{Use AddMeter to add the Meter to the provider.}
+   ```
+
+   **Example with `FormatMessage: true`:**
+
+   ```txt
+   2025-07-24T01:44:44.7059260Z:Measurements from Instrument 'dotnet.gc.collections', Meter 'System.Runtime' will be ignored. Reason: 'Instrument belongs to a Meter not subscribed by the provider.'. Suggested action: 'Use AddMeter to add the Meter to the provider.'
+   ```
 
 #### Remarks
 
