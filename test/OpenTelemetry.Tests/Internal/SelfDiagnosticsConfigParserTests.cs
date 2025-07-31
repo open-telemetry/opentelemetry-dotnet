@@ -130,4 +130,19 @@ public class SelfDiagnosticsConfigParserTests
         Assert.False(SelfDiagnosticsConfigParser.TryParseFormatMessage(configJson, out bool formatMessage));
         Assert.False(formatMessage); // Should default to false
     }
+
+    [Fact]
+    public void SelfDiagnosticsConfigParser_TryParseFormatMessage_UnquotedBoolean()
+    {
+        string configJson = """
+            {
+                "LogDirectory": "Diagnostics",
+                "FileSize": 1024,
+                "LogLevel": "Error",
+                "FormatMessage": true
+            }
+            """;
+        Assert.True(SelfDiagnosticsConfigParser.TryParseFormatMessage(configJson, out bool formatMessage));
+        Assert.True(formatMessage);
+    }
 }

@@ -29,7 +29,7 @@ internal sealed class SelfDiagnosticsConfigParser
         @"""LogLevel""\s*:\s*""(?<LogLevel>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex FormatMessageRegex = new(
-        @"""FormatMessage""\s*:\s*""(?<FormatMessage>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        @"""FormatMessage""\s*:\s*(?:""(?<FormatMessage>.*?)""|(?<FormatMessage>true|false))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     // This class is called in SelfDiagnosticsConfigRefresher.UpdateMemoryMappedFileFromConfiguration
     // in both main thread and the worker thread.
