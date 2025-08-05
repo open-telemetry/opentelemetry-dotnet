@@ -6,6 +6,21 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added `FormatMessage` configuration option to self-diagnostics feature. When
+  set to `true` (default is false), log messages will be formatted by replacing
+  placeholders with actual parameter values for improved readability.
+
+  Example `OTEL_DIAGNOSTICS.json`:
+
+  ```json
+  {
+      "LogDirectory": ".",
+      "FileSize": 32768,
+      "LogLevel": "Warning",
+      "FormatMessage": true
+  }
+  ```
+
 ## 1.12.0
 
 Released 2025-Apr-29
