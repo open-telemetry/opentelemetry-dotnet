@@ -19,17 +19,19 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     private readonly Lock lockObj = new();
     private readonly EventLevel logLevel;
     private readonly SelfDiagnosticsConfigRefresher configRefresher;
+    private readonly bool formatMessage;
     private readonly ThreadLocal<byte[]?> writeBuffer = new(() => null);
     private readonly List<EventSource>? eventSourcesBeforeConstructor = [];
 
     private bool disposedValue;
 
-    public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher)
+    public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher, bool formatMessage = false)
     {
         Guard.ThrowIfNull(configRefresher);
 
         this.logLevel = logLevel;
         this.configRefresher = configRefresher;
+        this.formatMessage = formatMessage;
 
         List<EventSource> eventSources;
         lock (this.lockObj)
@@ -229,20 +231,30 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
 
             var pos = DateTimeGetBytes(DateTime.UtcNow, buffer, 0);
             buffer[pos++] = (byte)':';
-            pos = EncodeInBuffer(eventMessage, false, buffer, pos);
-            if (payload != null)
+
+            if (this.formatMessage && eventMessage != null && payload != null && payload.Count > 0)
             {
-                // Not using foreach because it can cause allocations
-                for (int i = 0; i < payload.Count; ++i)
+                // Use string.Format to format the message with parameters
+                string messageToWrite = string.Format(System.Globalization.CultureInfo.InvariantCulture, eventMessage, payload.ToArray());
+                pos = EncodeInBuffer(messageToWrite, false, buffer, pos);
+            }
+            else
+            {
+                pos = EncodeInBuffer(eventMessage, false, buffer, pos);
+                if (payload != null)
                 {
-                    object? obj = payload[i];
-                    if (obj != null)
+                    // Not using foreach because it can cause allocations
+                    for (int i = 0; i < payload.Count; ++i)
                     {
-                        pos = EncodeInBuffer(obj.ToString() ?? "null", true, buffer, pos);
-                    }
-                    else
-                    {
-                        pos = EncodeInBuffer("null", true, buffer, pos);
+                        object? obj = payload[i];
+                        if (obj != null)
+                        {
+                            pos = EncodeInBuffer(obj.ToString() ?? "null", true, buffer, pos);
+                        }
+                        else
+                        {
+                            pos = EncodeInBuffer("null", true, buffer, pos);
+                        }
                     }
                 }
             }

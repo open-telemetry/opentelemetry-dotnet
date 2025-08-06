@@ -17,6 +17,20 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 
     public override ExportResult Export(in Batch<Metric> batch)
     {
+        // Print Resource information once at the beginning of the batch
+        var resource = this.ParentProvider.GetResource();
+        if (resource != Resource.Empty)
+        {
+            this.WriteLine("Resource associated with Metrics:");
+            foreach (var resourceAttribute in resource.Attributes)
+            {
+                if (this.TagWriter.TryTransformTag(resourceAttribute.Key, resourceAttribute.Value, out var result))
+                {
+                    this.WriteLine($"\t{result.Key}: {result.Value}");
+                }
+            }
+        }
+
         foreach (var metric in batch)
         {
             var msg = new StringBuilder(Environment.NewLine);
@@ -25,7 +39,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 #else
             msg.Append($"Metric Name: {metric.Name}");
 #endif
-            if (string.IsNullOrEmpty(metric.Description))
+            if (!string.IsNullOrEmpty(metric.Description))
             {
 #if NET
                 msg.Append(CultureInfo.InvariantCulture, $", Description: {metric.Description}");
@@ -34,7 +48,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 #endif
             }
 
-            if (string.IsNullOrEmpty(metric.Unit))
+            if (!string.IsNullOrEmpty(metric.Unit))
             {
 #if NET
                 msg.Append(CultureInfo.InvariantCulture, $", Unit: {metric.Unit}");
@@ -43,7 +57,33 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 #endif
             }
 
+#if NET
+            msg.Append(CultureInfo.InvariantCulture, $", Metric Type: {metric.MetricType}");
+#else
+            msg.Append($", Metric Type: {metric.MetricType}");
+#endif
+
             this.WriteLine(msg.ToString());
+
+            // Print Instrumentation scope (Meter) information once per metric
+            this.WriteLine("Instrumentation scope (Meter):");
+            this.WriteLine($"\tName: {metric.MeterName}");
+            if (!string.IsNullOrEmpty(metric.MeterVersion))
+            {
+                this.WriteLine($"\tVersion: {metric.MeterVersion}");
+            }
+
+            if (metric.MeterTags?.Any() == true)
+            {
+                this.WriteLine("\tTags:");
+                foreach (var meterTag in metric.MeterTags)
+                {
+                    if (this.TagWriter.TryTransformTag(meterTag, out var result))
+                    {
+                        this.WriteLine($"\t\t{result.Key}: {result.Value}");
+                    }
+                }
+            }
 
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
@@ -226,7 +266,6 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                     msg.Append(' ');
                 }
 
-                msg.Append(metric.MetricType);
                 msg.AppendLine();
 #if NET
                 msg.Append(CultureInfo.InvariantCulture, $"Value: {valueDisplay}");
@@ -242,38 +281,6 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 }
 
                 this.WriteLine(msg.ToString());
-
-                this.WriteLine("Instrumentation scope (Meter):");
-                this.WriteLine($"\tName: {metric.MeterName}");
-                if (!string.IsNullOrEmpty(metric.MeterVersion))
-                {
-                    this.WriteLine($"\tVersion: {metric.MeterVersion}");
-                }
-
-                if (metric.MeterTags?.Any() == true)
-                {
-                    this.WriteLine("\tTags:");
-                    foreach (var meterTag in metric.MeterTags)
-                    {
-                        if (this.TagWriter.TryTransformTag(meterTag, out var result))
-                        {
-                            this.WriteLine($"\t\t{result.Key}: {result.Value}");
-                        }
-                    }
-                }
-
-                var resource = this.ParentProvider.GetResource();
-                if (resource != Resource.Empty)
-                {
-                    this.WriteLine("Resource associated with Metric:");
-                    foreach (var resourceAttribute in resource.Attributes)
-                    {
-                        if (this.TagWriter.TryTransformTag(resourceAttribute.Key, resourceAttribute.Value, out var result))
-                        {
-                            this.WriteLine($"\t{result.Key}: {result.Value}");
-                        }
-                    }
-                }
             }
         }
 

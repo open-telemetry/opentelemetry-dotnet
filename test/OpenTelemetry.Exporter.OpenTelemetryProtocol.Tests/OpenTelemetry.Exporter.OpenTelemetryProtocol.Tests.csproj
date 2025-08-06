@@ -26,19 +26,14 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="GitHubActionsTestLogger" />
+    <PackageReference Include="Grpc" />
     <PackageReference Include="Grpc.AspNetCore.Server" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
-    <PackageReference Include="JunitXml.TestLogger" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Tools" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
-    <PackageReference Include="Grpc.Net.Client" />
-    <PackageReference Include="Grpc" />
-    <PackageReference Include="Google.Protobuf" />
-    <PackageReference Include="Grpc.Tools" />
   </ItemGroup>
 
   <ItemGroup>

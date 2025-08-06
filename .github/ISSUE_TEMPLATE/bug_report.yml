@@ -62,7 +62,7 @@ body:
   - type: textarea
     attributes:
       label: Steps to Reproduce
-      description: Provide a [minimal reproducible example](https://stackoverflow.com/help/minimal-reproducible-example). We will close the issue if the repro project you share with us is complex or we cannot reproduce the behavior you are reporting. We cannot investigate custom projects, so don't point us to such, please.
+      description: Provide a [minimal, reproducible example](https://stackoverflow.com/help/minimal-reproducible-example). We will close the issue if the repro project you share with us is complex or we cannot reproduce the behavior you are reporting. We cannot investigate custom projects, so don't point us to such, please.
     validations:
       required: true
 
