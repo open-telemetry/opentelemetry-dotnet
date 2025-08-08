@@ -26,7 +26,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "dotnet build failed with exit code $LASTEXITCODE"
 }
 
-$artifactsPath = Join-Path $rootDirectory "test/$testProjectName/bin/$configuration/$targetFramework"
+$artifactsPath = Join-Path $rootDirectory "artifacts/bin/$testProjectName/$($configuration.ToLowerInvariant())_$targetFramework"
 
 Write-Host "Generate Coyote rewriting options JSON file."
 $assemblies = Get-ChildItem $artifactsPath -Filter OpenTelemetry*.dll | ForEach-Object {$_.Name}
