@@ -13,7 +13,7 @@ RUN git clone --branch level-1 https://github.com/w3c/trace-context.git
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0.413@sha256:45e41fe52eb60f42bd75c83b7e8bfff0523e031e042b4c1fc7ddb9c348898c64 AS dotnet-sdk-8.0
 FROM mcr.microsoft.com/dotnet/sdk:9.0.304@sha256:840f3b62b9742dde4461a3c31e38ffd34d41d7d33afd39c378cfcfd5dcb82bd5 AS dotnet-sdk-9.0
-FROM mcr.microsoft.com/dotnet/sdk:10.0.100-preview.6@sha256:3deb1cdd2ca8a1d63ee473d868c626e37f3f6629fef65263a60a714916d3da2d AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.100-preview.7@sha256:3d69f7e851747ae8bd22509d7f54f036006edee67f73767213670fe570117d45 AS dotnet-sdk-10.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
