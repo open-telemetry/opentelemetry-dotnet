@@ -1375,6 +1375,8 @@ public sealed class TracerProviderSdkTests : IDisposable
         }
     }
 
+// Avoid uninstantiated internal classes: dynamically instantiated as test data
+#pragma warning disable CA1812
     private sealed class SamplerSetConfigurationGenerator : IEnumerable<object?[]>
     {
         private readonly List<object?[]> data =
@@ -1396,4 +1398,5 @@ public sealed class TracerProviderSdkTests : IDisposable
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
     }
+#pragma warning restore CA1812
 }
