@@ -66,3 +66,10 @@ updates:
         update-types:
           - "version-update:semver-major"
           - "version-update:semver-minor"
+  - package-ecosystem: "pip"
+    directory: "test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+    labels:
+      - "infra"
