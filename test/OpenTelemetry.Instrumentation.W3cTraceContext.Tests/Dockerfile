@@ -24,6 +24,7 @@ RUN dotnet publish "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj" 
 
 FROM dotnet-sdk-${TEST_SDK_VERSION} AS final
 WORKDIR /test
+COPY /test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/requirements.txt .
 COPY --from=build /drop .
 COPY --from=w3c /w3c .
 RUN apt-get update \
@@ -31,5 +32,5 @@ RUN apt-get update \
   && cd /usr/local/bin \
   && ln -s /usr/bin/python3 python
 
-RUN pip3 install aiohttp --break-system-packages
+RUN pip3 install --requirement requirements.txt --break-system-packages
 ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll", "--logger:console;verbosity=detailed"]
