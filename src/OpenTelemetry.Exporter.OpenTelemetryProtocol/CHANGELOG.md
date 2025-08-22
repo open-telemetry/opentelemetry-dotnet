@@ -19,6 +19,10 @@ Notes](../../RELEASENOTES.md).
   Note that exporting `logrecord.event.id` is still behind that same feature
   flag. ([#6306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6306))
 
+* gRPC calls to export traces, logs, and metrics using `OtlpExportProtocol.Grpc`
+  now set the `TE=trailers` HTTP request header to improve interoperability.
+  ([#6449](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6449))
+
 ## 1.12.0
 
 Released 2025-Apr-29
