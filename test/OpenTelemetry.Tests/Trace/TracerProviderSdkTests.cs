@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Resources;
@@ -1056,7 +1055,17 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     [Theory]
-    [ClassData(typeof(SamplerSetConfigurationGenerator))]
+    [InlineData(null, null, "ParentBased{AlwaysOnSampler}")]
+    [InlineData("always_on", null, "AlwaysOnSampler")]
+    [InlineData("always_off", null, "AlwaysOffSampler")]
+    [InlineData("always_OFF", null, "AlwaysOffSampler")]
+    [InlineData("traceidratio", "0.5", "TraceIdRatioBasedSampler{0.500000}")]
+    [InlineData("traceidratio", "not_a_double", "TraceIdRatioBasedSampler{1.000000}")]
+    [InlineData("parentbased_always_on", null, "ParentBased{AlwaysOnSampler}")]
+    [InlineData("parentbased_always_off", null, "ParentBased{AlwaysOffSampler}")]
+    [InlineData("parentbased_traceidratio", "0.111", "ParentBased{TraceIdRatioBasedSampler{0.111000}}")]
+    [InlineData("parentbased_traceidratio", "not_a_double", "ParentBased{TraceIdRatioBasedSampler{1.000000}}")]
+    [InlineData("ParentBased_TraceIdRatio", "0.000001", "ParentBased{TraceIdRatioBasedSampler{0.000001}}")]
     public void TestSamplerSetFromConfiguration(string? configValue, string? argValue, string samplerDescription)
     {
         var configBuilder = new ConfigurationBuilder();
@@ -1374,29 +1383,4 @@ public sealed class TracerProviderSdkTests : IDisposable
             this.IsDisposed = true;
         }
     }
-
-// Avoid uninstantiated internal classes: dynamically instantiated as test data
-#pragma warning disable CA1812
-    private sealed class SamplerSetConfigurationGenerator : IEnumerable<object?[]>
-    {
-        private readonly List<object?[]> data =
-        [
-            [null, null, "ParentBased{AlwaysOnSampler}"],
-            ["always_on", null, "AlwaysOnSampler"],
-            ["always_off", null, "AlwaysOffSampler"],
-            ["always_OFF", null, "AlwaysOffSampler"],
-            ["traceidratio", 0.5.ToString(CultureInfo.CurrentCulture), "TraceIdRatioBasedSampler{0.500000}"],
-            ["traceidratio", "not_a_double", "TraceIdRatioBasedSampler{1.000000}"],
-            ["parentbased_always_on", null, "ParentBased{AlwaysOnSampler}"],
-            ["parentbased_always_off", null, "ParentBased{AlwaysOffSampler}"],
-            ["parentbased_traceidratio", 0.111.ToString(CultureInfo.CurrentCulture), "ParentBased{TraceIdRatioBasedSampler{0.111000}}"],
-            ["parentbased_traceidratio", "not_a_double", "ParentBased{TraceIdRatioBasedSampler{1.000000}}"],
-            ["ParentBased_TraceIdRatio", 0.000001.ToString(CultureInfo.CurrentCulture), "ParentBased{TraceIdRatioBasedSampler{0.000001}}"],
-        ];
-
-        public IEnumerator<object[]> GetEnumerator() => this.data.GetEnumerator();
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
-    }
-#pragma warning restore CA1812
 }
