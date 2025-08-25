@@ -39,6 +39,11 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         try
         {
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
+
+            // TE is required by some servers, e.g. C Core.
+            // A missing TE header results in servers aborting the gRPC call.
+            httpRequest.Headers.TryAddWithoutValidation("TE", "trailers");
+
             using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
             httpResponse.EnsureSuccessStatusCode();
