@@ -21,7 +21,6 @@ Notes](../../RELEASENOTES.md).
   }
   ```
 
-
 * When using the `OTEL_TRACES_SAMPLER_ARG` variable with the
   `OTEL_TRACES_SAMPLER` variable set to `traceidratio`,  the value will be
   parsed invariantly of the culture of the local machine. Only `.` can now
