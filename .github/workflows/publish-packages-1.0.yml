@@ -67,7 +67,7 @@ jobs:
         foreach ($projectFile in $projectFiles) {
             $projectName = [System.IO.Path]::GetFileNameWithoutExtension($projectFile)
 
-            Get-ChildItem -Path src/$projectName/bin/Release/*/$projectName.dll -File | ForEach-Object {
+            Get-ChildItem -Path artifacts/bin/$projectName/release_*/$projectName.dll -File | ForEach-Object {
                 $fileFullPath = $_.FullName
                 Write-Host "Signing $fileFullPath"
 
@@ -83,7 +83,8 @@ jobs:
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: ${{ github.ref_name }}-packages
-        path: 'src/**/*.*nupkg'
+        path: ./artifacts/package/release
+        if-no-files-found: error
 
     - name: Publish MyGet
       env:
@@ -91,7 +92,7 @@ jobs:
       if: env.MYGET_TOKEN_EXISTS == 'true' # Skip MyGet publish if run on a fork without the secret
       run: |
         nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
-        nuget push src/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
+        nuget push ./artifacts/package/release/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
 
   post-build:
     runs-on: ubuntu-22.04
