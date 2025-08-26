@@ -21,7 +21,12 @@ Notes](../../RELEASENOTES.md).
   }
   ```
 
-* When using the `OTEL_TRACES_SAMPLER_ARG` variable with the `OTEL_TRACES_SAMPLER` variable set to `traceidratio`, the value will be parsed invariantly of the culture of the local machine. Only `.` can now be used as the decimal delimiter for its value.
+
+* When using the `OTEL_TRACES_SAMPLER_ARG` variable with the
+  `OTEL_TRACES_SAMPLER` variable set to `traceidratio`,  the value will be
+  parsed invariantly of the culture of the local machine. Only `.` can now
+  be used as the decimal delimiter for its value.
+  ([#6444](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6444))
 
 ## 1.12.0
 
