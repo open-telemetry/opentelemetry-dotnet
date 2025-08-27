@@ -21,9 +21,9 @@ Notes](../../RELEASENOTES.md).
   }
   ```
 
-* When using the `OTEL_TRACES_SAMPLER_ARG` environment variable
-  with the `OTEL_TRACES_SAMPLER` environment variable set to
-  `traceidratio`,  the value will be parsed using `.` as the decimal delimiter.
+* Fixed parsing of `OTEL_TRACES_SAMPLER_ARG` decimal values to always use `.`
+  as the delimiter when using the `traceidratio` sampler, preventing
+  locale-specific parsing issues.
   ([#6444](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6444))
 
 ## 1.12.0
