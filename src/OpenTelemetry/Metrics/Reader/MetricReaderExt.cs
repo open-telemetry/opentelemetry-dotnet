@@ -126,13 +126,24 @@ public abstract partial class MetricReader
                     ? this.exemplarFilterForHistograms ?? this.exemplarFilter
                     : this.exemplarFilter;
 
-                if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamIdentity.InstrumentName))
+                if (!Guard.IsValidInstrumentName(metricStreamIdentity.InstrumentName))
                 {
-                    OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
+                    if (metricStreamConfig?.Name == null)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
                         metricStreamIdentity.InstrumentName,
                         metricStreamIdentity.MeterName,
-                        "Metric name is invalid.",
+                        "Instrument name is invalid.",
                         "The name must comply with the OpenTelemetry specification.");
+                    }
+                    else
+                    {
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
+                        metricStreamIdentity.InstrumentName,
+                        metricStreamIdentity.MeterName,
+                        "View name is invalid.",
+                        "The name must comply with the OpenTelemetry specification.");
+                    }
 
                     continue;
                 }

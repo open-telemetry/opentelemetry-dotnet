@@ -21,6 +21,10 @@ Notes](../../RELEASENOTES.md).
   }
   ```
 
+* Moved the `InstrumentNameRegex` from `MeterProviderBuilderSdk` to `Guard`.
+  This regex is used to validate the view and instrument name. If you overwrite
+  the validation regex using reflection you have to update the code.
+
 ## 1.12.0
 
 Released 2025-Apr-29
