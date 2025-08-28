@@ -1,4 +1,4 @@
-# Updating Microsoft depenencies to match the target framework version
+# Updating Microsoft dependencies to match the target framework version
 
 After [requests from OpenTelemetry's users][issue], in a future release the .NET
 OpenTelemetry libraries are changing the strategy they use for selecting the
@@ -84,7 +84,7 @@ There are two reasons for this:
 
 1. As this package provides the core functionality OpenTelemetry builds upon
    (e.g. `Activity`, `Meter`), this library needs to be kept up-to-date to leverage
-   changes to OpenTelementry functionality as the standards evolve over time as
+   changes to OpenTelemetry functionality as the standards evolve over time as
    changes to Semantic Conventions etc. will not be backported to previous releases
    of the .NET platform.
 2. Prior to this change, the `System.Diagnostics.DiagnosticSource` package already
