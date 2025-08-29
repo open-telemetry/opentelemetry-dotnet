@@ -131,18 +131,18 @@ public abstract partial class MetricReader
                     if (metricStreamConfig?.Name == null)
                     {
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
-                        metricStreamIdentity.InstrumentName,
-                        metricStreamIdentity.MeterName,
-                        "Instrument name is invalid.",
-                        "The name must comply with the OpenTelemetry specification.");
+                            metricStreamIdentity.InstrumentName,
+                            metricStreamIdentity.MeterName,
+                            "Instrument name is invalid.",
+                            "The name must comply with the OpenTelemetry specification.");
                     }
                     else
                     {
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
-                        metricStreamIdentity.InstrumentName,
-                        metricStreamIdentity.MeterName,
-                        "View name is invalid.",
-                        "The name must comply with the OpenTelemetry specification.");
+                            metricStreamIdentity.InstrumentName,
+                            metricStreamIdentity.MeterName,
+                            "View name is invalid.",
+                            "The name must comply with the OpenTelemetry specification.");
                     }
 
                     continue;
