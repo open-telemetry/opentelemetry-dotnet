@@ -105,10 +105,7 @@ public static class MeterProviderBuilderExtensions
     {
         Guard.ThrowIfNull(instrumentName);
 
-        if (!MeterProviderBuilderSdk.IsValidInstrumentName(name))
-        {
-            throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
-        }
+        Guard.ThrowIfInvalidCustomViewName(name);
 
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
 #if NET || NETSTANDARD2_1_OR_GREATER
