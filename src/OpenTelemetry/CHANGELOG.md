@@ -24,6 +24,7 @@ Notes](../../RELEASENOTES.md).
 * Moved the `InstrumentNameRegex` from `MeterProviderBuilderSdk` to `Guard`.
   This regex is used to validate the view and instrument name. If you overwrite
   the validation regex using reflection you have to update the code.
+  ([#6457](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6457))
 
 ## 1.12.0
 
