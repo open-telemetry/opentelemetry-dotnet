@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Text;
 using Microsoft.Extensions.Configuration;
 
 namespace OpenTelemetry.Resources;
@@ -38,15 +39,70 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
         string[] rawAttributes = resourceAttributes.Split(AttributeListSplitter);
         foreach (string rawKeyValuePair in rawAttributes)
         {
-            string[] keyValuePair = rawKeyValuePair.Split(AttributeKeyValueSplitter);
-            if (keyValuePair.Length != 2)
+            var indexOfFirstEquals = rawKeyValuePair.IndexOf(AttributeKeyValueSplitter.ToString(), StringComparison.Ordinal);
+            if (indexOfFirstEquals == -1)
             {
                 continue;
             }
 
-            attributes.Add(new KeyValuePair<string, object>(keyValuePair[0].Trim(), keyValuePair[1].Trim()));
+            var key = rawKeyValuePair.Substring(0, indexOfFirstEquals).Trim();
+            var value = rawKeyValuePair.Substring(indexOfFirstEquals + 1).Trim();
+
+            if (!IsValidKeyValuePair(key, value))
+            {
+                continue;
+            }
+
+            var decodedValue = DecodeValue(value);
+
+            attributes.Add(new KeyValuePair<string, object>(key, decodedValue));
         }
 
         return attributes;
     }
+
+    private static bool IsValidKeyValuePair(string key, string value) =>
+        key.All(c => c <= 127) && !string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value);
+
+    private static string DecodeValue(string baggageEncoded)
+    {
+        var bytes = new List<byte>();
+        for (int i = 0; i < baggageEncoded.Length; i++)
+        {
+            if (baggageEncoded[i] == '%' && i + 2 < baggageEncoded.Length && IsHex(baggageEncoded[i + 1]) && IsHex(baggageEncoded[i + 2]))
+            {
+                string hex = baggageEncoded.Substring(i + 1, 2);
+                bytes.Add(Convert.ToByte(hex, 16));
+
+                i += 2;
+            }
+            else if (baggageEncoded[i] == '%')
+            {
+                return baggageEncoded;
+            }
+            else
+            {
+                if (!IsBaggageOctet(baggageEncoded[i]))
+                {
+                    return baggageEncoded;
+                }
+
+                bytes.Add((byte)baggageEncoded[i]);
+            }
+        }
+
+        return new UTF8Encoding(false, false).GetString(bytes.ToArray());
+    }
+
+    private static bool IsHex(char c) =>
+        (c >= '0' && c <= '9') ||
+        (c >= 'a' && c <= 'f') ||
+        (c >= 'A' && c <= 'F');
+
+    private static bool IsBaggageOctet(char c) =>
+    c == 0x21 ||
+    (c >= 0x23 && c <= 0x2B) ||
+    (c >= 0x2D && c <= 0x3A) ||
+    (c >= 0x3C && c <= 0x5B) ||
+    (c >= 0x5D && c <= 0x7E);
 }

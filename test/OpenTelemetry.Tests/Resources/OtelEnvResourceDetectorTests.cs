@@ -86,4 +86,99 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
         Assert.Contains(new KeyValuePair<string, object>("Key1", "Val1"), resource.Attributes);
         Assert.Contains(new KeyValuePair<string, object>("Key2", "Val2"), resource.Attributes);
     }
+
+    [Fact]
+    public void OtelEnvResource_InvalidValueEncoding()
+    {
+        // Arrange
+        var envVarValue = "key=invalid%encoding";
+        Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
+        var resource = new OtelEnvResourceDetector(
+            new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            .Detect();
+
+        // Assert
+        Assert.NotEqual(Resource.Empty, resource);
+        Assert.Single(resource.Attributes);
+        Assert.Contains(new KeyValuePair<string, object>("key", "invalid%encoding"), resource.Attributes);
+    }
+
+    [Fact]
+    public void OtelEnvResource_InvalidKeyEncoding()
+    {
+        // Arrange
+        var envVarValue = "Amélie=value";
+        Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
+        var resource = new OtelEnvResourceDetector(
+            new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            .Detect();
+
+        // Assert
+        Assert.NotEqual(Resource.Empty, resource);
+        Assert.Empty(resource.Attributes);
+    }
+
+    [Fact]
+    public void OtelEnvResource_ValidPercentEncodedValue()
+    {
+        // Arrange
+        var envVarValue = "key=Am%C3%A9lie"; // "Amélie" with é encoded
+        Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
+        var resource = new OtelEnvResourceDetector(
+            new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            .Detect();
+
+        // Assert
+        Assert.NotEqual(Resource.Empty, resource);
+        Assert.Single(resource.Attributes);
+        Assert.Contains(new KeyValuePair<string, object>("key", "Amélie"), resource.Attributes);
+    }
+
+    [Fact]
+    public void OtelEnvResource_ValidValueEncodingWithEqualSign()
+    {
+        // Arrange
+        var envVarValue = "key1=value1,key2=value2==3";
+        Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
+        var resource = new OtelEnvResourceDetector(
+            new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            .Detect();
+
+        // Assert
+        Assert.NotEqual(Resource.Empty, resource);
+        Assert.Contains(new KeyValuePair<string, object>("key1", "value1"), resource.Attributes);
+        Assert.Contains(new KeyValuePair<string, object>("key2", "value2==3"), resource.Attributes);
+    }
+
+    [Fact]
+    public void OtelEnvResource_EmptyValue()
+    {
+        // Arrange
+        var envVarValue = "key1=,key2=val2";
+        Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
+        var resource = new OtelEnvResourceDetector(
+            new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            .Detect();
+
+        // Assert
+        Assert.NotEqual(Resource.Empty, resource);
+        Assert.Single(resource.Attributes);
+        Assert.Contains(new KeyValuePair<string, object>("key2", "val2"), resource.Attributes);
+    }
+
+    [Fact]
+    public void OtelEnvResource_EmptyKey()
+    {
+        // Arrange
+        var envVarValue = "=val1,key2=val2";
+        Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
+        var resource = new OtelEnvResourceDetector(
+            new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            .Detect();
+
+        // Assert
+        Assert.NotEqual(Resource.Empty, resource);
+        Assert.Single(resource.Attributes);
+        Assert.Contains(new KeyValuePair<string, object>("key2", "val2"), resource.Attributes);
+    }
 }
