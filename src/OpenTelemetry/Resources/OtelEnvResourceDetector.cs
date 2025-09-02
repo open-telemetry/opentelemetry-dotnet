@@ -78,13 +78,13 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
             }
             else if (baggageEncoded[i] == '%')
             {
-                return baggageEncoded;
+                return baggageEncoded; // Bad percent triplet -> return original value
             }
             else
             {
                 if (!IsBaggageOctet(baggageEncoded[i]))
                 {
-                    return baggageEncoded;
+                    return baggageEncoded; // non-encoded character not baggage octet encoded -> return original value
                 }
 
                 bytes.Add((byte)baggageEncoded[i]);

@@ -88,7 +88,7 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
     }
 
     [Fact]
-    public void OtelEnvResource_InvalidValueEncoding()
+    public void OtelEnvResource_InvalidValueEncoding_InEnvVar()
     {
         // Arrange
         var envVarValue = "key=invalid%encoding";
@@ -104,7 +104,7 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
     }
 
     [Fact]
-    public void OtelEnvResource_InvalidKeyEncoding()
+    public void OtelEnvResource_InvalidKeyEncoding_InEnvVar()
     {
         // Arrange
         var envVarValue = "Amélie=value";
@@ -119,7 +119,7 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
     }
 
     [Fact]
-    public void OtelEnvResource_ValidPercentEncodedValue()
+    public void OtelEnvResource_ValidPercentEncodedValue_InEnvVar()
     {
         // Arrange
         var envVarValue = "key=Am%C3%A9lie"; // "Amélie" with é encoded
@@ -135,7 +135,7 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
     }
 
     [Fact]
-    public void OtelEnvResource_ValidValueEncodingWithEqualSign()
+    public void OtelEnvResource_ValidValueEncodingWithEqualSign_InEnvVar()
     {
         // Arrange
         var envVarValue = "key1=value1,key2=value2==3";
@@ -151,7 +151,7 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
     }
 
     [Fact]
-    public void OtelEnvResource_EmptyValue()
+    public void OtelEnvResource_EmptyValue_InEnvVar()
     {
         // Arrange
         var envVarValue = "key1=,key2=val2";
@@ -167,7 +167,7 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
     }
 
     [Fact]
-    public void OtelEnvResource_EmptyKey()
+    public void OtelEnvResource_EmptyKey_InEnvVar()
     {
         // Arrange
         var envVarValue = "=val1,key2=val2";
