@@ -6,7 +6,7 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Added decoding of the `OTEL_RESOURCE_ATTRIBUTES` variable according to the spec,
+* Added decoding of the `OTEL_RESOURCE_ATTRIBUTES` variable according to the specification,
   adhering to the [W3C Baggage](https://github.com/w3c/baggage/blob/main/baggage/HTTP_HEADER_FORMAT.md)
   format.
   ([#6461](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6461))
