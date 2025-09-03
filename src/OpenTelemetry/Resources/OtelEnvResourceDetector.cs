@@ -39,7 +39,7 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
         string[] rawAttributes = resourceAttributes.Split(AttributeListSplitter);
         foreach (string rawKeyValuePair in rawAttributes)
         {
-#if NETSTANDARD2_1 || NET8_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET
             var indexOfFirstEquals = rawKeyValuePair.IndexOf(AttributeKeyValueSplitter.ToString(), StringComparison.Ordinal);
 #else
             var indexOfFirstEquals = rawKeyValuePair.IndexOf(AttributeKeyValueSplitter);
