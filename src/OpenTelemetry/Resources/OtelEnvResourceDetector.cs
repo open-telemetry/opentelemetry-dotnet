@@ -39,7 +39,11 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
         string[] rawAttributes = resourceAttributes.Split(AttributeListSplitter);
         foreach (string rawKeyValuePair in rawAttributes)
         {
+#if NETSTANDARD2_1 || NET8_0_OR_GREATER
             var indexOfFirstEquals = rawKeyValuePair.IndexOf(AttributeKeyValueSplitter.ToString(), StringComparison.Ordinal);
+#else
+            var indexOfFirstEquals = rawKeyValuePair.IndexOf(AttributeKeyValueSplitter);
+#endif
             if (indexOfFirstEquals == -1)
             {
                 continue;
@@ -62,7 +66,7 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
     }
 
     private static bool IsValidKeyValuePair(string key, string value) =>
-        key.All(c => c <= 127) && !string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value);
+        !string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value) && key.All(c => c <= 127);
 
     private static string DecodeValue(string baggageEncoded)
     {
