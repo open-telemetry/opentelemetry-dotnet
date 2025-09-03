@@ -87,12 +87,15 @@ jobs:
         if-no-files-found: error
 
     - name: Publish MyGet
+      working-directory: ./artifacts/package/release
       env:
         MYGET_TOKEN_EXISTS: ${{ secrets.MYGET_TOKEN != '' }}
+        API_KEY: ${{ secrets.MYGET_TOKEN }}
+        SOURCE: https://www.myget.org/F/opentelemetry/api/v2/package
       if: env.MYGET_TOKEN_EXISTS == 'true' # Skip MyGet publish if run on a fork without the secret
+      shell: pwsh
       run: |
-        nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
-        nuget push ./artifacts/package/release/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
+        dotnet nuget push *.nupkg --api-key ${env:API_KEY} --skip-duplicate --source ${env:SOURCE}
 
   post-build:
     runs-on: ubuntu-22.04
