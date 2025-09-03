@@ -50,21 +50,6 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
     [InlineData("key=a%E0%80Am%C3%A9lie", new string[] { "key" }, new string[] { "a��Amélie" })]
     public void OtelEnvResource_EnvVar_Validation(string envVarValue, string[] expectedKeys, string[] expectedValues)
     {
-#if NET
-        Assert.NotNull(expectedKeys);
-        Assert.NotNull(expectedValues);
-#else
-        if (expectedKeys == null)
-        {
-            throw new ArgumentNullException(nameof(expectedKeys));
-        }
-
-        if (expectedValues == null)
-        {
-            throw new ArgumentNullException(nameof(expectedValues));
-        }
-#endif
-
         // Arrange
         Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
         var resource = new OtelEnvResourceDetector(
