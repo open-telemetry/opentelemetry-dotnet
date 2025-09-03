@@ -133,7 +133,7 @@ jobs:
         CreateDraftRelease `
           -gitRepository '${{ github.repository }}' `
           -tag '${{ github.ref_name }}' `
-          -releaseFiles '${{ github.workspace }}/artifacts/${{ github.ref_name }}-packages.zip#Packages'
+          -releaseFiles '${{ github.workspace }}/artifacts/${{ github.ref_name }}-packages.zip'
 
     - name: Post notice when packages are ready
       shell: pwsh
