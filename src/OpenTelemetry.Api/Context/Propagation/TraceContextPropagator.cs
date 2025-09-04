@@ -173,7 +173,7 @@ public class TraceContextPropagator : TextMapPropagator
 
         try
         {
-            traceId = ActivityTraceId.CreateFromString(traceparent.AsSpan().Slice(VersionPrefixIdLength, TraceIdLength));
+            traceId = ActivityTraceId.CreateFromString(traceparent.AsSpan(VersionPrefixIdLength, TraceIdLength));
         }
         catch (ArgumentOutOfRangeException)
         {
@@ -189,7 +189,7 @@ public class TraceContextPropagator : TextMapPropagator
         byte optionsLowByte;
         try
         {
-            spanId = ActivitySpanId.CreateFromString(traceparent.AsSpan().Slice(VersionAndTraceIdLength, SpanIdLength));
+            spanId = ActivitySpanId.CreateFromString(traceparent.AsSpan(VersionAndTraceIdLength, SpanIdLength));
             _ = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength]); // to verify if there is no bad chars on options position
             optionsLowByte = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength + 1]);
         }

@@ -47,7 +47,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         this.ExportIntervalMilliseconds = exportIntervalMilliseconds;
         this.ExportTimeoutMilliseconds = exportTimeoutMilliseconds;
 
-        this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
+        this.exporterThread = new Thread(this.ExporterProc)
         {
             IsBackground = true,
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
