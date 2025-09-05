@@ -39,6 +39,6 @@ jobs:
         if: env.MEMBER_FOUND == 'false'
         run: |
           USERNAME=$(jq -r '.pull_request.user.login' "$GITHUB_EVENT_PATH")
-          gh pr comment ${PR_NUM} --repo open-telemetry/opentelemetry-dotnet --body "Thank you for your contribution @${USERNAME}! 🎉 We would like to hear from you about your experience contributing to OpenTelemetry by taking a few minutes to fill out this [survey](${SURVEY_URL})."
+          gh pr comment ${PR_NUM} --repo open-telemetry/opentelemetry-dotnet --body "Thank you for your contribution @${USERNAME}! :tada: We would like to hear from you about your experience contributing to OpenTelemetry by taking a few minutes to fill out this [survey](${SURVEY_URL})."
         env:
           GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
