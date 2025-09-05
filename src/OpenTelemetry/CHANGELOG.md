@@ -21,6 +21,9 @@ Notes](../../RELEASENOTES.md).
   }
   ```
 
+* Moved the `InstrumentNameRegex` from `MeterProviderBuilderSdk` to `Guard`.
+  ([#6457](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6457))
+
 ## 1.12.0
 
 Released 2025-Apr-29
