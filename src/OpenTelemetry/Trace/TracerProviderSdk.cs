@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -458,7 +459,7 @@ internal sealed class TracerProviderSdk : TracerProvider
     private static double ReadTraceIdRatio(IConfiguration configuration)
     {
         if (configuration.TryGetStringValue(TracesSamplerArgConfigKey, out var configValue) &&
-                double.TryParse(configValue, out var traceIdRatio))
+                double.TryParse(configValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var traceIdRatio))
         {
             return traceIdRatio;
         }
