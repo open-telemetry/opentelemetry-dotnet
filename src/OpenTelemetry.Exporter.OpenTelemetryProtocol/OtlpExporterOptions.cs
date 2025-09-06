@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Globalization;
+
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -137,6 +139,9 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
     /// <inheritdoc/>
+    public bool CompressPayload { get; set; }
+
+    /// <inheritdoc/>
     public Func<HttpClient> HttpClientFactory
     {
         get => this.httpClientFactory ?? this.DefaultHttpClientFactory;
@@ -179,7 +184,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         bool appendSignalPathToEndpoint,
         string protocolEnvVarKey,
         string headersEnvVarKey,
-        string timeoutEnvVarKey)
+        string timeoutEnvVarKey,
+        string compressPayloadEnvVarKey)
     {
         if (configuration.TryGetUriValue(OpenTelemetryProtocolExporterEventSource.Log, endpointEnvVarKey, out var endpoint))
         {
@@ -204,6 +210,18 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         if (configuration.TryGetIntValue(OpenTelemetryProtocolExporterEventSource.Log, timeoutEnvVarKey, out var timeout))
         {
             this.TimeoutMilliseconds = timeout;
+        }
+
+        if (configuration.TryGetStringValue(compressPayloadEnvVarKey, out var compressPayload))
+        {
+            if (string.Equals(compressPayload.Trim(), "gzip", StringComparison.OrdinalIgnoreCase))
+            {
+                this.CompressPayload = true;
+            }
+            else if (!string.Equals(compressPayload.Trim(), "none", StringComparison.OrdinalIgnoreCase))
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.InvalidConfigurationValue(compressPayloadEnvVarKey, compressPayload);
+            }
         }
     }
 
@@ -250,7 +268,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 appendSignalPathToEndpoint: true,
                 OtlpSpecConfigDefinitions.DefaultProtocolEnvVarName,
                 OtlpSpecConfigDefinitions.DefaultHeadersEnvVarName,
-                OtlpSpecConfigDefinitions.DefaultTimeoutEnvVarName);
+                OtlpSpecConfigDefinitions.DefaultTimeoutEnvVarName,
+                OtlpSpecConfigDefinitions.DefaultCompressionEnvVarName);
         }
         else if (configurationType == OtlpExporterOptionsConfigurationType.Logs)
         {
@@ -260,7 +279,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 appendSignalPathToEndpoint: false,
                 OtlpSpecConfigDefinitions.LogsProtocolEnvVarName,
                 OtlpSpecConfigDefinitions.LogsHeadersEnvVarName,
-                OtlpSpecConfigDefinitions.LogsTimeoutEnvVarName);
+                OtlpSpecConfigDefinitions.LogsTimeoutEnvVarName,
+                OtlpSpecConfigDefinitions.LogsCompressionEnvVarName);
         }
         else if (configurationType == OtlpExporterOptionsConfigurationType.Metrics)
         {
@@ -270,7 +290,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 appendSignalPathToEndpoint: false,
                 OtlpSpecConfigDefinitions.MetricsProtocolEnvVarName,
                 OtlpSpecConfigDefinitions.MetricsHeadersEnvVarName,
-                OtlpSpecConfigDefinitions.MetricsTimeoutEnvVarName);
+                OtlpSpecConfigDefinitions.MetricsTimeoutEnvVarName,
+                OtlpSpecConfigDefinitions.MetricsCompressionEnvVarName);
         }
         else if (configurationType == OtlpExporterOptionsConfigurationType.Traces)
         {
@@ -280,7 +301,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 appendSignalPathToEndpoint: false,
                 OtlpSpecConfigDefinitions.TracesProtocolEnvVarName,
                 OtlpSpecConfigDefinitions.TracesHeadersEnvVarName,
-                OtlpSpecConfigDefinitions.TracesTimeoutEnvVarName);
+                OtlpSpecConfigDefinitions.TracesTimeoutEnvVarName,
+                OtlpSpecConfigDefinitions.TracesCompressionEnvVarName);
         }
         else
         {

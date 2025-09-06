@@ -4,6 +4,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.IO.Compression;
 using System.Net.Http.Headers;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -18,6 +19,8 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
         : base(options, httpClient, signalPath)
     {
     }
+
+    protected override string? ContentEncodingHeader => "gzip";
 
     internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
 
@@ -46,5 +49,20 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
             return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: null, exception: ex);
         }
+    }
+
+    protected override byte[] Compress(byte[] data, int contentLength)
+    {
+        using var compressedStream = new MemoryStream();
+        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Optimal))
+        {
+#if NET462 || NETSTANDARD2_0
+            gzipStream.Write(data.ToArray(), 0, data.Length);
+#else
+            gzipStream.Write(data);
+#endif
+        }
+
+        return compressedStream.ToArray();
     }
 }

@@ -44,9 +44,12 @@ internal abstract class OtlpExportClient : IExportClient
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
         this.HttpClient = httpClient;
+        this.CompressionEnabled = options.CompressPayload;
     }
 
     internal HttpClient HttpClient { get; }
+
+    internal bool CompressionEnabled { get; }
 
     internal Uri Endpoint { get; }
 
@@ -55,6 +58,8 @@ internal abstract class OtlpExportClient : IExportClient
     internal abstract MediaTypeHeaderValue MediaTypeHeader { get; }
 
     internal virtual bool RequireHttp2 => false;
+
+    protected abstract string? ContentEncodingHeader { get; }
 
     public abstract ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default);
 
@@ -70,26 +75,37 @@ internal abstract class OtlpExportClient : IExportClient
         var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint);
 
         if (this.RequireHttp2)
-        {
-            request.Version = Http2RequestVersion;
+            {
+                request.Version = Http2RequestVersion;
 
 #if NET6_0_OR_GREATER
             request.VersionPolicy = HttpVersionPolicy.RequestVersionExact;
 #endif
-        }
+            }
 
         foreach (var header in this.Headers)
         {
             request.Headers.Add(header.Key, header.Value);
         }
 
-        // TODO: Support compression.
+        var data = buffer;
 
-        request.Content = new ByteArrayContent(buffer, 0, contentLength);
+        if (this.CompressionEnabled)
+        {
+            data = this.Compress(buffer, contentLength);
+            if (this.ContentEncodingHeader != null)
+            {
+                request.Headers.Add("Content-Encoding", this.ContentEncodingHeader);
+            }
+        }
+
+        request.Content = new ByteArrayContent(data, 0, data.Length);
         request.Content.Headers.ContentType = this.MediaTypeHeader;
 
         return request;
     }
+
+    protected abstract byte[] Compress(byte[] data, int contentLength);
 
     protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
     {

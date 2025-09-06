@@ -4,6 +4,8 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Buffers.Binary;
+using System.IO.Compression;
 using System.Net.Http.Headers;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
@@ -32,6 +34,8 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
 
     internal override bool RequireHttp2 => true;
+
+    protected override string? ContentEncodingHeader => null;
 
     /// <inheritdoc/>
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
@@ -156,6 +160,29 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
             return DefaultExceptionExportClientGrpcResponse;
         }
+    }
+
+    protected override byte[] Compress(byte[] data, int contentLength)
+    {
+        using var compressedStream = new MemoryStream();
+        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Optimal))
+        {
+#if NET462 || NETSTANDARD2_0
+            gzipStream.Write(data.ToArray(), 0, data.Length);
+#else
+            gzipStream.Write(data);
+#endif
+        }
+
+        var compressedDataLength = compressedStream.Position;
+        var payload = new byte[compressedDataLength + 5];
+        using var payloadStream = new MemoryStream(payload);
+        compressedStream.WriteTo(payloadStream);
+
+        payload[0] = 1;
+        BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(1, 4), (uint)compressedDataLength);
+
+        return payload;
     }
 
     private static bool IsTransientNetworkError(HttpRequestException ex)
