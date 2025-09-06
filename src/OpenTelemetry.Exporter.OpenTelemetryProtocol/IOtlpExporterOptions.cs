@@ -70,6 +70,15 @@ internal interface IOtlpExporterOptions
     int TimeoutMilliseconds { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to compress the payload.
+    /// Currently gzip is the only supported compression method.
+    /// Note: Refer to the  <see
+    /// href="https://opentelemetry.io/docs/specs/otlp/#protocol-details">
+    /// OpenTelemetry Specification</see> for details />.
+    /// </summary>
+    bool CompressPayload { get; set; }
+
+    /// <summary>
     /// Gets or sets the factory function called to create the <see
     /// cref="HttpClient"/> instance that will be used at runtime to
     /// transmit telemetry over HTTP. The returned instance will be reused
