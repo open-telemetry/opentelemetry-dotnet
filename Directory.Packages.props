@@ -94,7 +94,7 @@
     <PackageVersion Include="Grpc.Net.Client" Version="[2.52.0,3.0)" />
     <PackageVersion Include="JunitXml.TestLogger" Version="6.1.0" />
     <PackageVersion Include="Microsoft.CSharp" Version="[4.7.0]" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.11.0-beta1.23525.2]" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(LatestRuntimeOutOfBandVer)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(LatestRuntimeOutOfBandVer)" />
