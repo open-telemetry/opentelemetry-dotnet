@@ -35,7 +35,6 @@ services:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: /cfg/run-test.sh
     environment:
-      DOTNET_SYSTEM_NET_SECURITY_NOREVOCATIONCHECKBYDEFAULT: 'true'
       OTEL_COLLECTOR_HOSTNAME: otel-collector
       OTEL_MOCK_COLLECTOR_HOSTNAME: mock-otel-collector
     depends_on:
