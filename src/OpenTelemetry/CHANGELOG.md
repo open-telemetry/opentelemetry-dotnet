@@ -6,8 +6,8 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Added a verification to ensure that a `MetricReader` can only be registered to a
-  single `MeterProvider`, as required by the OpenTelemetry specification.
+* Added a verification to ensure that a `MetricReader` can only be registered
+  to a single `MeterProvider`, as required by the OpenTelemetry specification.
   ([#6458](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6458))
 
 * Added `FormatMessage` configuration option to self-diagnostics feature. When
