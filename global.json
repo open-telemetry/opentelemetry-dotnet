@@ -2,7 +2,7 @@
   "sdk": {
     "version": "10.0.100-rc.1.25451.107",
     "allowPrerelease": false,
-    "rollForward": "latestFeature",
+    "rollForward": "latestMajor",
     "paths": [ ".dotnet", "$host$" ],
     "errorMessage": "The required version of the .NET SDK could not be found."
   }
