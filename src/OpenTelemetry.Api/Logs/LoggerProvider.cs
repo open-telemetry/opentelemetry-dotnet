@@ -1,12 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NETSTANDARD2_1_OR_GREATER || NET
 using System.Diagnostics.CodeAnalysis;
-#endif
-#if EXPOSE_EXPERIMENTAL_FEATURES && NET
 using OpenTelemetry.Internal;
-#endif
 
 namespace OpenTelemetry.Logs;
 
@@ -30,9 +26,7 @@ public class LoggerProvider : BaseProvider
     /// </summary>
     /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
     /// <returns><see cref="Logger"/> instance.</returns>
-#if NET
     [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
     public
 #else
     internal
@@ -47,9 +41,7 @@ public class LoggerProvider : BaseProvider
     /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
-#if NET
     [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
     public
 #else
     internal
@@ -65,9 +57,7 @@ public class LoggerProvider : BaseProvider
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <param name="version">Optional version of the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
-#if NET
     [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
     public
 #else
     internal
@@ -92,9 +82,7 @@ public class LoggerProvider : BaseProvider
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <param name="logger"><see cref="Logger"/>.</param>
     /// <returns><see langword="true"/> if the logger was created.</returns>
-#if NET
     [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
     protected
 #else
     internal
