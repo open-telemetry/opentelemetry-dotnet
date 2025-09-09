@@ -75,13 +75,13 @@ internal abstract class OtlpExportClient : IExportClient
         var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint);
 
         if (this.RequireHttp2)
-            {
-                request.Version = Http2RequestVersion;
+        {
+            request.Version = Http2RequestVersion;
 
 #if NET6_0_OR_GREATER
             request.VersionPolicy = HttpVersionPolicy.RequestVersionExact;
 #endif
-            }
+        }
 
         foreach (var header in this.Headers)
         {
