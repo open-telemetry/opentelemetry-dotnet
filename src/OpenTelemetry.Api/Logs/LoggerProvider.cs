@@ -1,8 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
+#if NETSTANDARD2_1_OR_GREATER || NET || EXPOSE_EXPERIMENTAL_FEATURES
 using System.Diagnostics.CodeAnalysis;
+#endif
+#if EXPOSE_EXPERIMENTAL_FEATURES
 using OpenTelemetry.Internal;
 #endif
 
