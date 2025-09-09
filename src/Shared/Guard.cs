@@ -54,12 +54,14 @@ namespace OpenTelemetry.Internal
         // fields. See: https://github.com/dotnet/runtime/issues/11571.
         // Customers: This is not guaranteed to work forever. We may change this
         // mechanism in the future do this at your own risk.
-#if NET7_0_OR_GREATER
+#if NET
         [GeneratedRegex(@"^[a-z][a-z0-9-._/]{0,254}$", RegexOptions.IgnoreCase)]
         public static partial Regex InstrumentNameRegex();
 #else
-        public static Regex InstrumentNameRegex { get; set; } = new(
+        private static readonly Regex InstrumentNameRegexField = new(
             @"^[a-z][a-z0-9-._/]{0,254}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        public static Regex InstrumentNameRegex() => InstrumentNameRegexField;
 #endif
 
         /// <summary>
@@ -241,11 +243,8 @@ namespace OpenTelemetry.Internal
             {
                 return false;
             }
-#if NET7_0_OR_GREATER
+
             return InstrumentNameRegex().IsMatch(instrumentName);
-#else
-            return InstrumentNameRegex.IsMatch(instrumentName);
-#endif
         }
 
         /// <summary>
@@ -263,11 +262,8 @@ namespace OpenTelemetry.Internal
             {
                 return true;
             }
-#if NET7_0_OR_GREATER
+
             return InstrumentNameRegex().IsMatch(customViewName);
-#else
-            return InstrumentNameRegex.IsMatch(customViewName);
-#endif
         }
 
         [DebuggerHidden]
