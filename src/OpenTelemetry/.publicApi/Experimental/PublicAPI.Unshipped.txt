@@ -1,27 +1,27 @@
-abstract OpenTelemetry.Metrics.ExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
-abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<double> measurement) -> void
-abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<long> measurement) -> void
+[OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
+[OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<double> measurement) -> void
+[OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<long> measurement) -> void
 OpenTelemetry.Logs.LogRecord.Logger.get -> OpenTelemetry.Logs.Logger!
 OpenTelemetry.Logs.LogRecord.Severity.get -> OpenTelemetry.Logs.LogRecordSeverity?
 OpenTelemetry.Logs.LogRecord.Severity.set -> void
 OpenTelemetry.Logs.LogRecord.SeverityText.get -> string?
 OpenTelemetry.Logs.LogRecord.SeverityText.set -> void
-OpenTelemetry.Metrics.ExemplarMeasurement<T>
-OpenTelemetry.Metrics.ExemplarMeasurement<T>.ExemplarMeasurement() -> void
-OpenTelemetry.Metrics.ExemplarMeasurement<T>.Tags.get -> System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string!, object?>>
-OpenTelemetry.Metrics.ExemplarMeasurement<T>.Value.get -> T
-OpenTelemetry.Metrics.ExemplarReservoir
-OpenTelemetry.Metrics.ExemplarReservoir.ResetOnCollect.get -> bool
-OpenTelemetry.Metrics.FixedSizeExemplarReservoir
-OpenTelemetry.Metrics.FixedSizeExemplarReservoir.Capacity.get -> int
-OpenTelemetry.Metrics.FixedSizeExemplarReservoir.FixedSizeExemplarReservoir(int capacity) -> void
-OpenTelemetry.Metrics.FixedSizeExemplarReservoir.UpdateExemplar(int exemplarIndex, in OpenTelemetry.Metrics.ExemplarMeasurement<double> measurement) -> void
-OpenTelemetry.Metrics.FixedSizeExemplarReservoir.UpdateExemplar(int exemplarIndex, in OpenTelemetry.Metrics.ExemplarMeasurement<long> measurement) -> void
+[OTEL1004]OpenTelemetry.Metrics.ExemplarMeasurement<T>
+[OTEL1004]OpenTelemetry.Metrics.ExemplarMeasurement<T>.ExemplarMeasurement() -> void
+[OTEL1004]OpenTelemetry.Metrics.ExemplarMeasurement<T>.Tags.get -> System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string!, object?>>
+[OTEL1004]OpenTelemetry.Metrics.ExemplarMeasurement<T>.Value.get -> T
+[OTEL1004]OpenTelemetry.Metrics.ExemplarReservoir
+[OTEL1004]OpenTelemetry.Metrics.ExemplarReservoir.ResetOnCollect.get -> bool
+[OTEL1004]OpenTelemetry.Metrics.FixedSizeExemplarReservoir
+[OTEL1004]OpenTelemetry.Metrics.FixedSizeExemplarReservoir.Capacity.get -> int
+[OTEL1004]OpenTelemetry.Metrics.FixedSizeExemplarReservoir.FixedSizeExemplarReservoir(int capacity) -> void
+[OTEL1004]OpenTelemetry.Metrics.FixedSizeExemplarReservoir.UpdateExemplar(int exemplarIndex, in OpenTelemetry.Metrics.ExemplarMeasurement<double> measurement) -> void
+[OTEL1004]OpenTelemetry.Metrics.FixedSizeExemplarReservoir.UpdateExemplar(int exemplarIndex, in OpenTelemetry.Metrics.ExemplarMeasurement<long> measurement) -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.get -> System.Func<OpenTelemetry.Metrics.ExemplarReservoir?>?
 OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.set -> void
-override sealed OpenTelemetry.Metrics.FixedSizeExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
-static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
-static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> Microsoft.Extensions.Logging.ILoggingBuilder!
-static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> Microsoft.Extensions.Logging.ILoggingBuilder!
-static OpenTelemetry.Sdk.CreateLoggerProviderBuilder() -> OpenTelemetry.Logs.LoggerProviderBuilder!
-virtual OpenTelemetry.Metrics.FixedSizeExemplarReservoir.OnCollected() -> void
+[OTEL1004]override sealed OpenTelemetry.Metrics.FixedSizeExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
+[OTEL1000]static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+[OTEL1000]static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+[OTEL1000]static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+[OTEL1001]static OpenTelemetry.Sdk.CreateLoggerProviderBuilder() -> OpenTelemetry.Logs.LoggerProviderBuilder!
+[OTEL1004]virtual OpenTelemetry.Metrics.FixedSizeExemplarReservoir.OnCollected() -> void
