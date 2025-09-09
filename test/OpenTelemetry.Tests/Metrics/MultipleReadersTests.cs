@@ -3,6 +3,7 @@
 
 using System.Diagnostics.Metrics;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -10,6 +11,96 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public class MultipleReadersTests
 {
+    [Fact]
+    public void ReaderCannotBeRegisteredMoreThanOnce()
+    {
+        var exportedItems = new List<Metric>();
+        using var exporter = new InMemoryExporter<Metric>(exportedItems);
+        using var reader = new BaseExportingMetricReader(exporter);
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+
+        var meterProviderBuilder1 = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader);
+        var meterProviderBuilder2 = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader);
+
+        using var meterProvider1 = meterProviderBuilder1.Build();
+        Assert.Throws<NotSupportedException>(() => meterProviderBuilder2.Build());
+    }
+
+    [Fact]
+    public void MultipleReadersOneCollectsIndependently()
+    {
+        var exportedItems1 = new List<Metric>();
+        var exportedItems2 = new List<Metric>();
+
+        using var exporter1 = new InMemoryExporter<Metric>(exportedItems1);
+        using var exporter2 = new InMemoryExporter<Metric>(exportedItems2);
+        using var reader1 = new BaseExportingMetricReader(exporter1);
+        using var reader2 = new BaseExportingMetricReader(exporter2);
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        var counter = meter.CreateCounter<long>("counter");
+
+        var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader1)
+            .AddReader(reader2);
+
+        using var meterProvider = meterProviderBuilder.Build();
+
+        counter.Add(1);
+
+        reader1.Collect();
+
+        Assert.Single(exportedItems1);
+        Assert.Empty(exportedItems2);
+    }
+
+    [Fact]
+    public void MultipleReadersDifferentTemporality()
+    {
+        var exportedItems1 = new List<Metric>();
+        var exportedItems2 = new List<Metric>();
+
+        using var exporter1 = new InMemoryExporter<Metric>(exportedItems1);
+        using var exporter2 = new InMemoryExporter<Metric>(exportedItems2);
+        using var reader1 = new BaseExportingMetricReader(exporter1);
+        using var reader2 = new BaseExportingMetricReader(exporter2);
+        reader1.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+        reader2.TemporalityPreference = MetricReaderTemporalityPreference.Cumulative;
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+        var counter = meter.CreateCounter<long>("counter");
+
+        var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader1)
+            .AddReader(reader2);
+
+        using var meterProvider = meterProviderBuilder.Build();
+
+        counter.Add(1);
+
+        reader1.Collect();
+        reader2.Collect();
+
+        AssertLongSumValueForMetric(exportedItems1[0], 1);
+        AssertLongSumValueForMetric(exportedItems2[0], 1);
+
+        exportedItems1.Clear();
+
+        counter.Add(10);
+        reader1.Collect();
+        reader2.Collect();
+
+        AssertLongSumValueForMetric(exportedItems1[0], 10);
+        AssertLongSumValueForMetric(exportedItems2[0], 11);
+    }
+
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta, false)]
     [InlineData(MetricReaderTemporalityPreference.Delta, true)]
