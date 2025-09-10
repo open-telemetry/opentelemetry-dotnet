@@ -127,7 +127,7 @@ jobs:
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: token ${ARTIFACT_TOKEN}" \
           -L \
-          -o '${GITHUB_WORKSPACE}/artifacts/${GITHUB_REF_NAME}-packages.zip' \
+          -o "${GITHUB_WORKSPACE}/artifacts/${GITHUB_REF_NAME}-packages.zip" \
           --create-dirs \
           "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip"
 
