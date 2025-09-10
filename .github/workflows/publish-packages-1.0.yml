@@ -91,13 +91,14 @@ jobs:
         if-no-files-found: error
 
     - name: Publish MyGet
+      working-directory: ./artifacts/package/release
       env:
         MYGET_TOKEN_EXISTS: ${{ secrets.MYGET_TOKEN != '' }}
         API_KEY: ${{ secrets.MYGET_TOKEN }}
         SOURCE: https://www.myget.org/F/opentelemetry/api/v2/package
       if: env.MYGET_TOKEN_EXISTS == 'true' # Skip MyGet publish if run on a fork without the secret
       shell: pwsh
-      run: dotnet nuget push "./artifacts/package/release/*.nupkg" --api-key ${env:API_KEY} --skip-duplicate --source ${env:SOURCE}
+      run: dotnet nuget push *.nupkg --api-key ${env:API_KEY} --skip-duplicate --source ${env:SOURCE}
 
   post-build:
     runs-on: ubuntu-22.04
@@ -138,7 +139,7 @@ jobs:
         CreateDraftRelease `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -tag ${env:GITHUB_REF_NAME} `
-          -releaseFiles "${env:GITHUB_WORKSPACE}/artifacts/${env:GITHUB_REF_NAME}-packages.zip#Packages"
+          -releaseFiles "${env:GITHUB_WORKSPACE}/artifacts/${env:GITHUB_REF_NAME}-packages.zip"
 
     - name: Post notice when packages are ready
       shell: pwsh

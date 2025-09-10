@@ -246,11 +246,12 @@ public sealed class LogRecordTests
     {
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
+        var trufflePrice = 299.99;
 
         var food = new Dictionary<string, object>
         {
             ["Name"] = "truffle",
-            ["Price"] = 299.99,
+            ["Price"] = trufflePrice,
         };
         logger.Food(food);
 
@@ -276,16 +277,8 @@ public sealed class LogRecordTests
         Assert.Equal("{Food}", exportedItems[0].Body);
         if (includeFormattedMessage)
         {
-            var prevCulture = CultureInfo.CurrentCulture;
-            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-            try
-            {
-                Assert.Equal("[Name, truffle], [Price, 299.99]", exportedItems[0].FormattedMessage);
-            }
-            finally
-            {
-                CultureInfo.CurrentCulture = prevCulture;
-            }
+            var priceInCurrentCulture = trufflePrice.ToString(CultureInfo.CurrentCulture);
+            Assert.Equal($"[Name, truffle], [Price, {priceInCurrentCulture}]", exportedItems[0].FormattedMessage);
         }
         else
         {
