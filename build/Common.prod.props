@@ -176,10 +176,13 @@
     <ItemGroup>
       <AdditionalFiles Include=".publicApi\Stable\PublicAPI.*.txt" />
       <AdditionalFiles Include=".publicApi\Stable\$(TargetFramework)\PublicAPI.*.txt" />
+      <AdditionalFiles Include=".publicApi\Stable\$([MSBuild]::GetTargetFrameworkIdentifier('$(TargetFramework)'))\PublicAPI.*.txt" />
       <AdditionalFiles Include=".publicApi\Experimental\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
       <AdditionalFiles Include=".publicApi\Experimental\$(TargetFramework)\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
+      <AdditionalFiles Include=".publicApi\Experimental\$([MSBuild]::GetTargetFrameworkIdentifier('$(TargetFramework)'))\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
       <AdditionalFiles Include=".publicApi\PublicAPI.*.txt" />
       <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.*.txt" />
+      <AdditionalFiles Include=".publicApi\$([MSBuild]::GetTargetFrameworkIdentifier('$(TargetFramework)'))\PublicAPI.*.txt" />
     </ItemGroup>
 
     <!-- Note: The '$(BuildNumber)' != '' check here is to reduce log spam in

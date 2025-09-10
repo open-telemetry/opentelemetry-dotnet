@@ -218,6 +218,11 @@ public abstract partial class MetricReader : IDisposable
 
     internal virtual void SetParentProvider(BaseProvider parentProvider)
     {
+        if (this.parentProvider != null && this.parentProvider != parentProvider)
+        {
+            throw new NotSupportedException("A MetricReader must not be registered with multiple MeterProviders.");
+        }
+
         this.parentProvider = parentProvider;
     }
 

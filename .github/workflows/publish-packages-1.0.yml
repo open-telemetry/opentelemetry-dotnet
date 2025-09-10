@@ -46,7 +46,7 @@ jobs:
         fetch-depth: 0
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
 
     - name: Install Cosign
       uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
@@ -87,12 +87,15 @@ jobs:
         if-no-files-found: error
 
     - name: Publish MyGet
+      working-directory: ./artifacts/package/release
       env:
         MYGET_TOKEN_EXISTS: ${{ secrets.MYGET_TOKEN != '' }}
+        API_KEY: ${{ secrets.MYGET_TOKEN }}
+        SOURCE: https://www.myget.org/F/opentelemetry/api/v2/package
       if: env.MYGET_TOKEN_EXISTS == 'true' # Skip MyGet publish if run on a fork without the secret
+      shell: pwsh
       run: |
-        nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
-        nuget push ./artifacts/package/release/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
+        dotnet nuget push *.nupkg --api-key ${env:API_KEY} --skip-duplicate --source ${env:SOURCE}
 
   post-build:
     runs-on: ubuntu-22.04
@@ -130,7 +133,7 @@ jobs:
         CreateDraftRelease `
           -gitRepository '${{ github.repository }}' `
           -tag '${{ github.ref_name }}' `
-          -releaseFiles '${{ github.workspace }}/artifacts/${{ github.ref_name }}-packages.zip#Packages'
+          -releaseFiles '${{ github.workspace }}/artifacts/${{ github.ref_name }}-packages.zip'
 
     - name: Post notice when packages are ready
       shell: pwsh
