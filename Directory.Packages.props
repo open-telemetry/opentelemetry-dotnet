@@ -39,13 +39,13 @@
     <!--
         OTel packages always point to latest stable release.
     -->
-    <PackageVersion Include="OpenTelemetry" Version="[$(OTelLatestStableVer),)" />
-    <PackageVersion Include="OpenTelemetry.Api" Version="[$(OTelLatestStableVer),)" />
-    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="[$(OTelLatestStableVer),)" />
-    <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="[$(OTelLatestStableVer),)" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="[$(OTelLatestStableVer),)" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="[$(OTelLatestStableVer),)" />
-    <PackageVersion Include="OpenTracing" Version="[0.12.1,)" />
+    <PackageVersion Include="OpenTelemetry" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry.Api" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
 
     <!--
         Typically, the latest stable version of System.Diagnostics.DiagnosticSource should be used here because:
