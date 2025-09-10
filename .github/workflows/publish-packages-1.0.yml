@@ -57,7 +57,8 @@ jobs:
       run: dotnet restore ./build/OpenTelemetry.proj -p:RunningDotNetPack=true
 
     - name: dotnet build
-      run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
+      shell: pwsh
+      run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:"BuildNumber=${env:GITHUB_RUN_NUMBER}" -p:RunningDotNetPack=true
 
     - name: Sign DLLs with Cosign Keyless
       shell: pwsh
@@ -76,7 +77,10 @@ jobs:
         }
 
     - name: dotnet pack
-      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:PackTag=${{ github.ref_type == 'tag' && github.ref_name || '' }}
+      shell: pwsh
+      env:
+        PACK_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+      run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:"PackTag=${env:PACK_TAG}"
 
     - name: Publish Artifacts
       id: upload-artifacts
@@ -94,8 +98,7 @@ jobs:
         SOURCE: https://www.myget.org/F/opentelemetry/api/v2/package
       if: env.MYGET_TOKEN_EXISTS == 'true' # Skip MyGet publish if run on a fork without the secret
       shell: pwsh
-      run: |
-        dotnet nuget push *.nupkg --api-key ${env:API_KEY} --skip-duplicate --source ${env:SOURCE}
+      run: dotnet nuget push *.nupkg --api-key ${env:API_KEY} --skip-duplicate --source ${env:SOURCE}
 
   post-build:
     runs-on: ubuntu-22.04
@@ -110,20 +113,23 @@ jobs:
       GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
-    - name: check out code
+    - name: Check out code
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        token: ${{ env.GH_TOKEN }}
 
     - name: Download Artifacts
+      env:
+        ARTIFACT_ID: ${{ needs.build-pack-publish.outputs.artifact-id }}
+        ARTIFACT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         curl \
           -H "Accept: application/vnd.github+json" \
-          -H "Authorization: token ${{ github.token }}" \
+          -H "Authorization: token ${ARTIFACT_TOKEN}" \
           -L \
-          -o '${{ github.workspace }}/artifacts/${{ github.ref_name }}-packages.zip' \
+          -o "${GITHUB_WORKSPACE}/artifacts/${GITHUB_REF_NAME}-packages.zip" \
           --create-dirs \
-          "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ needs.build-pack-publish.outputs.artifact-id }}/zip"
+          "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip"
 
     - name: Create GitHub Release draft
       shell: pwsh
@@ -131,20 +137,21 @@ jobs:
         Import-Module .\build\scripts\post-release.psm1
 
         CreateDraftRelease `
-          -gitRepository '${{ github.repository }}' `
-          -tag '${{ github.ref_name }}' `
-          -releaseFiles '${{ github.workspace }}/artifacts/${{ github.ref_name }}-packages.zip'
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -tag ${env:GITHUB_REF_NAME} `
+          -releaseFiles "${env:GITHUB_WORKSPACE}/artifacts/${env:GITHUB_REF_NAME}-packages.zip"
 
     - name: Post notice when packages are ready
       shell: pwsh
+      env:
+        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        PACKAGES_URL: ${{ needs.build-pack-publish.outputs.artifact-url }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
         TryPostPackagesReadyNoticeOnPrepareReleasePullRequest `
-          -gitRepository '${{ github.repository }}' `
-          -tag '${{ github.ref_name }}' `
-          -tagSha '${{ github.sha }}' `
-          -packagesUrl '${{ needs.build-pack-publish.outputs.artifact-url }}' `
-          -botUserName '${{ needs.automation.outputs.username }}'
-
-
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -tag ${env:GITHUB_REF_NAME} `
+          -tagSha ${env:GITHUB_SHA} `
+          -packagesUrl ${env:PACKAGES_URL} `
+          -botUserName ${env:BOT_USER_NAME}
