@@ -113,7 +113,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     {
 #if NET
         // Use task-based worker for browser platform where threading may be limited
-        if (OperatingSystem.IsBrowser() || !this.useThreads)
+        if (ThreadingHelper.IsThreadingDisabled() || !this.useThreads)
         {
             return new PeriodicExportingMetricReaderTaskWorker(
                 this,
