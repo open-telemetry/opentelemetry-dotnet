@@ -30,23 +30,23 @@ jobs:
     needs: automation
 
     if: |
-      github.event_name == 'issue_comment'
-      && github.event.issue.pull_request
-      && github.event.issue.locked == true
-      && github.event.comment.user.login != needs.automation.outputs.username
-      && contains(github.event.comment.body, '/PushPackages')
-      && startsWith(github.event.issue.title, '[release] Prepare release ')
-      && github.event.issue.pull_request.merged_at
-      && needs.automation.outputs.enabled
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.issue.locked == true &&
+      github.event.comment.user.login != needs.automation.outputs.username &&
+      contains(github.event.comment.body, '/PushPackages') &&
+      startsWith(github.event.issue.title, '[release] Prepare release ') &&
+      github.event.issue.pull_request.merged_at &&
+      needs.automation.outputs.enabled
 
     env:
       GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
 
     steps:
-    - name: check out code
+    - name: Check out code
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        token: ${{ env.GH_TOKEN }}
         ref: ${{ github.event.repository.default_branch }}
 
     - name: Setup .NET
@@ -55,17 +55,21 @@ jobs:
     - name: Push packages and publish release
       shell: pwsh
       env:
+        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
         NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
+        $HasToken = -Not [string]::IsNullOrEmpty($env:NUGET_TOKEN)
         PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest `
-          -gitRepository '${{ github.repository }}' `
-          -pullRequestNumber '${{ github.event.issue.number }}' `
-          -botUserName '${{ needs.automation.outputs.username }}' `
-          -commentUserName '${{ github.event.comment.user.login }}' `
-          -artifactDownloadPath '${{ github.workspace }}/artifacts' `
-          -pushToNuget '${{ secrets.NUGET_TOKEN != '' }}'
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -pullRequestNumber ${env:ISSUE_NUMBER} `
+          -botUserName ${env:BOT_USER_NAME} `
+          -commentUserName ${env:COMMENT_USER_NAME} `
+          -artifactDownloadPath "${env:GITHUB_WORKSPACE}/artifacts" `
+          -pushToNuget $HasToken
 
   post-release-published:
     runs-on: ubuntu-22.04
@@ -74,8 +78,8 @@ jobs:
     - automation
 
     if: |
-      needs.automation.outputs.enabled
-      && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
+      needs.automation.outputs.enabled &&
+      (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
 
     env:
       GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
@@ -87,7 +91,7 @@ jobs:
         # for this work.
         fetch-depth: 0
         ref: ${{ github.event.repository.default_branch }}
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        token: ${{ env.GH_TOKEN }}
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
@@ -97,32 +101,43 @@ jobs:
           (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
           || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
       shell: pwsh
+      env:
+        BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
+        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        TAG: ${{ inputs.tag || github.ref_name }}
+        TARGET_BRANCH: ${{ github.event.repository.default_branch }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
         CreateStableVersionUpdatePullRequest `
-          -gitRepository '${{ github.repository }}' `
-          -tag '${{ inputs.tag || github.ref_name }}' `
-          -targetBranch '${{ github.event.repository.default_branch }}' `
-          -gitUserName '${{ needs.automation.outputs.username }}' `
-          -gitUserEmail '${{ needs.automation.outputs.email }}'
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -tag ${env:TAG} `
+          -targetBranch ${env:TARGET_BRANCH} `
+          -gitUserName ${env:BOT_USER_NAME} `
+          -gitUserEmail ${env:BOT_USER_EMAIL}
 
     - name: Invoke core version update workflow in opentelemetry-dotnet-contrib repository
       if: vars.CONTRIB_REPO
       shell: pwsh
+      env:
+        CONTRIB_REPO: ${{ vars.CONTRIB_REPO }}
+        TAG: ${{ inputs.tag || github.ref_name }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
         InvokeCoreVersionUpdateWorkflowInRemoteRepository `
-          -remoteGitRepository '${{ vars.CONTRIB_REPO }}' `
-          -tag '${{ inputs.tag || github.ref_name }}'
+          -remoteGitRepository ${env:CONTRIB_REPO} `
+          -tag ${env:TAG}
 
     - name: Post notice when release is published
       shell: pwsh
+      env:
+        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        TAG: ${{ inputs.tag || github.ref_name }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
         TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
-          -gitRepository '${{ github.repository }}' `
-          -botUserName '${{ needs.automation.outputs.username }}' `
-          -tag '${{ inputs.tag || github.ref_name }}'
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -botUserName ${env:BOT_USER_NAME} `
+          -tag ${env:TAG}
