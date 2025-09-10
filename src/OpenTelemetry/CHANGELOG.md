@@ -25,6 +25,11 @@ Notes](../../RELEASENOTES.md).
   }
   ```
 
+* Fixed parsing of `OTEL_TRACES_SAMPLER_ARG` decimal values to always use `.`
+  as the delimiter when using the `traceidratio` sampler, preventing
+  locale-specific parsing issues.
+  ([#6444](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6444))
+
 ## 1.12.0
 
 Released 2025-Apr-29
