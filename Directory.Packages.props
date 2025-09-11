@@ -9,7 +9,15 @@
         possible and only deviate (use a specific version) when a package has a
         more specific patch which must be reference directly.
     -->
-    <LatestRuntimeOutOfBandVer>9.0.0</LatestRuntimeOutOfBandVer>
+    <RuntimePackageVersions>9.0.0</RuntimePackageVersions>
+    <SystemDiagnosticsDiagnosticSourceVersion>$(RuntimePackageVersions)</SystemDiagnosticsDiagnosticSourceVersion>
+    <!--
+        For modern .NET runtimes, match the major version of packages to the major version of the runtime.
+        This is to ensure that the NuGet packages that users deploy match the support lifetimes of the .NET version they are using (i.e. LTS vs STS).
+        See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
+    -->
+    <RuntimePackageVersions Condition="'$(TargetFramework)' == 'net8.0'">8.0.0</RuntimePackageVersions>
+    <RuntimePackageVersions Condition="'$(TargetFramework)' == 'net9.0'">9.0.0</RuntimePackageVersions>
 
     <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
     <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>8.0.0</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
@@ -22,19 +30,10 @@
       vulnerability in the NuGet packages that are published from this repository.
   -->
   <ItemGroup>
-    <!--
-        Typically, for the Microsoft.Extensions.* packages relating to DI Abstractions, Hosting Abstractions, and Logging,
-        the latest stable version should be used because:
-        1) Each major version bump will have some new API capabilities (e.g.For Logging, .NET 6 introduced compile-time logging
-          source generation, .NET 8 introduced automatic event id generation).
-        2) Each minor version bump is normally security hotfixes or critical bug fixes.
-        3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
-          these packages even during major version bumps, so compatibility is not a concern here.
-    -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(LatestRuntimeOutOfBandVer)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(RuntimePackageVersions)" />
 
     <!--
         OTel packages always point to latest stable release.
@@ -48,15 +47,11 @@
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
 
     <!--
-        Typically, the latest stable version of System.Diagnostics.DiagnosticSource should be used here because:
-        1) Each major version bump will likely have some new OpenTelemetry capabilities (e.g. .NET 6 introduced Meter
-          API, .NET 7 added UpDownCounter, .NET 8 added Meter/Instrument level attributes support, .NET 9 added
-          Advice/Hint API, etc.).
-        2) Each minor version bump is normally security hotfixes or critical bug fixes.
-        3) The .NET runtime team provides extra backward compatibility guarantee to System.Diagnostics.DiagnosticSource
-          even during major version bumps, so compatibility is not a concern here.
+        System.Diagnostics.DiagnosticSource is exempted from the requirement to match the major version of
+        the runtime so that new APIs and/or semantic conventions are available to all versions of .NET.
+        See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
     -->
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(LatestRuntimeOutOfBandVer)" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -96,10 +91,15 @@
     <PackageVersion Include="Microsoft.CSharp" Version="[4.7.0]" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(RuntimePackageVersions)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(RuntimePackageVersions)" />
+    <!--
+        Microsoft.Extensions.Telemetry.Abstractions is not part of the .NET runtime and is supported
+        at "tip", however the package multi-targets so that its dependencies match the major version
+        of the runtime for each target framework so always uses the latest major version.
+    -->
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="[9.0.0,)" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="[17.13.0,18.0.0)" />
