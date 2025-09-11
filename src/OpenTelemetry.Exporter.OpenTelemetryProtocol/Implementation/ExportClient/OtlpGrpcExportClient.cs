@@ -15,6 +15,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 internal sealed class OtlpGrpcExportClient : OtlpExportClient
 {
     public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
+    private const int GrpcMessageHeaderSize = 5;
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
     private static readonly MediaTypeHeaderValue MediaHeaderValue = new("application/grpc");
 
@@ -42,6 +43,15 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     {
         try
         {
+            // A gRPC message consists of 3 parts:
+            // byte 0     - Compression flag (0 = not compressed, 1 = compressed).
+            // bytes 1-4  - Message length in big-endian format (length of the serialized data only).
+            // bytes 5+   - Protobuf-encoded payload.
+            Span<byte> data = new Span<byte>(buffer, 1, 4);
+            var dataLength = buffer.Length - GrpcMessageHeaderSize;
+            BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
+            buffer[0] = this.CompressionEnabled ? (byte)1 : (byte)0;
+
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
 
             // TE is required by some servers, e.g. C Core.
@@ -165,25 +175,39 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     protected override byte[] Compress(byte[] data, int contentLength)
     {
         using var compressedStream = new MemoryStream();
-        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Optimal))
+        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Optimal, leaveOpen: true))
         {
-#if NET462 || NETSTANDARD2_0
-            gzipStream.Write(data.ToArray(), 0, data.Length);
-#else
-            gzipStream.Write(data);
-#endif
+            gzipStream.Write(data, GrpcMessageHeaderSize, data.Length - GrpcMessageHeaderSize);
+// #if NET462 || NETSTANDARD2_0
+            //             gzipStream.Write(data, 5, data.Length - 5);
+            // #else
+            //             gzipStream.Write(data, 5, data.Length - 5);
+            // #endif
         }
 
         var compressedDataLength = compressedStream.Position;
-        var payload = new byte[compressedDataLength + 5];
+        var payload = new byte[compressedDataLength + GrpcMessageHeaderSize];
         using var payloadStream = new MemoryStream(payload);
+        payloadStream.Position = GrpcMessageHeaderSize;
         compressedStream.WriteTo(payloadStream);
 
         payload[0] = 1;
         BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(1, 4), (uint)compressedDataLength);
 
         return payload;
-    }
+
+        // var compressedData = compressedStream.ToArray();
+        //     var compressedDataLength = compressedData.Length;
+
+        //     // Allocate gRPC frame: 1 flag + 4 length prefix + body
+        //     var payload = new byte[compressedDataLength + 5];
+        //     payload[0] = 1;
+        //     BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(1, 4), (uint)compressedDataLength);
+
+        //     Buffer.BlockCopy(compressedData, 0, payload, 5, compressedDataLength);
+
+        //     return payload;
+        }
 
     private static bool IsTransientNetworkError(HttpRequestException ex)
     {

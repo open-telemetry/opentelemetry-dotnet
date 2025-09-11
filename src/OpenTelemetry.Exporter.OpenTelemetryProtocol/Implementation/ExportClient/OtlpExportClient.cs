@@ -93,14 +93,15 @@ internal abstract class OtlpExportClient : IExportClient
         if (this.CompressionEnabled)
         {
             data = this.Compress(buffer, contentLength);
-            if (this.ContentEncodingHeader != null)
-            {
-                request.Headers.Add("Content-Encoding", this.ContentEncodingHeader);
-            }
         }
 
         request.Content = new ByteArrayContent(data, 0, data.Length);
         request.Content.Headers.ContentType = this.MediaTypeHeader;
+
+        if (this.CompressionEnabled && this.ContentEncodingHeader != null)
+        {
+            request.Content.Headers.Add("Content-Encoding", this.ContentEncodingHeader);
+        }
 
         return request;
     }
