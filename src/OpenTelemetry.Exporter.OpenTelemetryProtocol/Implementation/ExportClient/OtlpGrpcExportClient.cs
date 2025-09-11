@@ -48,7 +48,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             // bytes 1-4  - Message length in big-endian format (length of the serialized data only).
             // bytes 5+   - Protobuf-encoded payload.
             Span<byte> data = new Span<byte>(buffer, 1, 4);
-            var dataLength = buffer.Length - GrpcMessageHeaderSize;
+            var dataLength = contentLength - GrpcMessageHeaderSize;
             BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             buffer[0] = this.CompressionEnabled ? (byte)1 : (byte)0;
 
