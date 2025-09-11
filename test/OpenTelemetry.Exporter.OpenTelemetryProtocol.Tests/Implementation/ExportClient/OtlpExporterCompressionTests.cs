@@ -15,10 +15,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
 public class OtlpExporterCompressionTests
 {
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void SendExportRequest_SendsCorrectContent_Http(bool compressPayload)
+    [InlineData(true, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    [InlineData(false, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    [InlineData(true, "")]
+    public void SendExportRequest_SendsCorrectContent_Http(bool compressPayload, string text)
     {
+        var buffer = System.Text.Encoding.UTF8.GetBytes(text);
+
         // Arrange
         var options = new OtlpExporterOptions
         {
@@ -30,7 +33,6 @@ public class OtlpExporterCompressionTests
         using var httpClient = new HttpClient(testHttpHandler, false);
         var exportClient = new OtlpHttpExportClient(options, httpClient, string.Empty);
 
-        var buffer = Enumerable.Repeat((byte)65, 1000).ToArray();
         var deadlineUtc = DateTime.UtcNow.AddMilliseconds(httpClient.Timeout.TotalMilliseconds);
 
         // Act
@@ -61,10 +63,13 @@ public class OtlpExporterCompressionTests
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void SendExportRequest_SendsCorrectContent_Grpc(bool compressPayload)
+    [InlineData(true, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    [InlineData(false, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    [InlineData(true, "")]
+    public void SendExportRequest_SendsCorrectContent_Grpc(bool compressPayload, string text)
     {
+        var payload = System.Text.Encoding.UTF8.GetBytes(text);
+
         // Arrange
         var options = new OtlpExporterOptions
         {
@@ -72,7 +77,6 @@ public class OtlpExporterCompressionTests
             CompressPayload = compressPayload,
         };
 
-        var payload = Enumerable.Repeat((byte)65, 1000).ToArray();
         var buffer = new byte[payload.Length + 5];
         Buffer.BlockCopy(payload, 0, buffer, 5, payload.Length);
 
@@ -91,7 +95,6 @@ public class OtlpExporterCompressionTests
         Assert.True(result.Success);
         Assert.NotNull(httpRequest);
         Assert.NotNull(requestContent);
-        Assert.True(requestContent.Length > 5); // gRPC frame must be at least 5 bytes
 
         var compressionFlag = requestContent[0];
         var declaredLength = BinaryPrimitives.ReadUInt32BigEndian(requestContent.AsSpan(1, 4));
