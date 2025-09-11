@@ -22,5 +22,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          SURVEY_URL: https://docs.google.com/forms/d/e/1FAIpQLSf2FfCsW-DimeWzdQgfl0KDzT2UEAqu69_f7F2BVPSxVae1cQ/viewform?entry.1540511742=open-telemetry/opentelemetry-dotnet
+          SURVEY_URL: https://docs.google.com/forms/d/e/1FAIpQLSf2FfCsW-DimeWzdQgfl0KDzT2UEAqu69_f7F2BVPSxVae1cQ/viewform?entry.1540511742=${{ github.repository }}
           USERNAME: ${{ github.event.pull_request.user.login }}
