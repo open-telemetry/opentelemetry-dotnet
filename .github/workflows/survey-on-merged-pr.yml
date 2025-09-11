@@ -14,11 +14,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     # Only run for merged pull requests by non-members
-    if: |
-      github.event.pull_request.merged &&
-      (github.event.pull_request.author_association == 'CONTRIBUTOR' ||
-       github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' ||
-       github.event.pull_request.author_association == 'FIRST_TIMER')
+    if: github.event.pull_request.merged && contains(fromJson('["CONTRIBUTOR", "FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER"]'), github.event.pull_request.author_association)
     steps:
       - name: Add comment
         run: |
