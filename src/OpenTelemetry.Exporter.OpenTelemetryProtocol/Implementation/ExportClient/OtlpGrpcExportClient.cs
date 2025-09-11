@@ -178,11 +178,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Optimal, leaveOpen: true))
         {
             gzipStream.Write(data, GrpcMessageHeaderSize, data.Length - GrpcMessageHeaderSize);
-// #if NET462 || NETSTANDARD2_0
-            //             gzipStream.Write(data, 5, data.Length - 5);
-            // #else
-            //             gzipStream.Write(data, 5, data.Length - 5);
-            // #endif
         }
 
         var compressedDataLength = compressedStream.Position;
@@ -195,18 +190,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(1, 4), (uint)compressedDataLength);
 
         return payload;
-
-        // var compressedData = compressedStream.ToArray();
-        //     var compressedDataLength = compressedData.Length;
-
-        //     // Allocate gRPC frame: 1 flag + 4 length prefix + body
-        //     var payload = new byte[compressedDataLength + 5];
-        //     payload[0] = 1;
-        //     BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(1, 4), (uint)compressedDataLength);
-
-        //     Buffer.BlockCopy(compressedData, 0, payload, 5, compressedDataLength);
-
-        //     return payload;
         }
 
     private static bool IsTransientNetworkError(HttpRequestException ex)

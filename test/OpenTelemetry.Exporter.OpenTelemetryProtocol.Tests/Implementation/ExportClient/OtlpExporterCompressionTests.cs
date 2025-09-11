@@ -1,10 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers.Binary;
 using System.IO.Compression;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using Xunit;
-using System.Buffers.Binary;
 
 #if !NET
 using System.Net.Http;
@@ -49,10 +49,6 @@ public class OtlpExporterCompressionTests
 
             var content = testHttpHandler.HttpRequestContent;
             Assert.NotNull(content);
-            // using var compressedStream = new MemoryStream(content);
-            // using var gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress);
-            // using var decompressedStream = new MemoryStream();
-            // gzipStream.CopyTo(decompressedStream);
             var decompressedStream = Decompress(content);
 
             Assert.Equal(buffer, decompressedStream.ToArray());
@@ -76,11 +72,6 @@ public class OtlpExporterCompressionTests
             CompressPayload = compressPayload,
         };
 
-        // var originalPayload = Enumerable.Repeat((byte)65, 1000).ToArray();
-        // var buffer = new byte[originalPayload.Length + 5];
-        // Buffer.BlockCopy(originalPayload, 0, buffer, 5, originalPayload.Length);
-        // buffer[0] = compressPayload ? (byte)1 : (byte)0;
-        // BinaryPrimitives.WriteUInt32BigEndian(buffer.AsSpan(1, 4), (uint)(buffer.Length - 5));
         var payload = Enumerable.Repeat((byte)65, 1000).ToArray();
         var buffer = new byte[payload.Length + 5];
         Buffer.BlockCopy(payload, 0, buffer, 5, payload.Length);
@@ -111,10 +102,6 @@ public class OtlpExporterCompressionTests
 
         if (compressPayload)
         {
-            // using var bodyStream = new MemoryStream(body);
-            // using var gzipStream = new GZipStream(bodyStream, CompressionMode.Decompress);
-            // using var decompressedStream = new MemoryStream();
-            // gzipStream.CopyTo(decompressedStream);
             var decompressedStream = Decompress(body);
 
             Assert.Equal(payload, decompressedStream.ToArray());

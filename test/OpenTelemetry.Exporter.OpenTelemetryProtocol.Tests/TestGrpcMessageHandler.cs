@@ -3,13 +3,12 @@
 
 #if !NET
 using System.Net.Http;
-#endif
-
 using System.Net.Http.Headers;
+#endif
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-internal class TestGrpcMessageHandler : HttpMessageHandler
+internal sealed class TestGrpcMessageHandler : HttpMessageHandler
 {
     public HttpRequestMessage? HttpRequestMessage { get; private set; }
 
@@ -59,7 +58,7 @@ internal class TestGrpcMessageHandler : HttpMessageHandler
     }
 
 #if NETSTANDARD2_0 || NET462
-    private class CustomResponseTrailers : HttpHeaders
+    private sealed class CustomResponseTrailers : HttpHeaders
     {
     }
 #endif
