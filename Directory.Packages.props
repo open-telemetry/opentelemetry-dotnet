@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <OTelLatestStableVer>1.12.0</OTelLatestStableVer>
+    <OTelLatestStableVer>[1.12.0,2.0)</OTelLatestStableVer>
 
     <!--
         This is typically the latest annual release of .NET. Use this wherever
         possible and only deviate (use a specific version) when a package has a
         more specific patch which must be reference directly.
     -->
-    <RuntimePackageVersions>9.0.0</RuntimePackageVersions>
+    <RuntimePackageVersions>[9.0.0,)</RuntimePackageVersions>
     <SystemDiagnosticsDiagnosticSourceVersion>$(RuntimePackageVersions)</SystemDiagnosticsDiagnosticSourceVersion>
     <!--
         For modern .NET runtimes, match the major version of packages to the major version of the runtime.
@@ -38,12 +38,12 @@
     <!--
         OTel packages always point to latest stable release.
     -->
-    <PackageVersion Include="OpenTelemetry" Version="[$(OTelLatestStableVer),2.0)" />
-    <PackageVersion Include="OpenTelemetry.Api" Version="[$(OTelLatestStableVer),2.0)" />
-    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="[$(OTelLatestStableVer),2.0)" />
-    <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="[$(OTelLatestStableVer),2.0)" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="[$(OTelLatestStableVer),2.0)" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry" Version="$(OTelLatestStableVer)" />
+    <PackageVersion Include="OpenTelemetry.Api" Version="$(OTelLatestStableVer)" />
+    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="$(OTelLatestStableVer)" />
+    <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="$(OTelLatestStableVer)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OTelLatestStableVer)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
 
     <!--
