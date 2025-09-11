@@ -13,8 +13,11 @@ jobs:
     permissions:
       pull-requests: write
     runs-on: ubuntu-latest
-    # Only run for merged pull requests by non-members
-    if: github.event.pull_request.merged && contains(fromJson('["CONTRIBUTOR", "FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER"]'), github.event.pull_request.author_association)
+    # Only run for merged pull requests by non-members users (i.e. not bots)
+    if: |
+      github.event.pull_request.merged &&
+      github.event.pull_request.user.type == 'User' &&
+      contains(fromJson('["CONTRIBUTOR", "FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER"]'), github.event.pull_request.author_association)
     steps:
       - name: Add comment
         run: |
