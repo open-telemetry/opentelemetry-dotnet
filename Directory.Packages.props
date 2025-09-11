@@ -16,12 +16,12 @@
         This is to ensure that the NuGet packages that users deploy match the support lifetimes of the .NET version they are using (i.e. LTS vs STS).
         See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
     -->
-    <RuntimePackageVersions Condition="'$(TargetFramework)' == 'net8.0'">8.0.0</RuntimePackageVersions>
-    <RuntimePackageVersions Condition="'$(TargetFramework)' == 'net9.0'">9.0.0</RuntimePackageVersions>
+    <RuntimePackageVersions Condition="'$(TargetFramework)' == 'net8.0'">[8.0.0,)</RuntimePackageVersions>
+    <RuntimePackageVersions Condition="'$(TargetFramework)' == 'net9.0'">[9.0.0,)</RuntimePackageVersions>
 
     <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
-    <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>8.0.0</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
-    <SystemTextJsonOutOfBandMinimumCoreAppVer>8.0.5</SystemTextJsonOutOfBandMinimumCoreAppVer>
+    <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>[8.0.0,)</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
+    <SystemTextJsonOutOfBandMinimumCoreAppVer>[8.0.5,)</SystemTextJsonOutOfBandMinimumCoreAppVer>
   </PropertyGroup>
 
   <!--
