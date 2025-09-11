@@ -1,0 +1,2 @@
+OpenTelemetry.Exporter.OtlpExporterOptions.CompressPayload.get -> bool
+OpenTelemetry.Exporter.OtlpExporterOptions.CompressPayload.set -> void
