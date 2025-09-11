@@ -190,7 +190,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(1, 4), (uint)compressedDataLength);
 
         return payload;
-        }
+    }
 
     private static bool IsTransientNetworkError(HttpRequestException ex)
     {
