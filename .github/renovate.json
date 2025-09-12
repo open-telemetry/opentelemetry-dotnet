@@ -1,0 +1,60 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "additionalBranchPrefix": "{{manager}}/",
+  "automerge": false,
+  "commitBodyTable": true,
+  "commitMessageAction": "Bump",
+  "dependencyDashboard": false,
+  "extends": [
+    "config:best-practices",
+    "customManagers:dockerfileVersions",
+    "customManagers:githubActionsVersions",
+    ":automergeRequireAllStatusChecks",
+    ":disableRateLimiting",
+    ":enableVulnerabilityAlerts",
+    ":gitSignOff",
+    ":ignoreUnstable"
+  ],
+  "labels": ["dependencies", "infra"],
+  "packageRules": [
+    {
+      "matchManagers": ["dockerfile"],
+      "addLabels": ["docker"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "addLabels": ["github_actions"]
+    },
+    {
+      "matchManagers": ["nuget"],
+      "addLabels": [".NET"]
+    },
+    {
+      "matchManagers": ["pypi"],
+      "addLabels": ["python"]
+    },
+    {
+      "description": ["Skip pinned NuGet package versions"],
+      "matchManagers": ["nuget"],
+      "matchCurrentValue": "^\\[[^,]+,\\)$",
+      "enabled": false
+    },
+    {
+      "extends": ["monorepo:dotnet"],
+      "description": ["Disable major version updates for .NET"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "matchDepNames": ["xunit"],
+      "description": ["Disable major version updates for xunit"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ],
+  "schedule": ["* 8-17 * * 3"],
+  "timezone": "Etc/UTC",
+  "vulnerabilityAlerts": {
+    "addLabels": ["security"]
+  }
+}
