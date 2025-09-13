@@ -4,6 +4,8 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Buffers.Binary;
+using System.IO.Compression;
 using System.Net.Http.Headers;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
@@ -13,6 +15,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 internal sealed class OtlpGrpcExportClient : OtlpExportClient
 {
     public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
+    private const int GrpcMessageHeaderSize = 5;
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
     private static readonly MediaTypeHeaderValue MediaHeaderValue = new("application/grpc");
 
@@ -33,11 +36,22 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
     internal override bool RequireHttp2 => true;
 
+    protected override string? ContentEncodingHeader => null;
+
     /// <inheritdoc/>
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
         try
         {
+            // A gRPC message consists of 3 parts:
+            // byte 0     - Compression flag (0 = not compressed, 1 = compressed).
+            // bytes 1-4  - Message length in big-endian format (length of the serialized data only).
+            // bytes 5+   - Protobuf-encoded payload.
+            Span<byte> data = new Span<byte>(buffer, 1, 4);
+            var dataLength = contentLength - GrpcMessageHeaderSize;
+            BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
+            buffer[0] = this.CompressionEnabled ? (byte)1 : (byte)0;
+
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
 
             // TE is required by some servers, e.g. C Core.
@@ -156,6 +170,26 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
             return DefaultExceptionExportClientGrpcResponse;
         }
+    }
+
+    protected override byte[] Compress(byte[] data, int contentLength)
+    {
+        using var compressedStream = new MemoryStream();
+        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Optimal, leaveOpen: true))
+        {
+            gzipStream.Write(data, GrpcMessageHeaderSize, data.Length - GrpcMessageHeaderSize);
+        }
+
+        var compressedDataLength = compressedStream.Position;
+        var payload = new byte[compressedDataLength + GrpcMessageHeaderSize];
+        using var payloadStream = new MemoryStream(payload);
+        payloadStream.Position = GrpcMessageHeaderSize;
+        compressedStream.WriteTo(payloadStream);
+
+        payload[0] = 1;
+        BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(1, 4), (uint)compressedDataLength);
+
+        return payload;
     }
 
     private static bool IsTransientNetworkError(HttpRequestException ex)

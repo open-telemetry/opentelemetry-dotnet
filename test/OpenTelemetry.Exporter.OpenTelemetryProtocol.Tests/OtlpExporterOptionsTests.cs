@@ -100,6 +100,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             ["EndpointWithInvalidValue"] = "invalid",
             ["TimeoutWithInvalidValue"] = "invalid",
             ["ProtocolWithInvalidValue"] = "invalid",
+            ["CompressionWithInvalidValue"] = "invalid",
         };
 
         var configuration = new ConfigurationBuilder()
@@ -114,7 +115,8 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             appendSignalPathToEndpoint: true,
             "ProtocolWithInvalidValue",
             "NoopHeaders",
-            "TimeoutWithInvalidValue");
+            "TimeoutWithInvalidValue",
+            "CompressionWithInvalidValue");
 
 #if NET462_OR_GREATER || NETSTANDARD2_0
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), options.Endpoint);
@@ -125,6 +127,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.Equal(10000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExporterOptions.DefaultOtlpExportProtocol, options.Protocol);
         Assert.Null(options.Headers);
+        Assert.False(options.CompressPayload);
     }
 
     [Fact]
@@ -136,6 +139,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             ["Timeout"] = "2000",
             ["Protocol"] = "grpc",
             ["Headers"] = "A=2,B=3",
+            ["Compression"] = "none",
         };
 
         var configuration = new ConfigurationBuilder()
@@ -150,18 +154,21 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             appendSignalPathToEndpoint: true,
             "Protocol",
             "Headers",
-            "Timeout");
+            "Timeout",
+            "Compression");
 
         options.Endpoint = new Uri("http://localhost:200");
         options.Headers = "C=3";
         options.TimeoutMilliseconds = 40000;
         options.Protocol = OtlpExportProtocol.HttpProtobuf;
+        options.CompressPayload = true;
 
         Assert.Equal(new Uri("http://localhost:200"), options.Endpoint);
         Assert.Equal("C=3", options.Headers);
         Assert.Equal(40000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
         Assert.False(options.AppendSignalPathToEndpoint);
+        Assert.True(options.CompressPayload);
     }
 
     [Fact]

@@ -44,9 +44,12 @@ internal abstract class OtlpExportClient : IExportClient
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
         this.HttpClient = httpClient;
+        this.CompressionEnabled = options.CompressPayload;
     }
 
     internal HttpClient HttpClient { get; }
+
+    internal bool CompressionEnabled { get; }
 
     internal Uri Endpoint { get; }
 
@@ -55,6 +58,8 @@ internal abstract class OtlpExportClient : IExportClient
     internal abstract MediaTypeHeaderValue MediaTypeHeader { get; }
 
     internal virtual bool RequireHttp2 => false;
+
+    protected abstract string? ContentEncodingHeader { get; }
 
     public abstract ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default);
 
@@ -83,13 +88,27 @@ internal abstract class OtlpExportClient : IExportClient
             request.Headers.Add(header.Key, header.Value);
         }
 
-        // TODO: Support compression.
+        var data = buffer;
+        var dataLength = contentLength;
 
-        request.Content = new ByteArrayContent(buffer, 0, contentLength);
+        if (this.CompressionEnabled)
+        {
+            data = this.Compress(buffer, contentLength);
+            dataLength = data.Length;
+        }
+
+        request.Content = new ByteArrayContent(data, 0, dataLength);
         request.Content.Headers.ContentType = this.MediaTypeHeader;
+
+        if (this.CompressionEnabled && this.ContentEncodingHeader != null)
+        {
+            request.Content.Headers.Add("Content-Encoding", this.ContentEncodingHeader);
+        }
 
         return request;
     }
+
+    protected abstract byte[] Compress(byte[] data, int contentLength);
 
     protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
     {
