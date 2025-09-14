@@ -47,7 +47,11 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
     [InlineData("Amélie=val", new string[] { }, new string[] { })] // Invalid key
     [InlineData("key=invalid%encoding", new string[] { "key" }, new string[] { "invalid%encoding" })] // Invalid value
     [InlineData("key=v1+v2", new string[] { "key" }, new string[] { "v1+v2" })]
+#if NET
     [InlineData("key=a%E0%80Am%C3%A9lie", new string[] { "key" }, new string[] { "a��Amélie" })]
+#else
+    [InlineData("key=a%E0%80Am%C3%A9lie", new string[] { "key" }, new string[] { "a�Amélie" })]
+#endif
     public void OtelEnvResource_EnvVar_Validation(string envVarValue, string[] expectedKeys, string[] expectedValues)
     {
         // Arrange

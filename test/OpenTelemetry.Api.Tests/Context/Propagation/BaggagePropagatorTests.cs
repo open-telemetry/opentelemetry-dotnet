@@ -152,14 +152,14 @@ public class BaggagePropagatorTests
 
         Assert.Equal(3, actualBaggage.Count);
 
-        Assert.True(actualBaggage.ContainsKey("key 1"));
-        Assert.Equal("value 1", actualBaggage["key 1"]);
+        Assert.True(actualBaggage.ContainsKey("key+1"));
+        Assert.Equal("value+1", actualBaggage["key+1"]);
 
         Assert.True(actualBaggage.ContainsKey("key2"));
         Assert.Equal("!x_x,x-x&x(x\");:", actualBaggage["key2"]);
 
-        Assert.True(actualBaggage.ContainsKey("key()3"));
-        Assert.Equal("value()!&;:", actualBaggage["key()3"]);
+        Assert.True(actualBaggage.ContainsKey("key%28%293"));
+        Assert.Equal("value()!&;:", actualBaggage["key%28%293"]);
     }
 
     [Fact]
@@ -204,6 +204,6 @@ public class BaggagePropagatorTests
         this.baggage.Inject(propagationContext, carrier, Setter);
 
         Assert.Single(carrier);
-        Assert.Equal("key+1=value+1,key2=!x_x%2Cx-x%26x(x%22)%3B%3A", carrier[BaggagePropagator.BaggageHeaderName]);
+        Assert.Equal("key 1=value%201,key2=%21x_x%2Cx-x%26x%28x%22%29%3B%3A", carrier[BaggagePropagator.BaggageHeaderName]);
     }
 }
