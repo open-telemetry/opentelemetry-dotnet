@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if EXPOSE_EXPERIMENTAL_FEATURES && NET
+#if EXPOSE_EXPERIMENTAL_FEATURES
 using System.Diagnostics.CodeAnalysis;
 #endif
 using OpenTelemetry.Context.Propagation;
@@ -89,9 +89,7 @@ public static class Sdk
     /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
     /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
     /// to build a <see cref="LoggerProvider"/>.</returns>
-#if NET
     [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
     public
 #else
     /// <summary>

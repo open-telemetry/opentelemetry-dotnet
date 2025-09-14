@@ -4,7 +4,7 @@
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
-#if NET && EXPOSE_EXPERIMENTAL_FEATURES
+#if EXPOSE_EXPERIMENTAL_FEATURES
 using System.Diagnostics.CodeAnalysis;
 #endif
 using OpenTelemetry.Internal;
@@ -17,9 +17,7 @@ namespace OpenTelemetry.Logs;
 /// Stores attributes to be added to a log message.
 /// </summary>
 /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
-#if NET
 [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-#endif
 public
 #else
 /// <summary>

@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added a verification to ensure that a `MetricReader` can only be registered
+  to a single `MeterProvider`, as required by the OpenTelemetry specification.
+  ([#6458](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6458))
+
 * Added decoding of the `OTEL_RESOURCE_ATTRIBUTES` variable according to the specification,
   adhering to the [W3C Baggage](https://github.com/w3c/baggage/blob/main/baggage/HTTP_HEADER_FORMAT.md)
   format.
@@ -25,6 +29,11 @@ Notes](../../RELEASENOTES.md).
       "FormatMessage": true
   }
   ```
+
+* Fixed parsing of `OTEL_TRACES_SAMPLER_ARG` decimal values to always use `.`
+  as the delimiter when using the `traceidratio` sampler, preventing
+  locale-specific parsing issues.
+  ([#6444](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6444))
 
 ## 1.12.0
 

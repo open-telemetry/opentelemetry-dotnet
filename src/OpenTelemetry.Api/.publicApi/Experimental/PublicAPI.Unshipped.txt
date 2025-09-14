@@ -1,75 +1,75 @@
-abstract OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributeList attributes) -> void
-OpenTelemetry.Logs.Logger
-OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data) -> void
-OpenTelemetry.Logs.Logger.Logger(string? name) -> void
-OpenTelemetry.Logs.Logger.Name.get -> string!
-OpenTelemetry.Logs.Logger.Version.get -> string?
-OpenTelemetry.Logs.LoggerProvider.GetLogger() -> OpenTelemetry.Logs.Logger!
-OpenTelemetry.Logs.LoggerProvider.GetLogger(string? name) -> OpenTelemetry.Logs.Logger!
-OpenTelemetry.Logs.LoggerProvider.GetLogger(string? name, string? version) -> OpenTelemetry.Logs.Logger!
-OpenTelemetry.Logs.LogRecordAttributeList
-OpenTelemetry.Logs.LogRecordAttributeList.Add(string! key, object? value) -> void
-OpenTelemetry.Logs.LogRecordAttributeList.Add(System.Collections.Generic.KeyValuePair<string!, object?> attribute) -> void
-OpenTelemetry.Logs.LogRecordAttributeList.Clear() -> void
-OpenTelemetry.Logs.LogRecordAttributeList.Count.get -> int
-OpenTelemetry.Logs.LogRecordAttributeList.Enumerator
-OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, object?>
-OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Dispose() -> void
-OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Enumerator() -> void
-OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.MoveNext() -> bool
-OpenTelemetry.Logs.LogRecordAttributeList.GetEnumerator() -> OpenTelemetry.Logs.LogRecordAttributeList.Enumerator
-OpenTelemetry.Logs.LogRecordAttributeList.LogRecordAttributeList() -> void
-OpenTelemetry.Logs.LogRecordAttributeList.RecordException(System.Exception! exception) -> void
-OpenTelemetry.Logs.LogRecordAttributeList.this[int index].get -> System.Collections.Generic.KeyValuePair<string!, object?>
-OpenTelemetry.Logs.LogRecordAttributeList.this[int index].set -> void
-OpenTelemetry.Logs.LogRecordAttributeList.this[string! key].set -> void
-OpenTelemetry.Logs.LogRecordData
-OpenTelemetry.Logs.LogRecordData.Body.get -> string?
-OpenTelemetry.Logs.LogRecordData.Body.set -> void
-OpenTelemetry.Logs.LogRecordData.LogRecordData() -> void
-OpenTelemetry.Logs.LogRecordData.LogRecordData(in System.Diagnostics.ActivityContext activityContext) -> void
-OpenTelemetry.Logs.LogRecordData.LogRecordData(System.Diagnostics.Activity? activity) -> void
-OpenTelemetry.Logs.LogRecordData.Severity.get -> OpenTelemetry.Logs.LogRecordSeverity?
-OpenTelemetry.Logs.LogRecordData.Severity.set -> void
-OpenTelemetry.Logs.LogRecordData.SeverityText.get -> string?
-OpenTelemetry.Logs.LogRecordData.SeverityText.set -> void
-OpenTelemetry.Logs.LogRecordData.SpanId.get -> System.Diagnostics.ActivitySpanId
-OpenTelemetry.Logs.LogRecordData.SpanId.set -> void
-OpenTelemetry.Logs.LogRecordData.Timestamp.get -> System.DateTime
-OpenTelemetry.Logs.LogRecordData.Timestamp.set -> void
-OpenTelemetry.Logs.LogRecordData.TraceFlags.get -> System.Diagnostics.ActivityTraceFlags
-OpenTelemetry.Logs.LogRecordData.TraceFlags.set -> void
-OpenTelemetry.Logs.LogRecordData.TraceId.get -> System.Diagnostics.ActivityTraceId
-OpenTelemetry.Logs.LogRecordData.TraceId.set -> void
-OpenTelemetry.Logs.LogRecordData.EventName.get -> string?
-OpenTelemetry.Logs.LogRecordData.EventName.set -> void
-OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Debug = 5 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Debug2 = 6 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Debug3 = 7 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Debug4 = 8 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Error = 17 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Error2 = 18 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Error3 = 19 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Error4 = 20 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Fatal = 21 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Fatal2 = 22 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Fatal3 = 23 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Fatal4 = 24 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Info = 9 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Info2 = 10 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Info3 = 11 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Info4 = 12 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Trace = 1 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Trace2 = 2 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Trace3 = 3 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Trace4 = 4 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Unspecified = 0 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Warn = 13 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Warn2 = 14 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Warn3 = 15 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverity.Warn4 = 16 -> OpenTelemetry.Logs.LogRecordSeverity
-OpenTelemetry.Logs.LogRecordSeverityExtensions
-static OpenTelemetry.Logs.LogRecordAttributeList.CreateFromEnumerable(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>! attributes) -> OpenTelemetry.Logs.LogRecordAttributeList
-static OpenTelemetry.Logs.LogRecordSeverityExtensions.ToShortName(this OpenTelemetry.Logs.LogRecordSeverity logRecordSeverity) -> string!
-virtual OpenTelemetry.Logs.LoggerProvider.TryCreateLogger(string? name, out OpenTelemetry.Logs.Logger? logger) -> bool
+[OTEL1001]abstract OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributeList attributes) -> void
+[OTEL1001]OpenTelemetry.Logs.Logger
+[OTEL1001]OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data) -> void
+[OTEL1001]OpenTelemetry.Logs.Logger.Logger(string? name) -> void
+[OTEL1001]OpenTelemetry.Logs.Logger.Name.get -> string!
+[OTEL1001]OpenTelemetry.Logs.Logger.Version.get -> string?
+[OTEL1001]OpenTelemetry.Logs.LoggerProvider.GetLogger() -> OpenTelemetry.Logs.Logger!
+[OTEL1001]OpenTelemetry.Logs.LoggerProvider.GetLogger(string? name) -> OpenTelemetry.Logs.Logger!
+[OTEL1001]OpenTelemetry.Logs.LoggerProvider.GetLogger(string? name, string? version) -> OpenTelemetry.Logs.Logger!
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Add(string! key, object? value) -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Add(System.Collections.Generic.KeyValuePair<string!, object?> attribute) -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Clear() -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Count.get -> int
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Enumerator
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, object?>
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Dispose() -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Enumerator() -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.MoveNext() -> bool
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.GetEnumerator() -> OpenTelemetry.Logs.LogRecordAttributeList.Enumerator
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.LogRecordAttributeList() -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.RecordException(System.Exception! exception) -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.this[int index].get -> System.Collections.Generic.KeyValuePair<string!, object?>
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.this[int index].set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.this[string! key].set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.Body.get -> string?
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.Body.set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData() -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData(in System.Diagnostics.ActivityContext activityContext) -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData(System.Diagnostics.Activity? activity) -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.Severity.get -> OpenTelemetry.Logs.LogRecordSeverity?
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.Severity.set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.SeverityText.get -> string?
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.SeverityText.set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.SpanId.get -> System.Diagnostics.ActivitySpanId
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.SpanId.set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.Timestamp.get -> System.DateTime
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.Timestamp.set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.TraceFlags.get -> System.Diagnostics.ActivityTraceFlags
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.TraceFlags.set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.TraceId.get -> System.Diagnostics.ActivityTraceId
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.TraceId.set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.EventName.get -> string?
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.EventName.set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Debug = 5 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Debug2 = 6 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Debug3 = 7 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Debug4 = 8 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Error = 17 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Error2 = 18 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Error3 = 19 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Error4 = 20 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Fatal = 21 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Fatal2 = 22 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Fatal3 = 23 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Fatal4 = 24 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Info = 9 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Info2 = 10 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Info3 = 11 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Info4 = 12 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Trace = 1 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Trace2 = 2 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Trace3 = 3 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Trace4 = 4 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Unspecified = 0 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Warn = 13 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Warn2 = 14 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Warn3 = 15 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Warn4 = 16 -> OpenTelemetry.Logs.LogRecordSeverity
+[OTEL1001]OpenTelemetry.Logs.LogRecordSeverityExtensions
+[OTEL1001]static OpenTelemetry.Logs.LogRecordAttributeList.CreateFromEnumerable(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>! attributes) -> OpenTelemetry.Logs.LogRecordAttributeList
+[OTEL1001]static OpenTelemetry.Logs.LogRecordSeverityExtensions.ToShortName(this OpenTelemetry.Logs.LogRecordSeverity logRecordSeverity) -> string!
+[OTEL1001]virtual OpenTelemetry.Logs.LoggerProvider.TryCreateLogger(string? name, out OpenTelemetry.Logs.Logger? logger) -> bool
