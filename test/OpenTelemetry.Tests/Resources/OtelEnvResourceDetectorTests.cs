@@ -6,6 +6,7 @@ using Xunit;
 
 namespace OpenTelemetry.Resources.Tests;
 
+#pragma warning disable CA1062 // Validate arguments of public methods
 public sealed class OtelEnvResourceDetectorTests : IDisposable
 {
     public OtelEnvResourceDetectorTests()

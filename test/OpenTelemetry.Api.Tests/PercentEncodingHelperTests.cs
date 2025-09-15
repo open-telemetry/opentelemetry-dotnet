@@ -6,6 +6,7 @@ using Xunit;
 
 namespace OpenTelemetry.Api.Tests;
 
+#pragma warning disable CA1062 // Validate arguments of public methods
 public class PercentEncodingHelperTests
 {
     [Theory]
