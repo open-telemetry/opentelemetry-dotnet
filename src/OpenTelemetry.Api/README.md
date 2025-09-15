@@ -249,7 +249,7 @@ following sections describes more features.
 ### Activity creation options
 
 Basic usage example above showed how `StartActivity` method can be used to start
-an `Activity`. The started activity will automatically becomes the `Current`
+an `Activity`. The started activity automatically becomes the `Current`
 activity. It is important to note that the `StartActivity` returns `null`, if no
 listeners are interested in the activity to be created. This happens when the
 final application does not enable OpenTelemetry, or when OpenTelemetry samplers

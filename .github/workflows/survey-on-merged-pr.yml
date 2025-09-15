@@ -1,56 +1,29 @@
 name: Survey on Merged PR by Non-Member
 
 on:
-  issues:
+  pull_request_target:
+    branches: [main]
     types: [closed]
 
 permissions: {}
 
-env:
-  PR_URL: ${{ github.event.issue.pull_request.url }}
-  SURVEY_URL: https://docs.google.com/forms/d/e/1FAIpQLSf2FfCsW-DimeWzdQgfl0KDzT2UEAqu69_f7F2BVPSxVae1cQ/viewform?entry.1540511742=open-telemetry/opentelemetry-dotnet
-
 jobs:
   comment-on-pr:
     name: Add survey to PR if author is not a member
-    runs-on: ubuntu-latest
     permissions:
-      contents: write
       pull-requests: write
-    # Only run if this issue is a PR and the PR was merged
+    runs-on: ubuntu-latest
+    # Only run for merged pull requests by non-members users (i.e. not bots)
     if: |
-      github.event.issue.pull_request != null &&
-      github.event.issue.state == 'closed' &&
-      github.event.issue.closed_by != null
+      github.event.pull_request.merged &&
+      github.event.pull_request.user.type == 'User' &&
+      contains(fromJson('["CONTRIBUTOR", "FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER"]'), github.event.pull_request.author_association)
     steps:
-      - name: Get PR Info
-        id: pr-info
+      - name: Add comment
         run: |
-          # Get merged status and author
-          PR_JSON=$(gh api "$PR_URL")
-          echo "merged=$(echo "$PR_JSON" | jq -r '.merged')" >> $GITHUB_OUTPUT
-          echo "author=$(echo "$PR_JSON" | jq -r '.user.login')" >> $GITHUB_OUTPUT
+          gh pr comment "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" --body "Thank you for your contribution @${USERNAME}! :tada: We would like to hear from you about your experience contributing to OpenTelemetry by taking a few minutes to fill out this [survey](${SURVEY_URL})."
         env:
-          GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
-
-      - name: Check if user is a member of the org
-        id: check-membership
-        run: |
-          ORG="${{ github.repository_owner }}"
-          STATUS=$(gh api "orgs/$ORG/members/$USERNAME" --silent && echo "true" || echo "false")
-          if [[ "$STATUS" == "true" ]]; then
-            echo "MEMBER_FOUND=true" >> $GITHUB_ENV
-          else
-            echo "MEMBER_FOUND=false" >> $GITHUB_ENV
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
-          USERNAME: ${{ steps.pr-info.outputs.author }}
-
-      - name: Add comment to PR if author is not a member and PR is merged
-        if: steps.pr-info.outputs.merged == 'true' && steps.check-membership.outputs.member_found == 'false'
-        run: |
-          gh pr comment "$PR_URL" --body "Thank you for your contribution @${USERNAME}! :tada: We would like to hear from you about your experience contributing to OpenTelemetry by taking a few minutes to fill out this [survey](${SURVEY_URL})."
-        env:
-          GH_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
-          USERNAME: ${{ steps.pr-info.outputs.author }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SURVEY_URL: https://docs.google.com/forms/d/e/1FAIpQLSf2FfCsW-DimeWzdQgfl0KDzT2UEAqu69_f7F2BVPSxVae1cQ/viewform?entry.1540511742=${{ github.repository }}
+          USERNAME: ${{ github.event.pull_request.user.login }}
