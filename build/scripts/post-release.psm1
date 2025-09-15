@@ -183,7 +183,7 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
     [Parameter(Mandatory=$true)][string]$botUserName,
     [Parameter(Mandatory=$true)][string]$commentUserName,
     [Parameter(Mandatory=$true)][string]$artifactDownloadPath,
-    [Parameter(Mandatory=$true)][string]$pushToNuget
+    [Parameter(Mandatory=$true)][bool]$pushToNuget
   )
 
   $prViewResponse = gh pr view $pullRequestNumber --json author,title,comments | ConvertFrom-Json
@@ -231,12 +231,12 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
 
   Expand-Archive -LiteralPath "$artifactDownloadPath/$tag-packages.zip" -DestinationPath "$artifactDownloadPath\"
 
-  if ($pushToNuget -eq 'true')
+  if ($pushToNuget)
   {
     gh pr comment $pullRequestNumber `
       --body "I am uploading the packages for ``$tag`` to NuGet and then I will publish the release."
 
-    nuget push "$artifactDownloadPath/**/*.nupkg" -Source https://api.nuget.org/v3/index.json -ApiKey "$env:NUGET_TOKEN" -SymbolApiKey "$env:NUGET_TOKEN"
+    dotnet nuget push "$artifactDownloadPath/**/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key "$env:NUGET_TOKEN" --symbol-api-key "$env:NUGET_TOKEN"
 
     if ($LASTEXITCODE -gt 0)
     {

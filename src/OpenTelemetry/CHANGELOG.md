@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added a verification to ensure that a `MetricReader` can only be registered
+  to a single `MeterProvider`, as required by the OpenTelemetry specification.
+  ([#6458](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6458))
+
 * Added `FormatMessage` configuration option to self-diagnostics feature. When
   set to `true` (default is false), log messages will be formatted by replacing
   placeholders with actual parameter values for improved readability.
@@ -23,6 +27,11 @@ Notes](../../RELEASENOTES.md).
 
 * Moved the `InstrumentNameRegex` from `MeterProviderBuilderSdk` to `Guard`.
   ([#6457](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6457))
+
+* Fixed parsing of `OTEL_TRACES_SAMPLER_ARG` decimal values to always use `.`
+  as the delimiter when using the `traceidratio` sampler, preventing
+  locale-specific parsing issues.
+  ([#6444](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6444))
 
 ## 1.12.0
 

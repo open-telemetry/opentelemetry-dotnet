@@ -292,7 +292,7 @@ internal static class ProtobufSerializer
             }
         }
 #else
-        var bytesWritten = Utf8Encoding.GetBytes(value, buffer.AsSpan().Slice(writePosition));
+        var bytesWritten = Utf8Encoding.GetBytes(value, buffer.AsSpan(writePosition));
         Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
 #endif
 

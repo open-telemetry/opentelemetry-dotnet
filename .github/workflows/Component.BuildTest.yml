@@ -20,7 +20,7 @@ on:
         required: false
         type: string
       os-list:
-        default: '[ "windows-latest", "ubuntu-22.04", "ubuntu-22.04-arm" ]'
+        default: '[ "windows-latest", "windows-11-arm", "ubuntu-22.04", "ubuntu-22.04-arm" ]'
         required: false
         type: string
       tfm-list:
@@ -46,8 +46,11 @@ jobs:
           version: net462
         - os: ubuntu-22.04-arm
           version: net8.0
+        - os: windows-11-arm
+          version: net8.0
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
@@ -57,13 +60,13 @@ jobs:
         fetch-depth: 0
 
     - name: Setup previous .NET runtimes
-      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
       with:
         dotnet-version: |
           8.0.x
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
 
     - name: dotnet restore ${{ inputs.project-name }}
       run: dotnet restore ${{ inputs.project-name }} ${{ inputs.project-build-commands }}
@@ -92,7 +95,7 @@ jobs:
       run: dotnet-coverage merge -f cobertura -o ./TestResults/Cobertura.xml ./TestResults/**/*.coverage
 
     - name: Upload code coverage ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-      uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
+      uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
       continue-on-error: true # Note: Don't fail for upload failures
       env:
         OS: ${{ matrix.os }}

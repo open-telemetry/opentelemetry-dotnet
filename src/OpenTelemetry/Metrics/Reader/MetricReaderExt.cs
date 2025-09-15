@@ -19,8 +19,8 @@ public abstract partial class MetricReader
     private readonly Lock instrumentCreationLock = new();
     private int metricLimit;
     private int cardinalityLimit;
-    private Metric?[]? metrics;
-    private Metric[]? metricsCurrentBatch;
+    private Metric?[] metrics = [];
+    private Metric[] metricsCurrentBatch = [];
     private int metricIndex = -1;
     private ExemplarFilterType? exemplarFilter;
     private ExemplarFilterType? exemplarFilterForHistograms;
