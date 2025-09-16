@@ -207,8 +207,8 @@ jobs:
       run: |
         if [ "${CI_SUCCESS}" == "true" ]
         then
-          echo 'Build complete ✓'
+          echo 'Build complete'
         else
-          echo 'Build failed ✗'
+          echo 'Build failed'
           exit 1
         fi
