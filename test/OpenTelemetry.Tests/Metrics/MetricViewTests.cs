@@ -52,7 +52,7 @@ public class MetricViewTests : MetricTestsBase
             .AddView("name1", new MetricStreamConfiguration() { Name = viewNewName })
             .AddInMemoryExporter(exportedItems)));
 
-        Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message, StringComparison.Ordinal);
+        Assert.Contains($"View name {viewNewName} is invalid.", ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -37,7 +37,7 @@ public class MetricStreamConfiguration
         get => this.name;
         set
         {
-            Guard.ThrowIfInvalidViewName(value);
+            MetricGuard.ThrowIfInvalidViewName(value);
 
             this.name = value;
         }

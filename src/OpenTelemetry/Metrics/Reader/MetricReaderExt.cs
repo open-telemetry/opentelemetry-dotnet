@@ -126,7 +126,7 @@ public abstract partial class MetricReader
                     ? this.exemplarFilterForHistograms ?? this.exemplarFilter
                     : this.exemplarFilter;
 
-                if (!Guard.IsValidInstrumentName(metricStreamIdentity.InstrumentName))
+                if (!MetricGuard.IsValidInstrumentName(metricStreamIdentity.InstrumentName))
                 {
                     if (metricStreamConfig?.Name == null)
                     {

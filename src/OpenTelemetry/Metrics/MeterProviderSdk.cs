@@ -260,7 +260,7 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             if (viewConfigCount <= 0)
             {
-                if (!Guard.IsValidInstrumentName(instrument.Name))
+                if (!MetricGuard.IsValidInstrumentName(instrument.Name))
                 {
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
                         instrument.Name,
