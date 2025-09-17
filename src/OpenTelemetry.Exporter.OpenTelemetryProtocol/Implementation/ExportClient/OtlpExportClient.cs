@@ -88,16 +88,14 @@ internal abstract class OtlpExportClient : IExportClient
             request.Headers.Add(header.Key, header.Value);
         }
 
-        var data = buffer;
-        var dataLength = contentLength;
+        Stream data = new MemoryStream(buffer, 0, contentLength);
 
         if (this.Compression == OtlpExportCompression.Gzip)
         {
-            data = this.Compress(buffer);
-            dataLength = data.Length;
+            data = this.Compress(data);
         }
 
-        request.Content = new ByteArrayContent(data, 0, dataLength);
+        request.Content = new StreamContent(data);
         request.Content.Headers.ContentType = this.MediaTypeHeader;
 
         if (this.Compression == OtlpExportCompression.Gzip && this.ContentEncodingHeader != null)
@@ -108,7 +106,7 @@ internal abstract class OtlpExportClient : IExportClient
         return request;
     }
 
-    protected abstract byte[] Compress(byte[] data);
+    protected abstract Stream Compress(Stream dataStream);
 
     protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
     {

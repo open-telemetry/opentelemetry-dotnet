@@ -172,23 +172,25 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
     }
 
-    protected override byte[] Compress(byte[] data)
+    protected override Stream Compress(Stream dataStream)
     {
-        using var compressedStream = new MemoryStream();
-        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Optimal, leaveOpen: true))
+        var compressedStream = new MemoryStream();
+
+        compressedStream.WriteByte(1);
+        compressedStream.Write(new byte[4], 0, 4);
+
+        dataStream.Position = GrpcMessageHeaderSize;
+
+        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Fastest, leaveOpen: true))
         {
-            gzipStream.Write(data, GrpcMessageHeaderSize, data.Length - GrpcMessageHeaderSize);
+            dataStream.CopyTo(gzipStream);
         }
 
-        var compressedDataLength = compressedStream.Position;
-        var payload = new byte[compressedDataLength + GrpcMessageHeaderSize];
-        payload[0] = 1;
-        BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(1, 4), (uint)compressedDataLength);
-        using var payloadStream = new MemoryStream(payload);
-        payloadStream.Position = GrpcMessageHeaderSize;
-        compressedStream.WriteTo(payloadStream);
+        var compressedDataLength = (int)(compressedStream.Length - GrpcMessageHeaderSize);
+        BinaryPrimitives.WriteUInt32BigEndian(compressedStream.GetBuffer().AsSpan(1, 4), (uint)compressedDataLength);
 
-        return payload;
+        compressedStream.Position = 0;
+        return compressedStream;
     }
 
     private static bool IsTransientNetworkError(HttpRequestException ex)

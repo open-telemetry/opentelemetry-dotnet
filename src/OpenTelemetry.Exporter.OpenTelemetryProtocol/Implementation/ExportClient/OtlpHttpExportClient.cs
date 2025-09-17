@@ -51,18 +51,15 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
         }
     }
 
-    protected override byte[] Compress(byte[] data)
+    protected override Stream Compress(Stream dataStream)
     {
-        using var compressedStream = new MemoryStream();
-        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Optimal))
+        var compressedStream = new MemoryStream();
+        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Fastest, leaveOpen: true))
         {
-#if NET462 || NETSTANDARD2_0
-            gzipStream.Write(data.ToArray(), 0, data.Length);
-#else
-            gzipStream.Write(data);
-#endif
+            dataStream.CopyTo(gzipStream);
         }
 
-        return compressedStream.ToArray();
+        compressedStream.Position = 0;
+        return compressedStream;
     }
 }
