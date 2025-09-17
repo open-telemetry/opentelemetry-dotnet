@@ -134,26 +134,6 @@ public class OtlpExporterOptionsExtensionsTests
         AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
     }
 
-    private static void AssertTransmissionHandler(OtlpExporterTransmissionHandler transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds, string? retryStrategy)
-    {
-        if (retryStrategy == "in_memory")
-        {
-            Assert.True(transmissionHandler is OtlpExporterRetryTransmissionHandler);
-        }
-        else if (retryStrategy == "disk")
-        {
-            Assert.True(transmissionHandler is OtlpExporterPersistentStorageTransmissionHandler);
-        }
-        else
-        {
-            Assert.True(transmissionHandler is OtlpExporterTransmissionHandler);
-        }
-
-        Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
-
-        Assert.Equal(expectedTimeoutMilliseconds, transmissionHandler.TimeoutMilliseconds);
-    }
-
     [Fact]
     public void GetHeaders_NoUserAgentInHeaders_ReturnsDefaultUserAgent()
     {
@@ -209,7 +189,6 @@ public class OtlpExporterOptionsExtensionsTests
         };
 
         var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
-        var userAgentHeaders = headers.Where(h => h.Key == "User-Agent").ToList();
 
         // Should have Authorization, Content-Type, and User-Agent (from standard headers with custom prepended)
         Assert.Equal(3, headers.Count);
@@ -239,6 +218,26 @@ public class OtlpExporterOptionsExtensionsTests
 
         // Should not have extra spaces or the empty custom prefix
         Assert.DoesNotContain("  ", userAgentHeader.Value, StringComparison.Ordinal);
+    }
+
+    private static void AssertTransmissionHandler(OtlpExporterTransmissionHandler transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds, string? retryStrategy)
+    {
+        if (retryStrategy == "in_memory")
+        {
+            Assert.True(transmissionHandler is OtlpExporterRetryTransmissionHandler);
+        }
+        else if (retryStrategy == "disk")
+        {
+            Assert.True(transmissionHandler is OtlpExporterPersistentStorageTransmissionHandler);
+        }
+        else
+        {
+            Assert.True(transmissionHandler is OtlpExporterTransmissionHandler);
+        }
+
+        Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
+
+        Assert.Equal(expectedTimeoutMilliseconds, transmissionHandler.TimeoutMilliseconds);
     }
 
     /// <summary>

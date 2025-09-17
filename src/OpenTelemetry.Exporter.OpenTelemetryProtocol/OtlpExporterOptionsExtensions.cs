@@ -78,7 +78,7 @@ internal static class OtlpExporterOptionsExtensions
                 // Create User-Agent with custom prefix if provided
                 var userAgentValue = string.IsNullOrWhiteSpace(customUserAgent)
                     ? header.Value
-                    : $"{customUserAgent.Trim()} {header.Value}";
+                    : $"{customUserAgent!.Trim()} {header.Value}";
                 addHeader(headers, header.Key, userAgentValue);
             }
             else
