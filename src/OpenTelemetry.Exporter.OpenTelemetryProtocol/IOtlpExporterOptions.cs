@@ -64,6 +64,16 @@ internal interface IOtlpExporterOptions
     string? Headers { get; set; }
 
     /// <summary>
+    /// Gets or sets the custom user agent prefix to be prepended to the
+    /// default OpenTelemetry User-Agent header.
+    /// </summary>
+    /// <remarks>
+    /// When set, the resulting User-Agent header will follow the format:
+    /// <c>{UserAgent} OTel-OTLP-Exporter-Dotnet/{version}</c>.
+    /// </remarks>
+    string? UserAgent { get; set; }
+
+    /// <summary>
     /// Gets or sets the max waiting time (in milliseconds) for the backend to
     /// process each batch. Default value: <c>10000</c>.
     /// </summary>

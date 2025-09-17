@@ -34,7 +34,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
-        new("User-Agent", GetUserAgentString()),
+        new("User-Agent", GetDefaultUserAgentString()),
     };
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
@@ -109,6 +109,16 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     /// <inheritdoc/>
     public string? Headers { get; set; }
+
+    /// <summary>
+    /// Gets or sets the custom user agent prefix to be prepended to the
+    /// default OpenTelemetry User-Agent header.
+    /// </summary>
+    /// <remarks>
+    /// When set, the resulting User-Agent header will follow the format:
+    /// <c>{UserAgent} OTel-OTLP-Exporter-Dotnet/{version}</c>.
+    /// </remarks>
+    public string? UserAgent { get; set; }
 
     /// <inheritdoc/>
     public int TimeoutMilliseconds
@@ -219,6 +229,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.Headers ??= defaultExporterOptions.Headers;
 
+        this.UserAgent ??= defaultExporterOptions.UserAgent;
+
         this.timeoutMilliseconds ??= defaultExporterOptions.timeoutMilliseconds;
 
         this.httpClientFactory ??= defaultExporterOptions.httpClientFactory;
@@ -226,7 +238,15 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         return this;
     }
 
-    private static string GetUserAgentString()
+    internal string GetUserAgentString()
+    {
+        var defaultUserAgent = GetDefaultUserAgentString();
+        return string.IsNullOrWhiteSpace(this.UserAgent)
+            ? defaultUserAgent
+            : $"{this.UserAgent.Trim()} {defaultUserAgent}";
+    }
+
+    private static string GetDefaultUserAgentString()
     {
         var assembly = typeof(OtlpExporterOptions).Assembly;
         return $"OTel-OTLP-Exporter-Dotnet/{assembly.GetPackageVersion()}";

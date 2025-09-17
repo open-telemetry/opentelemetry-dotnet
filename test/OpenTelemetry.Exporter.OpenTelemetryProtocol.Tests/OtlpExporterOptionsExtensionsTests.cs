@@ -4,6 +4,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -151,6 +152,96 @@ public class OtlpExporterOptionsExtensionsTests
         Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
 
         Assert.Equal(expectedTimeoutMilliseconds, transmissionHandler.TimeoutMilliseconds);
+    }
+
+    [Fact]
+    public void GetHeaders_UserAgentNotSet_ReturnsDefaultUserAgent()
+    {
+        var options = new OtlpExporterOptions();
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+        Assert.Contains(headers, h => h.Key == "User-Agent" && h.Value.StartsWith("OTel-OTLP-Exporter-Dotnet/", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void GetHeaders_UserAgentSet_ReturnsCustomUserAgentWithDefault()
+    {
+        var options = new OtlpExporterOptions
+        {
+            UserAgent = "MyDistribution/1.0.0",
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var userAgentHeader = headers.FirstOrDefault(h => h.Key == "User-Agent");
+
+        Assert.NotEqual(default(KeyValuePair<string, string>), userAgentHeader);
+        Assert.StartsWith("MyDistribution/1.0.0 OTel-OTLP-Exporter-Dotnet/", userAgentHeader.Value, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GetHeaders_UserAgentSetWithWhitespace_ReturnsTrimmedUserAgent()
+    {
+        var options = new OtlpExporterOptions
+        {
+            UserAgent = "  MyDistribution/1.0.0  ",
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var userAgentHeader = headers.FirstOrDefault(h => h.Key == "User-Agent");
+
+        Assert.NotEqual(default(KeyValuePair<string, string>), userAgentHeader);
+        Assert.StartsWith("MyDistribution/1.0.0 OTel-OTLP-Exporter-Dotnet/", userAgentHeader.Value, StringComparison.Ordinal);
+        Assert.DoesNotContain("  ", userAgentHeader.Value, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GetHeaders_CustomUserAgentInHeaders_OverridesDefault()
+    {
+        var options = new OtlpExporterOptions
+        {
+            Headers = "User-Agent=CustomAgent/2.0.0",
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var userAgentHeaders = headers.Where(h => h.Key == "User-Agent").ToList();
+
+        Assert.Single(userAgentHeaders);
+        Assert.Equal("CustomAgent/2.0.0", userAgentHeaders[0].Value);
+    }
+
+    [Fact]
+    public void GetHeaders_CustomUserAgentInHeadersAndUserAgentProperty_HeadersWin()
+    {
+        var options = new OtlpExporterOptions
+        {
+            Headers = "User-Agent=CustomAgent/2.0.0",
+            UserAgent = "MyDistribution/1.0.0",
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var userAgentHeaders = headers.Where(h => h.Key == "User-Agent").ToList();
+
+        Assert.Single(userAgentHeaders);
+        Assert.Equal("CustomAgent/2.0.0", userAgentHeaders[0].Value);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void GetHeaders_EmptyOrWhitespaceUserAgent_ReturnsDefaultUserAgent(string? userAgent)
+    {
+        var options = new OtlpExporterOptions
+        {
+            UserAgent = userAgent,
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var userAgentHeader = headers.FirstOrDefault(h => h.Key == "User-Agent");
+
+        Assert.NotEqual(default(KeyValuePair<string, string>), userAgentHeader);
+        Assert.StartsWith("OTel-OTLP-Exporter-Dotnet/", userAgentHeader.Value, StringComparison.Ordinal);
+        Assert.DoesNotContain("  ", userAgentHeader.Value, StringComparison.Ordinal);
     }
 
     /// <summary>

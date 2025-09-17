@@ -1,0 +1,2 @@
+OpenTelemetry.Exporter.OtlpExporterOptions.UserAgent.get -> string?
+OpenTelemetry.Exporter.OtlpExporterOptions.UserAgent.set -> void

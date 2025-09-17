@@ -27,6 +27,8 @@ internal static class OtlpExporterOptionsExtensions
     {
         var optionHeaders = options.Headers;
         var headers = new THeaders();
+        var hasCustomUserAgent = false;
+
         if (!string.IsNullOrEmpty(optionHeaders))
         {
             // According to the specification, URL-encoded headers must be supported.
@@ -56,13 +58,34 @@ internal static class OtlpExporterOptionsExtensions
 
                 var key = pair.Slice(0, equalIndex).Trim().ToString();
                 var value = pair.Slice(equalIndex + 1).Trim().ToString();
+
+                if (string.Equals(key, "User-Agent", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasCustomUserAgent = true;
+                }
+
                 addHeader(headers, key, value);
             }
         }
 
+        // Add standard headers, handling User-Agent specially
         foreach (var header in OtlpExporterOptions.StandardHeaders)
         {
-            addHeader(headers, header.Key, header.Value);
+            if (string.Equals(header.Key, "User-Agent", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!hasCustomUserAgent)
+                {
+                    // No custom User-Agent, use the default (potentially with custom prefix)
+                    var userAgentValue = options.GetUserAgentString();
+                    addHeader(headers, header.Key, userAgentValue);
+                }
+
+                // If custom User-Agent was provided, don't add the standard one
+            }
+            else
+            {
+                addHeader(headers, header.Key, header.Value);
+            }
         }
 
         return headers;
