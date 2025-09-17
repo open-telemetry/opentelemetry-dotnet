@@ -4,6 +4,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -131,6 +132,92 @@ public class OtlpExporterOptionsExtensionsTests
 
         var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Traces);
         AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
+    }
+
+    [Fact]
+    public void GetHeaders_NoUserAgentInHeaders_ReturnsDefaultUserAgent()
+    {
+        var options = new OtlpExporterOptions
+        {
+            Headers = "Authorization=Bearer token123",
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var userAgentHeader = headers.FirstOrDefault(h => h.Key == "User-Agent");
+
+        Assert.NotEqual(default(KeyValuePair<string, string>), userAgentHeader);
+        Assert.StartsWith("OTel-OTLP-Exporter-Dotnet/", userAgentHeader.Value, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GetHeaders_UserAgentInHeaders_PrependsToDefault()
+    {
+        var options = new OtlpExporterOptions
+        {
+            Headers = "User-Agent=MyDistribution/1.0.0",
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var userAgentHeader = headers.FirstOrDefault(h => h.Key == "User-Agent");
+
+        Assert.NotEqual(default(KeyValuePair<string, string>), userAgentHeader);
+        Assert.StartsWith("MyDistribution/1.0.0 OTel-OTLP-Exporter-Dotnet/", userAgentHeader.Value, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GetHeaders_UserAgentWithWhitespace_TrimmedAndPrepended()
+    {
+        var options = new OtlpExporterOptions
+        {
+            Headers = "User-Agent=  MyService/2.1.0  ",
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var userAgentHeader = headers.FirstOrDefault(h => h.Key == "User-Agent");
+
+        Assert.NotEqual(default(KeyValuePair<string, string>), userAgentHeader);
+        Assert.StartsWith("MyService/2.1.0 OTel-OTLP-Exporter-Dotnet/", userAgentHeader.Value, StringComparison.Ordinal);
+        Assert.DoesNotContain("  ", userAgentHeader.Value, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GetHeaders_UserAgentWithOtherHeaders_PrependsCorrectly()
+    {
+        var options = new OtlpExporterOptions
+        {
+            Headers = "Authorization=Bearer token,User-Agent=CustomAgent/3.0.0,Content-Type=application/json",
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+        // Should have Authorization, Content-Type, and User-Agent (from standard headers with custom prepended)
+        Assert.Equal(3, headers.Count);
+        Assert.Contains(headers, h => h.Key == "Authorization" && h.Value == "Bearer token");
+        Assert.Contains(headers, h => h.Key == "Content-Type" && h.Value == "application/json");
+
+        var userAgentHeader = headers.FirstOrDefault(h => h.Key == "User-Agent");
+        Assert.NotEqual(default(KeyValuePair<string, string>), userAgentHeader);
+        Assert.StartsWith("CustomAgent/3.0.0 OTel-OTLP-Exporter-Dotnet/", userAgentHeader.Value, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void GetHeaders_EmptyOrWhitespaceUserAgent_UsesDefault(string userAgentValue)
+    {
+        var options = new OtlpExporterOptions
+        {
+            Headers = $"User-Agent={userAgentValue}",
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var userAgentHeader = headers.FirstOrDefault(h => h.Key == "User-Agent");
+
+        Assert.NotEqual(default(KeyValuePair<string, string>), userAgentHeader);
+        Assert.StartsWith("OTel-OTLP-Exporter-Dotnet/", userAgentHeader.Value, StringComparison.Ordinal);
+
+        // Should not have extra spaces or the empty custom prefix
+        Assert.DoesNotContain("  ", userAgentHeader.Value, StringComparison.Ordinal);
     }
 
     private static void AssertTransmissionHandler(OtlpExporterTransmissionHandler transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds, string? retryStrategy)
