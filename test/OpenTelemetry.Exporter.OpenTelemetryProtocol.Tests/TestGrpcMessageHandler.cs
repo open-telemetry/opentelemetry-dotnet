@@ -58,8 +58,6 @@ internal sealed class TestGrpcMessageHandler : HttpMessageHandler
     }
 
 #if NETSTANDARD2_0 || NET462
-    private sealed class CustomResponseTrailers : HttpHeaders
-    {
-    }
+    private sealed class CustomResponseTrailers : HttpHeaders;
 #endif
 }
