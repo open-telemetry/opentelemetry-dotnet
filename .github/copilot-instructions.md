@@ -8,19 +8,17 @@ OpenTelemetry .NET is the official .NET implementation of OpenTelemetry, providi
 
 ### Prerequisites and Setup
 
-**CRITICAL**: This repository requires .NET SDK 9.0.304 (specified in global.json). Install it before attempting any builds:
+**CRITICAL**: This repository requires a specific .NET SDK version (specified in global.json). Install it before attempting any builds:
 
-- Download and install .NET SDK 9.0.304:
+- Check the required version: `cat global.json` (look for the "version" field)
+- Download and install the required .NET SDK version:
   ```bash
-  # Linux/macOS
-  wget https://dotnetcli.azureedge.net/dotnet/Sdk/9.0.304/dotnet-sdk-9.0.304-linux-x64.tar.gz
-  tar -xzf dotnet-sdk-9.0.304-linux-x64.tar.gz -C /tmp/
-  export PATH="/tmp:$PATH"
-  
-  # Or install globally following .NET installation docs
+  # Install the latest stable .NET SDK from https://dotnet.microsoft.com/download
+  # Or use your system's package manager
+  # The SDK will automatically use the version specified in global.json
   ```
 - Install markdownlint for markdown validation: `npm install -g markdownlint-cli`
-- Verify setup: `dotnet --version` should show 9.0.304
+- Verify setup: `dotnet --version` should show a compatible version that satisfies global.json
 
 ### Build and Test Commands
 
@@ -105,7 +103,7 @@ Always manually validate changes by running complete end-to-end scenarios:
 
 ### Important Files
 
-- **`global.json`** - Specifies required .NET SDK version (9.0.304)
+- **`global.json`** - Specifies required .NET SDK version (check this file for current version)
 - **`.github/workflows/ci.yml`** - Main CI pipeline configuration
 - **`.editorconfig`** - Code style configuration (enforced by dotnet format)
 - **`Directory.Packages.props`** - Centralized package version management
@@ -127,7 +125,7 @@ When making changes, these are the most commonly modified areas:
 
 ### Build Issues
 
-- **Requires specific .NET SDK version**: Must use .NET SDK 9.0.304 as specified in global.json
+- **Requires specific .NET SDK version**: Must use the .NET SDK version specified in global.json
 - **Long build times**: Full solution build can take 20+ minutes, never cancel early
 - **Package restore timeouts**: May take 5+ minutes on first run, be patient
 - **Test timeouts**: Full test suite takes 30+ minutes, use targeted testing for faster feedback
@@ -171,7 +169,7 @@ Always ensure your changes pass:
 ### Quick Status Check
 ```bash
 # Verify environment setup
-dotnet --version  # Should show 9.0.304
+dotnet --version  # Should show a version compatible with global.json
 markdownlint --version  # Should be installed
 
 # Quick build validation  
