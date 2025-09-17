@@ -15,10 +15,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
 public class OtlpExporterCompressionTests
 {
     [Theory]
-    [InlineData(true, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
-    [InlineData(false, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
-    [InlineData(true, "")]
-    public void SendExportRequest_SendsCorrectContent_Http(bool compressPayload, string text)
+    [InlineData(OtlpExportCompression.Gzip, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    [InlineData(OtlpExportCompression.None, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    [InlineData(OtlpExportCompression.Gzip, "")]
+    public void SendExportRequest_SendsCorrectContent_Http(OtlpExportCompression compression, string text)
     {
         var buffer = System.Text.Encoding.UTF8.GetBytes(text);
 
@@ -26,7 +26,7 @@ public class OtlpExporterCompressionTests
         var options = new OtlpExporterOptions
         {
             Endpoint = new Uri("http://localhost:4317"),
-            CompressPayload = compressPayload,
+            Compression = compression,
         };
 
         using var testHttpHandler = new TestHttpMessageHandler();
@@ -45,7 +45,7 @@ public class OtlpExporterCompressionTests
         Assert.Equal(HttpMethod.Post, httpRequest.Method);
         Assert.NotNull(httpRequest.Content);
 
-        if (compressPayload)
+        if (compression == OtlpExportCompression.Gzip)
         {
             Assert.Contains(httpRequest.Content.Headers, h => h.Key == "Content-Encoding" && h.Value.First() == "gzip");
 
@@ -63,10 +63,10 @@ public class OtlpExporterCompressionTests
     }
 
     [Theory]
-    [InlineData(true, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
-    [InlineData(false, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
-    [InlineData(true, "")]
-    public void SendExportRequest_SendsCorrectContent_Grpc(bool compressPayload, string text)
+    [InlineData(OtlpExportCompression.Gzip, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    [InlineData(OtlpExportCompression.None, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    [InlineData(OtlpExportCompression.Gzip, "")]
+    public void SendExportRequest_SendsCorrectContent_Grpc(OtlpExportCompression compression, string text)
     {
         var payload = System.Text.Encoding.UTF8.GetBytes(text);
 
@@ -74,7 +74,7 @@ public class OtlpExporterCompressionTests
         var options = new OtlpExporterOptions
         {
             Endpoint = new Uri("http://localhost:4317"),
-            CompressPayload = compressPayload,
+            Compression = compression,
         };
 
         var buffer = new byte[payload.Length + 5];
@@ -100,10 +100,10 @@ public class OtlpExporterCompressionTests
         var declaredLength = BinaryPrimitives.ReadUInt32BigEndian(requestContent.AsSpan(1, 4));
         var body = requestContent.AsSpan(5, (int)declaredLength).ToArray();
 
-        Assert.Equal(compressPayload ? 1 : 0, compressionFlag);
+        Assert.Equal(compression == OtlpExportCompression.Gzip ? 1 : 0, compressionFlag);
         Assert.Equal(body.Length, (int)declaredLength);
 
-        if (compressPayload)
+        if (compression == OtlpExportCompression.Gzip)
         {
             var decompressedStream = Decompress(body);
 

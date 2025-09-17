@@ -138,7 +138,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
     /// <inheritdoc/>
-    public bool CompressPayload { get; set; }
+    public OtlpExportCompression Compression { get; set; } = OtlpExportCompression.None;
 
     /// <inheritdoc/>
     public Func<HttpClient> HttpClientFactory
@@ -213,11 +213,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         if (configuration.TryGetStringValue(compressPayloadEnvVarKey, out var compressPayload))
         {
-            if (string.Equals(compressPayload.Trim(), "gzip", StringComparison.OrdinalIgnoreCase))
+            if (Enum.TryParse<OtlpExportCompression>(compressPayload.Trim(), true, out var compression))
             {
-                this.CompressPayload = true;
+                this.Compression = compression;
             }
-            else if (!string.Equals(compressPayload.Trim(), "none", StringComparison.OrdinalIgnoreCase))
+            else
             {
                 OpenTelemetryProtocolExporterEventSource.Log.InvalidConfigurationValue(compressPayloadEnvVarKey, compressPayload);
             }

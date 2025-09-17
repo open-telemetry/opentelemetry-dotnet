@@ -1,2 +1,5 @@
-OpenTelemetry.Exporter.OtlpExporterOptions.CompressPayload.get -> bool
-OpenTelemetry.Exporter.OtlpExporterOptions.CompressPayload.set -> void
+OpenTelemetry.Exporter.OtlpExportCompression
+OpenTelemetry.Exporter.OtlpExportCompression.Gzip = 1 -> OpenTelemetry.Exporter.OtlpExportCompression
+OpenTelemetry.Exporter.OtlpExportCompression.None = 0 -> OpenTelemetry.Exporter.OtlpExportCompression
+OpenTelemetry.Exporter.OtlpExporterOptions.Compression.get -> OpenTelemetry.Exporter.OtlpExportCompression
+OpenTelemetry.Exporter.OtlpExporterOptions.Compression.set -> void

@@ -51,7 +51,7 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
         }
     }
 
-    protected override byte[] Compress(byte[] data, int contentLength)
+    protected override byte[] Compress(byte[] data)
     {
         using var compressedStream = new MemoryStream();
         using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Optimal))

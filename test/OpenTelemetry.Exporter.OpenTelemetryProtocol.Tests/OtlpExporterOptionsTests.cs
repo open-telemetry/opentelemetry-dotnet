@@ -127,7 +127,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.Equal(10000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExporterOptions.DefaultOtlpExportProtocol, options.Protocol);
         Assert.Null(options.Headers);
-        Assert.False(options.CompressPayload);
+        Assert.Equal(OtlpExportCompression.None, options.Compression);
     }
 
     [Fact]
@@ -161,14 +161,14 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         options.Headers = "C=3";
         options.TimeoutMilliseconds = 40000;
         options.Protocol = OtlpExportProtocol.HttpProtobuf;
-        options.CompressPayload = true;
+        options.Compression = OtlpExportCompression.Gzip;
 
         Assert.Equal(new Uri("http://localhost:200"), options.Endpoint);
         Assert.Equal("C=3", options.Headers);
         Assert.Equal(40000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
         Assert.False(options.AppendSignalPathToEndpoint);
-        Assert.True(options.CompressPayload);
+        Assert.Equal(OtlpExportCompression.Gzip, options.Compression);
     }
 
     [Fact]

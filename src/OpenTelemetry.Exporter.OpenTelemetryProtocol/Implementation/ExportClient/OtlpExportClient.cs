@@ -44,12 +44,12 @@ internal abstract class OtlpExportClient : IExportClient
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
         this.HttpClient = httpClient;
-        this.CompressionEnabled = options.CompressPayload;
+        this.Compression = options.Compression;
     }
 
     internal HttpClient HttpClient { get; }
 
-    internal bool CompressionEnabled { get; }
+    internal OtlpExportCompression Compression { get; }
 
     internal Uri Endpoint { get; }
 
@@ -91,16 +91,16 @@ internal abstract class OtlpExportClient : IExportClient
         var data = buffer;
         var dataLength = contentLength;
 
-        if (this.CompressionEnabled)
+        if (this.Compression == OtlpExportCompression.Gzip)
         {
-            data = this.Compress(buffer, contentLength);
+            data = this.Compress(buffer);
             dataLength = data.Length;
         }
 
         request.Content = new ByteArrayContent(data, 0, dataLength);
         request.Content.Headers.ContentType = this.MediaTypeHeader;
 
-        if (this.CompressionEnabled && this.ContentEncodingHeader != null)
+        if (this.Compression == OtlpExportCompression.Gzip && this.ContentEncodingHeader != null)
         {
             request.Content.Headers.Add("Content-Encoding", this.ContentEncodingHeader);
         }
@@ -108,7 +108,7 @@ internal abstract class OtlpExportClient : IExportClient
         return request;
     }
 
-    protected abstract byte[] Compress(byte[] data, int contentLength);
+    protected abstract byte[] Compress(byte[] data);
 
     protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
     {

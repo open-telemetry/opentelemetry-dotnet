@@ -47,10 +47,10 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             // byte 0     - Compression flag (0 = not compressed, 1 = compressed).
             // bytes 1-4  - Message length in big-endian format (length of the serialized data only).
             // bytes 5+   - Protobuf-encoded payload.
+            buffer[0] = this.Compression == OtlpExportCompression.Gzip ? (byte)1 : (byte)0;
             Span<byte> data = new Span<byte>(buffer, 1, 4);
             var dataLength = contentLength - GrpcMessageHeaderSize;
             BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
-            buffer[0] = this.CompressionEnabled ? (byte)1 : (byte)0;
 
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
 
@@ -172,7 +172,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
     }
 
-    protected override byte[] Compress(byte[] data, int contentLength)
+    protected override byte[] Compress(byte[] data)
     {
         using var compressedStream = new MemoryStream();
         using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Optimal, leaveOpen: true))
@@ -182,12 +182,11 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
         var compressedDataLength = compressedStream.Position;
         var payload = new byte[compressedDataLength + GrpcMessageHeaderSize];
+        payload[0] = 1;
+        BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(1, 4), (uint)compressedDataLength);
         using var payloadStream = new MemoryStream(payload);
         payloadStream.Position = GrpcMessageHeaderSize;
         compressedStream.WriteTo(payloadStream);
-
-        payload[0] = 1;
-        BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(1, 4), (uint)compressedDataLength);
 
         return payload;
     }
