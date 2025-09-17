@@ -27,7 +27,7 @@ internal static class OtlpExporterOptionsExtensions
     {
         var optionHeaders = options.Headers;
         var headers = new THeaders();
-        var hasCustomUserAgent = false;
+        string? customUserAgent = null;
 
         if (!string.IsNullOrEmpty(optionHeaders))
         {
@@ -59,28 +59,27 @@ internal static class OtlpExporterOptionsExtensions
                 var key = pair.Slice(0, equalIndex).Trim().ToString();
                 var value = pair.Slice(equalIndex + 1).Trim().ToString();
 
+                // Extract custom User-Agent to prepend to default
                 if (string.Equals(key, "User-Agent", StringComparison.OrdinalIgnoreCase))
                 {
-                    hasCustomUserAgent = true;
+                    customUserAgent = value;
                 }
-
-                addHeader(headers, key, value);
+                else
+                {
+                    addHeader(headers, key, value);
+                }
             }
         }
 
-        // Add standard headers, handling User-Agent specially
         foreach (var header in OtlpExporterOptions.StandardHeaders)
         {
             if (string.Equals(header.Key, "User-Agent", StringComparison.OrdinalIgnoreCase))
             {
-                if (!hasCustomUserAgent)
-                {
-                    // No custom User-Agent, use the default (potentially with custom prefix)
-                    var userAgentValue = options.GetUserAgentString();
-                    addHeader(headers, header.Key, userAgentValue);
-                }
-
-                // If custom User-Agent was provided, don't add the standard one
+                // Create User-Agent with custom prefix if provided
+                var userAgentValue = string.IsNullOrWhiteSpace(customUserAgent)
+                    ? header.Value
+                    : $"{customUserAgent.Trim()} {header.Value}";
+                addHeader(headers, header.Key, userAgentValue);
             }
             else
             {
