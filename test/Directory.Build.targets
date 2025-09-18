@@ -9,7 +9,7 @@
     reference is needed to mitigate:
     https://github.com/advisories/GHSA-hh2w-p6rv-4g7w. Remove this if Coyote
     publishes a fixed version. -->
-    <PackageReference Include="System.Text.Json" VersionOverride="$(SystemTextJsonOutOfBandMinimumCoreAppVer)" />
+    <PackageReference Include="System.Text.Json" VersionOverride="8.0.5" />
   </ItemGroup>
 
 </Project>

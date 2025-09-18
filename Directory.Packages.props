@@ -2,18 +2,6 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <OTelLatestStableVer>1.12.0</OTelLatestStableVer>
-
-    <!--
-        This is typically the latest annual release of .NET. Use this wherever
-        possible and only deviate (use a specific version) when a package has a
-        more specific patch which must be reference directly.
-    -->
-    <LatestRuntimeOutOfBandVer>9.0.0</LatestRuntimeOutOfBandVer>
-
-    <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
-    <SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>8.0.0</SystemTextEncodingsWebOutOfBandMinimumCoreAppVer>
-    <SystemTextJsonOutOfBandMinimumCoreAppVer>8.0.5</SystemTextJsonOutOfBandMinimumCoreAppVer>
   </PropertyGroup>
 
   <!--
@@ -31,20 +19,20 @@
         3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
           these packages even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(LatestRuntimeOutOfBandVer)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[9.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[9.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[9.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[9.0.0,)" />
 
     <!--
         OTel packages always point to latest stable release.
     -->
-    <PackageVersion Include="OpenTelemetry" Version="[$(OTelLatestStableVer),2.0)" />
-    <PackageVersion Include="OpenTelemetry.Api" Version="[$(OTelLatestStableVer),2.0)" />
-    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="[$(OTelLatestStableVer),2.0)" />
-    <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="[$(OTelLatestStableVer),2.0)" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="[$(OTelLatestStableVer),2.0)" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry" Version="[1.12.0,2.0)" />
+    <PackageVersion Include="OpenTelemetry.Api" Version="[1.12.0,2.0)" />
+    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="[1.12.0,2.0)" />
+    <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="[1.12.0,2.0)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="[1.12.0,2.0)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="[1.12.0,2.0)" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
 
     <!--
@@ -56,7 +44,7 @@
         3) The .NET runtime team provides extra backward compatibility guarantee to System.Diagnostics.DiagnosticSource
           even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(LatestRuntimeOutOfBandVer)" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[9.0.0,)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -73,9 +61,10 @@
     <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
     <PackageVersion Include="System.Text.Json" Version="4.7.2" />
 
+    <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
     <!-- Newer NETCoreApp runtimes need to be redirected to safe versions. -->
-    <PackageVersion Update="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebOutOfBandMinimumCoreAppVer)" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
-    <PackageVersion Update="System.Text.Json" Version="$(SystemTextJsonOutOfBandMinimumCoreAppVer)" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
+    <PackageVersion Update="System.Text.Encodings.Web" Version="[8.0.0,)" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
+    <PackageVersion Update="System.Text.Json" Version="[8.0.5,)" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
   </ItemGroup>
 
   <!--
@@ -96,10 +85,10 @@
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(LatestRuntimeOutOfBandVer)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(LatestRuntimeOutOfBandVer)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="9.0.0" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
