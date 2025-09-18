@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <OTelLatestStableVer>1.12.0</OTelLatestStableVer>
   </PropertyGroup>
 
   <!--
@@ -27,12 +28,12 @@
     <!--
         OTel packages always point to latest stable release.
     -->
-    <PackageVersion Include="OpenTelemetry" Version="[1.12.0,2.0)" />
-    <PackageVersion Include="OpenTelemetry.Api" Version="[1.12.0,2.0)" />
-    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="[1.12.0,2.0)" />
-    <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="[1.12.0,2.0)" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="[1.12.0,2.0)" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="[1.12.0,2.0)" />
+    <PackageVersion Include="OpenTelemetry" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry.Api" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="[$(OTelLatestStableVer),2.0)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="[$(OTelLatestStableVer),2.0)" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
 
     <!--
