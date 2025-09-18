@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -27,6 +28,8 @@ public class HistogramBuckets
     internal double RunningMax = double.NegativeInfinity;
     internal double SnapshotMax;
 
+    private static readonly ConcurrentDictionary<double[], BucketLookupNode> ExplicitBoundsToLookupTreeRoot = new(new HistogramBoundsComparer());
+
     private readonly BucketLookupNode? bucketLookupTreeRoot;
 
     private readonly Func<double, int> findHistogramBucketIndex;
@@ -38,7 +41,7 @@ public class HistogramBuckets
         this.findHistogramBucketIndex = this.FindBucketIndexLinear;
         if (explicitBounds != null && explicitBounds.Length >= DefaultBoundaryCountForBinarySearch)
         {
-            this.bucketLookupTreeRoot = ConstructBalancedBST(explicitBounds, 0, explicitBounds.Length)!;
+            this.bucketLookupTreeRoot = ExplicitBoundsToLookupTreeRoot.GetOrAdd(explicitBounds, bounds => ConstructBalancedBST(bounds, 0, bounds.Length)!);
             this.findHistogramBucketIndex = this.FindBucketIndexBinary;
 
             static BucketLookupNode? ConstructBalancedBST(double[] values, int min, int max)
@@ -159,8 +162,25 @@ public class HistogramBuckets
         }
     }
 
-    private static double[]? CleanUpInfinitiesFromExplicitBounds(double[]? explicitBounds) => explicitBounds
-        ?.Where(b => !double.IsNegativeInfinity(b) && !double.IsPositiveInfinity(b)).ToArray();
+    private static double[]? CleanUpInfinitiesFromExplicitBounds(double[]? explicitBounds)
+    {
+        if (explicitBounds == null)
+        {
+            return null;
+        }
+
+        for (var i = 0; i < explicitBounds.Length; i++)
+        {
+            if (double.IsNegativeInfinity(explicitBounds[i]) || double.IsPositiveInfinity(explicitBounds[i]))
+            {
+                return explicitBounds
+                    .Where(b => !double.IsNegativeInfinity(b) && !double.IsPositiveInfinity(b))
+                    .ToArray();
+            }
+        }
+
+        return explicitBounds;
+    }
 
     /// <summary>
     /// Enumerates the elements of a <see cref="HistogramBuckets"/>.
@@ -229,5 +249,67 @@ public class HistogramBuckets
         public BucketLookupNode? Left { get; set; }
 
         public BucketLookupNode? Right { get; set; }
+    }
+
+    private sealed class HistogramBoundsComparer : IEqualityComparer<double[]>
+    {
+        public bool Equals(double[]? x, double[]? y)
+        {
+            if (ReferenceEquals(x, y))
+            {
+                return true;
+            }
+
+            if (x == null || y == null)
+            {
+                return false;
+            }
+
+            if (x.Length != y.Length)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < x.Length; i++)
+            {
+                if (x[i] != y[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public int GetHashCode(double[] obj)
+        {
+            if (obj == null)
+            {
+                return 0;
+            }
+
+#if NET || NETSTANDARD2_1_OR_GREATER
+            HashCode hashCode = default;
+
+            foreach (var value in obj)
+            {
+                hashCode.Add(value);
+            }
+
+            var hash = hashCode.ToHashCode();
+#else
+            var hash = 17;
+
+            foreach (var value in obj)
+            {
+                unchecked
+                {
+                    hash = (hash * 31) + value.GetHashCode();
+                }
+            }
+#endif
+
+            return hash;
+        }
     }
 }
