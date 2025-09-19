@@ -14,7 +14,7 @@ public enum OtlpExportCompression
     None = 0,
 
     /// <summary>
-    /// Gzip is the only specified compression method for now.
+    /// Compress with Gzip.
     /// </summary>
     Gzip = 1,
 }
