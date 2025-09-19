@@ -71,8 +71,8 @@ internal interface IOtlpExporterOptions
 
     /// <summary>
     /// Gets or sets a value indicating how to compress the payload.
-    /// Currently gzip is the only supported compression method.
-    /// Note: Refer to the  <see
+    /// Currently Gzip is the only supported compression method.
+    /// Note: Refer to the <see
     /// href="https://opentelemetry.io/docs/specs/otlp/#protocol-details">
     /// OpenTelemetry Specification</see> for details />.
     /// </summary>
