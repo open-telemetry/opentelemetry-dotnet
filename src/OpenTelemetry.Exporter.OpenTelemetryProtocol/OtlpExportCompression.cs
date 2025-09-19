@@ -9,7 +9,7 @@ namespace OpenTelemetry.Exporter;
 public enum OtlpExportCompression
 {
     /// <summary>
-    /// Compression is disabled.
+    /// No compression.
     /// </summary>
     None = 0,
 
