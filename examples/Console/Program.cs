@@ -125,6 +125,9 @@ internal sealed class OtlpOptions
 
     [Option('p', "protocol", HelpText = "Transport protocol used by exporter. Supported values: grpc and http/protobuf.", Default = "grpc")]
     public string? Protocol { get; set; }
+
+    [Option('c', "compression", HelpText = "Compression algorithm used by exporter. Supported values: none and gzip.", Default = "None")]
+    public string? Compression { get; set; }
 }
 
 [Verb("logs", HelpText = "Specify the options required to test Logs")]

@@ -62,6 +62,10 @@ internal static class TestOtlpExporter
                 }
 
                 opt.Protocol = otlpExportProtocol.Value;
+                if (Enum.TryParse<OtlpExportCompression>(options.Compression, true, out var compression))
+                {
+                    opt.Compression = compression;
+                }
 
                 System.Console.WriteLine($"OTLP Exporter is using {opt.Protocol} protocol and endpoint {opt.Endpoint}");
             })
