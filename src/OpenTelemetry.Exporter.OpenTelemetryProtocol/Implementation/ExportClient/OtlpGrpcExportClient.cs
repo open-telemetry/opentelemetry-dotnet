@@ -188,8 +188,8 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             dataStream.CopyTo(gzipStream);
         }
 
-        var compressedDataLength = (int)(compressedStream.Length - GrpcMessageHeaderSize);
-        BinaryPrimitives.WriteUInt32BigEndian(compressedStream.GetBuffer().AsSpan(1, 4), (uint)compressedDataLength);
+        var compressedDataLength = (uint)(compressedStream.Length - GrpcMessageHeaderSize);
+        BinaryPrimitives.WriteUInt32BigEndian(compressedStream.GetBuffer().AsSpan(1, 4), compressedDataLength);
 
         compressedStream.Position = 0;
         return compressedStream;
