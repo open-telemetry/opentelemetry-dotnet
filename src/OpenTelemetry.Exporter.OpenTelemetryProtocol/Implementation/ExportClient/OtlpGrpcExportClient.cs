@@ -36,7 +36,9 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
     internal override bool RequireHttp2 => true;
 
-    protected override string? ContentEncodingHeader => null;
+    protected override string ContentEncodingHeaderKey => "grpc-encoding";
+
+    protected override string ContentEncodingHeaderValue => "gzip";
 
     /// <inheritdoc/>
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
@@ -177,7 +179,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         var compressedStream = new MemoryStream();
 
         compressedStream.WriteByte(1);
-        compressedStream.Write(new byte[4], 0, 4);
+        compressedStream.Write([0, 0, 0, 0], 0, 4);
 
         dataStream.Position = GrpcMessageHeaderSize;
 

@@ -59,7 +59,9 @@ internal abstract class OtlpExportClient : IExportClient
 
     internal virtual bool RequireHttp2 => false;
 
-    protected abstract string? ContentEncodingHeader { get; }
+    protected abstract string? ContentEncodingHeaderKey { get; }
+
+    protected abstract string? ContentEncodingHeaderValue { get; }
 
     public abstract ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default);
 
@@ -98,9 +100,9 @@ internal abstract class OtlpExportClient : IExportClient
         request.Content = new StreamContent(data);
         request.Content.Headers.ContentType = this.MediaTypeHeader;
 
-        if (this.Compression == OtlpExportCompression.Gzip && this.ContentEncodingHeader != null)
+        if (this.Compression == OtlpExportCompression.Gzip && this.ContentEncodingHeaderKey != null)
         {
-            request.Content.Headers.Add("Content-Encoding", this.ContentEncodingHeader);
+            request.Content.Headers.Add(this.ContentEncodingHeaderKey, this.ContentEncodingHeaderValue);
         }
 
         return request;

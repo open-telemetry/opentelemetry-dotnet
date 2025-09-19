@@ -3,6 +3,7 @@
 
 using System.Buffers.Binary;
 using System.IO.Compression;
+using System.Net.Http.Headers;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using Xunit;
 
@@ -15,58 +16,50 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
 public class OtlpExporterCompressionTests
 {
     [Theory]
-    [InlineData(OtlpExportCompression.Gzip, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
-    [InlineData(OtlpExportCompression.None, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
-    [InlineData(OtlpExportCompression.Gzip, "")]
-    public void SendExportRequest_SendsCorrectContent_Http(OtlpExportCompression compression, string text)
+    [InlineData("")]
+    [InlineData("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    public void SendExportRequest_SendsCorrectContent_Http_NonCompressed(string text)
     {
-        var buffer = System.Text.Encoding.UTF8.GetBytes(text);
-
-        // Arrange
-        var options = new OtlpExporterOptions
+        SendExportRequest_Http(OtlpExportCompression.None, text, (requestHeaders, testHttpHandlerContent, buffer) =>
         {
-            Endpoint = new Uri("http://localhost:4317"),
-            Compression = compression,
-        };
-
-        using var testHttpHandler = new TestHttpMessageHandler();
-        using var httpClient = new HttpClient(testHttpHandler, false);
-        var exportClient = new OtlpHttpExportClient(options, httpClient, string.Empty);
-
-        var deadlineUtc = DateTime.UtcNow.AddMilliseconds(httpClient.Timeout.TotalMilliseconds);
-
-        // Act
-        var result = exportClient.SendExportRequest(buffer, buffer.Length, deadlineUtc);
-        var httpRequest = testHttpHandler.HttpRequestMessage;
-
-        // Assert
-        Assert.True(result.Success);
-        Assert.NotNull(httpRequest);
-        Assert.Equal(HttpMethod.Post, httpRequest.Method);
-        Assert.NotNull(httpRequest.Content);
-
-        if (compression == OtlpExportCompression.Gzip)
-        {
-            Assert.Contains(httpRequest.Content.Headers, h => h.Key == "Content-Encoding" && h.Value.First() == "gzip");
-
-            var content = testHttpHandler.HttpRequestContent;
-            Assert.NotNull(content);
-            var decompressedStream = Decompress(content);
-
-            Assert.Equal(buffer, decompressedStream.ToArray());
-        }
-        else
-        {
-            Assert.DoesNotContain(httpRequest.Content.Headers, h => h.Key == "Content-Encoding");
-            Assert.Equal(buffer, testHttpHandler.HttpRequestContent);
-        }
+            Assert.DoesNotContain(requestHeaders, h => h.Key == "Content-Encoding");
+            Assert.Equal(buffer, testHttpHandlerContent);
+        });
     }
 
     [Theory]
-    [InlineData(OtlpExportCompression.Gzip, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
-    [InlineData(OtlpExportCompression.None, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
-    [InlineData(OtlpExportCompression.Gzip, "")]
-    public void SendExportRequest_SendsCorrectContent_Grpc(OtlpExportCompression compression, string text)
+    [InlineData("")]
+    [InlineData("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    public void SendExportRequest_SendsCorrectContent_Http_Compressed(string text)
+    {
+        SendExportRequest_Http(OtlpExportCompression.Gzip, text, (requestHeaders, testHttpHandlerContent, buffer) =>
+        {
+            Assert.Contains(requestHeaders, h => h.Key == "Content-Encoding" && h.Value.First() == "gzip");
+
+            Assert.NotNull(testHttpHandlerContent);
+            var decompressedStream = Decompress(testHttpHandlerContent);
+
+            Assert.Equal(buffer, decompressedStream.ToArray());
+        });
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    public void SendExportRequest_SendsCorrectContent_Grpc_NonCompressed(string text)
+    {
+        SendExportRequest_Grpc(OtlpExportCompression.None, text, body => body);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    public void SendExportRequest_SendsCorrectContent_Grpc_Compressed(string text)
+    {
+        SendExportRequest_Grpc(OtlpExportCompression.Gzip, text, Decompress);
+    }
+
+    private static void SendExportRequest_Grpc(OtlpExportCompression compression, string text, Func<byte[], byte[]?> readBody)
     {
         var payload = System.Text.Encoding.UTF8.GetBytes(text);
 
@@ -103,16 +96,37 @@ public class OtlpExporterCompressionTests
         Assert.Equal(compression == OtlpExportCompression.Gzip ? 1 : 0, compressionFlag);
         Assert.Equal(body.Length, (int)declaredLength);
 
-        if (compression == OtlpExportCompression.Gzip)
-        {
-            var decompressedStream = Decompress(body);
+        Assert.Equal(payload, readBody(body));
+    }
 
-            Assert.Equal(payload, decompressedStream.ToArray());
-        }
-        else
+    private static void SendExportRequest_Http(OtlpExportCompression compression, string text, Action<HttpContentHeaders, byte[]?, byte[]> assertions)
+    {
+        var buffer = System.Text.Encoding.UTF8.GetBytes(text);
+
+        // Arrange
+        var options = new OtlpExporterOptions
         {
-            Assert.Equal(payload, body);
-        }
+            Endpoint = new Uri("http://localhost:4317"),
+            Compression = compression,
+        };
+
+        using var testHttpHandler = new TestHttpMessageHandler();
+        using var httpClient = new HttpClient(testHttpHandler, false);
+        var exportClient = new OtlpHttpExportClient(options, httpClient, string.Empty);
+
+        var deadlineUtc = DateTime.UtcNow.AddMilliseconds(httpClient.Timeout.TotalMilliseconds);
+
+        // Act
+        var result = exportClient.SendExportRequest(buffer, buffer.Length, deadlineUtc);
+        var httpRequest = testHttpHandler.HttpRequestMessage;
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.NotNull(httpRequest);
+        Assert.Equal(HttpMethod.Post, httpRequest.Method);
+        Assert.NotNull(httpRequest.Content);
+
+        assertions(httpRequest.Content.Headers, testHttpHandler.HttpRequestContent, buffer);
     }
 
     private static byte[] Decompress(byte[] data)

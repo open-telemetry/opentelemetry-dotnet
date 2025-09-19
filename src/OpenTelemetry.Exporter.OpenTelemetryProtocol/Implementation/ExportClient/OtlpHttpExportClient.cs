@@ -22,7 +22,9 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
 
     internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
 
-    protected override string? ContentEncodingHeader => "gzip";
+    protected override string ContentEncodingHeaderKey => "Content-Encoding";
+
+    protected override string ContentEncodingHeaderValue => "gzip";
 
     /// <inheritdoc/>
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
