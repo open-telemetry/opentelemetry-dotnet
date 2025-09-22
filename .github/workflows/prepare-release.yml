@@ -29,7 +29,8 @@ permissions:
 jobs:
   automation:
     uses: ./.github/workflows/automation.yml
-    secrets: inherit
+    secrets:
+      OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   prepare-release-pr:
     runs-on: ubuntu-22.04
@@ -38,18 +39,22 @@ jobs:
 
     if: github.event_name == 'workflow_dispatch' && needs.automation.outputs.enabled
 
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     steps:
+    - uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
     - name: Check out code
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
-        token: ${{ env.GH_TOKEN }}
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Create GitHub Pull Request to prepare release
       shell: pwsh
       env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
         BOT_USER_NAME: ${{ needs.automation.outputs.username }}
         COMMENT_USER_NAME: ${{ github.event.sender.login }}
@@ -75,23 +80,27 @@ jobs:
     if: |
       github.event_name == 'pull_request' &&
       github.event.action == 'closed' &&
-      github.event.pull_request.user.login == needs.automation.outputs.username &&
+      github.event.pull_request.user.login == 'otelbot[bot]' &&
       github.event.pull_request.merged == true &&
       startsWith(github.event.pull_request.title, '[release] Prepare release ') &&
       needs.automation.outputs.enabled
 
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     steps:
+    - uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
     - name: Check out code
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
-        token: ${{ env.GH_TOKEN }}
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Lock GitHub Pull Request to prepare release
       shell: pwsh
       env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         BOT_USER_NAME: ${{ needs.automation.outputs.username }}
         ISSUE_NUMBER: ${{ github.event.pull_request.number }}
       run: |
@@ -111,27 +120,31 @@ jobs:
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       github.event.issue.locked == true &&
-      github.event.comment.user.login != needs.automation.outputs.username &&
+      github.event.comment.user.login != 'otelbot[bot]' &&
       contains(github.event.comment.body, '/CreateReleaseTag') &&
       startsWith(github.event.issue.title, '[release] Prepare release ') &&
       github.event.issue.pull_request.merged_at &&
       needs.automation.outputs.enabled
 
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     steps:
+    - uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
     - name: Check out code
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
-        token: ${{ env.GH_TOKEN }}
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Create release tag
       id: create-tag
       shell: pwsh
       env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
         BOT_USER_NAME: ${{ needs.automation.outputs.username }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -154,26 +167,30 @@ jobs:
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       github.event.issue.state == 'open' &&
-      github.event.comment.user.login != needs.automation.outputs.username &&
+      github.event.comment.user.login != 'otelbot[bot]' &&
       contains(github.event.comment.body, '/UpdateReleaseDates') &&
       startsWith(github.event.issue.title, '[release] Prepare release ') &&
       github.event.issue.pull_request.merged_at == null &&
       needs.automation.outputs.enabled
 
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     steps:
+    - uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
     - name: Check out code
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
-        token: ${{ env.GH_TOKEN }}
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Update release date
       shell: pwsh
       env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
         BOT_USER_NAME: ${{ needs.automation.outputs.username }}
         COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
@@ -198,25 +215,29 @@ jobs:
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       github.event.issue.state == 'open' &&
-      github.event.comment.user.login != needs.automation.outputs.username &&
+      github.event.comment.user.login != 'otelbot[bot]' &&
       contains(github.event.comment.body, '/UpdateReleaseNotes') &&
       startsWith(github.event.issue.title, '[release] Prepare release ') &&
       github.event.issue.pull_request.merged_at == null &&
       needs.automation.outputs.enabled
 
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     steps:
+    - uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
     - name: Check out code
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
-        token: ${{ env.GH_TOKEN }}
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Update release notes
       env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
         BOT_USER_NAME: ${{ needs.automation.outputs.username }}
         COMMENT_BODY: ${{ github.event.comment.body }}

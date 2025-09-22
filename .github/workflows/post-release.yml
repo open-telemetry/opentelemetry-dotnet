@@ -22,7 +22,8 @@ permissions:
 jobs:
   automation:
     uses: ./.github/workflows/automation.yml
-    secrets: inherit
+    secrets:
+      OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   push-packages-and-publish-release:
     runs-on: ubuntu-22.04
@@ -33,20 +34,23 @@ jobs:
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       github.event.issue.locked == true &&
-      github.event.comment.user.login != needs.automation.outputs.username &&
+      github.event.comment.user.login != 'otelbot[bot]' &&
       contains(github.event.comment.body, '/PushPackages') &&
       startsWith(github.event.issue.title, '[release] Prepare release ') &&
       github.event.issue.pull_request.merged_at &&
       needs.automation.outputs.enabled
 
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     steps:
+    - uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
     - name: Check out code
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
-        token: ${{ env.GH_TOKEN }}
+        token: ${{ steps.otelbot-token.outputs.token }}
         ref: ${{ github.event.repository.default_branch }}
 
     - name: Setup .NET
@@ -55,6 +59,7 @@ jobs:
     - name: Push packages and publish release
       shell: pwsh
       env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         BOT_USER_NAME: ${{ needs.automation.outputs.username }}
         COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -81,17 +86,20 @@ jobs:
       needs.automation.outputs.enabled &&
       (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
 
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     steps:
+    - uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         # Note: By default GitHub only fetches 1 commit. We need all the tags
         # for this work.
         fetch-depth: 0
         ref: ${{ github.event.repository.default_branch }}
-        token: ${{ env.GH_TOKEN }}
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
@@ -102,6 +110,7 @@ jobs:
           || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
       shell: pwsh
       env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
         BOT_USER_NAME: ${{ needs.automation.outputs.username }}
         TAG: ${{ inputs.tag || github.ref_name }}
@@ -120,6 +129,7 @@ jobs:
       if: vars.CONTRIB_REPO
       shell: pwsh
       env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         CONTRIB_REPO: ${{ vars.CONTRIB_REPO }}
         TAG: ${{ inputs.tag || github.ref_name }}
       run: |
@@ -132,6 +142,7 @@ jobs:
     - name: Post notice when release is published
       shell: pwsh
       env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         BOT_USER_NAME: ${{ needs.automation.outputs.username }}
         TAG: ${{ inputs.tag || github.ref_name }}
       run: |

@@ -17,7 +17,7 @@ function CreatePullRequestToUpdateChangelogsAndPublicApis {
 
   $isPrerelease = $version -match '-alpha' -or $version -match '-beta' -or $version -match '-rc'
   $tag="${minVerTagPrefix}${version}"
-  $branch="release/prepare-${tag}-release"
+  $branch="otelbot/prepare-${tag}-release"
 
   if ([string]::IsNullOrEmpty($gitUserName) -eq $false)
   {

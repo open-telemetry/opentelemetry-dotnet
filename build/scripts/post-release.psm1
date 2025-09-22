@@ -276,7 +276,7 @@ function CreateStableVersionUpdatePullRequest {
 
   $version = $match.Groups[1].Value
 
-  $branch="release/post-stable-${tag}-update"
+  $branch="otelbot/post-stable-${tag}-update"
 
   if ([string]::IsNullOrEmpty($gitUserName) -eq $false)
   {
