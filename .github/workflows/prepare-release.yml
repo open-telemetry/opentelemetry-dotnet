@@ -80,7 +80,7 @@ jobs:
     if: |
       github.event_name == 'pull_request' &&
       github.event.action == 'closed' &&
-      github.event.pull_request.user.login == 'otelbot[bot]' &&
+      github.event.pull_request.user.login == needs.automation.outputs.application-name &&
       github.event.pull_request.merged == true &&
       startsWith(github.event.pull_request.title, '[release] Prepare release ') &&
       needs.automation.outputs.enabled
@@ -120,7 +120,7 @@ jobs:
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       github.event.issue.locked == true &&
-      github.event.comment.user.login != 'otelbot[bot]' &&
+      github.event.comment.user.login != needs.automation.outputs.application-name &&
       contains(github.event.comment.body, '/CreateReleaseTag') &&
       startsWith(github.event.issue.title, '[release] Prepare release ') &&
       github.event.issue.pull_request.merged_at &&
@@ -168,7 +168,7 @@ jobs:
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       github.event.issue.state == 'open' &&
-      github.event.comment.user.login != 'otelbot[bot]' &&
+      github.event.comment.user.login != needs.automation.outputs.application-name &&
       contains(github.event.comment.body, '/UpdateReleaseDates') &&
       startsWith(github.event.issue.title, '[release] Prepare release ') &&
       github.event.issue.pull_request.merged_at == null &&
@@ -217,7 +217,7 @@ jobs:
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       github.event.issue.state == 'open' &&
-      github.event.comment.user.login != 'otelbot[bot]' &&
+      github.event.comment.user.login != needs.automation.outputs.application-name &&
       contains(github.event.comment.body, '/UpdateReleaseNotes') &&
       startsWith(github.event.issue.title, '[release] Prepare release ') &&
       github.event.issue.pull_request.merged_at == null &&
