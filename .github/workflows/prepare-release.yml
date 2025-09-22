@@ -101,7 +101,7 @@ jobs:
       shell: pwsh
       env:
         GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
-        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
         ISSUE_NUMBER: ${{ github.event.pull_request.number }}
       run: |
         Import-Module .\build\scripts\prepare-release.psm1
@@ -109,7 +109,7 @@ jobs:
         LockPullRequestAndPostNoticeToCreateReleaseTag `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -pullRequestNumber ${env:ISSUE_NUMBER} `
-          -botUserName ${env:BOT_USER_NAME}
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME}
 
   create-release-tag-pr-post-notice:
     runs-on: ubuntu-22.04
@@ -147,6 +147,7 @@ jobs:
         GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
         BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
       run: |
         Import-Module .\build\scripts\prepare-release.psm1
@@ -154,7 +155,7 @@ jobs:
         CreateReleaseTagAndPostNoticeOnPullRequest `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -pullRequestNumber ${env:ISSUE_NUMBER} `
-          -botUserName ${env:BOT_USER_NAME} `
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
           -gitUserName ${env:BOT_USER_NAME} `
           -gitUserEmail ${env:BOT_USER_EMAIL}
 
@@ -193,6 +194,7 @@ jobs:
         GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
         BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
         COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
       run: |
@@ -201,7 +203,7 @@ jobs:
         UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -pullRequestNumber ${env:ISSUE_NUMBER} `
-          -botUserName ${env:BOT_USER_NAME} `
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
           -commentUserName ${env:COMMENT_USER_NAME} `
           -gitUserName ${env:BOT_USER_NAME} `
           -gitUserEmail ${env:BOT_USER_EMAIL}
@@ -240,6 +242,7 @@ jobs:
         GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
         BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
         COMMENT_BODY: ${{ github.event.comment.body }}
         COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -250,7 +253,7 @@ jobs:
         UpdateReleaseNotesAndPostNoticeOnPullRequest `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -pullRequestNumber ${env:ISSUE_NUMBER} `
-          -botUserName ${env:BOT_USER_NAME} `
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
           -commentUserName ${env:COMMENT_USER_NAME} `
           -commentBody $Env:COMMENT_BODY `
           -gitUserName ${env:BOT_USER_NAME} `

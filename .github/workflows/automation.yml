@@ -9,6 +9,8 @@ on:
         value: ${{ vars.AUTOMATION_USERNAME }}
       email:
         value: ${{ vars.AUTOMATION_EMAIL }}
+      application-name:
+        value: ${{ vars.AUTOMATION_APPLICATION_NAME }}
     secrets:
       OTELBOT_DOTNET_PRIVATE_KEY:
         required: false
