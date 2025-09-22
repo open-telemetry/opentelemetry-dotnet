@@ -60,7 +60,7 @@ jobs:
       shell: pwsh
       env:
         GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
-        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
         COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
@@ -71,7 +71,7 @@ jobs:
         PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -pullRequestNumber ${env:ISSUE_NUMBER} `
-          -botUserName ${env:BOT_USER_NAME} `
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
           -commentUserName ${env:COMMENT_USER_NAME} `
           -artifactDownloadPath "${env:GITHUB_WORKSPACE}/artifacts" `
           -pushToNuget $HasToken
@@ -143,12 +143,12 @@ jobs:
       shell: pwsh
       env:
         GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
-        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
         TAG: ${{ inputs.tag || github.ref_name }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
         TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
           -gitRepository ${env:GITHUB_REPOSITORY} `
-          -botUserName ${env:BOT_USER_NAME} `
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
           -tag ${env:TAG}
