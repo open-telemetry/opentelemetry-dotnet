@@ -1,0 +1,65 @@
+name: codeql-analysis-steps
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  analyze:
+    permissions:
+      actions: read  # for github/codeql-action/init to get workflow details
+      contents: read  # for actions/checkout to fetch code
+      security-events: write  # for github/codeql-action/analyze to upload SARIF results
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['actions', 'csharp']
+
+    steps:
+      - name: Configure Pagefile
+        if: matrix.language == 'csharp'
+        uses: al-cheb/configure-pagefile-action@a3b6ebd6b634da88790d9c58d4b37a7f4a7b8708 # v1.4
+        with:
+          minimum-size: 8GB
+          maximum-size: 32GB
+          disk-root: "D:"
+
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          filter: 'tree:0'
+          persist-credentials: false
+          show-progress: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@192325c86100d080feab897ff886c34abd4c83a3 # v3.30.3
+        with:
+          build-mode: none
+          languages: ${{ matrix.language }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@192325c86100d080feab897ff886c34abd4c83a3 # v3.30.3
+        with:
+          category: '/language:${{ matrix.language }}'
+
+  results:
+    if: ${{ !cancelled() }}
+    needs: [ analyze ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Report status
+        shell: bash
+        env:
+          SCAN_SUCCESS: ${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+        run: |
+          if [ "${SCAN_SUCCESS}" == "true" ]
+          then
+            echo 'CodeQL analysis successful'
+          else
+            echo 'CodeQL analysis failed'
+            exit 1
+          fi

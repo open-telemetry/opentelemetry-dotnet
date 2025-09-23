@@ -5,14 +5,16 @@ on:
     outputs:
       enabled:
         value: ${{ jobs.resolve-automation.outputs.enabled == 'true' }}
-      token-secret-name:
-        value: ${{ jobs.resolve-automation.outputs.token-secret-name }}
       username:
         value: ${{ vars.AUTOMATION_USERNAME }}
       email:
         value: ${{ vars.AUTOMATION_EMAIL }}
+      application-name:
+        value: ${{ vars.AUTOMATION_APPLICATION_NAME }}
+      application-username:
+        value: ${{ vars.AUTOMATION_APPLICATION_USERNAME }}
     secrets:
-      OPENTELEMETRYBOT_GITHUB_TOKEN:
+      OTELBOT_DOTNET_PRIVATE_KEY:
         required: false
 
 permissions:
@@ -25,13 +27,11 @@ jobs:
 
     outputs:
       enabled: ${{ steps.evaluate.outputs.enabled }}
-      token-secret-name: ${{ steps.evaluate.outputs.token-secret-name }}
 
     env:
-      OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN != '' }}
+      OTELBOT_DOTNET_PRIVATE_KEY_EXISTS: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY != '' }}
 
     steps:
     - id: evaluate
       run: |
-        echo "enabled=${{ env.OPENTELEMETRYBOT_GITHUB_TOKEN_EXISTS == 'true' }}" >> "$GITHUB_OUTPUT"
-        echo "token-secret-name=OPENTELEMETRYBOT_GITHUB_TOKEN" >> "$GITHUB_OUTPUT"
+        echo "enabled=${{ env.OTELBOT_DOTNET_PRIVATE_KEY_EXISTS == 'true' }}" >> "$GITHUB_OUTPUT"
