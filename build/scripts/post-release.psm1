@@ -125,7 +125,7 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
     [Parameter(Mandatory=$true)][string]$tag,
     [Parameter(Mandatory=$true)][string]$tagSha,
     [Parameter(Mandatory=$true)][string]$packagesUrl,
-    [Parameter(Mandatory=$true)][string]$botUserName
+    [Parameter(Mandatory=$true)][string]$expectedPrAuthorUserName
   )
 
   $prListResponse = gh pr list --search $tagSha --state merged --json number,author,title,comments | ConvertFrom-Json
@@ -138,7 +138,7 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
 
   foreach ($pr in $prListResponse)
   {
-    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[release] Prepare release $tag")
+    if ($pr.author.login -ne $expectedPrAuthorUserName -or $pr.title -ne "[release] Prepare release $tag")
     {
       continue
     }
@@ -146,7 +146,7 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
     $foundComment = $false
     foreach ($comment in $pr.comments)
     {
-      if ($comment.author.login -eq $botUserName -and $comment.body.StartsWith("I just pushed the [$tag]"))
+      if ($comment.author.login -eq $expectedPrAuthorUserName -and $comment.body.StartsWith("I just pushed the [$tag]"))
       {
         $foundComment = $true
         break
@@ -180,7 +180,7 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter(Mandatory=$true)][string]$botUserName,
+    [Parameter(Mandatory=$true)][string]$expectedPrAuthorUserName,
     [Parameter(Mandatory=$true)][string]$commentUserName,
     [Parameter(Mandatory=$true)][string]$artifactDownloadPath,
     [Parameter(Mandatory=$true)][bool]$pushToNuget
@@ -188,7 +188,7 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
 
   $prViewResponse = gh pr view $pullRequestNumber --json author,title,comments | ConvertFrom-Json
 
-  if ($prViewResponse.author.login -ne $botUserName)
+  if ($prViewResponse.author.login -ne $expectedPrAuthorUserName)
   {
       throw 'PR author was unexpected'
   }
@@ -213,7 +213,7 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   $packagesUrl = ''
   foreach ($comment in $prViewResponse.comments)
   {
-    if ($comment.author.login -eq $botUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
+    if ($comment.author.login -eq $expectedPrAuthorUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
     {
       $foundComment = $true
       break
@@ -276,7 +276,7 @@ function CreateStableVersionUpdatePullRequest {
 
   $version = $match.Groups[1].Value
 
-  $branch="release/post-stable-${tag}-update"
+  $branch="otelbot/post-stable-${tag}-update"
 
   if ([string]::IsNullOrEmpty($gitUserName) -eq $false)
   {
@@ -539,7 +539,7 @@ Export-ModuleMember -Function InvokeCoreVersionUpdateWorkflowInRemoteRepository
 function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
-    [Parameter(Mandatory=$true)][string]$botUserName,
+    [Parameter(Mandatory=$true)][string]$expectedPrAuthorUserName,
     [Parameter(Mandatory=$true)][string]$tag
   )
 
@@ -559,7 +559,7 @@ function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
 
   foreach ($pr in $prListResponse)
   {
-    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[release] Prepare release $tag")
+    if ($pr.author.login -ne $expectedPrAuthorUserName -or $pr.title -ne "[release] Prepare release $tag")
     {
       continue
     }
@@ -567,7 +567,7 @@ function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
     $foundComment = $false
     foreach ($comment in $pr.comments)
     {
-      if ($comment.author.login -eq $botUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
+      if ($comment.author.login -eq $expectedPrAuthorUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
       {
         $foundComment = $true
         break
