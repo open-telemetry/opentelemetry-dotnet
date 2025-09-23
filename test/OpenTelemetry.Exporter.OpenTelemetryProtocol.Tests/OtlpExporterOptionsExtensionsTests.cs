@@ -24,7 +24,7 @@ public class OtlpExporterOptionsExtensionsTests
             Headers = optionHeaders,
         };
 
-        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var headers = options.GetHeaders();
 
         Assert.Equal(OtlpExporterOptions.StandardHeaders.Length, headers.Count);
 
@@ -173,12 +173,11 @@ public class OtlpExporterOptionsExtensionsTests
 
         if (expectException)
         {
-            Assert.Throws<ArgumentException>(() =>
-                options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v)));
+            Assert.Throws<ArgumentException>(() => options.GetHeaders());
             return;
         }
 
-        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var headers = options.GetHeaders();
 
         var actual = string.Join(",", headers.Select(h => $"{h.Key}={h.Value}"));
 

@@ -22,11 +22,10 @@ internal static class OtlpExporterOptionsExtensions
     private const string MetricsHttpServicePath = "v1/metrics";
     private const string LogsHttpServicePath = "v1/logs";
 
-    public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
-        where THeaders : new()
+    public static IReadOnlyDictionary<string, string> GetHeaders(this OtlpExporterOptions options)
     {
         var optionHeaders = options.Headers;
-        var headers = new THeaders();
+        var headers = new Dictionary<string, string>();
         if (!string.IsNullOrEmpty(optionHeaders))
         {
             // According to the specification, URL-encoded headers must be supported.
@@ -74,13 +73,13 @@ internal static class OtlpExporterOptionsExtensions
                     nextEqualIndex -= potentialValue.Length + 1;
                 }
 
-                addHeader(headers, key, value);
+                headers.Add(key, value);
             }
         }
 
         foreach (var header in OtlpExporterOptions.StandardHeaders)
         {
-            addHeader(headers, header.Key, header.Value);
+            headers.Add(header.Key, header.Value);
         }
 
         return headers;
