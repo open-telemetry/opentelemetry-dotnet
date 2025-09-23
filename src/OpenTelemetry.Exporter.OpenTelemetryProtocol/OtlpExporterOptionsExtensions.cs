@@ -36,12 +36,26 @@ internal static class OtlpExporterOptionsExtensions
 
             if (nextEqualIndex == -1)
             {
-                throw new ArgumentException("Headers provided in an invalid format.");
+                throw CreateInvalidHeaderFormatException();
+            }
+
+            // Skip any leading commas.
+            var leadingCommaIndex = headersSpan.Slice(0, nextEqualIndex).LastIndexOf(',');
+            if (leadingCommaIndex != -1)
+            {
+                headersSpan = headersSpan.Slice(leadingCommaIndex + 1);
+                nextEqualIndex -= leadingCommaIndex + 1;
             }
 
             while (!headersSpan.IsEmpty)
             {
                 var key = headersSpan.Slice(0, nextEqualIndex).Trim().ToString();
+
+                // HTTP header field-names can not be empty: https://www.rfc-editor.org/rfc/rfc7230#section-3.2
+                if (key.Length < 1)
+                {
+                    throw CreateInvalidHeaderFormatException();
+                }
 
                 headersSpan = headersSpan.Slice(nextEqualIndex + 1);
 
@@ -51,7 +65,7 @@ internal static class OtlpExporterOptionsExtensions
                 if (nextEqualIndex == -1)
                 {
                     // Everything until the end of the string can be considered the value.
-                    value = headersSpan.Trim().ToString();
+                    value = headersSpan.TrimEnd(',').Trim().ToString();
                     headersSpan = [];
                 }
                 else
@@ -63,12 +77,12 @@ internal static class OtlpExporterOptionsExtensions
 
                     if (lastComma == -1)
                     {
-                        throw new ArgumentException("Headers provided in an invalid format.");
+                        throw CreateInvalidHeaderFormatException();
                     }
 
                     potentialValue = potentialValue.Slice(0, lastComma);
 
-                    value = potentialValue.Trim().ToString();
+                    value = potentialValue.TrimEnd(',').Trim().ToString();
                     headersSpan = headersSpan.Slice(lastComma + 1);
                     nextEqualIndex -= potentialValue.Length + 1;
                 }
@@ -84,6 +98,9 @@ internal static class OtlpExporterOptionsExtensions
 
         return headers;
     }
+
+    private static ArgumentException CreateInvalidHeaderFormatException()
+        => new("Headers provided in an invalid format. Use: header=value,header=value");
 
     public static OtlpExporterTransmissionHandler GetExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions, OtlpSignalType otlpSignalType)
     {

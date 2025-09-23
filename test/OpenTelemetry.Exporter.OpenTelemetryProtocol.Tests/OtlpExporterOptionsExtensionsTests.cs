@@ -36,8 +36,8 @@ public class OtlpExporterOptionsExtensionsTests
 
     [Theory]
     [InlineData(" ")]
-    [InlineData(",key1=value1,key2=value2,")]
-    [InlineData(",,key1=value1,,key2=value2,,")]
+    [InlineData(",")]
+    [InlineData("=value1")]
     [InlineData("key1")]
     public void GetHeaders_InvalidOptionHeaders_ThrowsArgumentException(string inputOptionHeaders)
     {
@@ -53,12 +53,13 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("key1=value1,value2,key2=value3", "key1=value1,value2,key2=value3")]
     [InlineData(" key1 = value1 , key2=value2 ", "key1=value1,key2=value2")]
     [InlineData("key1= value with spaces ,key2=another value", "key1=value with spaces,key2=another value")]
-    [InlineData("=value1", "=value1")]
     [InlineData("key1=", "key1=")]
     [InlineData("key1=value1%2Ckey2=value2", "key1=value1,key2=value2")]
     [InlineData("key1=value1%2Ckey2=value2%2Ckey3=value3", "key1=value1,key2=value2,key3=value3")]
     [InlineData("key1=value1%2Cvalue2", "key1=value1,value2")]
     [InlineData("key1=value1%2Cvalue2%2Ckey2=value3", "key1=value1,value2,key2=value3")]
+    [InlineData(",key1=value1,key2=value2,", "key1=value1,key2=value2")]
+    [InlineData(",,key1=value1,,key2=value2,,", "key1=value1,key2=value2")]
     public void GetHeaders_ValidAndUrlEncodedHeaders_ReturnsCorrectHeaders(string inputOptionHeaders, string expectedNormalizedOptional)
     {
         VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);
