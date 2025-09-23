@@ -33,29 +33,47 @@ internal static class OtlpExporterOptionsExtensions
             optionHeaders = Uri.UnescapeDataString(optionHeaders);
             ReadOnlySpan<char> headersSpan = optionHeaders.AsSpan();
 
+            var nextEqualIndex = headersSpan.IndexOf('=');
+
+            if (nextEqualIndex == -1)
+            {
+                throw new ArgumentException("Headers provided in an invalid format.");
+            }
+
             while (!headersSpan.IsEmpty)
             {
-                int commaIndex = headersSpan.IndexOf(',');
-                ReadOnlySpan<char> pair;
-                if (commaIndex == -1)
+                var key = headersSpan.Slice(0, nextEqualIndex).Trim().ToString();
+
+                headersSpan = headersSpan.Slice(nextEqualIndex + 1);
+
+                nextEqualIndex = headersSpan.IndexOf('=');
+
+                string value;
+                if (nextEqualIndex == -1)
                 {
-                    pair = headersSpan;
+                    // Everything until the end of the string can be considered the value.
+                    value = headersSpan.Trim().ToString();
                     headersSpan = [];
                 }
                 else
                 {
-                    pair = headersSpan.Slice(0, commaIndex);
-                    headersSpan = headersSpan.Slice(commaIndex + 1);
+                    // If we have another = we need to backtrack from it
+                    // and try to find the last comma and consider that as the delimiter.
+                    var potentialValue = headersSpan.Slice(0, nextEqualIndex);
+                    var lastComma = potentialValue.LastIndexOf(',');
+
+                    if (lastComma == -1)
+                    {
+                        throw new ArgumentException("Headers provided in an invalid format.");
+                    }
+
+                    potentialValue = potentialValue.Slice(0, lastComma);
+
+                    value = potentialValue.Trim().ToString();
+                    headersSpan = headersSpan.Slice(lastComma + 1);
+                    nextEqualIndex -= potentialValue.Length + 1;
                 }
 
-                int equalIndex = pair.IndexOf('=');
-                if (equalIndex == -1)
-                {
-                    throw new ArgumentException("Headers provided in an invalid format.");
-                }
-
-                var key = pair.Slice(0, equalIndex).Trim().ToString();
-                var value = pair.Slice(equalIndex + 1).Trim().ToString();
                 addHeader(headers, key, value);
             }
         }
