@@ -97,7 +97,7 @@ public sealed class MessageReceiver : IDisposable
     {
         if (this.channel == null || this.connection == null)
         {
-            throw new InvalidOperationException("The message sender has not been started.");
+            throw new InvalidOperationException("The message receiver has not been started.");
         }
     }
 }
