@@ -15,6 +15,16 @@
     ":gitSignOff",
     ":ignoreUnstable"
   ],
+  "ignorePresets": [
+    ":ignoreModulesAndTests"
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/__tests__/**",
+    "**/__fixtures__/**"
+  ],
   "labels": ["dependencies", "infra"],
   "packageRules": [
     {
