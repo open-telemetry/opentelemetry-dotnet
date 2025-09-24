@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
@@ -17,29 +18,31 @@ public sealed class MessageReceiver : IDisposable
     private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
 
     private readonly ILogger<MessageReceiver> logger;
-    private readonly IConnection connection;
-    private readonly IModel channel;
+    private IConnection? connection;
+    private IChannel? channel;
 
     public MessageReceiver(ILogger<MessageReceiver> logger)
     {
         this.logger = logger;
-        this.connection = RabbitMqHelper.CreateConnection();
-        this.channel = RabbitMqHelper.CreateModelAndDeclareTestQueue(this.connection);
     }
 
     public void Dispose()
     {
-        this.channel.Dispose();
-        this.connection.Dispose();
+        this.channel?.Dispose();
+        this.connection?.Dispose();
     }
 
-    public void StartConsumer()
+    public async Task StartConsumerAsync()
     {
-        RabbitMqHelper.StartConsumer(this.channel, this.ReceiveMessage);
+        this.connection = await RabbitMqHelper.CreateConnectionAsync().ConfigureAwait(false);
+        this.channel = await RabbitMqHelper.CreateModelAndDeclareTestQueueAsync(this.connection).ConfigureAwait(false);
+        await RabbitMqHelper.StartConsumerAsync(this.channel, this.ReceiveMessageAsync).ConfigureAwait(false);
     }
 
-    public void ReceiveMessage(BasicDeliverEventArgs ea)
+    public async Task ReceiveMessageAsync(BasicDeliverEventArgs ea)
     {
+        this.EnsureStarted();
+
         ArgumentNullException.ThrowIfNull(ea);
 
         // Extract the PropagationContext of the upstream parent from the message headers.
@@ -63,7 +66,7 @@ public sealed class MessageReceiver : IDisposable
             RabbitMqHelper.AddMessagingTags(activity);
 
             // Simulate some work
-            Thread.Sleep(1000);
+            await Task.Delay(1_000).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -71,13 +74,13 @@ public sealed class MessageReceiver : IDisposable
         }
     }
 
-    private IEnumerable<string> ExtractTraceContextFromBasicProperties(IBasicProperties props, string key)
+    private IEnumerable<string> ExtractTraceContextFromBasicProperties(IReadOnlyBasicProperties props, string key)
     {
         try
         {
-            if (props.Headers.TryGetValue(key, out var value))
+            if (props.Headers?.TryGetValue(key, out var value) is true)
             {
-                var bytes = (byte[])value;
+                var bytes = (byte[])value!;
                 return [Encoding.UTF8.GetString(bytes)];
             }
         }
@@ -87,5 +90,14 @@ public sealed class MessageReceiver : IDisposable
         }
 
         return [];
+    }
+
+    [MemberNotNull(nameof(channel), nameof(connection))]
+    private void EnsureStarted()
+    {
+        if (this.channel == null || this.connection == null)
+        {
+            throw new InvalidOperationException("The message sender has not been started.");
+        }
     }
 }
