@@ -64,19 +64,21 @@ public class OtlpAttributeTests
                 if (array is byte[] byteArray)
                 {
                     Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.BytesValue, attribute.Value.ValueCase);
+                    Assert.Equal(byteArray.Length, attribute.Value.BytesValue.Length);
+                    Assert.Equal(byteArray, attribute.Value.BytesValue.ToByteArray());
                 }
                 else
                 {
                     Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
+                    var expectedArray = new long[array.Length];
+                    for (var i = 0; i < array.Length; i++)
+                    {
+                        expectedArray[i] = Convert.ToInt64(array.GetValue(i), CultureInfo.InvariantCulture);
+                    }
+
+                    Assert.Equal(expectedArray, attribute.Value.ArrayValue.Values.Select(x => x.IntValue));
                 }
 
-                var expectedArray = new long[array.Length];
-                for (var i = 0; i < array.Length; i++)
-                {
-                    expectedArray[i] = Convert.ToInt64(array.GetValue(i), CultureInfo.InvariantCulture);
-                }
-
-                Assert.Equal(expectedArray, attribute.Value.ArrayValue.Values.Select(x => x.IntValue));
                 break;
             default:
                 Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.IntValue, attribute.Value.ValueCase);
