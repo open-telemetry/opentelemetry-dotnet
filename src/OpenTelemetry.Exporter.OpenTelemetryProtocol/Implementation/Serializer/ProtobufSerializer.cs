@@ -232,6 +232,17 @@ internal static class ProtobufSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteByteArrayWithTag(byte[] buffer, int writePosition, int fieldNumber, int bytesLength, ReadOnlySpan<byte> value)
+    {
+        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
+        writePosition = WriteLength(buffer, writePosition, value.Length);
+        value.CopyTo(buffer.AsSpan(writePosition));
+
+        writePosition += value.Length;
+        return writePosition;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, string value)
     {
         Debug.Assert(value != null, "value was null");

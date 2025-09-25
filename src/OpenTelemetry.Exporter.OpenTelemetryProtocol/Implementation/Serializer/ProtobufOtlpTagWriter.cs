@@ -81,11 +81,34 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             tagValueTypeFullName,
             tagKey);
 
+    protected override bool TryWriteByteArrayTag(ref OtlpTagWriterState state, string key, byte[] byteArray, int? tagValueMaxLength)
+    {
+        // Write KeyValue tag
+        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+        var bytes = TruncateByteArray(byteArray.AsSpan(), tagValueMaxLength);
+        var bytesLength = bytes.Length;
+        var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)bytesLength);
+
+        // length = bytesLength + tagSize + length field size.
+        state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, bytesLength + 1 + serializedLengthSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        state.WritePosition = ProtobufSerializer.WriteByteArrayWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Bytes_Value, bytesLength, bytes);
+
+        return true;
+    }
+
     protected override bool TryWriteEmptyTag(ref OtlpTagWriterState state, string key, object? value)
     {
         state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
         state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, 0, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
         return true;
+    }
+
+    private static ReadOnlySpan<byte> TruncateByteArray(ReadOnlySpan<byte> value, int? maxLength)
+    {
+        return maxLength.HasValue && value.Length > maxLength
+            ? value.Slice(0, maxLength.Value)
+            : value;
     }
 
     internal struct OtlpTagWriterState
