@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using System.Globalization;
-using static OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer.ProtobufOtlpTagWriter;
 
 namespace OpenTelemetry.Internal;
 
