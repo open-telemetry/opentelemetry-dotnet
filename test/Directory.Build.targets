@@ -4,8 +4,12 @@
 
   <ItemGroup Condition="'$(ReferenceCoyotePackages)' == 'true'">
     <PackageReference Include="Microsoft.Coyote" />
-    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-8g4q-xg66-9fp4" />
-    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-hh2w-p6rv-4g7w" />
+
+    <!-- System.Text.Json is an indirect reference through Coyote. This
+    reference is needed to mitigate:
+    https://github.com/advisories/GHSA-hh2w-p6rv-4g7w. Remove this if Coyote
+    publishes a fixed version. -->
+    <PackageReference Include="System.Text.Json" VersionOverride="8.0.6" />
   </ItemGroup>
 
 </Project>
