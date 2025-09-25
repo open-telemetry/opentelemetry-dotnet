@@ -61,7 +61,15 @@ public class OtlpAttributeTests
         switch (value)
         {
             case Array array:
-                Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
+                if (array is byte[] byteArray)
+                {
+                    Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.BytesValue, attribute.Value.ValueCase);
+                }
+                else
+                {
+                    Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
+                }
+
                 var expectedArray = new long[array.Length];
                 for (var i = 0; i < array.Length; i++)
                 {
