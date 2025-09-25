@@ -81,26 +81,24 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             tagValueTypeFullName,
             tagKey);
 
-    protected override bool TryWriteByteArrayTag(ref OtlpTagWriterState state, string key, byte[] byteArray)
-    {
-        // Write KeyValue tag
-        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
-
-        var byteArraySpan = byteArray.AsSpan();
-        var byteArrayLength = byteArraySpan.Length;
-        var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)byteArrayLength);
-
-        // length = bytesLength + tagSize + length field size.
-        state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, byteArrayLength + 1 + serializedLengthSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
-        state.WritePosition = ProtobufSerializer.WriteByteArrayWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Bytes_Value, byteArrayLength, byteArraySpan);
-
-        return true;
-    }
-
     protected override bool TryWriteEmptyTag(ref OtlpTagWriterState state, string key, object? value)
     {
         state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
         state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, 0, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        return true;
+    }
+
+    protected override bool TryWriteByteArrayTag(ref OtlpTagWriterState state, string key, ReadOnlySpan<byte> value)
+    {
+        // Write KeyValue tag
+        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+        var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)value.Length);
+
+        // length = bytesLength + tagSize + length field size.
+        state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, value.Length + 1 + serializedLengthSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        state.WritePosition = ProtobufSerializer.WriteByteArrayWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Bytes_Value, value.Length, value);
+
         return true;
     }
 

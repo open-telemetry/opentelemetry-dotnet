@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using static OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer.ProtobufOtlpTagWriter;
 
 namespace OpenTelemetry.Internal;
 
@@ -67,7 +68,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 this.WriteFloatingPointTag(ref state, key, Convert.ToDouble(value, CultureInfo.InvariantCulture));
                 break;
             case Array array:
-                if (array is byte[] byteArray && this.TryWriteByteArrayTag(ref state, key, byteArray))
+                if (array is byte[] byteArray && this.TryWriteByteArrayTag(ref state, key, byteArray.AsSpan()))
                 {
                     return true;
                 }
@@ -124,7 +125,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     protected abstract bool TryWriteEmptyTag(ref TTagState state, string key, object? value);
 
-    protected abstract bool TryWriteByteArrayTag(ref TTagState state, string key, byte[] byteArray);
+    protected abstract bool TryWriteByteArrayTag(ref TTagState state, string key, ReadOnlySpan<byte> value);
 
     protected abstract void WriteIntegralTag(ref TTagState state, string key, long value);
 

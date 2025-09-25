@@ -198,7 +198,7 @@ public class JsonStringArrayTagWriterTests
             throw new NotImplementedException();
         }
 
-        protected override bool TryWriteByteArrayTag(ref Tag consoleTag, string key, byte[] byteArray) => false;
+        protected override bool TryWriteByteArrayTag(ref Tag consoleTag, string key, ReadOnlySpan<byte> value) => false;
 
         public struct Tag
         {
