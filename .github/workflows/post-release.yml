@@ -26,7 +26,7 @@ jobs:
       OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   push-packages-and-publish-release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
@@ -86,7 +86,7 @@ jobs:
           -pushToNuget $HasToken
 
   post-release-published:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs:
     - automation
