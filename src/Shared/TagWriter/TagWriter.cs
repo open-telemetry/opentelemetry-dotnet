@@ -67,7 +67,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 this.WriteFloatingPointTag(ref state, key, Convert.ToDouble(value, CultureInfo.InvariantCulture));
                 break;
             case Array array:
-                if (array is byte[] byteArray && this.TryWriteByteArrayTag(ref state, key, byteArray.AsSpan()))
+                if (value is byte[] byteArray && this.TryWriteByteArrayTag(ref state, key, byteArray.AsSpan()))
                 {
                     return true;
                 }
