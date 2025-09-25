@@ -33,7 +33,7 @@ jobs:
       OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   prepare-release-pr:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
@@ -73,7 +73,7 @@ jobs:
           -gitUserEmail ${env:BOT_USER_EMAIL}
 
   lock-pr-and-post-notice-to-create-release-tag:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
@@ -112,7 +112,7 @@ jobs:
           -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME}
 
   create-release-tag-pr-post-notice:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
@@ -160,7 +160,7 @@ jobs:
           -gitUserEmail ${env:BOT_USER_EMAIL}
 
   update-changelog-release-dates-on-prepare-pr-post-notice:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
@@ -209,7 +209,7 @@ jobs:
           -gitUserEmail ${env:BOT_USER_EMAIL}
 
   update-releasenotes-on-prepare-pr-post-notice:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
