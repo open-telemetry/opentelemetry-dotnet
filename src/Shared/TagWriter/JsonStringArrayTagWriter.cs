@@ -25,7 +25,7 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
 
     protected abstract void WriteArrayTag(ref TTagState writer, string key, ArraySegment<byte> arrayUtf8JsonBytes);
 
-    protected override bool TryWriteByteArrayTag(ref TTagState consoleTag, string key, byte[] byteArray, int? tagValueMaxLength) => false;
+    protected override bool TryWriteByteArrayTag(ref TTagState consoleTag, string key, byte[] byteArray) => false;
 
     internal readonly struct JsonArrayTagWriterState(MemoryStream stream, Utf8JsonWriter writer)
     {
