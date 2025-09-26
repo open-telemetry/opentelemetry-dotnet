@@ -239,6 +239,7 @@ you're more than welcome to participate!
 ### Maintainers
 
 * [Alan West](https://github.com/alanwest), New Relic
+* [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 * [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 
 For more information about the maintainer role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer).
@@ -248,7 +249,6 @@ For more information about the maintainer role, see the [community repository](h
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Martin Costello](https://github.com/martincostello), Grafana Labs
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
-* [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 
 For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
 
