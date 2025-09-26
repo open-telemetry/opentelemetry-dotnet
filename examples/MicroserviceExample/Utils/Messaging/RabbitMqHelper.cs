@@ -21,34 +21,32 @@ public static class RabbitMqHelper
         RequestedConnectionTimeout = TimeSpan.FromMilliseconds(3000),
     };
 
-    public static IConnection CreateConnection()
-    {
-        return ConnectionFactory.CreateConnection();
-    }
+    public static async Task<IConnection> CreateConnectionAsync() =>
+        await ConnectionFactory.CreateConnectionAsync().ConfigureAwait(false);
 
-    public static IModel CreateModelAndDeclareTestQueue(IConnection connection)
+    public static async Task<IChannel> CreateModelAndDeclareTestQueueAsync(IConnection connection)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
-        var channel = connection.CreateModel();
+        var channel = await connection.CreateChannelAsync().ConfigureAwait(false);
 
-        channel.QueueDeclare(
+        await channel.QueueDeclareAsync(
             queue: TestQueueName,
             durable: false,
             exclusive: false,
             autoDelete: false,
-            arguments: null);
+            arguments: null).ConfigureAwait(false);
 
         return channel;
     }
 
-    public static void StartConsumer(IModel channel, Action<BasicDeliverEventArgs> processMessage)
+    public static async Task StartConsumerAsync(IChannel channel, Func<BasicDeliverEventArgs, Task> processMessage)
     {
-        var consumer = new EventingBasicConsumer(channel);
+        var consumer = new AsyncEventingBasicConsumer(channel);
 
-        consumer.Received += (bc, ea) => processMessage(ea);
+        consumer.ReceivedAsync += async (bc, ea) => await processMessage(ea).ConfigureAwait(false);
 
-        channel.BasicConsume(queue: TestQueueName, autoAck: true, consumer: consumer);
+        await channel.BasicConsumeAsync(queue: TestQueueName, autoAck: true, consumer: consumer).ConfigureAwait(false);
     }
 
     public static void AddMessagingTags(Activity? activity)

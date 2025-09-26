@@ -26,9 +26,12 @@ jobs:
       OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   push-packages-and-publish-release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
+
+    permissions:
+      id-token: write
 
     if: |
       github.event_name == 'issue_comment' &&
@@ -41,7 +44,7 @@ jobs:
       needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+    - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
       id: otelbot-token
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
@@ -56,6 +59,12 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
 
+    - name: NuGet log in
+      uses: NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544 # v1.1.0
+      id: nuget-login
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
     - name: Push packages and publish release
       shell: pwsh
       env:
@@ -63,7 +72,7 @@ jobs:
         EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
         COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
-        NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
+        NUGET_TOKEN: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
@@ -77,7 +86,7 @@ jobs:
           -pushToNuget $HasToken
 
   post-release-published:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs:
     - automation
@@ -87,7 +96,7 @@ jobs:
       (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
 
     steps:
-    - uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+    - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
       id: otelbot-token
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
