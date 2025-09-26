@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   run-misspell:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
     - name: check out code
@@ -25,7 +25,7 @@ jobs:
       run: ./bin/misspell -error .
 
   run-sanitycheck:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
     - name: check out code
