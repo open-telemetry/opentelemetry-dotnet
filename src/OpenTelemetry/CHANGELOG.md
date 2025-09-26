@@ -10,6 +10,11 @@ Notes](../../RELEASENOTES.md).
   to a single `MeterProvider`, as required by the OpenTelemetry specification.
   ([#6458](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6458))
 
+* Added decoding of the `OTEL_RESOURCE_ATTRIBUTES` variable according to the specification,
+  adhering to the [W3C Baggage](https://github.com/w3c/baggage/blob/main/baggage/HTTP_HEADER_FORMAT.md)
+  format.
+  ([#6461](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6461))
+
 * Added `FormatMessage` configuration option to self-diagnostics feature. When
   set to `true` (default is false), log messages will be formatted by replacing
   placeholders with actual parameter values for improved readability.
