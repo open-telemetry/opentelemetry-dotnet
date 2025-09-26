@@ -2,7 +2,7 @@ services:
 
   # OTEL Collector to receive logs, metrics and traces from the application
   otel-collector:
-    image: otel/opentelemetry-collector:0.111.0
+    image: otel/opentelemetry-collector:0.136.0@sha256:98fd3b410ae8a939be9588f1580c4b7c3da6ebba49f5363df4259a827aabb779
     command: [ "--config=/etc/otel-collector.yaml" ]
     volumes:
       - ./otel-collector.yaml:/etc/otel-collector.yaml
@@ -13,7 +13,7 @@ services:
 
   # Exports Traces to Tempo
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.8.2@sha256:0ef775495967cd5d7a6b2e146b6ea695d624803c8db8349fb8ce4164f719f9b7
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
       - ./tempo.yaml:/etc/tempo.yaml
@@ -37,7 +37,7 @@ services:
 
 # UI to query traces and metrics
   grafana:
-    image: grafana/grafana:9.3.2
+    image: grafana/grafana:12.2.0@sha256:74144189b38447facf737dfd0f3906e42e0776212bf575dc3334c3609183adf7
     volumes:
       - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     environment:
