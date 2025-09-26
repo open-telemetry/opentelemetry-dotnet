@@ -23,7 +23,9 @@ Notes](../../RELEASENOTES.md).
   now set the `TE=trailers` HTTP request header to improve interoperability.
   ([#6449](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6449))
 
-* Write `byte[]` to `bytes_value` instead of `array_value` in TagWriter. ([#6535](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6535))
+* Improved performance exporting `byte[]` attributes as native binary format
+  instead of arrays.
+  ([#6535](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6535))
 
 ## 1.12.0
 

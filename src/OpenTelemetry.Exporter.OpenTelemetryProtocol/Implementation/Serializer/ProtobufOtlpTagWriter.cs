@@ -97,7 +97,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
         // length = bytesLength + tagSize + length field size.
         state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, value.Length + 1 + serializedLengthSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
-        state.WritePosition = ProtobufSerializer.WriteByteArrayWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Bytes_Value, value.Length, value);
+        state.WritePosition = ProtobufSerializer.WriteByteArrayWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Bytes_Value, value);
 
         return true;
     }
