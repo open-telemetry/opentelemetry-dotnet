@@ -25,7 +25,7 @@ Notes](../../RELEASENOTES.md).
 
 * Improved performance exporting `byte[]` attributes as native binary format
   instead of arrays.
-  ([#6535](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6535))
+  ([#6534](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6534))
 
 ## 1.12.0
 
