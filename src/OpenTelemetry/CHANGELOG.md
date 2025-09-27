@@ -25,6 +25,9 @@ Notes](../../RELEASENOTES.md).
   }
   ```
 
+* Moved the `InstrumentNameRegex` from `MeterProviderBuilderSdk` to `Guard`.
+  ([#6457](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6457))
+
 * Fixed parsing of `OTEL_TRACES_SAMPLER_ARG` decimal values to always use `.`
   as the delimiter when using the `traceidratio` sampler, preventing
   locale-specific parsing issues.
