@@ -13,7 +13,7 @@ services:
 
   # Exports Traces to Tempo
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.8.2@sha256:0ef775495967cd5d7a6b2e146b6ea695d624803c8db8349fb8ce4164f719f9b7
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
       - ./tempo.yaml:/etc/tempo.yaml
@@ -25,7 +25,7 @@ services:
 
 # Exports Metrics to Prometheus
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.6.0@sha256:76947e7ef22f8a698fc638f706685909be425dbe09bd7a2cd7aca849f79b5f64
     command:
       - --config.file=/etc/prometheus.yaml
       - --web.enable-remote-write-receiver
