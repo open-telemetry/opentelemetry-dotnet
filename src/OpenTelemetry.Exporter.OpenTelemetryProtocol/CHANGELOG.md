@@ -23,6 +23,10 @@ Notes](../../RELEASENOTES.md).
   now set the `TE=trailers` HTTP request header to improve interoperability.
   ([#6449](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6449))
 
+* Improved performance exporting `byte[]` attributes as native binary format
+  instead of arrays.
+  ([#6534](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6534))
+
 ## 1.12.0
 
 Released 2025-Apr-29
