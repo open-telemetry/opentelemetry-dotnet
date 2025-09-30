@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.13.0
+
+Released 2025-Sep-30
+
 * Added `AddLink(SpanContext, SpanAttributes?)` to `TelemetrySpan` to support
   linking spans and associating optional attributes for advanced trace relationships.
   ([#6305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6305))
