@@ -7,6 +7,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added support for gzip compression in the OTLP exporter for HTTP and gRPC.
+  Compression can be configured using the environment variables `OTEL_EXPORTER_OTLP_COMPRESSION`,
+  `OTEL_EXPORTER_OTLP_TRACES_COMPRESSION`, `OTEL_EXPORTER_OTLP_METRICS_COMPRESSION`,
+  `OTEL_EXPORTER_OTLP_LOGS_COMPRESSION`. Setting the respective environment variable
+  to `gzip` activates compression.
+  ([#6494](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6494))
+
 * Fixed an issue in .NET Framework where OTLP export of traces, logs, and
   metrics using `OtlpExportProtocol.Grpc` did not correctly set the initial
   write position, resulting in gRPC protocol errors.

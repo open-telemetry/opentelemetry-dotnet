@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Buffers.Binary;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
@@ -70,17 +69,6 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         try
         {
             int writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref this.buffer, this.startWritePosition, this.Resource, metrics);
-
-            if (this.startWritePosition == GrpcStartWritePosition)
-            {
-                // Grpc payload consists of 3 parts
-                // byte 0 - Specifying if the payload is compressed.
-                // 1-4 byte - Specifies the length of payload in big endian format.
-                // 5 and above -  Protobuf serialized data.
-                Span<byte> data = new Span<byte>(this.buffer, 1, 4);
-                var dataLength = writePosition - GrpcStartWritePosition;
-                BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
-            }
 
             if (!this.transmissionHandler.TrySubmitRequest(this.buffer, writePosition))
             {
