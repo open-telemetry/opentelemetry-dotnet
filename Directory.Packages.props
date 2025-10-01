@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <OTelLatestStableVer>1.12.0</OTelLatestStableVer>
+    <OTelLatestStableVer>1.13.0</OTelLatestStableVer>
   </PropertyGroup>
 
   <!--
