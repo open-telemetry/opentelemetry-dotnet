@@ -401,7 +401,7 @@ public class AggregatorTests
             AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
             Assert.Equal(0, sum);
             Assert.Equal(0, count);
-            Assert.Equal(expectedHistogram.Scale, secondScale);
+            Assert.Equal(Metric.DefaultExponentialHistogramMaxScale, secondScale);
 
             if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
             {
