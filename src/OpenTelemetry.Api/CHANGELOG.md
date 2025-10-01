@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.13.0
 
-Released 2025-Sep-30
+Released 2025-Oct-01
 
 * Added `AddLink(SpanContext, SpanAttributes?)` to `TelemetrySpan` to support
   linking spans and associating optional attributes for advanced trace relationships.

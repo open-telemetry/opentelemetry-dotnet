@@ -8,7 +8,7 @@ covering all components see: [Release Notes](../../RELEASENOTES.md).
 
 ## 1.13.0
 
-Released 2025-Sep-30
+Released 2025-Oct-01
 
 ## 1.12.0
 

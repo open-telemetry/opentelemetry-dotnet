@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.13.0
 
-Released 2025-Sep-30
+Released 2025-Oct-01
 
 * Added a verification to ensure that a `MetricReader` can only be registered
   to a single `MeterProvider`, as required by the OpenTelemetry specification.

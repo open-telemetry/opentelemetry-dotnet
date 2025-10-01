@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.13.0
 
-Released 2025-Sep-30
+Released 2025-Oct-01
 
 * Fixed an issue in .NET Framework where OTLP export of traces, logs, and
   metrics using `OtlpExportProtocol.Grpc` did not correctly set the initial

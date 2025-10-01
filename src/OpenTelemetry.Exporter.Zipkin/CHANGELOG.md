@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.13.0
 
-Released 2025-Sep-30
+Released 2025-Oct-01
 
 * Removed the peer service resolver, which was based on earlier experimental
   semantic conventions that are not part of the stable specification. This
