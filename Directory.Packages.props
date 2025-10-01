@@ -20,10 +20,10 @@
         3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
           these packages even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[9.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10.0.0-rc.1.25451.107,)" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[10.0.0-rc.1.25451.107,)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[10.0.0-rc.1.25451.107,)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[10.0.0-rc.1.25451.107,)" />
 
     <!--
         OTel packages always point to latest stable release.
@@ -45,7 +45,7 @@
         3) The .NET runtime team provides extra backward compatibility guarantee to System.Diagnostics.DiagnosticSource
           even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[9.0.0,)" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[10.0.0-rc.1.25451.107,)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -86,10 +86,10 @@
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.9" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-rc.1.25451.107" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0-rc.1.25451.107" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0-rc.1.25451.107" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-rc.1.25451.107" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="9.9.0" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
@@ -113,6 +113,10 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="9.0.9" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.0-rc.1.25451.107" />
   </ItemGroup>
 
 </Project>
