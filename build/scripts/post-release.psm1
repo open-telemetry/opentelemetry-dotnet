@@ -202,7 +202,7 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   $tag = $match.Groups[1].Value
 
   $commentUserPermission = gh api "repos/$gitRepository/collaborators/$commentUserName/permission" | ConvertFrom-Json
-  if ($commentUserPermission.permission -ne 'admin')
+  if ($commentUserPermission.permission -ne 'maintain')
   {
     gh pr comment $pullRequestNumber `
       --body "I'm sorry @$commentUserName but you don't have permission to push packages. Only maintainers can push to NuGet."
