@@ -202,7 +202,7 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   $tag = $match.Groups[1].Value
 
   $commentUserPermission = gh api "repos/$gitRepository/collaborators/$commentUserName/permission" | ConvertFrom-Json
-  if ($commentUserPermission.permission -ne 'admin')
+  if ($commentUserPermission.user.permissions.maintain)
   {
     gh pr comment $pullRequestNumber `
       --body "I'm sorry @$commentUserName but you don't have permission to push packages. Only maintainers can push to NuGet."
@@ -490,8 +490,10 @@ function GetCoreDependenciesForProjects {
         $output = dotnet restore $project -p:RunningDotNetPack=true
 
         $projectDir = $project | Split-Path -Parent
+        $projectDirName = $projectDir | Split-Path -Leaf
+        $projectArtifactsDir = $projectDir | Split-Path -Parent | Split-Path -Parent | Join-Path -ChildPath "artifacts/obj/$projectDirName"
 
-        $content = (Get-Content "$projectDir/obj/project.assets.json" -Raw)
+        $content = (Get-Content "$projectArtifactsDir/project.assets.json" -Raw)
 
         $projectDependencies = @{}
 
