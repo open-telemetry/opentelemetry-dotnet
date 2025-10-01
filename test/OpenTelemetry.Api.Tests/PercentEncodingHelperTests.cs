@@ -13,17 +13,17 @@ public class PercentEncodingHelperTests
     [InlineData(new string[] { "key1=val1,key2=val2", "key3=val3", "key4=val4" }, new string[] { "key1", "key2", "key3", "key4" }, new string[] { "val1", "val2", "val3", "val4" })] // Multiple headers
     [InlineData(new string[] { "key1=val%201,key2=val2" }, new string[] { "key1", "key2" }, new string[] { "val 1", "val2" })]
     [InlineData(new string[] { "key1,key2=val2" }, new string[] { "key2" }, new string[] { "val2" })]
-    [InlineData(new string[] { "key=Am%C3%A9lie" }, new string[] { "key" }, new string[] { "Amélie" })] // Valid percent-encoded value
+    [InlineData(new string[] { "key=Am%C3%A9lie" }, new string[] { "key" }, new string[] { "Am\u00E9lie" })] // Valid percent-encoded value
     [InlineData(new string[] { "key1=val1,key2=val2==3" }, new string[] { "key1", "key2" }, new string[] { "val1", "val2==3" })] // Valid value with equal sign
     [InlineData(new string[] { "key1=,key2=val2" }, new string[] { "key2" }, new string[] { "val2" })] // Empty value for key1
     [InlineData(new string[] { "=val1,key2=val2" }, new string[] { "key2" }, new string[] { "val2" })] // Empty key for key1
-    [InlineData(new string[] { "Amélie=val" }, new string[] { }, new string[] { }, false)] // Invalid key
+    [InlineData(new string[] { "Am\u00E9lie=val" }, new string[] { }, new string[] { }, false)] // Invalid key
     [InlineData(new string[] { "key=invalid%encoding" }, new string[] { "key" }, new string[] { "invalid%encoding" })] // Invalid value
     [InlineData(new string[] { "key=v1+v2" }, new string[] { "key" }, new string[] { "v1+v2" })]
 #if NET
-    [InlineData(new string[] { "key=a%E0%80Am%C3%A9lie" }, new string[] { "key" }, new string[] { "a��Amélie" })]
+    [InlineData(new string[] { "key=a%E0%80Am%C3%A9lie" }, new string[] { "key" }, new string[] { "a\uFFFD\uFFFDAm\u00E9lie" })]
 #else
-    [InlineData(new string[] { "key=a%E0%80Am%C3%A9lie" }, new string[] { "key" }, new string[] { "a�Amélie" })]
+    [InlineData(new string[] { "key=a%E0%80Am%C3%A9lie" }, new string[] { "key" }, new string[] { "a\uFFFDAm\u00E9lie" })]
 #endif
     public void ValidateBaggageExtraction(string[] baggage, string[] expectedKey, string[] expectedValue, bool canExtractExpected = true)
     {
