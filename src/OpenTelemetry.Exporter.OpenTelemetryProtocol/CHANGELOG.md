@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.13.0
+
+Released 2025-Oct-01
+
 * Fixed an issue in .NET Framework where OTLP export of traces, logs, and
   metrics using `OtlpExportProtocol.Grpc` did not correctly set the initial
   write position, resulting in gRPC protocol errors.
@@ -22,6 +26,10 @@ Notes](../../RELEASENOTES.md).
 * gRPC calls to export traces, logs, and metrics using `OtlpExportProtocol.Grpc`
   now set the `TE=trailers` HTTP request header to improve interoperability.
   ([#6449](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6449))
+
+* Improved performance exporting `byte[]` attributes as native binary format
+  instead of arrays.
+  ([#6534](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6534))
 
 ## 1.12.0
 

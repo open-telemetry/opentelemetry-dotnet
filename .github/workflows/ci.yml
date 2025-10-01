@@ -16,6 +16,13 @@ jobs:
   lint-misspell-sanitycheck:
     uses: ./.github/workflows/sanitycheck.yml
 
+  code-ql:
+    uses: ./.github/workflows/codeql-analysis-steps.yml
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
   detect-changes:
     runs-on: windows-latest
     outputs:
@@ -110,7 +117,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'otlp')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -128,7 +135,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'instrumentation')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -175,6 +182,7 @@ jobs:
   build-test:
     needs: [
       detect-changes,
+      code-ql,
       lint-misspell-sanitycheck,
       lint-md,
       lint-dotnet-format,
@@ -190,7 +198,17 @@ jobs:
       concurrency-tests
       ]
     if: always() && !cancelled()
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-    - run: |
-          if ( ${{ contains(needs.*.result, 'failure') }} == true ); then echo 'build failed'; exit 1; else echo 'build complete'; fi
+    - name: Report CI status
+      shell: bash
+      env:
+        CI_SUCCESS: ${{ !contains(needs.*.result, 'failure') }}
+      run: |
+        if [ "${CI_SUCCESS}" == "true" ]
+        then
+          echo 'Build complete'
+        else
+          echo 'Build failed'
+          exit 1
+        fi

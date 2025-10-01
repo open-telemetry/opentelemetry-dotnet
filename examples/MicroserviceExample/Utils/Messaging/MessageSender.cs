@@ -16,32 +16,36 @@ public sealed class MessageSender : IDisposable
     private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
 
     private readonly ILogger<MessageSender> logger;
-    private readonly IConnection connection;
-    private readonly IModel channel;
+    private IConnection? connection;
+    private IChannel? channel;
 
     public MessageSender(ILogger<MessageSender> logger)
     {
         this.logger = logger;
-        this.connection = RabbitMqHelper.CreateConnection();
-        this.channel = RabbitMqHelper.CreateModelAndDeclareTestQueue(this.connection);
     }
 
     public void Dispose()
     {
-        this.channel.Dispose();
-        this.connection.Dispose();
+        this.channel?.Dispose();
+        this.connection?.Dispose();
     }
 
-    public string SendMessage()
+    public async Task<string> SendMessageAsync()
     {
         try
         {
+            if (this.channel is null)
+            {
+                this.connection = await RabbitMqHelper.CreateConnectionAsync().ConfigureAwait(false);
+                this.channel = await RabbitMqHelper.CreateModelAndDeclareTestQueueAsync(this.connection).ConfigureAwait(false);
+            }
+
             // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
             // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/messaging/messaging-spans.md#span-name
             var activityName = $"{RabbitMqHelper.TestQueueName} send";
 
             using var activity = ActivitySource.StartActivity(activityName, ActivityKind.Producer);
-            var props = this.channel.CreateBasicProperties();
+            var props = new BasicProperties();
 
             // Depending on Sampling (and whether a listener is registered or not), the
             // activity above may not be created.
@@ -65,11 +69,12 @@ public sealed class MessageSender : IDisposable
             RabbitMqHelper.AddMessagingTags(activity);
             var body = $"Published message: DateTime.Now = {DateTime.Now}.";
 
-            this.channel.BasicPublish(
+            await this.channel.BasicPublishAsync(
                 exchange: RabbitMqHelper.DefaultExchangeName,
                 routingKey: RabbitMqHelper.TestQueueName,
+                mandatory: false,
                 basicProperties: props,
-                body: Encoding.UTF8.GetBytes(body));
+                body: Encoding.UTF8.GetBytes(body)).ConfigureAwait(false);
 
             this.logger.MessageSent(body);
 
@@ -86,7 +91,7 @@ public sealed class MessageSender : IDisposable
     {
         try
         {
-            props.Headers ??= new Dictionary<string, object>();
+            props.Headers ??= new Dictionary<string, object?>();
 
             props.Headers[key] = value;
         }
