@@ -41,17 +41,17 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
     [Theory]
     [InlineData("key1=val1,key2=val2", new string[] { "key1", "key2" }, new string[] { "val1", "val2" })]
     [InlineData("key1,key2=val2", new string[] { "key2" }, new string[] { "val2" })]
-    [InlineData("key=Am%C3%A9lie", new string[] { "key" }, new string[] { "Amélie" })] // Valid percent-encoded value
+    [InlineData("key=Am%C3%A9lie", new string[] { "key" }, new string[] { "Am\u00E9lie" })] // Valid percent-encoded value
     [InlineData("key1=val1,key2=val2==3", new string[] { "key1", "key2" }, new string[] { "val1", "val2==3" })] // Valid value with equal sign
     [InlineData("key1=,key2=val2", new string[] { "key2" }, new string[] { "val2" })] // Empty value for key1
     [InlineData("=val1,key2=val2", new string[] { "key2" }, new string[] { "val2" })] // Empty key for key1
-    [InlineData("Amélie=val", new string[] { }, new string[] { })] // Invalid key
+    [InlineData("Am\u00E9lie=val", new string[] { }, new string[] { })] // Invalid key
     [InlineData("key=invalid%encoding", new string[] { "key" }, new string[] { "invalid%encoding" })] // Invalid value
     [InlineData("key=v1+v2", new string[] { "key" }, new string[] { "v1+v2" })]
 #if NET
-    [InlineData("key=a%E0%80Am%C3%A9lie", new string[] { "key" }, new string[] { "a\uFFFD\uFFFDAmélie" })]
+    [InlineData("key=a%E0%80Am%C3%A9lie", new string[] { "key" }, new string[] { "a\uFFFD\uFFFDAm\u00E9lie" })]
 #else
-    [InlineData("key=a%E0%80Am%C3%A9lie", new string[] { "key" }, new string[] { "a\uFFFDAmélie" })]
+    [InlineData("key=a%E0%80Am%C3%A9lie", new string[] { "key" }, new string[] { "a\uFFFDAm\u00E9lie" })]
 #endif
     public void OtelEnvResource_EnvVar_Validation(string envVarValue, string[] expectedKeys, string[] expectedValues)
     {
