@@ -67,8 +67,7 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
         Assert.Equal(expectedKeys.Length, resource.Attributes.Count());
         for (int i = 0; i < expectedKeys.Length; i++)
         {
-            Assert.Equal(
-                expectedKeys.Zip(expectedValues, (k, v) => new KeyValuePair<string, object>(k, v)), resource.Attributes);
+            Assert.Equal(expectedKeys.Zip(expectedValues, (k, v) => new KeyValuePair<string, object>(k, v)), resource.Attributes);
         }
     }
 
