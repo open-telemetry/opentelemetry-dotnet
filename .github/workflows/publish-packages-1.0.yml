@@ -22,7 +22,8 @@ permissions:
 jobs:
   automation:
     uses: ./.github/workflows/automation.yml
-    secrets: inherit
+    secrets:
+      OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   build-pack-publish:
     runs-on: windows-latest
@@ -49,7 +50,7 @@ jobs:
       uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
 
     - name: Install Cosign
-      uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
+      uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
       with:
         cosign-release: v2.5.3
 
@@ -101,7 +102,7 @@ jobs:
       run: dotnet nuget push *.nupkg --api-key ${env:API_KEY} --skip-duplicate --source ${env:SOURCE}
 
   post-build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs:
     - automation
@@ -109,14 +110,17 @@ jobs:
 
     if: needs.automation.outputs.enabled && github.event_name == 'push'
 
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     steps:
+    - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
     - name: Check out code
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
-        token: ${{ env.GH_TOKEN }}
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Download Artifacts
       env:
@@ -133,6 +137,8 @@ jobs:
 
     - name: Create GitHub Release draft
       shell: pwsh
+      env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
@@ -144,7 +150,8 @@ jobs:
     - name: Post notice when packages are ready
       shell: pwsh
       env:
-        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
         PACKAGES_URL: ${{ needs.build-pack-publish.outputs.artifact-url }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
@@ -154,4 +161,4 @@ jobs:
           -tag ${env:GITHUB_REF_NAME} `
           -tagSha ${env:GITHUB_SHA} `
           -packagesUrl ${env:PACKAGES_URL} `
-          -botUserName ${env:BOT_USER_NAME}
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME}

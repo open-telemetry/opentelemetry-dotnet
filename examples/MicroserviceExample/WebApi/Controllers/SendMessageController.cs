@@ -18,8 +18,6 @@ public class SendMessageController : ControllerBase
     }
 
     [HttpGet]
-    public string Get()
-    {
-        return this.messageSender.SendMessage();
-    }
+    public async Task<string> Get() =>
+        await this.messageSender.SendMessageAsync().ConfigureAwait(false);
 }

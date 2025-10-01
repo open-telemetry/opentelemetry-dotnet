@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.13.0
+
+Released 2025-Oct-01
+
 * Added a verification to ensure that a `MetricReader` can only be registered
   to a single `MeterProvider`, as required by the OpenTelemetry specification.
   ([#6458](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6458))

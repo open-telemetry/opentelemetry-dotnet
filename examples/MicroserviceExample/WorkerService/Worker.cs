@@ -18,8 +18,6 @@ internal sealed class Worker : BackgroundService
     {
         stoppingToken.ThrowIfCancellationRequested();
 
-        this.messageReceiver.StartConsumer();
-
-        await Task.CompletedTask.ConfigureAwait(false);
+        await this.messageReceiver.StartConsumerAsync().ConfigureAwait(false);
     }
 }
