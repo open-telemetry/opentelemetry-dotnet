@@ -19,10 +19,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 public sealed class IntegrationTests : IDisposable
 {
     private const string CollectorHostnameEnvVarName = "OTEL_COLLECTOR_HOSTNAME";
-    private const int ExportIntervalMilliseconds = 10000;
+    private const int ExportIntervalMilliseconds = 10_000;
+    private const string GrpcEndpointHttp = ":4317";
+    private const string GrpcEndpointHttps = ":5317";
+    private const string ProtobufEndpointHttp = ":4318/v1/";
+    private const string ProtobufEndpointHttps = ":5318/v1/";
+
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
     private static readonly ExperimentalOptions DefaultExperimentalOptions = new();
     private static readonly string? CollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorHostnameEnvVarName);
+
+    private static readonly bool[] BooleanValues = [false, true];
+    private static readonly ExportProcessorType[] ExportProcessorTypes = [ExportProcessorType.Batch, ExportProcessorType.Simple];
+
     private readonly OpenTelemetryEventListener openTelemetryEventListener;
 
     public IntegrationTests(ITestOutputHelper outputHelper)
@@ -30,38 +39,86 @@ public sealed class IntegrationTests : IDisposable
         this.openTelemetryEventListener = new(outputHelper);
     }
 
-    public void Dispose()
+    public static TheoryData<OtlpExportProtocol, string, ExportProcessorType, bool, string> TraceTestCases()
     {
-        this.openTelemetryEventListener.Dispose();
-    }
+        var data = new TheoryData<OtlpExportProtocol, string, ExportProcessorType, bool, string>();
 
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-    [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Batch, false)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", ExportProcessorType.Batch, false)]
-    [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Batch, true)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", ExportProcessorType.Batch, true)]
-    [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Simple, false)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", ExportProcessorType.Simple, false)]
-    [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Simple, true)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", ExportProcessorType.Simple, true)]
-    [InlineData(OtlpExportProtocol.Grpc, ":5317", ExportProcessorType.Simple, true, "https")]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":5318/v1/traces", ExportProcessorType.Simple, true, "https")]
+        foreach (var exportType in ExportProcessorTypes)
+        {
+            foreach (var forceFlush in BooleanValues)
+            {
+                data.Add(OtlpExportProtocol.Grpc, GrpcEndpointHttp, exportType, forceFlush, Uri.UriSchemeHttp);
+                data.Add(OtlpExportProtocol.HttpProtobuf, $"{ProtobufEndpointHttp}traces", exportType, forceFlush, Uri.UriSchemeHttp);
+            }
+        }
+
+        data.Add(OtlpExportProtocol.Grpc, GrpcEndpointHttps, ExportProcessorType.Simple, true, Uri.UriSchemeHttps);
+        data.Add(OtlpExportProtocol.HttpProtobuf, $"{ProtobufEndpointHttps}traces", ExportProcessorType.Simple, true, Uri.UriSchemeHttps);
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+
+        return data;
+    }
+
+    public static TheoryData<OtlpExportProtocol, string, bool, bool, string> MetricsTestCases()
+    {
+        var data = new TheoryData<OtlpExportProtocol, string, bool, bool, string>();
+
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+        foreach (var useManualExport in BooleanValues)
+        {
+            foreach (var forceFlush in BooleanValues)
+            {
+                data.Add(OtlpExportProtocol.Grpc, GrpcEndpointHttp, useManualExport, forceFlush, Uri.UriSchemeHttp);
+                data.Add(OtlpExportProtocol.HttpProtobuf, $"{ProtobufEndpointHttp}metrics", useManualExport, forceFlush, Uri.UriSchemeHttp);
+            }
+        }
+
+        data.Add(OtlpExportProtocol.Grpc, GrpcEndpointHttps, true, true, Uri.UriSchemeHttps);
+        data.Add(OtlpExportProtocol.HttpProtobuf, $"{ProtobufEndpointHttps}metrics", true, true, Uri.UriSchemeHttps);
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+
+        return data;
+    }
+
+    public static TheoryData<OtlpExportProtocol, string, ExportProcessorType, string> LogsTestCases()
+    {
+        var data = new TheoryData<OtlpExportProtocol, string, ExportProcessorType, string>();
+
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+        foreach (var exportType in ExportProcessorTypes)
+        {
+            data.Add(OtlpExportProtocol.Grpc, GrpcEndpointHttp, exportType, Uri.UriSchemeHttp);
+            data.Add(OtlpExportProtocol.HttpProtobuf, $"{ProtobufEndpointHttp}logs", exportType, Uri.UriSchemeHttp);
+        }
+
+        data.Add(OtlpExportProtocol.Grpc, GrpcEndpointHttps, ExportProcessorType.Simple, Uri.UriSchemeHttps);
+        data.Add(OtlpExportProtocol.HttpProtobuf, $"{ProtobufEndpointHttps}logs", ExportProcessorType.Simple, Uri.UriSchemeHttps);
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+
+        return data;
+    }
+
+    public void Dispose() => this.openTelemetryEventListener.Dispose();
+
     [Trait("CategoryName", "CollectorIntegrationTests")]
     [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
-    public void TraceExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, ExportProcessorType exportProcessorType, bool forceFlush, string scheme = "http")
+    [MemberData(nameof(TraceTestCases))]
+    public void TraceExportResultIsSuccess(
+        OtlpExportProtocol protocol,
+        string endpoint,
+        ExportProcessorType exportProcessorType,
+        bool forceFlush,
+        string scheme)
     {
-        using EventWaitHandle handle = new ManualResetEvent(false);
+        using var handle = new ManualResetEvent(false);
 
-        var exporterOptions = new OtlpExporterOptions
+        var exporterOptions = CreateExporterOptions(protocol, scheme, endpoint);
+
+        exporterOptions.ExportProcessorType = exportProcessorType;
+        exporterOptions.BatchExportProcessorOptions = new()
         {
-            Endpoint = new Uri($"{scheme}://{CollectorHostname}{endpoint}"),
-            Protocol = protocol,
-            ExportProcessorType = exportProcessorType,
-            BatchExportProcessorOptions = new()
-            {
-                ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
-            },
+            ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
         };
 
         DelegatingExporter<Activity>? delegatingExporter = null;
@@ -121,29 +178,19 @@ public sealed class IntegrationTests : IDisposable
         }
     }
 
-#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-    [InlineData(OtlpExportProtocol.Grpc, ":4317", false, false)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", false, false)]
-    [InlineData(OtlpExportProtocol.Grpc, ":4317", false, true)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", false, true)]
-    [InlineData(OtlpExportProtocol.Grpc, ":4317", true, false)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", true, false)]
-    [InlineData(OtlpExportProtocol.Grpc, ":4317", true, true)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", true, true)]
-    [InlineData(OtlpExportProtocol.Grpc, ":5317", true, true, "https")]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":5318/v1/metrics", true, true, "https")]
-#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     [Trait("CategoryName", "CollectorIntegrationTests")]
     [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
-    public void MetricExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, bool useManualExport, bool forceFlush, string scheme = "http")
+    [MemberData(nameof(MetricsTestCases))]
+    public void MetricExportResultIsSuccess(
+        OtlpExportProtocol protocol,
+        string endpoint,
+        bool useManualExport,
+        bool forceFlush,
+        string scheme)
     {
-        using EventWaitHandle handle = new ManualResetEvent(false);
+        using var handle = new ManualResetEvent(false);
 
-        var exporterOptions = new OtlpExporterOptions
-        {
-            Endpoint = new Uri($"{scheme}://{CollectorHostname}{endpoint}"),
-            Protocol = protocol,
-        };
+        var exporterOptions = CreateExporterOptions(protocol, scheme, endpoint);
 
         DelegatingExporter<Metric>? delegatingExporter = null;
         var exportResults = new List<ExportResult>();
@@ -207,25 +254,18 @@ public sealed class IntegrationTests : IDisposable
         }
     }
 
-#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-    [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Batch)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/logs", ExportProcessorType.Batch)]
-    [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Simple)]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/logs", ExportProcessorType.Simple)]
-    [InlineData(OtlpExportProtocol.Grpc, ":5317", ExportProcessorType.Simple, "https")]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, ":5318/v1/logs", ExportProcessorType.Simple, "https")]
-#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     [Trait("CategoryName", "CollectorIntegrationTests")]
     [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
-    public void LogExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, ExportProcessorType exportProcessorType, string scheme = "http")
+    [MemberData(nameof(LogsTestCases))]
+    public void LogExportResultIsSuccess(
+        OtlpExportProtocol protocol,
+        string endpoint,
+        ExportProcessorType exportProcessorType,
+        string scheme)
     {
-        using EventWaitHandle handle = new ManualResetEvent(false);
+        using var handle = new ManualResetEvent(false);
 
-        var exporterOptions = new OtlpExporterOptions
-        {
-            Endpoint = new Uri($"{scheme}://{CollectorHostname}{endpoint}"),
-            Protocol = protocol,
-        };
+        var exporterOptions = CreateExporterOptions(protocol, scheme, endpoint);
 
         DelegatingExporter<LogRecord> delegatingExporter;
         var exportResults = new List<ExportResult>();
@@ -275,24 +315,26 @@ public sealed class IntegrationTests : IDisposable
                 Assert.Single(exportResults);
                 Assert.Equal(ExportResult.Success, exportResults[0]);
                 break;
+
             case ExportProcessorType.Simple:
                 Assert.Single(exportResults);
                 Assert.Equal(ExportResult.Success, exportResults[0]);
                 break;
+
             default:
                 throw new NotSupportedException("Unexpected processor type encountered.");
         }
     }
 
-    private sealed class OpenTelemetryEventListener : EventListener
-    {
-        private readonly ITestOutputHelper outputHelper;
-
-        public OpenTelemetryEventListener(ITestOutputHelper outputHelper)
+    private static OtlpExporterOptions CreateExporterOptions(OtlpExportProtocol protocol, string scheme, string endpoint) =>
+        new()
         {
-            this.outputHelper = outputHelper;
-        }
+            Endpoint = new($"{scheme}://{CollectorHostname}{endpoint}"),
+            Protocol = protocol,
+        };
 
+    private sealed class OpenTelemetryEventListener(ITestOutputHelper outputHelper) : EventListener
+    {
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
             base.OnEventSourceCreated(eventSource);
@@ -305,17 +347,13 @@ public sealed class IntegrationTests : IDisposable
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            string? message;
-            if (eventData.Message != null && eventData.Payload != null && eventData.Payload.Count > 0)
-            {
-                message = string.Format(CultureInfo.InvariantCulture, eventData.Message, eventData.Payload.ToArray());
-            }
-            else
-            {
-                message = eventData.Message;
-            }
+            var message = eventData.Message != null && eventData.Payload?.Count > 0
+                ? string.Format(CultureInfo.InvariantCulture, eventData.Message, [.. eventData.Payload])
+                : eventData.Message;
 
-            this.outputHelper.WriteLine(message);
+            message = string.Format(CultureInfo.InvariantCulture, "[{0}] {1}", eventData.Level, message);
+
+            outputHelper.WriteLine(message);
         }
     }
 }
