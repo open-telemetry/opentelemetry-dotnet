@@ -11,6 +11,8 @@ namespace OpenTelemetry.Exporter;
 /// </remarks>
 internal static class OtlpSpecConfigDefinitions
 {
+    public const string EnvVarPrefix = "OTEL_";
+    
     public const string DefaultEndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
     public const string DefaultHeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
     public const string DefaultTimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";

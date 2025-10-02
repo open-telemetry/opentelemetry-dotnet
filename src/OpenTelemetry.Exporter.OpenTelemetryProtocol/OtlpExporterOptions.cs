@@ -67,8 +67,12 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         BatchExportActivityProcessorOptions defaultBatchOptions)
     {
         Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
+        var finalConfiguration = new ConfigurationBuilder()
+            .AddEnvironmentVariables(OtlpSpecConfigDefinitions.EnvVarPrefix)
+            .AddConfiguration(configuration)
+            .Build();
 
-        this.ApplyConfiguration(configuration, configurationType);
+        this.ApplyConfiguration(finalConfiguration, configurationType);
 
         this.DefaultHttpClientFactory = () =>
         {
