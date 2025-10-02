@@ -62,7 +62,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     {
         Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
         var finalConfiguration = new ConfigurationBuilder()
-            .AddEnvironmentVariables(OtlpSpecConfigDefinitions.EnvVarPrefix)
+            .AddEnvironmentVariables()
             .AddConfiguration(configuration)
             .Build();
 
