@@ -7,9 +7,6 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Avoid allocating strings when logging gRPC export events unless required.
-  ([#6562](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6562))
-
 * Log export success when exporting telemetry using `http/protobuf`.
   ([#6562](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6562))
 
