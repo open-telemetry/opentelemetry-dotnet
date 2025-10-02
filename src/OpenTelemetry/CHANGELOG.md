@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an issue where the Base2 Exponential Bucket Histogram did not reset its
+  scale to 20 after each collection cycle when using delta aggregation temporality.
+  ([#6557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6557))
+
 ## 1.13.0
 
 Released 2025-Oct-01
