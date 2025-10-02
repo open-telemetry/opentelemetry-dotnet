@@ -49,24 +49,27 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// </summary>
     public OtlpExporterOptions()
         : this(
-            configuration: new ConfigurationBuilder().Build(),
+            configuration: null,
             configurationType: OtlpExporterOptionsConfigurationType.Default,
             defaultBatchOptions: new())
     {
     }
 
     internal OtlpExporterOptions(
-        IConfiguration configuration,
+        IConfiguration? configuration,
         OtlpExporterOptionsConfigurationType configurationType,
         BatchExportActivityProcessorOptions defaultBatchOptions)
     {
         Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
-        var finalConfiguration = new ConfigurationBuilder()
-            .AddEnvironmentVariables()
-            .AddConfiguration(configuration)
-            .Build();
+        var finalConfigurationBuilder = new ConfigurationBuilder()
+            .AddEnvironmentVariables();
 
-        this.ApplyConfiguration(finalConfiguration, configurationType);
+        if (configuration != null)
+        {
+            finalConfigurationBuilder = finalConfigurationBuilder.AddConfiguration(configuration);
+        }
+
+        this.ApplyConfiguration(finalConfigurationBuilder.Build(), configurationType);
 
         this.DefaultHttpClientFactory = () =>
         {
