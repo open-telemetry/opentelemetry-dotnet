@@ -104,6 +104,24 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         }
     }
 
+    [NonEvent]
+    public void ExportSuccess(Uri endpoint, string message)
+    {
+        if (Log.IsEnabled(EventLevel.Informational, EventKeywords.All))
+        {
+            this.ExportSuccess(endpoint.ToString(), message);
+        }
+    }
+
+    [NonEvent]
+    public void ResponseDeserializationFailed(Uri endpoint)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.ResponseDeserializationFailed(endpoint.ToString());
+        }
+    }
+
     [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
     public void FailedToReachCollector(string rawCollectorUri, string ex)
     {
