@@ -48,9 +48,14 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
     /// </summary>
     public OtlpExporterOptions()
+        : this(configurationType: OtlpExporterOptionsConfigurationType.Default)
+    {
+    }
+
+    internal OtlpExporterOptions(OtlpExporterOptionsConfigurationType configurationType)
         : this(
             configuration: null,
-            configurationType: OtlpExporterOptionsConfigurationType.Default,
+            configurationType: configurationType,
             defaultBatchOptions: new())
     {
     }
