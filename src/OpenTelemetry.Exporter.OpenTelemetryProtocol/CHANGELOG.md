@@ -7,9 +7,6 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Log export success when exporting telemetry using `http/protobuf`.
-  ([#6562](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6562))
-
 ## 1.13.0
 
 Released 2025-Oct-01
