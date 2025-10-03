@@ -160,25 +160,28 @@ public sealed class IntegrationTests : IDisposable
             if (forceFlush)
             {
                 Assert.True(tracerProvider.ForceFlush());
-                Assert.Single(exportResults);
-                Assert.Equal(ExportResult.Success, exportResults[0]);
+                AssertExpectedTraces();
             }
             else if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
             {
                 Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
-                Assert.Single(exportResults);
-                Assert.Equal(ExportResult.Success, exportResults[0]);
+                AssertExpectedTraces();
             }
         }
 
         if (!forceFlush && exportProcessorType == ExportProcessorType.Simple)
         {
-            Assert.Single(exportResults);
-            Assert.Equal(ExportResult.Success, exportResults[0]);
+            AssertExpectedTraces();
         }
 
         Assert.Empty(this.openTelemetryEventListener.Errors);
         Assert.Empty(this.openTelemetryEventListener.Warnings);
+
+        void AssertExpectedTraces()
+        {
+            Assert.Single(exportResults);
+            Assert.Equal(ExportResult.Success, exportResults[0]);
+        }
     }
 
     [Trait("CategoryName", "CollectorIntegrationTests")]
@@ -240,25 +243,28 @@ public sealed class IntegrationTests : IDisposable
             if (forceFlush)
             {
                 Assert.True(meterProvider.ForceFlush());
-                Assert.Single(exportResults);
-                Assert.Equal(ExportResult.Success, exportResults[0]);
+                AssertExpectedMetrics();
             }
             else if (!useManualExport)
             {
                 Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
-                Assert.Single(exportResults);
-                Assert.Equal(ExportResult.Success, exportResults[0]);
+                AssertExpectedMetrics();
             }
         }
 
         if (!forceFlush && useManualExport)
         {
-            Assert.Single(exportResults);
-            Assert.Equal(ExportResult.Success, exportResults[0]);
+            AssertExpectedMetrics();
         }
 
         Assert.Empty(this.openTelemetryEventListener.Errors);
         Assert.Empty(this.openTelemetryEventListener.Warnings);
+
+        void AssertExpectedMetrics()
+        {
+            Assert.Single(exportResults);
+            Assert.Equal(ExportResult.Success, exportResults[0]);
+        }
     }
 
     [Trait("CategoryName", "CollectorIntegrationTests")]
@@ -319,18 +325,17 @@ public sealed class IntegrationTests : IDisposable
         {
             case ExportProcessorType.Batch:
                 Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
-                Assert.Single(exportResults);
-                Assert.Equal(ExportResult.Success, exportResults[0]);
                 break;
 
             case ExportProcessorType.Simple:
-                Assert.Single(exportResults);
-                Assert.Equal(ExportResult.Success, exportResults[0]);
                 break;
 
             default:
                 throw new NotSupportedException("Unexpected processor type encountered.");
         }
+
+        Assert.Single(exportResults);
+        Assert.Equal(ExportResult.Success, exportResults[0]);
 
         Assert.Empty(this.openTelemetryEventListener.Errors);
         Assert.Empty(this.openTelemetryEventListener.Warnings);
