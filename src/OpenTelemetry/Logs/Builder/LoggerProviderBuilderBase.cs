@@ -1,9 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
+using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Logs;
 
@@ -91,6 +93,13 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
         bool validateScopes = false;
 #endif
         var serviceProvider = services.BuildServiceProvider(validateScopes);
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+
+        if (configuration.GetValue(SdkConfigDefinitions.SdkDisableEnvVarName, false))
+        {
+            serviceProvider.Dispose();
+            return new NoopLoggerProvider();
+        }
 
         return new LoggerProviderSdk(serviceProvider, ownsServiceProvider: true);
     }

@@ -1,9 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
+using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Metrics;
 
@@ -108,6 +110,13 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
         bool validateScopes = false;
 #endif
         var serviceProvider = services.BuildServiceProvider(validateScopes);
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+
+        if (configuration.GetValue(SdkConfigDefinitions.SdkDisableEnvVarName, false))
+        {
+            serviceProvider.Dispose();
+            return new NoopMeterProvider();
+        }
 
         return new MeterProviderSdk(serviceProvider, ownsServiceProvider: true);
     }
