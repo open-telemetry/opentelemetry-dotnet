@@ -176,6 +176,9 @@ public sealed class IntegrationTests : IDisposable
             Assert.Single(exportResults);
             Assert.Equal(ExportResult.Success, exportResults[0]);
         }
+
+        Assert.Empty(this.openTelemetryEventListener.Errors);
+        Assert.Empty(this.openTelemetryEventListener.Warnings);
     }
 
     [Trait("CategoryName", "CollectorIntegrationTests")]
@@ -198,7 +201,8 @@ public sealed class IntegrationTests : IDisposable
         var meterName = "otlp.collector.test";
 
         var builder = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meterName);
+            .AddMeter(meterName)
+            .AddMeter("System.Net.Http", "System.Net.NameResolution", "System.Runtime");
 
         var readerOptions = new MetricReaderOptions();
         readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = useManualExport ? Timeout.Infinite : ExportIntervalMilliseconds;
@@ -252,6 +256,9 @@ public sealed class IntegrationTests : IDisposable
             Assert.Single(exportResults);
             Assert.Equal(ExportResult.Success, exportResults[0]);
         }
+
+        Assert.Empty(this.openTelemetryEventListener.Errors);
+        Assert.Empty(this.openTelemetryEventListener.Warnings);
     }
 
     [Trait("CategoryName", "CollectorIntegrationTests")]
@@ -324,6 +331,9 @@ public sealed class IntegrationTests : IDisposable
             default:
                 throw new NotSupportedException("Unexpected processor type encountered.");
         }
+
+        Assert.Empty(this.openTelemetryEventListener.Errors);
+        Assert.Empty(this.openTelemetryEventListener.Warnings);
     }
 
     private static OtlpExporterOptions CreateExporterOptions(OtlpExportProtocol protocol, string scheme, string endpoint) =>
@@ -335,6 +345,10 @@ public sealed class IntegrationTests : IDisposable
 
     private sealed class OpenTelemetryEventListener(ITestOutputHelper outputHelper) : EventListener
     {
+        public List<string> Errors { get; } = [];
+
+        public List<string> Warnings { get; } = [];
+
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
             base.OnEventSourceCreated(eventSource);
@@ -354,6 +368,15 @@ public sealed class IntegrationTests : IDisposable
             message = string.Format(CultureInfo.InvariantCulture, "[{0}] {1}", eventData.Level, message);
 
             outputHelper.WriteLine(message);
+
+            if (eventData.Level == EventLevel.Error)
+            {
+                this.Errors.Add(message);
+            }
+            else if (eventData.Level == EventLevel.Warning)
+            {
+                this.Warnings.Add(message);
+            }
         }
     }
 }
