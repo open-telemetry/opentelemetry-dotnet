@@ -94,8 +94,9 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
 #endif
         var serviceProvider = services.BuildServiceProvider(validateScopes);
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        configuration.TryGetStringValue(SdkConfigDefinitions.SdkDisableEnvVarName, out var envVarValue);
 
-        if (configuration.GetValue(SdkConfigDefinitions.SdkDisableEnvVarName, false))
+        if (bool.TryParse(envVarValue, out bool result) && result)
         {
             serviceProvider.Dispose();
             return new NoopLoggerProvider();
