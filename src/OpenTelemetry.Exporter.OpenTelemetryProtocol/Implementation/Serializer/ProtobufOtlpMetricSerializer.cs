@@ -507,49 +507,51 @@ internal static class ProtobufOtlpMetricSerializer
 
     private static int WriteHistogramBuckets(byte[] buffer, int writePosition, HistogramBuckets buckets)
     {
-        // Collect all counts (assuming GetHistogramBuckets() returns in order)
-        var bucketCounts = new List<ulong>();
+        const int Fixed64Size = 8;
 
-        foreach (var x in buckets)
+        int length = buckets.BucketCounts.Length;
+
+        writePosition = ProtobufSerializer.WriteTagAndLength(
+            buffer,
+            writePosition,
+            length * Fixed64Size,
+            ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Bucket_Counts,
+            ProtobufWireType.LEN);
+
+        for (int i = 0; i < length; i++)
         {
-            bucketCounts.Add((ulong)x.BucketCount);
+            writePosition = ProtobufSerializer.WriteFixed64LittleEndianFormat(
+                buffer,
+                writePosition,
+                (ulong)buckets.BucketCounts[i].SnapshotValue);
         }
 
-        // Write packed repeated fixed64 bucket_counts
-        var fieldNumber = ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Bucket_Counts;
-        var tag2 = (fieldNumber << 3) | 2; // wire type 2 for length-delimited
-        writePosition = ProtobufSerializer.WriteVarInt32(buffer, writePosition, (uint)tag2);
+        length = 0;
 
-        int length = bucketCounts.Count * 8;
-        writePosition = ProtobufSerializer.WriteVarInt32(buffer, writePosition, (uint)length);
-
-        foreach (var bucketCount in bucketCounts)
+        for (int i = 0; i < buckets.ExplicitBounds!.Length; i++)
         {
-            writePosition = ProtobufSerializer.WriteFixed64LittleEndianFormat(buffer, writePosition, bucketCount);
-        }
-
-        var explicitBounds = new List<double>();
-
-        foreach (var x in buckets)
-        {
-            if (x.ExplicitBound != double.PositiveInfinity)
+            if (buckets.ExplicitBounds[i] != double.PositiveInfinity)
             {
-                explicitBounds.Add(x.ExplicitBound);
+                length++;
             }
         }
 
-        if (explicitBounds.Count > 0)
+        if (length > 0)
         {
-            var boundsFieldNumber = ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Explicit_Bounds;
-            var boundsTag = (boundsFieldNumber << 3) | 2; // wire type 2
-            writePosition = ProtobufSerializer.WriteVarInt32(buffer, writePosition, (uint)boundsTag);
+            writePosition = ProtobufSerializer.WriteTagAndLength(
+                buffer,
+                writePosition,
+                length * Fixed64Size,
+                ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Explicit_Bounds,
+                ProtobufWireType.LEN);
 
-            int boundsLength = explicitBounds.Count * 8;
-            writePosition = ProtobufSerializer.WriteVarInt32(buffer, writePosition, (uint)boundsLength);
-
-            foreach (var bound in explicitBounds)
+            for (int i = 0; i < buckets.ExplicitBounds!.Length; i++)
             {
-                writePosition = ProtobufSerializer.WriteDouble(buffer, writePosition, bound);
+                var value = buckets.ExplicitBounds[i];
+                if (value != double.PositiveInfinity)
+                {
+                    writePosition = ProtobufSerializer.WriteDouble(buffer, writePosition, value);
+                }
             }
         }
 
