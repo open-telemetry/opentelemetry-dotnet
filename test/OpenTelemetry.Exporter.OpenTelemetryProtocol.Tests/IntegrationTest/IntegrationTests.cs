@@ -111,7 +111,7 @@ public sealed class IntegrationTests : IDisposable
         bool forceFlush,
         string scheme)
     {
-        using var handle = new ManualResetEvent(false);
+        using var exported = new ManualResetEvent(false);
 
         var exporterOptions = CreateExporterOptions(protocol, scheme, endpoint);
 
@@ -142,7 +142,7 @@ public sealed class IntegrationTests : IDisposable
                     {
                         var result = otlpExporter.Export(batch);
                         exportResults.Add(result);
-                        handle.Set();
+                        exported.Set();
                         return result;
                     },
                 };
@@ -164,7 +164,7 @@ public sealed class IntegrationTests : IDisposable
             }
             else if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
             {
-                Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
+                Assert.True(exported.WaitOne(ExportIntervalMilliseconds * 2));
                 AssertExpectedTraces();
             }
         }
@@ -179,8 +179,8 @@ public sealed class IntegrationTests : IDisposable
 
         void AssertExpectedTraces()
         {
-            Assert.Single(exportResults);
-            Assert.Equal(ExportResult.Success, exportResults[0]);
+            var result = Assert.Single(exportResults);
+            Assert.Equal(ExportResult.Success, result);
         }
     }
 
@@ -194,7 +194,7 @@ public sealed class IntegrationTests : IDisposable
         bool forceFlush,
         string scheme)
     {
-        using var handle = new ManualResetEvent(false);
+        using var exported = new ManualResetEvent(false);
 
         var exporterOptions = CreateExporterOptions(protocol, scheme, endpoint);
 
@@ -223,7 +223,7 @@ public sealed class IntegrationTests : IDisposable
                     {
                         var result = otlpExporter.Export(batch);
                         exportResults.Add(result);
-                        handle.Set();
+                        exported.Set();
                         return result;
                     },
                 };
@@ -235,8 +235,13 @@ public sealed class IntegrationTests : IDisposable
             using var meter = new Meter(meterName);
 
             var counter = meter.CreateCounter<int>("test_counter");
-
             counter.Add(18);
+
+            var gauge = meter.CreateGauge<int>("test_gauge");
+            gauge.Record(42);
+
+            var histogram = meter.CreateHistogram<int>("test_histogram");
+            histogram.Record(100);
 
             Assert.NotNull(delegatingExporter);
 
@@ -247,7 +252,7 @@ public sealed class IntegrationTests : IDisposable
             }
             else if (!useManualExport)
             {
-                Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
+                Assert.True(exported.WaitOne(ExportIntervalMilliseconds * 2));
                 AssertExpectedMetrics();
             }
         }
@@ -262,8 +267,8 @@ public sealed class IntegrationTests : IDisposable
 
         void AssertExpectedMetrics()
         {
-            Assert.Single(exportResults);
-            Assert.Equal(ExportResult.Success, exportResults[0]);
+            var result = Assert.Single(exportResults);
+            Assert.Equal(ExportResult.Success, result);
         }
     }
 
@@ -276,7 +281,7 @@ public sealed class IntegrationTests : IDisposable
         ExportProcessorType exportProcessorType,
         string scheme)
     {
-        using var handle = new ManualResetEvent(false);
+        using var exported = new ManualResetEvent(false);
 
         var exporterOptions = CreateExporterOptions(protocol, scheme, endpoint);
 
@@ -310,7 +315,7 @@ public sealed class IntegrationTests : IDisposable
                                     {
                                         var result = otlpExporter.Export(batch);
                                         exportResults.Add(result);
-                                        handle.Set();
+                                        exported.Set();
                                         return result;
                                     },
                                 };
@@ -324,7 +329,7 @@ public sealed class IntegrationTests : IDisposable
         switch (processorOptions.ExportProcessorType)
         {
             case ExportProcessorType.Batch:
-                Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
+                Assert.True(exported.WaitOne(ExportIntervalMilliseconds * 2));
                 break;
 
             case ExportProcessorType.Simple:
@@ -334,8 +339,8 @@ public sealed class IntegrationTests : IDisposable
                 throw new NotSupportedException("Unexpected processor type encountered.");
         }
 
-        Assert.Single(exportResults);
-        Assert.Equal(ExportResult.Success, exportResults[0]);
+        var result = Assert.Single(exportResults);
+        Assert.Equal(ExportResult.Success, result);
 
         Assert.Empty(this.openTelemetryEventListener.Errors);
         Assert.Empty(this.openTelemetryEventListener.Warnings);
