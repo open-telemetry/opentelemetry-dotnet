@@ -573,7 +573,7 @@ internal static class ProtobufOtlpMetricSerializer
                 buffer,
                 writePosition,
                 length * 8,
-                ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Bucket_Counts,
+                fieldNumber,
                 ProtobufWireType.LEN);
         }
     }
