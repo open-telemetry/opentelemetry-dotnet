@@ -65,6 +65,29 @@ internal abstract class OtlpExportClient : IExportClient
         return true;
     }
 
+    protected static string? TryGetResponseBody(HttpResponseMessage? httpResponse, CancellationToken cancellationToken)
+    {
+        if (httpResponse?.Content == null)
+        {
+            return null;
+        }
+
+        try
+        {
+#if NET
+            var stream = httpResponse.Content.ReadAsStream(cancellationToken);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+#else
+            return httpResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+#endif
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
     protected HttpRequestMessage CreateHttpRequest(byte[] buffer, int contentLength)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint);
