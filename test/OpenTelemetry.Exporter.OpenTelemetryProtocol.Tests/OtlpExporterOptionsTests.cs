@@ -2,6 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
@@ -162,6 +166,44 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.Equal(40000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
         Assert.False(options.AppendSignalPathToEndpoint);
+    }
+
+    // https://github.com/open-telemetry/opentelemetry-dotnet/issues/6558
+    [Fact]
+    public void OtlpExporterOptions_EnvironmentVariableAppliedAfterIConfigurationBuilt()
+    {
+        var expectedEndpoint = "http://test:4317";
+        var host = Host
+            .CreateDefaultBuilder()
+            .ConfigureServices((_, services) =>
+            {
+                Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", expectedEndpoint);
+                services
+                    .AddOpenTelemetry()
+                    .WithTracing(builder => builder.AddOtlpExporter());
+            })
+            .Build();
+
+        var options = host.Services.GetRequiredService<IOptions<OtlpExporterOptions>>().Value;
+
+        Assert.Equal(new Uri(expectedEndpoint), options.Endpoint);
+    }
+
+    // https://github.com/open-telemetry/opentelemetry-dotnet/issues/5586
+    [Fact]
+    public void OtlpExporterOptions_EnvironmentVariableAppliedWhenEmptyApplication()
+    {
+        var expectedEndpoint = "http://test:4317";
+        Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", expectedEndpoint);
+        var hostBuilder = Host.CreateEmptyApplicationBuilder(settings: null);
+        hostBuilder.Services
+            .AddOpenTelemetry()
+            .WithTracing(builder => builder.AddOtlpExporter());
+        var host = hostBuilder.Build();
+
+        var options = host.Services.GetRequiredService<IOptions<OtlpExporterOptions>>().Value;
+
+        Assert.Equal(new Uri(expectedEndpoint), options.Endpoint);
     }
 
     [Fact]
