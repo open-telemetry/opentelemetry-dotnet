@@ -507,54 +507,74 @@ internal static class ProtobufOtlpMetricSerializer
 
     private static int WriteHistogramBuckets(byte[] buffer, int writePosition, HistogramBuckets buckets)
     {
-        const int Fixed64Size = 8;
+        writePosition = WriteBucketCounts(buffer, writePosition, buckets.BucketCounts);
 
-        int length = buckets.BucketCounts.Length;
-
-        writePosition = ProtobufSerializer.WriteTagAndLength(
-            buffer,
-            writePosition,
-            length * Fixed64Size,
-            ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Bucket_Counts,
-            ProtobufWireType.LEN);
-
-        for (int i = 0; i < length; i++)
-        {
-            writePosition = ProtobufSerializer.WriteFixed64LittleEndianFormat(
-                buffer,
-                writePosition,
-                (ulong)buckets.BucketCounts[i].SnapshotValue);
-        }
-
-        length = 0;
-
-        for (int i = 0; i < buckets.ExplicitBounds!.Length; i++)
-        {
-            if (buckets.ExplicitBounds[i] != double.PositiveInfinity)
-            {
-                length++;
-            }
-        }
-
-        if (length > 0)
-        {
-            writePosition = ProtobufSerializer.WriteTagAndLength(
-                buffer,
-                writePosition,
-                length * Fixed64Size,
-                ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Explicit_Bounds,
-                ProtobufWireType.LEN);
-
-            for (int i = 0; i < buckets.ExplicitBounds!.Length; i++)
-            {
-                var value = buckets.ExplicitBounds[i];
-                if (value != double.PositiveInfinity)
-                {
-                    writePosition = ProtobufSerializer.WriteDouble(buffer, writePosition, value);
-                }
-            }
-        }
+        writePosition = WriteExplicitBounds(buffer, writePosition, buckets.ExplicitBounds!);
 
         return writePosition;
+
+        static int WriteBucketCounts(byte[] buffer, int writePosition, HistogramBuckets.HistogramBucketValues[] values)
+        {
+            int length = values.Length;
+
+            writePosition = WritePackedLength(
+                buffer,
+                writePosition,
+                length,
+                ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Bucket_Counts);
+
+            for (int i = 0; i < length; i++)
+            {
+                writePosition = ProtobufSerializer.WriteFixed64LittleEndianFormat(
+                    buffer,
+                    writePosition,
+                    (ulong)values[i].SnapshotValue);
+            }
+
+            return writePosition;
+        }
+
+        static int WriteExplicitBounds(byte[] buffer, int writePosition, double[] values)
+        {
+            int length = 0;
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (values[i] != double.PositiveInfinity)
+                {
+                    length++;
+                }
+            }
+
+            if (length > 0)
+            {
+                writePosition = WritePackedLength(
+                    buffer,
+                    writePosition,
+                    length,
+                    ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Explicit_Bounds);
+
+                for (int i = 0; i < values.Length; i++)
+                {
+                    var value = values[i];
+                    if (value != double.PositiveInfinity)
+                    {
+                        writePosition = ProtobufSerializer.WriteDouble(buffer, writePosition, value);
+                    }
+                }
+            }
+
+            return writePosition;
+        }
+
+        static int WritePackedLength(byte[] buffer, int writePosition, int length, int fieldNumber)
+        {
+            return ProtobufSerializer.WriteTagAndLength(
+                buffer,
+                writePosition,
+                length * 8,
+                ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Bucket_Counts,
+                ProtobufWireType.LEN);
+        }
     }
 }
