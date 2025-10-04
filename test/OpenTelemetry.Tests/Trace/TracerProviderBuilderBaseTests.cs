@@ -2,11 +2,45 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Xunit;
+using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Trace.Tests;
 
-public class TracerProviderBuilderBaseTests
+public sealed class TracerProviderBuilderBaseTests : IDisposable
 {
+    public TracerProviderBuilderBaseTests()
+    {
+        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, null);
+    }
+
+    public void Dispose()
+    {
+        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, null);
+        GC.SuppressFinalize(this);
+    }
+
+    [Fact]
+    public void ReturnNoopTracerProviderWhenSdkDisabledEnvVarSet()
+    {
+        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, "true");
+        var builder = new TestTracerProviderBuilder();
+
+        using var provider = builder.Build();
+
+        Assert.IsType<NoopTracerProvider>(provider);
+    }
+
+    [Fact]
+    public void ReturnTracerProviderSdkWhenSdkDisabledEnvVarNotSet()
+    {
+        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, null);
+        var builder = new TestTracerProviderBuilder();
+
+        using var provider = builder.Build();
+
+        Assert.IsType<TracerProviderSdk>(provider);
+    }
+
     [Fact]
     public void AddInstrumentationInvokesFactoryTest()
     {
