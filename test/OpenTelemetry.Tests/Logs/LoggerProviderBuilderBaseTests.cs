@@ -19,25 +19,17 @@ public sealed class LoggerProviderBuilderBaseTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Fact]
-    public void ReturnNoopLoggerProviderWhenSdkDisabledEnvVarSet()
+    [Theory]
+    [InlineData("true", typeof(NoopLoggerProvider))]
+    [InlineData("false", typeof(LoggerProviderSdk))]
+    [InlineData(null, typeof(LoggerProviderSdk))]
+    public void LoggerProviderIsExpectedType(string? value, Type expected)
     {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, "true");
+        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, value);
         var builder = new LoggerProviderBuilderBase();
 
         using var provider = builder.Build();
 
-        Assert.IsType<NoopLoggerProvider>(provider);
-    }
-
-    [Fact]
-    public void ReturnLoggerProviderSdkWhenSdkDisabledEnvVarNotSet()
-    {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, null);
-        var builder = new LoggerProviderBuilderBase();
-
-        using var provider = builder.Build();
-
-        Assert.IsType<LoggerProviderSdk>(provider);
+        Assert.IsType(expected, provider);
     }
 }
