@@ -67,7 +67,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                         status = new Status(StatusCode.Internal, "Failed to deserialize response message.");
                     }
 
-                    OpenTelemetryProtocolExporterEventSource.Log.ResponseDeserializationFailed(this.Endpoint.ToString());
+                    OpenTelemetryProtocolExporterEventSource.Log.ResponseDeserializationFailed(this.Endpoint);
 
                     return new ExportClientGrpcResponse(
                         success: false,
@@ -88,7 +88,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
             if (status.StatusCode == StatusCode.OK)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint.ToString(), "Export completed successfully.");
+                OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint, "Export completed successfully.");
                 return SuccessExportResponse;
             }
 
