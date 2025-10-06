@@ -19,25 +19,17 @@ public sealed class MeterProviderBuilderBaseTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Fact]
-    public void ReturnNoopMeterProviderWhenSdkDisabledEnvVarSet()
+    [Theory]
+    [InlineData("true", typeof(NoopMeterProvider))]
+    [InlineData("false", typeof(MeterProviderSdk))]
+    [InlineData(null, typeof(MeterProviderSdk))]
+    public void LoggerProviderIsExpectedType(string? value, Type expected)
     {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, "true");
+        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, value);
         var builder = new MeterProviderBuilderBase();
 
         using var provider = builder.Build();
 
-        Assert.IsType<NoopMeterProvider>(provider);
-    }
-
-    [Fact]
-    public void ReturnMeterProviderSdkWhenSdkDisabledEnvVarNotSet()
-    {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, null);
-        var builder = new MeterProviderBuilderBase();
-
-        using var provider = builder.Build();
-
-        Assert.IsType<MeterProviderSdk>(provider);
+        Assert.IsType(expected, provider);
     }
 }

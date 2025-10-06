@@ -19,26 +19,18 @@ public sealed class TracerProviderBuilderBaseTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Fact]
-    public void ReturnNoopTracerProviderWhenSdkDisabledEnvVarSet()
+    [Theory]
+    [InlineData("true", typeof(NoopTracerProvider))]
+    [InlineData("false", typeof(TracerProviderSdk))]
+    [InlineData(null, typeof(TracerProviderSdk))]
+    public void TracerProviderIsExpectedType(string? value, Type expected)
     {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, "true");
+        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, value);
         var builder = new TestTracerProviderBuilder();
 
         using var provider = builder.Build();
 
-        Assert.IsType<NoopTracerProvider>(provider);
-    }
-
-    [Fact]
-    public void ReturnTracerProviderSdkWhenSdkDisabledEnvVarNotSet()
-    {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, null);
-        var builder = new TestTracerProviderBuilder();
-
-        using var provider = builder.Build();
-
-        Assert.IsType<TracerProviderSdk>(provider);
+        Assert.IsType(expected, provider);
     }
 
     [Fact]
