@@ -663,11 +663,11 @@ filtering the instruments to which the `View` should be applied.
 > It is not recommended to use the delegate overload of the `AddView` API
 because this is only evaluated when the instrument is first published, and any
 exceptions are swallowed after emitting an internal log. The other overloads are
-evaluated at MeterProvider construction itself, and throws Exception for any
+evaluated at `MeterProvider` construction itself, and throws an exception for any
 invalid configuration, allowing users to catch issues early. The OpenTelemetry SDK
-will NOT throw exceptions when running. Any mistakes made using this overload
+will **not** throw exceptions when running. Any mistakes made using this overload
 will cause the `View` to be ignored. Exceptions will be written to the internal
-log only. Use this API with caution and only when the more simple overloads
+log only. Use this API with caution and only when the simpler overloads
 cannot be used instead.
 
 ```csharp
@@ -677,7 +677,7 @@ cannot be used instead.
         if (instrument.Meter.Name.Equals("CompanyA.ProductB.Library2") &&
             instrument.GetType().Name.Contains("Histogram"))
         {
-            return new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 } };
+            return new ExplicitBucketHistogramConfiguration() { Boundaries = [10, 20] };
         }
 
         return null;
