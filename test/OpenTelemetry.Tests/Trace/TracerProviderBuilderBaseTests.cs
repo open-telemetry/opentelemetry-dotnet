@@ -6,31 +6,22 @@ using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Trace.Tests;
 
-public sealed class TracerProviderBuilderBaseTests : IDisposable
+public sealed class TracerProviderBuilderBaseTests
 {
-    public TracerProviderBuilderBaseTests()
-    {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, null);
-    }
-
-    public void Dispose()
-    {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, null);
-        GC.SuppressFinalize(this);
-    }
-
     [Theory]
     [InlineData("true", typeof(NoopTracerProvider))]
     [InlineData("false", typeof(TracerProviderSdk))]
     [InlineData(null, typeof(TracerProviderSdk))]
     public void TracerProviderIsExpectedType(string? value, Type expected)
     {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, value);
-        var builder = new TestTracerProviderBuilder();
+        using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", value))
+        {
+            var builder = new TestTracerProviderBuilder();
 
-        using var provider = builder.Build();
+            using var provider = builder.Build();
 
-        Assert.IsType(expected, provider);
+            Assert.IsType(expected, provider);
+        }
     }
 
     [Fact]

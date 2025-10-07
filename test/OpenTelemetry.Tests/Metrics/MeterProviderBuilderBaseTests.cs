@@ -6,30 +6,21 @@ using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public sealed class MeterProviderBuilderBaseTests : IDisposable
+public sealed class MeterProviderBuilderBaseTests
 {
-    public MeterProviderBuilderBaseTests()
-    {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, null);
-    }
-
-    public void Dispose()
-    {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, null);
-        GC.SuppressFinalize(this);
-    }
-
     [Theory]
     [InlineData("true", typeof(NoopMeterProvider))]
     [InlineData("false", typeof(MeterProviderSdk))]
     [InlineData(null, typeof(MeterProviderSdk))]
     public void LoggerProviderIsExpectedType(string? value, Type expected)
     {
-        Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, value);
-        var builder = new MeterProviderBuilderBase();
+        using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", value))
+        {
+            var builder = new MeterProviderBuilderBase();
 
-        using var provider = builder.Build();
+            using var provider = builder.Build();
 
-        Assert.IsType(expected, provider);
+            Assert.IsType(expected, provider);
+        }
     }
 }
