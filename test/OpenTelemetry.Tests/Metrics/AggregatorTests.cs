@@ -357,7 +357,7 @@ public class AggregatorTests
         AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
         Assert.Equal(50, sum);
         Assert.Equal(6, count);
-        Assert.True(firstScale <= Metric.DefaultExponentialHistogramMaxScale, "The first scale value, {0}, is greater than Metric.DefaultExponentialHistogramMaxScale.", firstScale);
+        Assert.True(firstScale <= Metric.DefaultExponentialHistogramMaxScale, $"The first scale value, {firstScale}, is greater than Metric.DefaultExponentialHistogramMaxScale.");
 
         if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
         {
