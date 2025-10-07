@@ -847,7 +847,7 @@ public struct MetricPoint
                     if (outputDelta)
                     {
                         this.runningValue.AsLong = 0;
-                        histogram.Reset(true);
+                        histogram.Reset(isMinMax: true);
                     }
 
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
