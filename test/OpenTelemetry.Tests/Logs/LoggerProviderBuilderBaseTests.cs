@@ -16,7 +16,6 @@ public sealed class LoggerProviderBuilderBaseTests
     {
         using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", value))
         {
-            Environment.SetEnvironmentVariable(SdkConfigDefinitions.SdkDisableEnvVarName, value);
             var builder = new LoggerProviderBuilderBase();
 
             using var provider = builder.Build();
