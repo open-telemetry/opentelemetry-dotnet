@@ -649,3 +649,37 @@ environmental variables:
 | -------------------------- | -------------------------------------------------- |
 | `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
 | `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
+
+## Advanced scenarios
+
+### View configuration using delegate
+
+The following code snippet shows how to use advanced selection criteria to
+customize the metrics output by the SDK. This requires the user to provide a
+`Func<Instrument, MetricStreamConfiguration>` which offers more flexibility in
+filtering the instruments to which the `View` should be applied.
+
+> [!CAUTION]
+> It is not recommended to use the delegate overload of the `AddView` API
+because this is only evaluated when the instrument is first published, and any
+exceptions are swallowed after emitting an internal log. The other overloads are
+evaluated at `MeterProvider` construction itself, and throws an exception for any
+invalid configuration, allowing users to catch issues early. The OpenTelemetry SDK
+will **not** throw exceptions when running. Any mistakes made using this overload
+will cause the `View` to be ignored. Exceptions will be written to the internal
+log only. Use this API with caution and only when the simpler overloads
+cannot be used instead.
+
+```csharp
+    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+    .AddView((instrument) =>
+    {
+        if (instrument.Meter.Name.Equals("CompanyA.ProductB.Library2") &&
+            instrument.GetType().Name.Contains("Histogram"))
+        {
+            return new ExplicitBucketHistogramConfiguration() { Boundaries = [10, 20] };
+        }
+
+        return null;
+    })
+```
