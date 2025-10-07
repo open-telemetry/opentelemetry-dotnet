@@ -32,5 +32,5 @@ RUN apt-get update \
   && cd /usr/local/bin \
   && ln -s /usr/bin/python3 python
 
-RUN pip3 install --requirement requirements.txt --break-system-packages
+RUN pip3 install --requirement requirements.txt --require-hashes --break-system-packages
 ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll", "--logger:console;verbosity=detailed"]
