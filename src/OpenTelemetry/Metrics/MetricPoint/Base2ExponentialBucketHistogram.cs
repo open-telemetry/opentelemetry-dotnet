@@ -197,14 +197,16 @@ internal sealed partial class Base2ExponentialBucketHistogram
         Debug.Assert(n == 0, "Increment should always succeed after scale down.");
     }
 
-    internal void Reset(bool isDelta)
+    internal void Reset(bool isMinMax)
     {
-        if (isDelta)
+        if (isMinMax)
         {
-            this.Scale = Metric.DefaultExponentialHistogramMaxScale;
-            this.RunningSum = 0;
+            this.RunningMin = double.PositiveInfinity;
+            this.RunningMax = double.NegativeInfinity;
         }
 
+        this.Scale = Metric.DefaultExponentialHistogramMaxScale;
+        this.RunningSum = 0;
         this.ZeroCount = 0;
         this.PositiveBuckets.Reset();
         this.NegativeBuckets.Reset();
