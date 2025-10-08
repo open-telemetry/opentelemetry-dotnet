@@ -5,7 +5,6 @@ using System.Collections;
 using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Metrics;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
