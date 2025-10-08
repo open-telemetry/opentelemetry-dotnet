@@ -292,16 +292,7 @@ internal static class ProtobufOtlpMetricSerializer
                             writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Max, max);
                         }
 
-                        foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
-                        {
-                            var bucketCount = (ulong)histogramMeasurement.BucketCount;
-                            writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Bucket_Counts, bucketCount);
-
-                            if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
-                            {
-                                writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Explicit_Bounds, histogramMeasurement.ExplicitBound);
-                            }
-                        }
+                        writePosition = WriteHistogramBuckets(buffer, writePosition, metricPoint.GetHistogramBuckets());
 
                         writePosition = WriteDoubleExemplars(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Exemplars, in metricPoint);
 
@@ -512,5 +503,78 @@ internal static class ProtobufOtlpMetricSerializer
 
         ProtobufSerializer.WriteReservedLength(buffer, exemplarLengthPosition, writePosition - (exemplarLengthPosition + ReserveSizeForLength));
         return writePosition;
+    }
+
+    private static int WriteHistogramBuckets(byte[] buffer, int writePosition, HistogramBuckets buckets)
+    {
+        writePosition = WriteBucketCounts(buffer, writePosition, buckets.BucketCounts);
+
+        writePosition = WriteExplicitBounds(buffer, writePosition, buckets.ExplicitBounds!);
+
+        return writePosition;
+
+        static int WriteBucketCounts(byte[] buffer, int writePosition, HistogramBuckets.HistogramBucketValues[] values)
+        {
+            int length = values.Length;
+
+            writePosition = WritePackedLength(
+                buffer,
+                writePosition,
+                length,
+                ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Bucket_Counts);
+
+            for (int i = 0; i < length; i++)
+            {
+                writePosition = ProtobufSerializer.WriteFixed64LittleEndianFormat(
+                    buffer,
+                    writePosition,
+                    (ulong)values[i].SnapshotValue);
+            }
+
+            return writePosition;
+        }
+
+        static int WriteExplicitBounds(byte[] buffer, int writePosition, double[] values)
+        {
+            int length = 0;
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (values[i] != double.PositiveInfinity)
+                {
+                    length++;
+                }
+            }
+
+            if (length > 0)
+            {
+                writePosition = WritePackedLength(
+                    buffer,
+                    writePosition,
+                    length,
+                    ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Explicit_Bounds);
+
+                for (int i = 0; i < values.Length; i++)
+                {
+                    var value = values[i];
+                    if (value != double.PositiveInfinity)
+                    {
+                        writePosition = ProtobufSerializer.WriteDouble(buffer, writePosition, value);
+                    }
+                }
+            }
+
+            return writePosition;
+        }
+
+        static int WritePackedLength(byte[] buffer, int writePosition, int length, int fieldNumber)
+        {
+            return ProtobufSerializer.WriteTagAndLength(
+                buffer,
+                writePosition,
+                length * 8,
+                fieldNumber,
+                ProtobufWireType.LEN);
+        }
     }
 }
