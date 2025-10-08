@@ -240,15 +240,6 @@ public static class OpenTelemetryLoggingExtensions
         // Since currently this class only contains primitive properties this is OK. The top level properties are kept
         // because the first generic argument of RegisterProviderOptions below is annotated with
         // DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All) so it will preserve everything on the OpenTelemetryLoggerOptions.
-        // But it would not work recursively into complex property values;
-        // This should be fully fixed with the introduction of Configuration binder source generator in .NET 8
-        // and then there should be a way to do this without any warnings.
-        // The correctness of these suppressions is verified by a test which validates that all properties of OpenTelemetryLoggerOptions
-        // are of a primitive type.
-#if NET
-        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "OpenTelemetryLoggerOptions contains only primitive properties.")]
-        [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "OpenTelemetryLoggerOptions contains only primitive properties.")]
-#endif
         static void RegisterLoggerProviderOptions(IServiceCollection services)
         {
             LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(services);
