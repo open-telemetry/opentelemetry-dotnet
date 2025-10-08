@@ -48,27 +48,33 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
     /// </summary>
     public OtlpExporterOptions()
-        : this(OtlpExporterOptionsConfigurationType.Default)
+        : this(configurationType: OtlpExporterOptionsConfigurationType.Default)
     {
     }
 
-    internal OtlpExporterOptions(
-        OtlpExporterOptionsConfigurationType configurationType)
+    internal OtlpExporterOptions(OtlpExporterOptionsConfigurationType configurationType)
         : this(
-              configuration: new ConfigurationBuilder().AddEnvironmentVariables().Build(),
-              configurationType,
-              defaultBatchOptions: new())
+            configuration: null,
+            configurationType: configurationType,
+            defaultBatchOptions: new())
     {
     }
 
     internal OtlpExporterOptions(
-        IConfiguration configuration,
+        IConfiguration? configuration,
         OtlpExporterOptionsConfigurationType configurationType,
         BatchExportActivityProcessorOptions defaultBatchOptions)
     {
         Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
+        var finalConfigurationBuilder = new ConfigurationBuilder()
+            .AddEnvironmentVariables();
 
-        this.ApplyConfiguration(configuration, configurationType);
+        if (configuration != null)
+        {
+            finalConfigurationBuilder = finalConfigurationBuilder.AddConfiguration(configuration);
+        }
+
+        this.ApplyConfiguration(finalConfigurationBuilder.Build(), configurationType);
 
         this.DefaultHttpClientFactory = () =>
         {

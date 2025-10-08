@@ -7,6 +7,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an issue where `OtlpExporterOptions` did not read environment variables (e.g. `OTEL_EXPORTER_OTLP_ENDPOINT`)
+  if the environment variables were set after `IConfiguration` was built.
+  ([#6558](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6558))
+  This change also addresses similar issues when .Net `Host` does not load environment variables into `IConfiguration` (e.g. `Host.CreateEmptyApplicationBuilder`).
+  ([#5586](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5586))
+
 ## 1.13.0
 
 Released 2025-Oct-01
