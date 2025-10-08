@@ -41,7 +41,15 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
 
         services
             .AddOpenTelemetryLoggerProviderBuilderServices()
-            .TryAddSingleton<LoggerProvider>(sp => new LoggerProviderSdk(sp, ownsServiceProvider: false));
+            .TryAddSingleton<LoggerProvider>(sp =>
+            {
+                if (IsOtelSdkDisabled(sp.GetRequiredService<IConfiguration>()))
+                {
+                    return new NoopLoggerProvider();
+                }
+
+                return new LoggerProviderSdk(sp, ownsServiceProvider: false);
+            });
 
         this.innerBuilder = new LoggerProviderServiceCollectionBuilder(services);
 
@@ -94,14 +102,24 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
 #endif
         var serviceProvider = services.BuildServiceProvider(validateScopes);
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-        configuration.TryGetStringValue(SdkConfigDefinitions.SdkDisableEnvVarName, out var envVarValue);
 
-        if (bool.TryParse(envVarValue, out bool result) && result)
+        if (IsOtelSdkDisabled(configuration))
         {
             serviceProvider.Dispose();
             return new NoopLoggerProvider();
         }
 
         return new LoggerProviderSdk(serviceProvider, ownsServiceProvider: true);
+    }
+
+    private static bool IsOtelSdkDisabled(IConfiguration configuration)
+    {
+        bool isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out bool result) && result;
+        if (isDisabled)
+        {
+            OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent($"Disabled because {SdkConfigDefinitions.SdkDisableEnvVarName} is true.");
+        }
+
+        return isDisabled;
     }
 }

@@ -41,7 +41,15 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
 
         services
             .AddOpenTelemetryTracerProviderBuilderServices()
-            .TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
+            .TryAddSingleton<TracerProvider>(sp =>
+            {
+                if (IsOtelSdkDisabled(sp.GetRequiredService<IConfiguration>()))
+                {
+                    return new NoopTracerProvider();
+                }
+
+                return new TracerProviderSdk(sp, ownsServiceProvider: false);
+            });
 
         this.innerBuilder = new TracerProviderServiceCollectionBuilder(services);
 
@@ -149,14 +157,24 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
 #endif
         var serviceProvider = services.BuildServiceProvider(validateScopes);
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-        configuration.TryGetStringValue(SdkConfigDefinitions.SdkDisableEnvVarName, out var envVarValue);
 
-        if (bool.TryParse(envVarValue, out bool result) && result)
+        if (IsOtelSdkDisabled(configuration))
         {
             serviceProvider.Dispose();
             return new NoopTracerProvider();
         }
 
         return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
+    }
+
+    private static bool IsOtelSdkDisabled(IConfiguration configuration)
+    {
+        bool isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out bool result) && result;
+        if (isDisabled)
+        {
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Disabled because {SdkConfigDefinitions.SdkDisableEnvVarName} is true.");
+        }
+
+        return isDisabled;
     }
 }

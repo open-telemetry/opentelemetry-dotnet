@@ -41,7 +41,15 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
 
         services
             .AddOpenTelemetryMeterProviderBuilderServices()
-            .TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
+            .TryAddSingleton<MeterProvider>(sp =>
+            {
+                if (IsOtelSdkDisabled(sp.GetRequiredService<IConfiguration>()))
+                {
+                    return new NoopMeterProvider();
+                }
+
+                return new MeterProviderSdk(sp, ownsServiceProvider: false);
+            });
 
         this.innerBuilder = new MeterProviderServiceCollectionBuilder(services);
 
@@ -111,14 +119,24 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
 #endif
         var serviceProvider = services.BuildServiceProvider(validateScopes);
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-        configuration.TryGetStringValue(SdkConfigDefinitions.SdkDisableEnvVarName, out var envVarValue);
 
-        if (bool.TryParse(envVarValue, out bool result) && result)
+        if (IsOtelSdkDisabled(configuration))
         {
             serviceProvider.Dispose();
             return new NoopMeterProvider();
         }
 
         return new MeterProviderSdk(serviceProvider, ownsServiceProvider: true);
+    }
+
+    private static bool IsOtelSdkDisabled(IConfiguration configuration)
+    {
+        bool isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out bool result) && result;
+        if (isDisabled)
+        {
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Disabled because {SdkConfigDefinitions.SdkDisableEnvVarName} is true.");
+        }
+
+        return isDisabled;
     }
 }
