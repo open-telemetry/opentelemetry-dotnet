@@ -352,10 +352,12 @@ public class AggregatorTests
         var count = metricPoint.GetHistogramCount();
         var sum = metricPoint.GetHistogramSum();
         var hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out var min, out var max);
+        var firstScale = metricPoint.GetExponentialHistogramData().Scale;
 
         AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
         Assert.Equal(50, sum);
         Assert.Equal(6, count);
+        Assert.True(firstScale <= Metric.DefaultExponentialHistogramMaxScale, $"The first scale value, {firstScale}, is greater than Metric.DefaultExponentialHistogramMaxScale.");
 
         if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
         {
@@ -373,12 +375,14 @@ public class AggregatorTests
         count = metricPoint.GetHistogramCount();
         sum = metricPoint.GetHistogramSum();
         hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out min, out max);
+        var secondScale = metricPoint.GetExponentialHistogramData().Scale;
 
         if (aggregationTemporality == AggregationTemporality.Cumulative)
         {
             AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
             Assert.Equal(50, sum);
             Assert.Equal(6, count);
+            Assert.Equal(firstScale, secondScale);
 
             if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
             {
@@ -393,10 +397,11 @@ public class AggregatorTests
         }
         else
         {
-            expectedHistogram.Reset();
+            expectedHistogram.Reset(isMinMax: aggregationType == AggregationType.HistogramWithMinMax);
             AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
             Assert.Equal(0, sum);
             Assert.Equal(0, count);
+            Assert.Equal(Metric.DefaultExponentialHistogramMaxScale, secondScale);
 
             if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
             {
