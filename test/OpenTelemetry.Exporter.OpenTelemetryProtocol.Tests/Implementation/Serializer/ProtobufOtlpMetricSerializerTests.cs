@@ -16,6 +16,46 @@ public static class ProtobufOtlpMetricSerializerTests
     public static async Task WriteMetricsData_Serializes_Metrics_Correctly()
     {
         // Arrange
+        var metrics = GenerateMetrics();
+
+        var attributes = new Dictionary<string, object>
+        {
+            { "service.name", "OpenTelemetry-DotNet" },
+            { "service.version", "1.2.3" },
+        };
+
+        var buffer = new byte[1024];
+        var writePosition = 0;
+        var resource = new Resource(attributes);
+
+        // Act
+        var actual = ProtobufOtlpMetricSerializer.WriteMetricsData(
+            ref buffer,
+            writePosition,
+            resource,
+            metrics);
+
+        // Assert
+        Assert.NotEqual(0, actual);
+        Assert.True(actual > writePosition, $"The returned write position, {actual} is not greater than the initial write position, {writePosition}.");
+        Assert.True(actual <= buffer.Length, $"The returned write position, {actual} is beyond the bounds of the buffer, {buffer.Length}.");
+
+        using var stream = new MemoryStream();
+
+#if NET
+        await stream.WriteAsync(buffer.AsMemory(0, actual));
+#else
+        await stream.WriteAsync(buffer, 0, actual);
+#endif
+
+        await Verify(stream, "bin")
+            .IgnoreParametersForVerified()
+            .UseDirectory("snapshots");
+    }
+
+    private static Batch<Metric> GenerateMetrics()
+    {
+        // Arrange
         Batch<Metric> metrics = default;
 
         // Create some metrics to export
@@ -79,38 +119,6 @@ public static class ProtobufOtlpMetricSerializerTests
             metric.AggregatorStore.OverrideTimeRange(startTime, endTime);
         }
 
-        var attributes = new Dictionary<string, object>
-        {
-            { "service.name", "OpenTelemetry-DotNet" },
-            { "service.version", "1.2.3" },
-        };
-
-        var buffer = new byte[1024];
-        var writePosition = 0;
-        var resource = new Resource(attributes);
-
-        // Act
-        var actual = ProtobufOtlpMetricSerializer.WriteMetricsData(
-            ref buffer,
-            writePosition,
-            resource,
-            metrics);
-
-        // Assert
-        Assert.NotEqual(0, actual);
-        Assert.True(actual > writePosition, $"The returned write position, {actual} is not greater than the initial write position, {writePosition}.");
-        Assert.True(actual <= buffer.Length, $"The returned write position, {actual} is beyond the bounds of the buffer, {buffer.Length}.");
-
-        using var stream = new MemoryStream();
-
-#if NET
-        await stream.WriteAsync(buffer.AsMemory(0, actual));
-#else
-        await stream.WriteAsync(buffer, 0, actual);
-#endif
-
-        await Verify(stream, "bin")
-            .IgnoreParametersForVerified()
-            .UseDirectory("snapshots");
+        return metrics;
     }
 }
