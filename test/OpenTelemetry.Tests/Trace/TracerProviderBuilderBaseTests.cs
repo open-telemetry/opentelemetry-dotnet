@@ -2,11 +2,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Xunit;
+using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Trace.Tests;
 
-public class TracerProviderBuilderBaseTests
+public sealed class TracerProviderBuilderBaseTests
 {
+    [Theory]
+    [InlineData("true", typeof(NoopTracerProvider))]
+    [InlineData("false", typeof(TracerProviderSdk))]
+    [InlineData(null, typeof(TracerProviderSdk))]
+    public void TracerProviderIsExpectedType(string? value, Type expected)
+    {
+        using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", value))
+        {
+            var builder = new TestTracerProviderBuilder();
+
+            using var provider = builder.Build();
+
+            Assert.IsType(expected, provider);
+        }
+    }
+
     [Fact]
     public void AddInstrumentationInvokesFactoryTest()
     {

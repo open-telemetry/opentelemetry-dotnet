@@ -1,9 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
+using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Logs;
 
@@ -39,7 +41,15 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
 
         services
             .AddOpenTelemetryLoggerProviderBuilderServices()
-            .TryAddSingleton<LoggerProvider>(sp => new LoggerProviderSdk(sp, ownsServiceProvider: false));
+            .TryAddSingleton<LoggerProvider>(sp =>
+            {
+                if (IsOtelSdkDisabled(sp.GetRequiredService<IConfiguration>()))
+                {
+                    return new NoopLoggerProvider();
+                }
+
+                return new LoggerProviderSdk(sp, ownsServiceProvider: false);
+            });
 
         this.innerBuilder = new LoggerProviderServiceCollectionBuilder(services);
 
@@ -91,7 +101,25 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
         bool validateScopes = false;
 #endif
         var serviceProvider = services.BuildServiceProvider(validateScopes);
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+
+        if (IsOtelSdkDisabled(configuration))
+        {
+            serviceProvider.Dispose();
+            return new NoopLoggerProvider();
+        }
 
         return new LoggerProviderSdk(serviceProvider, ownsServiceProvider: true);
+    }
+
+    private static bool IsOtelSdkDisabled(IConfiguration configuration)
+    {
+        bool isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out bool result) && result;
+        if (isDisabled)
+        {
+            OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent($"Disabled because {SdkConfigDefinitions.SdkDisableEnvVarName} is true.");
+        }
+
+        return isDisabled;
     }
 }

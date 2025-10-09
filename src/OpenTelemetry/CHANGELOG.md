@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added support for the `OTEL_SDK_DISABLED` environment variable in TracerProvider,
+  MeterProvider, and LoggerProvider. When `OTEL_SDK_DISABLED=true`,
+  the SDK returns no-op implementations for all telemetry signals.
+  ([#6568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6568))
 * Fixed an issue where the Base2 Exponential Bucket Histogram did not reset its
   scale to 20 after each collection cycle when using delta aggregation temporality.
   ([#6557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6557))
