@@ -83,6 +83,37 @@ jobs:
         PACK_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:"PackTag=${env:PACK_TAG}"
 
+    - name: Validate package DLL Cosign Keyless signatures
+      shell: pwsh
+      env:
+        PACK_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+      run: |
+        $nupkgFiles = Get-ChildItem -Path ./artifacts/package/release/*.nupkg -File
+
+        # Copy the NuGet packages to a temporary directory and extract them
+        $tempDir = New-Item -ItemType Directory -Path (Join-Path -Path ${env:RUNNER_TEMP} -ChildPath ([System.Guid]::NewGuid().ToString()))
+        foreach ($nupkgFile in $nupkgFiles) {
+            $nupkgFilePath = $nupkgFile.FullName
+            Write-Host "Extracting $nupkgFilePath"
+            Expand-Archive -Path $nupkgFilePath -DestinationPath $tempDir.FullName
+        }
+
+        # Iterate over all DLL files in the extracted packages and verify their signatures
+        $dllFiles = Get-ChildItem -Path $tempDir.FullName -Recurse -Filter *.dll -File
+        foreach ($dllFile in $dllFiles) {
+            $dllFilePath = $dllFile.FullName
+            Write-Host "Verifying $dllFilePath"
+            cosign.exe verify-blob `
+              --signature $dllFilePath-keyless.sig `
+              --certificate $dllFilePath-keyless.pem `
+              --certificate-identity "${env:GITHUB_SERVER_URL}/${env:GITHUB_REPOSITORY}/.github/workflows/publish-packages-1.0.yml@refs/tags/${env:PACK_TAG}" `
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" `
+              $dllFilePath
+            if ($LASTEXITCODE -ne 0) {
+                throw "Signature verification failed for $dllFilePath"
+            }
+        }
+
     - name: Publish Artifacts
       id: upload-artifacts
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
