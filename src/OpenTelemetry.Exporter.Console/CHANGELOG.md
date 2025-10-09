@@ -12,6 +12,10 @@ Notes](../../RELEASENOTES.md).
   `Microsoft.Extensions.Logging.Configuration` NuGet packages.
   ([#6327](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6327))
 
+## 1.13.1
+
+Released 2025-Oct-09
+
 ## 1.13.0
 
 Released 2025-Oct-01

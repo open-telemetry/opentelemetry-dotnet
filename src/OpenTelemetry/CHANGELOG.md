@@ -12,6 +12,10 @@ Notes](../../RELEASENOTES.md).
   `Microsoft.Extensions.Logging.Configuration` NuGet packages.
   ([#6327](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6327))
 
+## 1.13.1
+
+Released 2025-Oct-09
+
 * Fixed an issue where the Base2 Exponential Bucket Histogram did not reset its
   scale to 20 after each collection cycle when using delta aggregation temporality.
   ([#6557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6557))
