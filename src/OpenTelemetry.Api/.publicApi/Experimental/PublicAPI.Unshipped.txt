@@ -17,6 +17,7 @@
 [OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Dispose() -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Enumerator() -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.MoveNext() -> bool
+[OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.Equals(OpenTelemetry.Logs.LogRecordAttributeList other) -> bool
 [OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.GetEnumerator() -> OpenTelemetry.Logs.LogRecordAttributeList.Enumerator
 [OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.LogRecordAttributeList() -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordAttributeList.RecordException(System.Exception! exception) -> void
@@ -26,6 +27,7 @@
 [OTEL1001]OpenTelemetry.Logs.LogRecordData
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.Body.get -> string?
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.Body.set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.Equals(OpenTelemetry.Logs.LogRecordData other) -> bool
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData() -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData(in System.Diagnostics.ActivityContext activityContext) -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData(System.Diagnostics.Activity? activity) -> void
@@ -70,6 +72,14 @@
 [OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Warn3 = 15 -> OpenTelemetry.Logs.LogRecordSeverity
 [OTEL1001]OpenTelemetry.Logs.LogRecordSeverity.Warn4 = 16 -> OpenTelemetry.Logs.LogRecordSeverity
 [OTEL1001]OpenTelemetry.Logs.LogRecordSeverityExtensions
+[OTEL1001]override OpenTelemetry.Logs.LogRecordAttributeList.Equals(object? obj) -> bool
+[OTEL1001]override OpenTelemetry.Logs.LogRecordAttributeList.GetHashCode() -> int
+[OTEL1001]override OpenTelemetry.Logs.LogRecordData.Equals(object? obj) -> bool
+[OTEL1001]override OpenTelemetry.Logs.LogRecordData.GetHashCode() -> int
 [OTEL1001]static OpenTelemetry.Logs.LogRecordAttributeList.CreateFromEnumerable(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>! attributes) -> OpenTelemetry.Logs.LogRecordAttributeList
+[OTEL1001]static OpenTelemetry.Logs.LogRecordAttributeList.operator !=(OpenTelemetry.Logs.LogRecordAttributeList left, OpenTelemetry.Logs.LogRecordAttributeList right) -> bool
+[OTEL1001]static OpenTelemetry.Logs.LogRecordAttributeList.operator ==(OpenTelemetry.Logs.LogRecordAttributeList left, OpenTelemetry.Logs.LogRecordAttributeList right) -> bool
+[OTEL1001]static OpenTelemetry.Logs.LogRecordData.operator !=(OpenTelemetry.Logs.LogRecordData left, OpenTelemetry.Logs.LogRecordData right) -> bool
+[OTEL1001]static OpenTelemetry.Logs.LogRecordData.operator ==(OpenTelemetry.Logs.LogRecordData left, OpenTelemetry.Logs.LogRecordData right) -> bool
 [OTEL1001]static OpenTelemetry.Logs.LogRecordSeverityExtensions.ToShortName(this OpenTelemetry.Logs.LogRecordSeverity logRecordSeverity) -> string!
 [OTEL1001]virtual OpenTelemetry.Logs.LoggerProvider.TryCreateLogger(string? name, out OpenTelemetry.Logs.Logger? logger) -> bool

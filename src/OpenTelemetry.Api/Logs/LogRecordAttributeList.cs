@@ -25,9 +25,7 @@ public
 /// </summary>
 internal
 #endif
-#pragma warning disable CA1815 // Override equals and operator equals on value types
-    struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
-#pragma warning restore CA1815 // Override equals and operator equals on value types
+    struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>, IEquatable<LogRecordAttributeList>
 {
     internal const int OverflowMaxCount = 8;
     internal const int OverflowAdditionalCapacity = 16;
@@ -123,6 +121,26 @@ internal
     }
 
     /// <summary>
+    /// Determines whether the two instances of <see cref="LogRecordAttributeList"/> are equal.
+    /// </summary>
+    /// <param name="left">An instance of <see cref="LogRecordAttributeList"/>.</param>
+    /// <param name="right"> Another instance of <see cref="LogRecordAttributeList"/>.</param>
+    /// <returns>
+    /// <see langword="true"/> if the values are considered equal; otherwise, <see langword="false"/>.
+    /// </returns>
+    public static bool operator ==(LogRecordAttributeList left, LogRecordAttributeList right) => left.Equals(right);
+
+    /// <summary>
+    /// Determines whether the two instances of <see cref="LogRecordAttributeList"/> are not equal.
+    /// </summary>
+    /// <param name="left">An instance of <see cref="LogRecordAttributeList"/>.</param>
+    /// <param name="right"> Another instance of <see cref="LogRecordAttributeList"/>.</param>
+    /// <returns>
+    /// <see langword="true"/> if the values are not considered equal; otherwise, <see langword="false"/>.
+    /// </returns>
+    public static bool operator !=(LogRecordAttributeList left, LogRecordAttributeList right) => !(left == right);
+
+    /// <summary>
     /// Create a <see cref="LogRecordAttributeList"/> collection from an enumerable.
     /// </summary>
     /// <param name="attributes">Source attributes.</param>
@@ -135,6 +153,56 @@ internal
         logRecordAttributes.OverflowAttributes = [.. attributes];
         logRecordAttributes.count = logRecordAttributes.OverflowAttributes.Count;
         return logRecordAttributes;
+    }
+
+    /// <inheritdoc/>
+    public override readonly bool Equals(object? obj) =>
+        obj is LogRecordAttributeList other && this.Equals(other);
+
+    /// <inheritdoc/>
+    public readonly bool Equals(LogRecordAttributeList other)
+    {
+        if (this.count != other.count)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < this.count; i++)
+        {
+            if (!this[i].Equals(other[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <inheritdoc/>
+    public override readonly int GetHashCode()
+    {
+#if NET
+        HashCode combined = default;
+
+        for (int i = 0; i < this.count; i++)
+        {
+            combined.Add(this[i]);
+        }
+
+        return combined.ToHashCode();
+#else
+        unchecked
+        {
+            var hash = 17;
+
+            for (int i = 0; i < this.count; i++)
+            {
+                hash = (hash * 31) + this[i].GetHashCode();
+            }
+
+            return hash;
+        }
+#endif
     }
 
     /// <summary>
