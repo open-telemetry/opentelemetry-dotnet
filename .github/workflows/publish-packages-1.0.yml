@@ -96,8 +96,9 @@ jobs:
         $tempDir = New-Item -ItemType Directory -Path (Join-Path -Path ${env:RUNNER_TEMP} -ChildPath ([System.Guid]::NewGuid().ToString()))
         foreach ($nupkgFile in $nupkgFiles) {
             $nupkgFilePath = $nupkgFile.FullName
+            $packageName = [System.IO.Path]::GetFileNameWithoutExtension($nupkgFilePath)
             Write-Host "Extracting $nupkgFilePath"
-            Expand-Archive -Path $nupkgFilePath -DestinationPath $tempDir.FullName
+            Expand-Archive -Path $nupkgFilePath -DestinationPath (Join-Path $tempDir.FullName $packageName)
         }
 
         # Iterate over all DLL files in the extracted packages and verify their signatures
@@ -114,6 +115,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) {
                 throw "Signature verification failed for $dllFilePath"
             }
+            Write-Host "Signature verification succeeded for $dllFilePath"
         }
 
     - name: Publish Artifacts
