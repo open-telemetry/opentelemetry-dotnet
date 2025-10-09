@@ -5,7 +5,7 @@
 ARG BUILD_SDK_VERSION=9.0
 ARG TEST_SDK_VERSION=9.0
 
-FROM ubuntu:24.04@sha256:353675e2a41babd526e2b837d7ec780c2a05bca0164f7ea5dbbd433d21d166fc AS w3c
+FROM ubuntu:24.04@sha256:728785b59223d755e3e5c5af178fab1be7031f3522c5ccd7a0b32b80d8248123 AS w3c
 #Install git
 WORKDIR /w3c
 RUN apt-get update && apt-get install -y git
