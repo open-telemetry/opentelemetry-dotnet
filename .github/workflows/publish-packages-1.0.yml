@@ -86,6 +86,7 @@ jobs:
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:"PackTag=${env:PACK_TAG}"
 
     - name: Validate package DLL Cosign Keyless signatures
+      if: github.ref_type == 'tag'
       shell: pwsh
       env:
         PACK_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
