@@ -54,10 +54,13 @@
   <Target Name="IncludeSigningSignaturesInPackages" BeforeTargets="_GetTargetFrameworksOutput">
     <!-- Note: This target adds any signatures found to nuget packages -->
     <ItemGroup>
-      <SignatureFiles Include="$(RepoRoot)\src\$(MSBuildProjectName)\bin\$(Configuration)\*\$(MSBuildProjectName).dll-keyless.sig" />
-      <Content Include="@(SignatureFiles)" Link="%(RecursiveDir)%(Filename)%(Extension)" PackagePath="lib" />
-      <CertificateFiles Include="$(RepoRoot)\src\$(MSBuildProjectName)\bin\$(Configuration)\*\$(MSBuildProjectName).dll-keyless.pem" />
-      <Content Include="@(CertificateFiles)" Link="%(RecursiveDir)%(Filename)%(Extension)" PackagePath="lib" />
+      <SignatureFiles Include="$(RepoRoot)\artifacts\bin\$(MSBuildProjectName)\$(Configuration.ToLower())_*\$(MSBuildProjectName).dll-keyless.sig" />
+      <SignatureFiles Update="@(SignatureFiles)" TargetFramework="$([System.String]::Copy('%(RecursiveDir)').Replace('$(Configuration.ToLower())_', '').TrimEnd('\'))" />
+      <Content Include="@(SignatureFiles)" PackagePath="lib\%(TargetFramework)\%(Filename)%(Extension)" />
+
+      <CertificateFiles Include="$(RepoRoot)\artifacts\bin\$(MSBuildProjectName)\$(Configuration.ToLower())_*\$(MSBuildProjectName).dll-keyless.pem" />
+      <CertificateFiles Update="@(CertificateFiles)" TargetFramework="$([System.String]::Copy('%(RecursiveDir)').Replace('$(Configuration.ToLower())_', '').TrimEnd('\'))" />
+      <Content Include="@(CertificateFiles)" PackagePath="lib\%(TargetFramework)\%(Filename)%(Extension)" />
     </ItemGroup>
 
     <Message Importance="high" Text="**IncludeSignaturesInPackagesDebug** SignatureFiles: @(SignatureFiles)" />
