@@ -54,14 +54,14 @@
   <Target Name="IncludeSigningSignaturesInPackages" BeforeTargets="_GetTargetFrameworksOutput">
     <!-- Note: This target adds any signatures found to NuGet packages -->
     <ItemGroup>
-      <SignatureFiles Include="$(ArtifactsPath)\bin\$(MSBuildProjectName)\release_*\$(MSBuildProjectName).dll-keyless.sig" />
-      <CertificateFiles Include="$(ArtifactsPath)\bin\$(MSBuildProjectName)\release_*\$(MSBuildProjectName).dll-keyless.pem" />
+      <SignatureFiles Include="$(ArtifactsPath)\bin\$(MSBuildProjectName)\$(Configuration.ToLower())_*\$(MSBuildProjectName).dll-keyless.sig" />
+      <CertificateFiles Include="$(ArtifactsPath)\bin\$(MSBuildProjectName)\$(Configuration.ToLower())_*\$(MSBuildProjectName).dll-keyless.pem" />
       <!-- RecursiveDir is equal to e.g. `release_net8.0` so we need to strip it out -->
       <SignatureFilesWithTfm Include="@(SignatureFiles)">
-        <TargetFramework>$([System.String]::Copy('%(RecursiveDir)').Replace('release_', ''))</TargetFramework>
+        <TargetFramework>$([System.String]::Copy('%(RecursiveDir)').Replace(`$(Configuration.ToLower())_`, ''))</TargetFramework>
       </SignatureFilesWithTfm>
       <CertificateFilesWithTfm Include="@(CertificateFiles)">
-        <TargetFramework>$([System.String]::Copy('%(RecursiveDir)').Replace('release_', ''))</TargetFramework>
+        <TargetFramework>$([System.String]::Copy('%(RecursiveDir)').Replace(`$(Configuration.ToLower())_`, ''))</TargetFramework>
       </CertificateFilesWithTfm>
       <Content Include="@(SignatureFilesWithTfm)" Pack="True" PackagePath="lib\%(SignatureFilesWithTfm.TargetFramework)%(Filename)%(Extension)" />
       <Content Include="@(CertificateFilesWithTfm)" Pack="True" PackagePath="lib\%(CertificateFilesWithTfm.TargetFramework)%(Filename)%(Extension)" />
