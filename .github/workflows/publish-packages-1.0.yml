@@ -73,7 +73,7 @@ jobs:
 
             Get-ChildItem -Path artifacts/bin/$projectName/release_*/$projectName.dll -File | ForEach-Object {
                 $fileFullPath = $_.FullName
-                Write-Host "Signing $fileFullPath"
+                Write-Output "Signing $fileFullPath"
 
                 cosign.exe sign-blob $fileFullPath --yes --output-signature $fileFullPath-keyless.sig --output-certificate $fileFullPath-keyless.pem
             }
@@ -85,7 +85,7 @@ jobs:
         PACK_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:"PackTag=${env:PACK_TAG}"
 
-    - name: Validate package DLL Cosign Keyless signatures
+    - name: Verify package DLL Cosign Keyless signatures
       shell: pwsh
       run: |
         $nupkgFiles = Get-ChildItem -Path artifacts/package/release/*.nupkg -File
@@ -95,7 +95,7 @@ jobs:
         foreach ($nupkgFile in $nupkgFiles) {
             $nupkgFilePath = $nupkgFile.FullName
             $packageName = [System.IO.Path]::GetFileNameWithoutExtension($nupkgFilePath)
-            Write-Host "Extracting $nupkgFilePath"
+            Write-Output "Extracting $nupkgFilePath"
             Expand-Archive -Path $nupkgFilePath -DestinationPath (Join-Path $tempDir.FullName $packageName)
         }
 
@@ -103,7 +103,7 @@ jobs:
         $dllFiles = Get-ChildItem -Path $tempDir.FullName -Recurse -Filter *.dll -File
         foreach ($dllFile in $dllFiles) {
             $dllFilePath = $dllFile.FullName
-            Write-Host "Verifying $dllFilePath"
+            Write-Output "Verifying $dllFilePath"
             cosign.exe verify-blob `
               --signature $dllFilePath-keyless.sig `
               --certificate $dllFilePath-keyless.pem `
@@ -111,9 +111,10 @@ jobs:
               --certificate-oidc-issuer "https://token.actions.githubusercontent.com" `
               $dllFilePath
             if ($LASTEXITCODE -ne 0) {
-                throw "Signature verification failed for $dllFilePath"
+                Write-Output "::error::Signature verification failed for $dllFilePath."
+                exit 1
             }
-            Write-Host "Signature verification succeeded for $dllFilePath"
+            Write-Output "Signature verification succeeded for $dllFilePath"
         }
 
     - name: Publish Artifacts
