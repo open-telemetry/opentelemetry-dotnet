@@ -201,10 +201,11 @@ To verify the integrity of a DLL inside a NuGet package use the
 [cosign](https://github.com/sigstore/cosign) tool from Sigstore:
 
 ```bash
+$TAG="core-1.12.0"
 cosign verify-blob \
     --signature OpenTelemetry.dll-keyless.sig \
     --certificate OpenTelemetry.dll-keyless.pem.cer \
-    --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/core-1.10.0-rc.1" \
+    --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/$TAG" \
     --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
     OpenTelemetry.dll
 ```
