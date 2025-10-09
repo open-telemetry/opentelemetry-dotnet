@@ -186,7 +186,9 @@ internal
 
         for (int i = 0; i < this.count; i++)
         {
-            combined.Add(this[i]);
+            var item = this[i];
+            combined.Add(item.Key);
+            combined.Add(item.Value);
         }
 
         return combined.ToHashCode();
@@ -197,7 +199,9 @@ internal
 
             for (int i = 0; i < this.count; i++)
             {
-                hash = (hash * 31) + this[i].GetHashCode();
+                var item = this[i];
+                hash = (hash * 31) + item.Key.GetHashCode();
+                hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
             }
 
             return hash;

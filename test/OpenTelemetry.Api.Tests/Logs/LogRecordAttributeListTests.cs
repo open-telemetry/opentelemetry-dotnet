@@ -157,4 +157,147 @@ public sealed class LogRecordAttributeListTests
 
         Assert.Equal(2, list.Count);
     }
+
+    [Fact]
+    public void Equals_Object_ReturnsTrueForSameAttributes()
+    {
+        var left = new LogRecordAttributeList
+        {
+            ["key1"] = "value1",
+            ["key2"] = 123,
+        };
+
+        var right = new LogRecordAttributeList
+        {
+            ["key1"] = "value1",
+            ["key2"] = 123,
+        };
+
+        Assert.True(left.Equals((object)right));
+        Assert.True(((object)left).Equals(right));
+    }
+
+    [Fact]
+    public void Equals_Object_ReturnsFalseForDifferentAttributes()
+    {
+        var left = new LogRecordAttributeList
+        {
+            ["key1"] = "value1",
+            ["key2"] = 123,
+        };
+
+        var right = new LogRecordAttributeList
+        {
+            ["key1"] = "value2",
+            ["key2"] = 123,
+        };
+
+        Assert.False(left.Equals((object)right));
+        Assert.False(((object)left).Equals(right));
+    }
+
+    [Fact]
+    public void Equals_Object_ReturnsFalseForAnotherType()
+    {
+        var left = new LogRecordAttributeList
+        {
+            ["key1"] = "value1",
+            ["key2"] = 123,
+        };
+
+        var right = "foo";
+
+        Assert.False(left.Equals(right));
+    }
+
+    [Fact]
+    public void Equals_Typed_ReturnsTrueForSameAttributes()
+    {
+        var left = new LogRecordAttributeList
+        {
+            ["a"] = 1,
+        };
+
+        var right = new LogRecordAttributeList
+        {
+            ["a"] = 1,
+        };
+
+        Assert.True(left.Equals(right));
+    }
+
+    [Fact]
+    public void Equals_Typed_ReturnsFalseForDifferentCount()
+    {
+        var left = new LogRecordAttributeList
+        {
+            ["a"] = 1,
+        };
+
+        var right = default(LogRecordAttributeList);
+
+        Assert.False(left.Equals(right));
+    }
+
+    [Fact]
+    public void Operator_Equality_ReturnsTrueForEqualLists()
+    {
+        var left = new LogRecordAttributeList
+        {
+            ["x"] = 42,
+        };
+        var right = new LogRecordAttributeList
+        {
+            ["x"] = 42,
+        };
+
+        Assert.True(left == right);
+        Assert.False(left != right);
+    }
+
+    [Fact]
+    public void Operator_Equality_ReturnsFalseForDifferentLists()
+    {
+        var left = new LogRecordAttributeList
+        {
+            ["x"] = 42,
+        };
+        var right = new LogRecordAttributeList
+        {
+            ["x"] = 43,
+        };
+
+        Assert.False(left == right);
+        Assert.True(left != right);
+    }
+
+    [Fact]
+    public void GetHashCode_SameForEqualLists()
+    {
+        var left = new LogRecordAttributeList
+        {
+            ["foo"] = "bar",
+        };
+        var right = new LogRecordAttributeList
+        {
+            ["foo"] = "bar",
+        };
+
+        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+    }
+
+    [Fact]
+    public void GetHashCode_DifferentForDifferentLists()
+    {
+        var left = new LogRecordAttributeList
+        {
+            ["foo"] = "bar",
+        };
+        var right = new LogRecordAttributeList
+        {
+            ["foo"] = "baz",
+        };
+
+        Assert.NotEqual(left.GetHashCode(), right.GetHashCode());
+    }
 }
