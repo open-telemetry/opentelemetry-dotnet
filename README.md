@@ -173,7 +173,7 @@ For details about upcoming planned releases see:
 The dates and features described in issues and milestones are estimates and
 subject to change.
 
-For highlights and annoucements for stable releases see: [Release
+For highlights and announcements for stable releases see: [Release
 Notes](./RELEASENOTES.md).
 
 To access packages, source code, and/or view a list of changes for all
@@ -194,7 +194,7 @@ targets multiple frameworks each target outputs a dedicated DLL and signing
 artifacts into a sub folder based on the
 [TFM](https://learn.microsoft.com/dotnet/standard/frameworks).
 
-The digitial signature and certificate files share the same name prefix as the
+The digital signature and certificate files share the same name prefix as the
 DLL to ensure easy identification and association.
 
 To verify the integrity of a DLL inside a NuGet package use the
