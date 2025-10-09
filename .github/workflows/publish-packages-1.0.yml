@@ -86,10 +86,7 @@ jobs:
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:"PackTag=${env:PACK_TAG}"
 
     - name: Validate package DLL Cosign Keyless signatures
-      if: github.ref_type == 'tag'
       shell: pwsh
-      env:
-        PACK_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
       run: |
         $nupkgFiles = Get-ChildItem -Path artifacts/package/release/*.nupkg -File
 
@@ -110,7 +107,7 @@ jobs:
             cosign.exe verify-blob `
               --signature $dllFilePath-keyless.sig `
               --certificate $dllFilePath-keyless.pem `
-              --certificate-identity "${env:GITHUB_SERVER_URL}/${env:GITHUB_REPOSITORY}/.github/workflows/publish-packages-1.0.yml@refs/tags/${env:PACK_TAG}" `
+              --certificate-identity "${env:GITHUB_SERVER_URL}/${env:GITHUB_REPOSITORY}/.github/workflows/publish-packages-1.0.yml@${env:GITHUB_REF}" `
               --certificate-oidc-issuer "https://token.actions.githubusercontent.com" `
               $dllFilePath
             if ($LASTEXITCODE -ne 0) {
