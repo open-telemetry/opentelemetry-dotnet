@@ -32,6 +32,8 @@ jobs:
       id-token: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # renovate: datasource=github-releases depName=cosign packageName=sigstore/cosign
+      COSIGN_VERSION: v2.5.3
       COSIGN_YES: "yes"
 
     outputs:
@@ -52,7 +54,7 @@ jobs:
     - name: Install Cosign
       uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
       with:
-        cosign-release: v2.5.3
+        cosign-release: ${{ env.COSIGN_VERSION }}
 
     - name: dotnet restore
       run: dotnet restore ./build/OpenTelemetry.proj -p:RunningDotNetPack=true
@@ -71,7 +73,7 @@ jobs:
 
             Get-ChildItem -Path artifacts/bin/$projectName/release_*/$projectName.dll -File | ForEach-Object {
                 $fileFullPath = $_.FullName
-                Write-Host "Signing $fileFullPath"
+                Write-Output "Signing $fileFullPath"
 
                 cosign.exe sign-blob $fileFullPath --yes --output-signature $fileFullPath-keyless.sig --output-certificate $fileFullPath-keyless.pem
             }
@@ -82,6 +84,38 @@ jobs:
       env:
         PACK_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:"PackTag=${env:PACK_TAG}"
+
+    - name: Verify package DLL Cosign Keyless signatures
+      shell: pwsh
+      run: |
+        $nupkgFiles = Get-ChildItem -Path artifacts/package/release/*.nupkg -File
+
+        # Copy the NuGet packages to a temporary directory and extract them
+        $tempDir = New-Item -ItemType Directory -Path (Join-Path -Path ${env:RUNNER_TEMP} -ChildPath ([System.Guid]::NewGuid().ToString()))
+        foreach ($nupkgFile in $nupkgFiles) {
+            $nupkgFilePath = $nupkgFile.FullName
+            $packageName = [System.IO.Path]::GetFileNameWithoutExtension($nupkgFilePath)
+            Write-Output "Extracting $nupkgFilePath"
+            Expand-Archive -Path $nupkgFilePath -DestinationPath (Join-Path $tempDir.FullName $packageName)
+        }
+
+        # Iterate over all DLL files in the extracted packages and verify their signatures
+        $dllFiles = Get-ChildItem -Path $tempDir.FullName -Recurse -Filter *.dll -File
+        foreach ($dllFile in $dllFiles) {
+            $dllFilePath = $dllFile.FullName
+            Write-Output "Verifying $dllFilePath"
+            cosign.exe verify-blob `
+              --signature $dllFilePath-keyless.sig `
+              --certificate $dllFilePath-keyless.pem `
+              --certificate-identity "${env:GITHUB_SERVER_URL}/${env:GITHUB_REPOSITORY}/.github/workflows/publish-packages-1.0.yml@${env:GITHUB_REF}" `
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" `
+              $dllFilePath
+            if ($LASTEXITCODE -ne 0) {
+                Write-Output "::error::Signature verification failed for $dllFilePath."
+                exit 1
+            }
+            Write-Output "Signature verification succeeded for $dllFilePath"
+        }
 
     - name: Publish Artifacts
       id: upload-artifacts

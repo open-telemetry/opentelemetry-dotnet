@@ -5,7 +5,7 @@ services:
       - 9411:9411
 
   rabbitmq:
-    image: rabbitmq:4-management-alpine@sha256:603089229e6060279f1b5db7fb5d844d1f259dd7a73fca8e3b15bb93713ad27c
+    image: rabbitmq:4-management-alpine@sha256:acf36b61e63d7d1f4d5ae2bbe17f94f10612638d0314f72bc6df55603eb55381
     ports:
       - 5672:5672
       - 15672:15672

@@ -173,7 +173,7 @@ For details about upcoming planned releases see:
 The dates and features described in issues and milestones are estimates and
 subject to change.
 
-For highlights and annoucements for stable releases see: [Release
+For highlights and announcements for stable releases see: [Release
 Notes](./RELEASENOTES.md).
 
 To access packages, source code, and/or view a list of changes for all
@@ -194,17 +194,18 @@ targets multiple frameworks each target outputs a dedicated DLL and signing
 artifacts into a sub folder based on the
 [TFM](https://learn.microsoft.com/dotnet/standard/frameworks).
 
-The digitial signature and certificate files share the same name prefix as the
+The digital signature and certificate files share the same name prefix as the
 DLL to ensure easy identification and association.
 
 To verify the integrity of a DLL inside a NuGet package use the
 [cosign](https://github.com/sigstore/cosign) tool from Sigstore:
 
 ```bash
+$TAG="core-1.12.0"
 cosign verify-blob \
     --signature OpenTelemetry.dll-keyless.sig \
-    --certificate OpenTelemetry.dll-keyless.pem.cer \
-    --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/core-1.10.0-rc.1" \
+    --certificate OpenTelemetry.dll-keyless.pem \
+    --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/$TAG" \
     --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
     OpenTelemetry.dll
 ```
