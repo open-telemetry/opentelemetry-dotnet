@@ -2,8 +2,43 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <OTelLatestStableVer>1.13.0</OTelLatestStableVer>
+    <OTelLatestStableVer>1.13.1</OTelLatestStableVer>
   </PropertyGroup>
+
+  <!--
+      For modern .NET runtimes, match the major version of packages to the major version of the runtime.
+      This is to ensure that the NuGet packages that users deploy match the support lifetimes of the .NET version they are using (i.e. LTS vs STS).
+      See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
+  -->
+  <ItemGroup>
+    <!-- Default to latest versions for all TFMs -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[9.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[9.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[9.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[9.0.0,)" />
+  </ItemGroup>
+  <!-- Version overrides for specific netX.0 TFMs -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[8.0.0,)" />
+    <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[8.0.0,)" />
+    <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[8.0.0,)" />
+    <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[8.0.0,)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[9.0.0,)" />
+    <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[9.0.0,)" />
+    <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[9.0.0,)" />
+    <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[9.0.0,)" />
+  </ItemGroup>
+
+  <!--
+      System.Diagnostics.DiagnosticSource is exempted from the requirement to match the major version of
+      the runtime so that new APIs and/or semantic conventions are available to all versions of .NET.
+      See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
+  -->
+  <ItemGroup>
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[9.0.0,)" />
+  </ItemGroup>
 
   <!--
       This section covers packages that are directly referenced by the NuGet packages published from this repository.
@@ -11,20 +46,6 @@
       vulnerability in the NuGet packages that are published from this repository.
   -->
   <ItemGroup>
-    <!--
-        Typically, for the Microsoft.Extensions.* packages relating to DI Abstractions, Hosting Abstractions, and Logging,
-        the latest stable version should be used because:
-        1) Each major version bump will have some new API capabilities (e.g.For Logging, .NET 6 introduced compile-time logging
-          source generation, .NET 8 introduced automatic event id generation).
-        2) Each minor version bump is normally security hotfixes or critical bug fixes.
-        3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
-          these packages even during major version bumps, so compatibility is not a concern here.
-    -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[9.0.0,)" />
-
     <!--
         OTel packages always point to latest stable release.
     -->
@@ -35,17 +56,6 @@
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="[$(OTelLatestStableVer),2.0)" />
     <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="[$(OTelLatestStableVer),2.0)" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
-
-    <!--
-        Typically, the latest stable version of System.Diagnostics.DiagnosticSource should be used here because:
-        1) Each major version bump will likely have some new OpenTelemetry capabilities (e.g. .NET 6 introduced Meter
-          API, .NET 7 added UpDownCounter, .NET 8 added Meter/Instrument level attributes support, .NET 9 added
-          Advice/Hint API, etc.).
-        2) Each minor version bump is normally security hotfixes or critical bug fixes.
-        3) The .NET runtime team provides extra backward compatibility guarantee to System.Diagnostics.DiagnosticSource
-          even during major version bumps, so compatibility is not a concern here.
-    -->
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[9.0.0,)" />
   </ItemGroup>
 
   <ItemGroup>
