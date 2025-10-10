@@ -158,24 +158,12 @@ public class SamplersTests
         }
         else if (sampling == SamplingDecision.RecordOnly)
         {
-            // TODO: Update this when repo consumes DS v10.
-            // Note: Seems to be a bug in DiagnosticSource. Root in this case
-            // inherits context from the remote parent and Recorded doesn't get
-            // cleared. This should be fixed in .NET 10:
-            // https://github.com/dotnet/runtime/pull/111289
-            // Assert.False(root.Recorded);
-
+            Assert.False(root.Recorded);
             Assert.True(root.IsAllDataRequested);
         }
         else
         {
-            // TODO: Update this when repo consumes DS v10.
-            // Note: Seems to be a bug in DiagnosticSource. Root in this case
-            // inherits context from the remote parent and Recorded doesn't get
-            // cleared. This should be fixed in .NET 10:
-            // https://github.com/dotnet/runtime/pull/111289
-            // Assert.False(root.Recorded);
-
+            Assert.False(root.Recorded);
             Assert.False(root.IsAllDataRequested);
         }
 
