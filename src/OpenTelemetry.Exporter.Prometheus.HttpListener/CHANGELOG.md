@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.13.1-beta.1
+
+Released 2025-Oct-10
+
 * **Breaking Change** When targeting `net8.0`, the package now depends on version
   `8.0.0` of the `Microsoft.Extensions.DependencyInjection.Abstractions`,
   `Microsoft.Extensions.Diagnostics.Abstractions` and
