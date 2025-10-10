@@ -22,9 +22,7 @@ public
 /// </summary>
 internal
 #endif
-#pragma warning disable CA1815 // Override equals and operator equals on value types
-    struct LogRecordData
-#pragma warning restore CA1815 // Override equals and operator equals on value types
+    struct LogRecordData : IEquatable<LogRecordData>
 {
     internal DateTime TimestampBacking = DateTime.UtcNow;
 
@@ -89,7 +87,7 @@ internal
     public DateTime Timestamp
     {
         readonly get => this.TimestampBacking;
-        set { this.TimestampBacking = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value; }
+        set => this.TimestampBacking = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value;
     }
 
     /// <summary>
@@ -127,6 +125,71 @@ internal
     /// Gets or sets the name of the event associated with the log.
     /// </summary>
     public string? EventName { get; set; } = null;
+
+    /// <summary>
+    /// Determines whether the two instances of <see cref="LogRecordData"/> are equal.
+    /// </summary>
+    /// <param name="left">An instance of <see cref="LogRecordData"/>.</param>
+    /// <param name="right"> Another instance of <see cref="LogRecordData"/>.</param>
+    /// <returns>
+    /// <see langword="true"/> if the values are considered equal; otherwise, <see langword="false"/>.
+    /// </returns>
+    public static bool operator ==(LogRecordData left, LogRecordData right) => left.Equals(right);
+
+    /// <summary>
+    /// Determines whether the two instances of <see cref="LogRecordData"/> are not equal.
+    /// </summary>
+    /// <param name="left">An instance of <see cref="LogRecordData"/>.</param>
+    /// <param name="right"> Another instance of <see cref="LogRecordData"/>.</param>
+    /// <returns>
+    /// <see langword="true"/> if the values are not considered equal; otherwise, <see langword="false"/>.
+    /// </returns>
+    public static bool operator !=(LogRecordData left, LogRecordData right) => !(left == right);
+
+    /// <inheritdoc/>
+    public override readonly bool Equals(object? obj) =>
+        obj is LogRecordData other && this.Equals(other);
+
+    /// <inheritdoc/>
+    public readonly bool Equals(LogRecordData other) =>
+        this.TimestampBacking == other.TimestampBacking &&
+        this.TraceId == other.TraceId &&
+        this.SpanId == other.SpanId &&
+        this.TraceFlags == other.TraceFlags &&
+        this.Severity == other.Severity &&
+        this.SeverityText == other.SeverityText &&
+        this.Body == other.Body &&
+        this.EventName == other.EventName;
+
+    /// <inheritdoc/>
+    public override readonly int GetHashCode()
+#if NET
+        => HashCode.Combine(
+               this.TimestampBacking,
+               this.TraceId,
+               this.SpanId,
+               this.TraceFlags,
+               this.Severity,
+               this.SeverityText,
+               this.Body,
+               this.EventName);
+#else
+    {
+        unchecked
+        {
+            var hash = 17;
+            hash = (hash * 31) + this.TimestampBacking.GetHashCode();
+            hash = (hash * 31) + this.TraceId.GetHashCode();
+            hash = (hash * 31) + this.SpanId.GetHashCode();
+            hash = (hash * 31) + this.TraceFlags.GetHashCode();
+            hash = (hash * 31) + (this.Severity?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (this.SeverityText?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (this.Body?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (this.EventName?.GetHashCode() ?? 0);
+            return hash;
+        }
+    }
+#endif
 
     internal static void SetActivityContext(ref LogRecordData data, Activity? activity)
     {
