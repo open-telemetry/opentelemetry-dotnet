@@ -37,10 +37,7 @@ public class MetricStreamConfiguration
         get => this.name;
         set
         {
-            if (value != null && !MeterProviderBuilderSdk.IsValidViewName(value))
-            {
-                throw new ArgumentException($"Custom view name {value} is invalid.", nameof(value));
-            }
+            MetricGuard.ThrowIfInvalidViewName(value);
 
             this.name = value;
         }
