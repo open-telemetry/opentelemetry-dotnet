@@ -5,7 +5,6 @@ using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Resources;
-using Xunit;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 

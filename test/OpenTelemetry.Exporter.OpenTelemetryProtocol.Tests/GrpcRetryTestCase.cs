@@ -4,7 +4,6 @@
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Tests;
 

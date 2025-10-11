@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Http;
 #endif
 using System.Net.Http.Headers;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Tests;
 

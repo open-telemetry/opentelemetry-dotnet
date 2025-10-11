@@ -21,7 +21,6 @@ using OpenTelemetry.PersistentStorage.Abstractions;
 using OpenTelemetry.Proto.Collector.Trace.V1;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
