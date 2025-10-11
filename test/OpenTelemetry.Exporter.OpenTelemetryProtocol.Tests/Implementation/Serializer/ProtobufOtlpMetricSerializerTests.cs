@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Reflection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Metrics;
@@ -20,8 +21,8 @@ public static class ProtobufOtlpMetricSerializerTests
 
         var attributes = new Dictionary<string, object>
         {
-            { "service.name", "OpenTelemetry-DotNet" },
-            { "service.version", "1.2.3" },
+            ["service.name"] = "OpenTelemetry-DotNet",
+            ["service.version"] = "1.2.3",
         };
 
         var buffer = new byte[1024];
@@ -114,9 +115,16 @@ public static class ProtobufOtlpMetricSerializerTests
         var startTime = new DateTimeOffset(2025, 10, 08, 10, 20, 11, TimeSpan.Zero);
         var endTime = startTime.AddSeconds(10);
 
+        var type = typeof(AggregatorStore);
+        var bindingAttributes = BindingFlags.NonPublic | BindingFlags.Instance;
+
+        var startTimeProperty = type.GetProperty(nameof(AggregatorStore.StartTimeExclusive), bindingAttributes)!;
+        var endTimeProperty = type.GetProperty(nameof(AggregatorStore.EndTimeInclusive), bindingAttributes)!;
+
         foreach (var metric in metrics)
         {
-            metric.AggregatorStore.OverrideTimeRange(startTime, endTime);
+            startTimeProperty.SetValue(metric.AggregatorStore, startTime);
+            endTimeProperty.SetValue(metric.AggregatorStore, endTime);
         }
 
         return metrics;

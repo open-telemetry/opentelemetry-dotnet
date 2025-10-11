@@ -298,13 +298,6 @@ internal sealed class AggregatorStore
     internal MetricPointsAccessor GetMetricPoints()
         => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
 
-    // This method must only be used for testing purposes
-    internal void OverrideTimeRange(DateTimeOffset startTimeExclusive, DateTimeOffset endTimeInclusive)
-    {
-        this.StartTimeExclusive = startTimeExclusive;
-        this.EndTimeInclusive = endTimeInclusive;
-    }
-
     private static double[] FindDefaultHistogramBounds(in MetricStreamIdentity metricStreamIdentity)
     {
         if (metricStreamIdentity.Unit == "s")
