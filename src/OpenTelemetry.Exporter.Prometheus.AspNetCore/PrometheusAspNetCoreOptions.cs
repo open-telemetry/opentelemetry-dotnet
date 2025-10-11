@@ -38,5 +38,14 @@ public class PrometheusAspNetCoreOptions
         set => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds = value;
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether timestamps should be disabled. Default value: <see langword="false"/>.
+    /// </summary>
+    public bool DisableTimestamp
+    {
+        get => this.ExporterOptions.DisableTimestamp;
+        set => this.ExporterOptions.DisableTimestamp = value;
+    }
+
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
 }
