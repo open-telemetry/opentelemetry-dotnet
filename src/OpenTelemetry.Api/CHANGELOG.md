@@ -8,7 +8,9 @@ Notes](../../RELEASENOTES.md).
 
 * Add support for .NET 10.0.
   ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
-* Update `System.Diagnostics.DiagnosticSource` dependency to `10.0.0` for all target frameworks.
+
+* Update `System.Diagnostics.DiagnosticSource` dependency to `10.0.0`
+  for all target frameworks.
   ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
 
 ## 1.13.1
