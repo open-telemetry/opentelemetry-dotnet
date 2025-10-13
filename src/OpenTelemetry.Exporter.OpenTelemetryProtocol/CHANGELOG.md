@@ -7,6 +7,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Changed histogram protobuf serialization to use packed format for `bucket_counts`
+  and `explicit_bounds` to be specification-compliant and fix issues with strict
+  OTLP parsers. Lenient parsers should handle both formats.
+  ([#6567](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6567))
+
 ## 1.13.1
 
 Released 2025-Oct-09
