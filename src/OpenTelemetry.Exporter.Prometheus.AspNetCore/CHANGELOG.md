@@ -13,6 +13,9 @@ Notes](../../RELEASENOTES.md).
   `Microsoft.Extensions.Logging.Configuration` NuGet packages.
   ([#6327](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6327))
 
+* Add support for .NET 10.0.
+  ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
+
 ## 1.13.1-beta.1
 
 Released 2025-Oct-10
