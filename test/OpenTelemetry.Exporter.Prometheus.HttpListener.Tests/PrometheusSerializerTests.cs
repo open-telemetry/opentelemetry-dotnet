@@ -280,7 +280,7 @@ public sealed class PrometheusSerializerTests
         provider.ForceFlush();
 
         var cursor = WriteMetric(buffer, 0, metrics[0], false, disableTimestamp);
-        var timestampPart = disableTimestamp ? string.Empty : "\\d+";
+        var timestampPart = disableTimestamp ? string.Empty : " \\d+";
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var expected =
             ("^"
