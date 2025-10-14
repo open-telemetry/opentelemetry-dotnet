@@ -17,7 +17,6 @@ using OpenTelemetry.Proto.Trace.V1;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-using Xunit;
 using static OpenTelemetry.Proto.Common.V1.AnyValue;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;

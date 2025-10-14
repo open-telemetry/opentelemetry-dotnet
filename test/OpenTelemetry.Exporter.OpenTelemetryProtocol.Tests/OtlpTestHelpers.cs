@@ -3,7 +3,6 @@
 
 using System.Globalization;
 using Google.Protobuf.Collections;
-using Xunit;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;

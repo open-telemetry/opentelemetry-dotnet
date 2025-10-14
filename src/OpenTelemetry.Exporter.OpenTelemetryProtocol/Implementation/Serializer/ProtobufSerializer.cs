@@ -160,6 +160,10 @@ internal static class ProtobufSerializer
         return writePosition;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteDouble(byte[] buffer, int writePosition, double value)
+        => WriteFixed64LittleEndianFormat(buffer, writePosition, (ulong)BitConverter.DoubleToInt64Bits(value));
+
     /// <summary>
     /// Computes the number of bytes required to encode a 64-bit unsigned integer in Protocol Buffers' varint format.
     /// </summary>

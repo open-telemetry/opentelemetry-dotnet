@@ -3,7 +3,6 @@
 
 using System.Text;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Serializer;
 
