@@ -30,12 +30,12 @@ public sealed class PrometheusSerializerTests
         provider.ForceFlush();
 
         var cursor = WriteMetric(buffer, 0, metrics[0], false, disableTimestamp);
-        var timestampPart = disableTimestamp ? string.Empty : "\\d+";
+        var timestampPart = disableTimestamp ? string.Empty : " \\d+";
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var expected =
             ("^"
                 + "# TYPE test_gauge gauge\n"
-                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123 {timestampPart}\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123{timestampPart}\n"
                 + "$").Replace('\'', '"');
         Assert.Matches(expected, output);
     }
@@ -528,12 +528,12 @@ public sealed class PrometheusSerializerTests
         provider.ForceFlush();
 
         var cursor = WriteMetric(buffer, 0, metrics[0], true, disableTimestamp);
-        var timestampPart = disableTimestamp ? string.Empty : "\\d+\\.\\d{3}";
+        var timestampPart = disableTimestamp ? string.Empty : " \\d+\\.\\d{3}";
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var expected =
             ("^"
                 + "# TYPE test_updown_counter gauge\n"
-                + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} -1 {timestampPart}\n"
+                + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} -1{timestampPart}\n"
                 + "$").Replace('\'', '"');
         Assert.Matches(expected, output);
     }
@@ -559,29 +559,29 @@ public sealed class PrometheusSerializerTests
         provider.ForceFlush();
 
         var cursor = WriteMetric(buffer, 0, metrics[0], true, disableTimestamp);
-        var timestampPart = disableTimestamp ? string.Empty : "\\d+\\.\\d{3}";
+        var timestampPart = disableTimestamp ? string.Empty : " \\d+\\.\\d{3}";
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var expected =
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='0'}} 0 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5'}} 0 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10'}} 0 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='25'}} 1 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='50'}} 1 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='75'}} 1 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='100'}} 2 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='250'}} 2 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='500'}} 2 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='750'}} 2 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='1000'}} 2 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='2500'}} 2 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5000'}} 2 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='7500'}} 2 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10000'}} 2 {timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='\\+Inf'}} 2 {timestampPart}\n"
-                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 118 {timestampPart}\n"
-                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 2 {timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='0'}} 0{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5'}} 0{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10'}} 0{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='25'}} 1{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='50'}} 1{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='75'}} 1{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='100'}} 2{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='250'}} 2{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='500'}} 2{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='750'}} 2{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='1000'}} 2{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='2500'}} 2{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5000'}} 2{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='7500'}} 2{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10000'}} 2{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='\\+Inf'}} 2{timestampPart}\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 118{timestampPart}\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 2{timestampPart}\n"
                 + "$").Replace('\'', '"');
         Assert.Matches(expected, output);
     }

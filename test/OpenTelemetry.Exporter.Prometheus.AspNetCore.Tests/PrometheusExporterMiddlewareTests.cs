@@ -447,8 +447,8 @@ public sealed class PrometheusExporterMiddlewareTests
 
         string content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
 
-        var timestampPart = disableTimestamp ? string.Empty : "(\\d+)";
-        var timestampPartOpenMetrics = disableTimestamp ? string.Empty : "(\\d+\\.\\d{3})";
+        var timestampPart = disableTimestamp ? string.Empty : " (\\d+)";
+        var timestampPartOpenMetrics = disableTimestamp ? string.Empty : " (\\d+\\.\\d{3})";
         string expected = requestOpenMetrics
             ? $$"""
                     # TYPE target info
@@ -459,14 +459,14 @@ public sealed class PrometheusExporterMiddlewareTests
                     otel_scope_info{otel_scope_name="{{MeterName}}"} 1
                     # TYPE counter_double_bytes counter
                     # UNIT counter_double_bytes bytes
-                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17 {{timestampPartOpenMetrics}}
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17{{timestampPartOpenMetrics}}
                     # EOF
 
                     """.ReplaceLineEndings()
             : $$"""
                     # TYPE counter_double_bytes_total counter
                     # UNIT counter_double_bytes_total bytes
-                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17 {{timestampPart}}
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17{{timestampPart}}
                     # EOF
 
                     """.ReplaceLineEndings();
