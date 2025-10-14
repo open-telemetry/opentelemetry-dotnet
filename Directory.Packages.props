@@ -31,10 +31,10 @@
     <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[9.0.0,)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10.0.0-rc.1.25451.107,)" />
-    <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[10.0.0-rc.1.25451.107,)" />
-    <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[10.0.0-rc.1.25451.107,)" />
-    <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[10.0.0-rc.1.25451.107,)" />
+    <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10.0.0-rc.2.25502.107,)" />
+    <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[10.0.0-rc.2.25502.107,)" />
+    <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[10.0.0-rc.2.25502.107,)" />
+    <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[10.0.0-rc.2.25502.107,)" />
   </ItemGroup>
 
   <!--
@@ -43,7 +43,7 @@
       See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
   -->
   <ItemGroup>
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[10.0.0-rc.1.25451.107,)" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[10.0.0-rc.2.25502.107,)" />
   </ItemGroup>
 
   <!--
