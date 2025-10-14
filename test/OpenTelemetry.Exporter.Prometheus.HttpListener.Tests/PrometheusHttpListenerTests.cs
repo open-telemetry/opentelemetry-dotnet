@@ -313,8 +313,8 @@ public class PrometheusHttpListenerTests
 
             var content = await response.Content.ReadAsStringAsync();
 
-            var timestampPart = disableTimestamp ? string.Empty : "(\\d+)";
-            var timestampPartOpenMetrics = disableTimestamp ? string.Empty : "(\\d+\\.\\d{3})";
+            var timestampPart = disableTimestamp ? string.Empty : " (\\d+)";
+            var timestampPartOpenMetrics = disableTimestamp ? string.Empty : " (\\d+\\.\\d{3})";
             var expected = requestOpenMetrics
                 ? "# TYPE target info\n"
                   + "# HELP target Target metadata\n"
@@ -324,11 +324,11 @@ public class PrometheusHttpListenerTests
                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
                   + "# TYPE counter_double_bytes counter\n"
                   + "# UNIT counter_double_bytes bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17 {timestampPartOpenMetrics}\n"
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17{timestampPartOpenMetrics}\n"
                   + "# EOF\n"
                 : "# TYPE counter_double_bytes_total counter\n"
                   + "# UNIT counter_double_bytes_total bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17 {timestampPart}\n"
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17{timestampPart}\n"
                   + "# EOF\n";
 
             Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);
