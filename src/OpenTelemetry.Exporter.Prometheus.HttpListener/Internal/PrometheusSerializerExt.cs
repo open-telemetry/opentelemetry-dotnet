@@ -66,10 +66,9 @@ internal static partial class PrometheusSerializer
                     }
                 }
 
-                buffer[cursor++] = unchecked((byte)' ');
-
                 if (!disableTimestamp)
                 {
+                    buffer[cursor++] = unchecked((byte)' ');
                     cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
                 }
 
@@ -106,10 +105,10 @@ internal static partial class PrometheusSerializer
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
 
                     cursor = WriteLong(buffer, cursor, totalCount);
-                    buffer[cursor++] = unchecked((byte)' ');
 
                     if (!disableTimestamp)
                     {
+                        buffer[cursor++] = unchecked((byte)' ');
                         cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
                     }
 
@@ -124,10 +123,10 @@ internal static partial class PrometheusSerializer
                 buffer[cursor++] = unchecked((byte)' ');
 
                 cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
-                buffer[cursor++] = unchecked((byte)' ');
 
                 if (!disableTimestamp)
                 {
+                    buffer[cursor++] = unchecked((byte)' ');
                     cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
                 }
 
@@ -141,10 +140,10 @@ internal static partial class PrometheusSerializer
                 buffer[cursor++] = unchecked((byte)' ');
 
                 cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
-                buffer[cursor++] = unchecked((byte)' ');
 
                 if (!disableTimestamp)
                 {
+                    buffer[cursor++] = unchecked((byte)' ');
                     cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
                 }
 

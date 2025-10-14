@@ -7,14 +7,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Added the possibility to disable timestamps via the `PrometheusAspNetCoreOptions`.
-  ([#6600](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6600))
-
 * **Breaking Change** When targeting `net8.0`, the package now depends on version
   `8.0.0` of the `Microsoft.Extensions.DependencyInjection.Abstractions`,
   `Microsoft.Extensions.Diagnostics.Abstractions` and
   `Microsoft.Extensions.Logging.Configuration` NuGet packages.
   ([#6327](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6327))
+
+* Added the possibility to disable timestamps via the `PrometheusAspNetCoreOptions`.
+  ([#6600](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6600))
 
 ## 1.13.1-beta.1
 
