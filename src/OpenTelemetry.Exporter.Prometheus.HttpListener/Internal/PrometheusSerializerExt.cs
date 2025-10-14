@@ -22,7 +22,7 @@ internal static partial class PrometheusSerializer
         return true;
     }
 
-    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool openMetricsRequested = false, bool disableTimestamp = false)
+    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool openMetricsRequested, bool disableTimestamp)
     {
         cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
