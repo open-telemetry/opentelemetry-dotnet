@@ -25,7 +25,7 @@ services:
 
 # Exports Metrics to Prometheus
   prometheus:
-    image: prom/prometheus:v3.6.0@sha256:76947e7ef22f8a698fc638f706685909be425dbe09bd7a2cd7aca849f79b5f64
+    image: prom/prometheus:v3.7.0@sha256:29c1e0b48ad816750245dea3d65ac3ce57dda30547e67b1e9a5176e2953cc4dc
     command:
       - --config.file=/etc/prometheus.yaml
       - --web.enable-remote-write-receiver
