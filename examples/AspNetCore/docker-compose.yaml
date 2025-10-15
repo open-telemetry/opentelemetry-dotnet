@@ -13,7 +13,7 @@ services:
 
   # Exports Traces to Tempo
   tempo:
-    image: grafana/tempo:2.8.2@sha256:0ef775495967cd5d7a6b2e146b6ea695d624803c8db8349fb8ce4164f719f9b7
+    image: grafana/tempo:2.9.0@sha256:65a5789759435f1ef696f1953258b9bbdb18eb571d5ce711ff812d2e128288a4
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
       - ./tempo.yaml:/etc/tempo.yaml
