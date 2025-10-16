@@ -33,6 +33,12 @@ Description: ExemplarReservoir Support
 
 Details: [OTEL1004](./OTEL1004.md)
 
+### OTEL1005
+
+Description: OnEnding Implementation
+
+Details: [OTEL1005](./OTEL1005.md)
+
 ## Inactive
 
 Experimental APIs which have been released stable or removed:
