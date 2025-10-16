@@ -32,8 +32,6 @@ jobs:
       id-token: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # renovate: datasource=github-releases depName=cosign packageName=sigstore/cosign
-      COSIGN_VERSION: v2.5.3
       COSIGN_YES: "yes"
 
     outputs:
@@ -53,8 +51,6 @@ jobs:
 
     - name: Install Cosign
       uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
-      with:
-        cosign-release: ${{ env.COSIGN_VERSION }}
 
     - name: dotnet restore
       run: dotnet restore ./build/OpenTelemetry.proj -p:RunningDotNetPack=true

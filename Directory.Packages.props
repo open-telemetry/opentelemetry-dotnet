@@ -31,10 +31,10 @@
     <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[9.0.0,)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10.0.0-rc.1.25451.107,)" />
-    <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[10.0.0-rc.1.25451.107,)" />
-    <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[10.0.0-rc.1.25451.107,)" />
-    <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[10.0.0-rc.1.25451.107,)" />
+    <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10.0.0-rc.2.25502.107,)" />
+    <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[10.0.0-rc.2.25502.107,)" />
+    <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[10.0.0-rc.2.25502.107,)" />
+    <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[10.0.0-rc.2.25502.107,)" />
   </ItemGroup>
 
   <!--
@@ -43,7 +43,7 @@
       See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
   -->
   <ItemGroup>
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[10.0.0-rc.1.25451.107,)" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[10.0.0-rc.2.25502.107,)" />
   </ItemGroup>
 
   <!--
@@ -95,18 +95,18 @@
     <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.67.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.68.1" />
-    <PackageVersion Include="Google.Protobuf" Version="3.32.1" />
+    <PackageVersion Include="Google.Protobuf" Version="3.33.0" />
     <PackageVersion Include="Grpc" Version="2.46.6" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.67.0" />
     <PackageVersion Include="JunitXml.TestLogger" Version="7.0.2" />
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-rc.1.25451.107" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0-rc.1.25451.107" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0-rc.1.25451.107" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-rc.1.25451.107" />
-    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="9.9.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="9.10.0" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
     <PackageVersion Include="MinVer" Version="6.0.0" />
@@ -119,21 +119,21 @@
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="9.0.6" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageVersion Include="Verify.Xunit" Version="30.20.1" />
+    <PackageVersion Include="Verify.Xunit" Version="31.0.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="[2.8.2,)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="8.0.20" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="8.0.21" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="9.0.10" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.0-rc.1.25451.107" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.0-rc.2.25502.107" />
   </ItemGroup>
 
 </Project>
