@@ -26,21 +26,23 @@ public class CompositeActivityProcessorTests
         var result = string.Empty;
 
         using var p1 = new TestActivityProcessor(
-            activity => { result += "1"; },
-            activity => { result += "3"; });
+            activity => { result += "start1"; },
+            activity => { result += "end1"; });
         using var p2 = new TestActivityProcessor(
-            activity => { result += "2"; },
-            activity => { result += "4"; });
+            activity => { result += "start2"; },
+            activity => { result += "ending2"; },
+            activity => { result += "end2"; });
 
         using var activity = new Activity("test");
 
         using (var processor = new CompositeProcessor<Activity>([p1, p2]))
         {
             processor.OnStart(activity);
+            processor.OnEnding(activity);
             processor.OnEnd(activity);
         }
 
-        Assert.Equal("1234", result);
+        Assert.Equal("start1start2ending2end1end2", result);
     }
 
     [Fact]
@@ -48,12 +50,14 @@ public class CompositeActivityProcessorTests
     {
         using var p1 = new TestActivityProcessor(
             _ => throw new InvalidOperationException("Start exception"),
+            _ => throw new InvalidOperationException("Ending exception"),
             _ => throw new InvalidOperationException("End exception"));
 
         using var activity = new Activity("test");
 
         using var processor = new CompositeProcessor<Activity>([p1]);
         Assert.Throws<InvalidOperationException>(() => { processor.OnStart(activity); });
+        Assert.Throws<InvalidOperationException>(() => { processor.OnEnding(activity); });
         Assert.Throws<InvalidOperationException>(() => { processor.OnEnd(activity); });
     }
 

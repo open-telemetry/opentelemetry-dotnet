@@ -189,6 +189,10 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
                 {
+                    if (typeof(ExtendedBaseProcessor<Activity>).IsAssignableFrom(this.processor?.GetType()))
+                    {
+                        ((ExtendedBaseProcessor<Activity>)this.processor?).OnEnding(activity);
+                    }
                     this.processor?.OnEnd(activity);
                 }
             };
@@ -224,6 +228,10 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
                 {
+                    if (typeof(ExtendedBaseProcessor<Activity>).IsAssignableFrom(this.processor?.GetType()))
+                    {
+                        ((ExtendedBaseProcessor<Activity>)this.processor?).OnEnding(activity);
+                    }
                     this.processor?.OnEnd(activity);
                 }
             };
