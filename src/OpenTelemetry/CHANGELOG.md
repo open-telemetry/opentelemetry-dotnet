@@ -37,6 +37,9 @@ Released 2025-Oct-21
 * Add support for .NET 10.0.
   ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
 
+* feat: add on ending span processor functionality
+  ([#6617](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6617))
+
 ## 1.13.1
 
 Released 2025-Oct-09

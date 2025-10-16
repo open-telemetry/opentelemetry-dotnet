@@ -25,3 +25,7 @@ OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.set -> 
 [OTEL1000]static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 [OTEL1001]static OpenTelemetry.Sdk.CreateLoggerProviderBuilder() -> OpenTelemetry.Logs.LoggerProviderBuilder!
 [OTEL1004]virtual OpenTelemetry.Metrics.FixedSizeExemplarReservoir.OnCollected() -> void
+[OTEL1005]OpenTelemetry.ExtendedBaseProcessor<T>
+[OTEL1005]OpenTelemetry.ExtendedBaseProcessor<T>.ExtendedBaseProcessor() -> void
+[OTEL1005]virtual OpenTelemetry.ExtendedBaseProcessor<T>.OnEnding(T data) -> void
+[OTEL1005]override OpenTelemetry.CompositeProcessor<T>.OnEnding(T data) -> void
