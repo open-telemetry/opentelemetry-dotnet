@@ -7,6 +7,11 @@
     <NoWarn>$(NoWarn);CA1815</NoWarn> <!-- CA1815: Override equals and operator equals on value types - https://github.com/open-telemetry/opentelemetry-dotnet/issues/6278 -->
   </PropertyGroup>
 
+  <!-- Enabled for native AoT compatibility in .NET 8+ -->
+  <PropertyGroup>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
