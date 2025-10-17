@@ -10,7 +10,7 @@ namespace OpenTelemetry;
 /// Represents a chain of <see cref="BaseProcessor{T}"/>s.
 /// </summary>
 /// <typeparam name="T">The type of object to be processed.</typeparam>
-public class CompositeProcessor<T> : BaseProcessor<T>
+public class CompositeProcessor<T> : ExtendedBaseProcessor<T>
 {
     internal readonly DoublyLinkedListNode Head;
     private DoublyLinkedListNode tail;
@@ -66,6 +66,18 @@ public class CompositeProcessor<T> : BaseProcessor<T>
         for (var cur = this.Head; cur != null; cur = cur.Next)
         {
             cur.Value.OnEnd(data);
+        }
+    }
+
+    /// <inheritdoc/>
+    public override void OnEnding(T data)
+    {
+        for (var cur = this.Head; cur != null; cur = cur.Next)
+        {
+            if (typeof(ExtendedBaseProcessor<T>).IsAssignableFrom(cur.Value.GetType()))
+            {
+                ((ExtendedBaseProcessor<T>)cur.Value).OnEnding(data);
+            }
         }
     }
 
