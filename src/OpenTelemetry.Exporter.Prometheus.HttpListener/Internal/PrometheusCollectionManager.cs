@@ -275,7 +275,8 @@ internal sealed class PrometheusCollectionManager
                             cursor,
                             metric,
                             this.GetPrometheusMetric(metric),
-                            this.exporter.OpenMetricsRequested);
+                            this.exporter.OpenMetricsRequested,
+                            this.exporter.DisableTimestamp);
 
                         break;
                     }

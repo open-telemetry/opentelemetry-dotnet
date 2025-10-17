@@ -16,6 +16,9 @@ Notes](../../RELEASENOTES.md).
 * Add support for .NET 10.0.
   ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
 
+* Added the possibility to disable timestamps via the `PrometheusHttpListenerOptions`.
+  ([#6600](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6600))
+
 ## 1.13.1-beta.1
 
 Released 2025-Oct-10
