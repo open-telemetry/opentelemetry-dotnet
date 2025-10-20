@@ -454,8 +454,13 @@ public class OpenTelemetryServicesExtensionsTests
         using var host = builder.Build();
         await host.StartAsync();
 
+        var service = host.Services
+            .GetServices<IHostedService>()
+            .OfType<TestHostedService>()
+            .Single();
+
         // Give the background service some time to run.
-        await Task.Delay(TimeSpan.FromSeconds(1));
+        await Task.WhenAny(service.ExecuteTask!, Task.Delay(TimeSpan.FromSeconds(5)));
 
         await host.StopAsync();
 
