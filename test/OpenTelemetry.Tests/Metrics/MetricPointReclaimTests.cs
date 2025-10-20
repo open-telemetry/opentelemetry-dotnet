@@ -81,7 +81,7 @@ public class MetricPointReclaimTests
             threads[i].Join();
         }
 
-        meterProvider.ForceFlush();
+        Assert.True(meterProvider.ForceFlush());
 
         long expectedSum =
             emitMetricWithNoDimensions ?
