@@ -219,7 +219,7 @@ public class MetricPointReclaimTests
 
                     if (metric.MetricType.IsSum())
                     {
-                        this.Sum += metricPoint.GetSumLong();
+                        Interlocked.Add(ref this.Sum, metricPoint.GetSumLong());
                     }
                 }
             }
