@@ -18,7 +18,7 @@ public class MetricPointReclaimTests
         var counter = meter.CreateCounter<long>("MyFruitCounter");
 
         int numberOfUpdateThreads = 25;
-        int maxNumberofDistinctMetricPoints = 4000; // Default max MetricPoints * 2
+        int maxNumberOfDistinctMetricPoints = 4000; // Default max MetricPoints * 2
 
         using var exporter = new CustomExporter(assertNoDroppedMeasurements: true);
         using var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: 10)
@@ -38,7 +38,7 @@ public class MetricPointReclaimTests
             while (true)
             {
                 int i = Interlocked.Increment(ref threadArguments!.Counter);
-                if (i <= maxNumberofDistinctMetricPoints)
+                if (i <= maxNumberOfDistinctMetricPoints)
                 {
                     // Check for cases where a metric with no dimension is also emitted
                     if (emitMetricWithNoDimensions)
@@ -83,16 +83,10 @@ public class MetricPointReclaimTests
 
         meterProvider.ForceFlush();
 
-        long expectedSum;
-
-        if (emitMetricWithNoDimensions)
-        {
-            expectedSum = maxNumberofDistinctMetricPoints * (25 + 100);
-        }
-        else
-        {
-            expectedSum = maxNumberofDistinctMetricPoints * 100;
-        }
+        long expectedSum =
+            emitMetricWithNoDimensions ?
+            maxNumberOfDistinctMetricPoints * (100 + 25) :
+            maxNumberOfDistinctMetricPoints * 100;
 
         Assert.Equal(expectedSum, exporter.Sum);
     }
