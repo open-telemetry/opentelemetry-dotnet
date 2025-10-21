@@ -48,6 +48,14 @@ public sealed class PrometheusCollectionManagerTests
                 return result;
             };
 
+            var utcNow = DateTime.UtcNow;
+
+            if (cacheEnabled)
+            {
+                // Override the cache to ensure the cache is always seen again during its validity period.
+                exporter.CollectionManager.UtcNow = () => utcNow;
+            }
+
             var counter = meter.CreateCounter<int>("counter_int", description: "Prometheus help text goes here \n escaping.");
             counter.Add(100);
 
@@ -56,6 +64,9 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
+                    // Tick the clock forward - it should still be well within the cache duration.
+                    utcNow = utcNow.AddMilliseconds(1);
+
                     var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
                     try
                     {
@@ -112,10 +123,11 @@ public sealed class PrometheusCollectionManagerTests
                 exporter.CollectionManager.ExitCollect();
             }
 
-#pragma warning disable CA1849 // 'Thread.Sleep(int)' synchronously blocks. Use await instead.
-            // Changing to await Task.Delay leads to test instability.
-            Thread.Sleep(exporter.ScrapeResponseCacheDurationMilliseconds);
-#pragma warning restore CA1849 // 'Thread.Sleep(int)' synchronously blocks. Use await instead.
+            if (cacheEnabled)
+            {
+                // Progress time beyond the cache duration to force cache expiry.
+                utcNow = utcNow.AddMilliseconds(exporter.ScrapeResponseCacheDurationMilliseconds + 1);
+            }
 
             counter.Add(100);
 
