@@ -175,12 +175,18 @@ public sealed class LogRecordSharedPoolTests
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
         List<Task> tasks = [];
-        var random = new Random();
 
         for (int i = 0; i < Environment.ProcessorCount; i++)
         {
             tasks.Add(Task.Run(async () =>
             {
+                var random =
+#if NET
+                    Random.Shared;
+#else
+                    new Random();
+#endif
+
 #pragma warning disable CA5394 // Do not use insecure randomness
                 await Task.Delay(random.Next(100, 150));
 #pragma warning restore CA5394 // Do not use insecure randomness
