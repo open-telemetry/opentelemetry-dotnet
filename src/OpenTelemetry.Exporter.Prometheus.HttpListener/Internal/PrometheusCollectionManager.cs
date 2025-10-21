@@ -38,6 +38,8 @@ internal sealed class PrometheusCollectionManager
         this.scopes = [];
     }
 
+    internal Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
+
 #if NET
     public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested)
 #else
@@ -58,7 +60,7 @@ internal sealed class PrometheusCollectionManager
 
             if (previousDataViewGeneratedAtUtc.HasValue
                 && this.scrapeResponseCacheDurationMilliseconds > 0
-                && previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
+                && previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= this.UtcNow())
             {
 #if NET
                 return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: true));
@@ -103,13 +105,15 @@ internal sealed class PrometheusCollectionManager
         var result = this.ExecuteCollect(openMetricsRequested);
         if (result)
         {
+            var generatedAt = this.UtcNow();
+
             if (openMetricsRequested)
             {
-                this.previousOpenMetricsDataViewGeneratedAtUtc = DateTime.UtcNow;
+                this.previousOpenMetricsDataViewGeneratedAtUtc = generatedAt;
             }
             else
             {
-                this.previousPlainTextDataViewGeneratedAtUtc = DateTime.UtcNow;
+                this.previousPlainTextDataViewGeneratedAtUtc = generatedAt;
             }
 
             previousDataViewGeneratedAtUtc = openMetricsRequested
