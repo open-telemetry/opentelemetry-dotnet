@@ -46,55 +46,58 @@ internal sealed class PrometheusCollectionManager
     {
         this.EnterGlobalLock();
 
-        // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
-        // last successful collect, return the previous view.
-        var previousDataViewGeneratedAtUtc = openMetricsRequested
-            ? this.previousOpenMetricsDataViewGeneratedAtUtc
-            : this.previousPlainTextDataViewGeneratedAtUtc;
+        DateTime? previousDataViewGeneratedAtUtc;
 
-        if (previousDataViewGeneratedAtUtc.HasValue
-            && this.scrapeResponseCacheDurationMilliseconds > 0
-            && previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
+        try
+        {
+            // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
+            // last successful collect, return the previous view.
+            previousDataViewGeneratedAtUtc = openMetricsRequested
+                ? this.previousOpenMetricsDataViewGeneratedAtUtc
+                : this.previousPlainTextDataViewGeneratedAtUtc;
+
+            if (previousDataViewGeneratedAtUtc.HasValue
+                && this.scrapeResponseCacheDurationMilliseconds > 0
+                && previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
+            {
+#if NET
+                return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: true));
+#else
+                return Task.FromResult(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: true));
+#endif
+            }
+
+            // If a collection is already running, return a task to wait on the result.
+            if (this.collectionRunning)
+            {
+                this.collectionTcs ??= new TaskCompletionSource<CollectionResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+#if NET
+                return new ValueTask<CollectionResponse>(this.collectionTcs.Task);
+#else
+                return this.collectionTcs.Task;
+#endif
+            }
+
+            this.WaitForReadersToComplete();
+
+            // Start a collection on the current thread.
+            this.collectionRunning = true;
+
+            if (openMetricsRequested)
+            {
+                this.previousOpenMetricsDataViewGeneratedAtUtc = null;
+            }
+            else
+            {
+                this.previousPlainTextDataViewGeneratedAtUtc = null;
+            }
+        }
+        finally
         {
             Interlocked.Increment(ref this.readerCount);
             this.ExitGlobalLock();
-#if NET
-            return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: true));
-#else
-            return Task.FromResult(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: true));
-#endif
         }
-
-        // If a collection is already running, return a task to wait on the result.
-        if (this.collectionRunning)
-        {
-            this.collectionTcs ??= new TaskCompletionSource<CollectionResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-            Interlocked.Increment(ref this.readerCount);
-            this.ExitGlobalLock();
-#if NET
-            return new ValueTask<CollectionResponse>(this.collectionTcs.Task);
-#else
-            return this.collectionTcs.Task;
-#endif
-        }
-
-        this.WaitForReadersToComplete();
-
-        // Start a collection on the current thread.
-        this.collectionRunning = true;
-
-        if (openMetricsRequested)
-        {
-            this.previousOpenMetricsDataViewGeneratedAtUtc = null;
-        }
-        else
-        {
-            this.previousPlainTextDataViewGeneratedAtUtc = null;
-        }
-
-        Interlocked.Increment(ref this.readerCount);
-        this.ExitGlobalLock();
 
         CollectionResponse response;
         var result = this.ExecuteCollect(openMetricsRequested);
@@ -122,15 +125,20 @@ internal sealed class PrometheusCollectionManager
 
         this.EnterGlobalLock();
 
-        this.collectionRunning = false;
-
-        if (this.collectionTcs != null)
+        try
         {
-            this.collectionTcs.SetResult(response);
-            this.collectionTcs = null;
-        }
+            this.collectionRunning = false;
 
-        this.ExitGlobalLock();
+            if (this.collectionTcs != null)
+            {
+                this.collectionTcs.SetResult(response);
+                this.collectionTcs = null;
+            }
+        }
+        finally
+        {
+            this.ExitGlobalLock();
+        }
 
 #if NET
         return new ValueTask<CollectionResponse>(response);
