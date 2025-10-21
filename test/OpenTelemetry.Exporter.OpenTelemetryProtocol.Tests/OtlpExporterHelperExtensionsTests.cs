@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET462_OR_GREATER || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
