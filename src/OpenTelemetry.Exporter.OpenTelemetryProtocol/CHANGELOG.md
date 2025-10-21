@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.14.0-rc.1
+
+Released 2025-Oct-21
+
 * Changed histogram protobuf serialization to use packed format for `bucket_counts`
   and `explicit_bounds` to be specification-compliant and fix issues with strict
   OTLP parsers. Lenient parsers should handle both formats.

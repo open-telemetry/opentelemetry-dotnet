@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.14.0-rc.1
+
+Released 2025-Oct-21
+
 * **Breaking Change** When targeting `net8.0`, the package now depends on version
   `8.0.0` of the `Microsoft.Extensions.DependencyInjection.Abstractions` NuGet package.
   ([#6327](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6327))
