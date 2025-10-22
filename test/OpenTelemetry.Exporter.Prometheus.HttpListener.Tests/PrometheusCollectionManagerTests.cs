@@ -76,7 +76,7 @@ public sealed class PrometheusCollectionManagerTests
                         // Tick the clock forward - it should still be well within the cache duration.
                         utcNow = utcNow.AddMilliseconds(1);
 
-                        var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
+                        var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested, cts.Token);
                         try
                         {
                             return new Response
@@ -110,7 +110,7 @@ public sealed class PrometheusCollectionManagerTests
             counter.Add(100);
 
             // This should use the cache and ignore the second counter update.
-            var task = exporter.CollectionManager.EnterCollect(openMetricsRequested);
+            var task = exporter.CollectionManager.EnterCollect(openMetricsRequested, cts.Token);
             Assert.True(task.IsCompleted, "Collection did not complete.");
             var response = await task;
             try
@@ -148,7 +148,7 @@ public sealed class PrometheusCollectionManagerTests
                     {
                         cts.Token.ThrowIfCancellationRequested();
 
-                        var collectionResponse = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
+                        var collectionResponse = await exporter.CollectionManager.EnterCollect(openMetricsRequested, cts.Token);
                         try
                         {
                             return new Response

@@ -41,12 +41,12 @@ internal sealed class PrometheusCollectionManager
     internal Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
 
 #if NET
-    public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested)
+    public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested, CancellationToken cancellationToken)
 #else
-    public Task<CollectionResponse> EnterCollect(bool openMetricsRequested)
+    public Task<CollectionResponse> EnterCollect(bool openMetricsRequested, CancellationToken cancellationToken)
 #endif
     {
-        this.EnterGlobalLock();
+        this.EnterGlobalLock(cancellationToken);
 
         DateTime? previousDataViewGeneratedAtUtc;
 
@@ -127,7 +127,7 @@ internal sealed class PrometheusCollectionManager
             response = default;
         }
 
-        this.EnterGlobalLock();
+        this.EnterGlobalLock(cancellationToken);
 
         try
         {
@@ -174,10 +174,10 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void EnterGlobalLock()
+    private void EnterGlobalLock(CancellationToken cancellationToken)
     {
         SpinWait lockWait = default;
-        while (true)
+        while (!cancellationToken.IsCancellationRequested)
         {
             if (Interlocked.CompareExchange(ref this.globalLockState, 1, this.globalLockState) != 0)
             {
@@ -187,6 +187,8 @@ internal sealed class PrometheusCollectionManager
 
             break;
         }
+
+        cancellationToken.ThrowIfCancellationRequested();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
