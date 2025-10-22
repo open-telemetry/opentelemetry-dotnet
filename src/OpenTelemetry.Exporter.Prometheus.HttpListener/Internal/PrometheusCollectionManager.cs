@@ -16,13 +16,13 @@ internal sealed class PrometheusCollectionManager
     private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
     private readonly HashSet<string> scopes;
+    private readonly SemaphoreSlim globalLockState;
     private int metricsCacheCount;
     private byte[] plainTextBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private byte[] openMetricsBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private int targetInfoBufferLength = -1; // zero or positive when target_info has been written for the first time
     private ArraySegment<byte> previousPlainTextDataView;
     private ArraySegment<byte> previousOpenMetricsDataView;
-    private int globalLockState;
     private DateTime? previousPlainTextDataViewGeneratedAtUtc;
     private DateTime? previousOpenMetricsDataViewGeneratedAtUtc;
     private int readerCount;
@@ -36,6 +36,7 @@ internal sealed class PrometheusCollectionManager
         this.onCollectRef = this.OnCollect;
         this.metricsCache = [];
         this.scopes = [];
+        this.globalLockState = new(1, 1);
     }
 
     internal Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
@@ -173,15 +174,18 @@ internal sealed class PrometheusCollectionManager
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void EnterGlobalLock() =>
-        SpinWait.SpinUntil(() => Interlocked.CompareExchange(ref this.globalLockState, 1, 0) == 0);
+        this.globalLockState.Wait();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ExitGlobalLock() =>
-        Interlocked.Exchange(ref this.globalLockState, 0);
+        this.globalLockState.Release();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void WaitForReadersToComplete() =>
-        SpinWait.SpinUntil(() => Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) == 0);
+    private void WaitForReadersToComplete()
+    {
+        SpinWait.SpinUntil(NoReaders);
+        bool NoReaders() => Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) == 0;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ExecuteCollect(bool openMetricsRequested)
