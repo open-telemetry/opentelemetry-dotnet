@@ -65,7 +65,7 @@ public sealed class PrometheusCollectionManagerTests
             var counter = meter.CreateCounter<int>("counter_int", description: "Prometheus help text goes here \n escaping.");
             counter.Add(100);
 
-            Task<Response>[] collectTasks = new Task<Response>[10];
+            Task<Response>[] collectTasks = new Task<Response>[Math.Max(Environment.ProcessorCount / 2, 2)];
             for (int i = 0; i < collectTasks.Length; i++)
             {
                 collectTasks[i] = Task.Run(
