@@ -25,7 +25,7 @@ services:
 
 # Exports Metrics to Prometheus
   prometheus:
-    image: prom/prometheus:v3.7.1@sha256:ff7e389acbe064a4823212a500393d40a28a8f362e4b05cbf6742a9a3ef736b2
+    image: prom/prometheus:v3.7.2@sha256:23031bfe0e74a13004252caaa74eccd0d62b6c6e7a04711d5b8bf5b7e113adc7
     command:
       - --config.file=/etc/prometheus.yaml
       - --web.enable-remote-write-receiver
@@ -37,7 +37,7 @@ services:
 
 # UI to query traces and metrics
   grafana:
-    image: grafana/grafana:12.2.0@sha256:74144189b38447facf737dfd0f3906e42e0776212bf575dc3334c3609183adf7
+    image: grafana/grafana:12.2.1@sha256:35c41e0fd0295f5d0ee5db7e780cf33506abfaf47686196f825364889dee878b
     volumes:
       - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     environment:
