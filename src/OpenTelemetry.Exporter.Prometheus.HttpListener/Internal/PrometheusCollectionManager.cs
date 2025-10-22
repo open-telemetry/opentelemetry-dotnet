@@ -41,12 +41,12 @@ internal sealed class PrometheusCollectionManager
     internal Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
 
 #if NET
-    public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested, CancellationToken cancellationToken)
+    public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested)
 #else
-    public Task<CollectionResponse> EnterCollect(bool openMetricsRequested, CancellationToken cancellationToken)
+    public Task<CollectionResponse> EnterCollect(bool openMetricsRequested)
 #endif
     {
-        this.EnterGlobalLock(cancellationToken);
+        this.EnterGlobalLock();
 
         DateTime? previousDataViewGeneratedAtUtc;
 
@@ -127,7 +127,7 @@ internal sealed class PrometheusCollectionManager
             response = default;
         }
 
-        this.EnterGlobalLock(cancellationToken);
+        this.EnterGlobalLock();
 
         try
         {
@@ -152,10 +152,8 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitCollect()
-    {
+    public void ExitCollect() =>
         Interlocked.Decrement(ref this.readerCount);
-    }
 
     private static bool IncreaseBufferSize(ref byte[] buffer)
     {
@@ -174,44 +172,16 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void EnterGlobalLock(CancellationToken cancellationToken)
-    {
-        SpinWait lockWait = default;
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            if (Interlocked.CompareExchange(ref this.globalLockState, 1, this.globalLockState) != 0)
-            {
-                lockWait.SpinOnce();
-                continue;
-            }
-
-            break;
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-    }
+    private void EnterGlobalLock() =>
+        SpinWait.SpinUntil(() => Interlocked.CompareExchange(ref this.globalLockState, 1, 0) == 0);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ExitGlobalLock()
-    {
+    private void ExitGlobalLock() =>
         Interlocked.Exchange(ref this.globalLockState, 0);
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void WaitForReadersToComplete()
-    {
-        SpinWait readWait = default;
-        while (true)
-        {
-            if (Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) != 0)
-            {
-                readWait.SpinOnce();
-                continue;
-            }
-
-            break;
-        }
-    }
+    private void WaitForReadersToComplete() =>
+        SpinWait.SpinUntil(() => Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) == 0);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ExecuteCollect(bool openMetricsRequested)
