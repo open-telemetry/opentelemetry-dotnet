@@ -65,32 +65,35 @@ public sealed class PrometheusCollectionManagerTests
             var counter = meter.CreateCounter<int>("counter_int", description: "Prometheus help text goes here \n escaping.");
             counter.Add(100);
 
+            async Task<Response> CollectAsync(bool advanceClock)
+            {
+                cts.Token.ThrowIfCancellationRequested();
+
+                if (advanceClock)
+                {
+                    // Tick the clock forward - it should still be well within the cache duration.
+                    utcNow = utcNow.AddMilliseconds(1);
+                }
+
+                var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested, cts.Token);
+                try
+                {
+                    return new()
+                    {
+                        CollectionResponse = response,
+                        ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
+                    };
+                }
+                finally
+                {
+                    exporter.CollectionManager.ExitCollect();
+                }
+            }
+
             Task<Response>[] collectTasks = new Task<Response>[Math.Max(Environment.ProcessorCount / 2, 2)];
             for (int i = 0; i < collectTasks.Length; i++)
             {
-                collectTasks[i] = Task.Run(
-                    async () =>
-                    {
-                        cts.Token.ThrowIfCancellationRequested();
-
-                        // Tick the clock forward - it should still be well within the cache duration.
-                        utcNow = utcNow.AddMilliseconds(1);
-
-                        var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested, cts.Token);
-                        try
-                        {
-                            return new Response
-                            {
-                                CollectionResponse = response,
-                                ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
-                            };
-                        }
-                        finally
-                        {
-                            exporter.CollectionManager.ExitCollect();
-                        }
-                    },
-                    cts.Token);
+                collectTasks[i] = Task.Run(() => CollectAsync(advanceClock: true), cts.Token);
             }
 
             await WaitForTasksWithTimeout(collectTasks, testTimeout, cts.Token);
@@ -109,12 +112,13 @@ public sealed class PrometheusCollectionManagerTests
 
             counter.Add(100);
 
-            // This should use the cache and ignore the second counter update.
-            var task = exporter.CollectionManager.EnterCollect(openMetricsRequested, cts.Token);
-            Assert.True(task.IsCompleted, "Collection did not complete.");
-            var response = await task;
             try
             {
+                // This should use the cache and ignore the second counter update.
+                var task = exporter.CollectionManager.EnterCollect(openMetricsRequested, cts.Token);
+                Assert.True(task.IsCompleted, "Collection did not complete.");
+                var response = await task;
+
                 if (cacheEnabled)
                 {
                     Assert.Equal(1, runningCollectCount);
@@ -143,26 +147,7 @@ public sealed class PrometheusCollectionManagerTests
 
             for (int i = 0; i < collectTasks.Length; i++)
             {
-                collectTasks[i] = Task.Run(
-                    async () =>
-                    {
-                        cts.Token.ThrowIfCancellationRequested();
-
-                        var collectionResponse = await exporter.CollectionManager.EnterCollect(openMetricsRequested, cts.Token);
-                        try
-                        {
-                            return new Response
-                            {
-                                CollectionResponse = collectionResponse,
-                                ViewPayload = openMetricsRequested ? [.. collectionResponse.OpenMetricsView] : [.. collectionResponse.PlainTextView],
-                            };
-                        }
-                        finally
-                        {
-                            exporter.CollectionManager.ExitCollect();
-                        }
-                    },
-                    cts.Token);
+                collectTasks[i] = Task.Run(() => CollectAsync(advanceClock: false), cts.Token);
             }
 
             await WaitForTasksWithTimeout(collectTasks, testTimeout, cts.Token);
