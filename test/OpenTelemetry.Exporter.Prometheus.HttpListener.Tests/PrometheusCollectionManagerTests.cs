@@ -93,7 +93,7 @@ public sealed class PrometheusCollectionManagerTests
                     cts.Token);
             }
 
-            await Task.WhenAll(collectTasks);
+            await WaitForTasksWithTimeout(collectTasks, testTimeout, cts.Token);
 
             Assert.Equal(1, runningCollectCount);
 
@@ -165,7 +165,7 @@ public sealed class PrometheusCollectionManagerTests
                     cts.Token);
             }
 
-            await Task.WhenAll(collectTasks);
+            await WaitForTasksWithTimeout(collectTasks, testTimeout, cts.Token);
 
             Assert.Equal(cacheEnabled ? 2 : 3, runningCollectCount);
             Assert.NotEqual(firstResponse.ViewPayload, (await collectTasks[0]).ViewPayload);
@@ -180,6 +180,16 @@ public sealed class PrometheusCollectionManagerTests
                 Assert.Equal(firstResponse.ViewPayload, (await collectTasks[i]).ViewPayload);
                 Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, (await collectTasks[i]).CollectionResponse.GeneratedAtUtc);
             }
+        }
+
+        static async Task WaitForTasksWithTimeout<T>(Task<T>[] tasks, TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            var all = Task.WhenAll(tasks);
+            var finished = await Task.WhenAny(all, Task.Delay(timeout, cancellationToken));
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            await all;
         }
     }
 
