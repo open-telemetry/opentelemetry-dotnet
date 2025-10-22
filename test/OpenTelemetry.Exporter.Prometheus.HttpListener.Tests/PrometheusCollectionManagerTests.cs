@@ -90,13 +90,21 @@ public sealed class PrometheusCollectionManagerTests
                 }
             }
 
-            Task<Response>[] collectTasks = new Task<Response>[Math.Max(Environment.ProcessorCount / 2, 2)];
-            for (int i = 0; i < collectTasks.Length; i++)
+            async Task<Task<Response>[]> CollectInParallelAsync(bool advanceClock)
             {
-                collectTasks[i] = Task.Run(() => CollectAsync(advanceClock: true), cts.Token);
+                Task<Response>[] tasks = new Task<Response>[Math.Max(Environment.ProcessorCount / 2, 2)];
+
+                for (int i = 0; i < tasks.Length; i++)
+                {
+                    tasks[i] = Task.Run(() => CollectAsync(advanceClock), cts.Token);
+                }
+
+                await WaitForTasksWithTimeout(tasks, testTimeout, cts.Token);
+
+                return tasks;
             }
 
-            await WaitForTasksWithTimeout(collectTasks, testTimeout, cts.Token);
+            var collectTasks = await CollectInParallelAsync(advanceClock: true);
 
             Assert.Equal(1, runningCollectCount);
 
@@ -106,8 +114,10 @@ public sealed class PrometheusCollectionManagerTests
 
             for (int i = 1; i < collectTasks.Length; i++)
             {
-                Assert.Equal(firstResponse.ViewPayload, (await collectTasks[i]).ViewPayload);
-                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, (await collectTasks[i]).CollectionResponse.GeneratedAtUtc);
+                var response = await collectTasks[i];
+
+                Assert.Equal(firstResponse.ViewPayload, response.ViewPayload);
+                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, response.CollectionResponse.GeneratedAtUtc);
             }
 
             counter.Add(100);
@@ -145,25 +155,24 @@ public sealed class PrometheusCollectionManagerTests
 
             counter.Add(100);
 
-            for (int i = 0; i < collectTasks.Length; i++)
-            {
-                collectTasks[i] = Task.Run(() => CollectAsync(advanceClock: false), cts.Token);
-            }
-
-            await WaitForTasksWithTimeout(collectTasks, testTimeout, cts.Token);
+            collectTasks = await CollectInParallelAsync(advanceClock: false);
 
             Assert.Equal(cacheEnabled ? 2 : 3, runningCollectCount);
-            Assert.NotEqual(firstResponse.ViewPayload, (await collectTasks[0]).ViewPayload);
-            Assert.NotEqual(firstResponse.CollectionResponse.GeneratedAtUtc, (await collectTasks[0]).CollectionResponse.GeneratedAtUtc);
 
+            var original = firstResponse;
             firstResponse = await collectTasks[0];
+
+            Assert.NotEqual(original.ViewPayload, firstResponse.ViewPayload);
+            Assert.NotEqual(original.CollectionResponse.GeneratedAtUtc, firstResponse.CollectionResponse.GeneratedAtUtc);
 
             Assert.False(firstResponse.CollectionResponse.FromCache, "Response was served from the cache.");
 
             for (int i = 1; i < collectTasks.Length; i++)
             {
-                Assert.Equal(firstResponse.ViewPayload, (await collectTasks[i]).ViewPayload);
-                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, (await collectTasks[i]).CollectionResponse.GeneratedAtUtc);
+                var response = await collectTasks[i];
+
+                Assert.Equal(firstResponse.ViewPayload, response.ViewPayload);
+                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, response.CollectionResponse.GeneratedAtUtc);
             }
         }
 
