@@ -92,16 +92,42 @@ public sealed class PrometheusCollectionManagerTests
 
             async Task<Task<Response>[]> CollectInParallelAsync(bool advanceClock)
             {
-                Task<Response>[] tasks = new Task<Response>[Math.Max(Environment.ProcessorCount / 2, 2)];
+                var parallelism = Math.Max(Environment.ProcessorCount / 2, 2);
+
+#if NET
+                var bag = new System.Collections.Concurrent.ConcurrentBag<Response>();
+
+                var parallel = Parallel.ForAsync(
+                    0,
+                    parallelism,
+                    cts.Token,
+                    async (_, _) => bag.Add(await CollectAsync(advanceClock)));
+
+                var finished = await Task.WhenAny(parallel, Task.Delay(testTimeout, cts.Token));
+
+                cts.Token.ThrowIfCancellationRequested();
+
+                await parallel;
+
+                return [.. bag.Select((r) => Task.FromResult(r))];
+#else
+
+                Task<Response>[] tasks = new Task<Response>[parallelism];
 
                 for (int i = 0; i < tasks.Length; i++)
                 {
                     tasks[i] = Task.Run(() => CollectAsync(advanceClock), cts.Token);
                 }
 
-                await WaitForTasksWithTimeout(tasks, testTimeout, cts.Token);
+                var all = Task.WhenAll(tasks);
+                var finished = await Task.WhenAny(all, Task.Delay(testTimeout, cts.Token));
+
+                cts.Token.ThrowIfCancellationRequested();
+
+                await all;
 
                 return tasks;
+#endif
             }
 
             var collectTasks = await CollectInParallelAsync(advanceClock: true);
@@ -174,16 +200,6 @@ public sealed class PrometheusCollectionManagerTests
                 Assert.Equal(firstResponse.ViewPayload, response.ViewPayload);
                 Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, response.CollectionResponse.GeneratedAtUtc);
             }
-        }
-
-        static async Task WaitForTasksWithTimeout<T>(Task<T>[] tasks, TimeSpan timeout, CancellationToken cancellationToken)
-        {
-            var all = Task.WhenAll(tasks);
-            var finished = await Task.WhenAny(all, Task.Delay(timeout, cancellationToken));
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            await all;
         }
     }
 
