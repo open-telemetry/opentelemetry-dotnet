@@ -71,6 +71,7 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
             if (disposing)
             {
                 this.OnDispose?.Invoke();
+                this.CollectionManager?.Dispose();
             }
 
             this.disposed = true;

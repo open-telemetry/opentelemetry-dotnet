@@ -7,7 +7,7 @@ using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus;
 
-internal sealed class PrometheusCollectionManager
+internal sealed class PrometheusCollectionManager : IDisposable
 {
     private const int MaxCachedMetrics = 1024;
 
@@ -40,6 +40,8 @@ internal sealed class PrometheusCollectionManager
     }
 
     internal Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
+
+    public void Dispose() => this.globalLockState?.Dispose();
 
 #if NET
     public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested)
