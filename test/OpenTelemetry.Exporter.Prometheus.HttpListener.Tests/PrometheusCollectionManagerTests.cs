@@ -19,6 +19,9 @@ public sealed class PrometheusCollectionManagerTests
 #endif
     public async Task EnterExitCollectTest(int scrapeResponseCacheDurationMilliseconds, bool openMetricsRequested)
     {
+        var testTimeout = TimeSpan.FromMinutes(1);
+        using var cts = new CancellationTokenSource(testTimeout);
+
         bool cacheEnabled = scrapeResponseCacheDurationMilliseconds != 0;
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
@@ -44,7 +47,10 @@ public sealed class PrometheusCollectionManagerTests
             {
                 bool result = collectFunc!(timeout);
                 runningCollectCount++;
+
+                cts.Token.ThrowIfCancellationRequested();
                 Thread.Sleep(5000);
+
                 return result;
             };
 
@@ -62,25 +68,29 @@ public sealed class PrometheusCollectionManagerTests
             Task<Response>[] collectTasks = new Task<Response>[10];
             for (int i = 0; i < collectTasks.Length; i++)
             {
-                collectTasks[i] = Task.Run(async () =>
-                {
-                    // Tick the clock forward - it should still be well within the cache duration.
-                    utcNow = utcNow.AddMilliseconds(1);
+                collectTasks[i] = Task.Run(
+                    async () =>
+                    {
+                        cts.Token.ThrowIfCancellationRequested();
 
-                    var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
-                    try
-                    {
-                        return new Response
+                        // Tick the clock forward - it should still be well within the cache duration.
+                        utcNow = utcNow.AddMilliseconds(1);
+
+                        var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
+                        try
                         {
-                            CollectionResponse = response,
-                            ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
-                        };
-                    }
-                    finally
-                    {
-                        exporter.CollectionManager.ExitCollect();
-                    }
-                });
+                            return new Response
+                            {
+                                CollectionResponse = response,
+                                ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
+                            };
+                        }
+                        finally
+                        {
+                            exporter.CollectionManager.ExitCollect();
+                        }
+                    },
+                    cts.Token);
             }
 
             await Task.WhenAll(collectTasks);
@@ -89,7 +99,7 @@ public sealed class PrometheusCollectionManagerTests
 
             var firstResponse = await collectTasks[0];
 
-            Assert.False(firstResponse.CollectionResponse.FromCache);
+            Assert.False(firstResponse.CollectionResponse.FromCache, "Response was served from the cache.");
 
             for (int i = 1; i < collectTasks.Length; i++)
             {
@@ -101,20 +111,20 @@ public sealed class PrometheusCollectionManagerTests
 
             // This should use the cache and ignore the second counter update.
             var task = exporter.CollectionManager.EnterCollect(openMetricsRequested);
-            Assert.True(task.IsCompleted);
+            Assert.True(task.IsCompleted, "Collection did not complete.");
             var response = await task;
             try
             {
                 if (cacheEnabled)
                 {
                     Assert.Equal(1, runningCollectCount);
-                    Assert.True(response.FromCache);
+                    Assert.True(response.FromCache, "Response was not served from the cache.");
                     Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, response.GeneratedAtUtc);
                 }
                 else
                 {
                     Assert.Equal(2, runningCollectCount);
-                    Assert.False(response.FromCache);
+                    Assert.False(response.FromCache, "Response was served from the cache.");
                     Assert.True(firstResponse.CollectionResponse.GeneratedAtUtc < response.GeneratedAtUtc);
                 }
             }
@@ -133,22 +143,26 @@ public sealed class PrometheusCollectionManagerTests
 
             for (int i = 0; i < collectTasks.Length; i++)
             {
-                collectTasks[i] = Task.Run(async () =>
-                {
-                    var collectionResponse = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
-                    try
+                collectTasks[i] = Task.Run(
+                    async () =>
                     {
-                        return new Response
+                        cts.Token.ThrowIfCancellationRequested();
+
+                        var collectionResponse = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
+                        try
                         {
-                            CollectionResponse = collectionResponse,
-                            ViewPayload = openMetricsRequested ? [.. collectionResponse.OpenMetricsView] : [.. collectionResponse.PlainTextView],
-                        };
-                    }
-                    finally
-                    {
-                        exporter.CollectionManager.ExitCollect();
-                    }
-                });
+                            return new Response
+                            {
+                                CollectionResponse = collectionResponse,
+                                ViewPayload = openMetricsRequested ? [.. collectionResponse.OpenMetricsView] : [.. collectionResponse.PlainTextView],
+                            };
+                        }
+                        finally
+                        {
+                            exporter.CollectionManager.ExitCollect();
+                        }
+                    },
+                    cts.Token);
             }
 
             await Task.WhenAll(collectTasks);
@@ -159,7 +173,7 @@ public sealed class PrometheusCollectionManagerTests
 
             firstResponse = await collectTasks[0];
 
-            Assert.False(firstResponse.CollectionResponse.FromCache);
+            Assert.False(firstResponse.CollectionResponse.FromCache, "Response was served from the cache.");
 
             for (int i = 1; i < collectTasks.Length; i++)
             {
