@@ -92,7 +92,9 @@ public sealed class PrometheusCollectionManagerTests
 
             async Task<Task<Response>[]> CollectInParallelAsync(bool advanceClock)
             {
-                var parallelism = Math.Max(Environment.ProcessorCount / 2, 2);
+                // Avoid deadlocks by limiting parallelism to a reasonable level based on CPU count.
+                // Always use at least 2 to ensure concurrency happens. Running on a single core machine is unlikely.
+                var parallelism = Math.Max((Environment.ProcessorCount + 1) / 2, 2);
 
 #if NET
                 var bag = new System.Collections.Concurrent.ConcurrentBag<Response>();
@@ -103,7 +105,7 @@ public sealed class PrometheusCollectionManagerTests
                     cts.Token,
                     async (_, _) => bag.Add(await CollectAsync(advanceClock)));
 
-                var finished = await Task.WhenAny(parallel, Task.Delay(testTimeout, cts.Token));
+                await Task.WhenAny(parallel, Task.Delay(testTimeout, cts.Token));
 
                 cts.Token.ThrowIfCancellationRequested();
 
@@ -120,7 +122,7 @@ public sealed class PrometheusCollectionManagerTests
                 }
 
                 var all = Task.WhenAll(tasks);
-                var finished = await Task.WhenAny(all, Task.Delay(testTimeout, cts.Token));
+                await Task.WhenAny(all, Task.Delay(testTimeout, cts.Token));
 
                 cts.Token.ThrowIfCancellationRequested();
 
