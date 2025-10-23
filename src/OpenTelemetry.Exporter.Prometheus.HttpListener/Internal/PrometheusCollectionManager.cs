@@ -7,7 +7,7 @@ using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus;
 
-internal sealed class PrometheusCollectionManager : IDisposable
+internal sealed class PrometheusCollectionManager
 {
     private const int MaxCachedMetrics = 1024;
 
@@ -16,13 +16,13 @@ internal sealed class PrometheusCollectionManager : IDisposable
     private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
     private readonly HashSet<string> scopes;
-    private readonly SemaphoreSlim globalLockState;
     private int metricsCacheCount;
     private byte[] plainTextBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private byte[] openMetricsBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private int targetInfoBufferLength = -1; // zero or positive when target_info has been written for the first time
     private ArraySegment<byte> previousPlainTextDataView;
     private ArraySegment<byte> previousOpenMetricsDataView;
+    private int globalLockState;
     private DateTime? previousPlainTextDataViewGeneratedAtUtc;
     private DateTime? previousOpenMetricsDataViewGeneratedAtUtc;
     private int readerCount;
@@ -36,12 +36,9 @@ internal sealed class PrometheusCollectionManager : IDisposable
         this.onCollectRef = this.OnCollect;
         this.metricsCache = [];
         this.scopes = [];
-        this.globalLockState = new(1, 1);
     }
 
     internal Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
-
-    public void Dispose() => this.globalLockState?.Dispose();
 
 #if NET
     public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested)
@@ -155,8 +152,10 @@ internal sealed class PrometheusCollectionManager : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitCollect() =>
+    public void ExitCollect()
+    {
         Interlocked.Decrement(ref this.readerCount);
+    }
 
     private static bool IncreaseBufferSize(ref byte[] buffer)
     {
@@ -175,18 +174,41 @@ internal sealed class PrometheusCollectionManager : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void EnterGlobalLock() =>
-        this.globalLockState.Wait();
+    private void EnterGlobalLock()
+    {
+        SpinWait lockWait = default;
+        while (true)
+        {
+            if (Interlocked.CompareExchange(ref this.globalLockState, 1, this.globalLockState) != 0)
+            {
+                lockWait.SpinOnce();
+                continue;
+            }
+
+            break;
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ExitGlobalLock() =>
-        this.globalLockState.Release();
+    private void ExitGlobalLock()
+    {
+        Interlocked.Exchange(ref this.globalLockState, 0);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void WaitForReadersToComplete()
     {
-        SpinWait.SpinUntil(NoReaders);
-        bool NoReaders() => Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) == 0;
+        SpinWait readWait = default;
+        while (true)
+        {
+            if (Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) != 0)
+            {
+                readWait.SpinOnce();
+                continue;
+            }
+
+            break;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
