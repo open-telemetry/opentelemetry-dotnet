@@ -28,6 +28,7 @@ jobs:
   build-pack-publish:
     runs-on: windows-latest
     permissions:
+      attestations: write
       contents: read
       id-token: write
     env:
@@ -74,6 +75,12 @@ jobs:
                 cosign.exe sign-blob $fileFullPath --yes --output-signature $fileFullPath-keyless.sig --output-certificate $fileFullPath-keyless.pem
             }
         }
+
+    - name: Create GitHub attestations for DLLs
+      uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+      with:
+        subject-path: |
+          ./artifacts/bin/*/release_*/*.dll
 
     - name: dotnet pack
       shell: pwsh
