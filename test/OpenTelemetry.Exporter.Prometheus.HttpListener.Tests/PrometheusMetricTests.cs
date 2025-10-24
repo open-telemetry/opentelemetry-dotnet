@@ -268,11 +268,7 @@ public sealed class PrometheusMetricTests
     [MemberData(nameof(GetPrometheusType_Data))]
     public void GetPrometheusType_MapsOpenTelemetryMetricsTypeToPrometheus(MetricsMappingTestData mappingTestData)
     {
-        Assert.NotNull(mappingTestData);
-
-#pragma warning disable CA1062 // Validate arguments of public methods - needed only for .NET Framework
         var result = PrometheusMetric.GetPrometheusType(mappingTestData.OpenTelemetryMetricType);
-#pragma warning restore CA1062 // Validate arguments of public methods - needed only for .NET Framework
         Assert.Equal(mappingTestData.ExpectedPrometheusType, result);
     }
 

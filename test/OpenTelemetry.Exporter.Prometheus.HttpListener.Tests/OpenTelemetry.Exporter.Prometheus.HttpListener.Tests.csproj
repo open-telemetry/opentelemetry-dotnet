@@ -6,6 +6,8 @@
     <DefineConstants>$(DefineConstants);PROMETHEUS_HTTP_LISTENER</DefineConstants>
     <!-- Avoid conflicting port registrations if TFMs tested in parallel -->
     <TestTfmsInParallel>false</TestTfmsInParallel>
+    <!-- CA1062 Validate arguments of public methods - needed for Theory methods -->
+    <NoWarn>$(NoWarn);CA1062</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
