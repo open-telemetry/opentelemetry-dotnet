@@ -92,7 +92,7 @@ public class BatchExportActivityProcessorTests
         Assert.Equal(0, processor.ProcessedCount);
 
         // waiting to see if time is triggering the exporter
-        await Task.Delay(TimeSpan.FromSeconds(1));
+        await Task.Delay(TimeSpan.FromSeconds(2));
         Assert.Empty(exportedItems);
 
         // forcing flush
