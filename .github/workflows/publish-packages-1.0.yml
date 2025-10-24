@@ -80,7 +80,7 @@ jobs:
       uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
       with:
         subject-path: |
-          ./artifacts/bin/*/release_*/*.dll
+          ./artifacts/bin/*/release_*/OpenTelemetry*.dll
 
     - name: dotnet pack
       shell: pwsh
