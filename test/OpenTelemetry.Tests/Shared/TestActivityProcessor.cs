@@ -5,9 +5,10 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Tests;
 
-internal sealed class TestActivityProcessor : BaseProcessor<Activity>
+internal sealed class TestActivityProcessor : ExtendedBaseProcessor<Activity>
 {
     public Action<Activity>? StartAction;
+    public Action<Activity>? EndingAction;
     public Action<Activity>? EndAction;
 
     public TestActivityProcessor()
@@ -20,6 +21,13 @@ internal sealed class TestActivityProcessor : BaseProcessor<Activity>
         this.EndAction = onEnd;
     }
 
+    public TestActivityProcessor(Action<Activity>? onStart, Action<Activity>? onEnding, Action<Activity>? onEnd)
+    {
+        this.StartAction = onStart;
+        this.EndingAction = onEnding;
+        this.EndAction = onEnd;
+    }
+
     public bool ShutdownCalled { get; private set; }
 
     public bool ForceFlushCalled { get; private set; }
@@ -29,6 +37,11 @@ internal sealed class TestActivityProcessor : BaseProcessor<Activity>
     public override void OnStart(Activity span)
     {
         this.StartAction?.Invoke(span);
+    }
+
+    public override void OnEnding(Activity span)
+    {
+        this.EndingAction?.Invoke(span);
     }
 
     public override void OnEnd(Activity span)
