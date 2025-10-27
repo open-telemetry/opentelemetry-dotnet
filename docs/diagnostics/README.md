@@ -9,7 +9,7 @@ to specific code patterns identified through static analysis.
 
 Range: OTEL1000 - OTEL1999
 
-Experimental APIs exposed in OpenTelemetry .NET pre-relase builds. APIs are
+Experimental APIs exposed in OpenTelemetry .NET pre-release builds. APIs are
 exposed experimentally when either the OpenTelemetry Specification has
 explicitly marked some feature as
 [experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md)

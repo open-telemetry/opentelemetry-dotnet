@@ -435,6 +435,7 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public async Task AddOpenTelemetry_HostedServiceOrder_DoesNotMatter()
     {
+        // Arrange
         var exportedItems = new List<Activity>();
 
         var builder = new HostBuilder().ConfigureServices(services =>
@@ -449,12 +450,23 @@ public class OpenTelemetryServicesExtensionsTests
                 });
         });
 
-        var host = builder.Build();
+        // Act
+        using var host = builder.Build();
         await host.StartAsync();
-        await host.StopAsync();
-        host.Dispose();
 
-        Assert.Single(exportedItems);
+        var service = host.Services
+            .GetServices<IHostedService>()
+            .OfType<TestHostedService>()
+            .Single();
+
+        // Give the background service some time to run.
+        await Task.WhenAny(service.ExecuteTask!, Task.Delay(TimeSpan.FromSeconds(5)));
+
+        await host.StopAsync();
+
+        // Assert
+        var activity = Assert.Single(exportedItems);
+        Assert.Equal("test", activity.DisplayName);
     }
 
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes
