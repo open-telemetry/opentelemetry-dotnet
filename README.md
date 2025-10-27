@@ -188,17 +188,35 @@ and can be installed using the
 
 Starting with the `1.10.0` release the DLLs included in the packages pushed to
 NuGet are digitally signed using [Sigstore](https://www.sigstore.dev/). Within
-each NuGet package the digital signature and its corresponding certificate file
-are placed alongside the shipped DLL(s) in the `/lib` folder. When a project
-targets multiple frameworks each target outputs a dedicated DLL and signing
-artifacts into a sub folder based on the
-[TFM](https://learn.microsoft.com/dotnet/standard/frameworks).
+each NuGet package the digital signature artifacts are placed alongside the
+shipped DLL(s) in the `/lib` folder. When a project targets multiple frameworks
+each target outputs a dedicated DLL and signing artifacts into a sub folder
+based on the [TFM](https://learn.microsoft.com/dotnet/standard/frameworks).
 
-The digital signature and certificate files share the same name prefix as the
-DLL to ensure easy identification and association.
+The digital signature files share the same name prefix as the DLL to ensure
+easy identification and association.
 
 To verify the integrity of a DLL inside a NuGet package use the
 [cosign](https://github.com/sigstore/cosign) tool from Sigstore:
+
+#### Version 1.14.0-rc.2 and later
+
+These versions are using bundle format known from cosign 3.0+.
+
+```bash
+$TAG="core-1.14.0-rc.1"
+cosign verify-blob \
+    --bundle OpenTelemetry.dll.sigstore.json \
+    --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/$TAG" \
+    --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+    --use-signed-timestamps \
+    OpenTelemetry.dll
+```
+
+#### Versions 1.10.0 - 1.14.0-rc.1
+
+These versions are using separate signature and certificate files format known
+from cosign 2.x.
 
 ```bash
 $TAG="core-1.12.0"
