@@ -1,4 +1,3 @@
-OpenTelemetry.Metrics.MetricReaderTemporalityPreference.LowMemory = 3 -> OpenTelemetry.Metrics.MetricReaderTemporalityPreference
 [OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
 [OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<double> measurement) -> void
 [OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<long> measurement) -> void
