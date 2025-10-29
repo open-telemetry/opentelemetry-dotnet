@@ -308,6 +308,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "experimental-apis", "experi
 		docs\diagnostics\experimental-apis\OTEL1000.md = docs\diagnostics\experimental-apis\OTEL1000.md
 		docs\diagnostics\experimental-apis\OTEL1001.md = docs\diagnostics\experimental-apis\OTEL1001.md
 		docs\diagnostics\experimental-apis\OTEL1004.md = docs\diagnostics\experimental-apis\OTEL1004.md
+		docs\diagnostics\experimental-apis\OTEL1005.md = docs\diagnostics\experimental-apis\OTEL1005.md
 		docs\diagnostics\experimental-apis\README.md = docs\diagnostics\experimental-apis\README.md
 	EndProjectSection
 EndProject

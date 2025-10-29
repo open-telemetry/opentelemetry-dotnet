@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Diagnostics;
 using OpenTelemetry.Internal;
 
@@ -10,7 +13,11 @@ namespace OpenTelemetry;
 /// Represents a chain of <see cref="BaseProcessor{T}"/>s.
 /// </summary>
 /// <typeparam name="T">The type of object to be processed.</typeparam>
+#if EXPOSE_EXPERIMENTAL_FEATURES
+public class CompositeProcessor<T> : ExtendedBaseProcessor<T>
+#else
 public class CompositeProcessor<T> : BaseProcessor<T>
+#endif
 {
     internal readonly DoublyLinkedListNode Head;
     private DoublyLinkedListNode tail;
@@ -68,6 +75,21 @@ public class CompositeProcessor<T> : BaseProcessor<T>
             cur.Value.OnEnd(data);
         }
     }
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <inheritdoc/>
+    [Experimental(DiagnosticDefinitions.ExtendedBaseProcessorExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    public override void OnEnding(T data)
+    {
+        for (var cur = this.Head; cur != null; cur = cur.Next)
+        {
+            if (typeof(ExtendedBaseProcessor<T>).IsAssignableFrom(cur.Value.GetType()))
+            {
+                ((ExtendedBaseProcessor<T>)cur.Value).OnEnding(data);
+            }
+        }
+    }
+#endif
 
     /// <inheritdoc/>
     public override void OnStart(T data)
