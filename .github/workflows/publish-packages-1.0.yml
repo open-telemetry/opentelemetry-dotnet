@@ -93,7 +93,7 @@ jobs:
         # renovate: datasource=nuget depName=dotnet-validate
         DOTNET_VALIDATE_VERSION: '0.0.1-preview.537'
         # renovate: datasource=nuget depName=Meziantou.Framework.NuGetPackageValidation.Tool
-        MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION: '1.0.32'
+        MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION: '1.0.34'
       run: |
         dotnet tool install --global dotnet-validate --version ${env:DOTNET_VALIDATE_VERSION} --allow-roll-forward
         dotnet tool install --global Meziantou.Framework.NuGetPackageValidation.Tool --version ${env:MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION} --allow-roll-forward
@@ -160,7 +160,7 @@ jobs:
 
     - name: Publish Artifacts
       id: upload-artifacts
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: ${{ github.ref_name }}-packages
         path: ./artifacts/package/release
