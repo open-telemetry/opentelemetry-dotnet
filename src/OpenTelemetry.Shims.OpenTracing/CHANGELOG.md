@@ -9,6 +9,13 @@ Notes](../../RELEASENOTES.md).
 * Add support for .NET 10.0.
   ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
 
+* **Breaking Change** NuGet packages now use the Sigstore bundle format
+  (`.sigstore.json`) for digital signatures instead of separate signature
+  (`.sig`) and certificate (`.pem`) files. This requires cosign 3.0 or later
+  for verification. See the [Digital signing
+  section](../../README.md#digital-signing) for updated verification instructions.
+  ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
+
 ## 1.13.1-beta.1
 
 Released 2025-Oct-10

@@ -54,17 +54,12 @@
   <Target Name="IncludeSigningSignaturesInPackages" BeforeTargets="_GetTargetFrameworksOutput">
     <!-- Note: This target adds any signatures found to NuGet packages -->
     <ItemGroup>
-      <SignatureFiles Include="$(ArtifactsPath)\bin\$(MSBuildProjectName)\$(Configuration.ToLower())_*\$(MSBuildProjectName).dll-keyless.sig" />
-      <CertificateFiles Include="$(ArtifactsPath)\bin\$(MSBuildProjectName)\$(Configuration.ToLower())_*\$(MSBuildProjectName).dll-keyless.pem" />
+      <SigstoreBundle Include="$(ArtifactsPath)\bin\$(MSBuildProjectName)\$(Configuration.ToLower())_*\$(MSBuildProjectName).dll.sigstore.json" />
       <!-- RecursiveDir is equal to e.g. `release_net8.0` so we need to strip it out -->
-      <SignatureFilesWithTfm Include="@(SignatureFiles)">
+      <SigstoreBundleWithTfm Include="@(SigstoreBundle)">
         <TargetFramework>$([System.String]::Copy('%(RecursiveDir)').Replace(`$(Configuration.ToLower())_`, ''))</TargetFramework>
-      </SignatureFilesWithTfm>
-      <CertificateFilesWithTfm Include="@(CertificateFiles)">
-        <TargetFramework>$([System.String]::Copy('%(RecursiveDir)').Replace(`$(Configuration.ToLower())_`, ''))</TargetFramework>
-      </CertificateFilesWithTfm>
-      <Content Include="@(SignatureFilesWithTfm)" Pack="True" PackagePath="lib\%(SignatureFilesWithTfm.TargetFramework)%(Filename)%(Extension)" />
-      <Content Include="@(CertificateFilesWithTfm)" Pack="True" PackagePath="lib\%(CertificateFilesWithTfm.TargetFramework)%(Filename)%(Extension)" />
+      </SigstoreBundleWithTfm>
+      <Content Include="@(SigstoreBundleWithTfm)" Pack="True" PackagePath="lib\%(SigstoreBundleWithTfm.TargetFramework)%(Filename)%(Extension)" />
     </ItemGroup>
 
     <Message Importance="high" Text="**IncludeSignaturesInPackagesDebug** SignatureFiles: @(SignatureFilesWithTfm)" />
