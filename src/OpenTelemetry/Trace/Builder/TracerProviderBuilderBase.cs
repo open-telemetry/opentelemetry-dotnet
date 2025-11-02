@@ -45,7 +45,9 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
             {
                 if (IsOtelSdkDisabled(sp.GetRequiredService<IConfiguration>()))
                 {
-                    return new NoopTracerProvider();
+                    var noopTracerProvider = new NoopTracerProvider();
+                    noopTracerProvider.Dispose();
+                    return noopTracerProvider;
                 }
 
                 return new TracerProviderSdk(sp, ownsServiceProvider: false);

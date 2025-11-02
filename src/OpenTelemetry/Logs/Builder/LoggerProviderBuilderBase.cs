@@ -45,7 +45,9 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
             {
                 if (IsOtelSdkDisabled(sp.GetRequiredService<IConfiguration>()))
                 {
-                    return new NoopLoggerProvider();
+                    var noopLoggerProvider = new NoopLoggerProvider();
+                    noopLoggerProvider.Dispose();
+                    return noopLoggerProvider;
                 }
 
                 return new LoggerProviderSdk(sp, ownsServiceProvider: false);

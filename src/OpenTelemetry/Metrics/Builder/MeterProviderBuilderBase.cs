@@ -45,7 +45,9 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
             {
                 if (IsOtelSdkDisabled(sp.GetRequiredService<IConfiguration>()))
                 {
-                    return new NoopMeterProvider();
+                    var noopMeterProvider = new NoopMeterProvider();
+                    noopMeterProvider.Dispose();
+                    return noopMeterProvider;
                 }
 
                 return new MeterProviderSdk(sp, ownsServiceProvider: false);
