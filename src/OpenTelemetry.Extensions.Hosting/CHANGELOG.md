@@ -6,6 +6,24 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.14.0-rc.1
+
+Released 2025-Oct-21
+
+* **Breaking Change** When targeting `net8.0`, the package now depends on version
+  `8.0.0` of the `Microsoft.Extensions.DependencyInjection.Abstractions`,
+  `Microsoft.Extensions.Diagnostics.Abstractions`,
+  `Microsoft.Extensions.Hosting.Abstractions` and
+  `Microsoft.Extensions.Logging.Configuration` NuGet packages.
+  ([#6327](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6327))
+
+* Add support for .NET 10.0.
+  ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
+
+## 1.13.1
+
+Released 2025-Oct-09
+
 ## 1.13.0
 
 Released 2025-Oct-01

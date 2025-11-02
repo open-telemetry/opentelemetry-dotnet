@@ -59,7 +59,7 @@ public class PrometheusSerializerBenchmarks
             int cursor = 0;
             foreach (var metric in this.metrics)
             {
-                cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric));
+                cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric), openMetricsRequested: false, disableTimestamp: false);
             }
         }
     }

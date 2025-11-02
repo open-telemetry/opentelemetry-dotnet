@@ -2,21 +2,22 @@
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/Dockerfile .
 
-ARG BUILD_SDK_VERSION=9.0
-ARG TEST_SDK_VERSION=9.0
+ARG BUILD_SDK_VERSION=10.0
+ARG TEST_SDK_VERSION=10.0
 
-FROM ubuntu:24.04@sha256:353675e2a41babd526e2b837d7ec780c2a05bca0164f7ea5dbbd433d21d166fc AS w3c
+FROM ubuntu:24.04@sha256:66460d557b25769b102175144d538d88219c077c678a49af4afca6fbfc1b5252 AS w3c
 #Install git
 WORKDIR /w3c
 RUN apt-get update && apt-get install -y git
 RUN git clone --branch level-1 https://github.com/w3c/trace-context.git
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.414@sha256:ff8311847c54c04d1a14c488362807997d59b61372da5095a95f89cbcda7f9b7 AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.305@sha256:123b43e4d9775451d8ed63af324a42132707b4edb14770bcdf5c85cf55bc45f1 AS dotnet-sdk-9.0
+FROM mcr.microsoft.com/dotnet/sdk:8.0.415@sha256:f2f0cb3af991eb6959c8a20551b0152f10cce61354c089dd863a7b72c0f00fea AS dotnet-sdk-8.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0.306@sha256:ca77338a19f87a7d24494a3656cb7d878a040c158621337b9cd3ab811c5eb057 AS dotnet-sdk-9.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.100-rc.2@sha256:ed46c853a4f100ba7aab2394e9fb9f9b8989e93346b04632dbce11e5da7623d8 AS dotnet-sdk-10.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net9.0
+ARG PUBLISH_FRAMEWORK=net10.0
 WORKDIR /repo
 COPY . ./
 WORKDIR "/repo/test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests"

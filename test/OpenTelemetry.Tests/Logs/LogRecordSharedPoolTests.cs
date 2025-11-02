@@ -166,6 +166,8 @@ public sealed class LogRecordSharedPoolTests
             {
                 pool.Return(new LogRecord { Source = LogRecord.LogRecordSource.FromSharedPool, PoolReferenceCount = 1 });
             }
+
+            Assert.Equal(LogRecordSharedPool.DefaultMaxPoolSize, pool.Count);
         }
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -178,7 +180,12 @@ public sealed class LogRecordSharedPoolTests
         {
             tasks.Add(Task.Run(async () =>
             {
-                Random random = new Random();
+                var random =
+#if NET
+                    Random.Shared;
+#else
+                    new Random();
+#endif
 
 #pragma warning disable CA5394 // Do not use insecure randomness
                 await Task.Delay(random.Next(100, 150));
@@ -202,14 +209,10 @@ public sealed class LogRecordSharedPoolTests
 
         await Task.WhenAll(tasks);
 
-        processor.ForceFlush();
+        Assert.True(processor.ForceFlush());
 
-        if (warmup)
-        {
-            Assert.Equal(LogRecordSharedPool.DefaultMaxPoolSize, pool.Count);
-        }
-
-        Assert.True(pool.Count <= LogRecordSharedPool.DefaultMaxPoolSize);
+        Assert.NotEqual(0, pool.Count);
+        Assert.True(pool.Count <= LogRecordSharedPool.DefaultMaxPoolSize, $"{pool.Count} > {LogRecordSharedPool.DefaultMaxPoolSize}");
     }
 
     [Fact]
@@ -242,7 +245,7 @@ public sealed class LogRecordSharedPoolTests
         {
             tasks.Add(Task.Run(async () =>
             {
-                await Task.Delay(2000);
+                await Task.Delay(2_000);
 
                 for (int i = 0; i < 100_000; i++)
                 {
@@ -255,14 +258,11 @@ public sealed class LogRecordSharedPoolTests
 
         await Task.WhenAll(tasks);
 
-        Assert.True(pool.Count <= LogRecordSharedPool.DefaultMaxPoolSize);
+        Assert.True(pool.Count <= LogRecordSharedPool.DefaultMaxPoolSize, $"{pool.Count} > {LogRecordSharedPool.DefaultMaxPoolSize}");
     }
 
     private sealed class NoopExporter : BaseExporter<LogRecord>
     {
-        public override ExportResult Export(in Batch<LogRecord> batch)
-        {
-            return ExportResult.Success;
-        }
+        public override ExportResult Export(in Batch<LogRecord> batch) => ExportResult.Success;
     }
 }

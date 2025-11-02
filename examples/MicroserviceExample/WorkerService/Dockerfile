@@ -1,17 +1,19 @@
-ARG SDK_VERSION=9.0
+ARG SDK_VERSION=10.0
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.414@sha256:ff8311847c54c04d1a14c488362807997d59b61372da5095a95f89cbcda7f9b7 AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.305@sha256:123b43e4d9775451d8ed63af324a42132707b4edb14770bcdf5c85cf55bc45f1 AS dotnet-sdk-9.0
+FROM mcr.microsoft.com/dotnet/sdk:8.0.415@sha256:f2f0cb3af991eb6959c8a20551b0152f10cce61354c089dd863a7b72c0f00fea AS dotnet-sdk-8.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0.306@sha256:ca77338a19f87a7d24494a3656cb7d878a040c158621337b9cd3ab811c5eb057 AS dotnet-sdk-9.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.100-rc.2@sha256:ed46c853a4f100ba7aab2394e9fb9f9b8989e93346b04632dbce11e5da7623d8 AS dotnet-sdk-10.0
 
 FROM dotnet-sdk-${SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net9.0
+ARG PUBLISH_FRAMEWORK=net10.0
 WORKDIR /app
 COPY . ./
 RUN dotnet publish ./examples/MicroserviceExample/WorkerService -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /out -p:IntegrationBuild=true
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0.20@sha256:53f73fbe620361e5116f68752bf42958dfcda8699a94a785dcb4657bc571c8f3 AS dotnet-aspnet-8.0
-FROM mcr.microsoft.com/dotnet/aspnet:9.0.9@sha256:366204b1d249aa2615f4942c8549677a1f3e6231829f274aa8829fc048f38d8c AS dotnet-aspnet-9.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.21@sha256:590a934508c35c2ef61203ded76f088f5ec6263b863b55d3deaea8fc2d6b55a6 AS dotnet-aspnet-8.0
+FROM mcr.microsoft.com/dotnet/aspnet:9.0.10@sha256:bf48e8b328707fae0e63a1b7d764d770221def59b97468c8cdee68f4e38ddfb9 AS dotnet-aspnet-9.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.0-rc.2@sha256:5b201bc57156a9f70d58a86112dc7a8217cf3a885740a8fe914b0782ee09647e AS dotnet-aspnet-10.0
 
 FROM dotnet-aspnet-${SDK_VERSION} AS runtime
 WORKDIR /app

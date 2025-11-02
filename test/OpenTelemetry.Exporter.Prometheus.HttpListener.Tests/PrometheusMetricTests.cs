@@ -1,12 +1,29 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Metrics;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
 public sealed class PrometheusMetricTests
 {
+    public static TheoryData<MetricsMappingTestData> GetPrometheusType_Data()
+    {
+        var data = new TheoryData<MetricsMappingTestData>
+        {
+            new(MetricType.LongSum, PrometheusType.Counter),
+            new(MetricType.DoubleSum, PrometheusType.Counter),
+            new(MetricType.LongGauge, PrometheusType.Gauge),
+            new(MetricType.DoubleGauge, PrometheusType.Gauge),
+            new(MetricType.Histogram, PrometheusType.Histogram),
+            new(MetricType.ExponentialHistogram, PrometheusType.Histogram),
+            new(MetricType.LongSumNonMonotonic, PrometheusType.Gauge),
+            new(MetricType.DoubleSumNonMonotonic, PrometheusType.Gauge),
+        };
+        return data;
+    }
+
     [Fact]
     public void SanitizeMetricName_Valid()
     {
@@ -245,6 +262,14 @@ public sealed class PrometheusMetricTests
     public void OpenMetricsMetadataName_Counter_DisableSuffixTotal_NotAppendTotal()
     {
         AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, true, "db_bytes_written_bytes");
+    }
+
+    [Theory]
+    [MemberData(nameof(GetPrometheusType_Data))]
+    public void GetPrometheusType_MapsOpenTelemetryMetricsTypeToPrometheus(MetricsMappingTestData mappingTestData)
+    {
+        var result = PrometheusMetric.GetPrometheusType(mappingTestData.OpenTelemetryMetricType);
+        Assert.Equal(mappingTestData.ExpectedPrometheusType, result);
     }
 
     private static void AssertName(

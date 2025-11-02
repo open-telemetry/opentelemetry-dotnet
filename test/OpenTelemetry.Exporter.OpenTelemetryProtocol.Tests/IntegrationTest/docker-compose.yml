@@ -19,7 +19,7 @@ services:
       "
 
   otel-collector:
-    image: otel/opentelemetry-collector:0.136.0@sha256:98fd3b410ae8a939be9588f1580c4b7c3da6ebba49f5363df4259a827aabb779
+    image: otel/opentelemetry-collector:0.138.0@sha256:56951db9579bf00d3f32a4e934e19548183a86c14640798502bcd4c225976ea6
     volumes:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: --config=/cfg/otel-collector-config.yaml

@@ -168,7 +168,7 @@ public static class OtlpMetricExporterExtensions
         Debug.Assert(metricReaderOptions != null, "metricReaderOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
-#if NET462_OR_GREATER || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         if (exporterOptions!.Protocol == OtlpExportProtocol.Grpc &&
             ReferenceEquals(exporterOptions.HttpClientFactory, exporterOptions.DefaultHttpClientFactory))

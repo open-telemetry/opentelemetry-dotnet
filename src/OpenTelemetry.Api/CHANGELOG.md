@@ -6,6 +6,21 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.14.0-rc.1
+
+Released 2025-Oct-21
+
+* Add support for .NET 10.0.
+  ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
+
+* Update `System.Diagnostics.DiagnosticSource` dependency to `10.0.0`
+  for all target frameworks.
+  ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
+
+## 1.13.1
+
+Released 2025-Oct-09
+
 ## 1.13.0
 
 Released 2025-Oct-01
