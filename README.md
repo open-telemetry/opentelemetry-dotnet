@@ -199,12 +199,12 @@ easy identification and association.
 To verify the integrity of a DLL inside a NuGet package use the
 [cosign](https://github.com/sigstore/cosign) tool from Sigstore:
 
-#### Version 1.14.0-rc.2 and later
+#### Version 1.14.0 and later
 
 These versions are using bundle format known from cosign 3.0+.
 
 ```bash
-$TAG="core-1.14.0-rc.1"
+$TAG="core-1.14.0"
 cosign verify-blob \
     --bundle OpenTelemetry.dll.sigstore.json \
     --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/$TAG" \
