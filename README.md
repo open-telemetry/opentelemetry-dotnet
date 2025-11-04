@@ -234,6 +234,23 @@ cosign verify-blob \
 For more verification options please refer to the [cosign
 documentation](https://github.com/sigstore/cosign/blob/main/doc/cosign_verify-blob.md).
 
+### Attestation
+
+Starting with the `1.14.0` release the DLLs included in the packages pushed to
+NuGet are attested using [GitHub Artifact attestations](https://docs.github.com/actions/concepts/security/artifact-attestations).
+
+To verify the attestation of a DLL inside a NuGet package use the [GitHub CLI](https://cli.github.com/):
+
+```bash
+gh attestation verify --owner open-telemetry .\OpenTelemetry.dll
+```
+
+> [!NOTE]
+> A successful verification outputs `Verification succeeded!`.
+
+For more verification options please refer to the [`gh attestation verify`
+documentation](https://cli.github.com/manual/gh_attestation_verify).
+
 ## Contributing
 
 For information about contributing to the project see:
