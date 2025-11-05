@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added support for the `OTEL_SDK_DISABLED` environment variable in TracerProvider,
+  MeterProvider, and LoggerProvider. When `OTEL_SDK_DISABLED=true`,
+  the SDK returns no-op implementations for all telemetry signals.
+  ([#6568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6568))
+
 ## 1.14.0-rc.1
 
 Released 2025-Oct-21
