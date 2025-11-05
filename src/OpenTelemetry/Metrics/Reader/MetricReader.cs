@@ -37,6 +37,21 @@ public abstract partial class MetricReader : IDisposable
         };
     };
 
+    private static readonly Func<Type, AggregationTemporality> LowMemoryTemporalityPreferenceFunc = (instrumentType) =>
+    {
+        return instrumentType.GetGenericTypeDefinition() switch
+        {
+            var type when type == typeof(Counter<>) => AggregationTemporality.Delta,
+            var type when type == typeof(Histogram<>) => AggregationTemporality.Delta,
+
+            var type when type == typeof(UpDownCounter<>) => AggregationTemporality.Cumulative,
+            var type when type == typeof(ObservableCounter<>) => AggregationTemporality.Cumulative,
+            var type when type == typeof(ObservableUpDownCounter<>) => AggregationTemporality.Cumulative,
+
+            _ => AggregationTemporality.Cumulative,
+        };
+    };
+
     private readonly Lock newTaskLock = new();
     private readonly Lock onCollectLock = new();
     private readonly TaskCompletionSource<bool> shutdownTcs = new();
@@ -72,6 +87,7 @@ public abstract partial class MetricReader : IDisposable
             this.temporalityFunc = value switch
             {
                 MetricReaderTemporalityPreference.Delta => MonotonicDeltaTemporalityPreferenceFunc,
+                MetricReaderTemporalityPreference.LowMemory => LowMemoryTemporalityPreferenceFunc,
                 _ => CumulativeTemporalityPreferenceFunc,
             };
         }
