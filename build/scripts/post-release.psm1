@@ -202,7 +202,7 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   $tag = $match.Groups[1].Value
 
   $commentUserPermission = gh api "repos/$gitRepository/collaborators/$commentUserName/permission" | ConvertFrom-Json
-  if ($commentUserPermission.user.permissions.maintain)
+  if (-not $commentUserPermission.user.permissions.maintain)
   {
     gh pr unlock $pullRequestNumber
     gh pr comment $pullRequestNumber `
