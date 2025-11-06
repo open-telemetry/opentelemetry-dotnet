@@ -204,8 +204,10 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   $commentUserPermission = gh api "repos/$gitRepository/collaborators/$commentUserName/permission" | ConvertFrom-Json
   if ($commentUserPermission.user.permissions.maintain)
   {
+    gh pr unlock $pullRequestNumber
     gh pr comment $pullRequestNumber `
       --body "I'm sorry @$commentUserName but you don't have permission to push packages. Only maintainers can push to NuGet."
+    gh pr lock $pullRequestNumber
     return
   }
 
@@ -233,22 +235,28 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
 
   if ($pushToNuget)
   {
+    gh pr unlock $pullRequestNumber
     gh pr comment $pullRequestNumber `
       --body "I am uploading the packages for ``$tag`` to NuGet and then I will publish the release."
+    gh pr lock $pullRequestNumber
 
     dotnet nuget push "$artifactDownloadPath/**/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key "$env:NUGET_TOKEN" --symbol-api-key "$env:NUGET_TOKEN"
 
     if ($LASTEXITCODE -gt 0)
     {
+      gh pr unlock $pullRequestNumber
       gh pr comment $pullRequestNumber `
         --body "Something went wrong uploading the packages for ``$tag`` to NuGet."
+      gh pr lock $pullRequestNumber
 
       throw 'nuget push failure'
     }
   }
   else {
+    gh pr unlock $pullRequestNumber
     gh pr comment $pullRequestNumber `
       --body "I am publishing the release without uploading the packages to NuGet because a token wasn't configured."
+    gh pr lock $pullRequestNumber
   }
 
   gh release edit $tag --draft=false
