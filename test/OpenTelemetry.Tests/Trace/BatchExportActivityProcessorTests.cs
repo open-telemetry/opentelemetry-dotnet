@@ -65,7 +65,7 @@ public class BatchExportActivityProcessorTests
     [Theory]
     [InlineData(Timeout.Infinite)]
     [InlineData(0)]
-    [InlineData(10)]
+    [InlineData(1)]
     public async Task CheckForceFlushExport(int timeout)
     {
         var exportedItems = new List<Activity>();
