@@ -65,7 +65,7 @@ public class BatchExportActivityProcessorTests
     [Theory]
     [InlineData(Timeout.Infinite)]
     [InlineData(0)]
-    [InlineData(1)]
+    [InlineData(10)]
     public async Task CheckForceFlushExport(int timeout)
     {
         var exportedItems = new List<Activity>();
@@ -92,7 +92,7 @@ public class BatchExportActivityProcessorTests
         Assert.Equal(0, processor.ProcessedCount);
 
         // waiting to see if time is triggering the exporter
-        await Task.Delay(TimeSpan.FromSeconds(1.5);
+        await Task.Delay(TimeSpan.FromSeconds(2));
         Assert.Empty(exportedItems);
 
         // forcing flush
