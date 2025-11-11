@@ -26,6 +26,9 @@ Notes](../../RELEASENOTES.md).
   section](../../README.md#digital-signing) for updated verification instructions.
   ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
 
+* Update to stable versions for .NET 10.0 NuGet packages.
+  ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
+
 ## 1.13.1-beta.1
 
 Released 2025-Oct-10
