@@ -39,7 +39,7 @@ jobs:
           build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props', 'global.json']
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
-          solution: ['OpenTelemetry.sln']
+          solution: ['OpenTelemetry.slnx']
           packaged-code: ['src/**', '!**/*.md']
           api-code: ['*/OpenTelemetry.Api*/**', '!**/*.md']
           api-packages: ['src/OpenTelemetry.Api*/**', '!**/*.md']
@@ -71,7 +71,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/Component.BuildTest.yml
     with:
-      project-name: 'OpenTelemetry.sln'
+      project-name: 'OpenTelemetry.slnx'
       code-cov-name: 'Solution'
 
   build-test-project-stable:
