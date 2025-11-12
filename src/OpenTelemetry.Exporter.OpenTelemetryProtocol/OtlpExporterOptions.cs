@@ -41,7 +41,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     private int? timeoutMilliseconds;
     private Func<HttpClient>? httpClientFactory;
     private string? userAgentProductIdentifier;
-    private string baseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{typeof(OtlpExporterOptions).Assembly.GetName().Version}";
+    private string baseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{typeof(OtlpExporterOptions).Assembly.GetPackageVersion()}";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
