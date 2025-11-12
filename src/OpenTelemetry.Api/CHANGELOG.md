@@ -13,6 +13,10 @@ Notes](../../RELEASENOTES.md).
   section](../../README.md#digital-signing) for updated verification instructions.
   ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
 
+* Update `System.Diagnostics.DiagnosticSource` dependency to `10.0.0`
+  for all target frameworks.
+  ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
+
 * Update to stable versions for .NET 10.0 NuGet packages.
   ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
 
@@ -23,7 +27,7 @@ Released 2025-Oct-21
 * Add support for .NET 10.0.
   ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
 
-* Update `System.Diagnostics.DiagnosticSource` dependency to `10.0.0`
+* Update `System.Diagnostics.DiagnosticSource` dependency to `10.0.0-rc.2.25502.107`
   for all target frameworks.
   ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
 
