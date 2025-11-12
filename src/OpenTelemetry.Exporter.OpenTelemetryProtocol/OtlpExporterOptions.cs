@@ -39,9 +39,9 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     ];
 
     internal KeyValuePair<string, string>[] StandardHeaders =>
-        string.IsNullOrEmpty(this.userAgentProductIdentifier)
+        string.IsNullOrEmpty(this.UserAgentProductIdentifier)
             ? DefaultHeaders
-            : [new("User-Agent", this.GetUserAgentString())];
+            : [new("User-Agent", $"{this.UserAgentProductIdentifier} {baseUserAgent}")];
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
@@ -49,7 +49,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     private Uri? endpoint;
     private int? timeoutMilliseconds;
     private Func<HttpClient>? httpClientFactory;
-    private string? userAgentProductIdentifier;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
@@ -134,11 +133,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// <summary>
     /// Gets or sets the user agent identifier.
     /// </summary>
-    public string UserAgentProductIdentifier
-    {
-        get => this.userAgentProductIdentifier ?? string.Empty;
-        set => this.userAgentProductIdentifier = string.IsNullOrWhiteSpace(value) ? string.Empty : value;
-    }
+    public string UserAgentProductIdentifier { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
@@ -241,8 +236,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         return this;
     }
-
-    private string GetUserAgentString() => $"{this.userAgentProductIdentifier} {baseUserAgent}";
 
     private void ApplyConfiguration(
         IConfiguration configuration,
