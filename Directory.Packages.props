@@ -12,10 +12,10 @@
   -->
   <ItemGroup>
     <!-- Default to latest versions for all TFMs -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[9.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[10.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[10.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[10.0.0,)" />
   </ItemGroup>
   <!-- Version overrides for specific netX.0 TFMs -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
