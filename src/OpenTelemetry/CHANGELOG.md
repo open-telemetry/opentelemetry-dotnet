@@ -16,6 +16,10 @@ Notes](../../RELEASENOTES.md).
 * Update to stable versions for .NET 10.0 NuGet packages.
   ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
 
+* Update `Microsoft.Extensions.*` dependencies to `10.0.0` for .NET Framework
+  and .NET Standard.
+  ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
+
 ## 1.14.0-rc.1
 
 Released 2025-Oct-21
