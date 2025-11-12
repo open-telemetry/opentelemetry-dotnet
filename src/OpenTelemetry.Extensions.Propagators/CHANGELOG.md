@@ -6,6 +6,10 @@ covering all components see: [Release Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.14.0
+
+Released 2025-Nov-12
+
 * **Breaking Change** NuGet packages now use the Sigstore bundle format
   (`.sigstore.json`) for digital signatures instead of separate signature
   (`.sig`) and certificate (`.pem`) files. This requires cosign 3.0 or later
