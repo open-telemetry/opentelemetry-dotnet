@@ -32,7 +32,16 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
 #endif
 
-    internal KeyValuePair<string, string>[] StandardHeaders => [new("User-Agent", this.GetUserAgentString())];
+    private static readonly string baseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{typeof(OtlpExporterOptions).Assembly.GetPackageVersion()}";
+    private static readonly KeyValuePair<string, string>[] DefaultHeader =
+    [
+        new("User-Agent", baseUserAgent)
+    ];
+
+    internal KeyValuePair<string, string>[] StandardHeaders =>
+        string.IsNullOrEmpty(this.userAgentProductIdentifier)
+            ? DefaultHeader
+            : [new("User-Agent", this.GetUserAgentString())];
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
@@ -41,7 +50,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     private int? timeoutMilliseconds;
     private Func<HttpClient>? httpClientFactory;
     private string? userAgentProductIdentifier;
-    private string baseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{typeof(OtlpExporterOptions).Assembly.GetPackageVersion()}";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
