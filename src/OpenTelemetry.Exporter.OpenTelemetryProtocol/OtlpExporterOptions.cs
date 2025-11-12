@@ -32,17 +32,16 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
 #endif
 
-    internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
-    {
-        new("User-Agent", GetUserAgentString()),
-    };
+    internal static KeyValuePair<string, string>[] StandardHeaders => standardHeaders;
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
+    private static KeyValuePair<string, string>[]? standardHeaders;
     private OtlpExportProtocol? protocol;
     private Uri? endpoint;
     private int? timeoutMilliseconds;
     private Func<HttpClient>? httpClientFactory;
+    private string? userAgentProductIdentifier;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
@@ -77,6 +76,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
             };
         };
+
+        standardHeaders =
+        [
+            new("User-Agent", this.GetUserAgentString())
+        ];
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;
     }
@@ -122,6 +126,23 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     {
         get => this.protocol ?? DefaultOtlpExportProtocol;
         set => this.protocol = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the user agent identifier.
+    /// </summary>
+    public string UserAgentProductIdentifier
+    {
+        get => this.userAgentProductIdentifier ?? string.Empty;
+        set
+        {
+            this.userAgentProductIdentifier = string.IsNullOrWhiteSpace(value) ? string.Empty : value;
+
+            standardHeaders =
+            [
+                new("User-Agent", this.GetUserAgentString())
+            ];
+        }
     }
 
     /// <summary>
@@ -226,10 +247,17 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         return this;
     }
 
-    private static string GetUserAgentString()
+    private string GetUserAgentString()
     {
         var assembly = typeof(OtlpExporterOptions).Assembly;
-        return $"OTel-OTLP-Exporter-Dotnet/{assembly.GetPackageVersion()}";
+        var baseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{assembly.GetPackageVersion()}";
+
+        if (!string.IsNullOrEmpty(this.userAgentProductIdentifier))
+        {
+            return $"{this.userAgentProductIdentifier} {baseUserAgent}";
+        }
+
+        return baseUserAgent;
     }
 
     private void ApplyConfiguration(
