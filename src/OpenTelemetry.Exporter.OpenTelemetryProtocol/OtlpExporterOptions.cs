@@ -40,7 +40,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     internal KeyValuePair<string, string>[] StandardHeaders =>
         string.IsNullOrEmpty(this.userAgentProductIdentifier)
-            ? DefaultHeader
+            ? DefaultHeaders
             : [new("User-Agent", this.GetUserAgentString())];
 
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
@@ -242,10 +242,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         return this;
     }
 
-    private string GetUserAgentString()
-    {
-        return !string.IsNullOrEmpty(this.userAgentProductIdentifier) ? $"{this.userAgentProductIdentifier} {baseUserAgent}" : baseUserAgent;
-    }
+    private string GetUserAgentString() => $"{this.userAgentProductIdentifier} {baseUserAgent}";
 
     private void ApplyConfiguration(
         IConfiguration configuration,
