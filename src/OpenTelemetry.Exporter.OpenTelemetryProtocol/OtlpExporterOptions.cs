@@ -41,6 +41,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     private int? timeoutMilliseconds;
     private Func<HttpClient>? httpClientFactory;
     private string? userAgentProductIdentifier;
+    private string baseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{typeof(OtlpExporterOptions).Assembly.GetName().Version}";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
@@ -70,7 +71,10 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.DefaultHttpClientFactory = () =>
         {
-            return new HttpClient { Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds), };
+            return new HttpClient
+            {
+                Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
+            };
         };
 
         this.BatchExportProcessorOptions = defaultBatchOptions!;
@@ -232,9 +236,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     private string GetUserAgentString()
     {
-        var assembly = typeof(OtlpExporterOptions).Assembly;
-        var baseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{assembly.GetPackageVersion()}";
-
         return !string.IsNullOrEmpty(this.userAgentProductIdentifier) ? $"{this.userAgentProductIdentifier} {baseUserAgent}" : baseUserAgent;
     }
 
