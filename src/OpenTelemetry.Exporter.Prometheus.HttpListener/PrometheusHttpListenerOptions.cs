@@ -25,6 +25,11 @@ public class PrometheusHttpListenerOptions
     public bool DisableTotalNameSuffixForCounters { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether timestamps should be disabled. Default value: <see langword="false"/>.
+    /// </summary>
+    public bool DisableTimestamp { get; set; }
+
+    /// <summary>
     /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
     /// Default value: <c>["http://localhost:9464/"]</c>.
     /// </summary>

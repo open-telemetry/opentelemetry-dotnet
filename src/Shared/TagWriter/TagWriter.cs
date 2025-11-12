@@ -67,6 +67,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 this.WriteFloatingPointTag(ref state, key, Convert.ToDouble(value, CultureInfo.InvariantCulture));
                 break;
             case Array array:
+                if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, ((byte[])value).AsSpan()))
+                {
+                    return true;
+                }
+
                 try
                 {
                     this.WriteArrayTagInternal(ref state, key, array, tagValueMaxLength);
@@ -118,6 +123,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
     }
 
     protected abstract bool TryWriteEmptyTag(ref TTagState state, string key, object? value);
+
+    protected abstract bool TryWriteByteArrayTag(ref TTagState state, string key, ReadOnlySpan<byte> value);
 
     protected abstract void WriteIntegralTag(ref TTagState state, string key, long value);
 

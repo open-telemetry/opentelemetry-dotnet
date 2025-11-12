@@ -4,6 +4,27 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.13.1
+
+Release details: [1.13.1](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.13.1)
+
+* In version `1.13.0`, the digital signature (`.dll-keyless.sig`) and
+  certificate (`.dll-keyless.pem`) files were unintentionally omitted from the
+  published NuGet packages.
+* This hotfix restores the Sigstore signing artifacts for all target frameworks
+  (`net462`, `netstandard2.0`, `netstandard2.1`, `net8.0`, `net9.0`), ensuring
+  the integrity of DLL verification using Sigstore cosign.
+
+## 1.13.0
+
+Release details: [1.13.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.13.0)
+
+* gRPC calls to export traces, logs, and metrics using `OtlpExportProtocol.Grpc`
+  now set the `TE=trailers` HTTP request header to improve interoperability.
+* `EventName` is now exported by default as `EventName` instead of
+  `logrecord.event.name` when specified through `ILogger` or the experimental
+  log bridge API.
+
 ## 1.12.0
 
 Release details: [1.12.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.12.0)

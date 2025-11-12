@@ -631,7 +631,7 @@ want to solicit feedback from the community.
       Added in `1.8.0`.
 
     * When set to `disk`, it enables retries by storing telemetry on disk during
-    transient errors.  The default path where the telemetry is stored is
+    transient errors. The default path where the telemetry is stored is
     obtained by calling
     [Path.GetTempPath()](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath)
     or can be customized by setting

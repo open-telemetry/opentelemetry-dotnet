@@ -125,7 +125,7 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
     [Parameter(Mandatory=$true)][string]$tag,
     [Parameter(Mandatory=$true)][string]$tagSha,
     [Parameter(Mandatory=$true)][string]$packagesUrl,
-    [Parameter(Mandatory=$true)][string]$botUserName
+    [Parameter(Mandatory=$true)][string]$expectedPrAuthorUserName
   )
 
   $prListResponse = gh pr list --search $tagSha --state merged --json number,author,title,comments | ConvertFrom-Json
@@ -138,7 +138,7 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
 
   foreach ($pr in $prListResponse)
   {
-    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[release] Prepare release $tag")
+    if ($pr.author.login -ne $expectedPrAuthorUserName -or $pr.title -ne "[release] Prepare release $tag")
     {
       continue
     }
@@ -146,7 +146,7 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
     $foundComment = $false
     foreach ($comment in $pr.comments)
     {
-      if ($comment.author.login -eq $botUserName -and $comment.body.StartsWith("I just pushed the [$tag]"))
+      if ($comment.author.login -eq $expectedPrAuthorUserName -and $comment.body.StartsWith("I just pushed the [$tag]"))
       {
         $foundComment = $true
         break
@@ -180,15 +180,15 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter(Mandatory=$true)][string]$botUserName,
+    [Parameter(Mandatory=$true)][string]$expectedPrAuthorUserName,
     [Parameter(Mandatory=$true)][string]$commentUserName,
     [Parameter(Mandatory=$true)][string]$artifactDownloadPath,
-    [Parameter(Mandatory=$true)][string]$pushToNuget
+    [Parameter(Mandatory=$true)][bool]$pushToNuget
   )
 
   $prViewResponse = gh pr view $pullRequestNumber --json author,title,comments | ConvertFrom-Json
 
-  if ($prViewResponse.author.login -ne $botUserName)
+  if ($prViewResponse.author.login -ne $expectedPrAuthorUserName)
   {
       throw 'PR author was unexpected'
   }
@@ -202,10 +202,12 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   $tag = $match.Groups[1].Value
 
   $commentUserPermission = gh api "repos/$gitRepository/collaborators/$commentUserName/permission" | ConvertFrom-Json
-  if ($commentUserPermission.permission -ne 'admin')
+  if (-not $commentUserPermission.user.permissions.maintain)
   {
+    gh pr unlock $pullRequestNumber
     gh pr comment $pullRequestNumber `
       --body "I'm sorry @$commentUserName but you don't have permission to push packages. Only maintainers can push to NuGet."
+    gh pr lock $pullRequestNumber
     return
   }
 
@@ -213,7 +215,7 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   $packagesUrl = ''
   foreach ($comment in $prViewResponse.comments)
   {
-    if ($comment.author.login -eq $botUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
+    if ($comment.author.login -eq $expectedPrAuthorUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
     {
       $foundComment = $true
       break
@@ -231,24 +233,30 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
 
   Expand-Archive -LiteralPath "$artifactDownloadPath/$tag-packages.zip" -DestinationPath "$artifactDownloadPath\"
 
-  if ($pushToNuget -eq 'true')
+  if ($pushToNuget)
   {
+    gh pr unlock $pullRequestNumber
     gh pr comment $pullRequestNumber `
       --body "I am uploading the packages for ``$tag`` to NuGet and then I will publish the release."
+    gh pr lock $pullRequestNumber
 
-    nuget push "$artifactDownloadPath/**/*.nupkg" -Source https://api.nuget.org/v3/index.json -ApiKey "$env:NUGET_TOKEN" -SymbolApiKey "$env:NUGET_TOKEN"
+    dotnet nuget push "$artifactDownloadPath/**/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key "$env:NUGET_TOKEN" --symbol-api-key "$env:NUGET_TOKEN"
 
     if ($LASTEXITCODE -gt 0)
     {
+      gh pr unlock $pullRequestNumber
       gh pr comment $pullRequestNumber `
         --body "Something went wrong uploading the packages for ``$tag`` to NuGet."
+      gh pr lock $pullRequestNumber
 
       throw 'nuget push failure'
     }
   }
   else {
+    gh pr unlock $pullRequestNumber
     gh pr comment $pullRequestNumber `
       --body "I am publishing the release without uploading the packages to NuGet because a token wasn't configured."
+    gh pr lock $pullRequestNumber
   }
 
   gh release edit $tag --draft=false
@@ -276,7 +284,7 @@ function CreateStableVersionUpdatePullRequest {
 
   $version = $match.Groups[1].Value
 
-  $branch="release/post-stable-${tag}-update"
+  $branch="otelbot/post-stable-${tag}-update"
 
   if ([string]::IsNullOrEmpty($gitUserName) -eq $false)
   {
@@ -490,8 +498,10 @@ function GetCoreDependenciesForProjects {
         $output = dotnet restore $project -p:RunningDotNetPack=true
 
         $projectDir = $project | Split-Path -Parent
+        $projectDirName = $projectDir | Split-Path -Leaf
+        $projectArtifactsDir = $projectDir | Split-Path -Parent | Split-Path -Parent | Join-Path -ChildPath "artifacts/obj/$projectDirName"
 
-        $content = (Get-Content "$projectDir/obj/project.assets.json" -Raw)
+        $content = (Get-Content "$projectArtifactsDir/project.assets.json" -Raw)
 
         $projectDependencies = @{}
 
@@ -539,7 +549,7 @@ Export-ModuleMember -Function InvokeCoreVersionUpdateWorkflowInRemoteRepository
 function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
-    [Parameter(Mandatory=$true)][string]$botUserName,
+    [Parameter(Mandatory=$true)][string]$expectedPrAuthorUserName,
     [Parameter(Mandatory=$true)][string]$tag
   )
 
@@ -559,7 +569,7 @@ function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
 
   foreach ($pr in $prListResponse)
   {
-    if ($pr.author.login -ne $botUserName -or $pr.title -ne "[release] Prepare release $tag")
+    if ($pr.author.login -ne $expectedPrAuthorUserName -or $pr.title -ne "[release] Prepare release $tag")
     {
       continue
     }
@@ -567,7 +577,7 @@ function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
     $foundComment = $false
     foreach ($comment in $pr.comments)
     {
-      if ($comment.author.login -eq $botUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
+      if ($comment.author.login -eq $expectedPrAuthorUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
       {
         $foundComment = $true
         break

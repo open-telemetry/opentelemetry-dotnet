@@ -51,13 +51,19 @@ public sealed class PrometheusExporterMiddlewareTests
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = null));
     }
 
-    [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_OptionsViaAddPrometheusExporter()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public Task PrometheusExporterMiddlewareIntegration_OptionsViaAddPrometheusExporter(bool disableTimestamp)
     {
         return RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_from_AddPrometheusExporter",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-            configureOptions: o => o.ScrapeEndpointPath = "/metrics_from_AddPrometheusExporter");
+            configureOptions: o =>
+            {
+                o.ScrapeEndpointPath = "/metrics_from_AddPrometheusExporter";
+                o.DisableTimestamp = disableTimestamp;
+            });
     }
 
     [Fact]
@@ -407,7 +413,9 @@ public sealed class PrometheusExporterMiddlewareTests
 
         if (!skipMetrics)
         {
-            await VerifyAsync(beginTimestamp, endTimestamp, response, requestOpenMetrics, meterTags);
+            var options = new PrometheusAspNetCoreOptions();
+            configureOptions?.Invoke(options);
+            await VerifyAsync(beginTimestamp, endTimestamp, response, requestOpenMetrics, meterTags, options.DisableTimestamp);
         }
         else
         {
@@ -419,7 +427,7 @@ public sealed class PrometheusExporterMiddlewareTests
         await host.StopAsync();
     }
 
-    private static async Task VerifyAsync(long beginTimestamp, long endTimestamp, HttpResponseMessage response, bool requestOpenMetrics, KeyValuePair<string, object?>[]? meterTags)
+    private static async Task VerifyAsync(long beginTimestamp, long endTimestamp, HttpResponseMessage response, bool requestOpenMetrics, KeyValuePair<string, object?>[]? meterTags, bool disableTimestamp = false)
     {
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(response.Content.Headers.Contains("Last-Modified"));
@@ -439,6 +447,8 @@ public sealed class PrometheusExporterMiddlewareTests
 
         string content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
 
+        var timestampPart = disableTimestamp ? string.Empty : " (\\d+)";
+        var timestampPartOpenMetrics = disableTimestamp ? string.Empty : " (\\d+\\.\\d{3})";
         string expected = requestOpenMetrics
             ? $$"""
                     # TYPE target info
@@ -449,14 +459,14 @@ public sealed class PrometheusExporterMiddlewareTests
                     otel_scope_info{otel_scope_name="{{MeterName}}"} 1
                     # TYPE counter_double_bytes counter
                     # UNIT counter_double_bytes bytes
-                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17 (\d+\.\d{3})
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17{{timestampPartOpenMetrics}}
                     # EOF
 
                     """.ReplaceLineEndings()
             : $$"""
                     # TYPE counter_double_bytes_total counter
                     # UNIT counter_double_bytes_total bytes
-                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17 (\d+)
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17{{timestampPart}}
                     # EOF
 
                     """.ReplaceLineEndings();
@@ -465,9 +475,12 @@ public sealed class PrometheusExporterMiddlewareTests
 
         Assert.True(matches.Count == 1, content);
 
-        var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty, StringComparison.Ordinal), CultureInfo.InvariantCulture);
+        if (!disableTimestamp)
+        {
+            var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty, StringComparison.Ordinal), CultureInfo.InvariantCulture);
 
-        Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp, $"{beginTimestamp} {timestamp} {endTimestamp}");
+            Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp, $"{beginTimestamp} {timestamp} {endTimestamp}");
+        }
     }
 
     private static Task<IHost> StartTestHostAsync(

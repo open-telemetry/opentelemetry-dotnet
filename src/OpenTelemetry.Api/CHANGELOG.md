@@ -6,6 +6,32 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change** NuGet packages now use the Sigstore bundle format
+  (`.sigstore.json`) for digital signatures instead of separate signature
+  (`.sig`) and certificate (`.pem`) files. This requires cosign 3.0 or later
+  for verification. See the [Digital signing
+  section](../../README.md#digital-signing) for updated verification instructions.
+  ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
+
+## 1.14.0-rc.1
+
+Released 2025-Oct-21
+
+* Add support for .NET 10.0.
+  ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
+
+* Update `System.Diagnostics.DiagnosticSource` dependency to `10.0.0`
+  for all target frameworks.
+  ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
+
+## 1.13.1
+
+Released 2025-Oct-09
+
+## 1.13.0
+
+Released 2025-Oct-01
+
 * Added `AddLink(SpanContext, SpanAttributes?)` to `TelemetrySpan` to support
   linking spans and associating optional attributes for advanced trace relationships.
   ([#6305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6305))

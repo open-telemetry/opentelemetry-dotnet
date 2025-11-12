@@ -2,7 +2,7 @@ services:
 
   # OTEL Collector to receive logs, metrics and traces from the application
   otel-collector:
-    image: otel/opentelemetry-collector:0.111.0
+    image: otel/opentelemetry-collector:0.139.0@sha256:8ac5df2a931e9264667b236d65bf7591fa4ba633a7a634e6caa2f0a4fc549c07
     command: [ "--config=/etc/otel-collector.yaml" ]
     volumes:
       - ./otel-collector.yaml:/etc/otel-collector.yaml
@@ -13,7 +13,7 @@ services:
 
   # Exports Traces to Tempo
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.9.0@sha256:65a5789759435f1ef696f1953258b9bbdb18eb571d5ce711ff812d2e128288a4
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
       - ./tempo.yaml:/etc/tempo.yaml
@@ -25,7 +25,7 @@ services:
 
 # Exports Metrics to Prometheus
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.7.3@sha256:49214755b6153f90a597adcbff0252cc61069f8ab69ce8411285cd4a560e8038
     command:
       - --config.file=/etc/prometheus.yaml
       - --web.enable-remote-write-receiver
@@ -37,7 +37,7 @@ services:
 
 # UI to query traces and metrics
   grafana:
-    image: grafana/grafana:9.3.2
+    image: grafana/grafana:12.2.1@sha256:35c41e0fd0295f5d0ee5db7e780cf33506abfaf47686196f825364889dee878b
     volumes:
       - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     environment:

@@ -21,13 +21,13 @@ jobs:
         fetch-depth: 0
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
 
     - name: dotnet pack
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=false /p:RunningDotNetPack=true
 
     - name: Publish stable NuGet packages to Artifacts
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: packages-stable
         path: ./artifacts/package/release
@@ -45,13 +45,13 @@ jobs:
         fetch-depth: 0
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
 
     - name: dotnet pack
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=true /p:RunningDotNetPack=true
 
     - name: Publish experimental NuGet packages to Artifacts
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: packages-experimental
         path: ./artifacts/package/release

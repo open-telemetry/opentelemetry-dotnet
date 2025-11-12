@@ -23,7 +23,7 @@ public class OtlpGrpcExporterBenchmarks
     private Activity? activity;
     private CircularBuffer<Activity>? activityBatch;
 
-    [Params(1, 10, 100)]
+    [Params(1, 10, 20)]
     public int NumberOfBatches { get; set; }
 
     [Params(10000)]

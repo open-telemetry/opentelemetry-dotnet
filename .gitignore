@@ -355,3 +355,6 @@ rewrite.coyote.json
 
 # Test results
 TestResults/
+
+# Verify snapshots
+*.received.*

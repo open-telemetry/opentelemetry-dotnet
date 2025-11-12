@@ -160,6 +160,10 @@ internal static class ProtobufSerializer
         return writePosition;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteDouble(byte[] buffer, int writePosition, double value)
+        => WriteFixed64LittleEndianFormat(buffer, writePosition, (ulong)BitConverter.DoubleToInt64Bits(value));
+
     /// <summary>
     /// Computes the number of bytes required to encode a 64-bit unsigned integer in Protocol Buffers' varint format.
     /// </summary>
@@ -232,6 +236,17 @@ internal static class ProtobufSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteByteArrayWithTag(byte[] buffer, int writePosition, int fieldNumber, ReadOnlySpan<byte> value)
+    {
+        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
+        writePosition = WriteLength(buffer, writePosition, value.Length);
+        value.CopyTo(buffer.AsSpan(writePosition));
+
+        writePosition += value.Length;
+        return writePosition;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, string value)
     {
         Debug.Assert(value != null, "value was null");
@@ -292,7 +307,7 @@ internal static class ProtobufSerializer
             }
         }
 #else
-        var bytesWritten = Utf8Encoding.GetBytes(value, buffer.AsSpan().Slice(writePosition));
+        var bytesWritten = Utf8Encoding.GetBytes(value, buffer.AsSpan(writePosition));
         Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
 #endif
 
