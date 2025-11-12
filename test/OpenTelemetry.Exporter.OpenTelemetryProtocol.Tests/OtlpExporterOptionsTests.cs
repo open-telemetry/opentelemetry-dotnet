@@ -276,7 +276,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
     {
         var options = new OtlpExporterOptions();
 
-        var userAgentHeader = OtlpExporterOptions.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent");
+        var userAgentHeader = options.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent");
 
         Assert.NotNull(userAgentHeader.Key);
         Assert.StartsWith("OTel-OTLP-Exporter-Dotnet/", userAgentHeader.Value, StringComparison.OrdinalIgnoreCase);
@@ -292,7 +292,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
 
         Assert.Equal("MyDistribution/1.2.3", options.UserAgentProductIdentifier);
 
-        var userAgentHeader = OtlpExporterOptions.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent");
+        var userAgentHeader = options.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent");
 
         Assert.NotNull(userAgentHeader.Key);
         Assert.StartsWith("MyDistribution/1.2.3 OTel-OTLP-Exporter-Dotnet/", userAgentHeader.Value, StringComparison.OrdinalIgnoreCase);
@@ -303,12 +303,12 @@ public sealed class OtlpExporterOptionsTests : IDisposable
     {
         var options = new OtlpExporterOptions();
 
-        var initialUserAgent = OtlpExporterOptions.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent").Value;
+        var initialUserAgent = options.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent").Value;
         Assert.StartsWith("OTel-OTLP-Exporter-Dotnet/", initialUserAgent, StringComparison.OrdinalIgnoreCase);
 
         options.UserAgentProductIdentifier = "MyProduct/1.0.0";
 
-        var updatedUserAgent = OtlpExporterOptions.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent").Value;
+        var updatedUserAgent = options.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent").Value;
         Assert.StartsWith("MyProduct/1.0.0 OTel-OTLP-Exporter-Dotnet/", updatedUserAgent, StringComparison.OrdinalIgnoreCase);
         Assert.NotEqual(initialUserAgent, updatedUserAgent);
     }
@@ -321,7 +321,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             UserAgentProductIdentifier = "MyProduct/1.0.0",
         };
 
-        var userAgentHeader = OtlpExporterOptions.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent").Value;
+        var userAgentHeader = options.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent").Value;
 
         // Should have two product tokens separated by a space
         var tokens = userAgentHeader.Split(' ');
@@ -341,7 +341,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             UserAgentProductIdentifier = identifier,
         };
 
-        var userAgentHeader = OtlpExporterOptions.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent").Value;
+        var userAgentHeader = options.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent").Value;
 
         // Should only contain the default exporter identifier, no leading space
         Assert.StartsWith("OTel-OTLP-Exporter-Dotnet/", userAgentHeader, StringComparison.OrdinalIgnoreCase);
@@ -356,7 +356,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             UserAgentProductIdentifier = "MySDK/2.0.0 MyDistribution/1.0.0",
         };
 
-        var userAgentHeader = OtlpExporterOptions.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent").Value;
+        var userAgentHeader = options.StandardHeaders.FirstOrDefault(h => h.Key == "User-Agent").Value;
 
         Assert.StartsWith("MySDK/2.0.0 MyDistribution/1.0.0 OTel-OTLP-Exporter-Dotnet/", userAgentHeader, StringComparison.OrdinalIgnoreCase);
     }
