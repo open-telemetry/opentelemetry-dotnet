@@ -20,10 +20,10 @@ jobs:
       uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
 
     - name: dotnet restore
-      run: dotnet restore OpenTelemetry.sln
+      run: dotnet restore OpenTelemetry.slnx
 
     - name: dotnet format
-      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes # Note: .proj files are currently not supported by dotnet format
+      run: dotnet format OpenTelemetry.slnx --no-restore --verify-no-changes # Note: .proj files are currently not supported by dotnet format
       env:
         ExposeExperimentalFeatures: false
 
@@ -38,9 +38,9 @@ jobs:
       uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
 
     - name: dotnet restore
-      run: dotnet restore OpenTelemetry.sln
+      run: dotnet restore OpenTelemetry.slnx
 
     - name: dotnet format
-      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes # Note: .proj files are currently not supported by dotnet format
+      run: dotnet format OpenTelemetry.slnx --no-restore --verify-no-changes # Note: .proj files are currently not supported by dotnet format
       env:
         ExposeExperimentalFeatures: true
