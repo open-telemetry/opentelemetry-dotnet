@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.14.0-beta.1
+
+Released 2025-Nov-12
+
 * Add support for .NET 10.0.
   ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
 
@@ -15,6 +19,9 @@ Notes](../../RELEASENOTES.md).
   for verification. See the [Digital signing
   section](../../README.md#digital-signing) for updated verification instructions.
   ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
+
+* Updated OpenTelemetry core component version(s) to `1.14.0`.
+  ([#6689](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6689))
 
 ## 1.13.1-beta.1
 
