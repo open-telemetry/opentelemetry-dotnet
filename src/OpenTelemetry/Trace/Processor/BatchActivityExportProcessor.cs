@@ -14,23 +14,39 @@ public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
     /// <summary>
     /// Initializes a new instance of the <see cref="BatchActivityExportProcessor"/> class.
     /// </summary>
-    /// <param name="exporter"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor" path="/param[@name='exporter']"/></param>
-    /// <param name="maxQueueSize"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor" path="/param[@name='maxQueueSize']"/></param>
-    /// <param name="scheduledDelayMilliseconds"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor" path="/param[@name='scheduledDelayMilliseconds']"/></param>
-    /// <param name="exporterTimeoutMilliseconds"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor" path="/param[@name='exporterTimeoutMilliseconds']"/></param>
-    /// <param name="maxExportBatchSize"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor" path="/param[@name='maxExportBatchSize']"/></param>
+    /// <param name="exporter"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T}, int, int, int, int)" path="/param[@name='exporter']"/></param>
+    /// <param name="maxQueueSize"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T}, int, int, int, int)" path="/param[@name='maxQueueSize']"/></param>
+    /// <param name="scheduledDelayMilliseconds"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T}, int, int, int, int)" path="/param[@name='scheduledDelayMilliseconds']"/></param>
+    /// <param name="exporterTimeoutMilliseconds"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T}, int, int, int, int)" path="/param[@name='exporterTimeoutMilliseconds']"/></param>
+    /// <param name="maxExportBatchSize"><inheritdoc cref="BatchExportProcessor{T}.BatchExportProcessor(BaseExporter{T}, int, int, int, int)" path="/param[@name='maxExportBatchSize']"/></param>
     public BatchActivityExportProcessor(
         BaseExporter<Activity> exporter,
         int maxQueueSize = DefaultMaxQueueSize,
         int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
         int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
         int maxExportBatchSize = DefaultMaxExportBatchSize)
-        : base(
+        : this(
             exporter,
-            maxQueueSize,
-            scheduledDelayMilliseconds,
-            exporterTimeoutMilliseconds,
-            maxExportBatchSize)
+            new BatchExportProcessorOptions<Activity>
+            {
+                MaxQueueSize = maxQueueSize,
+                ScheduledDelayMilliseconds = scheduledDelayMilliseconds,
+                ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds,
+                MaxExportBatchSize = maxExportBatchSize,
+                UseThreads = true,
+            })
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BatchActivityExportProcessor"/> class.
+    /// </summary>
+    /// <param name="exporter">Activity exporter.</param>
+    /// <param name="options">Configuration options for the batch export processor.</param>
+    public BatchActivityExportProcessor(
+        BaseExporter<Activity> exporter,
+        BatchExportProcessorOptions<Activity> options)
+        : base(exporter, options)
     {
     }
 
