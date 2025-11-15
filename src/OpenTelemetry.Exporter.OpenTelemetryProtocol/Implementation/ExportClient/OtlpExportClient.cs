@@ -42,7 +42,7 @@ internal abstract class OtlpExportClient : IExportClient
         }
 
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
-        this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        this.Headers = options.GetHeaders();
         this.HttpClient = httpClient;
     }
 

@@ -22,51 +22,85 @@ internal static class OtlpExporterOptionsExtensions
     private const string MetricsHttpServicePath = "v1/metrics";
     private const string LogsHttpServicePath = "v1/logs";
 
-    public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
-        where THeaders : new()
+    public static IReadOnlyDictionary<string, string> GetHeaders(this OtlpExporterOptions options)
     {
         var optionHeaders = options.Headers;
-        var headers = new THeaders();
+        var headers = new Dictionary<string, string>();
         if (!string.IsNullOrEmpty(optionHeaders))
         {
             // According to the specification, URL-encoded headers must be supported.
             optionHeaders = Uri.UnescapeDataString(optionHeaders);
             ReadOnlySpan<char> headersSpan = optionHeaders.AsSpan();
 
+            var nextEqualIndex = headersSpan.IndexOf('=');
+
+            if (nextEqualIndex == -1)
+            {
+                throw CreateInvalidHeaderFormatException();
+            }
+
+            // Skip any leading commas.
+            var leadingCommaIndex = headersSpan.Slice(0, nextEqualIndex).LastIndexOf(',');
+            if (leadingCommaIndex != -1)
+            {
+                headersSpan = headersSpan.Slice(leadingCommaIndex + 1);
+                nextEqualIndex -= leadingCommaIndex + 1;
+            }
+
             while (!headersSpan.IsEmpty)
             {
-                int commaIndex = headersSpan.IndexOf(',');
-                ReadOnlySpan<char> pair;
-                if (commaIndex == -1)
+                var key = headersSpan.Slice(0, nextEqualIndex).Trim().ToString();
+
+                // HTTP header field-names can not be empty: https://www.rfc-editor.org/rfc/rfc7230#section-3.2
+                if (key.Length < 1)
                 {
-                    pair = headersSpan;
+                    throw CreateInvalidHeaderFormatException();
+                }
+
+                headersSpan = headersSpan.Slice(nextEqualIndex + 1);
+
+                nextEqualIndex = headersSpan.IndexOf('=');
+
+                string value;
+                if (nextEqualIndex == -1)
+                {
+                    // Everything until the end of the string can be considered the value.
+                    value = headersSpan.TrimEnd(',').Trim().ToString();
                     headersSpan = [];
                 }
                 else
                 {
-                    pair = headersSpan.Slice(0, commaIndex);
-                    headersSpan = headersSpan.Slice(commaIndex + 1);
+                    // If we have another = we need to backtrack from it
+                    // and try to find the last comma and consider that as the delimiter.
+                    var potentialValue = headersSpan.Slice(0, nextEqualIndex);
+                    var lastComma = potentialValue.LastIndexOf(',');
+
+                    if (lastComma == -1)
+                    {
+                        throw CreateInvalidHeaderFormatException();
+                    }
+
+                    potentialValue = potentialValue.Slice(0, lastComma);
+
+                    value = potentialValue.TrimEnd(',').Trim().ToString();
+                    headersSpan = headersSpan.Slice(lastComma + 1);
+                    nextEqualIndex -= potentialValue.Length + 1;
                 }
 
-                int equalIndex = pair.IndexOf('=');
-                if (equalIndex == -1)
-                {
-                    throw new ArgumentException("Headers provided in an invalid format.");
-                }
-
-                var key = pair.Slice(0, equalIndex).Trim().ToString();
-                var value = pair.Slice(equalIndex + 1).Trim().ToString();
-                addHeader(headers, key, value);
+                headers.Add(key, value);
             }
         }
 
         foreach (var header in OtlpExporterOptions.StandardHeaders)
         {
-            addHeader(headers, header.Key, header.Value);
+            headers.Add(header.Key, header.Value);
         }
 
         return headers;
     }
+
+    private static ArgumentException CreateInvalidHeaderFormatException()
+        => new("Headers provided in an invalid format. Use: header=value,header=value");
 
     public static OtlpExporterTransmissionHandler GetExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions, OtlpSignalType otlpSignalType)
     {
