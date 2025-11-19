@@ -131,7 +131,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     }
 
     /// <summary>
-    /// Gets or sets the user agent identifier.
+    /// Gets or sets a custom user agent identifier.
+    /// This will be prepended to the default user agent string.
     /// </summary>
     public string UserAgentProductIdentifier { get; set; } = string.Empty;
 
