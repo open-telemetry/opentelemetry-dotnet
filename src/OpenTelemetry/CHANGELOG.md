@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added `LowMemory` temporality as an option in the OTLP metrics exporter.
+  ([#6648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6648))
+
 ## 1.14.0
 
 Released 2025-Nov-12
