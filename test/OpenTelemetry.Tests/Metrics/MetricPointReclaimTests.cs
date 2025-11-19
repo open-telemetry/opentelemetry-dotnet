@@ -10,9 +10,11 @@ namespace OpenTelemetry.Metrics.Tests;
 public class MetricPointReclaimTests
 {
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void MeasurementsAreNotDropped(bool emitMetricWithNoDimensions)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void MeasurementsAreNotDropped(bool emitMetricWithNoDimensions, bool useThreads)
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var counter = meter.CreateCounter<long>("MyFruitCounter");
@@ -21,7 +23,13 @@ public class MetricPointReclaimTests
         int maxNumberOfDistinctMetricPoints = 4000; // Default max MetricPoints * 2
 
         using var exporter = new CustomExporter(assertNoDroppedMeasurements: true);
-        using var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: 10)
+        using var metricReader = new PeriodicExportingMetricReader(
+            exporter,
+            new()
+            {
+                ExportIntervalMilliseconds = 10,
+                UseThreads = useThreads,
+            })
         {
             TemporalityPreference = MetricReaderTemporalityPreference.Delta,
         };

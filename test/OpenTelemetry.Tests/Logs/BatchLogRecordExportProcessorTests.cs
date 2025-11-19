@@ -10,8 +10,10 @@ namespace OpenTelemetry.Logs.Tests;
 
 public sealed class BatchLogRecordExportProcessorTests
 {
-    [Fact]
-    public void StateValuesAndScopeBufferingTest()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void StateValuesAndScopeBufferingTest(bool useThread)
     {
         var scopeProvider = new LoggerExternalScopeProvider();
 
@@ -21,7 +23,15 @@ public sealed class BatchLogRecordExportProcessorTests
 #pragma warning disable CA2000 // Dispose objects before losing scope
             new InMemoryExporter<LogRecord>(exportedItems),
 #pragma warning restore CA2000 // Dispose objects before losing scope
-            scheduledDelayMilliseconds: int.MaxValue);
+            new()
+            {
+                // Use the default values for the other parameters, but allow overriding useThreads
+                MaxQueueSize = BatchLogRecordExportProcessor.DefaultMaxQueueSize,
+                MaxExportBatchSize = BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
+                ExporterTimeoutMilliseconds = BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
+                ScheduledDelayMilliseconds = int.MaxValue,
+                UseThreads = useThread,
+            });
 
         using var scope = scopeProvider.Push(exportedItems);
 
@@ -147,6 +157,49 @@ public sealed class BatchLogRecordExportProcessorTests
 
         Assert.Single(exportedItems);
         Assert.Same(logRecord, exportedItems[0]);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void DisposeWithoutShutdown(bool useThread)
+    {
+        var scopeProvider = new LoggerExternalScopeProvider();
+
+        List<LogRecord> exportedItems = new();
+
+        var processor = new BatchLogRecordExportProcessor(
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            new InMemoryExporter<LogRecord>(exportedItems),
+#pragma warning restore CA2000 // Dispose objects before losing scope
+            new()
+            {
+                // Use the default values for the other parameters, but allow overriding useThreads
+                MaxQueueSize = BatchLogRecordExportProcessor.DefaultMaxQueueSize,
+                MaxExportBatchSize = BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
+                ExporterTimeoutMilliseconds = BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
+                ScheduledDelayMilliseconds = int.MaxValue,
+                UseThreads = useThread,
+            });
+
+        processor.Dispose();
+
+        using var scope = scopeProvider.Push(exportedItems);
+
+        var pool = LogRecordSharedPool.Current;
+
+        var logRecord = pool.Rent();
+
+        var state = new LogRecordTests.DisposingState("Hello world");
+
+        logRecord.ILoggerData.ScopeProvider = scopeProvider;
+        logRecord.StateValues = state;
+
+        processor.OnEnd(logRecord);
+
+        state.Dispose();
+
+        Assert.Empty(exportedItems);
     }
 }
 #endif
