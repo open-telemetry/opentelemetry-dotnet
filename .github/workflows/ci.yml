@@ -8,6 +8,8 @@ on:
     branches: [ 'main*' ]
   pull_request:
     branches: [ 'main*' ]
+  merge_group:
+    types: [ checks_requested ]
 
 permissions:
   contents: read
@@ -28,7 +30,7 @@ jobs:
     outputs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
     - uses: AurorNZ/paths-filter@3b1f3abc3371cca888d8eb03dfa70bc8a9867629 # v4.0.0
       id: changes
       with:
@@ -37,7 +39,7 @@ jobs:
           build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props', 'global.json']
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
-          solution: ['OpenTelemetry.sln']
+          solution: ['OpenTelemetry.slnx']
           packaged-code: ['src/**', '!**/*.md']
           api-code: ['*/OpenTelemetry.Api*/**', '!**/*.md']
           api-packages: ['src/OpenTelemetry.Api*/**', '!**/*.md']
@@ -69,7 +71,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/Component.BuildTest.yml
     with:
-      project-name: 'OpenTelemetry.sln'
+      project-name: 'OpenTelemetry.slnx'
       code-cov-name: 'Solution'
 
   build-test-project-stable:
@@ -123,7 +125,7 @@ jobs:
       matrix:
         version: [ net8.0, net9.0, net10.0 ]
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       - name: Run OTLP Exporter docker compose
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
@@ -141,7 +143,7 @@ jobs:
       matrix:
         version: [ net8.0, net9.0, net10.0 ]
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       - name: Run W3C Trace Context docker compose
         run: docker compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 

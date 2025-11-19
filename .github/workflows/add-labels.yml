@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: check out code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
       - name: Add labels for package found in bug issue descriptions
         shell: pwsh
@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: check out code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           ref: ${{ github.event.repository.default_branch }} # Note: Do not run on the PR branch we want to execute add-labels.psm1 from main on the base repo only because pull_request_target can see secrets
 

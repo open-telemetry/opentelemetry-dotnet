@@ -530,10 +530,10 @@ environmental variables:
 > Programmatically calling `SetExemplarFilter` will override any defaults set
   using environment variables or configuration.
 
-| Environment variable       | Description                                        | Notes |
-| -------------------------- | -------------------------------------------------- |-------|
+| Environment variable | Description | Notes |
+| -------------------------- | -------------------------------------------------- | ------- |
 | `OTEL_METRICS_EXEMPLAR_FILTER` | Sets the default `ExemplarFilter` to use for all metrics. | Added in `1.9.0` |
-| `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS`        | Sets the default `ExemplarFilter` to use for histogram metrics. If set `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS` takes precedence over `OTEL_METRICS_EXEMPLAR_FILTER` for histogram metrics. | Experimental key (may be removed or changed in the future). Added in `1.9.0` |
+| `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS` | Sets the default `ExemplarFilter` to use for histogram metrics. If set `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS` takes precedence over `OTEL_METRICS_EXEMPLAR_FILTER` for histogram metrics. | Experimental key (may be removed or changed in the future). Added in `1.9.0` |
 
 Allowed values:
 
@@ -645,10 +645,10 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 It is also possible to configure the `Resource` by using following
 environmental variables:
 
-| Environment variable       | Description                                        |
+| Environment variable | Description |
 | -------------------------- | -------------------------------------------------- |
 | `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
-| `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
+| `OTEL_SERVICE_NAME` | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
 
 ## Advanced scenarios
 

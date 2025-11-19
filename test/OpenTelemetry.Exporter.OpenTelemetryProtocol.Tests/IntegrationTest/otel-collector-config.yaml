@@ -52,6 +52,8 @@ receivers:
 
 exporters:
   debug:
+    sending_queue:
+      queue_size: 1000
     verbosity: detailed
 
 service:

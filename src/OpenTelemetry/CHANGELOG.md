@@ -9,6 +9,24 @@ Notes](../../RELEASENOTES.md).
 * Added `LowMemory` temporality as an option in the OTLP metrics exporter.
   ([#6648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6648))
 
+## 1.14.0
+
+Released 2025-Nov-12
+
+* **Breaking Change** NuGet packages now use the Sigstore bundle format
+  (`.sigstore.json`) for digital signatures instead of separate signature
+  (`.sig`) and certificate (`.pem`) files. This requires cosign 3.0 or later
+  for verification. See the [Digital signing
+  section](../../README.md#digital-signing) for updated verification instructions.
+  ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
+
+* Update to stable versions for .NET 10.0 NuGet packages.
+  ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
+
+* Update `Microsoft.Extensions.*` dependencies to `10.0.0` for .NET Framework
+  and .NET Standard.
+  ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
+
 ## 1.14.0-rc.1
 
 Released 2025-Oct-21

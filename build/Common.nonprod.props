@@ -4,7 +4,7 @@
   <PropertyGroup>
     <NoWarn>$(NoWarn),CS1574,CS1591</NoWarn>
     <IsPackable>false</IsPackable>
-    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\OpenTelemetry.test.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.slnx'))\build\OpenTelemetry.test.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
-    <Content Include="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\xunit.runner.json">
+    <Content Include="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.slnx'))\build\xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -47,7 +47,7 @@
     <!-- Note: When running dotnet test from CLI with the framework parameter
     errors will be generated for projects which do not implement the requested
     target. In order to enable running tests for a given framework across a
-    solution/project with mixed targets (eg: dotnet test OpenTelemetry.sln -f
+    solution/project with mixed targets (eg: dotnet test OpenTelemetry.slnx -f
     net462) we convert this into a skip message only. -->
     <PropertyGroup Condition="$(TargetFrameworks.Contains($(TargetFramework))) != 'true'">
       <_SkipTests>true</_SkipTests>

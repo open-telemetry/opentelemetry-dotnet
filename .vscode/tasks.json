@@ -3,7 +3,7 @@
     {
       "args": [
         "build",
-        "${workspaceFolder}/OpenTelemetry.sln",
+        "${workspaceFolder}/OpenTelemetry.slnx",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary"
       ],
@@ -22,7 +22,7 @@
     {
       "args": [
         "test",
-        "${workspaceFolder}/OpenTelemetry.sln",
+        "${workspaceFolder}/OpenTelemetry.slnx",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary"
       ],
