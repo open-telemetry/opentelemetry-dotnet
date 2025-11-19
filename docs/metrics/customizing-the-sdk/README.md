@@ -531,7 +531,7 @@ environmental variables:
   using environment variables or configuration.
 
 | Environment variable | Description | Notes |
-| -------------------------- | -------------------------------------------------- | ------ |
+| -------------------------- | -------------------------------------------------- | ------- |
 | `OTEL_METRICS_EXEMPLAR_FILTER` | Sets the default `ExemplarFilter` to use for all metrics. | Added in `1.9.0` |
 | `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS` | Sets the default `ExemplarFilter` to use for histogram metrics. If set `OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS` takes precedence over `OTEL_METRICS_EXEMPLAR_FILTER` for histogram metrics. | Experimental key (may be removed or changed in the future). Added in `1.9.0` |
 
