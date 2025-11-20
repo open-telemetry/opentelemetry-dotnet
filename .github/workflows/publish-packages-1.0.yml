@@ -28,6 +28,7 @@ jobs:
   build-pack-publish:
     runs-on: windows-latest
     permissions:
+      attestations: write
       contents: read
       id-token: write
     env:
@@ -39,7 +40,7 @@ jobs:
       artifact-id: ${{ steps.upload-artifacts.outputs.artifact-id }}
 
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
@@ -50,7 +51,7 @@ jobs:
       uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
 
     - name: Install Cosign
-      uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+      uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
     - name: dotnet restore
       run: dotnet restore ./build/OpenTelemetry.proj -p:RunningDotNetPack=true
@@ -71,9 +72,15 @@ jobs:
                 $fileFullPath = $_.FullName
                 Write-Output "Signing $fileFullPath"
 
-                cosign.exe sign-blob $fileFullPath --yes --output-signature $fileFullPath-keyless.sig --output-certificate $fileFullPath-keyless.pem
+                cosign.exe sign-blob --yes --bundle "$fileFullPath.sigstore.json" $fileFullPath
             }
         }
+
+    - name: Create GitHub attestations for DLLs
+      uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+      with:
+        subject-path: |
+          ./artifacts/bin/*/release_*/OpenTelemetry*.dll
 
     - name: dotnet pack
       shell: pwsh
@@ -86,7 +93,7 @@ jobs:
         # renovate: datasource=nuget depName=dotnet-validate
         DOTNET_VALIDATE_VERSION: '0.0.1-preview.537'
         # renovate: datasource=nuget depName=Meziantou.Framework.NuGetPackageValidation.Tool
-        MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION: '1.0.34'
+        MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION: '1.0.37'
       run: |
         dotnet tool install --global dotnet-validate --version ${env:DOTNET_VALIDATE_VERSION} --allow-roll-forward
         dotnet tool install --global Meziantou.Framework.NuGetPackageValidation.Tool --version ${env:MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION} --allow-roll-forward
@@ -139,10 +146,10 @@ jobs:
             $dllFilePath = $dllFile.FullName
             Write-Output "Verifying $dllFilePath"
             cosign.exe verify-blob `
-              --signature $dllFilePath-keyless.sig `
-              --certificate $dllFilePath-keyless.pem `
+              --bundle "$dllFilePath.sigstore.json" `
               --certificate-identity "${env:GITHUB_SERVER_URL}/${env:GITHUB_REPOSITORY}/.github/workflows/publish-packages-1.0.yml@${env:GITHUB_REF}" `
               --certificate-oidc-issuer "https://token.actions.githubusercontent.com" `
+              --use-signed-timestamps `
               $dllFilePath
             if ($LASTEXITCODE -ne 0) {
                 Write-Output "::error::Signature verification failed for $dllFilePath."
@@ -186,7 +193,7 @@ jobs:
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       with:
         token: ${{ steps.otelbot-token.outputs.token }}
 

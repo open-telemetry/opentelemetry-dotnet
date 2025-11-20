@@ -131,7 +131,7 @@ public abstract partial class MetricReader
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
                         metricStreamIdentity.InstrumentName,
                         metricStreamIdentity.MeterName,
-                        "Metric name is invalid.",
+                        metricStreamConfig?.Name == null ? "Instrument name is invalid." : "View name is invalid.",
                         "The name must comply with the OpenTelemetry specification.");
 
                     continue;

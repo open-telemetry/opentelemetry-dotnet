@@ -727,6 +727,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     [InlineData("cuMulative", MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("DeltA", MetricReaderTemporalityPreference.Delta)]
     [InlineData("invalid", MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("lowmemory", MetricReaderTemporalityPreference.LowMemory)]
     public void TestTemporalityPreferenceUsingConfiguration(string configValue, MetricReaderTemporalityPreference expectedTemporality)
     {
         var testExecuted = false;
@@ -757,6 +758,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     [InlineData("cuMulative", MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("DeltA", MetricReaderTemporalityPreference.Delta)]
     [InlineData("invalid", MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("lowmemory", MetricReaderTemporalityPreference.LowMemory)]
     public void TestTemporalityPreferenceUsingEnvVar(string configValue, MetricReaderTemporalityPreference expectedTemporality)
     {
         Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitionTests.MetricsData.TemporalityKeyName, configValue);
