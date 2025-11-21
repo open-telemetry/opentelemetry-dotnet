@@ -118,6 +118,11 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
                 this.WriteLine($"    Version: {activity.Source.Version}");
             }
 
+            if (!string.IsNullOrEmpty(activity.Source.TelemetrySchemaUrl))
+            {
+                this.WriteLine($"    Schema Url: {activity.Source.TelemetrySchemaUrl}");
+            }
+
             if (activity.Source.Tags?.Any() == true)
             {
                 this.WriteLine("    Tags:");
