@@ -10,7 +10,7 @@ Notes](../../RELEASENOTES.md).
 * Added `UserAgentProductIdentifier` property to `OtlpExporterOptions` to allow
   custom product identifiers to be prepended to the User-Agent header. When set,
   the custom identifier is prepended with a space separator to the default
-  User-Agent string (e.g., "MyApp/1.0 OTel-OTLP-Exporter-Dotnet/1.14.0").
+  User-Agent string (e.g., `MyApp/1.0 OTel-OTLP-Exporter-Dotnet/1.14.0`).
   ([#6496])
 
 ## 1.14.0
