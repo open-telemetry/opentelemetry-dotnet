@@ -1,9 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
+using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Metrics;
 
@@ -39,7 +41,17 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
 
         services
             .AddOpenTelemetryMeterProviderBuilderServices()
-            .TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
+            .TryAddSingleton<MeterProvider>(sp =>
+            {
+                if (IsOtelSdkDisabled(sp.GetRequiredService<IConfiguration>()))
+                {
+                    var noopMeterProvider = new NoopMeterProvider();
+                    noopMeterProvider.Dispose();
+                    return noopMeterProvider;
+                }
+
+                return new MeterProviderSdk(sp, ownsServiceProvider: false);
+            });
 
         this.innerBuilder = new MeterProviderServiceCollectionBuilder(services);
 
@@ -108,7 +120,25 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
         bool validateScopes = false;
 #endif
         var serviceProvider = services.BuildServiceProvider(validateScopes);
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+
+        if (IsOtelSdkDisabled(configuration))
+        {
+            serviceProvider.Dispose();
+            return new NoopMeterProvider();
+        }
 
         return new MeterProviderSdk(serviceProvider, ownsServiceProvider: true);
+    }
+
+    private static bool IsOtelSdkDisabled(IConfiguration configuration)
+    {
+        bool isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out bool result) && result;
+        if (isDisabled)
+        {
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Disabled because {SdkConfigDefinitions.SdkDisableEnvVarName} is true.");
+        }
+
+        return isDisabled;
     }
 }
