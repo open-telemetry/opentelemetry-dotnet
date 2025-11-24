@@ -16,7 +16,12 @@ public class MetricSnapshotTests
         var exportedMetrics = new List<Metric>();
         var exportedSnapshots = new List<MetricSnapshot>();
 
-        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = new Meter(new MeterOptions(Utils.GetCurrentMethodName())
+        {
+            Version = "1.0.0",
+            TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
+        });
+
         var counter = meter.CreateCounter<long>("meter");
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
@@ -49,6 +54,7 @@ public class MetricSnapshotTests
         Assert.Equal(metric1.MeterName, snapshot1.MeterName);
         Assert.Equal(metric1.MetricType, snapshot1.MetricType);
         Assert.Equal(metric1.MeterVersion, snapshot1.MeterVersion);
+        Assert.Equal(metric1.MeterSchemaUrl, snapshot1.MeterSchemaUrl);
 
         // SECOND EXPORT
         counter.Add(5);

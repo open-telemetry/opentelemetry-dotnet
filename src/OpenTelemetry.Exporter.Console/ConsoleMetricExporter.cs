@@ -73,6 +73,11 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 this.WriteLine($"\tVersion: {metric.MeterVersion}");
             }
 
+            if (!string.IsNullOrEmpty(metric.InstrumentIdentity.MeterSchemaUrl))
+            {
+                this.WriteLine($"\tSchema Url: {metric.MeterSchemaUrl}");
+            }
+
             if (metric.MeterTags?.Any() == true)
             {
                 this.WriteLine("\tTags:");
