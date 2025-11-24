@@ -120,7 +120,7 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
 
             if (!string.IsNullOrEmpty(activity.Source.TelemetrySchemaUrl))
             {
-                this.WriteLine($"    Schema Url: {activity.Source.TelemetrySchemaUrl}");
+                this.WriteLine($"    Schema URL: {activity.Source.TelemetrySchemaUrl}");
             }
 
             if (activity.Source.Tags?.Any() == true)
