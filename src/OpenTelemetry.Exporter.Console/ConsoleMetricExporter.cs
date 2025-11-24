@@ -75,7 +75,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 
             if (!string.IsNullOrEmpty(metric.InstrumentIdentity.MeterSchemaUrl))
             {
-                this.WriteLine($"\tSchema Url: {metric.MeterSchemaUrl}");
+                this.WriteLine($"\tSchema URL: {metric.MeterSchemaUrl}");
             }
 
             if (metric.MeterTags?.Any() == true)

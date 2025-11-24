@@ -232,7 +232,7 @@ public sealed class Metric
     public string MeterVersion => this.InstrumentIdentity.MeterVersion;
 
     /// <summary>
-    /// Gets the meter schema url for the metric stream.
+    /// Gets the meter schema URL for the metric stream.
     /// </summary>
 #pragma warning disable CA1056 // Change the type of property from 'string' to 'System.Uri'
     public string MeterSchemaUrl => this.InstrumentIdentity.MeterSchemaUrl;
