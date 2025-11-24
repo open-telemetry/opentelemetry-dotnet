@@ -21,4 +21,12 @@ public enum MetricReaderTemporalityPreference
     /// Aggregations of non-monotonic measurements use cumulative temporality.
     /// </summary>
     Delta = 2,
+
+    /// <summary>
+    /// Uses delta temporality for synchronous Counter and Histogram instruments and
+    /// cumulative temporality for synchronous UpDownCounter, ObservableCounter and
+    /// ObservableUpDownCounter instruments. This mode reduces SDK memory usage by avoiding
+    /// the need to store both cumulative and delta states for temporality conversion.
+    /// </summary>
+    LowMemory = 3,
 }

@@ -126,6 +126,8 @@ OpenTelemetry.Trace.TelemetrySpan.AddEvent(string! name, OpenTelemetry.Trace.Spa
 OpenTelemetry.Trace.TelemetrySpan.AddEvent(string! name, System.DateTimeOffset timestamp, OpenTelemetry.Trace.SpanAttributes? attributes) -> OpenTelemetry.Trace.TelemetrySpan!
 OpenTelemetry.Trace.TelemetrySpan.AddEvent(string! name, System.DateTimeOffset timestamp) -> OpenTelemetry.Trace.TelemetrySpan!
 OpenTelemetry.Trace.TelemetrySpan.AddEvent(string! name) -> OpenTelemetry.Trace.TelemetrySpan!
+OpenTelemetry.Trace.TelemetrySpan.AddLink(OpenTelemetry.Trace.SpanContext spanContext, OpenTelemetry.Trace.SpanAttributes? attributes) -> OpenTelemetry.Trace.TelemetrySpan!
+OpenTelemetry.Trace.TelemetrySpan.AddLink(OpenTelemetry.Trace.SpanContext spanContext) -> OpenTelemetry.Trace.TelemetrySpan!
 OpenTelemetry.Trace.TelemetrySpan.Context.get -> OpenTelemetry.Trace.SpanContext
 OpenTelemetry.Trace.TelemetrySpan.Dispose() -> void
 OpenTelemetry.Trace.TelemetrySpan.End() -> void

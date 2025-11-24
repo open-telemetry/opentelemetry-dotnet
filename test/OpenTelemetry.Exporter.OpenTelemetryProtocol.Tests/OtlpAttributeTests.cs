@@ -4,7 +4,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
-using Xunit;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
@@ -61,14 +60,23 @@ public class OtlpAttributeTests
         switch (value)
         {
             case Array array:
-                Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
-                var expectedArray = new long[array.Length];
-                for (var i = 0; i < array.Length; i++)
+                if (value.GetType() == typeof(byte[]))
                 {
-                    expectedArray[i] = Convert.ToInt64(array.GetValue(i), CultureInfo.InvariantCulture);
+                    Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.BytesValue, attribute.Value.ValueCase);
+                    Assert.Equal((byte[])value, attribute.Value.BytesValue.ToByteArray());
+                }
+                else
+                {
+                    Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
+                    var expectedArray = new long[array.Length];
+                    for (var i = 0; i < array.Length; i++)
+                    {
+                        expectedArray[i] = Convert.ToInt64(array.GetValue(i), CultureInfo.InvariantCulture);
+                    }
+
+                    Assert.Equal(expectedArray, attribute.Value.ArrayValue.Values.Select(x => x.IntValue));
                 }
 
-                Assert.Equal(expectedArray, attribute.Value.ArrayValue.Values.Select(x => x.IntValue));
                 break;
             default:
                 Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.IntValue, attribute.Value.ValueCase);

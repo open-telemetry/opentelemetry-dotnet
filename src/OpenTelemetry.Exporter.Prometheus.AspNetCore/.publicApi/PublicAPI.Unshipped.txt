@@ -1,6 +1,8 @@
 Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions
 Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTimestamp.get -> bool
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTimestamp.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTotalNameSuffixForCounters.get -> bool
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTotalNameSuffixForCounters.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.PrometheusAspNetCoreOptions() -> void

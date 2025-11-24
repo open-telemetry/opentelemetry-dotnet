@@ -7,6 +7,37 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.14.0
+
+Released 2025-Nov-12
+
+* **Breaking Change** NuGet packages now use the Sigstore bundle format
+  (`.sigstore.json`) for digital signatures instead of separate signature
+  (`.sig`) and certificate (`.pem`) files. This requires cosign 3.0 or later
+  for verification. See the [Digital signing
+  section](../../README.md#digital-signing) for updated verification instructions.
+  ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
+
+## 1.14.0-rc.1
+
+Released 2025-Oct-21
+
+* Changed histogram protobuf serialization to use packed format for `bucket_counts`
+  and `explicit_bounds` to be specification-compliant and fix issues with strict
+  OTLP parsers. Lenient parsers should handle both formats.
+  ([#6567](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6567))
+
+* Add support for .NET 10.0.
+  ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
+
+## 1.13.1
+
+Released 2025-Oct-09
+
+## 1.13.0
+
+Released 2025-Oct-01
+
 * Fixed an issue in .NET Framework where OTLP export of traces, logs, and
   metrics using `OtlpExportProtocol.Grpc` did not correctly set the initial
   write position, resulting in gRPC protocol errors.
@@ -22,6 +53,10 @@ Notes](../../RELEASENOTES.md).
 * gRPC calls to export traces, logs, and metrics using `OtlpExportProtocol.Grpc`
   now set the `TE=trailers` HTTP request header to improve interoperability.
   ([#6449](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6449))
+
+* Improved performance exporting `byte[]` attributes as native binary format
+  instead of arrays.
+  ([#6534](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6534))
 
 ## 1.12.0
 

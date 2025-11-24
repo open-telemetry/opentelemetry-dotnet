@@ -24,7 +24,7 @@ on:
         required: false
         type: string
       tfm-list:
-        default: '[ "net462", "net8.0", "net9.0" ]'
+        default: '[ "net462", "net8.0", "net9.0", "net10.0" ]'
         required: false
         type: string
 
@@ -45,14 +45,14 @@ jobs:
         - os: ubuntu-22.04-arm
           version: net462
         - os: ubuntu-22.04-arm
-          version: net8.0
+          version: net10.0
         - os: windows-11-arm
-          version: net8.0
+          version: net10.0
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
@@ -64,6 +64,7 @@ jobs:
       with:
         dotnet-version: |
           8.0.x
+          9.0.x
 
     - name: Setup .NET
       uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0

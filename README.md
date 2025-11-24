@@ -173,7 +173,7 @@ For details about upcoming planned releases see:
 The dates and features described in issues and milestones are estimates and
 subject to change.
 
-For highlights and annoucements for stable releases see: [Release
+For highlights and announcements for stable releases see: [Release
 Notes](./RELEASENOTES.md).
 
 To access packages, source code, and/or view a list of changes for all
@@ -188,23 +188,42 @@ and can be installed using the
 
 Starting with the `1.10.0` release the DLLs included in the packages pushed to
 NuGet are digitally signed using [Sigstore](https://www.sigstore.dev/). Within
-each NuGet package the digital signature and its corresponding certificate file
-are placed alongside the shipped DLL(s) in the `/lib` folder. When a project
-targets multiple frameworks each target outputs a dedicated DLL and signing
-artifacts into a sub folder based on the
-[TFM](https://learn.microsoft.com/dotnet/standard/frameworks).
+each NuGet package the digital signature artifacts are placed alongside the
+shipped DLL(s) in the `/lib` folder. When a project targets multiple frameworks
+each target outputs a dedicated DLL and signing artifacts into a sub folder
+based on the [TFM](https://learn.microsoft.com/dotnet/standard/frameworks).
 
-The digitial signature and certificate files share the same name prefix as the
-DLL to ensure easy identification and association.
+The digital signature files share the same name prefix as the DLL to ensure
+easy identification and association.
 
 To verify the integrity of a DLL inside a NuGet package use the
 [cosign](https://github.com/sigstore/cosign) tool from Sigstore:
 
+#### Version 1.14.0 and later
+
+These versions are using bundle format known from cosign 3.0+.
+
 ```bash
+$TAG="core-1.14.0"
+cosign verify-blob \
+    --bundle OpenTelemetry.dll.sigstore.json \
+    --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/$TAG" \
+    --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+    --use-signed-timestamps \
+    OpenTelemetry.dll
+```
+
+#### Versions 1.10.0 - 1.14.0-rc.1
+
+These versions are using separate signature and certificate files format known
+from cosign 2.x.
+
+```bash
+$TAG="core-1.12.0"
 cosign verify-blob \
     --signature OpenTelemetry.dll-keyless.sig \
-    --certificate OpenTelemetry.dll-keyless.pem.cer \
-    --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/core-1.10.0-rc.1" \
+    --certificate OpenTelemetry.dll-keyless.pem \
+    --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/$TAG" \
     --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
     OpenTelemetry.dll
 ```
@@ -214,6 +233,23 @@ cosign verify-blob \
 
 For more verification options please refer to the [cosign
 documentation](https://github.com/sigstore/cosign/blob/main/doc/cosign_verify-blob.md).
+
+### Attestation
+
+Starting with the `1.14.0` release the DLLs included in the packages pushed to
+NuGet are attested using [GitHub Artifact attestations](https://docs.github.com/actions/concepts/security/artifact-attestations).
+
+To verify the attestation of a DLL inside a NuGet package use the [GitHub CLI](https://cli.github.com/):
+
+```bash
+gh attestation verify --owner open-telemetry .\OpenTelemetry.dll
+```
+
+> [!NOTE]
+> A successful verification outputs `Verification succeeded!`.
+
+For more verification options please refer to the [`gh attestation verify`
+documentation](https://cli.github.com/manual/gh_attestation_verify).
 
 ## Contributing
 
@@ -239,6 +275,7 @@ you're more than welcome to participate!
 ### Maintainers
 
 * [Alan West](https://github.com/alanwest), New Relic
+* [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 * [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 
 For more information about the maintainer role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer).
@@ -248,7 +285,6 @@ For more information about the maintainer role, see the [community repository](h
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Martin Costello](https://github.com/martincostello), Grafana Labs
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
-* [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
 
 For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
 

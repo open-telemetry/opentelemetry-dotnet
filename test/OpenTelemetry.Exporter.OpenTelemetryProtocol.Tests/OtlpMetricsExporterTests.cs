@@ -12,7 +12,6 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-using Xunit;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
 
@@ -728,6 +727,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     [InlineData("cuMulative", MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("DeltA", MetricReaderTemporalityPreference.Delta)]
     [InlineData("invalid", MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("lowmemory", MetricReaderTemporalityPreference.LowMemory)]
     public void TestTemporalityPreferenceUsingConfiguration(string configValue, MetricReaderTemporalityPreference expectedTemporality)
     {
         var testExecuted = false;
@@ -758,6 +758,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     [InlineData("cuMulative", MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("DeltA", MetricReaderTemporalityPreference.Delta)]
     [InlineData("invalid", MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("lowmemory", MetricReaderTemporalityPreference.LowMemory)]
     public void TestTemporalityPreferenceUsingEnvVar(string configValue, MetricReaderTemporalityPreference expectedTemporality)
     {
         Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitionTests.MetricsData.TemporalityKeyName, configValue);

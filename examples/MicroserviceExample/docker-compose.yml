@@ -1,11 +1,11 @@
 services:
   zipkin:
-    image: openzipkin/zipkin
+    image: openzipkin/zipkin:3.5.1@sha256:bb570eb45c2994eaf32da783cc098b3d51d1095b73ec92919863d73d0a9eaafb
     ports:
       - 9411:9411
 
   rabbitmq:
-    image: rabbitmq:3-management-alpine
+    image: rabbitmq:4-management-alpine@sha256:823b455d50e6a1a106243223a302c3eff5f14cf5d6a8827782071403ee255352
     ports:
       - 5672:5672
       - 15672:15672

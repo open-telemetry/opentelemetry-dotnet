@@ -61,10 +61,12 @@ public class PrometheusHttpListenerTests
         });
     }
 
-    [Fact]
-    public async Task PrometheusExporterHttpServerIntegration()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task PrometheusExporterHttpServerIntegration(bool disableTimestamp)
     {
-        await RunPrometheusExporterHttpServerIntegrationTest();
+        await RunPrometheusExporterHttpServerIntegrationTest(disableTimestamp: disableTimestamp);
     }
 
     [Fact]
@@ -73,10 +75,12 @@ public class PrometheusHttpListenerTests
         await RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
     }
 
-    [Fact]
-    public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics(bool disableTimestamp)
     {
-        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty);
+        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty, disableTimestamp: disableTimestamp);
     }
 
     [Fact]
@@ -220,7 +224,7 @@ public class PrometheusHttpListenerTests
             });
     }
 
-    private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, out string address)
+    private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, out string address, bool disableTimestamp = false)
     {
         Random random = new Random();
         int retryAttempts = 5;
@@ -242,6 +246,7 @@ public class PrometheusHttpListenerTests
                     .AddPrometheusHttpListener(options =>
                     {
                         options.UriPrefixes = [generatedAddress];
+                        options.DisableTimestamp = disableTimestamp;
                     })
                     .Build();
 
@@ -258,13 +263,13 @@ public class PrometheusHttpListenerTests
         return provider ?? throw new InvalidOperationException("HttpListener could not be started");
     }
 
-    private static async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text", KeyValuePair<string, object?>[]? meterTags = null)
+    private static async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text", KeyValuePair<string, object?>[]? meterTags = null, bool disableTimestamp = false)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text", StringComparison.Ordinal);
 
         using var meter = new Meter(MeterName, MeterVersion, meterTags);
 
-        var provider = BuildMeterProvider(meter, [], out var address);
+        var provider = BuildMeterProvider(meter, [], out var address, disableTimestamp);
 
         var counterTags = new KeyValuePair<string, object?>[]
         {
@@ -308,6 +313,8 @@ public class PrometheusHttpListenerTests
 
             var content = await response.Content.ReadAsStringAsync();
 
+            var timestampPart = disableTimestamp ? string.Empty : " (\\d+)";
+            var timestampPartOpenMetrics = disableTimestamp ? string.Empty : " (\\d+\\.\\d{3})";
             var expected = requestOpenMetrics
                 ? "# TYPE target info\n"
                   + "# HELP target Target metadata\n"
@@ -317,11 +324,11 @@ public class PrometheusHttpListenerTests
                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
                   + "# TYPE counter_double_bytes counter\n"
                   + "# UNIT counter_double_bytes bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17{timestampPartOpenMetrics}\n"
                   + "# EOF\n"
                 : "# TYPE counter_double_bytes_total counter\n"
                   + "# UNIT counter_double_bytes_total bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17 (\\d+)\n"
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17{timestampPart}\n"
                   + "# EOF\n";
 
             Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);

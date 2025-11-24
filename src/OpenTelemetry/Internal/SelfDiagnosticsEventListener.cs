@@ -129,7 +129,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     /// </para>
     /// </summary>
     /// <remarks>
-    /// The bytes array must be large enough to write 27-33 charaters from the byteIndex starting position.
+    /// The bytes array must be large enough to write 27-33 characters from the byteIndex starting position.
     /// </remarks>
     /// <param name="datetime">DateTime.</param>
     /// <param name="bytes">Array of bytes to write.</param>
