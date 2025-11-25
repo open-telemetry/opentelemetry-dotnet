@@ -15,8 +15,6 @@ OpenTelemetry.Exporter.OtlpExporterOptions.Protocol.get -> OpenTelemetry.Exporte
 OpenTelemetry.Exporter.OtlpExporterOptions.Protocol.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.TimeoutMilliseconds.get -> int
 OpenTelemetry.Exporter.OtlpExporterOptions.TimeoutMilliseconds.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.UserAgentProductIdentifier.get -> string?
-OpenTelemetry.Exporter.OtlpExporterOptions.UserAgentProductIdentifier.set -> void
 OpenTelemetry.Exporter.OtlpExportProtocol
 OpenTelemetry.Exporter.OtlpExportProtocol.Grpc = 0 -> OpenTelemetry.Exporter.OtlpExportProtocol
 OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf = 1 -> OpenTelemetry.Exporter.OtlpExportProtocol
