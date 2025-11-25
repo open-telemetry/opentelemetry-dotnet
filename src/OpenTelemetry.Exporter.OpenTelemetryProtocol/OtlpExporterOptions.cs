@@ -32,18 +32,12 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
 #endif
 
-    private static readonly string baseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{typeof(OtlpExporterOptions).Assembly.GetPackageVersion()}";
+    internal readonly Func<HttpClient> DefaultHttpClientFactory;
+    private static readonly string BaseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{typeof(OtlpExporterOptions).Assembly.GetPackageVersion()}";
     private static readonly KeyValuePair<string, string>[] DefaultHeaders =
     [
-        new("User-Agent", baseUserAgent)
+        new("User-Agent", BaseUserAgent)
     ];
-
-    internal KeyValuePair<string, string>[] StandardHeaders =>
-        string.IsNullOrEmpty(this.UserAgentProductIdentifier)
-            ? DefaultHeaders
-            : [new("User-Agent", $"{this.UserAgentProductIdentifier} {baseUserAgent}")];
-
-    internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
     private OtlpExportProtocol? protocol;
     private Uri? endpoint;
@@ -134,7 +128,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// Gets or sets a custom user agent identifier.
     /// This will be prepended to the default user agent string.
     /// </summary>
-    public string UserAgentProductIdentifier { get; set; } = string.Empty;
+    public string? UserAgentProductIdentifier { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
@@ -159,6 +153,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             this.httpClientFactory = value;
         }
     }
+
+    internal KeyValuePair<string, string>[] StandardHeaders =>
+        string.IsNullOrEmpty(this.UserAgentProductIdentifier)
+            ? DefaultHeaders
+            : [new("User-Agent", $"{this.UserAgentProductIdentifier} {BaseUserAgent}")];
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should

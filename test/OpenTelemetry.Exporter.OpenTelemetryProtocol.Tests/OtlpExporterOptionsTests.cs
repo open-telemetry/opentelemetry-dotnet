@@ -327,7 +327,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         var tokens = userAgentHeader.Split(' ');
         Assert.Equal(2, tokens.Length);
         Assert.Equal("MyProduct/1.0.0", tokens[0]);
-        Assert.StartsWith("OTel-OTLP-Exporter-Dotnet/", tokens[1],StringComparison.OrdinalIgnoreCase);
+        Assert.StartsWith("OTel-OTLP-Exporter-Dotnet/", tokens[1], StringComparison.OrdinalIgnoreCase);
     }
 
     [Theory]
