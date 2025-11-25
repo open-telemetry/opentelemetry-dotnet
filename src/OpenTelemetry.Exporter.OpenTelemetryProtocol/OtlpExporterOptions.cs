@@ -155,7 +155,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     }
 
     internal KeyValuePair<string, string>[] StandardHeaders =>
-        string.IsNullOrEmpty(this.UserAgentProductIdentifier)
+        string.IsNullOrWhiteSpace(this.UserAgentProductIdentifier)
             ? DefaultHeaders
             : [new("User-Agent", $"{this.UserAgentProductIdentifier} {BaseUserAgent}")];
 
