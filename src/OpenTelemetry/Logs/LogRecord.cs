@@ -20,13 +20,13 @@ public sealed class LogRecord
     internal LogRecordILoggerData ILoggerData;
     internal IReadOnlyList<KeyValuePair<string, object?>>? AttributeData;
     internal List<KeyValuePair<string, object?>>? AttributeStorage;
-    internal List<object?>? ScopeStorage;
+    internal List<LogRecordScope?>? ScopeStorage;
     internal LogRecordSource Source = LogRecordSource.CreatedManually;
     internal int PoolReferenceCount = int.MaxValue;
 
-    private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
+    private static readonly Action<object?, List<LogRecordScope?>> AddScopeToBufferedList = (scope, state) =>
     {
-        state.Add(scope);
+        state.Add(new LogRecordScope(scope));
     };
 
     internal LogRecord()
@@ -423,19 +423,22 @@ public sealed class LogRecord
     {
         Guard.ThrowIfNull(callback);
 
+        this.BufferLogScopes();
+
         var bufferedScopes = this.ILoggerData.BufferedScopes;
         if (bufferedScopes != null)
         {
-            foreach (object? scope in bufferedScopes)
+            foreach (LogRecordScope? scope in bufferedScopes)
             {
+                if (scope == null)
+                {
+                    continue;
+                }
+
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
-                callback(new(scope), state);
+                callback(scope, state);
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
             }
-        }
-        else
-        {
-            this.ILoggerData.ScopeProvider?.ForEachScope(ScopeForEachState<TState>.ForEachScope, new(callback, state));
         }
     }
 
@@ -529,7 +532,7 @@ public sealed class LogRecord
             return;
         }
 
-        var scopeStorage = this.ScopeStorage ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes);
+        var scopeStorage = this.ScopeStorage ??= new List<LogRecordScope?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes);
 
         scopeProvider.ForEachScope(AddScopeToBufferedList, scopeStorage);
 
@@ -546,7 +549,7 @@ public sealed class LogRecord
         public Exception? Exception;
         public object? State;
         public IExternalScopeProvider? ScopeProvider;
-        public List<object?>? BufferedScopes;
+        public List<LogRecordScope?>? BufferedScopes;
 
         public LogRecordILoggerData Copy()
         {
@@ -562,7 +565,7 @@ public sealed class LogRecord
             var bufferedScopes = this.BufferedScopes;
             if (bufferedScopes != null)
             {
-                copy.BufferedScopes = new List<object?>(bufferedScopes);
+                copy.BufferedScopes = new List<LogRecordScope?>(bufferedScopes);
             }
 
             return copy;
@@ -571,10 +574,8 @@ public sealed class LogRecord
 
     private readonly struct ScopeForEachState<TState>
     {
-        public static readonly Action<object?, ScopeForEachState<TState>> ForEachScope = (object? scope, ScopeForEachState<TState> state) =>
+        public static readonly Action<LogRecordScope, ScopeForEachState<TState>> ForEachScope = (LogRecordScope logRecordScope, ScopeForEachState<TState> state) =>
         {
-            LogRecordScope logRecordScope = new LogRecordScope(scope);
-
             state.Callback(logRecordScope, state.UserState);
         };
 

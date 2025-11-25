@@ -8,83 +8,53 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Stores details about a scope attached to a log message.
 /// </summary>
-public readonly struct LogRecordScope
+public sealed class LogRecordScope : IEnumerable<KeyValuePair<string, object?>>
 {
+    private readonly object? scope;
+    private IEnumerable<KeyValuePair<string, object?>> attributes;
+
     internal LogRecordScope(object? scope)
     {
-        this.Scope = scope;
+        this.scope = scope;
+        this.attributes = ResolveAttributes(scope);
     }
 
     /// <summary>
     /// Gets the raw scope value.
     /// </summary>
-    public object? Scope { get; }
+    public object? Scope => this.scope;
+
+    /// <summary>
+    /// Gets or sets the attributes attached to the scope.
+    /// </summary>
+    public IEnumerable<KeyValuePair<string, object?>> Attributes
+    {
+        get => this.attributes;
+        set
+        {
+            if (ReferenceEquals(this.attributes, value))
+            {
+                return;
+            }
+
+            this.attributes = value;
+        }
+    }
 
     /// <summary>
     /// Gets an <see cref="IEnumerator"/> for looping over the inner values
     /// of the scope.
     /// </summary>
-    /// <returns><see cref="Enumerator"/>.</returns>
-    public Enumerator GetEnumerator() => new(this.Scope);
+    /// <returns><see cref="IEnumerator"/>.</returns>
+    public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => this.attributes.GetEnumerator();
 
-    /// <summary>
-    /// LogRecordScope enumerator.
-    /// </summary>
-    public struct Enumerator : IEnumerator<KeyValuePair<string, object?>>
-    {
-        private readonly IReadOnlyList<KeyValuePair<string, object?>> scope;
-        private int position;
+    IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Enumerator"/> struct.
-        /// </summary>
-        /// <param name="scope">Scope.</param>
-        public Enumerator(object? scope)
+    private static IEnumerable<KeyValuePair<string, object?>> ResolveAttributes(object? scope) =>
+        scope switch
         {
-            if (scope is IReadOnlyList<KeyValuePair<string, object?>> scopeList)
-            {
-                this.scope = scopeList;
-            }
-            else if (scope is IEnumerable<KeyValuePair<string, object?>> scopeEnumerable)
-            {
-                this.scope = new List<KeyValuePair<string, object?>>(scopeEnumerable);
-            }
-            else
-            {
-                this.scope = new List<KeyValuePair<string, object?>>
-                {
-                    new KeyValuePair<string, object?>(string.Empty, scope),
-                };
-            }
-
-            this.position = 0;
-            this.Current = default;
-        }
-
-        /// <inheritdoc/>
-        public KeyValuePair<string, object?> Current { get; private set; }
-
-        object IEnumerator.Current => this.Current;
-
-        /// <inheritdoc/>
-        public bool MoveNext()
-        {
-            if (this.position < this.scope.Count)
-            {
-                this.Current = this.scope[this.position++];
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-        }
-
-        /// <inheritdoc/>
-        public void Reset()
-            => throw new NotSupportedException();
-    }
+            IReadOnlyList<KeyValuePair<string, object?>> scopeList => scopeList,
+            IEnumerable<KeyValuePair<string, object?>> scopeEnumerable => scopeEnumerable,
+            _ => [new KeyValuePair<string, object?>(string.Empty, scope)],
+        };
 }
