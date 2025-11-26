@@ -51,7 +51,7 @@ jobs:
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         token: ${{ steps.otelbot-token.outputs.token }}
         ref: ${{ github.event.repository.default_branch }}
@@ -102,7 +102,7 @@ jobs:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
-    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         # Note: By default GitHub only fetches 1 commit. We need all the tags
         # for this work.
