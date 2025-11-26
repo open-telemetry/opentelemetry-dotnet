@@ -10,6 +10,9 @@ Notes](../../RELEASENOTES.md).
 * Added support for `ActivitySource.TelemetrySchemaUrl` property.
   ([#6730](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6730))
 
+* Added support for `Meter.TelemetrySchemaUrl` property.
+  ([#6731](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6731))
+
 ## 1.14.0
 
 Released 2025-Nov-12
