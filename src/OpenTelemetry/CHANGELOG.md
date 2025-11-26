@@ -9,6 +9,12 @@ Notes](../../RELEASENOTES.md).
 * Added `LowMemory` temporality as an option in the OTLP metrics exporter.
   ([#6648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6648))
 
+* Moved the bucket lookup tree from `HistogramBuckets` to `AggregatorStore`.
+  This reduces memory consumption because all `MetricPoint`s within a given
+  `AggregatorStore` now share the same bucket lookup tree instead of each
+  `MetricPoint` creating its own tree.
+  ([#6715](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6715))
+
 ## 1.14.0
 
 Released 2025-Nov-12
