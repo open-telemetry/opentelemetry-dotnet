@@ -1,6 +1,6 @@
 ARG SDK_VERSION=9.0
 FROM mcr.microsoft.com/dotnet/sdk:8.0.416@sha256:874c4613d5ebf8b328ad920a90640c8dea9758bdbe61dc191dbcbed03721fc79 AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.307@sha256:cdb198f8fc1dfd714c798f609582dedfe397c03318b820eecbefdea06934da14 AS dotnet-sdk-9.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0.308@sha256:584cdb686f8ff7d2ffd636581b9bba8c9de38df1e751e9275438cddecdfbbcd2 AS dotnet-sdk-9.0
 FROM mcr.microsoft.com/dotnet/sdk:10.0.100@sha256:c7445f141c04f1a6b454181bd098dcfa606c61ba0bd213d0a702489e5bd4cd71 AS dotnet-sdk-10.0
 
 FROM dotnet-sdk-${SDK_VERSION} AS build
