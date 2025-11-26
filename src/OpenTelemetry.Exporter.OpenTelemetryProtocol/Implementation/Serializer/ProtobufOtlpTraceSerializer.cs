@@ -204,6 +204,11 @@ internal static class ProtobufOtlpTraceSerializer
             writePosition = WriteSpan(buffer, writePosition, sdkLimitOptions, activities[i]);
         }
 
+        if (!string.IsNullOrEmpty(activitySource.TelemetrySchemaUrl))
+        {
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.ScopeSpans_Schema_Url, activitySource.TelemetrySchemaUrl!);
+        }
+
         return writePosition;
     }
 
