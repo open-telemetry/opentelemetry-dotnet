@@ -122,9 +122,10 @@ internal static class ProtobufOtlpMetricSerializer
         writePosition += ReserveSizeForLength;
 
         Debug.Assert(metrics.Count > 0, "Metrics collection is not expected to be empty.");
-        var meterVersion = metrics[0].MeterVersion;
-        var meterTags = metrics[0].MeterTags;
-        var meterSchemaUrl = metrics[0].MeterSchemaUrl;
+        var metric = metrics[0];
+        var meterVersion = metric.MeterVersion;
+        var meterTags = metric.MeterTags;
+        var meterSchemaUrl = metric.MeterSchemaUrl;
 
         writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, meterName);
         if (meterVersion != null)
