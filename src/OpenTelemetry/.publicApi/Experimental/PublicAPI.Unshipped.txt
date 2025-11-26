@@ -25,3 +25,6 @@ OpenTelemetry.Metrics.MetricStreamConfiguration.ExemplarReservoirFactory.set -> 
 [OTEL1000]static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.UseOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 [OTEL1001]static OpenTelemetry.Sdk.CreateLoggerProviderBuilder() -> OpenTelemetry.Logs.LoggerProviderBuilder!
 [OTEL1004]virtual OpenTelemetry.Metrics.FixedSizeExemplarReservoir.OnCollected() -> void
+[OTEL1005]OpenTelemetry.Trace.AlwaysRecordSampler
+[OTEL1005]static OpenTelemetry.Trace.AlwaysRecordSampler.Create(OpenTelemetry.Trace.Sampler! rootSampler) -> OpenTelemetry.Trace.AlwaysRecordSampler!
+[OTEL1005]override OpenTelemetry.Trace.AlwaysRecordSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult

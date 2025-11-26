@@ -12,6 +12,9 @@ Notes](../../RELEASENOTES.md).
 * Added support for `Meter.TelemetrySchemaUrl` property.
   ([#6714](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6714))
 
+* Added `AlwaysRecordSampler`.
+  ([#6732](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6732))
+
 ## 1.14.0
 
 Released 2025-Nov-12
