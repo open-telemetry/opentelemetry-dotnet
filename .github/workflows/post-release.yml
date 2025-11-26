@@ -57,7 +57,7 @@ jobs:
         ref: ${{ github.event.repository.default_branch }}
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
 
     - name: NuGet log in
       uses: NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544 # v1.1.0
@@ -111,7 +111,7 @@ jobs:
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
 
     - name: Create GitHub Pull Request to update stable build version in props
       if: |
