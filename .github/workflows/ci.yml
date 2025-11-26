@@ -31,7 +31,7 @@ jobs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
     - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-    - uses: AurorNZ/paths-filter@3b1f3abc3371cca888d8eb03dfa70bc8a9867629 # v4.0.0
+    - uses: AurorNZ/paths-filter@a661f85fd9b7355cc6a5759040cbe926d8087daa # v4.1.0
       id: changes
       with:
         filters: |
