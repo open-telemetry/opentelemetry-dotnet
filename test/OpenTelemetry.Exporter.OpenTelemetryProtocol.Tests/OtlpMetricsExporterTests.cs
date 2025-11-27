@@ -157,9 +157,11 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void ToOtlpResourceMetricsTest(bool includeServiceNameInResource)
+    [InlineData(true, "https://opentelemetry.io/schemas/1.0.0")]
+    [InlineData(false, "")]
+#pragma warning disable CA1054 // URI-like parameters should not be strings
+    public void ToOtlpResourceMetricsTest(bool includeServiceNameInResource, string telemetrySchemaUrl)
+#pragma warning restore CA1054 // URI-like parameters should not be strings
     {
         var resourceBuilder = ResourceBuilder.CreateEmpty();
         if (includeServiceNameInResource)
@@ -180,7 +182,14 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             new("key2", "value2"),
         };
 
-        using var meter = new Meter(name: $"{Utils.GetCurrentMethodName()}.{includeServiceNameInResource}", version: "0.0.1", tags: meterTags);
+        var meterOptions = new MeterOptions($"{Utils.GetCurrentMethodName()}.{includeServiceNameInResource}")
+        {
+            Version = "0.0.1",
+            Tags = meterTags,
+            TelemetrySchemaUrl = telemetrySchemaUrl,
+        };
+
+        using var meter = new Meter(meterOptions);
         using var provider = Sdk.CreateMeterProviderBuilder()
             .SetResourceBuilder(resourceBuilder)
             .AddMeter(meter.Name)
@@ -211,7 +220,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         Assert.Single(resourceMetric.ScopeMetrics);
         var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
-        Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
+        Assert.Equal(telemetrySchemaUrl, instrumentationLibraryMetrics.SchemaUrl);
         Assert.Equal(meter.Name, instrumentationLibraryMetrics.Scope.Name);
         Assert.Equal("0.0.1", instrumentationLibraryMetrics.Scope.Version);
 
@@ -727,6 +736,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     [InlineData("cuMulative", MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("DeltA", MetricReaderTemporalityPreference.Delta)]
     [InlineData("invalid", MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("lowmemory", MetricReaderTemporalityPreference.LowMemory)]
     public void TestTemporalityPreferenceUsingConfiguration(string configValue, MetricReaderTemporalityPreference expectedTemporality)
     {
         var testExecuted = false;
@@ -757,6 +767,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     [InlineData("cuMulative", MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("DeltA", MetricReaderTemporalityPreference.Delta)]
     [InlineData("invalid", MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData("lowmemory", MetricReaderTemporalityPreference.LowMemory)]
     public void TestTemporalityPreferenceUsingEnvVar(string configValue, MetricReaderTemporalityPreference expectedTemporality)
     {
         Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitionTests.MetricsData.TemporalityKeyName, configValue);

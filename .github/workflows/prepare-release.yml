@@ -40,14 +40,14 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
       id: otelbot-token
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         token: ${{ steps.otelbot-token.outputs.token }}
 
@@ -86,14 +86,14 @@ jobs:
       needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
       id: otelbot-token
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         token: ${{ steps.otelbot-token.outputs.token }}
 
@@ -127,14 +127,14 @@ jobs:
       needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
       id: otelbot-token
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
@@ -175,14 +175,14 @@ jobs:
       needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
       id: otelbot-token
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
@@ -224,14 +224,14 @@ jobs:
       needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
       id: otelbot-token
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0

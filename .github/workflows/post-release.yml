@@ -44,20 +44,20 @@ jobs:
       needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
       id: otelbot-token
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         token: ${{ steps.otelbot-token.outputs.token }}
         ref: ${{ github.event.repository.default_branch }}
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
 
     - name: NuGet log in
       uses: NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544 # v1.1.0
@@ -96,13 +96,13 @@ jobs:
       (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
 
     steps:
-    - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
       id: otelbot-token
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         # Note: By default GitHub only fetches 1 commit. We need all the tags
         # for this work.
@@ -111,7 +111,7 @@ jobs:
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
 
     - name: Create GitHub Pull Request to update stable build version in props
       if: |

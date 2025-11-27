@@ -40,7 +40,7 @@ jobs:
       artifact-id: ${{ steps.upload-artifacts.outputs.artifact-id }}
 
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
@@ -48,7 +48,7 @@ jobs:
         fetch-depth: 0
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
 
     - name: Install Cosign
       uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
@@ -93,7 +93,7 @@ jobs:
         # renovate: datasource=nuget depName=dotnet-validate
         DOTNET_VALIDATE_VERSION: '0.0.1-preview.537'
         # renovate: datasource=nuget depName=Meziantou.Framework.NuGetPackageValidation.Tool
-        MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION: '1.0.36'
+        MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION: '1.0.38'
       run: |
         dotnet tool install --global dotnet-validate --version ${env:DOTNET_VALIDATE_VERSION} --allow-roll-forward
         dotnet tool install --global Meziantou.Framework.NuGetPackageValidation.Tool --version ${env:MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION} --allow-roll-forward
@@ -186,14 +186,14 @@ jobs:
     if: needs.automation.outputs.enabled && github.event_name == 'push'
 
     steps:
-    - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
       id: otelbot-token
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         token: ${{ steps.otelbot-token.outputs.token }}
 
