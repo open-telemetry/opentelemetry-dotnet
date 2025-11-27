@@ -87,6 +87,7 @@
     <File Path="docs/diagnostics/experimental-apis/OTEL1000.md" />
     <File Path="docs/diagnostics/experimental-apis/OTEL1001.md" />
     <File Path="docs/diagnostics/experimental-apis/OTEL1004.md" />
+    <File Path="docs/diagnostics/experimental-apis/OTEL1005.md" />
     <File Path="docs/diagnostics/experimental-apis/README.md" />
   </Folder>
   <Folder Name="/docs/logs/">
