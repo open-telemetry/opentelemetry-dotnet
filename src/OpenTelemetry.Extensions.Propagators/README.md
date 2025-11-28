@@ -26,7 +26,7 @@ Use `B3 OpenZipkin` context only:
 using OpenTelemetry;
 using OpenTelemetry.Extensions.Propagators;
 
-Sdk.SetDefaultTextMapPropagator(new B3Propagator())
+Sdk.SetDefaultTextMapPropagator(new B3Propagator());
 ```
 
 Use `B3 OpenZipkin` and `W3C Baggage` propagators at the same time:
