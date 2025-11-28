@@ -32,12 +32,12 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
 #endif
 
-    internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
-    {
-        new("User-Agent", GetUserAgentString()),
-    };
-
     internal readonly Func<HttpClient> DefaultHttpClientFactory;
+    private static readonly string BaseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{typeof(OtlpExporterOptions).Assembly.GetPackageVersion()}";
+    private static readonly KeyValuePair<string, string>[] DefaultHeaders =
+    [
+        new("User-Agent", BaseUserAgent)
+    ];
 
     private OtlpExportProtocol? protocol;
     private Uri? endpoint;
@@ -125,6 +125,12 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     }
 
     /// <summary>
+    /// Gets or sets a custom user agent identifier.
+    /// This will be prepended to the default user agent string.
+    /// </summary>
+    public string? UserAgentProductIdentifier { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
     /// </summary>
     /// <remarks>Note: This only applies when exporting traces.</remarks>
@@ -147,6 +153,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             this.httpClientFactory = value;
         }
     }
+
+    internal KeyValuePair<string, string>[] StandardHeaders =>
+        string.IsNullOrWhiteSpace(this.UserAgentProductIdentifier)
+            ? DefaultHeaders
+            : [new("User-Agent", $"{this.UserAgentProductIdentifier} {BaseUserAgent}")];
 
     /// <summary>
     /// Gets a value indicating whether or not the signal-specific path should
@@ -224,12 +235,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         this.httpClientFactory ??= defaultExporterOptions.httpClientFactory;
 
         return this;
-    }
-
-    private static string GetUserAgentString()
-    {
-        var assembly = typeof(OtlpExporterOptions).Assembly;
-        return $"OTel-OTLP-Exporter-Dotnet/{assembly.GetPackageVersion()}";
     }
 
     private void ApplyConfiguration(
