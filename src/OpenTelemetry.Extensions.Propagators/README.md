@@ -15,7 +15,7 @@ Add a reference to the
 package in your project.
 
 ```shell
-dotnet add package --prerelease OpenTelemetry.Extensions.Propagators
+dotnet add package OpenTelemetry.Extensions.Propagators
 ```
 
 ## Configuration
