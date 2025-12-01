@@ -447,9 +447,9 @@ public sealed class TracerTests : IDisposable
 
         var tracer = tracerProvider.GetTracer("test", "1.0.0", schemaUrl);
 
-        using (var span = tracer.StartActiveSpan("TestSpan"))
+        using (tracer.StartActiveSpan("TestSpan"))
         {
-            // Activity started by the tracer with tags
+            // Activity started by the tracer with schema URL
         }
 
         var activity = Assert.Single(exportedItems);
@@ -584,7 +584,7 @@ public sealed class TracerTests : IDisposable
 
         var tracer = tracerProvider.GetTracer("test", "1.0.0", tags);
 
-        using (var span = tracer.StartActiveSpan("TestSpan"))
+        using (tracer.StartActiveSpan("TestSpan"))
         {
             // Activity started by the tracer with tags
         }
