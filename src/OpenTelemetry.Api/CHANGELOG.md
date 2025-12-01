@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added a new overload for `TracerProvider.GetTracer` which accepts an optional
+  `string? schemaUrl` parameter, allowing a schema URL to be set on the `Tracer`.
+  ([#6736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6736))
+
 ## 1.14.0
 
 Released 2025-Nov-12
