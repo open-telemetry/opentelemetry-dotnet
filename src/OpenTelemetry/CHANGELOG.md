@@ -12,6 +12,9 @@ Notes](../../RELEASENOTES.md).
 * Added support for `Meter.TelemetrySchemaUrl` property.
   ([#6714](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6714))
 
+* Fix env var parsing spec gap for OTEL_RESOURCE_ATTRIBUTES.
+  ([#6737](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6737))
+
 ## 1.14.0
 
 Released 2025-Nov-12
