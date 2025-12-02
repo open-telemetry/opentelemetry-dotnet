@@ -68,6 +68,27 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
         Assert.Contains(new KeyValuePair<string, object>("Key2", "Val2"), resource.Attributes);
     }
 
+    [Theory]
+    [InlineData("Key1=Val1%20With%20Spaces", "Key1", "Val1 With Spaces")]
+    [InlineData(" query= select%20*%20from%20foo ", "query", "select * from foo")]
+    [InlineData("raw=100%25%", "raw", "100%%")]
+    [InlineData("bad=%G1value=value", "bad", "%G1value=value")]
+    [InlineData("a=%2C%3B%3D", "a", ",;=")]
+
+    public void OtelEnvResource_WithEnvVar_Decoding(string envVarValue, string key, string value)
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
+        var resource = new OtelEnvResourceDetector(
+            new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            .Detect();
+
+        // Assert
+        Assert.NotEqual(Resource.Empty, resource);
+        Assert.Single(resource.Attributes);
+        Assert.Contains(new KeyValuePair<string, object>(key, value), resource.Attributes);
+    }
+
     [Fact]
     public void OtelEnvResource_UsingIConfiguration()
     {

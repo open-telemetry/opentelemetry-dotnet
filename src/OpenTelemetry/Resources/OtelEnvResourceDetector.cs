@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Net;
 using Microsoft.Extensions.Configuration;
 
 namespace OpenTelemetry.Resources;
@@ -9,7 +10,7 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
 {
     public const string EnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
     private const char AttributeListSplitter = ',';
-    private const char AttributeKeyValueSplitter = '=';
+    private static readonly char[] AttributeKeyValueSplitter = ['='];
 
     private readonly IConfiguration configuration;
 
@@ -38,13 +39,14 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
         string[] rawAttributes = resourceAttributes.Split(AttributeListSplitter);
         foreach (string rawKeyValuePair in rawAttributes)
         {
-            string[] keyValuePair = rawKeyValuePair.Split(AttributeKeyValueSplitter);
+            string[] keyValuePair = rawKeyValuePair.Split(AttributeKeyValueSplitter, 2);
             if (keyValuePair.Length != 2)
             {
                 continue;
             }
 
-            attributes.Add(new KeyValuePair<string, object>(keyValuePair[0].Trim(), keyValuePair[1].Trim()));
+            var value = WebUtility.UrlDecode(keyValuePair[1].Trim());
+            attributes.Add(new KeyValuePair<string, object>(keyValuePair[0].Trim(), value));
         }
 
         return attributes;
