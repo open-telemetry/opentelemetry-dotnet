@@ -89,7 +89,7 @@
       These packages are referenced as "PrivateAssets" or used in tests/examples.
   -->
   <ItemGroup>
-    <PackageVersion Include="BenchmarkDotNet" Version="0.15.6" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.1" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
