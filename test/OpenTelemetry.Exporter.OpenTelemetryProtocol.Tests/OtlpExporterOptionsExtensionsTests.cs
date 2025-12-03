@@ -23,7 +23,7 @@ public class OtlpExporterOptionsExtensionsTests
             Headers = optionHeaders,
         };
 
-        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        var headers = options.GetHeaders();
 
         Assert.Equal(OtlpExporterOptions.StandardHeaders.Length, headers.Count);
 
@@ -35,8 +35,8 @@ public class OtlpExporterOptionsExtensionsTests
 
     [Theory]
     [InlineData(" ")]
-    [InlineData(",key1=value1,key2=value2,")]
-    [InlineData(",,key1=value1,,key2=value2,,")]
+    [InlineData(",")]
+    [InlineData("=value1")]
     [InlineData("key1")]
     public void GetHeaders_InvalidOptionHeaders_ThrowsArgumentException(string inputOptionHeaders)
     {
@@ -48,12 +48,17 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("key1=value1", "key1=value1")]
     [InlineData("key1=value1,key2=value2", "key1=value1,key2=value2")]
     [InlineData("key1=value1,key2=value2,key3=value3", "key1=value1,key2=value2,key3=value3")]
+    [InlineData("key1=value1,value2", "key1=value1,value2")]
+    [InlineData("key1=value1,value2,key2=value3", "key1=value1,value2,key2=value3")]
     [InlineData(" key1 = value1 , key2=value2 ", "key1=value1,key2=value2")]
     [InlineData("key1= value with spaces ,key2=another value", "key1=value with spaces,key2=another value")]
-    [InlineData("=value1", "=value1")]
     [InlineData("key1=", "key1=")]
     [InlineData("key1=value1%2Ckey2=value2", "key1=value1,key2=value2")]
     [InlineData("key1=value1%2Ckey2=value2%2Ckey3=value3", "key1=value1,key2=value2,key3=value3")]
+    [InlineData("key1=value1%2Cvalue2", "key1=value1,value2")]
+    [InlineData("key1=value1%2Cvalue2%2Ckey2=value3", "key1=value1,value2,key2=value3")]
+    [InlineData(",key1=value1,key2=value2,", "key1=value1,key2=value2")]
+    [InlineData(",,key1=value1,,key2=value2,,", "key1=value1,key2=value2")]
     public void GetHeaders_ValidAndUrlEncodedHeaders_ReturnsCorrectHeaders(string inputOptionHeaders, string expectedNormalizedOptional)
     {
         VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);
@@ -168,33 +173,21 @@ public class OtlpExporterOptionsExtensionsTests
 
         if (expectException)
         {
-            Assert.Throws<ArgumentException>(() =>
-                options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v)));
+            Assert.Throws<ArgumentException>(() => options.GetHeaders());
             return;
         }
 
-        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
-        var expectedOptional = new Dictionary<string, string>();
+        var headers = options.GetHeaders();
 
-        if (!string.IsNullOrEmpty(expectedNormalizedOptional))
+        var actual = string.Join(",", headers.Select(h => $"{h.Key}={h.Value}"));
+
+        var expected = expectedNormalizedOptional;
+        if (expected.Length > 0)
         {
-            foreach (var segment in expectedNormalizedOptional.Split([','], StringSplitOptions.RemoveEmptyEntries))
-            {
-                var parts = segment.Split(['='], 2);
-                expectedOptional.Add(parts[0].Trim(), parts[1].Trim());
-            }
+            expected += ',';
         }
+        expected += string.Join(",", OtlpExporterOptions.StandardHeaders.Select(h => $"{h.Key}={h.Value}"));
 
-        Assert.Equal(OtlpExporterOptions.StandardHeaders.Length + expectedOptional.Count, headers.Count);
-
-        foreach (var kvp in expectedOptional)
-        {
-            Assert.Contains(headers, h => h.Key == kvp.Key && h.Value == kvp.Value);
-        }
-
-        foreach (var std in OtlpExporterOptions.StandardHeaders)
-        {
-            Assert.Contains(headers, h => h.Key == std.Key && h.Value == std.Value);
-        }
+        Assert.Equal(expected, actual);
     }
 }
