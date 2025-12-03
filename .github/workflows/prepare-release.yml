@@ -47,7 +47,7 @@ jobs:
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         token: ${{ steps.otelbot-token.outputs.token }}
 
@@ -93,7 +93,7 @@ jobs:
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         token: ${{ steps.otelbot-token.outputs.token }}
 
@@ -134,7 +134,7 @@ jobs:
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
@@ -182,7 +182,7 @@ jobs:
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
@@ -231,7 +231,7 @@ jobs:
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
