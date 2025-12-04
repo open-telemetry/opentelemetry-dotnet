@@ -72,9 +72,9 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
     [InlineData("Key1=Val1%20With%20Spaces", "Key1", "Val1 With Spaces")]
     [InlineData(" query= select%20*%20from%20foo ", "query", "select * from foo")]
     [InlineData("raw=100%25%", "raw", "100%%")]
-    [InlineData("bad=%G1value=value", "bad", "%G1value=value")]
+    [InlineData("bad=%G1value", "bad", "%G1value")]
     [InlineData("a=%2C%3B%3D", "a", ",;=")]
-
+    [InlineData("url=https://x.com?a=1", "url", "https://x.com?a=1")]
     public void OtelEnvResource_WithEnvVar_Decoding(string envVarValue, string key, string value)
     {
         // Arrange
