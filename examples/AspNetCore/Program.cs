@@ -11,7 +11,7 @@ using OpenTelemetry.Trace;
 
 var appBuilder = WebApplication.CreateBuilder(args);
 
-// Note: Switch between Zipkin/OTLP/Console by setting UseTracingExporter in appsettings.json.
+// Note: Switch between OTLP/Console by setting UseTracingExporter in appsettings.json.
 var tracingExporter = appBuilder.Configuration.GetValue("UseTracingExporter", defaultValue: "CONSOLE").ToUpperInvariant();
 
 // Note: Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.
