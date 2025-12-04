@@ -40,7 +40,7 @@ jobs:
       artifact-id: ${{ steps.upload-artifacts.outputs.artifact-id }}
 
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
@@ -93,7 +93,7 @@ jobs:
         # renovate: datasource=nuget depName=dotnet-validate
         DOTNET_VALIDATE_VERSION: '0.0.1-preview.537'
         # renovate: datasource=nuget depName=Meziantou.Framework.NuGetPackageValidation.Tool
-        MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION: '1.0.38'
+        MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION: '1.0.39'
       run: |
         dotnet tool install --global dotnet-validate --version ${env:DOTNET_VALIDATE_VERSION} --allow-roll-forward
         dotnet tool install --global Meziantou.Framework.NuGetPackageValidation.Tool --version ${env:MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION} --allow-roll-forward
@@ -193,7 +193,7 @@ jobs:
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         token: ${{ steps.otelbot-token.outputs.token }}
 
