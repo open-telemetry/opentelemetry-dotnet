@@ -10,7 +10,7 @@ Notes](../../RELEASENOTES.md).
   Zipkin already support OTLP ingestion. Change your exporter to
   `OpenTelemetry.Exporter.OpenTelemetryProtocol` as stated in
   [Deprecating Zipkin Exporter blog post](https://opentelemetry.io/blog/2025/deprecating-zipkin-exporters/).
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#6750](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6750))
 
 ## 1.14.0
 
