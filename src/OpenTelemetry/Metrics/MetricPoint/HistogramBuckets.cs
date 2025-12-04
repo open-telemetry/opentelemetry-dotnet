@@ -12,8 +12,6 @@ namespace OpenTelemetry.Metrics;
 // Note: Does not implement IEnumerable<> to prevent accidental boxing.
 public class HistogramBuckets
 {
-    internal const int DefaultBoundaryCountForBinarySearch = 50;
-
     internal readonly double[]? ExplicitBounds;
 
     internal readonly HistogramBucketValues[] BucketCounts;
@@ -27,40 +25,13 @@ public class HistogramBuckets
     internal double RunningMax = double.NegativeInfinity;
     internal double SnapshotMax;
 
-    private readonly BucketLookupNode? bucketLookupTreeRoot;
+    private readonly HistogramExplicitBounds? histogramExplicitBounds;
 
-    private readonly Func<double, int> findHistogramBucketIndex;
-
-    internal HistogramBuckets(double[]? explicitBounds)
+    internal HistogramBuckets(HistogramExplicitBounds? histogramExplicitBounds)
     {
-        explicitBounds = CleanUpInfinitiesFromExplicitBounds(explicitBounds);
-        this.ExplicitBounds = explicitBounds;
-        this.findHistogramBucketIndex = this.FindBucketIndexLinear;
-        if (explicitBounds != null && explicitBounds.Length >= DefaultBoundaryCountForBinarySearch)
-        {
-            this.bucketLookupTreeRoot = ConstructBalancedBST(explicitBounds, 0, explicitBounds.Length)!;
-            this.findHistogramBucketIndex = this.FindBucketIndexBinary;
-
-            static BucketLookupNode? ConstructBalancedBST(double[] values, int min, int max)
-            {
-                if (min == max)
-                {
-                    return null;
-                }
-
-                int median = min + ((max - min) / 2);
-                return new BucketLookupNode
-                {
-                    Index = median,
-                    UpperBoundInclusive = values[median],
-                    LowerBoundExclusive = median > 0 ? values[median - 1] : double.NegativeInfinity,
-                    Left = ConstructBalancedBST(values, min, median),
-                    Right = ConstructBalancedBST(values, median + 1, max),
-                };
-            }
-        }
-
-        this.BucketCounts = explicitBounds != null ? new HistogramBucketValues[explicitBounds.Length + 1] : Array.Empty<HistogramBucketValues>();
+        this.histogramExplicitBounds = histogramExplicitBounds;
+        this.ExplicitBounds = histogramExplicitBounds?.Bounds;
+        this.BucketCounts = this.ExplicitBounds != null ? new HistogramBucketValues[this.ExplicitBounds.Length + 1] : [];
     }
 
     /// <summary>
@@ -71,7 +42,7 @@ public class HistogramBuckets
 
     internal HistogramBuckets Copy()
     {
-        HistogramBuckets copy = new HistogramBuckets(this.ExplicitBounds);
+        HistogramBuckets copy = new HistogramBuckets(this.histogramExplicitBounds);
 
         Array.Copy(this.BucketCounts, copy.BucketCounts, this.BucketCounts.Length);
         copy.SnapshotSum = this.SnapshotSum;
@@ -84,54 +55,8 @@ public class HistogramBuckets
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int FindBucketIndex(double value)
     {
-        return this.findHistogramBucketIndex(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal int FindBucketIndexBinary(double value)
-    {
-        BucketLookupNode? current = this.bucketLookupTreeRoot;
-
-        Debug.Assert(current != null, "Bucket root was null.");
-
-        do
-        {
-            if (value <= current!.LowerBoundExclusive)
-            {
-                current = current.Left;
-            }
-            else if (value > current.UpperBoundInclusive)
-            {
-                current = current.Right;
-            }
-            else
-            {
-                return current.Index;
-            }
-        }
-        while (current != null);
-
-        Debug.Assert(this.ExplicitBounds != null, "ExplicitBounds was null.");
-
-        return this.ExplicitBounds!.Length;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal int FindBucketIndexLinear(double value)
-    {
-        Debug.Assert(this.ExplicitBounds != null, "ExplicitBounds was null.");
-
-        int i;
-        for (i = 0; i < this.ExplicitBounds!.Length; i++)
-        {
-            // Upper bound is inclusive
-            if (value <= this.ExplicitBounds[i])
-            {
-                break;
-            }
-        }
-
-        return i;
+        Debug.Assert(this.histogramExplicitBounds != null, "histogramExplicitBounds was null.");
+        return this.histogramExplicitBounds!.FindBucketIndex(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -158,9 +83,6 @@ public class HistogramBuckets
             }
         }
     }
-
-    private static double[]? CleanUpInfinitiesFromExplicitBounds(double[]? explicitBounds) => explicitBounds
-        ?.Where(b => !double.IsNegativeInfinity(b) && !double.IsPositiveInfinity(b)).ToArray();
 
     /// <summary>
     /// Enumerates the elements of a <see cref="HistogramBuckets"/>.
@@ -216,18 +138,5 @@ public class HistogramBuckets
     {
         public long RunningValue;
         public long SnapshotValue;
-    }
-
-    private sealed class BucketLookupNode
-    {
-        public double UpperBoundInclusive { get; set; }
-
-        public double LowerBoundExclusive { get; set; }
-
-        public int Index { get; set; }
-
-        public BucketLookupNode? Left { get; set; }
-
-        public BucketLookupNode? Right { get; set; }
     }
 }
