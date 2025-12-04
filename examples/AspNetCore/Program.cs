@@ -3,7 +3,6 @@
 
 using System.Diagnostics.Metrics;
 using Examples.AspNetCore;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -55,16 +54,6 @@ appBuilder.Services.AddOpenTelemetry()
 
         switch (tracingExporter)
         {
-            case "ZIPKIN":
-                builder.AddZipkinExporter();
-
-                builder.ConfigureServices(services =>
-                {
-                    // Use IConfiguration binding for Zipkin exporter options.
-                    services.Configure<ZipkinExporterOptions>(appBuilder.Configuration.GetSection("Zipkin"));
-                });
-                break;
-
             case "OTLP":
                 builder.AddOtlpExporter(otlpOptions =>
                 {

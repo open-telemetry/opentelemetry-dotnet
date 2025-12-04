@@ -16,7 +16,6 @@ internal static class Program
     ///
     /// dotnet run --project Examples.Console.csproj -- console
     /// dotnet run --project Examples.Console.csproj -- inmemory
-    /// dotnet run --project Examples.Console.csproj -- zipkin -u http://localhost:9411/api/v2/spans
     /// dotnet run --project Examples.Console.csproj -- prometheus -p 9464
     /// dotnet run --project Examples.Console.csproj -- otlp -e "http://localhost:4317" -p "grpc"
     /// dotnet run --project Examples.Console.csproj -- metrics --help
@@ -31,9 +30,8 @@ internal static class Program
     /// <param name="args">Arguments from command line.</param>
     public static void Main(string[] args)
     {
-        Parser.Default.ParseArguments<ZipkinOptions, PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
+        Parser.Default.ParseArguments<PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
             .MapResult(
-                (ZipkinOptions options) => TestZipkinExporter.Run(options),
                 (PrometheusOptions options) => TestPrometheusExporter.Run(options),
                 (MetricsOptions options) => TestMetrics.Run(options),
                 (LogsOptions options) => TestLogs.Run(options),
@@ -49,13 +47,6 @@ internal static class Program
 }
 
 #pragma warning disable SA1402 // File may only contain a single type
-
-[Verb("zipkin", HelpText = "Specify the options required to test Zipkin exporter")]
-internal sealed class ZipkinOptions
-{
-    [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
-    public required string Uri { get; set; }
-}
 
 [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
 internal sealed class PrometheusOptions

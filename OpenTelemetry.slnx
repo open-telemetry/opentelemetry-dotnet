@@ -135,6 +135,7 @@
   <Folder Name="/examples/MicroserviceExample/">
     <File Path="examples/MicroserviceExample/.dockerignore" />
     <File Path="examples/MicroserviceExample/docker-compose.yml" />
+    <File Path="examples/MicroserviceExample/otel-collector-config.yaml" />
     <File Path="examples/MicroserviceExample/README.md" />
     <Project Path="examples/MicroserviceExample/Utils/Utils.csproj" />
     <Project Path="examples/MicroserviceExample/WebApi/WebApi.csproj" />

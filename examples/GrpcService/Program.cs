@@ -26,12 +26,6 @@ builder.Services.AddOpenTelemetry()
                     otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317"));
                 });
                 break;
-            case "ZIPKIN":
-                tracerBuilder.AddZipkinExporter(zipkinOptions =>
-                {
-                    zipkinOptions.Endpoint = new Uri(builder.Configuration.GetValue("Zipkin:Endpoint", defaultValue: "http://localhost:9411/api/v2/spans"));
-                });
-                break;
             default:
                 tracerBuilder.AddConsoleExporter();
                 break;
