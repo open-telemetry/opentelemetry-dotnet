@@ -61,6 +61,23 @@ public class HttpRetryTestCase
                 [
                     new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
                 ]),
+
+            // Verify max retry limit (5 attempts pass, 6th fails)
+            new(
+                "Max retries exceeded (fail on 6th attempt)",
+                [
+
+                    // Attempts 1-5 should pass with correct backoff values
+                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 1500),
+                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 2250),
+                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 3375),
+                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000),
+                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000),
+
+                    // Attempt 6 should fail, next delay is irrelevant
+                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedSuccess: false)
+                ],
+                expectedRetryAttempts: 6),
         ];
 
         // TODO: Add more cases.

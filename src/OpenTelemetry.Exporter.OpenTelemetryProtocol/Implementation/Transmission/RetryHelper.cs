@@ -7,18 +7,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmissi
 
 internal static class RetryHelper
 {
-    internal static bool ShouldRetryRequest(ExportClientResponse response, int retryDelayMilliseconds, out OtlpRetry.RetryResult retryResult)
+    internal static bool ShouldRetryRequest(ExportClientResponse response, int retryDelayMilliseconds, int attempt, out OtlpRetry.RetryResult retryResult)
     {
         if (response is ExportClientGrpcResponse grpcResponse)
         {
-            if (OtlpRetry.TryGetGrpcRetryResult(grpcResponse, retryDelayMilliseconds, out retryResult))
+            if (OtlpRetry.TryGetGrpcRetryResult(grpcResponse, retryDelayMilliseconds, attempt, out retryResult))
             {
                 return true;
             }
         }
         else if (response is ExportClientHttpResponse httpResponse)
         {
-            if (OtlpRetry.TryGetHttpRetryResult(httpResponse, retryDelayMilliseconds, out retryResult))
+            if (OtlpRetry.TryGetHttpRetryResult(httpResponse, retryDelayMilliseconds, attempt, out retryResult))
             {
                 return true;
             }

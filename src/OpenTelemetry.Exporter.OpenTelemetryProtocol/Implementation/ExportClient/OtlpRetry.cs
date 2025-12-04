@@ -46,13 +46,21 @@ internal static class OtlpRetry
     public const int InitialBackoffMilliseconds = 1000;
     private const int MaxBackoffMilliseconds = 5000;
     private const double BackoffMultiplier = 1.5;
+    private const int MaxRetryAttempts = 5;
 
 #if !NET
     private static readonly Random Random = new();
 #endif
 
-    public static bool TryGetHttpRetryResult(ExportClientHttpResponse response, int retryDelayInMilliSeconds, out RetryResult retryResult)
+    public static bool TryGetHttpRetryResult(ExportClientHttpResponse response, int retryDelayInMilliSeconds, int attempt, out RetryResult retryResult)
     {
+        // Fail fast check
+        if (attempt >= MaxRetryAttempts)
+        {
+            retryResult = default;
+            return false;
+        }
+
         if (response.StatusCode.HasValue)
         {
             return TryGetRetryResult(response.StatusCode.Value, IsHttpStatusCodeRetryable, response.DeadlineUtc, response.Headers, TryGetHttpRetryDelay, retryDelayInMilliSeconds, out retryResult);
@@ -80,9 +88,15 @@ internal static class OtlpRetry
         return true;
     }
 
-    public static bool TryGetGrpcRetryResult(ExportClientGrpcResponse response, int retryDelayMilliseconds, out RetryResult retryResult)
+    public static bool TryGetGrpcRetryResult(ExportClientGrpcResponse response, int retryDelayMilliseconds, int attempt, out RetryResult retryResult)
     {
         retryResult = default;
+
+        // Fail fast check
+        if (attempt >= MaxRetryAttempts)
+        {
+            return false;
+        }
 
         if (response.Status != null)
         {

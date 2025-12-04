@@ -76,13 +76,26 @@ public class GrpcRetryTestCase
                     new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2250),
                     new(StatusCode.Unavailable, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromMilliseconds(500))), expectedNextRetryDelayMilliseconds: 750),
                     new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1125),
-                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1688),
-                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2532),
-                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 3798),
-                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
-                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000)
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1688)
                 ],
-                expectedRetryAttempts: 9),
+                expectedRetryAttempts: 5),
+
+            // Verify max retry limit (5 attempts pass, 6th fails)
+            new(
+                "Max retries exceeded (fail on 6th attempt)",
+                [
+
+                    // Attempts 1-5 should pass with correct backoff values
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1500),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2250),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 3375),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
+                    new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
+
+                    // Attempt 6 should fail, next delay is irrelevant
+                    new(StatusCode.Unavailable, expectedSuccess: false)
+                ],
+                expectedRetryAttempts: 6),
         ];
     }
 
