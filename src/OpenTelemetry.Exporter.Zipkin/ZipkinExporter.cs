@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter;
 public class ZipkinExporter : BaseExporter<Activity>
 {
     internal const string ObsoleteNote =
-        "Zipkin exporter is obsolete and will be removed in future releases. Consider using OpenTelemetry.Exporter.OpenTelemetryProtocol NuGet package. See https://opentelemetry.io/blog/2025/deprecating-zipkin-exporters/ for more information.";
+        "The Zipkin exporter is obsolete and will be removed in a future release. Consider using the OpenTelemetry.Exporter.OpenTelemetryProtocol NuGet package instead. See https://opentelemetry.io/blog/2025/deprecating-zipkin-exporters/ for more information.";
 
     private readonly ZipkinExporterOptions options;
     private readonly int maxPayloadSizeInBytes;

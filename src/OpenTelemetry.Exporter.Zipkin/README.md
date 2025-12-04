@@ -6,8 +6,8 @@
 > [!IMPORTANT]
 > This package is [Deprecated](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/versioning-and-stability.md)
 > and it will stop receiving any updates in December 2026.
-> Zipkin already support OTLP ingestion. Change your exporter to
-> `OpenTelemetry.Exporter.OpenTelemetryProtocol` as stated in
+> Zipkin already supports OTLP ingestion. Change your exporter to
+> `OpenTelemetry.Exporter.OpenTelemetryProtocol` as stated in the
 > [Deprecating Zipkin Exporter blog post](https://opentelemetry.io/blog/2025/deprecating-zipkin-exporters/).
 
 ## Prerequisite
