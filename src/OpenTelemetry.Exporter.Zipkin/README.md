@@ -57,10 +57,6 @@ take precedence over the environment variables.
 * `UseShortTraceIds`: Whether the trace's ID should be shortened before sending
    to Zipkin (default false).
 
-See
-[`TestZipkinExporter.cs`](../../examples/Console/TestZipkinExporter.cs)
-for example use.
-
 ### Configuration using Dependency Injection
 
 This exporter allows easy configuration of `ZipkinExporterOptions` from
