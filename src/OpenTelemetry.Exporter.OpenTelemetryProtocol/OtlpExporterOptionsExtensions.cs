@@ -60,7 +60,7 @@ internal static class OtlpExporterOptionsExtensions
             }
         }
 
-        foreach (var header in OtlpExporterOptions.StandardHeaders)
+        foreach (var header in options.StandardHeaders)
         {
             addHeader(headers, header.Key, header.Value);
         }

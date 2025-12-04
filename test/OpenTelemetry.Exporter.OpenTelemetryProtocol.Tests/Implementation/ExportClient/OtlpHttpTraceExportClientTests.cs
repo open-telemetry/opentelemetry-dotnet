@@ -57,13 +57,13 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
 
         Assert.NotNull(client.HttpClient);
 
-        Assert.Equal(2 + OtlpExporterOptions.StandardHeaders.Length, client.Headers.Count);
+        Assert.Equal(2 + options.StandardHeaders.Length, client.Headers.Count);
         Assert.Contains(client.Headers, kvp => kvp.Key == header1.Name && kvp.Value == header1.Value);
         Assert.Contains(client.Headers, kvp => kvp.Key == header2.Name && kvp.Value == header2.Value);
 
-        for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+        for (int i = 0; i < options.StandardHeaders.Length; i++)
         {
-            Assert.Contains(client.Headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value == OtlpExporterOptions.StandardHeaders[i].Value);
+            Assert.Contains(client.Headers, entry => entry.Key == options.StandardHeaders[i].Key && entry.Value == options.StandardHeaders[i].Value);
         }
     }
 
@@ -156,13 +156,13 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
             Assert.Equal(HttpMethod.Post, httpRequest.Method);
             Assert.NotNull(httpRequest.RequestUri);
             Assert.Equal("http://localhost:4317/", httpRequest.RequestUri.AbsoluteUri);
-            Assert.Equal(OtlpExporterOptions.StandardHeaders.Length + 2, httpRequest.Headers.Count());
+            Assert.Equal(options.StandardHeaders.Length + 2, httpRequest.Headers.Count());
             Assert.Contains(httpRequest.Headers, h => h.Key == header1.Name && h.Value.First() == header1.Value);
             Assert.Contains(httpRequest.Headers, h => h.Key == header2.Name && h.Value.First() == header2.Value);
 
-            for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+            for (int i = 0; i < options.StandardHeaders.Length; i++)
             {
-                Assert.Contains(httpRequest.Headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value.First() == OtlpExporterOptions.StandardHeaders[i].Value);
+                Assert.Contains(httpRequest.Headers, entry => entry.Key == options.StandardHeaders[i].Key && entry.Value.First() == options.StandardHeaders[i].Value);
             }
 
             Assert.NotNull(testHttpHandler.HttpRequestContent);
