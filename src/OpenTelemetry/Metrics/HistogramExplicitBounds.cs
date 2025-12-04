@@ -43,7 +43,7 @@ internal sealed class HistogramExplicitBounds
         }
     }
 
-    public double[] Bounds { get; private set; }
+    public double[] Bounds { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int FindBucketIndex(double value)
