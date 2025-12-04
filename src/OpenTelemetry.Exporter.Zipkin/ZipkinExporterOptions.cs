@@ -16,6 +16,7 @@ namespace OpenTelemetry.Exporter;
 /// OTEL_EXPORTER_ZIPKIN_ENDPOINT
 /// environment variables are parsed during object construction.
 /// </summary>
+[Obsolete(ZipkinExporter.ObsoleteNote)]
 public sealed class ZipkinExporterOptions
 {
     internal const int DefaultMaxPayloadSizeInBytes = 4096;
