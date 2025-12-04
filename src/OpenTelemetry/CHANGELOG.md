@@ -6,11 +6,21 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added support for the `OTEL_SDK_DISABLED` environment variable in TracerProvider,
+  MeterProvider, and LoggerProvider. When `OTEL_SDK_DISABLED=true`,
+  the SDK returns no-op implementations for all telemetry signals.
+  The `OTEL_SDK_DISABLED` environment variable is only evaluated upon application
+  startup, later changes have no effect.
+  ([#6568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6568))
+
 * Added `LowMemory` temporality as an option in the OTLP metrics exporter.
   ([#6648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6648))
 
 * Added support for `Meter.TelemetrySchemaUrl` property.
   ([#6714](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6714))
+
+* Improve performance and reduce memory consumption for metrics histograms.
+  ([#6715](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6715))
 
 * Decode `value` in OTEL_RESOURCE_ATTRIBUTES environment variable.
   ([#6737](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6737))

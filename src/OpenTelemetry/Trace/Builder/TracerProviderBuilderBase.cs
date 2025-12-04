@@ -1,9 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
+using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Trace;
 
@@ -39,7 +41,17 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
 
         services
             .AddOpenTelemetryTracerProviderBuilderServices()
-            .TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
+            .TryAddSingleton<TracerProvider>(sp =>
+            {
+                if (IsOtelSdkDisabled(sp.GetRequiredService<IConfiguration>()))
+                {
+                    var noopTracerProvider = new NoopTracerProvider();
+                    noopTracerProvider.Dispose();
+                    return noopTracerProvider;
+                }
+
+                return new TracerProviderSdk(sp, ownsServiceProvider: false);
+            });
 
         this.innerBuilder = new TracerProviderServiceCollectionBuilder(services);
 
@@ -146,7 +158,25 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
         bool validateScopes = false;
 #endif
         var serviceProvider = services.BuildServiceProvider(validateScopes);
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+
+        if (IsOtelSdkDisabled(configuration))
+        {
+            serviceProvider.Dispose();
+            return new NoopTracerProvider();
+        }
 
         return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
+    }
+
+    private static bool IsOtelSdkDisabled(IConfiguration configuration)
+    {
+        bool isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out bool result) && result;
+        if (isDisabled)
+        {
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Disabled because {SdkConfigDefinitions.SdkDisableEnvVarName} is true.");
+        }
+
+        return isDisabled;
     }
 }
