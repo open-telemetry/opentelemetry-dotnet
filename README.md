@@ -132,7 +132,7 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
   (OpenTelemetry Protocol)
 * [Prometheus AspNetCore](./src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
 * [Prometheus HttpListener](./src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
-* [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
+* [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md) (Deprecated)
 
 Additional packages including [instrumentation
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),

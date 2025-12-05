@@ -6,6 +6,8 @@
     <PackageTags>$(PackageTags);Zipkin;distributed-tracing</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
     <ReferenceSystemTextJsonPackages>true</ReferenceSystemTextJsonPackages>
+    <!-- CS0618: Do not use Obsolete classes/methods. Zipkin exporter is deprecated and marked as Obsolete.-->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

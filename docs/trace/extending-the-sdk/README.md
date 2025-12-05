@@ -17,7 +17,7 @@ OpenTelemetry .NET SDK has provided the following built-in trace exporters:
 * [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 * [InMemory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
 * [OpenTelemetryProtocol](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
-* [Zipkin](../../../src/OpenTelemetry.Exporter.Zipkin/README.md)
+* [Zipkin](../../../src/OpenTelemetry.Exporter.Zipkin/README.md) (Deprecated)
 
 Custom exporters can be implemented to send telemetry data to places which are
 not covered by the built-in exporters:
