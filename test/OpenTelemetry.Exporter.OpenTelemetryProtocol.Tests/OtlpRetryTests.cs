@@ -33,7 +33,7 @@ public class OtlpRetryTests
             var statusCode = retryAttempt.Response.Status.Value.StatusCode;
             var deadline = retryAttempt.Response.DeadlineUtc;
             var trailers = retryAttempt.Response.GrpcStatusDetailsHeader;
-            var success = OtlpRetry.TryGetGrpcRetryResult(retryAttempt.Response, nextRetryDelayMilliseconds, out var retryResult);
+            var success = OtlpRetry.TryGetGrpcRetryResult(retryAttempt.Response, nextRetryDelayMilliseconds, attempts - 1, out var retryResult);
 
             Assert.Equal(retryAttempt.ExpectedSuccess, success);
 
@@ -82,7 +82,7 @@ public class OtlpRetryTests
             var statusCode = retryAttempt.Response.StatusCode;
             var deadline = retryAttempt.Response.DeadlineUtc;
             var headers = retryAttempt.Response.Headers;
-            var success = OtlpRetry.TryGetHttpRetryResult(retryAttempt.Response, nextRetryDelayMilliseconds, out var retryResult);
+            var success = OtlpRetry.TryGetHttpRetryResult(retryAttempt.Response, nextRetryDelayMilliseconds, attempts - 1, out var retryResult);
 
             Assert.Equal(retryAttempt.ExpectedSuccess, success);
 
