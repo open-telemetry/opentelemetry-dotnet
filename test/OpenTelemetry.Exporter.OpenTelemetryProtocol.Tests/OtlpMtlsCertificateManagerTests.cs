@@ -191,22 +191,6 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
             DateTimeOffset.UtcNow.AddDays(30));
         return cert;
     }
-
-    private static System.Security.Cryptography.X509Certificates.X509Certificate2 CreateExpiredCertificate()
-    {
-        using var rsa = System.Security.Cryptography.RSA.Create(2048);
-        var req = new System.Security.Cryptography.X509Certificates.CertificateRequest(
-            "CN=Expired Test Certificate",
-            rsa,
-            System.Security.Cryptography.HashAlgorithmName.SHA256,
-            System.Security.Cryptography.RSASignaturePadding.Pkcs1);
-
-        // Create a certificate that expired yesterday
-        var cert = req.CreateSelfSigned(
-            DateTimeOffset.UtcNow.AddDays(-30),
-            DateTimeOffset.UtcNow.AddDays(-1));
-        return cert;
-    }
 }
 
 #endif
