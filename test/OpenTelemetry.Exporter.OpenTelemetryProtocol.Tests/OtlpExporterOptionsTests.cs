@@ -276,6 +276,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
 
             Assert.NotNull(options.MtlsOptions);
             Assert.Equal("/path/to/ca.crt", options.MtlsOptions.CaCertificatePath);
+            Assert.True(options.MtlsOptions.IsEnabled);
         }
         finally
         {

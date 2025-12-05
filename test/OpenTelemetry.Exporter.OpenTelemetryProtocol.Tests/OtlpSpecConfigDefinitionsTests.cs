@@ -3,8 +3,6 @@
 
 #if NET
 
-using Xunit;
-
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public class OtlpSpecConfigDefinitionsTests

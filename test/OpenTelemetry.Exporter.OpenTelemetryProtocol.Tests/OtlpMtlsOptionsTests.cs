@@ -3,8 +3,6 @@
 
 #if NET
 
-using Xunit;
-
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public class OtlpMtlsOptionsTests
@@ -43,6 +41,22 @@ public class OtlpMtlsOptionsTests
     public void IsEnabled_ReturnsFalse_WhenNoClientCertificateProvided()
     {
         var options = new OtlpMtlsOptions();
+        Assert.False(options.IsEnabled);
+    }
+
+    [Fact]
+    public void IsEnabled_ReturnsTrue_WhenCaCertificateFilePathProvided()
+    {
+        var options = new OtlpMtlsOptions { CaCertificatePath = "/path/to/ca.crt" };
+        Assert.True(options.IsEnabled);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void IsEnabled_ReturnsFalse_WhenCaCertificateFilePathIsEmpty(string filePath)
+    {
+        var options = new OtlpMtlsOptions { CaCertificatePath = filePath };
         Assert.False(options.IsEnabled);
     }
 

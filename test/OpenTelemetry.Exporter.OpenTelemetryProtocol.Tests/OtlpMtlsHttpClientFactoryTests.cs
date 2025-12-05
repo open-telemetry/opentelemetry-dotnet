@@ -3,7 +3,10 @@
 
 #if NET
 
-using Xunit;
+using System.Net.Security;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -39,7 +42,7 @@ public class OtlpMtlsHttpClientFactoryTests
         {
             // Create a self-signed certificate for testing
             using var cert = CreateSelfSignedCertificate();
-            var certBytes = cert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx);
+            var certBytes = cert.Export(X509ContentType.Pfx);
             File.WriteAllBytes(tempCertFile, certBytes);
 
             var options = new OtlpMtlsOptions
@@ -53,7 +56,7 @@ public class OtlpMtlsHttpClientFactoryTests
             Assert.NotNull(httpClient);
 
             // Verify the HttpClientHandler has client certificates configured
-            var handlerField = typeof(HttpClient).GetField(
+            var handlerField = typeof(HttpMessageInvoker).GetField(
                 "_handler",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (handlerField?.GetValue(httpClient) is HttpClientHandler handler)
@@ -73,41 +76,149 @@ public class OtlpMtlsHttpClientFactoryTests
     [Fact]
     public void CreateHttpClient_ConfiguresServerCertificateValidation_WhenTrustedRootCertificatesProvided()
     {
-        var tempTrustStoreFile = Path.GetTempFileName();
-        try
+        RunWithCryptoSupportCheck(() =>
         {
-            // Create a self-signed certificate for testing as trusted root
-            using var trustedCert = CreateSelfSignedCertificate();
-            var trustedCertPem = Convert.ToBase64String(trustedCert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Cert));
-            var pemContent =
-                $"-----BEGIN CERTIFICATE-----\n{trustedCertPem}\n-----END CERTIFICATE-----";
-            File.WriteAllText(tempTrustStoreFile, pemContent);
-
-            var options = new OtlpMtlsOptions
+            var tempTrustStoreFile = Path.GetTempFileName();
+            try
             {
-                CaCertificatePath = tempTrustStoreFile,
-            };
+                // Create a self-signed certificate for testing as trusted root
+                using var trustedCert = CreateSelfSignedCertificate();
+                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(trustedCert));
 
-            using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
+                var options = new OtlpMtlsOptions
+                {
+                    CaCertificatePath = tempTrustStoreFile,
+                    EnableCertificateChainValidation = false, // Avoid platform-specific chain build differences
+                };
 
-            Assert.NotNull(httpClient);
+                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
 
-            // Verify the HttpClientHandler has server certificate validation configured
-            var handlerField = typeof(HttpClient).GetField(
-                "_handler",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (handlerField?.GetValue(httpClient) is HttpClientHandler handler)
+                Assert.NotNull(httpClient);
+
+                // Verify the HttpClientHandler has server certificate validation configured
+                var handlerField = typeof(HttpMessageInvoker).GetField(
+                    "_handler",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (handlerField?.GetValue(httpClient) is HttpClientHandler handler)
+                {
+                    Assert.NotNull(handler.ServerCertificateCustomValidationCallback);
+                }
+            }
+            finally
             {
+                if (File.Exists(tempTrustStoreFile))
+                {
+                    File.Delete(tempTrustStoreFile);
+                }
+            }
+        });
+    }
+
+    [Fact]
+    public void CreateHttpClient_ConfiguresServerValidation_WithCaOnly()
+    {
+        RunWithCryptoSupportCheck(() =>
+        {
+            var tempTrustStoreFile = Path.GetTempFileName();
+
+            try
+            {
+                using var caCertificate = CreateCertificateAuthority();
+                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(caCertificate));
+
+                var options = new OtlpMtlsOptions
+                {
+                    CaCertificatePath = tempTrustStoreFile,
+                    EnableCertificateChainValidation = false, // Avoid platform-specific chain build differences
+                };
+
+                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
+
+                var handlerField = typeof(HttpMessageInvoker).GetField(
+                    "_handler",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                Assert.NotNull(handlerField);
+
+                var handler = handlerField.GetValue(httpClient) as HttpClientHandler;
+
+                Assert.NotNull(handler);
+                Assert.Empty(handler!.ClientCertificates);
                 Assert.NotNull(handler.ServerCertificateCustomValidationCallback);
             }
-        }
-        finally
-        {
-            if (File.Exists(tempTrustStoreFile))
+            finally
             {
-                File.Delete(tempTrustStoreFile);
+                if (File.Exists(tempTrustStoreFile))
+                {
+                    File.Delete(tempTrustStoreFile);
+                }
             }
-        }
+        });
+    }
+
+    [Fact]
+    public void ValidateServerCertificate_ReturnsTrue_WhenNoSslPolicyErrors()
+    {
+        using var caCertificate = CreateCertificateAuthority();
+        using var serverCertificate = CreateServerCertificate(caCertificate);
+        using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateServerCertificate(
+            serverCertificate,
+            chain,
+            SslPolicyErrors.None,
+            caCertificate);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void ValidateServerCertificate_ReturnsTrue_WithProvidedCa()
+    {
+        using var caCertificate = CreateCertificateAuthority();
+        using var serverCertificate = CreateServerCertificate(caCertificate);
+        using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateServerCertificate(
+            serverCertificate,
+            chain,
+            SslPolicyErrors.RemoteCertificateChainErrors,
+            caCertificate);
+
+        Assert.True(result);
+        Assert.Equal(caCertificate.Thumbprint, chain.ChainElements[^1].Certificate.Thumbprint);
+    }
+
+    [Fact]
+    public void ValidateServerCertificate_ReturnsFalse_WhenCaDoesNotMatch()
+    {
+        using var caCertificate = CreateCertificateAuthority();
+        using var otherCaCertificate = CreateCertificateAuthority();
+        using var serverCertificate = CreateServerCertificate(caCertificate);
+        using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateServerCertificate(
+            serverCertificate,
+            chain,
+            SslPolicyErrors.RemoteCertificateChainErrors,
+            otherCaCertificate);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void ValidateCertificateChain_ReturnsFalseForExpiredCertificate()
+    {
+        using var expiredCertificate = CreateExpiredCertificate();
+
+        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(
+            expiredCertificate,
+            OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ClientCertificateType);
+
+        Assert.False(result);
     }
 
     [Fact]
@@ -119,19 +230,146 @@ public class OtlpMtlsHttpClientFactoryTests
         Assert.Equal("mtlsOptions", exception.ParamName);
     }
 
-    private static System.Security.Cryptography.X509Certificates.X509Certificate2 CreateSelfSignedCertificate()
+    private static X509Certificate2 CreateSelfSignedCertificate()
     {
-        using var rsa = System.Security.Cryptography.RSA.Create(2048);
-        var req = new System.Security.Cryptography.X509Certificates.CertificateRequest(
+        using var rsa = RSA.Create(2048);
+        var req = new CertificateRequest(
             "CN=Test Certificate",
             rsa,
-            System.Security.Cryptography.HashAlgorithmName.SHA256,
-            System.Security.Cryptography.RSASignaturePadding.Pkcs1);
+            HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pkcs1);
 
         var cert = req.CreateSelfSigned(
             DateTimeOffset.UtcNow.AddDays(-1),
             DateTimeOffset.UtcNow.AddDays(30));
-        return cert;
+#if NET9_0_OR_GREATER
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+#else
+#pragma warning disable SYSLIB0057
+        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+#pragma warning restore SYSLIB0057
+#endif
+    }
+
+    private static X509Certificate2 CreateCertificateAuthority()
+    {
+        using var rsa = RSA.Create(2048);
+        var request = new CertificateRequest(
+            "CN=Test CA",
+            rsa,
+            HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pkcs1);
+
+        request.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
+        request.CertificateExtensions.Add(new X509KeyUsageExtension(
+            X509KeyUsageFlags.KeyCertSign | X509KeyUsageFlags.CrlSign,
+            true));
+        request.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
+
+        var cert = request.CreateSelfSigned(
+            DateTimeOffset.UtcNow.AddDays(-1),
+            DateTimeOffset.UtcNow.AddYears(1));
+
+#if NET9_0_OR_GREATER
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+#else
+#pragma warning disable SYSLIB0057
+        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+#pragma warning restore SYSLIB0057
+#endif
+    }
+
+    private static X509Certificate2 CreateServerCertificate(X509Certificate2 issuer)
+    {
+        using var rsa = RSA.Create(2048);
+        var request = new CertificateRequest(
+            "CN=localhost",
+            rsa,
+            HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pkcs1);
+
+        request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, false));
+        request.CertificateExtensions.Add(new X509KeyUsageExtension(
+            X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment,
+            true));
+        request.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
+
+        var sanBuilder = new SubjectAlternativeNameBuilder();
+        sanBuilder.AddDnsName("localhost");
+        request.CertificateExtensions.Add(sanBuilder.Build());
+
+        var serialNumber = new byte[16];
+        RandomNumberGenerator.Fill(serialNumber);
+
+        var cert = request.Create(
+            issuer,
+            DateTimeOffset.UtcNow.AddDays(-1),
+            DateTimeOffset.UtcNow.AddDays(30),
+            serialNumber);
+
+#if NET9_0_OR_GREATER
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+#else
+#pragma warning disable SYSLIB0057
+        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+#pragma warning restore SYSLIB0057
+#endif
+    }
+
+    private static X509Certificate2 CreateExpiredCertificate()
+    {
+        using var rsa = RSA.Create(2048);
+        var request = new CertificateRequest(
+            "CN=Expired Certificate",
+            rsa,
+            HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pkcs1);
+
+        request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, false));
+
+        var cert = request.CreateSelfSigned(
+            DateTimeOffset.UtcNow.AddDays(-30),
+            DateTimeOffset.UtcNow.AddDays(-1));
+
+#if NET9_0_OR_GREATER
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+#else
+#pragma warning disable SYSLIB0057
+        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+#pragma warning restore SYSLIB0057
+#endif
+    }
+
+    private static string ExportCertificateWithPrivateKey(X509Certificate2 certificate)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine(certificate.ExportCertificatePem().Trim());
+
+        using RSA? privateKey = certificate.GetRSAPrivateKey();
+        if (privateKey != null)
+        {
+            var pkcs8Bytes = privateKey.ExportPkcs8PrivateKey();
+            var privateKeyPem = PemEncoding.Write("PRIVATE KEY", pkcs8Bytes);
+            builder.AppendLine(new string(privateKeyPem).Trim());
+        }
+
+        return builder.ToString();
+    }
+
+    private static void RunWithCryptoSupportCheck(Action testBody)
+    {
+        try
+        {
+            testBody();
+        }
+        catch (PlatformNotSupportedException ex)
+        {
+            Console.WriteLine($"Skipping mTLS HttpClient tests: {ex.Message}");
+        }
+        catch (CryptographicException ex) when (ex.Message.Contains("not supported", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine($"Skipping mTLS HttpClient tests: {ex.Message}");
+        }
     }
 }
 

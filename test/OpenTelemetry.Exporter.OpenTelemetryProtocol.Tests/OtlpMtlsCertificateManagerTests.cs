@@ -3,8 +3,6 @@
 
 #if NET
 
-using Xunit;
-
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public class OtlpMtlsCertificateManagerTests
@@ -30,6 +28,11 @@ PQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFG
 HIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
 ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
 4567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCD
+-----END CERTIFICATE-----";
+
+    private const string InvalidCertPem =
+        @"-----BEGIN CERTIFICATE-----
+INVALID CERTIFICATE DATA
 -----END CERTIFICATE-----";
 
     [Fact]
@@ -154,7 +157,7 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
     {
         var tempCertFile = Path.GetTempFileName();
         var tempKeyFile = Path.GetTempFileName();
-        File.WriteAllText(tempCertFile, TestCertPem);
+        File.WriteAllText(tempCertFile, InvalidCertPem);
         File.WriteAllText(tempKeyFile, "test-key-content");
 
         try

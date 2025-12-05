@@ -30,9 +30,11 @@ internal sealed class OtlpMtlsOptions
 
     /// <summary>
     /// Gets a value indicating whether mTLS is enabled.
-    /// mTLS is considered enabled if at least the client certificate path is provided.
+    /// mTLS is considered enabled if at least the client certificate path or CA certificate path is provided.
     /// </summary>
-    public bool IsEnabled => !string.IsNullOrWhiteSpace(this.ClientCertificatePath);
+    public bool IsEnabled =>
+        !string.IsNullOrWhiteSpace(this.ClientCertificatePath)
+        || !string.IsNullOrWhiteSpace(this.CaCertificatePath);
 }
 
 #endif
