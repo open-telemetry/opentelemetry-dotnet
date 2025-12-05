@@ -6,6 +6,69 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added support for the `OTEL_SDK_DISABLED` environment variable in TracerProvider,
+  MeterProvider, and LoggerProvider. When `OTEL_SDK_DISABLED=true`,
+  the SDK returns no-op implementations for all telemetry signals.
+  The `OTEL_SDK_DISABLED` environment variable is only evaluated upon application
+  startup, later changes have no effect.
+  ([#6568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6568))
+
+* Added `LowMemory` temporality as an option in the OTLP metrics exporter.
+  ([#6648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6648))
+
+* Added support for `Meter.TelemetrySchemaUrl` property.
+  ([#6714](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6714))
+
+* Improve performance and reduce memory consumption for metrics histograms.
+  ([#6715](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6715))
+
+## 1.14.0
+
+Released 2025-Nov-12
+
+* **Breaking Change** NuGet packages now use the Sigstore bundle format
+  (`.sigstore.json`) for digital signatures instead of separate signature
+  (`.sig`) and certificate (`.pem`) files. This requires cosign 3.0 or later
+  for verification. See the [Digital signing
+  section](../../README.md#digital-signing) for updated verification instructions.
+  ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
+
+* Update to stable versions for .NET 10.0 NuGet packages.
+  ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
+
+* Update `Microsoft.Extensions.*` dependencies to `10.0.0` for .NET Framework
+  and .NET Standard.
+  ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
+
+## 1.14.0-rc.1
+
+Released 2025-Oct-21
+
+* **Breaking Change** When targeting `net8.0`, the package now depends on version
+  `8.0.0` of the `Microsoft.Extensions.DependencyInjection.Abstractions`,
+  `Microsoft.Extensions.Diagnostics.Abstractions` and
+  `Microsoft.Extensions.Logging.Configuration` NuGet packages.
+  ([#6327](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6327))
+
+* Add support for .NET 10.0.
+  ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
+
+## 1.13.1
+
+Released 2025-Oct-09
+
+* Fixed an issue where the Base2 Exponential Bucket Histogram did not reset its
+  scale to 20 after each collection cycle when using delta aggregation temporality.
+  ([#6557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6557))
+
+## 1.13.0
+
+Released 2025-Oct-01
+
+* Added a verification to ensure that a `MetricReader` can only be registered
+  to a single `MeterProvider`, as required by the OpenTelemetry specification.
+  ([#6458](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6458))
+
 * Added `FormatMessage` configuration option to self-diagnostics feature. When
   set to `true` (default is false), log messages will be formatted by replacing
   placeholders with actual parameter values for improved readability.
@@ -20,6 +83,11 @@ Notes](../../RELEASENOTES.md).
       "FormatMessage": true
   }
   ```
+
+* Fixed parsing of `OTEL_TRACES_SAMPLER_ARG` decimal values to always use `.`
+  as the delimiter when using the `traceidratio` sampler, preventing
+  locale-specific parsing issues.
+  ([#6444](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6444))
 
 ## 1.12.0
 

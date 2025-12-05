@@ -35,10 +35,12 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             }
             catch (HttpRequestException ex)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, ex);
+                var response = TryGetResponseBody(httpResponse, cancellationToken);
+                OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
                 return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: httpResponse, ex);
             }
 
+            OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint, "Export completed successfully.");
             return SuccessExportResponse;
         }
         catch (HttpRequestException ex)

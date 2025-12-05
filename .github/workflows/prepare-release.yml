@@ -29,186 +29,232 @@ permissions:
 jobs:
   automation:
     uses: ./.github/workflows/automation.yml
-    secrets: inherit
+    secrets:
+      OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   prepare-release-pr:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
     if: github.event_name == 'workflow_dispatch' && needs.automation.outputs.enabled
 
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
-
     steps:
-    - name: check out code
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
+      id: otelbot-token
       with:
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
+    - name: Check out code
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Create GitHub Pull Request to prepare release
       shell: pwsh
+      env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
+        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        COMMENT_USER_NAME: ${{ github.event.sender.login }}
+        TAG_PREFIX: ${{ inputs.tag-prefix }}
+        VERSION: ${{ inputs.version }}
       run: |
         Import-Module .\build\scripts\prepare-release.psm1
 
         CreatePullRequestToUpdateChangelogsAndPublicApis `
-          -gitRepository '${{ github.repository }}' `
-          -minVerTagPrefix '${{ inputs.tag-prefix }}' `
-          -version '${{ inputs.version }}' `
-          -requestedByUserName '${{ github.event.sender.login }}' `
-          -targetBranch '${{ github.ref_name }}' `
-          -gitUserName '${{ needs.automation.outputs.username }}' `
-          -gitUserEmail '${{ needs.automation.outputs.email }}'
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -minVerTagPrefix ${env:TAG_PREFIX} `
+          -version ${env:VERSION} `
+          -requestedByUserName ${env:COMMENT_USER_NAME} `
+          -targetBranch ${env:GITHUB_REF_NAME} `
+          -gitUserName ${env:BOT_USER_NAME} `
+          -gitUserEmail ${env:BOT_USER_EMAIL}
 
   lock-pr-and-post-notice-to-create-release-tag:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
     if: |
-      github.event_name == 'pull_request'
-      && github.event.action == 'closed'
-      && github.event.pull_request.user.login == needs.automation.outputs.username
-      && github.event.pull_request.merged == true
-      && startsWith(github.event.pull_request.title, '[release] Prepare release ')
-      && needs.automation.outputs.enabled
-
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.user.login == needs.automation.outputs.application-username &&
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.title, '[release] Prepare release ') &&
+      needs.automation.outputs.enabled
 
     steps:
-    - name: check out code
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
+      id: otelbot-token
       with:
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
+    - name: Check out code
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Lock GitHub Pull Request to prepare release
       shell: pwsh
+      env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
+        ISSUE_NUMBER: ${{ github.event.pull_request.number }}
       run: |
         Import-Module .\build\scripts\prepare-release.psm1
 
         LockPullRequestAndPostNoticeToCreateReleaseTag `
-          -gitRepository '${{ github.repository }}' `
-          -pullRequestNumber '${{ github.event.pull_request.number }}' `
-          -botUserName '${{ needs.automation.outputs.username }}'
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -pullRequestNumber ${env:ISSUE_NUMBER} `
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME}
 
   create-release-tag-pr-post-notice:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
     if: |
-      github.event_name == 'issue_comment'
-      && github.event.issue.pull_request
-      && github.event.issue.locked == true
-      && github.event.comment.user.login != needs.automation.outputs.username
-      && contains(github.event.comment.body, '/CreateReleaseTag')
-      && startsWith(github.event.issue.title, '[release] Prepare release ')
-      && github.event.issue.pull_request.merged_at
-      && needs.automation.outputs.enabled
-
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.issue.locked == true &&
+      github.event.comment.user.login != needs.automation.outputs.application-username &&
+      contains(github.event.comment.body, '/CreateReleaseTag') &&
+      startsWith(github.event.issue.title, '[release] Prepare release ') &&
+      github.event.issue.pull_request.merged_at &&
+      needs.automation.outputs.enabled
 
     steps:
-    - name: check out code
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
+    - name: Check out code
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Create release tag
       id: create-tag
       shell: pwsh
+      env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
+        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
       run: |
         Import-Module .\build\scripts\prepare-release.psm1
 
         CreateReleaseTagAndPostNoticeOnPullRequest `
-          -gitRepository '${{ github.repository }}' `
-          -pullRequestNumber '${{ github.event.issue.number }}' `
-          -botUserName '${{ needs.automation.outputs.username }}' `
-          -gitUserName '${{ needs.automation.outputs.username }}' `
-          -gitUserEmail '${{ needs.automation.outputs.email }}'
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -pullRequestNumber ${env:ISSUE_NUMBER} `
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
+          -gitUserName ${env:BOT_USER_NAME} `
+          -gitUserEmail ${env:BOT_USER_EMAIL}
 
   update-changelog-release-dates-on-prepare-pr-post-notice:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
     if: |
-      github.event_name == 'issue_comment'
-      && github.event.issue.pull_request
-      && github.event.issue.state == 'open'
-      && github.event.comment.user.login != needs.automation.outputs.username
-      && contains(github.event.comment.body, '/UpdateReleaseDates')
-      && startsWith(github.event.issue.title, '[release] Prepare release ')
-      && github.event.issue.pull_request.merged_at == null
-      && needs.automation.outputs.enabled
-
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.issue.state == 'open' &&
+      github.event.comment.user.login != needs.automation.outputs.application-username &&
+      contains(github.event.comment.body, '/UpdateReleaseDates') &&
+      startsWith(github.event.issue.title, '[release] Prepare release ') &&
+      github.event.issue.pull_request.merged_at == null &&
+      needs.automation.outputs.enabled
 
     steps:
-    - name: check out code
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
+    - name: Check out code
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Update release date
       shell: pwsh
+      env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
+        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
+        COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
       run: |
         Import-Module .\build\scripts\prepare-release.psm1
 
         UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest `
-          -gitRepository '${{ github.repository }}' `
-          -pullRequestNumber '${{ github.event.issue.number }}' `
-          -botUserName '${{ needs.automation.outputs.username }}' `
-          -commentUserName '${{ github.event.comment.user.login }}' `
-          -gitUserName '${{ needs.automation.outputs.username }}' `
-          -gitUserEmail '${{ needs.automation.outputs.email }}'
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -pullRequestNumber ${env:ISSUE_NUMBER} `
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
+          -commentUserName ${env:COMMENT_USER_NAME} `
+          -gitUserName ${env:BOT_USER_NAME} `
+          -gitUserEmail ${env:BOT_USER_EMAIL}
 
   update-releasenotes-on-prepare-pr-post-notice:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
     if: |
-      github.event_name == 'issue_comment'
-      && github.event.issue.pull_request
-      && github.event.issue.state == 'open'
-      && github.event.comment.user.login != needs.automation.outputs.username
-      && contains(github.event.comment.body, '/UpdateReleaseNotes')
-      && startsWith(github.event.issue.title, '[release] Prepare release ')
-      && github.event.issue.pull_request.merged_at == null
-      && needs.automation.outputs.enabled
-
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.issue.state == 'open' &&
+      github.event.comment.user.login != needs.automation.outputs.application-username &&
+      contains(github.event.comment.body, '/UpdateReleaseNotes') &&
+      startsWith(github.event.issue.title, '[release] Prepare release ') &&
+      github.event.issue.pull_request.merged_at == null &&
+      needs.automation.outputs.enabled
 
     steps:
-    - name: check out code
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
+    - name: Check out code
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Update release notes
       env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
+        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
         COMMENT_BODY: ${{ github.event.comment.body }}
+        COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
       shell: pwsh
       run: |
         Import-Module .\build\scripts\prepare-release.psm1
 
         UpdateReleaseNotesAndPostNoticeOnPullRequest `
-          -gitRepository '${{ github.repository }}' `
-          -pullRequestNumber '${{ github.event.issue.number }}' `
-          -botUserName '${{ needs.automation.outputs.username }}' `
-          -commentUserName '${{ github.event.comment.user.login }}' `
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -pullRequestNumber ${env:ISSUE_NUMBER} `
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
+          -commentUserName ${env:COMMENT_USER_NAME} `
           -commentBody $Env:COMMENT_BODY `
-          -gitUserName '${{ needs.automation.outputs.username }}' `
-          -gitUserEmail '${{ needs.automation.outputs.email }}'
+          -gitUserName ${env:BOT_USER_NAME} `
+          -gitUserEmail ${env:BOT_USER_EMAIL}

@@ -12,7 +12,7 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
        * There are different categories of packages. Check the project file for
          what you want to release and look for `MinVerTagPrefix`.
 
-         * `core-`: Core packages. These packages are defined\goverened by the
+         * `core-`: Core packages. These packages are defined\governed by the
            OpenTelemetry Specification or are part of fundamental infrastructure
            and have released stable versions. They may be released as `alpha`,
            `beta`, `rc`, or stable.
@@ -29,7 +29,7 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
            * `OpenTelemetry.Extensions.Propagators` - Defined by spec
 
          * `coreunstable-`: Core unstable packages. These packages are
-           defined\goverened by the OpenTelemetry Specification or are part of
+           defined\governed by the OpenTelemetry Specification or are part of
            fundamental infrastructure but have not released stable versions. As
            of the `1.9.0` release cycle they may only be released as `alpha` or
            `beta`.

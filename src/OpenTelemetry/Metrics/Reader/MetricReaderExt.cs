@@ -19,8 +19,8 @@ public abstract partial class MetricReader
     private readonly Lock instrumentCreationLock = new();
     private int metricLimit;
     private int cardinalityLimit;
-    private Metric?[]? metrics;
-    private Metric[]? metricsCurrentBatch;
+    private Metric?[] metrics = [];
+    private Metric[] metricsCurrentBatch = [];
     private int metricIndex = -1;
     private ExemplarFilterType? exemplarFilter;
     private ExemplarFilterType? exemplarFilterForHistograms;
@@ -131,7 +131,7 @@ public abstract partial class MetricReader
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
                         metricStreamIdentity.InstrumentName,
                         metricStreamIdentity.MeterName,
-                        "Metric name is invalid.",
+                        metricStreamConfig?.Name == null ? "Instrument name is invalid." : "View name is invalid.",
                         "The name must comply with the OpenTelemetry specification.");
 
                     continue;

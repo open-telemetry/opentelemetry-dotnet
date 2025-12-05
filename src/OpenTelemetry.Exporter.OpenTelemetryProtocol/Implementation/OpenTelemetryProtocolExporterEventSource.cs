@@ -60,11 +60,11 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [NonEvent]
-    public void HttpRequestFailed(Uri endpoint, Exception ex)
+    public void HttpRequestFailed(Uri endpoint, string? response, Exception ex)
     {
         if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            this.HttpRequestFailed(endpoint.ToString(), ex.ToInvariantString());
+            this.HttpRequestFailed(endpoint.ToString(), response, ex.ToInvariantString());
         }
     }
 
@@ -101,6 +101,24 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
             this.ExportFailure(endpoint.ToString(), message, status.ToString());
+        }
+    }
+
+    [NonEvent]
+    public void ExportSuccess(Uri endpoint, string message)
+    {
+        if (Log.IsEnabled(EventLevel.Informational, EventKeywords.All))
+        {
+            this.ExportSuccess(endpoint.ToString(), message);
+        }
+    }
+
+    [NonEvent]
+    public void ResponseDeserializationFailed(Uri endpoint)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.ResponseDeserializationFailed(endpoint.ToString());
         }
     }
 
@@ -182,10 +200,10 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         this.WriteEvent(16, endpoint, exceptionMessage);
     }
 
-    [Event(17, Message = "HTTP request to {0} failed. Exception: {1}", Level = EventLevel.Error)]
-    public void HttpRequestFailed(string endpoint, string exceptionMessage)
+    [Event(17, Message = "HTTP request to {0} failed. Response: {1}. Exception: {2}", Level = EventLevel.Error)]
+    public void HttpRequestFailed(string endpoint, string? response, string exceptionMessage)
     {
-        this.WriteEvent(17, endpoint, exceptionMessage);
+        this.WriteEvent(17, endpoint, response, exceptionMessage);
     }
 
     [Event(18, Message = "Operation unexpectedly canceled for endpoint {0}. Exception: {1}", Level = EventLevel.Warning)]

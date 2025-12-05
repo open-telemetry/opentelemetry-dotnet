@@ -17,7 +17,7 @@ function CreatePullRequestToUpdateChangelogsAndPublicApis {
 
   $isPrerelease = $version -match '-alpha' -or $version -match '-beta' -or $version -match '-rc'
   $tag="${minVerTagPrefix}${version}"
-  $branch="release/prepare-${tag}-release"
+  $branch="otelbot/prepare-${tag}-release"
 
   if ([string]::IsNullOrEmpty($gitUserName) -eq $false)
   {
@@ -136,12 +136,12 @@ function LockPullRequestAndPostNoticeToCreateReleaseTag {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter(Mandatory=$true)][string]$botUserName
+    [Parameter(Mandatory=$true)][string]$expectedPrAuthorUserName
   )
 
   $prViewResponse = gh pr view $pullRequestNumber --json mergeCommit,author,title | ConvertFrom-Json
 
-  if ($prViewResponse.author.login -ne $botUserName)
+  if ($prViewResponse.author.login -ne $expectedPrAuthorUserName)
   {
       throw 'PR author was unexpected'
   }
@@ -178,14 +178,14 @@ function CreateReleaseTagAndPostNoticeOnPullRequest {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter(Mandatory=$true)][string]$botUserName,
+    [Parameter(Mandatory=$true)][string]$expectedPrAuthorUserName,
     [Parameter()][string]$gitUserName,
     [Parameter()][string]$gitUserEmail
   )
 
   $prViewResponse = gh pr view $pullRequestNumber --json mergeCommit,author,title | ConvertFrom-Json
 
-  if ($prViewResponse.author.login -ne $botUserName)
+  if ($prViewResponse.author.login -ne $expectedPrAuthorUserName)
   {
       throw 'PR author was unexpected'
   }
@@ -232,7 +232,9 @@ I just pushed the [$tag](https://github.com/$gitRepository/releases/tag/$tag) ta
 The [package workflow](https://github.com/$gitRepository/actions/workflows/publish-packages-1.0.yml) should begin momentarily.
 "@
 
+  gh pr unlock $pullRequestNumber
   gh pr comment $pullRequestNumber --body $body
+  gh pr lock $pullRequestNumber
 }
 
 Export-ModuleMember -Function CreateReleaseTagAndPostNoticeOnPullRequest
@@ -241,7 +243,7 @@ function UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter(Mandatory=$true)][string]$botUserName,
+    [Parameter(Mandatory=$true)][string]$expectedPrAuthorUserName,
     [Parameter(Mandatory=$true)][string]$commentUserName,
     [Parameter()][string]$gitUserName,
     [Parameter()][string]$gitUserEmail
@@ -249,7 +251,7 @@ function UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest {
 
   $prViewResponse = gh pr view $pullRequestNumber --json headRefName,author,title | ConvertFrom-Json
 
-  if ($prViewResponse.author.login -ne $botUserName)
+  if ($prViewResponse.author.login -ne $expectedPrAuthorUserName)
   {
       throw 'PR author was unexpected'
   }
@@ -344,7 +346,7 @@ function UpdateReleaseNotesAndPostNoticeOnPullRequest {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,
     [Parameter(Mandatory=$true)][string]$pullRequestNumber,
-    [Parameter(Mandatory=$true)][string]$botUserName,
+    [Parameter(Mandatory=$true)][string]$expectedPrAuthorUserName,
     [Parameter(Mandatory=$true)][string]$commentUserName,
     [Parameter(Mandatory=$true)][string]$commentBody,
     [Parameter()][string]$gitUserName,
@@ -353,7 +355,7 @@ function UpdateReleaseNotesAndPostNoticeOnPullRequest {
 
   $prViewResponse = gh pr view $pullRequestNumber --json headRefName,author,title | ConvertFrom-Json
 
-  if ($prViewResponse.author.login -ne $botUserName)
+  if ($prViewResponse.author.login -ne $expectedPrAuthorUserName)
   {
       throw 'PR author was unexpected'
   }

@@ -36,10 +36,17 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     /// <inheritdoc/>
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
+        HttpResponseMessage? httpResponse = null;
+
         try
         {
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
-            using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
+
+            // TE is required by some servers, e.g. C Core.
+            // A missing TE header results in servers aborting the gRPC call.
+            httpRequest.Headers.TryAddWithoutValidation("TE", "trailers");
+
+            httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
             httpResponse.EnsureSuccessStatusCode();
 
@@ -62,7 +69,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                         status = new Status(StatusCode.Internal, "Failed to deserialize response message.");
                     }
 
-                    OpenTelemetryProtocolExporterEventSource.Log.ResponseDeserializationFailed(this.Endpoint.ToString());
+                    OpenTelemetryProtocolExporterEventSource.Log.ResponseDeserializationFailed(this.Endpoint);
 
                     return new ExportClientGrpcResponse(
                         success: false,
@@ -83,7 +90,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
             if (status.StatusCode == StatusCode.OK)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint.ToString(), "Export completed successfully.");
+                OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint, "Export completed successfully.");
                 return SuccessExportResponse;
             }
 
@@ -116,7 +123,8 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         catch (HttpRequestException ex)
         {
             // Handle non-retryable HTTP errors.
-            OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, ex);
+            var response = TryGetResponseBody(httpResponse, cancellationToken);
+            OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
             return new ExportClientGrpcResponse(
                 success: false,
                 deadlineUtc: deadlineUtc,
@@ -150,6 +158,10 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         {
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
             return DefaultExceptionExportClientGrpcResponse;
+        }
+        finally
+        {
+            httpResponse?.Dispose();
         }
     }
 

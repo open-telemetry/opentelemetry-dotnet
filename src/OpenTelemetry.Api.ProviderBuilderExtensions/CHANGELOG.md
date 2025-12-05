@@ -7,6 +7,43 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.14.0
+
+Released 2025-Nov-12
+
+* **Breaking Change** NuGet packages now use the Sigstore bundle format
+  (`.sigstore.json`) for digital signatures instead of separate signature
+  (`.sig`) and certificate (`.pem`) files. This requires cosign 3.0 or later
+  for verification. See the [Digital signing
+  section](../../README.md#digital-signing) for updated verification instructions.
+  ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
+
+* Update to stable versions for .NET 10.0 NuGet packages.
+  ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
+
+* Update `Microsoft.Extensions.*` dependencies to `10.0.0` for .NET Framework
+  and .NET Standard.
+  ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
+
+## 1.14.0-rc.1
+
+Released 2025-Oct-21
+
+* **Breaking Change** When targeting `net8.0`, the package now depends on version
+  `8.0.0` of the `Microsoft.Extensions.DependencyInjection.Abstractions` NuGet package.
+  ([#6327](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6327))
+
+* Add support for .NET 10.0.
+  ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
+
+## 1.13.1
+
+Released 2025-Oct-09
+
+## 1.13.0
+
+Released 2025-Oct-01
+
 ## 1.12.0
 
 Released 2025-Apr-29

@@ -335,10 +335,10 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 It is also possible to configure the `Resource` by using following
 environmental variables:
 
-| Environment variable       | Description                                        |
+| Environment variable | Description |
 | -------------------------- | -------------------------------------------------- |
 | `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
-| `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
+| `OTEL_SERVICE_NAME` | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
 
 ### Samplers
 
@@ -366,10 +366,10 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 If using `1.8.0-rc.1` or newer it is also possible to configure the sampler by
 using the following environmental variables:
 
-| Environment variable       | Description                                        |
+| Environment variable | Description |
 | -------------------------- | -------------------------------------------------- |
 | `OTEL_TRACES_SAMPLER` | Sampler to be used for traces. See the [General SDK Configuration specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#general-sdk-configuration) for more details. |
-| `OTEL_TRACES_SAMPLER_ARG`        | String value to be used as the sampler argument. |
+| `OTEL_TRACES_SAMPLER_ARG` | String value to be used as the sampler argument. |
 
 The supported values for `OTEL_TRACES_SAMPLER` are:
 

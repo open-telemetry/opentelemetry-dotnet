@@ -18,7 +18,6 @@
     <PackageProjectUrl>https://opentelemetry.io</PackageProjectUrl>
     <Authors>OpenTelemetry Authors</Authors>
     <Copyright>Copyright The OpenTelemetry Authors</Copyright>
-    <PackageOutputPath Condition="$(Build_ArtifactStagingDirectory) != ''">$(Build_ArtifactStagingDirectory)</PackageOutputPath>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -53,16 +52,18 @@
   </ItemGroup>
 
   <Target Name="IncludeSigningSignaturesInPackages" BeforeTargets="_GetTargetFrameworksOutput">
-    <!-- Note: This target adds any signatures found to nuget packages -->
+    <!-- Note: This target adds any signatures found to NuGet packages -->
     <ItemGroup>
-      <SignatureFiles Include="$(RepoRoot)\src\$(MSBuildProjectName)\bin\$(Configuration)\*\$(MSBuildProjectName).dll-keyless.sig" />
-      <Content Include="@(SignatureFiles)" Link="%(RecursiveDir)%(Filename)%(Extension)" PackagePath="lib" />
-      <CertificateFiles Include="$(RepoRoot)\src\$(MSBuildProjectName)\bin\$(Configuration)\*\$(MSBuildProjectName).dll-keyless.pem" />
-      <Content Include="@(CertificateFiles)" Link="%(RecursiveDir)%(Filename)%(Extension)" PackagePath="lib" />
+      <SigstoreBundle Include="$(ArtifactsPath)\bin\$(MSBuildProjectName)\$(Configuration.ToLower())_*\$(MSBuildProjectName).dll.sigstore.json" />
+      <!-- RecursiveDir is equal to e.g. `release_net8.0` so we need to strip it out -->
+      <SigstoreBundleWithTfm Include="@(SigstoreBundle)">
+        <TargetFramework>$([System.String]::Copy('%(RecursiveDir)').Replace(`$(Configuration.ToLower())_`, ''))</TargetFramework>
+      </SigstoreBundleWithTfm>
+      <Content Include="@(SigstoreBundleWithTfm)" Pack="True" PackagePath="lib\%(SigstoreBundleWithTfm.TargetFramework)%(Filename)%(Extension)" />
     </ItemGroup>
 
-    <Message Importance="high" Text="**IncludeSignaturesInPackagesDebug** SignatureFiles: @(SignatureFiles)" />
-    <Message Importance="high" Text="**IncludeCertificatesInPackagesDebug** SignatureFiles: @(CertificateFiles)" />
+    <Message Importance="high" Text="**IncludeSignaturesInPackagesDebug** SignatureFiles: @(SignatureFilesWithTfm)" />
+    <Message Importance="high" Text="**IncludeCertificatesInPackagesDebug** CertificateFiles: @(CertificateFilesWithTfm)" />
   </Target>
 
   <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)' != '' AND '$(BuildNumber)' != ''">
@@ -97,7 +98,7 @@
 
   <Target Name="IncludeReadmeAndReleaseNotesInPackages" BeforeTargets="_GetTargetFrameworksOutput">
     <!-- Note: This target runs during pack to convert relative links in
-    markdowns into github permalinks which will work when rendered on Nuget. -->
+    markdowns into GitHub permalinks which will work when rendered on NuGet. -->
 
     <Exec
       Command="git rev-parse HEAD"
@@ -177,10 +178,13 @@
     <ItemGroup>
       <AdditionalFiles Include=".publicApi\Stable\PublicAPI.*.txt" />
       <AdditionalFiles Include=".publicApi\Stable\$(TargetFramework)\PublicAPI.*.txt" />
+      <AdditionalFiles Include=".publicApi\Stable\$([MSBuild]::GetTargetFrameworkIdentifier('$(TargetFramework)'))\PublicAPI.*.txt" />
       <AdditionalFiles Include=".publicApi\Experimental\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
       <AdditionalFiles Include=".publicApi\Experimental\$(TargetFramework)\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
+      <AdditionalFiles Include=".publicApi\Experimental\$([MSBuild]::GetTargetFrameworkIdentifier('$(TargetFramework)'))\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
       <AdditionalFiles Include=".publicApi\PublicAPI.*.txt" />
       <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.*.txt" />
+      <AdditionalFiles Include=".publicApi\$([MSBuild]::GetTargetFrameworkIdentifier('$(TargetFramework)'))\PublicAPI.*.txt" />
     </ItemGroup>
 
     <!-- Note: The '$(BuildNumber)' != '' check here is to reduce log spam in

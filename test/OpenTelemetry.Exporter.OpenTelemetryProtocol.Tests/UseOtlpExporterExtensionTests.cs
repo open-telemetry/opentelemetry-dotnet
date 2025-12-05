@@ -9,7 +9,6 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -38,7 +37,7 @@ public sealed class UseOtlpExporterExtensionTests : IDisposable
 
         var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().CurrentValue;
 
-#if NET462_OR_GREATER || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), exporterOptions.DefaultOptions.Endpoint);
 #else
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), exporterOptions.DefaultOptions.Endpoint);

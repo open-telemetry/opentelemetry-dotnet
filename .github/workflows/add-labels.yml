@@ -15,11 +15,11 @@ jobs:
       issues: write
     if: github.event_name == 'issues' && !github.event.issue.pull_request
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: check out code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Add labels for package found in bug issue descriptions
         shell: pwsh
@@ -38,11 +38,11 @@ jobs:
       pull-requests: write
     if: github.event_name == 'pull_request_target'
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: check out code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           ref: ${{ github.event.repository.default_branch }} # Note: Do not run on the PR branch we want to execute add-labels.psm1 from main on the base repo only because pull_request_target can see secrets
 

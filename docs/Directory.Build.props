@@ -1,8 +1,11 @@
 <Project>
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\Common.nonprod.props" />
+  <Import Project="$([System.IO.Path]::Combine($(MSBuildThisFileDirectory), '..', 'Directory.Build.props'))" />
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.slnx'))\build\Common.nonprod.props" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>$(TargetFrameworksForDocs)</TargetFrameworks>
+    <!-- Opt-out of Artifacts Output for docs as there are duplicated project names -->
+    <UseArtifactsOutput>false</UseArtifactsOutput>
   </PropertyGroup>
 </Project>

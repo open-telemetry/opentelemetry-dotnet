@@ -25,7 +25,7 @@ public class ZipkinExporterBenchmarks
     private string? serverHost;
     private int serverPort;
 
-    [Params(1, 10, 100)]
+    [Params(1, 10, 20)]
     public int NumberOfBatches { get; set; }
 
     [Params(10000)]

@@ -22,104 +22,142 @@ permissions:
 jobs:
   automation:
     uses: ./.github/workflows/automation.yml
-    secrets: inherit
+    secrets:
+      OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   push-packages-and-publish-release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs: automation
 
-    if: |
-      github.event_name == 'issue_comment'
-      && github.event.issue.pull_request
-      && github.event.issue.locked == true
-      && github.event.comment.user.login != needs.automation.outputs.username
-      && contains(github.event.comment.body, '/PushPackages')
-      && startsWith(github.event.issue.title, '[release] Prepare release ')
-      && github.event.issue.pull_request.merged_at
-      && needs.automation.outputs.enabled
+    permissions:
+      id-token: write
 
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+    if: |
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.issue.locked == true &&
+      github.event.comment.user.login != needs.automation.outputs.application-username &&
+      contains(github.event.comment.body, '/PushPackages') &&
+      startsWith(github.event.issue.title, '[release] Prepare release ') &&
+      github.event.issue.pull_request.merged_at &&
+      needs.automation.outputs.enabled
 
     steps:
-    - name: check out code
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
+      id: otelbot-token
       with:
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
+    - name: Check out code
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        token: ${{ steps.otelbot-token.outputs.token }}
         ref: ${{ github.event.repository.default_branch }}
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
+
+    - name: NuGet log in
+      uses: NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544 # v1.1.0
+      id: nuget-login
+      with:
+        user: ${{ secrets.NUGET_USER }}
 
     - name: Push packages and publish release
       shell: pwsh
       env:
-        NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
+        COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
+        NUGET_TOKEN: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
+        $HasToken = -Not [string]::IsNullOrEmpty($env:NUGET_TOKEN)
         PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest `
-          -gitRepository '${{ github.repository }}' `
-          -pullRequestNumber '${{ github.event.issue.number }}' `
-          -botUserName '${{ needs.automation.outputs.username }}' `
-          -commentUserName '${{ github.event.comment.user.login }}' `
-          -artifactDownloadPath '${{ github.workspace }}/artifacts' `
-          -pushToNuget '${{ secrets.NUGET_TOKEN != '' }}'
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -pullRequestNumber ${env:ISSUE_NUMBER} `
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
+          -commentUserName ${env:COMMENT_USER_NAME} `
+          -artifactDownloadPath "${env:GITHUB_WORKSPACE}/artifacts" `
+          -pushToNuget $HasToken
 
   post-release-published:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     needs:
     - automation
 
     if: |
-      needs.automation.outputs.enabled
-      && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
-
-    env:
-      GH_TOKEN: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+      needs.automation.outputs.enabled &&
+      (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
 
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
+      id: otelbot-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         # Note: By default GitHub only fetches 1 commit. We need all the tags
         # for this work.
         fetch-depth: 0
         ref: ${{ github.event.repository.default_branch }}
-        token: ${{ secrets[needs.automation.outputs.token-secret-name] }}
+        token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
 
     - name: Create GitHub Pull Request to update stable build version in props
       if: |
           (github.ref_type == 'tag' && startsWith(github.ref_name, 'core-') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-rc'))
           || (inputs.tag && startsWith(inputs.tag, 'core-') && !contains(inputs.tag, '-alpha') && !contains(inputs.tag, '-beta') && !contains(inputs.tag, '-rc'))
       shell: pwsh
+      env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        BOT_USER_EMAIL: ${{ needs.automation.outputs.email }}
+        BOT_USER_NAME: ${{ needs.automation.outputs.username }}
+        TAG: ${{ inputs.tag || github.ref_name }}
+        TARGET_BRANCH: ${{ github.event.repository.default_branch }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
         CreateStableVersionUpdatePullRequest `
-          -gitRepository '${{ github.repository }}' `
-          -tag '${{ inputs.tag || github.ref_name }}' `
-          -targetBranch '${{ github.event.repository.default_branch }}' `
-          -gitUserName '${{ needs.automation.outputs.username }}' `
-          -gitUserEmail '${{ needs.automation.outputs.email }}'
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -tag ${env:TAG} `
+          -targetBranch ${env:TARGET_BRANCH} `
+          -gitUserName ${env:BOT_USER_NAME} `
+          -gitUserEmail ${env:BOT_USER_EMAIL}
 
     - name: Invoke core version update workflow in opentelemetry-dotnet-contrib repository
       if: vars.CONTRIB_REPO
       shell: pwsh
+      env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        CONTRIB_REPO: ${{ vars.CONTRIB_REPO }}
+        TAG: ${{ inputs.tag || github.ref_name }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
         InvokeCoreVersionUpdateWorkflowInRemoteRepository `
-          -remoteGitRepository '${{ vars.CONTRIB_REPO }}' `
-          -tag '${{ inputs.tag || github.ref_name }}'
+          -remoteGitRepository ${env:CONTRIB_REPO} `
+          -tag ${env:TAG}
 
     - name: Post notice when release is published
       shell: pwsh
+      env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
+        TAG: ${{ inputs.tag || github.ref_name }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
         TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
-          -gitRepository '${{ github.repository }}' `
-          -botUserName '${{ needs.automation.outputs.username }}' `
-          -tag '${{ inputs.tag || github.ref_name }}'
+          -gitRepository ${env:GITHUB_REPOSITORY} `
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
+          -tag ${env:TAG}

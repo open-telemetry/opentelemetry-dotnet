@@ -409,6 +409,55 @@ public sealed class TracerTests : IDisposable
     }
 
     [Fact]
+    public void GetTracer_WithSameSchemaUrl_ReturnsSameInstance()
+    {
+        var schemaUrl = "http://schema";
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", schemaUrl);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", schemaUrl);
+
+        Assert.Same(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_WithDifferentSchemaUrls_ReturnsDifferentInstances()
+    {
+        var schemaUrl1 = "http://schema1";
+        var schemaUrl2 = "http://schema2";
+
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", schemaUrl1);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", schemaUrl2);
+
+        Assert.NotSame(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_WithSchemaUrl_AppliesSchemaUrlToActivities()
+    {
+        var exportedItems = new List<Activity>();
+        var schemaUrl = "http://schema";
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("test")
+            .AddInMemoryExporter(exportedItems)
+            .SetSampler(new AlwaysOnSampler())
+            .Build();
+
+        var tracer = tracerProvider.GetTracer("test", "1.0.0", schemaUrl);
+
+        using (tracer.StartActiveSpan("TestSpan"))
+        {
+            // Activity started by the tracer with schema URL
+        }
+
+        var activity = Assert.Single(exportedItems);
+
+        Assert.Equal(schemaUrl, activity.Source.TelemetrySchemaUrl);
+    }
+
+    [Fact]
     public void GetTracer_WithSameTags_ReturnsSameInstance()
     {
         var tags1 = new List<KeyValuePair<string, object?>> { new("tag1", "value1"), new("tag2", "value2") };
@@ -535,7 +584,7 @@ public sealed class TracerTests : IDisposable
 
         var tracer = tracerProvider.GetTracer("test", "1.0.0", tags);
 
-        using (var span = tracer.StartActiveSpan("TestSpan"))
+        using (tracer.StartActiveSpan("TestSpan"))
         {
             // Activity started by the tracer with tags
         }
