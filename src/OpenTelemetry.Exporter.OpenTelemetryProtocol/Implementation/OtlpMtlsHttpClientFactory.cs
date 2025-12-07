@@ -18,6 +18,8 @@ internal static class OtlpMtlsHttpClientFactory
     /// <param name="mtlsOptions">The mTLS configuration options.</param>
     /// <param name="configureClient">Optional action to configure the client.</param>
     /// <returns>An HttpClient configured for mTLS.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="mtlsOptions"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when mTLS is not enabled.</exception>
     public static HttpClient CreateMtlsHttpClient(
         OtlpMtlsOptions mtlsOptions,
         Action<HttpClient>? configureClient = null)
@@ -26,9 +28,9 @@ internal static class OtlpMtlsHttpClientFactory
 
         if (!mtlsOptions.IsEnabled)
         {
-            var client = new HttpClient();
-            configureClient?.Invoke(client);
-            return client;
+            throw new InvalidOperationException(
+                "mTLS options must include a client or CA certificate path."
+            );
         }
 
         HttpClientHandler? handler = null;

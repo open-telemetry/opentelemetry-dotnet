@@ -13,14 +13,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 public class OtlpMtlsHttpClientFactoryTests
 {
     [Fact]
-    public void CreateHttpClient_ReturnsHttpClient_WhenMtlsIsDisabled()
+    public void CreateHttpClient_ThrowsInvalidOperationException_WhenMtlsIsDisabled()
     {
         var options = new OtlpMtlsOptions(); // Disabled by default
 
-        using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
-
-        Assert.NotNull(httpClient);
-        Assert.IsType<HttpClient>(httpClient);
+        Assert.Throws<InvalidOperationException>(() =>
+            OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options));
     }
 
     [Fact]
