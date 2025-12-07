@@ -309,5 +309,21 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         Level = EventLevel.Informational)]
     internal void MtlsConfigurationEnabled(string clientCertificateSubject) =>
         this.WriteEvent(33, clientCertificateSubject);
+
+    [NonEvent]
+    internal void MtlsHttpClientCreationFailed(Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.MtlsHttpClientCreationFailed(ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        34,
+        Message = "Failed to create mTLS HttpClient. Exception: {0}",
+        Level = EventLevel.Error)]
+    internal void MtlsHttpClientCreationFailed(string exception) =>
+        this.WriteEvent(34, exception);
 #endif
 }

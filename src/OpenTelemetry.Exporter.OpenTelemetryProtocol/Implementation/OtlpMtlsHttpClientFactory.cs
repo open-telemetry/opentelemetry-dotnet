@@ -28,9 +28,7 @@ internal static class OtlpMtlsHttpClientFactory
 
         if (!mtlsOptions.IsEnabled)
         {
-            throw new InvalidOperationException(
-                "mTLS options must include a client or CA certificate path."
-            );
+            throw new InvalidOperationException("mTLS options must include a client or CA certificate path.");
         }
 
         HttpClientHandler? handler = null;
@@ -122,6 +120,7 @@ internal static class OtlpMtlsHttpClientFactory
             // Dispose handler if something went wrong
             handler?.Dispose();
 
+            OpenTelemetryProtocolExporterEventSource.Log.MtlsHttpClientCreationFailed(ex);
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             throw;
         }
