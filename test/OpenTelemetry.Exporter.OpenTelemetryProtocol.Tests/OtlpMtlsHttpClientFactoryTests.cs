@@ -155,6 +155,56 @@ public class OtlpMtlsHttpClientFactoryTests
     }
 
     [Fact]
+    public void CreateHttpClient_InvokesServerValidationCallbackAfterFactoryReturns()
+    {
+        RunWithCryptoSupportCheck(() =>
+        {
+            var tempTrustStoreFile = Path.GetTempFileName();
+            try
+            {
+                using var caCertificate = CreateCertificateAuthority();
+                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(caCertificate));
+
+                var options = new OtlpMtlsOptions
+                {
+                    CaCertificatePath = tempTrustStoreFile,
+                    EnableCertificateChainValidation = false,
+                };
+
+                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
+
+                var handlerField = typeof(HttpMessageInvoker).GetField(
+                    "_handler",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                Assert.NotNull(handlerField);
+
+                var handler = handlerField.GetValue(httpClient) as HttpClientHandler;
+                Assert.NotNull(handler);
+                Assert.NotNull(handler!.ServerCertificateCustomValidationCallback);
+
+                using var serverCertificate = CreateServerCertificate(caCertificate);
+                using var chain = new X509Chain();
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+                var validationResult = handler.ServerCertificateCustomValidationCallback(
+                    new HttpRequestMessage(),
+                    serverCertificate,
+                    chain,
+                    SslPolicyErrors.RemoteCertificateChainErrors);
+
+                Assert.True(validationResult);
+            }
+            finally
+            {
+                if (File.Exists(tempTrustStoreFile))
+                {
+                    File.Delete(tempTrustStoreFile);
+                }
+            }
+        });
+    }
+
+    [Fact]
     public void ValidateServerCertificate_ReturnsTrue_WhenNoSslPolicyErrors()
     {
         using var caCertificate = CreateCertificateAuthority();

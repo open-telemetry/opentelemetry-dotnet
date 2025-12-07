@@ -80,34 +80,13 @@ internal static class OtlpMtlsHttpClientFactory
 
             // Create HttpClientHandler with mTLS configuration
 #pragma warning disable CA2000 // Dispose objects before losing scope - HttpClientHandler is disposed by HttpClient
-            handler = new HttpClientHandler { CheckCertificateRevocationList = true };
+            handler = new MtlsHttpClientHandler(clientCertificate, caCertificate);
 #pragma warning restore CA2000
+            handler.CheckCertificateRevocationList = true;
 
-            // Add client certificate if available
-            if (clientCertificate != null)
-            {
-                handler.ClientCertificates.Add(clientCertificate);
-                handler.ClientCertificateOptions = ClientCertificateOption.Manual;
-            }
-
-            // Set up server certificate validation
-            if (caCertificate != null)
-            {
-                handler.ServerCertificateCustomValidationCallback = (
-                    httpRequestMessage,
-                    cert,
-                    chain,
-                    sslPolicyErrors) =>
-                {
-                    if (cert == null || chain == null)
-                    {
-                        return false;
-                    }
-
-                    return OtlpMtlsCertificateManager.ValidateServerCertificate(
-                        cert, chain, sslPolicyErrors, caCertificate);
-                };
-            }
+            // Handler now owns the certificates and will dispose them when disposed.
+            caCertificate = null;
+            clientCertificate = null;
 
             var client = new HttpClient(handler, disposeHandler: true);
 
@@ -129,6 +108,59 @@ internal static class OtlpMtlsHttpClientFactory
             // Dispose certificates as they are no longer needed after being added to the handler
             caCertificate?.Dispose();
             clientCertificate?.Dispose();
+        }
+    }
+
+    private sealed class MtlsHttpClientHandler : HttpClientHandler
+    {
+        private readonly X509Certificate2? caCertificate;
+        private readonly X509Certificate2? clientCertificate;
+
+        internal MtlsHttpClientHandler(
+            X509Certificate2? clientCertificate,
+            X509Certificate2? caCertificate)
+        {
+            this.clientCertificate = clientCertificate;
+            this.caCertificate = caCertificate;
+            this.CheckCertificateRevocationList = true;
+
+            if (clientCertificate != null)
+            {
+                this.ClientCertificates.Add(clientCertificate);
+                this.ClientCertificateOptions = ClientCertificateOption.Manual;
+            }
+
+            if (caCertificate != null)
+            {
+                this.ServerCertificateCustomValidationCallback = (
+                    httpRequestMessage,
+                    cert,
+                    chain,
+                    sslPolicyErrors) =>
+                {
+                    if (cert == null || chain == null)
+                    {
+                        return false;
+                    }
+
+                    return OtlpMtlsCertificateManager.ValidateServerCertificate(
+                        cert,
+                        chain,
+                        sslPolicyErrors,
+                        caCertificate);
+                };
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.caCertificate?.Dispose();
+                this.clientCertificate?.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
     }
 }
