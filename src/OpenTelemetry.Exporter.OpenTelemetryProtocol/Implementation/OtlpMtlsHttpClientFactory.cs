@@ -100,7 +100,6 @@ internal static class OtlpMtlsHttpClientFactory
             handler?.Dispose();
 
             OpenTelemetryProtocolExporterEventSource.Log.MtlsHttpClientCreationFailed(ex);
-            OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             throw;
         }
         finally
