@@ -39,13 +39,13 @@ public struct MetricPoint
         AggregatorStore aggregatorStore,
         AggregationType aggType,
         KeyValuePair<string, object?>[]? tagKeysAndValues,
-        double[] histogramExplicitBounds,
+        HistogramExplicitBounds histogramExplicitBounds,
         int exponentialHistogramMaxSize,
         int exponentialHistogramMaxScale,
         LookupData? lookupData = null)
     {
         Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
-        Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
+        Debug.Assert(histogramExplicitBounds != null, "HistogramExplicitBounds was null.");
         Debug.Assert(!aggregatorStore!.OutputDelta || lookupData != null, "LookupData was null.");
 
         this.aggType = aggType;
@@ -79,7 +79,7 @@ public struct MetricPoint
             this.mpComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
             if (isExemplarEnabled && reservoir == null)
             {
-                reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds!.Length);
+                reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds!.Bounds.Length);
             }
         }
         else if (this.aggType == AggregationType.Histogram ||
