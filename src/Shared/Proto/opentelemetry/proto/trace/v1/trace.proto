@@ -78,7 +78,8 @@ message ScopeSpans {
   // is recorded in. Notably, the last part of the URL path is the version number of the
   // schema: http[s]://server[:port]/path/<version>. To learn more about Schema URL see
   // https://opentelemetry.io/docs/specs/otel/schemas/#schema-url
-  // This schema_url applies to all spans and span events in the "spans" field.
+  // This schema_url applies to the data in the "scope" field and all spans and span
+  // events in the "spans" field.
   string schema_url = 3;
 }
 
@@ -208,16 +209,7 @@ message Span {
   //
   // Attribute keys MUST be unique (it is not allowed to have more than one
   // attribute with the same key).
-  //
-  // The attribute values SHOULD NOT contain empty values.
-  // The attribute values SHOULD NOT contain bytes values.
-  // The attribute values SHOULD NOT contain array values different than array of string values, bool values, int values,
-  // double values.
-  // The attribute values SHOULD NOT contain kvlist values.
-  // The behavior of software that receives attributes containing such values can be unpredictable.
-  // These restrictions can change in a minor release.
-  // The restrictions take origin from the OpenTelemetry specification:
-  // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.47.0/specification/common/README.md#attribute.
+  // The behavior of software that receives duplicated keys can be unpredictable.
   repeated opentelemetry.proto.common.v1.KeyValue attributes = 9;
 
   // The number of attributes that were discarded. Attributes
@@ -238,16 +230,7 @@ message Span {
     // A collection of attribute key/value pairs on the event.
     // Attribute keys MUST be unique (it is not allowed to have more than one
     // attribute with the same key).
-    //
-    // The attribute values SHOULD NOT contain empty values.
-    // The attribute values SHOULD NOT contain bytes values.
-    // The attribute values SHOULD NOT contain array values different than array of string values, bool values, int values,
-    // double values.
-    // The attribute values SHOULD NOT contain kvlist values.
-    // The behavior of software that receives attributes containing such values can be unpredictable.
-    // These restrictions can change in a minor release.
-    // The restrictions take origin from the OpenTelemetry specification:
-    // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.47.0/specification/common/README.md#attribute.
+    // The behavior of software that receives duplicated keys can be unpredictable.
     repeated opentelemetry.proto.common.v1.KeyValue attributes = 3;
 
     // The number of dropped attributes. If the value is 0,
@@ -280,16 +263,7 @@ message Span {
     // A collection of attribute key/value pairs on the link.
     // Attribute keys MUST be unique (it is not allowed to have more than one
     // attribute with the same key).
-    //
-    // The attribute values SHOULD NOT contain empty values.
-    // The attribute values SHOULD NOT contain bytes values.
-    // The attribute values SHOULD NOT contain array values different than array of string values, bool values, int values,
-    // double values.
-    // The attribute values SHOULD NOT contain kvlist values.
-    // The behavior of software that receives attributes containing such values can be unpredictable.
-    // These restrictions can change in a minor release.
-    // The restrictions take origin from the OpenTelemetry specification:
-    // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.47.0/specification/common/README.md#attribute.
+    // The behavior of software that receives duplicated keys can be unpredictable.
     repeated opentelemetry.proto.common.v1.KeyValue attributes = 4;
 
     // The number of dropped attributes. If the value is 0,
@@ -342,7 +316,7 @@ message Status {
   enum StatusCode {
     // The default status.
     STATUS_CODE_UNSET               = 0;
-    // The Span has been validated by an Application developer or Operator to
+    // The Span has been validated by an Application developer or Operator to 
     // have completed successfully.
     STATUS_CODE_OK                  = 1;
     // The Span contains an error.

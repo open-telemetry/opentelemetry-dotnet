@@ -232,7 +232,9 @@ I just pushed the [$tag](https://github.com/$gitRepository/releases/tag/$tag) ta
 The [package workflow](https://github.com/$gitRepository/actions/workflows/publish-packages-1.0.yml) should begin momentarily.
 "@
 
+  gh pr unlock $pullRequestNumber
   gh pr comment $pullRequestNumber --body $body
+  gh pr lock $pullRequestNumber
 }
 
 Export-ModuleMember -Function CreateReleaseTagAndPostNoticeOnPullRequest

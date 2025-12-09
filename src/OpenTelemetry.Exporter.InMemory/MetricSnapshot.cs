@@ -41,5 +41,9 @@ public class MetricSnapshot
 
     public string MeterVersion => this.instrumentIdentity.MeterVersion;
 
+#pragma warning disable CA1056 // Change the type of property from 'string' to 'System.Uri'
+    public string MeterSchemaUrl => this.instrumentIdentity.MeterSchemaUrl;
+#pragma warning restore CA1056 // Change the type of property from 'string' to 'System.Uri'
+
     public IReadOnlyList<MetricPoint> MetricPoints { get; }
 }

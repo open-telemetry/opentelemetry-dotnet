@@ -193,8 +193,6 @@ internal sealed class MeterProviderSdk : MeterProvider
 
     internal MetricReader? Reader => this.reader;
 
-    internal int ViewCount => this.viewConfigs.Count;
-
     internal static void MeasurementsCompleted(Instrument instrument, object? state)
     {
         if (state is not MetricState metricState)

@@ -26,7 +26,8 @@ public class AggregatorTests
     [Fact]
     public void HistogramDistributeToAllBucketsDefault()
     {
-        var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+        var boundaries = new HistogramExplicitBounds(Metric.DefaultHistogramBounds);
+        var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
         histogramPoint.Update(-1);
         histogramPoint.Update(0);
         histogramPoint.Update(2);
@@ -76,7 +77,7 @@ public class AggregatorTests
     [Fact]
     public void HistogramDistributeToAllBucketsCustom()
     {
-        var boundaries = new double[] { 10, 20 };
+        var boundaries = new HistogramExplicitBounds([10, 20]);
         var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
         // 5 recordings <=10
@@ -111,7 +112,7 @@ public class AggregatorTests
             actualCount++;
         }
 
-        Assert.Equal(boundaries.Length + 1, actualCount);
+        Assert.Equal(boundaries.Bounds.Length + 1, actualCount);
     }
 
     [Fact]
@@ -119,19 +120,20 @@ public class AggregatorTests
     {
         // Arrange
         // Bounds = (-Inf, 0] (0, 1], ... (49, +Inf)
-        var boundaries = new double[HistogramBuckets.DefaultBoundaryCountForBinarySearch];
-        for (var i = 0; i < boundaries.Length; i++)
+        var values = new double[HistogramExplicitBounds.DefaultBoundaryCountForBinarySearch];
+        for (var i = 0; i < values.Length; i++)
         {
-            boundaries[i] = i;
+            values[i] = i;
         }
 
+        var boundaries = new HistogramExplicitBounds(values);
         var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
         // Act
         histogramPoint.Update(-1);
-        histogramPoint.Update(boundaries[0]);
-        histogramPoint.Update(boundaries[boundaries.Length - 1]);
-        for (var i = 0.5; i < boundaries.Length; i++)
+        histogramPoint.Update(values[0]);
+        histogramPoint.Update(values[values.Length - 1]);
+        for (var i = 0.5; i < values.Length; i++)
         {
             histogramPoint.Update(i);
         }
@@ -144,7 +146,7 @@ public class AggregatorTests
         {
             var expectedCount = 1;
 
-            if (index == 0 || index == boundaries.Length - 1)
+            if (index == 0 || index == values.Length - 1)
             {
                 expectedCount = 2;
             }
@@ -157,7 +159,7 @@ public class AggregatorTests
     [Fact]
     public void HistogramWithOnlySumCount()
     {
-        var boundaries = Array.Empty<double>();
+        var boundaries = new HistogramExplicitBounds([]);
         var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
         histogramPoint.Update(-10);
@@ -187,7 +189,7 @@ public class AggregatorTests
     [Fact]
     public void MultiThreadedHistogramUpdateAndSnapShotTest()
     {
-        var boundaries = Array.Empty<double>();
+        var boundaries = new HistogramExplicitBounds([]);
         var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
         var argsToThread = new ThreadArguments(histogramPoint, new ManualResetEvent(false));
 
@@ -462,7 +464,8 @@ public class AggregatorTests
     internal void HistogramBucketBoundariesTest(HistogramBoundaryTestCase boundaryTestCase)
     {
         // Arrange
-        var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaryTestCase.InputBoundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+        var boundaries = new HistogramExplicitBounds(boundaryTestCase.InputBoundaries);
+        var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
         var expectedTotalBuckets = boundaryTestCase.ExpectedBucketCounts.Length;
 
         // Act

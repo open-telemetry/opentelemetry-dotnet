@@ -40,7 +40,7 @@ public class TracerProvider : BaseProvider
 #endif
         string name,
         string? version) =>
-        this.GetTracer(name, version, null);
+        this.GetTracer(name, version, null, null);
 
     /// <summary>
     /// Gets a tracer with given name, version and tags.
@@ -49,12 +49,35 @@ public class TracerProvider : BaseProvider
     /// <param name="version">Version of the instrumentation library.</param>
     /// <param name="tags">Tags associated with the tracer.</param>
     /// <returns>Tracer instance.</returns>
+    // 1.14.0 BACKCOMPAT OVERLOAD -- DO NOT TOUCH
+    public Tracer GetTracer(
+#if NET
+        [AllowNull]
+#endif
+        string name,
+        string? version,
+        IEnumerable<KeyValuePair<string, object?>>? tags)
+    {
+        return this.GetTracer(name, version, null, tags);
+    }
+
+    /// <summary>
+    /// Gets a tracer with given name, version and tags.
+    /// </summary>
+    /// <param name="name">Name identifying the instrumentation library.</param>
+    /// <param name="version">Version of the instrumentation library.</param>
+    /// <param name="schemaUrl">Schema URL associated with the tracer.</param>
+    /// <param name="tags">Tags associated with the tracer.</param>
+    /// <returns>Tracer instance.</returns>
     public Tracer GetTracer(
 #if NET
         [AllowNull]
 #endif
         string name,
         string? version = null,
+#pragma warning disable CA1054 // Change the type of attribute from 'string' to 'System.Uri'
+        string? schemaUrl = null,
+#pragma warning restore CA1054 // Change the type of attribute from 'string' to 'System.Uri'
         IEnumerable<KeyValuePair<string, object?>>? tags = null)
     {
         var tracers = this.Tracers;
@@ -64,7 +87,7 @@ public class TracerProvider : BaseProvider
             return new(activitySource: null);
         }
 
-        var key = new TracerKey(name, version, tags);
+        var key = new TracerKey(name, version, schemaUrl, tags);
 
         if (!tracers.TryGetValue(key, out var tracer))
         {
@@ -77,7 +100,14 @@ public class TracerProvider : BaseProvider
                     return new(activitySource: null);
                 }
 
-                tracer = new(new(key.Name, key.Version, key.Tags));
+                var activitySourceOptions = new System.Diagnostics.ActivitySourceOptions(key.Name)
+                {
+                    Version = key.Version,
+                    Tags = key.Tags,
+                    TelemetrySchemaUrl = key.SchemaUrl,
+                };
+
+                tracer = new(new(activitySourceOptions));
                 bool result = tracers.TryAdd(key, tracer);
 #if DEBUG
                 System.Diagnostics.Debug.Assert(result, "Write into tracers cache failed");
@@ -118,19 +148,22 @@ public class TracerProvider : BaseProvider
     {
         public readonly string Name;
         public readonly string? Version;
+        public readonly string? SchemaUrl;
         public readonly KeyValuePair<string, object?>[]? Tags;
 
-        public TracerKey(string? name, string? version, IEnumerable<KeyValuePair<string, object?>>? tags)
+        public TracerKey(string? name, string? version, string? schemaUrl, IEnumerable<KeyValuePair<string, object?>>? tags)
         {
             this.Name = name ?? string.Empty;
             this.Version = version;
+            this.SchemaUrl = schemaUrl;
             this.Tags = GetOrderedTags(tags);
         }
 
         public bool Equals(TracerKey other)
         {
             if (!string.Equals(this.Name, other.Name, StringComparison.Ordinal) ||
-                !string.Equals(this.Version, other.Version, StringComparison.Ordinal))
+                !string.Equals(this.Version, other.Version, StringComparison.Ordinal) ||
+                !string.Equals(this.SchemaUrl, other.SchemaUrl, StringComparison.Ordinal))
             {
                 return false;
             }
@@ -146,9 +179,11 @@ public class TracerProvider : BaseProvider
 #if NET
                 hash = (hash * 31) + (this.Name?.GetHashCode(StringComparison.Ordinal) ?? 0);
                 hash = (hash * 31) + (this.Version?.GetHashCode(StringComparison.Ordinal) ?? 0);
+                hash = (hash * 31) + (this.SchemaUrl?.GetHashCode(StringComparison.Ordinal) ?? 0);
 #else
                 hash = (hash * 31) + (this.Name?.GetHashCode() ?? 0);
                 hash = (hash * 31) + (this.Version?.GetHashCode() ?? 0);
+                hash = (hash * 31) + (this.SchemaUrl?.GetHashCode() ?? 0);
 #endif
 
                 hash = (hash * 31) + GetTagsHashCode(this.Tags);

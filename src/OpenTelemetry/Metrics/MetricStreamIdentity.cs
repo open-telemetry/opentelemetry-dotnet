@@ -16,6 +16,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         this.MeterName = instrument.Meter.Name;
         this.MeterVersion = instrument.Meter.Version ?? string.Empty;
         this.MeterTags = instrument.Meter.Tags != null ? new Tags(instrument.Meter.Tags.ToArray()) : null;
+        this.MeterSchemaUrl = instrument.Meter.TelemetrySchemaUrl ?? string.Empty;
         this.InstrumentName = metricStreamConfiguration?.Name ?? instrument.Name;
         this.Unit = instrument.Unit ?? string.Empty;
         this.Description = metricStreamConfiguration?.Description ?? instrument.Description ?? string.Empty;
@@ -33,6 +34,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         hashCode.Add(this.InstrumentType);
         hashCode.Add(this.MeterName);
         hashCode.Add(this.MeterVersion);
+        hashCode.Add(this.MeterSchemaUrl);
         hashCode.Add(this.MeterTags);
         hashCode.Add(this.InstrumentName);
         hashCode.Add(this.HistogramRecordMinMax);
@@ -65,6 +67,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             hash = (hash * 31) + this.InstrumentType.GetHashCode();
             hash = (hash * 31) + this.MeterName.GetHashCode();
             hash = (hash * 31) + this.MeterVersion.GetHashCode();
+            hash = (hash * 31) + this.MeterSchemaUrl.GetHashCode();
             hash = (hash * 31) + this.MeterTags?.GetHashCode() ?? 0;
             hash = (hash * 31) + this.InstrumentName.GetHashCode();
             hash = (hash * 31) + this.HistogramRecordMinMax.GetHashCode();
@@ -91,6 +94,8 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
     public string MeterName { get; }
 
     public string MeterVersion { get; }
+
+    public string MeterSchemaUrl { get; }
 
     public Tags? MeterTags { get; }
 
@@ -138,6 +143,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         return this.InstrumentType == other.InstrumentType
             && this.MeterName == other.MeterName
             && this.MeterVersion == other.MeterVersion
+            && this.MeterSchemaUrl == other.MeterSchemaUrl
             && this.InstrumentName == other.InstrumentName
             && this.Unit == other.Unit
             && this.Description == other.Description

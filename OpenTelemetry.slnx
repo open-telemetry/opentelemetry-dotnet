@@ -1,0 +1,236 @@
+<Solution>
+  <Folder Name="/.github/">
+    <File Path=".github/codecov.yml" />
+    <File Path=".github/CODEOWNERS" />
+    <File Path=".github/dependabot.yml" />
+    <File Path=".github/PULL_REQUEST_TEMPLATE.md" />
+  </Folder>
+  <Folder Name="/.github/ISSUE_TEMPLATE/">
+    <File Path=".github/ISSUE_TEMPLATE/bug_report.yml" />
+    <File Path=".github/ISSUE_TEMPLATE/feature_request.yml" />
+  </Folder>
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/add-labels.yml" />
+    <File Path=".github/workflows/automation.yml" />
+    <File Path=".github/workflows/ci.yml" />
+    <File Path=".github/workflows/codeql-analysis.yml" />
+    <File Path=".github/workflows/Component.BuildTest.yml" />
+    <File Path=".github/workflows/concurrency-tests.yml" />
+    <File Path=".github/workflows/docfx.yml" />
+    <File Path=".github/workflows/dotnet-format.yml" />
+    <File Path=".github/workflows/markdownlint.yml" />
+    <File Path=".github/workflows/package-validation.yml" />
+    <File Path=".github/workflows/post-release.yml" />
+    <File Path=".github/workflows/prepare-release.yml" />
+    <File Path=".github/workflows/publish-packages-1.0.yml" />
+    <File Path=".github/workflows/sanitycheck.yml" />
+    <File Path=".github/workflows/stale.yml" />
+    <File Path=".github/workflows/verifyaotcompat.yml" />
+  </Folder>
+  <Folder Name="/build/">
+    <File Path="build/Common.nonprod.props" />
+    <File Path="build/Common.prod.props" />
+    <File Path="build/Common.props" />
+    <File Path="build/Common.targets" />
+    <File Path="build/debug.snk" />
+    <File Path="build/docfx.cmd" />
+    <File Path="build/docker-compose.net10.0.yml" />
+    <File Path="build/docker-compose.net8.0.yml" />
+    <File Path="build/docker-compose.net9.0.yml" />
+    <File Path="build/GlobalAttrExclusions.txt" />
+    <File Path="build/opentelemetry-icon-color.png" />
+    <File Path="build/OpenTelemetry.prod.loose.ruleset" />
+    <File Path="build/OpenTelemetry.prod.ruleset" />
+    <File Path="build/OpenTelemetry.proj" />
+    <File Path="build/OpenTelemetry.test.ruleset" />
+    <File Path="build/RELEASING.md" />
+    <File Path="build/stylecop.json" />
+    <File Path="build/UnstableCoreLibraries.proj" />
+    <File Path="build/xunit.runner.json" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/build/docs/">
+    <File Path="docs/Directory.Build.props" />
+    <File Path="docs/Directory.Packages.props" />
+    <File Path="docs/docfx.json" />
+    <File Path="docs/toc.yml" />
+  </Folder>
+  <Folder Name="/build/examples/">
+    <File Path="examples/Directory.Build.props" />
+    <File Path="examples/Directory.Build.targets" />
+  </Folder>
+  <Folder Name="/build/scripts/">
+    <File Path="build/scripts/add-labels.psm1" />
+    <File Path="build/scripts/finalize-publicapi.ps1" />
+    <File Path="build/scripts/post-release.psm1" />
+    <File Path="build/scripts/prepare-release.psm1" />
+    <File Path="build/scripts/sanitycheck.py" />
+    <File Path="build/scripts/test-aot-compatibility.ps1" />
+    <File Path="build/scripts/test-threadSafety.ps1" />
+    <File Path="build/scripts/update-changelogs.ps1" />
+  </Folder>
+  <Folder Name="/build/src/">
+    <File Path="src/Directory.Build.props" />
+    <File Path="src/Directory.Build.targets" />
+  </Folder>
+  <Folder Name="/build/test/">
+    <File Path="test/Directory.Build.props" />
+    <File Path="test/Directory.Build.targets" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="docs/README.md" />
+  </Folder>
+  <Folder Name="/docs/diagnostics/">
+    <File Path="docs/diagnostics/README.md" />
+  </Folder>
+  <Folder Name="/docs/diagnostics/experimental-apis/">
+    <File Path="docs/diagnostics/experimental-apis/OTEL1000.md" />
+    <File Path="docs/diagnostics/experimental-apis/OTEL1001.md" />
+    <File Path="docs/diagnostics/experimental-apis/OTEL1004.md" />
+    <File Path="docs/diagnostics/experimental-apis/README.md" />
+  </Folder>
+  <Folder Name="/docs/logs/">
+    <File Path="docs/logs/README.md" />
+    <Project Path="docs/logs/complex-objects/complex-objects.csproj" />
+    <Project Path="docs/logs/correlation/correlation.csproj" />
+    <Project Path="docs/logs/customizing-the-sdk/customizing-the-sdk.csproj" />
+    <Project Path="docs/logs/dedicated-pipeline/dedicated-pipeline.csproj" />
+    <Project Path="docs/logs/extending-the-sdk/extending-the-sdk.csproj" />
+    <Project Path="docs/logs/getting-started-aspnetcore/getting-started-aspnetcore.csproj" />
+    <Project Path="docs/logs/getting-started-console/getting-started-console.csproj" />
+    <Project Path="docs/logs/redaction/redaction.csproj" />
+  </Folder>
+  <Folder Name="/docs/metrics/">
+    <File Path="docs/metrics/README.md" />
+    <Project Path="docs/metrics/customizing-the-sdk/customizing-the-sdk.csproj" />
+    <Project Path="docs/metrics/exemplars/exemplars.csproj" />
+    <Project Path="docs/metrics/extending-the-sdk/extending-the-sdk.csproj" />
+    <Project Path="docs/metrics/getting-started-aspnetcore/getting-started-aspnetcore.csproj" />
+    <Project Path="docs/metrics/getting-started-console/getting-started-console.csproj" />
+    <Project Path="docs/metrics/getting-started-prometheus-grafana/getting-started-prometheus-grafana.csproj" />
+    <Project Path="docs/metrics/learning-more-instruments/learning-more-instruments.csproj" />
+  </Folder>
+  <Folder Name="/docs/resources/">
+    <File Path="docs/resources/README.md" />
+    <Project Path="docs/resources/extending-the-sdk/extending-the-sdk.csproj" />
+  </Folder>
+  <Folder Name="/docs/trace/">
+    <File Path="docs/trace/README.md" />
+    <Project Path="docs/trace/customizing-the-sdk/customizing-the-sdk.csproj" />
+    <Project Path="docs/trace/extending-the-sdk/extending-the-sdk.csproj" />
+    <Project Path="docs/trace/getting-started-aspnetcore/getting-started-aspnetcore.csproj" />
+    <Project Path="docs/trace/getting-started-console/getting-started-console.csproj" />
+    <Project Path="docs/trace/getting-started-jaeger/getting-started-jaeger.csproj" />
+    <Project Path="docs/trace/links-based-sampler/links-sampler.csproj" />
+    <Project Path="docs/trace/links-creation-with-new-activities/links-creation.csproj" />
+    <Project Path="docs/trace/reporting-exceptions/reporting-exceptions.csproj" />
+    <Project Path="docs/trace/stratified-sampling-example/stratified-sampling-example.csproj" />
+    <Project Path="docs/trace/tail-based-sampling-span-level/tail-based-sampling-example.csproj" />
+  </Folder>
+  <Folder Name="/examples/">
+    <Project Path="examples/AspNetCore/Examples.AspNetCore.csproj" />
+    <Project Path="examples/Console/Examples.Console.csproj" />
+    <Project Path="examples/GrpcService/Examples.GrpcService.csproj" />
+  </Folder>
+  <Folder Name="/examples/MicroserviceExample/">
+    <File Path="examples/MicroserviceExample/.dockerignore" />
+    <File Path="examples/MicroserviceExample/docker-compose.yml" />
+    <File Path="examples/MicroserviceExample/README.md" />
+    <Project Path="examples/MicroserviceExample/Utils/Utils.csproj" />
+    <Project Path="examples/MicroserviceExample/WebApi/WebApi.csproj" />
+    <Project Path="examples/MicroserviceExample/WorkerService/WorkerService.csproj" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <File Path="src/Shared/ActivityHelperExtensions.cs" />
+    <File Path="src/Shared/AssemblyVersionExtensions.cs" />
+    <File Path="src/Shared/DiagnosticDefinitions.cs" />
+    <File Path="src/Shared/ExceptionExtensions.cs" />
+    <File Path="src/Shared/Guard.cs" />
+    <File Path="src/Shared/MathHelper.cs" />
+    <File Path="src/Shared/PeriodicExportingMetricReaderHelper.cs" />
+    <File Path="src/Shared/ResourceSemanticConventions.cs" />
+    <File Path="src/Shared/SemanticConventions.cs" />
+    <File Path="src/Shared/SpanAttributeConstants.cs" />
+    <File Path="src/Shared/StatusHelper.cs" />
+    <File Path="src/Shared/ThreadSafeRandom.cs" />
+  </Folder>
+  <Folder Name="/Shared/Configuration/">
+    <File Path="src/Shared/Configuration/IConfigurationExtensionsLogger.cs" />
+    <File Path="src/Shared/Configuration/OpenTelemetryConfigurationExtensions.cs" />
+  </Folder>
+  <Folder Name="/Shared/EnvironmentVariables/">
+    <File Path="src/Shared/EnvironmentVariables/EnvironmentVariablesConfigurationProvider.cs" />
+    <File Path="src/Shared/EnvironmentVariables/EnvironmentVariablesConfigurationSource.cs" />
+    <File Path="src/Shared/EnvironmentVariables/EnvironmentVariablesExtensions.cs" />
+  </Folder>
+  <Folder Name="/Shared/Metrics/">
+    <File Path="src/Shared/Metrics/Base2ExponentialBucketHistogramHelper.cs" />
+  </Folder>
+  <Folder Name="/Shared/Options/">
+    <File Path="src/Shared/Options/DelegatingOptionsFactory.cs" />
+    <File Path="src/Shared/Options/DelegatingOptionsFactoryServiceCollectionExtensions.cs" />
+    <File Path="src/Shared/Options/SingletonOptionsManager.cs" />
+  </Folder>
+  <Folder Name="/Shared/Proto/">
+    <File Path="src/Shared/Proto/README.md" />
+  </Folder>
+  <Folder Name="/Shared/Shims/">
+    <File Path="src/Shared/Shims/ExperimentalAttribute.cs" />
+    <File Path="src/Shared/Shims/IsExternalInit.cs" />
+    <File Path="src/Shared/Shims/Lock.cs" />
+    <File Path="src/Shared/Shims/NullableAttributes.cs" />
+  </Folder>
+  <Folder Name="/Shared/TagWriter/">
+    <File Path="src/Shared/TagWriter/ArrayTagWriter.cs" />
+    <File Path="src/Shared/TagWriter/JsonStringArrayTagWriter.cs" />
+    <File Path="src/Shared/TagWriter/TagWriter.cs" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".dockerignore" />
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="CONTRIBUTING.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="LICENSE.TXT" />
+    <File Path="NuGet.config" />
+    <File Path="README.md" />
+    <File Path="RELEASENOTES.md" />
+    <File Path="THIRD-PARTY-NOTICES.TXT" />
+    <File Path="VERSIONING.md" />
+  </Folder>
+  <Folder Name="/testdata/">
+    <Project Path="test/TestApp.AspNetCore/TestApp.AspNetCore.csproj" />
+  </Folder>
+  <Project Path="src/OpenTelemetry.Api.ProviderBuilderExtensions/OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
+  <Project Path="src/OpenTelemetry.Api/OpenTelemetry.Api.csproj" />
+  <Project Path="src/OpenTelemetry.Exporter.Console/OpenTelemetry.Exporter.Console.csproj" />
+  <Project Path="src/OpenTelemetry.Exporter.InMemory/OpenTelemetry.Exporter.InMemory.csproj" />
+  <Project Path="src/OpenTelemetry.Exporter.OpenTelemetryProtocol/OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
+  <Project Path="src/OpenTelemetry.Exporter.Prometheus.AspNetCore/OpenTelemetry.Exporter.Prometheus.AspNetCore.csproj" />
+  <Project Path="src/OpenTelemetry.Exporter.Prometheus.HttpListener/OpenTelemetry.Exporter.Prometheus.HttpListener.csproj" />
+  <Project Path="src/OpenTelemetry.Exporter.Zipkin/OpenTelemetry.Exporter.Zipkin.csproj" />
+  <Project Path="src/OpenTelemetry.Extensions.Hosting/OpenTelemetry.Extensions.Hosting.csproj" />
+  <Project Path="src/OpenTelemetry.Extensions.Propagators/OpenTelemetry.Extensions.Propagators.csproj" />
+  <Project Path="src/OpenTelemetry.Shims.OpenTracing/OpenTelemetry.Shims.OpenTracing.csproj" />
+  <Project Path="src/OpenTelemetry/OpenTelemetry.csproj" />
+  <Project Path="test/Benchmarks/Benchmarks.csproj" />
+  <Project Path="test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj" />
+  <Project Path="test/OpenTelemetry.Api.ProviderBuilderExtensions.Tests/OpenTelemetry.Api.ProviderBuilderExtensions.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Api.Tests/OpenTelemetry.Api.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Exporter.Console.Tests/OpenTelemetry.Exporter.Console.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests/OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Exporter.Prometheus.HttpListener.Tests/OpenTelemetry.Exporter.Prometheus.HttpListener.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Exporter.Zipkin.Tests/OpenTelemetry.Exporter.Zipkin.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Extensions.Hosting.Tests/OpenTelemetry.Extensions.Hosting.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Extensions.Propagators.Tests/OpenTelemetry.Extensions.Propagators.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Shims.OpenTracing.Tests/OpenTelemetry.Shims.OpenTracing.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Tests.Stress.Logs/OpenTelemetry.Tests.Stress.Logs.csproj" />
+  <Project Path="test/OpenTelemetry.Tests.Stress.Metrics/OpenTelemetry.Tests.Stress.Metrics.csproj" />
+  <Project Path="test/OpenTelemetry.Tests.Stress.Traces/OpenTelemetry.Tests.Stress.Traces.csproj" />
+  <Project Path="test/OpenTelemetry.Tests.Stress/OpenTelemetry.Tests.Stress.csproj" />
+  <Project Path="test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj" />
+</Solution>

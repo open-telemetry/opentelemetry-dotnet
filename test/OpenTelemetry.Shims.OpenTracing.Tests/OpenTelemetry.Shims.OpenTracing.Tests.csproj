@@ -3,12 +3,7 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry.Shims.OpenTracing</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-    <DefineConstants Condition="'$(RunningDotNetPack)' != 'true'">$(DefineConstants);BUILDING_USING_PROJECTS</DefineConstants>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="NuGet.Versioning"/>
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Shims.OpenTracing\OpenTelemetry.Shims.OpenTracing.csproj" />

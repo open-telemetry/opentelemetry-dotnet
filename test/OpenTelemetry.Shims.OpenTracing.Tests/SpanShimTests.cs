@@ -220,31 +220,14 @@ public class SpanShimTests
 
         // Legacy span status tag should be set
         Assert.Equal("ERROR", shim.Span.Activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-
-        if (VersionHelper.IsApiVersionGreaterThanOrEqualTo(1, 10))
-        {
-            // Activity status code should also be set
-            Assert.Equal(ActivityStatusCode.Error, shim.Span.Activity.Status);
-        }
-        else
-        {
-            Assert.Equal(ActivityStatusCode.Unset, shim.Span.Activity.Status);
-        }
+        Assert.Equal(ActivityStatusCode.Error, shim.Span.Activity.Status);
 
         shim.SetTag(Tags.Error.Key, false);
 
         // Legacy span status tag should be set
         Assert.Equal("OK", shim.Span.Activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
 
-        if (VersionHelper.IsApiVersionGreaterThanOrEqualTo(1, 10))
-        {
-            // Activity status code should also be set
-            Assert.Equal(ActivityStatusCode.Ok, shim.Span.Activity.Status);
-        }
-        else
-        {
-            Assert.Equal(ActivityStatusCode.Unset, shim.Span.Activity.Status);
-        }
+        Assert.Equal(ActivityStatusCode.Ok, shim.Span.Activity.Status);
     }
 
     [Fact]

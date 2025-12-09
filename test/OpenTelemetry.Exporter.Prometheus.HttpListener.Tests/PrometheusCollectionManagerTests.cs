@@ -19,6 +19,9 @@ public sealed class PrometheusCollectionManagerTests
 #endif
     public async Task EnterExitCollectTest(int scrapeResponseCacheDurationMilliseconds, bool openMetricsRequested)
     {
+        var testTimeout = TimeSpan.FromMinutes(1);
+        using var cts = new CancellationTokenSource(testTimeout);
+
         bool cacheEnabled = scrapeResponseCacheDurationMilliseconds != 0;
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
@@ -44,66 +47,126 @@ public sealed class PrometheusCollectionManagerTests
             {
                 bool result = collectFunc!(timeout);
                 runningCollectCount++;
+
+                cts.Token.ThrowIfCancellationRequested();
                 Thread.Sleep(5000);
+
                 return result;
             };
+
+            var utcNow = DateTime.UtcNow;
+
+            if (cacheEnabled)
+            {
+                // Override the cache to ensure the cache is always seen again during its validity period.
+                exporter.CollectionManager.UtcNow = () => utcNow;
+            }
 
             var counter = meter.CreateCounter<int>("counter_int", description: "Prometheus help text goes here \n escaping.");
             counter.Add(100);
 
-            Task<Response>[] collectTasks = new Task<Response>[10];
-            for (int i = 0; i < collectTasks.Length; i++)
+            async Task<Response> CollectAsync(bool advanceClock)
             {
-                collectTasks[i] = Task.Run(async () =>
+                cts.Token.ThrowIfCancellationRequested();
+
+                if (advanceClock)
                 {
-                    var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
-                    try
+                    // Tick the clock forward - it should still be well within the cache duration.
+                    utcNow = utcNow.AddMilliseconds(1);
+                }
+
+                var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
+                try
+                {
+                    return new()
                     {
-                        return new Response
-                        {
-                            CollectionResponse = response,
-                            ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
-                        };
-                    }
-                    finally
-                    {
-                        exporter.CollectionManager.ExitCollect();
-                    }
-                });
+                        CollectionResponse = response,
+                        ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
+                    };
+                }
+                finally
+                {
+                    exporter.CollectionManager.ExitCollect();
+                }
             }
 
-            await Task.WhenAll(collectTasks);
+            async Task<Task<Response>[]> CollectInParallelAsync(bool advanceClock)
+            {
+                // Avoid deadlocks by limiting parallelism to a reasonable level based on CPU count.
+                // Always use at least 2 to ensure concurrency happens. Running on a single core machine is unlikely.
+                var parallelism = Math.Max((Environment.ProcessorCount + 1) / 2, 2);
+
+#if NET
+                var bag = new System.Collections.Concurrent.ConcurrentBag<Response>();
+
+                var parallel = Parallel.ForAsync(
+                    0,
+                    parallelism,
+                    cts.Token,
+                    async (_, _) => bag.Add(await CollectAsync(advanceClock)));
+
+                await Task.WhenAny(parallel, Task.Delay(testTimeout, cts.Token));
+
+                cts.Token.ThrowIfCancellationRequested();
+
+                await parallel;
+
+                return [.. bag.Select((r) => Task.FromResult(r))];
+#else
+
+                Task<Response>[] tasks = new Task<Response>[parallelism];
+
+                for (int i = 0; i < tasks.Length; i++)
+                {
+                    tasks[i] = Task.Run(() => CollectAsync(advanceClock), cts.Token);
+                }
+
+                var all = Task.WhenAll(tasks);
+                await Task.WhenAny(all, Task.Delay(testTimeout, cts.Token));
+
+                cts.Token.ThrowIfCancellationRequested();
+
+                await all;
+
+                return tasks;
+#endif
+            }
+
+            var collectTasks = await CollectInParallelAsync(advanceClock: true);
 
             Assert.Equal(1, runningCollectCount);
 
             var firstResponse = await collectTasks[0];
 
-            Assert.False(firstResponse.CollectionResponse.FromCache);
+            Assert.False(firstResponse.CollectionResponse.FromCache, "Response was served from the cache.");
 
             for (int i = 1; i < collectTasks.Length; i++)
             {
-                Assert.Equal(firstResponse.ViewPayload, (await collectTasks[i]).ViewPayload);
-                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, (await collectTasks[i]).CollectionResponse.GeneratedAtUtc);
+                var response = await collectTasks[i];
+
+                Assert.Equal(firstResponse.ViewPayload, response.ViewPayload);
+                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, response.CollectionResponse.GeneratedAtUtc);
             }
 
             counter.Add(100);
 
-            // This should use the cache and ignore the second counter update.
-            var task = exporter.CollectionManager.EnterCollect(openMetricsRequested);
-            Assert.True(task.IsCompleted);
-            var response = await task;
             try
             {
+                // This should use the cache and ignore the second counter update.
+                var task = exporter.CollectionManager.EnterCollect(openMetricsRequested);
+                Assert.True(task.IsCompleted, "Collection did not complete.");
+                var response = await task;
+
                 if (cacheEnabled)
                 {
                     Assert.Equal(1, runningCollectCount);
-                    Assert.True(response.FromCache);
+                    Assert.True(response.FromCache, "Response was not served from the cache.");
                     Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, response.GeneratedAtUtc);
                 }
                 else
                 {
                     Assert.Equal(2, runningCollectCount);
-                    Assert.False(response.FromCache);
+                    Assert.False(response.FromCache, "Response was served from the cache.");
                     Assert.True(firstResponse.CollectionResponse.GeneratedAtUtc < response.GeneratedAtUtc);
                 }
             }
@@ -112,47 +175,32 @@ public sealed class PrometheusCollectionManagerTests
                 exporter.CollectionManager.ExitCollect();
             }
 
-#pragma warning disable CA1849 // 'Thread.Sleep(int)' synchronously blocks. Use await instead.
-            // Changing to await Task.Delay leads to test instability.
-            Thread.Sleep(exporter.ScrapeResponseCacheDurationMilliseconds);
-#pragma warning restore CA1849 // 'Thread.Sleep(int)' synchronously blocks. Use await instead.
+            if (cacheEnabled)
+            {
+                // Progress time beyond the cache duration to force cache expiry.
+                utcNow = utcNow.AddMilliseconds(exporter.ScrapeResponseCacheDurationMilliseconds + 1);
+            }
 
             counter.Add(100);
 
-            for (int i = 0; i < collectTasks.Length; i++)
-            {
-                collectTasks[i] = Task.Run(async () =>
-                {
-                    var collectionResponse = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
-                    try
-                    {
-                        return new Response
-                        {
-                            CollectionResponse = collectionResponse,
-                            ViewPayload = openMetricsRequested ? [.. collectionResponse.OpenMetricsView] : [.. collectionResponse.PlainTextView],
-                        };
-                    }
-                    finally
-                    {
-                        exporter.CollectionManager.ExitCollect();
-                    }
-                });
-            }
-
-            await Task.WhenAll(collectTasks);
+            collectTasks = await CollectInParallelAsync(advanceClock: false);
 
             Assert.Equal(cacheEnabled ? 2 : 3, runningCollectCount);
-            Assert.NotEqual(firstResponse.ViewPayload, (await collectTasks[0]).ViewPayload);
-            Assert.NotEqual(firstResponse.CollectionResponse.GeneratedAtUtc, (await collectTasks[0]).CollectionResponse.GeneratedAtUtc);
 
+            var original = firstResponse;
             firstResponse = await collectTasks[0];
 
-            Assert.False(firstResponse.CollectionResponse.FromCache);
+            Assert.NotEqual(original.ViewPayload, firstResponse.ViewPayload);
+            Assert.NotEqual(original.CollectionResponse.GeneratedAtUtc, firstResponse.CollectionResponse.GeneratedAtUtc);
+
+            Assert.False(firstResponse.CollectionResponse.FromCache, "Response was served from the cache.");
 
             for (int i = 1; i < collectTasks.Length; i++)
             {
-                Assert.Equal(firstResponse.ViewPayload, (await collectTasks[i]).ViewPayload);
-                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, (await collectTasks[i]).CollectionResponse.GeneratedAtUtc);
+                var response = await collectTasks[i];
+
+                Assert.Equal(firstResponse.ViewPayload, response.ViewPayload);
+                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, response.CollectionResponse.GeneratedAtUtc);
             }
         }
     }

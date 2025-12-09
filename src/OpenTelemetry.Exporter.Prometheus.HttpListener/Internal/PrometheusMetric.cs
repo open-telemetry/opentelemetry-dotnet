@@ -88,7 +88,7 @@ internal sealed class PrometheusMetric
 
     public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
     {
-        return new PrometheusMetric(metric.Name, metric.Unit, GetPrometheusType(metric), disableTotalNameSuffixForCounters);
+        return new PrometheusMetric(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters);
     }
 
     internal static string SanitizeMetricName(string metricName)
@@ -177,6 +177,12 @@ internal sealed class PrometheusMetric
         return sb.ToString();
     }
 
+    internal static PrometheusType GetPrometheusType(MetricType openTelemetryMetricType)
+    {
+        int metricType = (int)openTelemetryMetricType >> 4;
+        return MetricTypes[metricType];
+    }
+
     private static string SanitizeOpenMetricsName(string metricName)
     {
         if (metricName.EndsWith("_total", StringComparison.Ordinal))
@@ -229,12 +235,6 @@ internal sealed class PrometheusMetric
         }
 
         return false;
-    }
-
-    private static PrometheusType GetPrometheusType(Metric metric)
-    {
-        int metricType = (int)metric.MetricType >> 4;
-        return MetricTypes[metricType];
     }
 
     // The map to translate OTLP units to Prometheus units

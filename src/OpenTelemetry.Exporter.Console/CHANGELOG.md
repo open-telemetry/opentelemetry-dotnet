@@ -6,6 +6,23 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added support for `ActivitySource.TelemetrySchemaUrl` property.
+  ([#6713](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6713))
+
+* Added support for `Meter.TelemetrySchemaUrl` property.
+  ([#6714](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6714))
+
+## 1.14.0
+
+Released 2025-Nov-12
+
+* **Breaking Change** NuGet packages now use the Sigstore bundle format
+  (`.sigstore.json`) for digital signatures instead of separate signature
+  (`.sig`) and certificate (`.pem`) files. This requires cosign 3.0 or later
+  for verification. See the [Digital signing
+  section](../../README.md#digital-signing) for updated verification instructions.
+  ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
+
 ## 1.14.0-rc.1
 
 Released 2025-Oct-21

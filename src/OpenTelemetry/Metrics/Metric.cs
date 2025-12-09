@@ -232,6 +232,13 @@ public sealed class Metric
     public string MeterVersion => this.InstrumentIdentity.MeterVersion;
 
     /// <summary>
+    /// Gets the meter schema URL for the metric stream.
+    /// </summary>
+#pragma warning disable CA1056 // Change the type of property from 'string' to 'System.Uri'
+    public string MeterSchemaUrl => this.InstrumentIdentity.MeterSchemaUrl;
+#pragma warning restore CA1056 // Change the type of property from 'string' to 'System.Uri'
+
+    /// <summary>
     /// Gets the attributes (tags) for the metric stream.
     /// </summary>
     public IEnumerable<KeyValuePair<string, object?>>? MeterTags => this.InstrumentIdentity.MeterTags?.KeyValuePairs;

@@ -12,7 +12,7 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public class MetricExemplarTests : MetricTestsBase
 {
-    private const int MaxTimeToAllowForFlush = 10000;
+    private const int MaxTimeToAllowForFlush = 15_000;
 
     [Theory]
     [InlineData(null, null, null)]
@@ -78,15 +78,13 @@ public class MetricExemplarTests : MetricTestsBase
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
-                if (i.Name.StartsWith("testCounter", StringComparison.Ordinal))
-                {
-                    return new MetricStreamConfiguration
+                return
+                    i.Name.StartsWith("testCounter", StringComparison.Ordinal) ?
+                    new MetricStreamConfiguration
                     {
                         ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
-                    };
-                }
-
-                return null;
+                    }
+                    : null;
             })
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -94,13 +92,13 @@ public class MetricExemplarTests : MetricTestsBase
             }));
 
         var measurementValues = GenerateRandomValues(2, false, null);
-        foreach (var value in measurementValues)
+        foreach (var (value, _) in measurementValues)
         {
-            counterDouble.Add(value.Value);
-            counterLong.Add((long)value.Value);
+            counterDouble.Add(value);
+            counterLong.Add((long)value);
         }
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
         ValidateFirstPhase("testCounterDouble", testStartTime, exportedItems, measurementValues, e => e.DoubleValue);
         ValidateFirstPhase("testCounterLong", testStartTime, exportedItems, measurementValues, e => e.LongValue);
@@ -112,15 +110,15 @@ public class MetricExemplarTests : MetricTestsBase
 #endif
 
         var secondMeasurementValues = GenerateRandomValues(1, true, measurementValues);
-        foreach (var value in secondMeasurementValues)
+        foreach (var (value, _) in secondMeasurementValues)
         {
             using var activity = new Activity("test");
             activity.Start();
-            counterDouble.Add(value.Value);
-            counterLong.Add((long)value.Value);
+            counterDouble.Add(value);
+            counterLong.Add((long)value);
         }
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
         ValidateSecondPhase("testCounterDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues, e => e.DoubleValue);
         ValidateSecondPhase("testCounterLong", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues, e => e.LongValue);
@@ -166,7 +164,7 @@ public class MetricExemplarTests : MetricTestsBase
                 //  First collect we saw Exemplar A & B
                 //  Second collect we saw Exemplar C but B remained in the reservoir
                 Assert.Equal(2, exemplars.Count);
-                secondMeasurementValues = secondMeasurementValues.Concat(firstMeasurementValues.Skip(1).Take(1)).ToArray();
+                secondMeasurementValues = [.. secondMeasurementValues, .. firstMeasurementValues.Skip(1).Take(1)];
             }
             else
             {
@@ -207,7 +205,7 @@ public class MetricExemplarTests : MetricTestsBase
                 metricReaderOptions.TemporalityPreference = temporality;
             }));
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
         ValidateFirstPhase("testGaugeDouble", testStartTime, exportedItems, measurementValues, e => e.DoubleValue);
         ValidateFirstPhase("testGaugeLong", testStartTime, exportedItems, measurementValues, e => e.LongValue);
@@ -222,7 +220,7 @@ public class MetricExemplarTests : MetricTestsBase
         Thread.Sleep(10); // Compensates for low resolution timing in netfx.
 #endif
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
         ValidateSecondPhase("testGaugeDouble", testStartTime, exportedItems, measurementValues, e => e.DoubleValue);
         ValidateSecondPhase("testGaugeLong", testStartTime, exportedItems, measurementValues, e => e.LongValue);
@@ -306,21 +304,11 @@ public class MetricExemplarTests : MetricTestsBase
                 .AddMeter(meter.Name)
                 .AddView(i =>
                 {
-                    if (i.Name.StartsWith("histogramWithBucketsAndMinMax", StringComparison.Ordinal))
+                    return new ExplicitBucketHistogramConfiguration
                     {
-                        return new ExplicitBucketHistogramConfiguration
-                        {
-                            Boundaries = buckets,
-                        };
-                    }
-                    else
-                    {
-                        return new ExplicitBucketHistogramConfiguration
-                        {
-                            Boundaries = buckets,
-                            RecordMinMax = false,
-                        };
-                    }
+                        Boundaries = buckets,
+                        RecordMinMax = i.Name.StartsWith("histogramWithBucketsAndMinMax", StringComparison.Ordinal),
+                    };
                 })
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
@@ -333,15 +321,15 @@ public class MetricExemplarTests : MetricTestsBase
             .Concat([2000.0])
             .Select(b => (Value: b, ExpectTraceId: false))
             .ToArray();
-        foreach (var value in measurementValues)
+        foreach (var (value, _) in measurementValues)
         {
-            histogramWithBucketsAndMinMaxDouble.Record(value.Value);
-            histogramWithBucketsDouble.Record(value.Value);
-            histogramWithBucketsAndMinMaxLong.Record((long)value.Value);
-            histogramWithBucketsLong.Record((long)value.Value);
+            histogramWithBucketsAndMinMaxDouble.Record(value);
+            histogramWithBucketsDouble.Record(value);
+            histogramWithBucketsAndMinMaxLong.Record((long)value);
+            histogramWithBucketsLong.Record((long)value);
         }
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
         ValidateFirstPhase("histogramWithBucketsAndMinMaxDouble", testStartTime, exportedItems, measurementValues);
         ValidateFirstPhase("histogramWithBucketsDouble", testStartTime, exportedItems, measurementValues);
@@ -355,17 +343,17 @@ public class MetricExemplarTests : MetricTestsBase
 #endif
 
         var secondMeasurementValues = buckets.Take(1).Select(b => (Value: b, ExpectTraceId: true)).ToArray();
-        foreach (var value in secondMeasurementValues)
+        foreach (var (value, _) in secondMeasurementValues)
         {
             using var activity = new Activity("test");
             activity.Start();
-            histogramWithBucketsAndMinMaxDouble.Record(value.Value);
-            histogramWithBucketsDouble.Record(value.Value);
-            histogramWithBucketsAndMinMaxLong.Record((long)value.Value);
-            histogramWithBucketsLong.Record((long)value.Value);
+            histogramWithBucketsAndMinMaxDouble.Record(value);
+            histogramWithBucketsDouble.Record(value);
+            histogramWithBucketsAndMinMaxLong.Record((long)value);
+            histogramWithBucketsLong.Record((long)value);
         }
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
         ValidateScondPhase("histogramWithBucketsAndMinMaxDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
         ValidateScondPhase("histogramWithBucketsDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
@@ -408,7 +396,7 @@ public class MetricExemplarTests : MetricTestsBase
             if (temporality == MetricReaderTemporalityPreference.Cumulative)
             {
                 Assert.Equal(11, exemplars.Count);
-                secondMeasurementValues = secondMeasurementValues.Concat(firstMeasurementValues.Skip(1)).ToArray();
+                secondMeasurementValues = [.. secondMeasurementValues, .. firstMeasurementValues.Skip(1)];
             }
             else
             {
@@ -438,23 +426,12 @@ public class MetricExemplarTests : MetricTestsBase
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
-                if (i.Name.StartsWith("histogramWithoutBucketsAndMinMax", StringComparison.Ordinal))
+                return new ExplicitBucketHistogramConfiguration
                 {
-                    return new ExplicitBucketHistogramConfiguration
-                    {
-                        Boundaries = [],
-                        ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
-                    };
-                }
-                else
-                {
-                    return new ExplicitBucketHistogramConfiguration
-                    {
-                        Boundaries = [],
-                        RecordMinMax = false,
-                        ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
-                    };
-                }
+                    Boundaries = [],
+                    RecordMinMax = i.Name.StartsWith("histogramWithoutBucketsAndMinMax", StringComparison.Ordinal),
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                };
             })
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -462,15 +439,15 @@ public class MetricExemplarTests : MetricTestsBase
             }));
 
         var measurementValues = GenerateRandomValues(2, false, null);
-        foreach (var value in measurementValues)
+        foreach (var (value, _) in measurementValues)
         {
-            histogramWithoutBucketsAndMinMaxDouble.Record(value.Value);
-            histogramWithoutBucketsDouble.Record(value.Value);
-            histogramWithoutBucketsAndMinMaxLong.Record((long)value.Value);
-            histogramWithoutBucketsLong.Record((long)value.Value);
+            histogramWithoutBucketsAndMinMaxDouble.Record(value);
+            histogramWithoutBucketsDouble.Record(value);
+            histogramWithoutBucketsAndMinMaxLong.Record((long)value);
+            histogramWithoutBucketsLong.Record((long)value);
         }
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
         ValidateFirstPhase("histogramWithoutBucketsAndMinMaxDouble", testStartTime, exportedItems, measurementValues);
         ValidateFirstPhase("histogramWithoutBucketsDouble", testStartTime, exportedItems, measurementValues);
@@ -484,17 +461,17 @@ public class MetricExemplarTests : MetricTestsBase
 #endif
 
         var secondMeasurementValues = GenerateRandomValues(1, true, measurementValues);
-        foreach (var value in secondMeasurementValues)
+        foreach (var (value, _) in secondMeasurementValues)
         {
             using var activity = new Activity("test");
             activity.Start();
-            histogramWithoutBucketsAndMinMaxDouble.Record(value.Value);
-            histogramWithoutBucketsDouble.Record(value.Value);
-            histogramWithoutBucketsAndMinMaxLong.Record((long)value.Value);
-            histogramWithoutBucketsLong.Record((long)value.Value);
+            histogramWithoutBucketsAndMinMaxDouble.Record(value);
+            histogramWithoutBucketsDouble.Record(value);
+            histogramWithoutBucketsAndMinMaxLong.Record((long)value);
+            histogramWithoutBucketsLong.Record((long)value);
         }
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
         ValidateSecondPhase("histogramWithoutBucketsAndMinMaxDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
         ValidateSecondPhase("histogramWithoutBucketsDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
@@ -537,7 +514,7 @@ public class MetricExemplarTests : MetricTestsBase
             if (temporality == MetricReaderTemporalityPreference.Cumulative)
             {
                 Assert.Equal(2, exemplars.Count);
-                secondMeasurementValues = secondMeasurementValues.Concat(firstMeasurementValues.Skip(1)).ToArray();
+                secondMeasurementValues = [.. secondMeasurementValues, .. firstMeasurementValues.Skip(1)];
             }
             else
             {
@@ -567,17 +544,10 @@ public class MetricExemplarTests : MetricTestsBase
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
-                if (i.Name.StartsWith("exponentialHistogramWithMinMax", StringComparison.Ordinal))
+                return new Base2ExponentialBucketHistogramConfiguration()
                 {
-                    return new Base2ExponentialBucketHistogramConfiguration();
-                }
-                else
-                {
-                    return new Base2ExponentialBucketHistogramConfiguration()
-                    {
-                        RecordMinMax = false,
-                    };
-                }
+                    RecordMinMax = i.Name.StartsWith("exponentialHistogramWithMinMax", StringComparison.Ordinal),
+                };
             })
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -585,15 +555,16 @@ public class MetricExemplarTests : MetricTestsBase
             }));
 
         var measurementValues = GenerateRandomValues(20, false, null);
-        foreach (var value in measurementValues)
+
+        foreach (var (value, _) in measurementValues)
         {
-            exponentialHistogramWithMinMaxDouble.Record(value.Value);
-            exponentialHistogramDouble.Record(value.Value);
-            exponentialHistogramWithMinMaxLong.Record((long)value.Value);
-            exponentialHistogramLong.Record((long)value.Value);
+            exponentialHistogramWithMinMaxDouble.Record(value);
+            exponentialHistogramDouble.Record(value);
+            exponentialHistogramWithMinMaxLong.Record((long)value);
+            exponentialHistogramLong.Record((long)value);
         }
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
         ValidateFirstPhase("exponentialHistogramWithMinMaxDouble", testStartTime, exportedItems, measurementValues);
         ValidateFirstPhase("exponentialHistogramDouble", testStartTime, exportedItems, measurementValues);
@@ -607,17 +578,17 @@ public class MetricExemplarTests : MetricTestsBase
 #endif
 
         var secondMeasurementValues = GenerateRandomValues(1, true, measurementValues);
-        foreach (var value in secondMeasurementValues)
+        foreach (var (value, _) in secondMeasurementValues)
         {
             using var activity = new Activity("test");
             activity.Start();
-            exponentialHistogramWithMinMaxDouble.Record(value.Value);
-            exponentialHistogramDouble.Record(value.Value);
-            exponentialHistogramWithMinMaxLong.Record((long)value.Value);
-            exponentialHistogramLong.Record((long)value.Value);
+            exponentialHistogramWithMinMaxDouble.Record(value);
+            exponentialHistogramDouble.Record(value);
+            exponentialHistogramWithMinMaxLong.Record((long)value);
+            exponentialHistogramLong.Record((long)value);
         }
 
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
         ValidateSecondPhase("exponentialHistogramWithMinMaxDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
         ValidateSecondPhase("exponentialHistogramDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
@@ -660,7 +631,7 @@ public class MetricExemplarTests : MetricTestsBase
             if (temporality == MetricReaderTemporalityPreference.Cumulative)
             {
                 Assert.Equal(20, exemplars.Count);
-                secondMeasurementValues = secondMeasurementValues.Concat(firstMeasurementValues.Skip(1).Take(19)).ToArray();
+                secondMeasurementValues = [.. secondMeasurementValues, .. firstMeasurementValues.Skip(1).Take(19)];
             }
             else
             {
@@ -742,12 +713,10 @@ public class MetricExemplarTests : MetricTestsBase
                     TagKeys = enableTagFiltering ? ["key1"] : null,
                     ExemplarReservoirFactory = () =>
                     {
-                        if (testExemplarReservoir != null)
-                        {
-                            throw new InvalidOperationException();
-                        }
-
-                        return testExemplarReservoir = new TestExemplarReservoir();
+                        return
+                            testExemplarReservoir != null ?
+                            throw new InvalidOperationException() :
+                            (ExemplarReservoir)(testExemplarReservoir = new TestExemplarReservoir());
                     },
                 })
             .AddInMemoryExporter(exportedItems));
@@ -873,8 +842,6 @@ public class MetricExemplarTests : MetricTestsBase
         }
 
         public override void Offer(in ExemplarMeasurement<long> measurement)
-        {
-            throw new NotSupportedException();
-        }
+            => throw new NotSupportedException();
     }
 }

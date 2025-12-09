@@ -4,6 +4,26 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.14.0
+
+Release details: [1.14.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.14.0)
+
+* Add support for .NET 10.0.
+* **Breaking Change** When targeting `net8.0`, the package now depends on version
+  `8.0.0` of the `Microsoft.Extensions.DependencyInjection.Abstractions`,
+  `Microsoft.Extensions.Diagnostics.Abstractions`,
+  `Microsoft.Extensions.Hosting.Abstractions` and
+  `Microsoft.Extensions.Logging.Configuration` NuGet packages.
+* Update `System.Diagnostics.DiagnosticSource` dependency to `10.0.0`
+  for all target frameworks.
+* Update `Microsoft.Extensions.*` dependencies to `10.0.0`
+  for .NET Framework and .NET Standard.
+* **Breaking Change** NuGet packages now use the Sigstore bundle format
+  (`.sigstore.json`) for digital signatures instead of separate signature
+  (`.sig`) and certificate (`.pem`) files. This requires cosign 3.0 or later
+  for verification. See the [Digital signing
+  section](./README.md#digital-signing) for updated verification instructions.
+
 ## 1.13.1
 
 Release details: [1.13.1](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.13.1)

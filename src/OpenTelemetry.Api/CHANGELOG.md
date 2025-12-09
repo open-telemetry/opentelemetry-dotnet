@@ -6,6 +6,25 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added a new overload for `TracerProvider.GetTracer` which accepts an optional
+  `string? schemaUrl` parameter, allowing a schema URL to be set on the `Tracer`.
+  ([#6736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6736))
+
+## 1.14.0
+
+Released 2025-Nov-12
+
+* **Breaking Change** NuGet packages now use the Sigstore bundle format
+  (`.sigstore.json`) for digital signatures instead of separate signature
+  (`.sig`) and certificate (`.pem`) files. This requires cosign 3.0 or later
+  for verification. See the [Digital signing
+  section](../../README.md#digital-signing) for updated verification instructions.
+  ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
+
+* Update `System.Diagnostics.DiagnosticSource` dependency to `10.0.0`
+  for all target frameworks.
+  ([#6667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6667))
+
 ## 1.14.0-rc.1
 
 Released 2025-Oct-21
@@ -13,7 +32,7 @@ Released 2025-Oct-21
 * Add support for .NET 10.0.
   ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
 
-* Update `System.Diagnostics.DiagnosticSource` dependency to `10.0.0`
+* Update `System.Diagnostics.DiagnosticSource` dependency to `10.0.0-rc.2.25502.107`
   for all target frameworks.
   ([#6307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6307))
 

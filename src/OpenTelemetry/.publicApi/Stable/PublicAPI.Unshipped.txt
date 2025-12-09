@@ -6,3 +6,5 @@ OpenTelemetry.BatchLogRecordExportProcessor.BatchLogRecordExportProcessor(OpenTe
 OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions! options) -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.UseThreads.get -> bool
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.UseThreads.set -> void
+OpenTelemetry.Metrics.Metric.MeterSchemaUrl.get -> string!
+OpenTelemetry.Metrics.MetricReaderTemporalityPreference.LowMemory = 3 -> OpenTelemetry.Metrics.MetricReaderTemporalityPreference

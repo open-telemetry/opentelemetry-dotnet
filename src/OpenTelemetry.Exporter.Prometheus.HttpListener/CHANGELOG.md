@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.14.0-beta.1
+
+Released 2025-Nov-12
+
 * **Breaking Change** When targeting `net8.0`, the package now depends on version
   `8.0.0` of the `Microsoft.Extensions.DependencyInjection.Abstractions`,
   `Microsoft.Extensions.Diagnostics.Abstractions` and
@@ -18,6 +22,16 @@ Notes](../../RELEASENOTES.md).
 
 * Added the possibility to disable timestamps via the `PrometheusHttpListenerOptions`.
   ([#6600](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6600))
+
+* **Breaking Change** NuGet packages now use the Sigstore bundle format
+  (`.sigstore.json`) for digital signatures instead of separate signature
+  (`.sig`) and certificate (`.pem`) files. This requires cosign 3.0 or later
+  for verification. See the [Digital signing
+  section](../../README.md#digital-signing) for updated verification instructions.
+  ([#6623](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6623))
+
+* Updated OpenTelemetry core component version(s) to `1.14.0`.
+  ([#6689](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6689))
 
 ## 1.13.1-beta.1
 

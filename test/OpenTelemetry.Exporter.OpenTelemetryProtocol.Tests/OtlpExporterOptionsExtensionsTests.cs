@@ -25,11 +25,11 @@ public class OtlpExporterOptionsExtensionsTests
 
         var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
 
-        Assert.Equal(OtlpExporterOptions.StandardHeaders.Length, headers.Count);
+        Assert.Equal(options.StandardHeaders.Length, headers.Count);
 
-        for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+        for (int i = 0; i < options.StandardHeaders.Length; i++)
         {
-            Assert.Contains(headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value == OtlpExporterOptions.StandardHeaders[i].Value);
+            Assert.Contains(headers, entry => entry.Key == options.StandardHeaders[i].Key && entry.Value == options.StandardHeaders[i].Value);
         }
     }
 
@@ -185,14 +185,14 @@ public class OtlpExporterOptionsExtensionsTests
             }
         }
 
-        Assert.Equal(OtlpExporterOptions.StandardHeaders.Length + expectedOptional.Count, headers.Count);
+        Assert.Equal(options.StandardHeaders.Length + expectedOptional.Count, headers.Count);
 
         foreach (var kvp in expectedOptional)
         {
             Assert.Contains(headers, h => h.Key == kvp.Key && h.Value == kvp.Value);
         }
 
-        foreach (var std in OtlpExporterOptions.StandardHeaders)
+        foreach (var std in options.StandardHeaders)
         {
             Assert.Contains(headers, h => h.Key == std.Key && h.Value == std.Value);
         }
