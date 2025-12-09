@@ -66,8 +66,10 @@ public class ZipkinExporterBenchmarks
     [Benchmark]
     public void ZipkinExporter_Batching()
     {
+#pragma warning disable CS0618 // Type or member is obsolete - deprecated Zipkin exporter
         using var exporter = new ZipkinExporter(
             new ZipkinExporterOptions
+#pragma warning restore CS0618 // Type or member is obsolete - deprecated Zipkin exporter
             {
                 Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
             });

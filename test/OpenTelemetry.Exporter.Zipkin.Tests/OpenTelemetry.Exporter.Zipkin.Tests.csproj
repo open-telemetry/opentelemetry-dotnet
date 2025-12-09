@@ -5,6 +5,8 @@
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <!-- Avoid conflicting port registrations if TFMs tested in parallel -->
     <TestTfmsInParallel>false</TestTfmsInParallel>
+    <!-- CS0618: Do not use Obsolete classes/methods. Zipkin exporter is deprecated and marked as Obsolete.-->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

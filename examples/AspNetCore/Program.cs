@@ -3,7 +3,6 @@
 
 using System.Diagnostics.Metrics;
 using Examples.AspNetCore;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -12,7 +11,7 @@ using OpenTelemetry.Trace;
 
 var appBuilder = WebApplication.CreateBuilder(args);
 
-// Note: Switch between Zipkin/OTLP/Console by setting UseTracingExporter in appsettings.json.
+// Note: Switch between OTLP/Console by setting UseTracingExporter in appsettings.json.
 var tracingExporter = appBuilder.Configuration.GetValue("UseTracingExporter", defaultValue: "CONSOLE").ToUpperInvariant();
 
 // Note: Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.
@@ -55,16 +54,6 @@ appBuilder.Services.AddOpenTelemetry()
 
         switch (tracingExporter)
         {
-            case "ZIPKIN":
-                builder.AddZipkinExporter();
-
-                builder.ConfigureServices(services =>
-                {
-                    // Use IConfiguration binding for Zipkin exporter options.
-                    services.Configure<ZipkinExporterOptions>(appBuilder.Configuration.GetSection("Zipkin"));
-                });
-                break;
-
             case "OTLP":
                 builder.AddOtlpExporter(otlpOptions =>
                 {

@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Trace;
 using Utils.Messaging;
 
@@ -14,10 +15,11 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(b => b
         .AddAspNetCoreInstrumentation()
         .AddSource(nameof(MessageSender))
-        .AddZipkinExporter(o =>
+        .AddOtlpExporter(o =>
         {
-            var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
-            o.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
+            var otelCollectorHostName = Environment.GetEnvironmentVariable("OTEL_COLLECTOR_HOSTNAME") ?? "localhost";
+            o.Endpoint = new Uri($"http://{otelCollectorHostName}:4318/v1/traces");
+            o.Protocol = OtlpExportProtocol.HttpProtobuf;
         }));
 
 builder.WebHost.UseUrls("http://*:5000");

@@ -4,6 +4,19 @@ services:
     ports:
       - 9411:9411
 
+# OpenTelemetry Collector is used to receive traces from the services and export them to Zipkin for visualization.
+# You can choose to configure different visualization backends by modifying the otel-collector-config.yaml file.
+# Alternatively, you can have the services export traces directly to Zipkin by https://github.com/openzipkin-contrib/zipkin-otel.
+  otel-collector:
+    image: otel/opentelemetry-collector:0.141.0@sha256:b54b114431b2aa031c28f590507b4a17daabd59a4d797eb7fddd7988b4d3e3ea
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - 4318:4318   # OTLP HTTP/protobuf
+    depends_on:
+      - zipkin
+
   rabbitmq:
     image: rabbitmq:4-management-alpine@sha256:395e21feb54d07af2f913d317e40221855ae5848d120b585bc58ab9644a909e3
     ports:
@@ -20,12 +33,12 @@ services:
       - RABBITMQ_HOSTNAME=rabbitmq
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
-      - ZIPKIN_HOSTNAME=zipkin
+      - OTEL_COLLECTOR_HOSTNAME=otel-collector
     ports:
       - 5000:5000
     depends_on:
       - rabbitmq
-      - zipkin
+      - otel-collector
 
   workerservice:
     build:
@@ -37,8 +50,8 @@ services:
       - RABBITMQ_HOSTNAME=rabbitmq
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
-      - ZIPKIN_HOSTNAME=zipkin
+      - OTEL_COLLECTOR_HOSTNAME=otel-collector
     restart: on-failure
     depends_on:
       - rabbitmq
-      - zipkin
+      - otel-collector

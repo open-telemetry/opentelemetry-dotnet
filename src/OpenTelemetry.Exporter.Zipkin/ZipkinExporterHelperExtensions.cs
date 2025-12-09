@@ -23,6 +23,7 @@ public static class ZipkinExporterHelperExtensions
     /// </summary>
     /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+    [Obsolete(ZipkinExporter.ObsoleteNote)]
     public static TracerProviderBuilder AddZipkinExporter(this TracerProviderBuilder builder)
         => AddZipkinExporter(builder, name: null, configure: null);
 
@@ -32,6 +33,7 @@ public static class ZipkinExporterHelperExtensions
     /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
     /// <param name="configure">Callback action for configuring <see cref="ZipkinExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+    [Obsolete(ZipkinExporter.ObsoleteNote)]
     public static TracerProviderBuilder AddZipkinExporter(this TracerProviderBuilder builder, Action<ZipkinExporterOptions> configure)
         => AddZipkinExporter(builder, name: null, configure);
 
@@ -42,6 +44,7 @@ public static class ZipkinExporterHelperExtensions
     /// <param name="name">Optional name which is used when retrieving options.</param>
     /// <param name="configure">Optional callback action for configuring <see cref="ZipkinExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+    [Obsolete(ZipkinExporter.ObsoleteNote)]
     public static TracerProviderBuilder AddZipkinExporter(
         this TracerProviderBuilder builder,
         string? name,

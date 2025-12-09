@@ -15,12 +15,12 @@ The Web API publishes messages to RabbitMQ which the Worker Service consumes.
 Distributed context propagation is achieved using OpenTelemetry APIs to inject
 and extract trace context in the headers of the published messages.
 
-The Zipkin exporter is configured for viewing the distributed traces.
+The OTLP exporter is configured for viewing the distributed traces.
 
 ## Running the example
 
-A running instance of RabbitMQ and Zipkin are required. These can easily be
-spun up in docker containers.
+A running instance of OpenTelemetry Collector, RabbitMQ, and Zipkin are required.
+These can easily be spun up in docker containers.
 
 The `WebApi` and `WorkerService` projects can be run from this directory as
 follows:
@@ -31,8 +31,9 @@ dotnet run --project WorkerService
 ```
 
 Instead of running the projects individually, if you are using Docker Desktop,
-a `docker compose` file is provided. This makes standing up the Zipkin and
-RabbitMQ dependencies easy, as well as starting both applications.
+a `docker compose` file is provided. This makes standing up the OpenTelemetry
+Collector, Zipkin, and RabbitMQ dependencies easy, as well as starting both
+applications.
 
 To run the example using `docker compose`, run the following from this
 directory:
