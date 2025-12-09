@@ -4,6 +4,9 @@ services:
     ports:
       - 9411:9411
 
+# OpenTelemetry Collector is used to receive traces from the services and export them to Zipkin for visualization.
+# You can choose to configure different visualization backends by modifying the otel-collector-config.yaml file.
+# Alternatively, you can have the services export traces directly to Zipkin by https://github.com/openzipkin-contrib/zipkin-otel.
   otel-collector:
     image: otel/opentelemetry-collector:0.141.0@sha256:b54b114431b2aa031c28f590507b4a17daabd59a4d797eb7fddd7988b4d3e3ea
     command: ["--config=/etc/otel-collector-config.yaml"]
