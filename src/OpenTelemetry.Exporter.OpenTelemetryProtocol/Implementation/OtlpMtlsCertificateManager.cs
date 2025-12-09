@@ -233,12 +233,16 @@ internal static class OtlpMtlsCertificateManager
             }
 
             // If the only error is an untrusted root, validate against our CA
-            if (sslPolicyErrors == SslPolicyErrors.RemoteCertificateChainErrors)
+            if (sslPolicyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
             {
                 // Add our CA certificate to the chain
                 chain.ChainPolicy.ExtraStore.Add(caCertificate);
                 chain.ChainPolicy.VerificationFlags =
                     X509VerificationFlags.AllowUnknownCertificateAuthority;
+                chain.ChainPolicy.CustomTrustStore.Add(caCertificate);
+                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                chain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
 
                 bool isValid = chain.Build(serverCert);
 
