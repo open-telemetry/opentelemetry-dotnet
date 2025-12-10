@@ -362,8 +362,8 @@ attributes will be exported when
 variable will be set to `true`.
 
   **NOTE**: These attributes were removed in [1.6.0-rc.1](#160-rc1) release in
-  order to support stable release of OTLP Log Exporter. The attributes will now be
-  available via environment variable mentioned above.
+  order to support stable release of OTLP Log Exporter. The attributes will now
+  be available via environment variable mentioned above.
   ([#4892](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4892))
 
 * Added ability to export attributes corresponding to `LogRecord.EventId.Id` as

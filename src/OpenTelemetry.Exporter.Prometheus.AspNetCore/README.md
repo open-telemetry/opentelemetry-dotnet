@@ -24,7 +24,8 @@ to scrape.
 > This exporter does not support Exemplars. For using Exemplars, use the [OTLP
 Exporter](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md) and use a
 component like OTel Collector to expose metrics (with exemplars) to Prometheus.
-This [tutorial](../../docs/metrics/exemplars/README.md) shows one way how to do that.
+This [tutorial](../../docs/metrics/exemplars/README.md) shows one way how to do
+that.
 
 ## Prerequisite
 

@@ -6,9 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* This package is deprecated and it will stop receiving any updates in December 2026.
-  Zipkin already supports OTLP ingestion. Change your exporter to
-  `OpenTelemetry.Exporter.OpenTelemetryProtocol` as stated in the
+* This package is deprecated and it will stop receiving any updates in
+  December 2026. Zipkin already supports OTLP ingestion. Change your exporter
+  to `OpenTelemetry.Exporter.OpenTelemetryProtocol` as stated in the
   [Deprecating Zipkin Exporter blog post](https://opentelemetry.io/blog/2025/deprecating-zipkin-exporters/).
   ([#6750](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6750))
 
@@ -124,8 +124,9 @@ Released 2024-Apr-02
 
 Released 2024-Mar-27
 
-* Zipkin tags used for Instrumentation Library changed from `otel.library.name` and
-  `otel.library.version` to `otel.scope.name` and `otel.scope.version` respectively.
+* Zipkin tags used for Instrumentation Library changed from `otel.library.name`
+  and `otel.library.version` to `otel.scope.name` and `otel.scope.version`
+  respectively.
   Old versions of attributes are deprecated, but still exported
   for [backward compatibility](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.31.0/specification/common/mapping-to-non-otlp.md#instrumentationscope).
   ([#5473](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5473))
