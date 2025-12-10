@@ -42,8 +42,8 @@ scenario. Let's say we have a producer activity (say with ID S1 in Trace T1) tha
 produces a message and a consumer activity (say with ID S2 in Trace T2)  that
 consumes the message.
 
-Now, let's say that the producing activity S1 in trace T1 is sampled, say using the
-decision of a parent based sampler. Now, let's say that the activity S2 in trace
+Now, let's say that the producing activity S1 in trace T1 is sampled, say using
+the decision of a parent based sampler. Now, let's say that the activity S2 in trace
 T2 is not sampled based on the parent based sampler decision for T2. However,
 since this activity S2 in T2 is linked to the producing activity (S1 in T1) that
 is sampled, this mechanism ensures that the consuming activity (S2 in T2) will

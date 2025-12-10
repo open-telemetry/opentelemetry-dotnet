@@ -10,8 +10,8 @@ ConsoleExporter supports exporting logs, metrics and traces.
 > This exporter is intended for debugging and learning purposes. It is not
   recommended for production use. The output format is not standardized and can
   change at any time.
-  If a standardized format for exporting telemetry to stdout is desired, upvote on
-  [this feature request](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5920).
+  If a standardized format for exporting telemetry to stdout is desired, upvote
+  on [this feature request](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5920).
 
 ## Installation
 
