@@ -453,11 +453,11 @@ or reader
   The following environment variables can be used to configure mTLS
   (mutual TLS) authentication (.NET 8.0+ only):
 
-  | Environment variable                             | `OtlpMtlsOptions` property    | Description                           |
-  | -------------------------------------------------| ----------------------------- | ------------------------------------- |
-  | `OTEL_EXPORTER_OTLP_CERTIFICATE`                 | `CaCertificatePath`           | Path to CA certificate file (PEM)     |
-  | `OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE`          | `ClientCertificatePath`       | Path to client certificate file (PEM) |
-  | `OTEL_EXPORTER_OTLP_CLIENT_KEY`                  | `ClientKeyPath`               | Path to client private key file (PEM) |
+  | Environment variable                             | Description                           |
+  | -------------------------------------------------| ------------------------------------- |
+  | `OTEL_EXPORTER_OTLP_CERTIFICATE`                 | Path to CA certificate file (PEM)     |
+  | `OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE`          | Path to client certificate file (PEM) |
+  | `OTEL_EXPORTER_OTLP_CLIENT_KEY`                  | Path to client private key file (PEM) |
 
 * Logs:
 
