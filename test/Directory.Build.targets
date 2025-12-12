@@ -5,11 +5,18 @@
   <ItemGroup Condition="'$(ReferenceCoyotePackages)' == 'true'">
     <PackageReference Include="Microsoft.Coyote" />
 
-    <!-- System.Text.Json is an indirect reference through Coyote. This
-    reference is needed to mitigate:
-    https://github.com/advisories/GHSA-hh2w-p6rv-4g7w. Remove this if Coyote
-    publishes a fixed version. -->
-    <PackageReference Include="System.Text.Json" VersionOverride="8.0.6" />
+    <!--
+      System.Text.Json is an indirect reference through Coyote which flags
+      the GitHub Security Advisories listed below. However, if we reference
+      System.Text.Json directly, the .NET 10 SDK will generate a NU1510
+      warning that the package reference is redundant and will be pruned,
+      so instead just suppress the advisories as the in-box version will
+      be selected and will be a patched version with no vulnerability.
+
+      Remove this if Coyote publishes a fixed version.
+    -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-8g4q-xg66-9fp4" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-hh2w-p6rv-4g7w" />
   </ItemGroup>
 
 </Project>
