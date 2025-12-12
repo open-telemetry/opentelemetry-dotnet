@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added mTLS configuration support for the OTLP exporter (client cert/key and
+  CA certificate options).
+  ([#6343](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6343))
+
 * Added `UserAgentProductIdentifier` property to `OtlpExporterOptions` to allow
   custom product identifiers to be prepended to the User-Agent header. When set,
   the custom identifier is prepended with a space separator to the default

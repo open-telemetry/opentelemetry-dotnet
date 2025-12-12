@@ -258,4 +258,72 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     {
         this.InvalidConfigurationValue(key, value);
     }
+
+#if NET
+    [Event(26, Message = "{0} loaded successfully from '{1}'.", Level = EventLevel.Informational)]
+    internal void MtlsCertificateLoaded(string certificateType, string filePath) =>
+        this.WriteEvent(26, certificateType, filePath);
+
+    [Event(27, Message = "Failed to load {0} from '{1}'. Error: {2}", Level = EventLevel.Error)]
+    internal void MtlsCertificateLoadFailed(
+        string certificateType,
+        string filePath,
+        string error) => this.WriteEvent(27, certificateType, filePath, error);
+
+    [Event(28, Message = "{0} file not found at path: '{1}'.", Level = EventLevel.Error)]
+    internal void MtlsCertificateFileNotFound(string certificateType, string filePath) =>
+        this.WriteEvent(28, certificateType, filePath);
+
+    [Event(
+        29,
+        Message = "{0} chain validation failed for certificate '{1}'. Errors: {2}",
+        Level = EventLevel.Error)]
+    internal void MtlsCertificateChainValidationFailed(
+        string certificateType,
+        string subject,
+        string errors) => this.WriteEvent(29, certificateType, subject, errors);
+
+    [Event(
+        30,
+        Message = "{0} chain validated successfully for certificate '{1}'.",
+        Level = EventLevel.Informational)]
+    internal void MtlsCertificateChainValidated(string certificateType, string subject) =>
+        this.WriteEvent(30, certificateType, subject);
+
+    [Event(
+        31,
+        Message = "Server certificate validated successfully for '{0}'.",
+        Level = EventLevel.Informational)]
+    internal void MtlsServerCertificateValidated(string subject) => this.WriteEvent(31, subject);
+
+    [Event(
+        32,
+        Message = "Server certificate validation failed for '{0}'. Errors: {1}",
+        Level = EventLevel.Error)]
+    internal void MtlsServerCertificateValidationFailed(string subject, string errors) =>
+        this.WriteEvent(32, subject, errors);
+
+    [Event(
+        33,
+        Message = "mTLS configuration enabled. Client certificate: '{0}'.",
+        Level = EventLevel.Informational)]
+    internal void MtlsConfigurationEnabled(string clientCertificateSubject) =>
+        this.WriteEvent(33, clientCertificateSubject);
+
+    [NonEvent]
+    internal void MtlsHttpClientCreationFailed(Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.MtlsHttpClientCreationFailed(ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        34,
+        Message = "Failed to create mTLS HttpClient. Exception: {0}",
+        Level = EventLevel.Error)]
+    internal void MtlsHttpClientCreationFailed(string exception) =>
+        this.WriteEvent(34, exception);
+#endif
 }
