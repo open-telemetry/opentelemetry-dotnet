@@ -13,7 +13,7 @@ jobs:
   add-labels-on-issues:
     permissions:
       issues: write
-    if: github.event_name == 'issues' && !github.event.issue.pull_request
+    if: github.event.repository.fork == false && github.event_name == 'issues' && !github.event.issue.pull_request
 
     runs-on: ubuntu-24.04
 
@@ -36,7 +36,7 @@ jobs:
   add-labels-on-pull-requests:
     permissions:
       pull-requests: write
-    if: github.event_name == 'pull_request_target'
+    if: github.event.repository.fork == false && github.event_name == 'pull_request_target'
 
     runs-on: ubuntu-24.04
 
