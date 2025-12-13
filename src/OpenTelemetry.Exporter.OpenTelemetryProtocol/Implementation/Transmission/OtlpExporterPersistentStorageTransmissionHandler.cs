@@ -51,7 +51,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
     protected override bool OnSubmitRequestFailure(byte[] request, int contentLength, ExportClientResponse response)
     {
         Debug.Assert(request != null, "request was null");
-        return RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out _) && this.persistentBlobProvider.TryCreateBlob(request!, out _);
+        return RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, 0, out _) && this.persistentBlobProvider.TryCreateBlob(request!, out _);
     }
 
     protected override void OnShutdown(int timeoutMilliseconds)
@@ -127,7 +127,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
                     if (blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
                     {
                         var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
-                        if (this.TryRetryRequest(data, data.Length, deadlineUtc, out var response) || !RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out var retryInfo))
+                        if (this.TryRetryRequest(data, data.Length, deadlineUtc, out var response) || !RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, 0, out var retryInfo))
                         {
                             blob.TryDelete();
                         }
