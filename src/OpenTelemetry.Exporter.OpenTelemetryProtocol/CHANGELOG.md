@@ -28,7 +28,7 @@ Notes](../../RELEASENOTES.md).
   histogram instruments. Valid values are `explicit_bucket_histogram` (default)
   and `base2_exponential_bucket_histogram`. Explicit views configured via
   `AddView` take precedence over this setting.
-  ([#](https://github.com/open-telemetry/opentelemetry-dotnet/pull/))
+  ([#6778](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6778))
 
 ## 1.14.0
 
