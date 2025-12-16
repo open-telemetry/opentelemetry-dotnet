@@ -13,12 +13,51 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Seri
 
 public static class ProtobufOtlpMetricSerializerTests
 {
+    private const string HistogramName = "histogram";
+
     [Fact]
     public static async Task WriteMetricsData_Serializes_Metrics_Correctly()
     {
         // Arrange
         var metrics = GenerateMetrics();
 
+        // Act and Assert
+        await WriteMetricsAndAssertSnapshot(metrics);
+    }
+
+    [Fact]
+    public static async Task WriteMetricsData_Serializes_Metrics_With_Explicit_Boundaries()
+    {
+        // Arrange
+        var metrics = GenerateMetrics((builder) =>
+        {
+            builder.AddView(
+                instrumentName: HistogramName,
+                new ExplicitBucketHistogramConfiguration { Boundaries = [1, 2, 4, 8, 16] });
+        });
+
+        // Act and Assert
+        await WriteMetricsAndAssertSnapshot(metrics);
+    }
+
+    [Fact]
+    public static async Task WriteMetricsData_Serializes_Metrics_With_No_Boundaries()
+    {
+        // Arrange
+        var metrics = GenerateMetrics((builder) =>
+        {
+            builder.AddView(
+                instrumentName: HistogramName,
+                new ExplicitBucketHistogramConfiguration { Boundaries = [] });
+        });
+
+        // Act and Assert
+        await WriteMetricsAndAssertSnapshot(metrics);
+    }
+
+    private static async Task WriteMetricsAndAssertSnapshot(Batch<Metric> metrics)
+    {
+        // Arrange
         var attributes = new Dictionary<string, object>
         {
             ["service.name"] = "OpenTelemetry-DotNet",
@@ -54,7 +93,7 @@ public static class ProtobufOtlpMetricSerializerTests
             .UseDirectory("snapshots");
     }
 
-    private static Batch<Metric> GenerateMetrics()
+    private static Batch<Metric> GenerateMetrics(Action<MeterProviderBuilder>? configure = null)
     {
         // Arrange
         Batch<Metric> metrics = default;
@@ -94,6 +133,8 @@ public static class ProtobufOtlpMetricSerializerTests
                     experimentalOptions,
                     configureExporterInstance: (_) => exporter));
 
+            configure?.Invoke(builder);
+
             using var meterProvider = builder.Build();
             using var meter = new Meter(meterName);
 
@@ -103,7 +144,7 @@ public static class ProtobufOtlpMetricSerializerTests
             var gauge = meter.CreateGauge<int>("gauge");
             gauge.Record(42);
 
-            var histogram = meter.CreateHistogram<int>("histogram");
+            var histogram = meter.CreateHistogram<int>(HistogramName);
             histogram.Record(100);
 
             Assert.True(meterProvider.ForceFlush());
