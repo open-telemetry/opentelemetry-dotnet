@@ -38,7 +38,7 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
                     throw new ArgumentException($"Histogram boundaries are invalid. Histogram boundaries must be in ascending order with distinct values.", nameof(value));
                 }
 
-                this.CopiedBoundaries = value.ToArray();
+                this.CopiedBoundaries = [.. value];
             }
             else
             {

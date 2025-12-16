@@ -102,7 +102,7 @@ internal static class EventSourceTestHelper
         string expectedMessage = eventArguments.Length == 0
             ? GetEventAttribute(eventMethod).Message!
             : string.Format(CultureInfo.InvariantCulture, GetEventAttribute(eventMethod).Message!, eventArguments);
-        string actualMessage = string.Format(CultureInfo.InvariantCulture, actualEvent.Message!, actualEvent.Payload!.ToArray());
+        string actualMessage = string.Format(CultureInfo.InvariantCulture, actualEvent.Message!, [.. actualEvent.Payload!]);
         AssertEqual(nameof(VerifyEventMessage), expectedMessage, actualMessage);
     }
 
