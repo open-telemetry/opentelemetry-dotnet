@@ -43,6 +43,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Benchmarks" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="MockOpenTelemetryCollector" PublicKey="$(StrongNamePublicKey)" />
+    <InternalsVisibleTo Include="OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests" PublicKey="$(StrongNamePublicKey)" />
   </ItemGroup>
 
