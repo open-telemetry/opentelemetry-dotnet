@@ -57,7 +57,7 @@ public abstract partial class MetricReader
         // Apply default histogram aggregation if configured
         if (this.DefaultHistogramAggregation.HasValue)
         {
-            metricStreamConfiguration = this.CreateDefaultHistogramConfiguration(instrument);
+            metricStreamConfiguration = this.CreateDefaultHistogramConfiguration(instrument!);
         }
 
         var metricStreamIdentity = new MetricStreamIdentity(instrument!, metricStreamConfiguration);
@@ -132,7 +132,7 @@ public abstract partial class MetricReader
                 // Apply default histogram aggregation if no explicit view is provided
                 if (metricStreamConfig == null && this.DefaultHistogramAggregation.HasValue)
                 {
-                    metricStreamConfig = this.CreateDefaultHistogramConfiguration(instrument);
+                    metricStreamConfig = this.CreateDefaultHistogramConfiguration(instrument!);
                 }
 
                 var metricStreamIdentity = new MetricStreamIdentity(instrument!, metricStreamConfig);
