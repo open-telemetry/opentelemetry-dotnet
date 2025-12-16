@@ -23,6 +23,13 @@ Notes](../../RELEASENOTES.md).
 * Added support for `Meter.TelemetrySchemaUrl` property.
   ([#6731](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6731))
 
+* Added support for `OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION`
+  environment variable to configure the default histogram aggregation for
+  histogram instruments. Valid values are `explicit_bucket_histogram` (default)
+  and `base2_exponential_bucket_histogram`. Explicit views configured via
+  `AddView` take precedence over this setting.
+  ([#](https://github.com/open-telemetry/opentelemetry-dotnet/pull/))
+
 ## 1.14.0
 
 Released 2025-Nov-12

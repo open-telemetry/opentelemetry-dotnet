@@ -23,6 +23,7 @@ internal static class PeriodicExportingMetricReaderHelper
         var metricReader = new PeriodicExportingMetricReader(exporter, exportInterval, exportTimeout)
         {
             TemporalityPreference = options.TemporalityPreference,
+            DefaultHistogramAggregation = options.DefaultHistogramAggregation,
         };
 
         return metricReader;

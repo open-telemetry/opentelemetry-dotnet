@@ -971,6 +971,186 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    [Theory]
+    [InlineData("explicit_bucket_histogram", MetricReaderHistogramAggregation.ExplicitBucketHistogram)]
+    [InlineData("base2_exponential_bucket_histogram", MetricReaderHistogramAggregation.Base2ExponentialBucketHistogram)]
+    [InlineData("invalid", null)]
+    internal void TestDefaultHistogramAggregationUsingConfiguration(string configValue, MetricReaderHistogramAggregation? expectedAggregation)
+    {
+        var testExecuted = false;
+
+        var configData = new Dictionary<string, string?> { [OtlpSpecConfigDefinitions.MetricsDefaultHistogramAggregationEnvVarName] = configValue };
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configData)
+            .Build();
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<IConfiguration>(configuration);
+
+                services.PostConfigure<MetricReaderOptions>(o =>
+                {
+                    testExecuted = true;
+                    Assert.Equal(expectedAggregation, o.DefaultHistogramAggregation);
+                });
+            })
+            .AddOtlpExporter()
+            .Build();
+
+        Assert.True(testExecuted);
+    }
+
+    [Theory]
+    [InlineData("explicit_bucket_histogram", MetricReaderHistogramAggregation.ExplicitBucketHistogram)]
+    [InlineData("base2_exponential_bucket_histogram", MetricReaderHistogramAggregation.Base2ExponentialBucketHistogram)]
+    [InlineData("invalid", null)]
+    internal void TestDefaultHistogramAggregationUsingEnvVar(string configValue, MetricReaderHistogramAggregation? expectedAggregation)
+    {
+        try
+        {
+            Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitions.MetricsDefaultHistogramAggregationEnvVarName, configValue);
+
+            var testExecuted = false;
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.PostConfigure<MetricReaderOptions>(o =>
+                    {
+                        testExecuted = true;
+                        Assert.Equal(expectedAggregation, o.DefaultHistogramAggregation);
+                    });
+                })
+                .AddOtlpExporter()
+                .Build();
+
+            Assert.True(testExecuted);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitions.MetricsDefaultHistogramAggregationEnvVarName, null);
+        }
+    }
+
+    [Theory]
+    [InlineData(null, false)]
+    [InlineData(MetricReaderHistogramAggregation.ExplicitBucketHistogram, false)]
+    [InlineData(MetricReaderHistogramAggregation.Base2ExponentialBucketHistogram, true)]
+    internal void TestDefaultHistogramAggregationAppliedToHistograms(MetricReaderHistogramAggregation? aggregation, bool expectExponential)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.DefaultHistogramAggregation = aggregation;
+            })
+            .Build();
+
+        var histogram = meter.CreateHistogram<long>("test_histogram");
+        histogram.Record(100);
+        histogram.Record(200);
+
+        meterProvider.ForceFlush();
+
+        var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count);
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+
+        var resourceMetric = request.ResourceMetrics.Single();
+        var scopeMetrics = resourceMetric.ScopeMetrics.Single();
+        var actual = scopeMetrics.Metrics.Single();
+
+        if (expectExponential)
+        {
+            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.ExponentialHistogram, actual.DataCase);
+            Assert.NotNull(actual.ExponentialHistogram);
+            Assert.Null(actual.Histogram);
+        }
+        else
+        {
+            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Histogram, actual.DataCase);
+            Assert.NotNull(actual.Histogram);
+            Assert.Null(actual.ExponentialHistogram);
+        }
+    }
+
+    [Fact]
+    internal void TestDefaultHistogramAggregationOverriddenByExplicitView()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                // Set default to exponential
+                metricReaderOptions.DefaultHistogramAggregation = MetricReaderHistogramAggregation.Base2ExponentialBucketHistogram;
+            })
+
+            // Explicit view should override the default
+            .AddView("test_histogram", new ExplicitBucketHistogramConfiguration())
+            .Build();
+
+        var histogram = meter.CreateHistogram<long>("test_histogram");
+        histogram.Record(100);
+        histogram.Record(200);
+
+        meterProvider.ForceFlush();
+
+        var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count);
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+
+        var resourceMetric = request.ResourceMetrics.Single();
+        var scopeMetrics = resourceMetric.ScopeMetrics.Single();
+        var actual = scopeMetrics.Metrics.Single();
+
+        // Should use explicit bucket histogram despite default being exponential
+        Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Histogram, actual.DataCase);
+        Assert.NotNull(actual.Histogram);
+        Assert.Null(actual.ExponentialHistogram);
+    }
+
+    [Fact]
+    internal void TestDefaultHistogramAggregationAppliedWhenViewsConfiguredButDontMatch()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                // Set default to exponential
+                metricReaderOptions.DefaultHistogramAggregation = MetricReaderHistogramAggregation.Base2ExponentialBucketHistogram;
+            })
+
+            // Add a view that doesn't match our histogram
+            .AddView("counter_*", new MetricStreamConfiguration())
+            .Build();
+
+        var histogram = meter.CreateHistogram<long>("test_histogram");
+        histogram.Record(100);
+        histogram.Record(200);
+
+        meterProvider.ForceFlush();
+
+        var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count);
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+
+        var resourceMetric = request.ResourceMetrics.Single();
+        var scopeMetrics = resourceMetric.ScopeMetrics.Single();
+        var actual = scopeMetrics.Metrics.Single();
+
+        // Should use exponential histogram from default (views configured but didn't match)
+        Assert.Equal(OtlpMetrics.Metric.DataOneofCase.ExponentialHistogram, actual.DataCase);
+        Assert.NotNull(actual.ExponentialHistogram);
+        Assert.Null(actual.Histogram);
+    }
+
     private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar?> getExemplarFunc, T state)
     {
         var exemplar = getExemplarFunc(state);

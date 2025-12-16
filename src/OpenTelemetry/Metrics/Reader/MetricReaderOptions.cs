@@ -48,4 +48,9 @@ public class MetricReaderOptions
             this.periodicExportingMetricReaderOptions = value;
         }
     }
+
+    /// <summary>
+    /// Gets or sets the default histogram aggregation.
+    /// </summary>
+    internal MetricReaderHistogramAggregation? DefaultHistogramAggregation { get; set; }
 }
