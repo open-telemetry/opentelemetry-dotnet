@@ -409,7 +409,7 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition,
                     in exemplar,
                     ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Exemplars,
-                    static (byte[] buffer, int writePosition, in Exemplar exemplar) => ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Value_As_Int, (ulong)exemplar.LongValue));
+                    static (buffer, writePosition, in exemplar) => ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Value_As_Int, (ulong)exemplar.LongValue));
             }
         }
 
@@ -472,7 +472,7 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition,
                     in exemplar,
                     fieldNumber,
-                    static (byte[] buffer, int writePosition, in Exemplar exemplar) => ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Value_As_Double, exemplar.DoubleValue));
+                    static (buffer, writePosition, in exemplar) => ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Value_As_Double, exemplar.DoubleValue));
             }
         }
 
@@ -516,7 +516,10 @@ internal static class ProtobufOtlpMetricSerializer
     {
         writePosition = WriteBucketCounts(buffer, writePosition, buckets.BucketCounts);
 
-        writePosition = WriteExplicitBounds(buffer, writePosition, buckets.ExplicitBounds!);
+        if (buckets.ExplicitBounds is { } explicitBounds)
+        {
+            writePosition = WriteExplicitBounds(buffer, writePosition, explicitBounds);
+        }
 
         return writePosition;
 
