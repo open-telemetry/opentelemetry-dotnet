@@ -23,7 +23,7 @@ Notes](../../RELEASENOTES.md).
 * Added support for `Meter.TelemetrySchemaUrl` property.
   ([#6731](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6731))
 
-* Fix `NullReferenceException` when no bucket boundaries configured for a view
+* Fix `NullReferenceException` when no bucket boundaries configured for a view.
   ([#6773](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6773))
 
 ## 1.14.0
