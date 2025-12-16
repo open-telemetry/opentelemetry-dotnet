@@ -1007,30 +1007,23 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     [InlineData("invalid", null)]
     internal void TestDefaultHistogramAggregationUsingEnvVar(string configValue, MetricReaderHistogramAggregation? expectedAggregation)
     {
-        try
-        {
-            Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitions.MetricsDefaultHistogramAggregationEnvVarName, configValue);
+        using var scope = new EnvironmentVariableScope(OtlpSpecConfigDefinitions.MetricsDefaultHistogramAggregationEnvVarName, configValue);
 
-            var testExecuted = false;
+        var testExecuted = false;
 
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .ConfigureServices(services =>
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.PostConfigure<MetricReaderOptions>(o =>
                 {
-                    services.PostConfigure<MetricReaderOptions>(o =>
-                    {
-                        testExecuted = true;
-                        Assert.Equal(expectedAggregation, o.DefaultHistogramAggregation);
-                    });
-                })
-                .AddOtlpExporter()
-                .Build();
+                    testExecuted = true;
+                    Assert.Equal(expectedAggregation, o.DefaultHistogramAggregation);
+                });
+            })
+            .AddOtlpExporter()
+            .Build();
 
-            Assert.True(testExecuted);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable(OtlpSpecConfigDefinitions.MetricsDefaultHistogramAggregationEnvVarName, null);
-        }
+        Assert.True(testExecuted);
     }
 
     [Theory]
@@ -1056,12 +1049,15 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         meterProvider.ForceFlush();
 
-        var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count);
-        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        OtlpCollector.ExportMetricsServiceRequest request;
+        using (var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count))
+        {
+            request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        }
 
-        var resourceMetric = request.ResourceMetrics.Single();
-        var scopeMetrics = resourceMetric.ScopeMetrics.Single();
-        var actual = scopeMetrics.Metrics.Single();
+        var resourceMetric = Assert.Single(request.ResourceMetrics);
+        var scopeMetrics = Assert.Single(resourceMetric.ScopeMetrics);
+        var actual = Assert.Single(scopeMetrics.Metrics);
 
         if (expectExponential)
         {
@@ -1101,12 +1097,15 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         meterProvider.ForceFlush();
 
-        var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count);
-        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        OtlpCollector.ExportMetricsServiceRequest request;
+        using (var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count))
+        {
+            request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        }
 
-        var resourceMetric = request.ResourceMetrics.Single();
-        var scopeMetrics = resourceMetric.ScopeMetrics.Single();
-        var actual = scopeMetrics.Metrics.Single();
+        var resourceMetric = Assert.Single(request.ResourceMetrics);
+        var scopeMetrics = Assert.Single(resourceMetric.ScopeMetrics);
+        var actual = Assert.Single(scopeMetrics.Metrics);
 
         // Should use explicit bucket histogram despite default being exponential
         Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Histogram, actual.DataCase);
@@ -1138,12 +1137,15 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         meterProvider.ForceFlush();
 
-        var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count);
-        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        OtlpCollector.ExportMetricsServiceRequest request;
+        using (var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count))
+        {
+            request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+        }
 
-        var resourceMetric = request.ResourceMetrics.Single();
-        var scopeMetrics = resourceMetric.ScopeMetrics.Single();
-        var actual = scopeMetrics.Metrics.Single();
+        var resourceMetric = Assert.Single(request.ResourceMetrics);
+        var scopeMetrics = Assert.Single(resourceMetric.ScopeMetrics);
+        var actual = Assert.Single(scopeMetrics.Metrics);
 
         // Should use exponential histogram from default (views configured but didn't match)
         Assert.Equal(OtlpMetrics.Metric.DataOneofCase.ExponentialHistogram, actual.DataCase);

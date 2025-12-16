@@ -39,17 +39,15 @@ internal static class OtlpServiceCollectionExtensions
                 // The spec defines snake_case values (explicit_bucket_histogram, base2_exponential_bucket_histogram).
                 // Using direct string comparison ensures we strictly validate against spec-defined values and fail
                 // gracefully for invalid inputs, rather than attempting to parse arbitrary strings to enum values.
+                // Case-insensitive comparison is used for flexibility, though the spec uses lowercase.
                 var otlpDefaultHistogramAggregation = config[OtlpSpecConfigDefinitions.MetricsDefaultHistogramAggregationEnvVarName];
-                if (!string.IsNullOrWhiteSpace(otlpDefaultHistogramAggregation))
+                if (string.Equals(otlpDefaultHistogramAggregation, "base2_exponential_bucket_histogram", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (otlpDefaultHistogramAggregation!.Equals("base2_exponential_bucket_histogram", StringComparison.OrdinalIgnoreCase))
-                    {
-                        readerOptions.DefaultHistogramAggregation = MetricReaderHistogramAggregation.Base2ExponentialBucketHistogram;
-                    }
-                    else if (otlpDefaultHistogramAggregation.Equals("explicit_bucket_histogram", StringComparison.OrdinalIgnoreCase))
-                    {
-                        readerOptions.DefaultHistogramAggregation = MetricReaderHistogramAggregation.ExplicitBucketHistogram;
-                    }
+                    readerOptions.DefaultHistogramAggregation = MetricReaderHistogramAggregation.Base2ExponentialBucketHistogram;
+                }
+                else if (string.Equals(otlpDefaultHistogramAggregation, "explicit_bucket_histogram", StringComparison.OrdinalIgnoreCase))
+                {
+                    readerOptions.DefaultHistogramAggregation = MetricReaderHistogramAggregation.ExplicitBucketHistogram;
                 }
             });
     }
