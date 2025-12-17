@@ -45,7 +45,7 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\EnvironmentVariableScope.cs" Link="Includes\EnvironmentVariableScope.cs" />
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\DelegatingExporter.cs" Link="Includes\DelegatingExporter.cs" />    
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\DelegatingExporter.cs" Link="Includes\DelegatingExporter.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="Includes\SkipUnlessEnvVarFoundTheoryAttribute.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestActivityProcessor.cs" Link="Includes\TestActivityProcessor.cs" />
