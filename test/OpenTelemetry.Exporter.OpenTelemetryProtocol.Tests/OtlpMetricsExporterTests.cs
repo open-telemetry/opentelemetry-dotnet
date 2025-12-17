@@ -1034,31 +1034,32 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter(Utils.GetCurrentMethodName());
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+        using (var meter = new Meter(Utils.GetCurrentMethodName()))
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
                 metricReaderOptions.DefaultHistogramAggregation = aggregation;
             })
-            .Build();
-
-        var histogram = meter.CreateHistogram<long>("test_histogram");
-        histogram.Record(100);
-        histogram.Record(200);
-
-        meterProvider.ForceFlush();
-
-        var metric = Assert.Single(exportedItems);
-        Assert.Equal("test_histogram", metric.Name);
-
-        if (expectExponential)
+            .Build())
         {
-            Assert.Equal(MetricType.ExponentialHistogram, metric.MetricType);
-        }
-        else
-        {
-            Assert.Equal(MetricType.Histogram, metric.MetricType);
+            var histogram = meter.CreateHistogram<long>("test_histogram");
+            histogram.Record(100);
+            histogram.Record(200);
+
+            Assert.True(meterProvider.ForceFlush());
+
+            var metric = Assert.Single(exportedItems);
+            Assert.Equal("test_histogram", metric.Name);
+
+            if (expectExponential)
+            {
+                Assert.Equal(MetricType.ExponentialHistogram, metric.MetricType);
+            }
+            else
+            {
+                Assert.Equal(MetricType.Histogram, metric.MetricType);
+            }
         }
     }
 
@@ -1067,8 +1068,8 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter(Utils.GetCurrentMethodName());
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+        using (var meter = new Meter(Utils.GetCurrentMethodName()))
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1078,19 +1079,20 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
             // Explicit view should override the default
             .AddView("test_histogram", new ExplicitBucketHistogramConfiguration())
-            .Build();
+            .Build())
+        {
+            var histogram = meter.CreateHistogram<long>("test_histogram");
+            histogram.Record(100);
+            histogram.Record(200);
 
-        var histogram = meter.CreateHistogram<long>("test_histogram");
-        histogram.Record(100);
-        histogram.Record(200);
+            Assert.True(meterProvider.ForceFlush());
 
-        meterProvider.ForceFlush();
+            var metric = Assert.Single(exportedItems);
+            Assert.Equal("test_histogram", metric.Name);
 
-        var metric = Assert.Single(exportedItems);
-        Assert.Equal("test_histogram", metric.Name);
-
-        // Should use explicit bucket histogram despite default being exponential
-        Assert.Equal(MetricType.Histogram, metric.MetricType);
+            // Should use explicit bucket histogram despite default being exponential
+            Assert.Equal(MetricType.Histogram, metric.MetricType);
+        }
     }
 
     [Fact]
@@ -1098,8 +1100,8 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     {
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter(Utils.GetCurrentMethodName());
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+        using (var meter = new Meter(Utils.GetCurrentMethodName()))
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1109,19 +1111,20 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
             // Add a view that doesn't match our histogram
             .AddView("counter_*", new MetricStreamConfiguration())
-            .Build();
+            .Build())
+        {
+            var histogram = meter.CreateHistogram<long>("test_histogram");
+            histogram.Record(100);
+            histogram.Record(200);
 
-        var histogram = meter.CreateHistogram<long>("test_histogram");
-        histogram.Record(100);
-        histogram.Record(200);
+            Assert.True(meterProvider.ForceFlush());
 
-        meterProvider.ForceFlush();
+            var metric = Assert.Single(exportedItems);
+            Assert.Equal("test_histogram", metric.Name);
 
-        var metric = Assert.Single(exportedItems);
-        Assert.Equal("test_histogram", metric.Name);
-
-        // Should use exponential histogram from default (views configured but didn't match)
-        Assert.Equal(MetricType.ExponentialHistogram, metric.MetricType);
+            // Should use exponential histogram from default (views configured but didn't match)
+            Assert.Equal(MetricType.ExponentialHistogram, metric.MetricType);
+        }
     }
 
     private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar?> getExemplarFunc, T state)
