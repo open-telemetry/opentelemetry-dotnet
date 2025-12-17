@@ -93,7 +93,7 @@ jobs:
         # renovate: datasource=nuget depName=dotnet-validate
         DOTNET_VALIDATE_VERSION: '0.0.1-preview.537'
         # renovate: datasource=nuget depName=Meziantou.Framework.NuGetPackageValidation.Tool
-        MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION: '1.0.40'
+        MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION: '1.0.41'
       run: |
         dotnet tool install --global dotnet-validate --version ${env:DOTNET_VALIDATE_VERSION} --allow-roll-forward
         dotnet tool install --global Meziantou.Framework.NuGetPackageValidation.Tool --version ${env:MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION} --allow-roll-forward
