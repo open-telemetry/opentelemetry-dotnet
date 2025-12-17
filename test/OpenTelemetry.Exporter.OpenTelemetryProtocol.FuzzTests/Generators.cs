@@ -16,6 +16,24 @@ internal static class Generators
 {
     public static readonly ActivitySource TestActivitySource = new("Fuzz.ActivitySource", "1.0.0");
 
+    private static readonly Gen<ActivityStatusCode> ActivityStatusCodes = Gen.Elements(
+    [
+        ActivityStatusCode.Unset,
+        ActivityStatusCode.Ok,
+        ActivityStatusCode.Error,
+    ]);
+
+    private static readonly Gen<LogRecordSeverity> LogRecordSeverities = Gen.Elements(
+    [
+        LogRecordSeverity.Debug,
+        LogRecordSeverity.Error,
+        LogRecordSeverity.Fatal,
+        LogRecordSeverity.Info,
+        LogRecordSeverity.Trace,
+        LogRecordSeverity.Unspecified,
+        LogRecordSeverity.Warn,
+    ]);
+
     public static Arbitrary<SdkLimitOptions> SdkLimitOptionsArbitrary()
     {
         var gen = from spanAttributesLimit in Gen.Choose(0, 1000).Select(x => (int?)x)
@@ -43,7 +61,7 @@ internal static class Generators
     {
         var gen = Gen.Sized(size =>
         {
-            var activity = TestActivitySource.StartActivity($"TestActivity_{Guid.NewGuid():N}")!;
+            var activity = TestActivitySource.StartActivity($"TestActivity_{Guid.NewGuid():N}");
             if (activity == null)
             {
                 return Gen.Constant(new Activity("Fallback"));
@@ -84,9 +102,7 @@ internal static class Generators
                 activity.AddLink(new ActivityLink(context, linkTags));
             }
 
-            // Set status
-            var statusGen = Gen.Elements(ActivityStatusCode.Unset, ActivityStatusCode.Ok, ActivityStatusCode.Error);
-            activity.SetStatus(statusGen.Sample(size, 1).First());
+            activity.SetStatus(ActivityStatusCodes.Sample(size, 1).First());
 
             return Gen.Constant(activity);
         });
@@ -147,14 +163,18 @@ internal static class Generators
                     counter.Add(100 * i);
                 }
 
-                double gaugeValue = size;
-                var gauge = meter.CreateObservableGauge("test.gauge", () => gaugeValue++);
+                var gauge = meter.CreateGauge<double>("test.gauge");
+
+                for (int i = 0; i < size; i++)
+                {
+                    gauge.Record(0.1 * i);
+                }
 
                 var histogram = meter.CreateHistogram<int>("test.histogram");
 
                 for (int i = 0; i < size; i++)
                 {
-                    histogram.Record(200 * i);
+                    histogram.Record(300 * i);
                 }
 
                 meterProvider.ForceFlush();
@@ -177,8 +197,8 @@ internal static class Generators
         {
             var logRecord = LogRecordSharedPool.Current.Rent();
 
+            logRecord.Severity = LogRecordSeverities.Sample(size, 1).First();
             logRecord.Timestamp = DateTime.UtcNow;
-            logRecord.Severity = (LogRecordSeverity)(size % 7);
 
             // Add attributes
             var count = Math.Min(size, 50);
@@ -212,12 +232,5 @@ internal static class Generators
 
     public static Arbitrary<int> BufferSizeArbitrary() => Gen.Choose(64, 10 * 1024 * 1024).ToArbitrary();
 
-    public static void RegisterAll()
-    {
-        SdkLimitOptionsArbitrary();
-        ActivityArbitrary();
-        ResourceArbitrary();
-        LogRecordArbitrary();
-        ActivityBatchArbitrary();
-    }
+    public static Arbitrary<LogRecordSeverity> LogRecordSeverityArbitrary() => LogRecordSeverities.ToArbitrary();
 }

@@ -13,18 +13,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests;
 
 public class ProtobufOtlpLogSerializerTests
 {
-    static ProtobufOtlpLogSerializerTests()
-    {
-        Generators.RegisterAll();
-    }
-
     [Property(MaxTest = 100)]
     public Property SerializedDataNeverExceedsBufferSize() => Prop.ForAll(
         Generators.BufferSizeArbitrary(),
         Generators.SdkLimitOptionsArbitrary(),
-        (bufferSize, sdkLimits) =>
+        Generators.LogRecordSeverityArbitrary(),
+        (bufferSize, sdkLimits, severity) =>
         {
-            var logRecords = CreateLogRecords();
+            var logRecords = CreateLogRecords(severity);
 
             try
             {
@@ -56,9 +52,10 @@ public class ProtobufOtlpLogSerializerTests
     public Property WriteLogsDataReturnsNonNegativePosition() => Prop.ForAll(
         Generators.SdkLimitOptionsArbitrary(),
         Generators.ResourceArbitrary(),
-        (sdkLimits, resource) =>
+        Generators.LogRecordSeverityArbitrary(),
+        (sdkLimits, resource, severity) =>
         {
-            var logRecords = CreateLogRecords();
+            var logRecords = CreateLogRecords(severity);
 
             try
             {
@@ -117,9 +114,10 @@ public class ProtobufOtlpLogSerializerTests
     public Property BufferAutoResizesWhenNeeded() => Prop.ForAll(
         Generators.SdkLimitOptionsArbitrary(),
         Generators.ResourceArbitrary(),
-        (sdkLimits, resource) =>
+        Generators.LogRecordSeverityArbitrary(),
+        (sdkLimits, resource, severity) =>
         {
-            var logRecords = CreateLogRecords();
+            var logRecords = CreateLogRecords(severity);
 
             try
             {
@@ -152,9 +150,10 @@ public class ProtobufOtlpLogSerializerTests
     public Property SerializedOutputCanBeDeserialized() => Prop.ForAll(
         Generators.SdkLimitOptionsArbitrary(),
         Generators.ResourceArbitrary(),
-        (sdkLimits, resource) =>
+        Generators.LogRecordSeverityArbitrary(),
+        (sdkLimits, resource, severity) =>
         {
-            var logRecords = CreateLogRecords();
+            var logRecords = CreateLogRecords(severity);
 
             try
             {
@@ -181,10 +180,6 @@ public class ProtobufOtlpLogSerializerTests
 
                 return request != null && request.ResourceLogs.Count > 0;
             }
-            catch (Google.Protobuf.InvalidProtocolBufferException)
-            {
-                return false;
-            }
             catch (Exception ex) when (IsAllowedException(ex))
             {
                 return true;
@@ -197,13 +192,7 @@ public class ProtobufOtlpLogSerializerTests
 
     [Property(MaxTest = 50)]
     public Property WriteLogsDataHandlesVariousSeverityLevels() => Prop.ForAll(
-        Gen.Elements(
-            LogRecordSeverity.Trace,
-            LogRecordSeverity.Debug,
-            LogRecordSeverity.Info,
-            LogRecordSeverity.Warn,
-            LogRecordSeverity.Error,
-            LogRecordSeverity.Fatal).ToArbitrary(),
+        Generators.LogRecordSeverityArbitrary(),
         Generators.SdkLimitOptionsArbitrary(),
         (severity, sdkLimits) =>
         {
@@ -237,7 +226,7 @@ public class ProtobufOtlpLogSerializerTests
             }
         });
 
-    private static LogRecord[] CreateLogRecords()
+    private static LogRecord[] CreateLogRecords(LogRecordSeverity severity)
     {
         var logRecords = new List<LogRecord>();
 
@@ -246,7 +235,7 @@ public class ProtobufOtlpLogSerializerTests
             var logRecord = LogRecordSharedPool.Current.Rent();
 
             logRecord.Attributes = [new($"log.attribute.{i}", $"value_{i}")];
-            logRecord.Severity = (LogRecordSeverity)(i % 7);
+            logRecord.Severity = severity;
             logRecord.Timestamp = DateTime.UtcNow;
 
             logRecords.Add(logRecord);

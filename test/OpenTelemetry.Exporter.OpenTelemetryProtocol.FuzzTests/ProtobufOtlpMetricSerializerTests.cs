@@ -12,11 +12,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests;
 
 public class ProtobufOtlpMetricSerializerTests
 {
-    static ProtobufOtlpMetricSerializerTests()
-    {
-        Generators.RegisterAll();
-    }
-
     [Property(MaxTest = 100)]
     public Property SerializedDataNeverExceedsBufferSize() => Prop.ForAll(
         Generators.BatchMetricArbitrary(),

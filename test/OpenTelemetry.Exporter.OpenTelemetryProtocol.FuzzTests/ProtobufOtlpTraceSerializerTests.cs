@@ -14,7 +14,6 @@ public class ProtobufOtlpTraceSerializerTests
 {
     static ProtobufOtlpTraceSerializerTests()
     {
-        Generators.RegisterAll();
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
     }
