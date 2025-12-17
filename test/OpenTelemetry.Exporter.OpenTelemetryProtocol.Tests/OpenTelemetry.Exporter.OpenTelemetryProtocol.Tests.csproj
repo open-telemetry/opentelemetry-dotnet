@@ -44,13 +44,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\DelegatingExporter.cs" Link="Includes\DelegatingExporter.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\EnvironmentVariableScope.cs" Link="Includes\EnvironmentVariableScope.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\DelegatingExporter.cs" Link="Includes\DelegatingExporter.cs" />    
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="Includes\SkipUnlessEnvVarFoundTheoryAttribute.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestActivityProcessor.cs" Link="Includes\TestActivityProcessor.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="Includes\TestEventListener.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\Utils.cs" Link="Includes\Utils.cs" />
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\EnvironmentVariableScope.cs" Link="Includes\EnvironmentVariableScope.cs" />
   </ItemGroup>
 
   <ItemGroup>
