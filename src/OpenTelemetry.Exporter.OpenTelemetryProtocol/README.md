@@ -394,20 +394,24 @@ appBuilder.Services.Configure<LogRecordExportProcessorOptions>(
 ### MetricReaderOptions
 
 The `MetricReaderOptions` class may be used to configure reader settings for
-metrics:
+metrics (e.g. `TemporalityPreference` and `PeriodicExportingMetricReaderOptions`):
 
 ```csharp
 // Set via delegate using code:
 appBuilder.Services.AddOpenTelemetry()
     .WithMetrics(builder => builder.AddOtlpExporter((exporterOptions, readerOptions) =>
     {
+        readerOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
         readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
+        readerOptions.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds = 5_000;
     }));
 
 // Set via Options API using code:
 appBuilder.Services.Configure<MetricReaderOptions>(o =>
 {
+    o.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
     o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
+    o.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds = 5_000;
 });
 
 // Set via Options API using configuration:
