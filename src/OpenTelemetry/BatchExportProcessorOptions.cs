@@ -29,5 +29,4 @@ public class BatchExportProcessorOptions<T>
     /// Gets or sets the maximum batch size of every export. It must be smaller or equal to <see cref="MaxQueueSize"/>. The default value is 512.
     /// </summary>
     public int MaxExportBatchSize { get; set; } = BatchExportProcessor<T>.DefaultMaxExportBatchSize;
-
 }
