@@ -24,7 +24,6 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
 
     private readonly CircularBuffer<T> circularBuffer;
     private readonly BatchExportWorker<T> worker;
-    private readonly bool useThreads;
     private bool disposed;
 
     /// <summary>
@@ -47,7 +46,6 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
             ScheduledDelayMilliseconds = scheduledDelayMilliseconds,
             ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds,
             MaxExportBatchSize = maxExportBatchSize,
-            UseThreads = true,
         })
     {
     }
@@ -71,7 +69,6 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         this.ScheduledDelayMilliseconds = options?.ScheduledDelayMilliseconds ?? 0;
         this.ExporterTimeoutMilliseconds = options?.ExporterTimeoutMilliseconds ?? -1;
         this.MaxExportBatchSize = options?.MaxExportBatchSize ?? 0;
-        this.useThreads = options?.UseThreads ?? true;
 
         Guard.ThrowIfOutOfRange(this.MaxExportBatchSize, min: 1, max: maxQueueSize, maxName: nameof(options.MaxQueueSize));
         Guard.ThrowIfOutOfRange(this.ScheduledDelayMilliseconds, min: 1);
@@ -167,7 +164,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     {
 #if NET
         // Use task-based worker for browser platform where threading may be limited
-        if (ThreadingHelper.IsThreadingDisabled() || !this.useThreads)
+    if (ThreadingHelper.IsThreadingDisabled())
         {
             return new BatchExportTaskWorker<T>(
                 this.circularBuffer,

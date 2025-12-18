@@ -4,6 +4,7 @@
 #if !NETFRAMEWORK
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -13,8 +14,10 @@ public sealed class BatchLogRecordExportProcessorTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void StateValuesAndScopeBufferingTest(bool useThread)
+    public void StateValuesAndScopeBufferingTest(bool threadingDisabled)
     {
+        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(threadingDisabled);
+
         var scopeProvider = new LoggerExternalScopeProvider();
 
         List<LogRecord> exportedItems = new();
@@ -25,12 +28,10 @@ public sealed class BatchLogRecordExportProcessorTests
 #pragma warning restore CA2000 // Dispose objects before losing scope
             new()
             {
-                // Use the default values for the other parameters, but allow overriding useThreads
                 MaxQueueSize = BatchLogRecordExportProcessor.DefaultMaxQueueSize,
                 MaxExportBatchSize = BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
                 ExporterTimeoutMilliseconds = BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
                 ScheduledDelayMilliseconds = int.MaxValue,
-                UseThreads = useThread,
             });
 
         using var scope = scopeProvider.Push(exportedItems);
@@ -162,8 +163,10 @@ public sealed class BatchLogRecordExportProcessorTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void DisposeWithoutShutdown(bool useThread)
+    public void DisposeWithoutShutdown(bool threadingDisabled)
     {
+        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(threadingDisabled);
+
         var scopeProvider = new LoggerExternalScopeProvider();
 
         List<LogRecord> exportedItems = new();
@@ -174,12 +177,10 @@ public sealed class BatchLogRecordExportProcessorTests
 #pragma warning restore CA2000 // Dispose objects before losing scope
             new()
             {
-                // Use the default values for the other parameters, but allow overriding useThreads
                 MaxQueueSize = BatchLogRecordExportProcessor.DefaultMaxQueueSize,
                 MaxExportBatchSize = BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
                 ExporterTimeoutMilliseconds = BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
                 ScheduledDelayMilliseconds = int.MaxValue,
-                UseThreads = useThread,
             });
 
         processor.Dispose();

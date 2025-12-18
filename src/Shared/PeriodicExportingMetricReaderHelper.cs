@@ -12,14 +12,12 @@ internal static class PeriodicExportingMetricReaderHelper
         BaseExporter<Metric> exporter,
         MetricReaderOptions options,
         int defaultExportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
-        int defaultExportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds,
-        bool useThreads = true)
+        int defaultExportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
     {
         var periodicOptions = new PeriodicExportingMetricReaderOptions
         {
             ExportIntervalMilliseconds = options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds ?? defaultExportIntervalMilliseconds,
             ExportTimeoutMilliseconds = options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds ?? defaultExportTimeoutMilliseconds,
-            UseThreads = useThreads,
         };
 
         var metricReader = new PeriodicExportingMetricReader(exporter, periodicOptions)

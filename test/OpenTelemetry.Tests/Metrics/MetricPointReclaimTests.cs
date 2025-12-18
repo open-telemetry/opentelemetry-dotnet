@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -14,8 +15,10 @@ public class MetricPointReclaimTests
     [InlineData(true, false)]
     [InlineData(false, true)]
     [InlineData(true, true)]
-    public void MeasurementsAreNotDropped(bool emitMetricWithNoDimensions, bool useThreads)
+    public void MeasurementsAreNotDropped(bool emitMetricWithNoDimensions, bool threadingDisabled)
     {
+        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(threadingDisabled);
+
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var counter = meter.CreateCounter<long>("MyFruitCounter");
 
@@ -28,7 +31,6 @@ public class MetricPointReclaimTests
             new()
             {
                 ExportIntervalMilliseconds = 10,
-                UseThreads = useThreads,
             })
         {
             TemporalityPreference = MetricReaderTemporalityPreference.Delta,
