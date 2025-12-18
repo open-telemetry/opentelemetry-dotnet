@@ -52,5 +52,4 @@ public class PeriodicExportingMetricReaderOptions
     /// associated with the metric reader.
     /// </summary>
     public int? ExportTimeoutMilliseconds { get; set; }
-
 }
