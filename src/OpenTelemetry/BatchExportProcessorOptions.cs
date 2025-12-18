@@ -30,8 +30,4 @@ public class BatchExportProcessorOptions<T>
     /// </summary>
     public int MaxExportBatchSize { get; set; } = BatchExportProcessor<T>.DefaultMaxExportBatchSize;
 
-    /// <summary>
-    /// Gets or sets a value indicating whether to use threads. Enables the use of <see cref="Thread" /> when <see langword="true"/>; otherwise <see cref="Task"/> is used. The default value is <see langword="true"/>.
-    /// </summary>
-    public bool UseThreads { get; set; } = true;
 }

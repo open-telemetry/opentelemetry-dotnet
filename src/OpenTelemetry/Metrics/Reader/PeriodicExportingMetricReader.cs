@@ -18,7 +18,6 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     internal readonly int ExportIntervalMilliseconds;
     internal readonly int ExportTimeoutMilliseconds;
     private readonly PeriodicExportingMetricReaderWorker worker;
-    private readonly bool useThreads;
     private bool disposed;
 
     /// <summary>
@@ -35,7 +34,6 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         {
             ExportIntervalMilliseconds = exportIntervalMilliseconds,
             ExportTimeoutMilliseconds = exportTimeoutMilliseconds,
-            UseThreads = true,
         })
     {
     }
@@ -66,7 +64,6 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
 
         this.ExportIntervalMilliseconds = exportIntervalMilliseconds;
         this.ExportTimeoutMilliseconds = exportTimeoutMilliseconds;
-        this.useThreads = options?.UseThreads ?? false;
 
         this.worker = this.CreateWorker();
         this.worker.Start();
@@ -113,7 +110,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     {
 #if NET
         // Use task-based worker for browser platform where threading may be limited
-        if (ThreadingHelper.IsThreadingDisabled() || !this.useThreads)
+    if (ThreadingHelper.IsThreadingDisabled())
         {
             return new PeriodicExportingMetricReaderTaskWorker(
                 this,

@@ -4,6 +4,7 @@
 using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using Xunit;
 
@@ -33,15 +34,19 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
         Assert.Equal(MetricReaderTemporalityPreference.Cumulative, reader.TemporalityPreference);
     }
 
-    [Fact]
-    public void CreatePeriodicExportingMetricReader_Defaults_WithTask()
-    {
-        using var reader = CreatePeriodicExportingMetricReader(useThreads: false);
+        [Fact]
+        public void CreatePeriodicExportingMetricReader_Defaults_WithTask()
+        {
+        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(threadingDisabled: true);
+
+    #pragma warning disable CA2000 // Dispose objects before losing scope
+        var reader = CreatePeriodicExportingMetricReader();
+    #pragma warning restore CA2000 // Dispose objects before losing scope
 
         Assert.Equal(60000, reader.ExportIntervalMilliseconds);
         Assert.Equal(30000, reader.ExportTimeoutMilliseconds);
         Assert.Equal(MetricReaderTemporalityPreference.Cumulative, reader.TemporalityPreference);
-    }
+        }
 
     [Fact]
     public void CreatePeriodicExportingMetricReader_TemporalityPreference_FromOptions()
@@ -140,13 +145,13 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     }
 
     private static PeriodicExportingMetricReader CreatePeriodicExportingMetricReader(
-        MetricReaderOptions? options = null, bool useThreads = true)
+        MetricReaderOptions? options = null)
     {
         options ??= new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var dummyMetricExporter = new InMemoryExporter<Metric>(Array.Empty<Metric>());
 #pragma warning restore CA2000 // Dispose objects before losing scope
-        return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(dummyMetricExporter, options, useThreads: useThreads);
+        return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(dummyMetricExporter, options);
     }
 }

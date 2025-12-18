@@ -33,7 +33,6 @@ public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
                 ScheduledDelayMilliseconds = scheduledDelayMilliseconds,
                 ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds,
                 MaxExportBatchSize = maxExportBatchSize,
-                UseThreads = true,
             })
     {
     }

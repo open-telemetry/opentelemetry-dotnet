@@ -33,7 +33,6 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
                 ScheduledDelayMilliseconds = scheduledDelayMilliseconds,
                 ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds,
                 MaxExportBatchSize = maxExportBatchSize,
-                UseThreads = true,
             })
     {
     }
