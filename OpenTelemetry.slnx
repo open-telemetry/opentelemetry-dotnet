@@ -221,6 +221,7 @@
   <Project Path="test/OpenTelemetry.Api.ProviderBuilderExtensions.Tests/OpenTelemetry.Api.ProviderBuilderExtensions.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Api.Tests/OpenTelemetry.Api.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Console.Tests/OpenTelemetry.Exporter.Console.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests/OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests/OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Prometheus.HttpListener.Tests/OpenTelemetry.Exporter.Prometheus.HttpListener.Tests.csproj" />
