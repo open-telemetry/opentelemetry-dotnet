@@ -57,7 +57,7 @@ internal static class Generators
         return gen.ToArbitrary();
     }
 
-    public static Arbitrary<Activity> ActivityArbitrary()
+    public static Arbitrary<Activity> ActivityArbitrary(ActivityStatusCode? status = default)
     {
         var gen = Gen.Sized(size =>
         {
@@ -102,7 +102,7 @@ internal static class Generators
                 activity.AddLink(new ActivityLink(context, linkTags));
             }
 
-            activity.SetStatus(ActivityStatusCodes.Sample(size, 1).First());
+            activity.SetStatus(status ?? ActivityStatusCodes.Sample(size, 1).First());
 
             return Gen.Constant(activity);
         });
@@ -191,13 +191,13 @@ internal static class Generators
     /// <summary>
     /// Generates valid LogRecord instances.
     /// </summary>
-    public static Arbitrary<LogRecord> LogRecordArbitrary()
+    public static Arbitrary<LogRecord> LogRecordArbitrary(LogRecordSeverity? severity = default)
     {
         var gen = Gen.Sized(size =>
         {
             var logRecord = LogRecordSharedPool.Current.Rent();
 
-            logRecord.Severity = LogRecordSeverities.Sample(size, 1).First();
+            logRecord.Severity = severity ?? LogRecordSeverities.Sample(size, 1).First();
             logRecord.Timestamp = DateTime.UtcNow;
 
             // Add attributes
@@ -205,7 +205,7 @@ internal static class Generators
             var attributes = new List<KeyValuePair<string, object?>>(count);
             for (int i = 0; i < count; i++)
             {
-                attributes.Add(new KeyValuePair<string, object?>($"log.attr.{i}", $"value_{i}"));
+                attributes.Add(new KeyValuePair<string, object?>($"log.attribute.{i}", $"value_{i}"));
             }
 
             if (attributes.Count > 0)

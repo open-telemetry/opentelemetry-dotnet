@@ -251,6 +251,41 @@ public class ProtobufOtlpTraceSerializerTests
             }
         });
 
+    [Property(MaxTest = 200)]
+    public Property HandlesArbitraryActivityStatusCodes() => Prop.ForAll(
+        Gen.Choose(int.MinValue, int.MaxValue).ToArbitrary(),
+        Generators.SdkLimitOptionsArbitrary(),
+        (statusCode, sdkLimits) =>
+        {
+            var activities = Generators.ActivityArbitrary((ActivityStatusCode)statusCode).Generator.Sample(1).ToArray();
+
+            try
+            {
+                var buffer = new byte[10 * 1024 * 1024]; // 10MB buffer
+                var batch = new Batch<Activity>(activities, activities.Length);
+
+                var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
+                    ref buffer,
+                    0,
+                    sdkLimits,
+                    null,
+                    batch);
+
+                return writePos >= 0 && writePos <= buffer.Length;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
+            }
+            finally
+            {
+                foreach (var activity in activities)
+                {
+                    activity?.Dispose();
+                }
+            }
+        });
+
     private static bool IsAllowedException(Exception ex)
         => ex is IndexOutOfRangeException or ArgumentException;
 }

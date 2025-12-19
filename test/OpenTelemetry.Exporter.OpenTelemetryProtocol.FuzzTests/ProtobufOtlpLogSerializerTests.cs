@@ -42,10 +42,6 @@ public class ProtobufOtlpLogSerializerTests
             {
                 return true;
             }
-            finally
-            {
-                CleanupLogRecords(logRecords);
-            }
         });
 
     [Property(MaxTest = 100)]
@@ -76,10 +72,6 @@ public class ProtobufOtlpLogSerializerTests
             catch (Exception ex) when (IsAllowedException(ex))
             {
                 return true;
-            }
-            finally
-            {
-                CleanupLogRecords(logRecords);
             }
         });
 
@@ -140,10 +132,6 @@ public class ProtobufOtlpLogSerializerTests
             {
                 return true;
             }
-            finally
-            {
-                CleanupLogRecords(logRecords);
-            }
         });
 
     [Property(MaxTest = 50)]
@@ -184,10 +172,6 @@ public class ProtobufOtlpLogSerializerTests
             {
                 return true;
             }
-            finally
-            {
-                CleanupLogRecords(logRecords);
-            }
         });
 
     [Property(MaxTest = 50)]
@@ -196,14 +180,12 @@ public class ProtobufOtlpLogSerializerTests
         Generators.SdkLimitOptionsArbitrary(),
         (severity, sdkLimits) =>
         {
-            var logRecord = LogRecordSharedPool.Current.Rent();
-            logRecord.Severity = severity;
-            logRecord.Timestamp = DateTime.UtcNow;
+            var logRecord = Generators.LogRecordArbitrary(severity).Generator.Sample(1).ToArray();
 
             try
             {
                 var buffer = new byte[10 * 1024 * 1024];
-                var batch = new Batch<LogRecord>([logRecord], 1);
+                var batch = new Batch<LogRecord>(logRecord, 1);
                 var experimentalOptions = new ExperimentalOptions();
 
                 var writePos = ProtobufOtlpLogSerializer.WriteLogsData(
@@ -220,37 +202,40 @@ public class ProtobufOtlpLogSerializerTests
             {
                 return true;
             }
-            finally
+        });
+
+    [Property(MaxTest = 50)]
+    public Property WriteLogsDataHandlesInvalidSeverities() => Prop.ForAll(
+        Gen.Choose(int.MinValue, int.MaxValue).ToArbitrary(),
+        Generators.SdkLimitOptionsArbitrary(),
+        (severity, sdkLimits) =>
+        {
+            var logRecord = Generators.LogRecordArbitrary((LogRecordSeverity)severity).Generator.Sample(1).ToArray();
+
+            try
             {
-                LogRecordSharedPool.Current.Return(logRecord);
+                var buffer = new byte[10 * 1024 * 1024];
+                var batch = new Batch<LogRecord>(logRecord, 1);
+                var experimentalOptions = new ExperimentalOptions();
+
+                var writePos = ProtobufOtlpLogSerializer.WriteLogsData(
+                    ref buffer,
+                    0,
+                    sdkLimits,
+                    experimentalOptions,
+                    null,
+                    batch);
+
+                return writePos >= 0;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
             }
         });
 
     private static LogRecord[] CreateLogRecords(LogRecordSeverity severity)
-    {
-        var logRecords = new List<LogRecord>();
-
-        for (int i = 0; i < 10; i++)
-        {
-            var logRecord = LogRecordSharedPool.Current.Rent();
-
-            logRecord.Attributes = [new($"log.attribute.{i}", $"value_{i}")];
-            logRecord.Severity = severity;
-            logRecord.Timestamp = DateTime.UtcNow;
-
-            logRecords.Add(logRecord);
-        }
-
-        return [.. logRecords];
-    }
-
-    private static void CleanupLogRecords(LogRecord[] logRecords)
-    {
-        foreach (var logRecord in logRecords)
-        {
-            LogRecordSharedPool.Current.Return(logRecord);
-        }
-    }
+        => Generators.LogRecordArbitrary(severity).Generator.ArrayOf().Sample(1, 10).First();
 
     private static bool IsAllowedException(Exception ex)
         => ex is IndexOutOfRangeException or ArgumentException;
