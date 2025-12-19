@@ -26,6 +26,13 @@ Notes](../../RELEASENOTES.md).
 * Fix `NullReferenceException` when no bucket boundaries configured for a view.
   ([#6773](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6773))
 
+* Added support for `OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION`
+  environment variable to configure the default histogram aggregation for
+  histogram instruments. Valid values are `explicit_bucket_histogram` (default)
+  and `base2_exponential_bucket_histogram`. Explicit views configured via
+  `AddView` take precedence over this setting.
+  ([#6778](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6778))
+
 ## 1.14.0
 
 Released 2025-Nov-12

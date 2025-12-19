@@ -45,7 +45,9 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         OtlpSpecConfigDefinitions.MetricsProtocolEnvVarName,
         "http/protobuf",
         OtlpSpecConfigDefinitions.MetricsTemporalityPreferenceEnvVarName,
-        "Delta");
+        "Delta",
+        OtlpSpecConfigDefinitions.MetricsDefaultHistogramAggregationEnvVarName,
+        "base2_exponential_bucket_histogram");
 
     internal static TestData TracingData { get; } = new TestData(
         OtlpExporterOptionsConfigurationType.Traces,
@@ -77,6 +79,7 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_TIMEOUT", MetricsData.TimeoutKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", MetricsData.ProtocolKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE", MetricsData.TemporalityKeyName);
+        Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION", MetricsData.HistogramAggregationKeyName);
 
         Assert.Equal("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", TracingData.EndpointKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_TRACES_HEADERS", TracingData.HeadersKeyName);
@@ -269,7 +272,9 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
             string protocolKeyName,
             string protocolValue,
             string temporalityKeyName,
-            string temporalityValue)
+            string temporalityValue,
+            string? histogramAggregationKeyName = null,
+            string? histogramAggregationValue = null)
             : base(
                   OtlpExporterOptionsConfigurationType.Metrics,
                   endpointKeyName,
@@ -284,11 +289,17 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         {
             this.TemporalityKeyName = temporalityKeyName;
             this.TemporalityValue = temporalityValue;
+            this.HistogramAggregationKeyName = histogramAggregationKeyName;
+            this.HistogramAggregationValue = histogramAggregationValue;
         }
 
         public string TemporalityKeyName { get; }
 
         public string TemporalityValue { get; }
+
+        public string? HistogramAggregationKeyName { get; }
+
+        public string? HistogramAggregationValue { get; }
 
         public void AssertMatches(MetricReaderOptions metricReaderOptions)
         {
@@ -297,21 +308,49 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
 #else
             Assert.Equal(Enum.Parse(typeof(MetricReaderTemporalityPreference), this.TemporalityValue), metricReaderOptions.TemporalityPreference);
 #endif
+
+            if (!string.IsNullOrWhiteSpace(this.HistogramAggregationValue))
+            {
+                // Map spec-defined snake_case values to enum
+                var expectedValue = this.HistogramAggregationValue!.Equals("base2_exponential_bucket_histogram", StringComparison.OrdinalIgnoreCase)
+                    ? MetricReaderHistogramAggregation.Base2ExponentialBucketHistogram
+                    : this.HistogramAggregationValue.Equals("explicit_bucket_histogram", StringComparison.OrdinalIgnoreCase)
+                        ? MetricReaderHistogramAggregation.ExplicitBucketHistogram
+                        : (MetricReaderHistogramAggregation?)null;
+
+                Assert.Equal(expectedValue, metricReaderOptions.DefaultHistogramAggregation);
+            }
+            else
+            {
+                Assert.Null(metricReaderOptions.DefaultHistogramAggregation);
+            }
         }
 
         protected override void OnSetEnvVars()
         {
             Environment.SetEnvironmentVariable(this.TemporalityKeyName, this.TemporalityValue);
+            if (this.HistogramAggregationKeyName != null)
+            {
+                Environment.SetEnvironmentVariable(this.HistogramAggregationKeyName, this.HistogramAggregationValue);
+            }
         }
 
         protected override void OnClearEnvVars()
         {
             Environment.SetEnvironmentVariable(this.TemporalityKeyName, null);
+            if (this.HistogramAggregationKeyName != null)
+            {
+                Environment.SetEnvironmentVariable(this.HistogramAggregationKeyName, null);
+            }
         }
 
         protected override void OnAddToDictionary(Dictionary<string, string?> dictionary)
         {
             dictionary[this.TemporalityKeyName] = this.TemporalityValue;
+            if (this.HistogramAggregationKeyName != null)
+            {
+                dictionary[this.HistogramAggregationKeyName] = this.HistogramAggregationValue;
+            }
         }
     }
 }

@@ -94,6 +94,11 @@ public abstract partial class MetricReader : IDisposable
     }
 
     /// <summary>
+    /// Gets or sets the default histogram aggregation.
+    /// </summary>
+    internal MetricReaderHistogramAggregation? DefaultHistogramAggregation { get; set; }
+
+    /// <summary>
     /// Attempts to collect the metrics, blocks the current thread until
     /// metrics collection completed, shutdown signaled or timed out.
     /// If there are asynchronous instruments involved, their callback

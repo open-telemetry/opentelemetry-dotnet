@@ -52,7 +52,15 @@ public abstract partial class MetricReader
         Debug.Assert(instrument != null, "instrument was null");
         Debug.Assert(this.metrics != null, "this.metrics was null");
 
-        var metricStreamIdentity = new MetricStreamIdentity(instrument!, metricStreamConfiguration: null);
+        MetricStreamConfiguration? metricStreamConfiguration = null;
+
+        // Apply default histogram aggregation if configured
+        if (this.DefaultHistogramAggregation is { } aggregation)
+        {
+            metricStreamConfiguration = CreateDefaultHistogramConfiguration(instrument!, aggregation);
+        }
+
+        var metricStreamIdentity = new MetricStreamIdentity(instrument!, metricStreamConfiguration);
 
         var exemplarFilter = metricStreamIdentity.IsHistogram
             ? this.exemplarFilterForHistograms ?? this.exemplarFilter
@@ -120,6 +128,13 @@ public abstract partial class MetricReader
             for (int i = 0; i < maxCountMetricsToBeCreated; i++)
             {
                 var metricStreamConfig = metricStreamConfigs[i];
+
+                // Apply default histogram aggregation if no explicit view is provided
+                if (metricStreamConfig == null && this.DefaultHistogramAggregation is { } aggregation)
+                {
+                    metricStreamConfig = CreateDefaultHistogramConfiguration(instrument!, aggregation);
+                }
+
                 var metricStreamIdentity = new MetricStreamIdentity(instrument!, metricStreamConfig);
 
                 var exemplarFilter = metricStreamIdentity.IsHistogram
@@ -187,6 +202,25 @@ public abstract partial class MetricReader
         this.cardinalityLimit = cardinalityLimit;
         this.exemplarFilter = exemplarFilter;
         this.exemplarFilterForHistograms = exemplarFilterForHistograms;
+    }
+
+    private static MetricStreamConfiguration? CreateDefaultHistogramConfiguration(Instrument instrument, MetricReaderHistogramAggregation aggregation)
+    {
+        Debug.Assert(instrument != null, "instrument was null");
+
+        var instrumentType = instrument!.GetType();
+        if (instrumentType.IsGenericType)
+        {
+            var genericType = instrumentType.GetGenericTypeDefinition();
+            if (genericType == typeof(Histogram<>))
+            {
+                return aggregation == MetricReaderHistogramAggregation.Base2ExponentialBucketHistogram
+                    ? new Base2ExponentialBucketHistogramConfiguration()
+                    : new ExplicitBucketHistogramConfiguration();
+            }
+        }
+
+        return null;
     }
 
     private bool TryGetExistingMetric(in MetricStreamIdentity metricStreamIdentity, [NotNullWhen(true)] out Metric? existingMetric)
