@@ -1048,18 +1048,20 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             histogram.Record(200);
 
             Assert.True(meterProvider.ForceFlush());
+        }
 
-            var metric = Assert.Single(exportedItems);
-            Assert.Equal("test_histogram", metric.Name);
+        // In cumulative mode, disposal triggers a shutdown collect which exports metrics again.
+        // Take the first metric which was exported during ForceFlush.
+        var metric = exportedItems.First();
+        Assert.Equal("test_histogram", metric.Name);
 
-            if (expectExponential)
-            {
-                Assert.Equal(MetricType.ExponentialHistogram, metric.MetricType);
-            }
-            else
-            {
-                Assert.Equal(MetricType.Histogram, metric.MetricType);
-            }
+        if (expectExponential)
+        {
+            Assert.Equal(MetricType.ExponentialHistogram, metric.MetricType);
+        }
+        else
+        {
+            Assert.Equal(MetricType.Histogram, metric.MetricType);
         }
     }
 
@@ -1086,13 +1088,15 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             histogram.Record(200);
 
             Assert.True(meterProvider.ForceFlush());
-
-            var metric = Assert.Single(exportedItems);
-            Assert.Equal("test_histogram", metric.Name);
-
-            // Should use explicit bucket histogram despite default being exponential
-            Assert.Equal(MetricType.Histogram, metric.MetricType);
         }
+
+        // In cumulative mode, disposal triggers a shutdown collect which exports metrics again.
+        // Take the first metric which was exported during ForceFlush.
+        var metric = exportedItems.First();
+        Assert.Equal("test_histogram", metric.Name);
+
+        // Should use explicit bucket histogram despite default being exponential
+        Assert.Equal(MetricType.Histogram, metric.MetricType);
     }
 
     [Fact]
@@ -1118,13 +1122,15 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             histogram.Record(200);
 
             Assert.True(meterProvider.ForceFlush());
-
-            var metric = Assert.Single(exportedItems);
-            Assert.Equal("test_histogram", metric.Name);
-
-            // Should use exponential histogram from default (views configured but didn't match)
-            Assert.Equal(MetricType.ExponentialHistogram, metric.MetricType);
         }
+
+        // In cumulative mode, disposal triggers a shutdown collect which exports metrics again.
+        // Take the first metric which was exported during ForceFlush.
+        var metric = exportedItems.First();
+        Assert.Equal("test_histogram", metric.Name);
+
+        // Should use exponential histogram from default (views configured but didn't match)
+        Assert.Equal(MetricType.ExponentialHistogram, metric.MetricType);
     }
 
     private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar?> getExemplarFunc, T state)
