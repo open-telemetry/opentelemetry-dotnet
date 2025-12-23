@@ -5,7 +5,7 @@
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public class OtlpMtlsCertificateManagerTests
+public class OtlpCertificateManagerTests
 {
     private const string TestCertPem =
         @"-----BEGIN CERTIFICATE-----
@@ -39,7 +39,7 @@ INVALID CERTIFICATE DATA
     public void LoadClientCertificate_ThrowsFileNotFoundException_WhenCertificateFileDoesNotExist()
     {
         var exception = Assert.Throws<FileNotFoundException>(() =>
-            OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadClientCertificate(
+            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(
                 "/nonexistent/client.crt",
                 "/nonexistent/client.key"));
 
@@ -56,7 +56,7 @@ INVALID CERTIFICATE DATA
         try
         {
             var exception = Assert.Throws<FileNotFoundException>(() =>
-                OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadClientCertificate(
+                OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(
                     tempCertFile,
                     "/nonexistent/client.key"));
 
@@ -73,7 +73,7 @@ INVALID CERTIFICATE DATA
     public void LoadCaCertificate_ThrowsFileNotFoundException_WhenTrustStoreFileDoesNotExist()
     {
         var exception = Assert.Throws<FileNotFoundException>(() =>
-            OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadCaCertificate("/nonexistent/ca.crt"));
+            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadCaCertificate("/nonexistent/ca.crt"));
 
         Assert.Contains("CA certificate file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("/nonexistent/ca.crt", exception.Message, StringComparison.OrdinalIgnoreCase);
@@ -90,7 +90,7 @@ INVALID CERTIFICATE DATA
         try
         {
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadClientCertificate(tempCertFile, tempKeyFile));
+                OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(tempCertFile, tempKeyFile));
 
             Assert.Contains(
                 "Failed to load client certificate",
@@ -113,7 +113,7 @@ INVALID CERTIFICATE DATA
         try
         {
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadCaCertificate(tempTrustStoreFile));
+                OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadCaCertificate(tempTrustStoreFile));
 
             Assert.Contains(
                 "Failed to load CA certificate",
@@ -133,7 +133,7 @@ INVALID CERTIFICATE DATA
         using var cert = CreateSelfSignedCertificate();
 
         // Should not throw for self-signed certificate with proper validation
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate");
+        var result = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ValidateCertificateChain(cert, "test certificate");
 
         // For self-signed certificates, validation may fail, but method should not throw
         Assert.True(result || !result); // Just check that it returns a boolean
@@ -146,7 +146,7 @@ INVALID CERTIFICATE DATA
         using var cert = CreateSelfSignedCertificate();
 
         // Should return a boolean result
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(cert, "test certificate");
+        var result = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ValidateCertificateChain(cert, "test certificate");
 
         // The result can be true or false, but the method should not throw
         Assert.True(result || !result);
@@ -166,7 +166,7 @@ INVALID CERTIFICATE DATA
             // Note: We expect this to fail because we're using dummy cert/key content
             // but it should not fail due to the method signature
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.LoadClientCertificate(
+                OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(
                     tempCertFile,
                     tempKeyFile));
 

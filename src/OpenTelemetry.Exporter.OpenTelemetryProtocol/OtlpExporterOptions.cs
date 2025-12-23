@@ -75,10 +75,10 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             var timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds);
 
 #if NET
-            // If mTLS is configured, create an mTLS-enabled client
+            // If TLS configuration is enabled (mTLS or CA only), create a secure client
             if (this.MtlsOptions?.IsEnabled == true)
             {
-                return OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(
+                return OtlpSecureHttpClientFactory.CreateSecureHttpClient(
                     this.MtlsOptions,
                     client => client.Timeout = timeout);
             }
