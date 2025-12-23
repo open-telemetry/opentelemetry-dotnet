@@ -78,7 +78,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             // If mTLS is configured, create an mTLS-enabled client
             if (this.MtlsOptions?.IsEnabled == true)
             {
-                return OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(
+                return OtlpSecureHttpClientFactory.CreateSecureHttpClient(
                     this.MtlsOptions,
                     client => client.Timeout = timeout);
             }

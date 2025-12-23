@@ -12,7 +12,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 /// <summary>
 /// Manages certificate loading, validation, and security checks for mTLS connections.
 /// </summary>
-internal static class OtlpMtlsCertificateManager
+internal static class OtlpCertificateManager
 {
     internal const string CaCertificateType = "CA certificate";
     internal const string ClientCertificateType = "Client certificate";
