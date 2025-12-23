@@ -8,42 +8,42 @@ using System.Security.Cryptography.X509Certificates;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 /// <summary>
-/// Factory for creating HttpClient instances configured with mTLS settings.
+/// Factory for creating HttpClient instances configured with TLS settings.
 /// </summary>
 internal static class OtlpSecureHttpClientFactory
 {
     /// <summary>
-    /// Creates an HttpClient configured with mTLS settings.
+    /// Creates an HttpClient configured with TLS settings based on the provided options.
     /// </summary>
-    /// <param name="mtlsOptions">The mTLS configuration options.</param>
+    /// <param name="tlsOptions">The TLS configuration options.</param>
     /// <param name="configureClient">Optional action to configure the client.</param>
-    /// <returns>An HttpClient configured for mTLS.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="mtlsOptions"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when mTLS is not enabled.</exception>
+    /// <returns>An HttpClient configured for secure communication.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="tlsOptions"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when TLS is not enabled.</exception>
     public static HttpClient CreateSecureHttpClient(
-        OtlpMtlsOptions mtlsOptions,
+        OtlpTlsOptions tlsOptions,
         Action<HttpClient>? configureClient = null)
     {
-        ArgumentNullException.ThrowIfNull(mtlsOptions);
+        ArgumentNullException.ThrowIfNull(tlsOptions);
 
-        if (!mtlsOptions.IsEnabled)
+        if (!tlsOptions.IsTlsEnabled && !tlsOptions.IsMtlsEnabled)
         {
-            throw new InvalidOperationException("mTLS options must include a client or CA certificate path.");
+            throw new InvalidOperationException(
+                "TLS options must include at least a CA path or client certificate path.");
         }
 
-        HttpClientHandler? handler = null;
         X509Certificate2? caCertificate = null;
         X509Certificate2? clientCertificate = null;
+        TlsHttpClientHandler? handler = null;
 
         try
         {
-            // Load certificates
-            if (!string.IsNullOrEmpty(mtlsOptions.CaCertificatePath))
+            if (!string.IsNullOrEmpty(tlsOptions.CaCertificatePath))
             {
                 caCertificate = OtlpCertificateManager.LoadCaCertificate(
-                    mtlsOptions.CaCertificatePath);
+                    tlsOptions.CaCertificatePath);
 
-                if (mtlsOptions.EnableCertificateChainValidation)
+                if (tlsOptions.EnableCertificateChainValidation)
                 {
                     OtlpCertificateManager.ValidateCertificateChain(
                         caCertificate,
@@ -51,23 +51,17 @@ internal static class OtlpSecureHttpClientFactory
                 }
             }
 
-            if (!string.IsNullOrEmpty(mtlsOptions.ClientCertificatePath))
+            if (tlsOptions is OtlpMtlsOptions mtlsOptions && mtlsOptions.IsMtlsEnabled)
             {
-                if (string.IsNullOrEmpty(mtlsOptions.ClientKeyPath))
-                {
-                    // Load certificate without separate key file (e.g., PKCS#12 format)
-                    clientCertificate = OtlpCertificateManager.LoadClientCertificate(
-                        mtlsOptions.ClientCertificatePath,
-                        null);
-                }
-                else
-                {
-                    clientCertificate = OtlpCertificateManager.LoadClientCertificate(
-                        mtlsOptions.ClientCertificatePath,
+                clientCertificate = string.IsNullOrEmpty(mtlsOptions.ClientKeyPath)
+                    ? OtlpCertificateManager.LoadClientCertificate(
+                        mtlsOptions.ClientCertificatePath!,
+                        null)
+                    : OtlpCertificateManager.LoadClientCertificate(
+                        mtlsOptions.ClientCertificatePath!,
                         mtlsOptions.ClientKeyPath);
-                }
 
-                if (mtlsOptions.EnableCertificateChainValidation)
+                if (tlsOptions.EnableCertificateChainValidation)
                 {
                     OtlpCertificateManager.ValidateCertificateChain(
                         clientCertificate,
@@ -77,18 +71,24 @@ internal static class OtlpSecureHttpClientFactory
                 OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationEnabled(
                     clientCertificate.Subject);
             }
+            else if (caCertificate != null)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.CaCertificateConfigured(
+                    caCertificate.Subject);
+            }
 
-            // Create HttpClientHandler with mTLS configuration
+            // Create HttpClientHandler and apply TLS configuration
 #pragma warning disable CA2000 // Dispose objects before losing scope - HttpClientHandler is disposed by HttpClient
-            handler = new MtlsHttpClientHandler(clientCertificate, caCertificate);
+            handler = new TlsHttpClientHandler(caCertificate, clientCertificate);
 #pragma warning restore CA2000
-            handler.CheckCertificateRevocationList = true;
 
-            // Handler now owns the certificates and will dispose them when disposed.
+            // Handler now owns certificates
             caCertificate = null;
             clientCertificate = null;
 
+#pragma warning disable CA5399 // CheckCertificateRevocationList is set in ConfigureTls.
             var client = new HttpClient(handler, disposeHandler: true);
+#pragma warning restore CA5399
 
             configureClient?.Invoke(client);
 
@@ -96,70 +96,108 @@ internal static class OtlpSecureHttpClientFactory
         }
         catch (Exception ex)
         {
-            // Dispose handler if something went wrong
+            // Clean up on failure
             handler?.Dispose();
-
-            OpenTelemetryProtocolExporterEventSource.Log.MtlsHttpClientCreationFailed(ex);
-            throw;
-        }
-        finally
-        {
-            // Dispose certificates as they are no longer needed after being added to the handler
             caCertificate?.Dispose();
             clientCertificate?.Dispose();
+
+            OpenTelemetryProtocolExporterEventSource.Log.SecureHttpClientCreationFailed(ex);
+            throw;
         }
     }
 
-    private sealed class MtlsHttpClientHandler : HttpClientHandler
+    /// <summary>
+    /// Creates an HttpClient configured with mTLS settings.
+    /// </summary>
+    /// <param name="mtlsOptions">The mTLS configuration options.</param>
+    /// <param name="configureClient">Optional action to configure the client.</param>
+    /// <returns>An HttpClient configured for mTLS.</returns>
+    /// <remarks>
+    /// This method exists for backward compatibility. New code should use
+    /// <see cref="CreateSecureHttpClient(OtlpTlsOptions, Action{HttpClient}?)"/>.
+    /// </remarks>
+    public static HttpClient CreateMtlsHttpClient(
+        OtlpMtlsOptions mtlsOptions,
+        Action<HttpClient>? configureClient = null)
+    {
+        return CreateSecureHttpClient(mtlsOptions, configureClient);
+    }
+
+    /// <summary>
+    /// HttpClientHandler that applies TLS configuration based on loaded certificates.
+    /// </summary>
+    private sealed class TlsHttpClientHandler : HttpClientHandler
     {
         private readonly X509Certificate2? caCertificate;
         private readonly X509Certificate2? clientCertificate;
+        private bool disposed;
 
-        internal MtlsHttpClientHandler(
-            X509Certificate2? clientCertificate,
-            X509Certificate2? caCertificate)
+        internal TlsHttpClientHandler(
+            X509Certificate2? caCertificate,
+            X509Certificate2? clientCertificate)
         {
-            this.clientCertificate = clientCertificate;
             this.caCertificate = caCertificate;
-            this.CheckCertificateRevocationList = true;
+            this.clientCertificate = clientCertificate;
 
-            if (clientCertificate != null)
-            {
-                this.ClientCertificates.Add(clientCertificate);
-                this.ClientCertificateOptions = ClientCertificateOption.Manual;
-            }
-
-            if (caCertificate != null)
-            {
-                this.ServerCertificateCustomValidationCallback = (
-                    httpRequestMessage,
-                    cert,
-                    chain,
-                    sslPolicyErrors) =>
-                {
-                    if (cert == null || chain == null)
-                    {
-                        return false;
-                    }
-
-                    return OtlpCertificateManager.ValidateServerCertificate(
-                        cert,
-                        chain,
-                        sslPolicyErrors,
-                        caCertificate);
-                };
-            }
+            this.ConfigureTls();
         }
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
+            if (disposing && !this.disposed)
             {
-                this.caCertificate?.Dispose();
                 this.clientCertificate?.Dispose();
+                this.caCertificate?.Dispose();
+                this.disposed = true;
             }
 
             base.Dispose(disposing);
+        }
+
+        private void ConfigureTls()
+        {
+            this.CheckCertificateRevocationList = true;
+
+            this.ConfigureClientCertificate();
+            this.ConfigureCaCertificateValidation();
+        }
+
+        private void ConfigureClientCertificate()
+        {
+            if (this.clientCertificate == null)
+            {
+                return;
+            }
+
+            this.ClientCertificates.Add(this.clientCertificate);
+            this.ClientCertificateOptions = ClientCertificateOption.Manual;
+        }
+
+        private void ConfigureCaCertificateValidation()
+        {
+            if (this.caCertificate == null)
+            {
+                return;
+            }
+
+            var caCert = this.caCertificate;
+            this.ServerCertificateCustomValidationCallback = (
+                httpRequestMessage,
+                cert,
+                chain,
+                sslPolicyErrors) =>
+            {
+                if (cert == null || chain == null)
+                {
+                    return false;
+                }
+
+                return OtlpCertificateManager.ValidateServerCertificate(
+                    cert,
+                    chain,
+                    sslPolicyErrors,
+                    caCert);
+            };
         }
     }
 }
