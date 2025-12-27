@@ -393,6 +393,16 @@ measurement that could not be independently aggregated will be automatically
 aggregated using the [overflow
 attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#overflow-attribute).
 
+In other words, the SDK will stop tracking some new attribute sets separately.
+Instead of dropping those measurements, the SDK aggregates them into a
+synthetic metric point with a single attribute: `otel.metric.overflow=true`.
+
+Once an overflow exists, queries that filter on attributes (dimensions) become
+unreliable. For example, if you query the sum of requests where `route=foo`,
+there is no way to tell whether some `route=foo` measurements were folded into
+the overflow metric point. In that situation, only aggregations that do not
+filter based on dimensions (the total metric) remain trustworthy.
+
 > [!NOTE]
 > In SDK versions `1.6.0` - `1.9.0` the overflow attribute was an experimental
   feature that could be enabled by setting the environment variable
