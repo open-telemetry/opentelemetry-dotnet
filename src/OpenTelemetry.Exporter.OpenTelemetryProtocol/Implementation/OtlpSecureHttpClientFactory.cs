@@ -82,7 +82,7 @@ internal static class OtlpSecureHttpClientFactory
             handler = new TlsHttpClientHandler(caCertificate, clientCertificate);
 #pragma warning restore CA2000
 
-            // Handler now owns certificates.
+            // Handler keeps certificates alive; do not dispose in handler to avoid TLS callback races.
             caCertificate = null;
             clientCertificate = null;
 
@@ -132,7 +132,6 @@ internal static class OtlpSecureHttpClientFactory
     {
         private readonly X509Certificate2? caCertificate;
         private readonly X509Certificate2? clientCertificate;
-        private bool disposed;
 
         internal TlsHttpClientHandler(
             X509Certificate2? caCertificate,
@@ -146,13 +145,7 @@ internal static class OtlpSecureHttpClientFactory
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing && !this.disposed)
-            {
-                this.clientCertificate?.Dispose();
-                this.caCertificate?.Dispose();
-                this.disposed = true;
-            }
-
+            // Intentionally do not dispose certificates here; TLS callbacks can run after disposal.
             base.Dispose(disposing);
         }
 
@@ -182,6 +175,7 @@ internal static class OtlpSecureHttpClientFactory
                 return;
             }
 
+            // Capture the reference for the callback; this does not clone the cert or change its lifetime.
             var caCert = this.caCertificate;
             this.ServerCertificateCustomValidationCallback = (
                 httpRequestMessage,
