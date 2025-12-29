@@ -325,5 +325,28 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         Level = EventLevel.Error)]
     internal void MtlsHttpClientCreationFailed(string exception) =>
         this.WriteEvent(34, exception);
+
+    [Event(
+        35,
+        Message = "CA configured for server validation. Subject: '{0}'.",
+        Level = EventLevel.Informational)]
+    internal void CaCertificateConfigured(string subject) =>
+        this.WriteEvent(35, subject);
+
+    [NonEvent]
+    internal void SecureHttpClientCreationFailed(Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.SecureHttpClientCreationFailed(ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        36,
+        Message = "Failed to create secure HttpClient. Exception: {0}",
+        Level = EventLevel.Error)]
+    internal void SecureHttpClientCreationFailed(string exception) =>
+        this.WriteEvent(36, exception);
 #endif
 }
