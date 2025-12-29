@@ -10,7 +10,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 /// <summary>
 /// Factory for creating HttpClient instances configured with mTLS settings.
 /// </summary>
-internal static class OtlpMtlsHttpClientFactory
+internal static class OtlpSecureHttpClientFactory
 {
     /// <summary>
     /// Creates an HttpClient configured with mTLS settings.
@@ -20,7 +20,7 @@ internal static class OtlpMtlsHttpClientFactory
     /// <returns>An HttpClient configured for mTLS.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="mtlsOptions"/> is null.</exception>
     /// <exception cref="InvalidOperationException">Thrown when mTLS is not enabled.</exception>
-    public static HttpClient CreateMtlsHttpClient(
+    public static HttpClient CreateSecureHttpClient(
         OtlpMtlsOptions mtlsOptions,
         Action<HttpClient>? configureClient = null)
     {
@@ -40,14 +40,14 @@ internal static class OtlpMtlsHttpClientFactory
             // Load certificates
             if (!string.IsNullOrEmpty(mtlsOptions.CaCertificatePath))
             {
-                caCertificate = OtlpMtlsCertificateManager.LoadCaCertificate(
+                caCertificate = OtlpCertificateManager.LoadCaCertificate(
                     mtlsOptions.CaCertificatePath);
 
                 if (mtlsOptions.EnableCertificateChainValidation)
                 {
-                    OtlpMtlsCertificateManager.ValidateCertificateChain(
+                    OtlpCertificateManager.ValidateCertificateChain(
                         caCertificate,
-                        OtlpMtlsCertificateManager.CaCertificateType);
+                        OtlpCertificateManager.CaCertificateType);
                 }
             }
 
@@ -56,22 +56,22 @@ internal static class OtlpMtlsHttpClientFactory
                 if (string.IsNullOrEmpty(mtlsOptions.ClientKeyPath))
                 {
                     // Load certificate without separate key file (e.g., PKCS#12 format)
-                    clientCertificate = OtlpMtlsCertificateManager.LoadClientCertificate(
+                    clientCertificate = OtlpCertificateManager.LoadClientCertificate(
                         mtlsOptions.ClientCertificatePath,
                         null);
                 }
                 else
                 {
-                    clientCertificate = OtlpMtlsCertificateManager.LoadClientCertificate(
+                    clientCertificate = OtlpCertificateManager.LoadClientCertificate(
                         mtlsOptions.ClientCertificatePath,
                         mtlsOptions.ClientKeyPath);
                 }
 
                 if (mtlsOptions.EnableCertificateChainValidation)
                 {
-                    OtlpMtlsCertificateManager.ValidateCertificateChain(
+                    OtlpCertificateManager.ValidateCertificateChain(
                         clientCertificate,
-                        OtlpMtlsCertificateManager.ClientCertificateType);
+                        OtlpCertificateManager.ClientCertificateType);
                 }
 
                 OpenTelemetryProtocolExporterEventSource.Log.MtlsConfigurationEnabled(
@@ -142,7 +142,7 @@ internal static class OtlpMtlsHttpClientFactory
                         return false;
                     }
 
-                    return OtlpMtlsCertificateManager.ValidateServerCertificate(
+                    return OtlpCertificateManager.ValidateServerCertificate(
                         cert,
                         chain,
                         sslPolicyErrors,
