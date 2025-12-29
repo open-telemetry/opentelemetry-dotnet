@@ -102,6 +102,7 @@ internal static class OtlpSecureHttpClientFactory
         }
         finally
         {
+            // Cleanup if ownership was not transferred to the handler.
             caCertificate?.Dispose();
             clientCertificate?.Dispose();
         }
