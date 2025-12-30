@@ -258,6 +258,8 @@ internal static class OtlpCertificateManager
                     X509VerificationFlags.AllowUnknownCertificateAuthority;
                 chain.ChainPolicy.CustomTrustStore.Add(caCertificate);
                 chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                // CRL/OCSP checks are skipped for custom CA validation to avoid blocking on
+                // private PKI infrastructure that may be unreachable from clients.
                 chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
                 chain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
 
