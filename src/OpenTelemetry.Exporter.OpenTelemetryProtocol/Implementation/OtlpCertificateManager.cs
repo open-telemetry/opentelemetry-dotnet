@@ -240,6 +240,15 @@ internal static class OtlpCertificateManager
                 return true;
             }
 
+            if (sslPolicyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch))
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsServerCertificateValidationFailed(
+                    serverCert.Subject,
+                    sslPolicyErrors.ToString());
+
+                return false;
+            }
+
             // If the only error is an untrusted root, validate against our CA
             if (sslPolicyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
             {

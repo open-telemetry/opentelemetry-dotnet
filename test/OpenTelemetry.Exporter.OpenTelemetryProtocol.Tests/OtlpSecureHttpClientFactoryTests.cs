@@ -222,6 +222,23 @@ public class OtlpSecureHttpClientFactoryTests
     }
 
     [Fact]
+    public void ValidateServerCertificate_ReturnsFalse_WhenNameMismatch()
+    {
+        using var caCertificate = CreateCertificateAuthority();
+        using var serverCertificate = CreateServerCertificate(caCertificate);
+        using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+        var result = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ValidateServerCertificate(
+            serverCertificate,
+            chain,
+            SslPolicyErrors.RemoteCertificateNameMismatch,
+            caCertificate);
+
+        Assert.False(result);
+    }
+
+    [Fact]
     public void ValidateServerCertificate_ReturnsTrue_WithProvidedCa()
     {
         using var caCertificate = CreateCertificateAuthority();
