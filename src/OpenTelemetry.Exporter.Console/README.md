@@ -30,6 +30,52 @@ used:
 * Traces: [ASP.NET Core](../../docs/trace/getting-started-aspnetcore/README.md)
   | [Console](../../docs/trace/getting-started-console/README.md)
 
+## Formatters
+
+There are two formatters provided.
+
+The `Simple` formatter shows basic information, in a coloured format suitable
+for use during application development (similar to the .NET console logger provider).
+
+As the format is fairly terse, it is recommended to also use local OTLP services,
+such as Loki, Jaeger, and Prometheus, for full telemetry details.
+
+> [!WARNING]
+> This is not designed for production use, but is usable for development.
+
+The `KeyValue` formatter provides a lot more detail, dumping out the most of
+the OpenTelemetry details. Use this alternative format for learning about
+OpenTelemetry.
+
+## Running examples
+
+The example projects includes simple console examples for output of logs,
+spans, and metrics:
+
+```powershell
+dotnet run --project examples/Console/Examples.Console.csproj -- logs --useExporter console
+dotnet run --project examples/Console/Examples.Console.csproj -- console
+dotnet run --project examples/Console/Examples.Console.csproj -- metrics
+```
+
+If you want to run with an alternative console formatter, then you can pass it
+via the command line:
+
+```powershell
+dotnet run --project examples/Console/Examples.Console.csproj -- logs --useExporter console --useFormatter keyvalue
+```
+
+For an integrated example that includes all telemetry types in an ASP.NET
+application, use:
+
+```powershell
+dotnet run --project examples/AspNetCore/Examples.AspNetCore.csproj
+```
+
+Then use a browser to request `https://localhost:5001/weatherforecast`
+
+![Simple Console Exporter example](docs/simple-console-exporter.png)
+
 ## Configuration
 
 See the
@@ -39,6 +85,13 @@ an example of how to use the exporter for exporting traces to a collection.
 You can configure the `ConsoleExporter` through `Options` types properties
 and environment variables.
 The `Options` type setters take precedence over the environment variables.
+
+| Option | Description |
+| -- | -- |
+| Formatter | Default is the "Simple" formatter; use "KeyValue" for old format. |
+| Targets | Default is "Console"; can also specify "Debug". (for KeyValue formatter) |
+| TimestampFormat | Default is "HH:mm:ss ". If empty, no timestamp is output. (for Simple formatter) |
+| UseUtcTimestamp | Default is false (output local time). (for Simple formatter) |
 
 ### MetricReaderOptions (metrics)
 
@@ -62,7 +115,7 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
 See [`TestMetrics.cs`](../../examples/Console/TestMetrics.cs) for a runnable
 example.
 
-## Environment Variables
+### Environment Variables
 
 The following environment variables can be used to override the default
 values of the `PeriodicExportingMetricReaderOptions`
