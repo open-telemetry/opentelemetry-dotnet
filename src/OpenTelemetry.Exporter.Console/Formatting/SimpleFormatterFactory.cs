@@ -17,5 +17,5 @@ internal sealed class SimpleFormatterFactory : IFormatterFactory
         new SimpleLogRecordFormatter(options);
 
     public IConsoleFormatter<Metric> GetMetricFormatter(ConsoleExporterOptions options) =>
-        new KeyValueMetricFormatter(options);
+        new SimpleMetricFormatter(options);
 }
