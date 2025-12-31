@@ -6,14 +6,12 @@ namespace OpenTelemetry.Exporter.Formatting.Simple;
 internal abstract class SimpleFormatterBase<T> : IConsoleFormatter<T>
     where T : class
 {
-    private readonly ConsoleExporterOptions exporterOptions;
-    private readonly SimpleFormatterOptions formatterOptions;
-
-    protected SimpleFormatterBase(ConsoleExporterOptions exporterOptions, SimpleFormatterOptions formatterOptions)
+    protected SimpleFormatterBase(ConsoleExporterOptions options)
     {
-        this.exporterOptions = exporterOptions;
-        this.formatterOptions = formatterOptions;
+        this.Options = options;
     }
+
+    public ConsoleExporterOptions Options { get; private set; }
 
     public abstract ExportResult Export(in Batch<T> batch, ConsoleFormatterContext context);
 
