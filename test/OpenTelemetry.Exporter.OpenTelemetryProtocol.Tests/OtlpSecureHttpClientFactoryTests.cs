@@ -258,6 +258,24 @@ public class OtlpSecureHttpClientFactoryTests
     }
 
     [Fact]
+    public void ValidateServerCertificate_ReturnsFalse_WhenCaDoesNotMatch_EvenIfSslPolicyErrorsNone()
+    {
+        using var caCertificate = CreateCertificateAuthority();
+        using var otherCaCertificate = CreateCertificateAuthority();
+        using var serverCertificate = CreateServerCertificate(caCertificate);
+        using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+        var result = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ValidateServerCertificate(
+            serverCertificate,
+            chain,
+            SslPolicyErrors.None,
+            otherCaCertificate);
+
+        Assert.False(result);
+    }
+
+    [Fact]
     public void ValidateCertificateChain_ReturnsFalseForExpiredCertificate()
     {
         using var expiredCertificate = CreateExpiredCertificate();
