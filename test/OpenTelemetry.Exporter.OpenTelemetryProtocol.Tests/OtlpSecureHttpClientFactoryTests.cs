@@ -72,16 +72,16 @@ public class OtlpSecureHttpClientFactoryTests
     }
 
     [Fact]
-    public void CreateHttpClient_ConfiguresServerCertificateValidation_WhenTrustedRootCertificatesProvided()
+    public void CreateHttpClient_ConfiguresServerCertificateValidation_WhenCaCertificatesProvided()
     {
         RunWithCryptoSupportCheck(() =>
         {
             var tempTrustStoreFile = Path.GetTempFileName();
             try
             {
-                // Create a self-signed certificate for testing as trusted root
-                using var trustedCert = CreateSelfSignedCertificate();
-                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(trustedCert));
+                // Create a self-signed certificate for testing as CA root
+                using var caCert = CreateSelfSignedCertificate();
+                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(caCert));
 
                 var options = new OtlpMtlsOptions
                 {
@@ -222,6 +222,23 @@ public class OtlpSecureHttpClientFactoryTests
     }
 
     [Fact]
+    public void ValidateServerCertificate_ReturnsFalse_WhenNameMismatch()
+    {
+        using var caCertificate = CreateCertificateAuthority();
+        using var serverCertificate = CreateServerCertificate(caCertificate);
+        using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+        var result = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ValidateServerCertificate(
+            serverCertificate,
+            chain,
+            SslPolicyErrors.RemoteCertificateNameMismatch,
+            caCertificate);
+
+        Assert.False(result);
+    }
+
+    [Fact]
     public void ValidateServerCertificate_ReturnsTrue_WithProvidedCa()
     {
         using var caCertificate = CreateCertificateAuthority();
@@ -275,7 +292,7 @@ public class OtlpSecureHttpClientFactoryTests
         var exception = Assert.Throws<ArgumentNullException>(() =>
             OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(null!));
 
-        Assert.Equal("mtlsOptions", exception.ParamName);
+        Assert.Equal("tlsOptions", exception.ParamName);
     }
 
     private static X509Certificate2 CreateSelfSignedCertificate()
