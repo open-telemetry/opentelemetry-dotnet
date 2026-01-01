@@ -22,4 +22,7 @@
     <Compile Include="$(RepoRoot)\src\Shared\TagWriter\*.cs" Link="Includes\TagWriter\%(Filename).cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpenTelemetry.Exporter.Console.Tests" PublicKey="$(StrongNamePublicKey)" />
+  </ItemGroup>
 </Project>

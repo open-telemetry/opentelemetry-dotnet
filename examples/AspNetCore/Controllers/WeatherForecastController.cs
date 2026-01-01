@@ -64,7 +64,10 @@ public class WeatherForecastController : ControllerBase
         // Optional: Count the freezing days
         this.freezingDaysCounter.Add(forecast.Count(f => f.TemperatureC < 0));
 
-        this.logger.WeatherForecastGenerated(LogLevel.Information, forecast.Length, forecast);
+        var logLevel = forecast.Any(f => f.TemperatureC > 50)
+            ? LogLevel.Warning
+            : LogLevel.Information;
+        this.logger.WeatherForecastGenerated(logLevel, forecast.Length, forecast);
 
         return forecast;
     }
