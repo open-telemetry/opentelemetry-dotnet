@@ -1,23 +1,28 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 
 namespace OpenTelemetry.Internal;
 
-internal abstract class TagWriter<TTagState, TArrayState>
+internal abstract class TagWriter<TTagState, TArrayState, TKvlistState>
     where TTagState : notnull
     where TArrayState : notnull
+    where TKvlistState : notnull
 {
     private readonly ArrayTagWriter<TArrayState> arrayWriter;
+    private readonly KvlistTagWriter<TKvlistState>? kvlistWriter;
 
     protected TagWriter(
-        ArrayTagWriter<TArrayState> arrayTagWriter)
+        ArrayTagWriter<TArrayState> arrayTagWriter,
+        KvlistTagWriter<TKvlistState>? kvlistTagWriter = null)
     {
         Guard.ThrowIfNull(arrayTagWriter);
 
         this.arrayWriter = arrayTagWriter;
+        this.kvlistWriter = kvlistTagWriter;
     }
 
     public bool TryWriteTag(
@@ -90,6 +95,38 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
                 break;
 
+            case IDictionary<string, object?> dict when this.kvlistWriter != null:
+                try
+                {
+                    this.WriteKvlistTagInternal(ref state, key, dict, tagValueMaxLength);
+                }
+                catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
+                {
+                    throw;
+                }
+                catch
+                {
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                }
+
+                break;
+
+            case IReadOnlyDictionary<string, object?> dict when this.kvlistWriter != null:
+                try
+                {
+                    this.WriteKvlistTagInternal(ref state, key, dict, tagValueMaxLength);
+                }
+                catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
+                {
+                    throw;
+                }
+                catch
+                {
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                }
+
+                break;
+
             // All other types are converted to strings including the following
             // built-in value types:
             // case nint:    Pointer type.
@@ -135,6 +172,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
     protected abstract void WriteStringTag(ref TTagState state, string key, ReadOnlySpan<char> value);
 
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
+
+    protected virtual void WriteKvlistTag(ref TTagState state, string key, ref TKvlistState value)
+    {
+        // Default implementation does nothing - subclasses that support kvlist should override
+    }
 
     protected abstract void OnUnsupportedTagDropped(
         string tagKey,
@@ -208,6 +250,172 @@ internal abstract class TagWriter<TTagState, TArrayState>
         }
 
         this.WriteArrayTag(ref state, key, ref arrayState);
+    }
+
+    private void WriteKvlistTagInternal(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> dict, int? tagValueMaxLength)
+    {
+        Debug.Assert(this.kvlistWriter != null, "kvlistWriter was null");
+
+        var kvlistState = this.kvlistWriter!.BeginWriteKvlist();
+
+        try
+        {
+            foreach (var kvp in dict)
+            {
+                this.WriteKvlistEntry(ref kvlistState, kvp.Key, kvp.Value, tagValueMaxLength);
+            }
+
+            this.kvlistWriter.EndWriteKvlist(ref kvlistState);
+        }
+        catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
+        {
+            if (this.kvlistWriter.TryResize())
+            {
+                this.WriteKvlistTagInternal(ref state, key, dict, tagValueMaxLength);
+                return;
+            }
+
+            this.WriteStringTag(
+                ref state,
+                key,
+                "TRUNCATED".AsSpan());
+
+            this.LogUnsupportedTagTypeAndReturnFalse(key, dict.GetType().ToString());
+            return;
+        }
+
+        this.WriteKvlistTag(ref state, key, ref kvlistState);
+    }
+
+    private void WriteKvlistEntry(ref TKvlistState state, string key, object? value, int? tagValueMaxLength)
+    {
+        Debug.Assert(this.kvlistWriter != null, "kvlistWriter was null");
+
+        if (value == null)
+        {
+            this.kvlistWriter!.WriteNullValue(ref state, key);
+            return;
+        }
+
+        switch (value)
+        {
+            case char c:
+                Span<char> charSpan = [c];
+                this.kvlistWriter!.WriteStringValue(ref state, key, charSpan);
+                break;
+            case string s:
+                this.kvlistWriter!.WriteStringValue(ref state, key, TruncateString(s.AsSpan(), tagValueMaxLength));
+                break;
+            case bool b:
+                this.kvlistWriter!.WriteBooleanValue(ref state, key, b);
+                break;
+            case byte:
+            case sbyte:
+            case short:
+            case ushort:
+            case int:
+            case uint:
+            case long:
+                this.kvlistWriter!.WriteIntegralValue(ref state, key, Convert.ToInt64(value, CultureInfo.InvariantCulture));
+                break;
+            case float:
+            case double:
+                this.kvlistWriter!.WriteFloatingPointValue(ref state, key, Convert.ToDouble(value, CultureInfo.InvariantCulture));
+                break;
+            case Array array:
+                // Write nested array as ArrayValue within the kvlist
+                var arrayState = this.arrayWriter.BeginWriteArray();
+                this.WriteArrayToStateTypeChecked(ref arrayState, array, tagValueMaxLength);
+                this.arrayWriter.EndWriteArray(ref arrayState);
+                this.kvlistWriter!.WriteArrayValue(ref state, key, ref arrayState);
+                break;
+            case IDictionary<string, object?> nestedDict:
+                // Recursively write nested dictionaries as KeyValueList
+                var nestedKvlistState = this.kvlistWriter!.BeginWriteKvlist();
+                foreach (var kvp in nestedDict)
+                {
+                    this.WriteKvlistEntry(ref nestedKvlistState, kvp.Key, kvp.Value, tagValueMaxLength);
+                }
+
+                this.kvlistWriter.EndWriteKvlist(ref nestedKvlistState);
+                this.kvlistWriter.WriteKvlistValue(ref state, key, ref nestedKvlistState);
+                break;
+            case IReadOnlyDictionary<string, object?> nestedDict:
+                // Recursively write nested dictionaries as KeyValueList
+                var nestedKvlistState2 = this.kvlistWriter!.BeginWriteKvlist();
+                foreach (var kvp in nestedDict)
+                {
+                    this.WriteKvlistEntry(ref nestedKvlistState2, kvp.Key, kvp.Value, tagValueMaxLength);
+                }
+
+                this.kvlistWriter.EndWriteKvlist(ref nestedKvlistState2);
+                this.kvlistWriter.WriteKvlistValue(ref state, key, ref nestedKvlistState2);
+                break;
+            default:
+                // Fall back to string conversion for unsupported types
+                var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+                if (stringValue != null)
+                {
+                    this.kvlistWriter!.WriteStringValue(ref state, key, TruncateString(stringValue.AsSpan(), tagValueMaxLength));
+                }
+                else
+                {
+                    this.kvlistWriter!.WriteNullValue(ref state, key);
+                }
+
+                break;
+        }
+    }
+
+    private void WriteArrayToStateTypeChecked(ref TArrayState arrayState, Array array, int? tagValueMaxLength)
+    {
+        for (var i = 0; i < array.Length; ++i)
+        {
+            var item = array.GetValue(i);
+            if (item == null)
+            {
+                this.arrayWriter.WriteNullValue(ref arrayState);
+                continue;
+            }
+
+            switch (item)
+            {
+                case char c:
+                    this.WriteCharValue(ref arrayState, c);
+                    break;
+                case string s:
+                    this.arrayWriter.WriteStringValue(ref arrayState, TruncateString(s.AsSpan(), tagValueMaxLength));
+                    break;
+                case bool b:
+                    this.arrayWriter.WriteBooleanValue(ref arrayState, b);
+                    break;
+                case byte:
+                case sbyte:
+                case short:
+                case ushort:
+                case int:
+                case uint:
+                case long:
+                    this.arrayWriter.WriteIntegralValue(ref arrayState, Convert.ToInt64(item, CultureInfo.InvariantCulture));
+                    break;
+                case float:
+                case double:
+                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, Convert.ToDouble(item, CultureInfo.InvariantCulture));
+                    break;
+                default:
+                    var stringValue = Convert.ToString(item, CultureInfo.InvariantCulture);
+                    if (stringValue == null)
+                    {
+                        this.arrayWriter.WriteNullValue(ref arrayState);
+                    }
+                    else
+                    {
+                        this.arrayWriter.WriteStringValue(ref arrayState, TruncateString(stringValue.AsSpan(), tagValueMaxLength));
+                    }
+
+                    break;
+            }
+        }
     }
 
 #if NETFRAMEWORK

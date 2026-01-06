@@ -6,11 +6,11 @@ using System.Text.Json;
 
 namespace OpenTelemetry.Internal;
 
-internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagState, JsonStringArrayTagWriter<TTagState>.JsonArrayTagWriterState>
+internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagState, JsonStringArrayTagWriter<TTagState>.JsonArrayTagWriterState, JsonStringArrayTagWriter<TTagState>.JsonKvlistTagWriterState>
     where TTagState : notnull
 {
     protected JsonStringArrayTagWriter()
-        : base(new JsonArrayTagWriter())
+        : base(new JsonArrayTagWriter(), kvlistTagWriter: null)
     {
     }
 
@@ -32,6 +32,11 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
         public MemoryStream Stream { get; } = stream;
 
         public Utf8JsonWriter Writer { get; } = writer;
+    }
+
+    // Placeholder struct - JSON writer doesn't support kvlist
+    internal readonly struct JsonKvlistTagWriterState
+    {
     }
 
     internal sealed class JsonArrayTagWriter : ArrayTagWriter<JsonArrayTagWriterState>
