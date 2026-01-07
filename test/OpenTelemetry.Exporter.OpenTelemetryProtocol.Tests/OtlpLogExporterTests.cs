@@ -1727,4 +1727,134 @@ public class OtlpLogExporterTests
 
         return resourceSpans;
     }
+
+    [Fact]
+    public void ToOtlpLog_WhenAttributeIsDictionary_SerializesAsKeyValueList()
+    {
+        // Arrange
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options =>
+                {
+                    options.IncludeFormattedMessage = true;
+                });
+        });
+
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+
+        // Log with a dictionary attribute
+        var dict = new Dictionary<string, object?>
+        {
+            { "key1", "value1" },
+            { "key2", 42 },
+            { "key3", true }
+        };
+        logger.LogInformation("Test with dictionary: {Dict}", dict);
+
+        // Act
+        Assert.Single(logRecords);
+        var logRecord = logRecords[0];
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+
+        // Assert
+        Assert.NotNull(otlpLogRecord);
+
+        // Find the Dict attribute
+        var dictAttr = TryGetAttribute(otlpLogRecord, "Dict");
+        Assert.NotNull(dictAttr);
+
+        // Verify it's a KeyValueList
+        Assert.Equal(ValueOneofCase.KvlistValue, dictAttr.Value.ValueCase);
+        Assert.NotNull(dictAttr.Value.KvlistValue);
+
+        // Verify the kvlist contains the expected values
+        var kvlist = dictAttr.Value.KvlistValue;
+        Assert.Equal(3, kvlist.Values.Count);
+
+        var kv1 = kvlist.Values.FirstOrDefault(x => x.Key == "key1");
+        Assert.NotNull(kv1);
+        Assert.Equal("value1", kv1.Value.StringValue);
+
+        var kv2 = kvlist.Values.FirstOrDefault(x => x.Key == "key2");
+        Assert.NotNull(kv2);
+        Assert.Equal(42, kv2.Value.IntValue);
+
+        var kv3 = kvlist.Values.FirstOrDefault(x => x.Key == "key3");
+        Assert.NotNull(kv3);
+        Assert.True(kv3.Value.BoolValue);
+    }
+
+    [Fact]
+    public void ToOtlpLog_WhenAttributeIsNestedDictionary_SerializesAsNestedKeyValueList()
+    {
+        // Arrange
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options =>
+                {
+                    options.IncludeFormattedMessage = true;
+                });
+        });
+
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+
+        // Log with a nested dictionary attribute
+        var nested = new Dictionary<string, object?>
+        {
+            { "outer_key", "outer_value" },
+            { "nested", new Dictionary<string, object?>
+                {
+                    { "inner_key", "inner_value" },
+                    { "inner_int", 123 }
+                }
+            }
+        };
+        logger.LogInformation("Test with nested dictionary: {Nested}", nested);
+
+        // Act
+        Assert.Single(logRecords);
+        var logRecord = logRecords[0];
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+
+        // Assert
+        Assert.NotNull(otlpLogRecord);
+
+        // Find the Nested attribute
+        var nestedAttr = TryGetAttribute(otlpLogRecord, "Nested");
+        Assert.NotNull(nestedAttr);
+
+        // Verify it's a KeyValueList
+        Assert.Equal(ValueOneofCase.KvlistValue, nestedAttr.Value.ValueCase);
+        var outerKvlist = nestedAttr.Value.KvlistValue;
+        Assert.NotNull(outerKvlist);
+        Assert.Equal(2, outerKvlist.Values.Count);
+
+        // Verify outer_key
+        var outerKey = outerKvlist.Values.FirstOrDefault(x => x.Key == "outer_key");
+        Assert.NotNull(outerKey);
+        Assert.Equal("outer_value", outerKey.Value.StringValue);
+
+        // Verify nested kvlist
+        var nestedKv = outerKvlist.Values.FirstOrDefault(x => x.Key == "nested");
+        Assert.NotNull(nestedKv);
+        Assert.Equal(ValueOneofCase.KvlistValue, nestedKv.Value.ValueCase);
+
+        var innerKvlist = nestedKv.Value.KvlistValue;
+        Assert.NotNull(innerKvlist);
+        Assert.Equal(2, innerKvlist.Values.Count);
+
+        var innerKey = innerKvlist.Values.FirstOrDefault(x => x.Key == "inner_key");
+        Assert.NotNull(innerKey);
+        Assert.Equal("inner_value", innerKey.Value.StringValue);
+
+        var innerInt = innerKvlist.Values.FirstOrDefault(x => x.Key == "inner_int");
+        Assert.NotNull(innerInt);
+        Assert.Equal(123, innerInt.Value.IntValue);
+    }
 }
