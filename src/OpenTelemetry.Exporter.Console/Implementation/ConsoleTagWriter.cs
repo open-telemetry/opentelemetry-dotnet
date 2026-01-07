@@ -67,6 +67,12 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         consoleTag.Value = Encoding.UTF8.GetString(arrayUtf8JsonBytes.Array!, 0, arrayUtf8JsonBytes.Count);
     }
 
+    protected override void WriteKvlistTag(ref ConsoleTag consoleTag, string key, ArraySegment<byte> kvlistUtf8JsonBytes)
+    {
+        consoleTag.Key = key;
+        consoleTag.Value = Encoding.UTF8.GetString(kvlistUtf8JsonBytes.Array!, 0, kvlistUtf8JsonBytes.Count);
+    }
+
     protected override void OnUnsupportedTagDropped(
         string tagKey,
         string tagValueTypeFullName)

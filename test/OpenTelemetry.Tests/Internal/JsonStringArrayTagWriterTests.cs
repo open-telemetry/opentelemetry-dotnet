@@ -146,6 +146,63 @@ public class JsonStringArrayTagWriterTests
         VerifySerialization(data, expectedValue);
     }
 
+    [Fact]
+    public void Dictionary_SerializesAsJsonObject()
+    {
+        var dict = new Dictionary<string, object?>
+        {
+            { "key1", "value1" },
+            { "key2", 42 },
+        };
+
+        TestTagWriter.Tag tag = default;
+        var result = TestTagWriter.Instance.TryWriteTag(ref tag, new KeyValuePair<string, object?>("dict", dict));
+
+        Assert.True(result);
+        Assert.Equal("dict", tag.Key);
+        Assert.Equal("""{"key1":"value1","key2":42}""", tag.Value);
+    }
+
+    [Fact]
+    public void NestedDictionary_SerializesAsNestedJsonObject()
+    {
+        var dict = new Dictionary<string, object?>
+        {
+            { "outer", "value" },
+            {
+                "nested", new Dictionary<string, object?>
+                {
+                    { "inner", "innerValue" },
+                    { "number", 123 },
+                }
+            },
+        };
+
+        TestTagWriter.Tag tag = default;
+        var result = TestTagWriter.Instance.TryWriteTag(ref tag, new KeyValuePair<string, object?>("dict", dict));
+
+        Assert.True(result);
+        Assert.Equal("dict", tag.Key);
+        Assert.Equal("""{"outer":"value","nested":{"inner":"innerValue","number":123}}""", tag.Value);
+    }
+
+    [Fact]
+    public void DictionaryWithArray_SerializesCorrectly()
+    {
+        var dict = new Dictionary<string, object?>
+        {
+            { "name", "test" },
+            { "values", new[] { 1, 2, 3 } },
+        };
+
+        TestTagWriter.Tag tag = default;
+        var result = TestTagWriter.Instance.TryWriteTag(ref tag, new KeyValuePair<string, object?>("dict", dict));
+
+        Assert.True(result);
+        Assert.Equal("dict", tag.Key);
+        Assert.Equal("""{"name":"test","values":[1,2,3]}""", tag.Value);
+    }
+
     private static void VerifySerialization(Array data, string expectedValue)
     {
         TestTagWriter.Tag tag = default;
@@ -187,6 +244,12 @@ public class JsonStringArrayTagWriterTests
         {
             tag.Key = key;
             tag.Value = Encoding.UTF8.GetString(arrayUtf8JsonBytes.Array!, 0, arrayUtf8JsonBytes.Count);
+        }
+
+        protected override void WriteKvlistTag(ref Tag tag, string key, ArraySegment<byte> kvlistUtf8JsonBytes)
+        {
+            tag.Key = key;
+            tag.Value = Encoding.UTF8.GetString(kvlistUtf8JsonBytes.Array!, 0, kvlistUtf8JsonBytes.Count);
         }
 
         protected override void OnUnsupportedTagDropped(string tagKey, string tagValueTypeFullName)
