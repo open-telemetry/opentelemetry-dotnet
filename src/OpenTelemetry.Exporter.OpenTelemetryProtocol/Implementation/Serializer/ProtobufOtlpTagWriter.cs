@@ -6,10 +6,10 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
-internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.OtlpTagWriterState, ProtobufOtlpTagWriter.OtlpTagWriterArrayState>
+internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.OtlpTagWriterState, ProtobufOtlpTagWriter.OtlpTagWriterArrayState, ProtobufOtlpTagWriter.OtlpTagWriterKvlistState>
 {
     private ProtobufOtlpTagWriter()
-        : base(new OtlpArrayTagWriter())
+        : base(new OtlpArrayTagWriter(), new OtlpKvlistTagWriter())
     {
     }
 
@@ -75,6 +75,25 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         state.WritePosition += value.WritePosition;
     }
 
+    protected override void WriteKvlistTag(ref OtlpTagWriterState state, string key, ref OtlpTagWriterKvlistState value)
+    {
+        // Write KeyValue.key
+        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+        // Write KeyValue.value tag and length
+        // AnyValue size = kvlist tag (1) + kvlist length varint + kvlist content
+        var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)value.WritePosition);
+        var anyValueSize = value.WritePosition + 1 + serializedLengthSize;
+        state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, anyValueSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+
+        // Write AnyValue.kvlist_value tag and length
+        state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, value.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Kvlist_Value, ProtobufWireType.LEN);
+
+        // Copy the serialized KeyValueList content
+        Buffer.BlockCopy(value.Buffer, 0, state.Buffer, state.WritePosition, value.WritePosition);
+        state.WritePosition += value.WritePosition;
+    }
+
     protected override void OnUnsupportedTagDropped(
         string tagKey,
         string tagValueTypeFullName) => OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(
@@ -111,6 +130,12 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     }
 
     internal struct OtlpTagWriterArrayState
+    {
+        public byte[] Buffer;
+        public int WritePosition;
+    }
+
+    internal struct OtlpTagWriterKvlistState
     {
         public byte[] Buffer;
         public int WritePosition;
@@ -192,6 +217,225 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             catch (OutOfMemoryException)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.BufferResizeFailedDueToMemory(nameof(OtlpArrayTagWriter));
+                return false;
+            }
+        }
+    }
+
+    internal sealed class OtlpKvlistTagWriter : KvlistTagWriter<OtlpTagWriterKvlistState>
+    {
+        [ThreadStatic]
+        internal static byte[]? ThreadBuffer;
+
+        [ThreadStatic]
+        internal static int NestingLevel;
+
+        private const int MaxBufferSize = 2 * 1024 * 1024;
+
+        public override OtlpTagWriterKvlistState BeginWriteKvlist()
+        {
+            byte[] buffer;
+
+            if (NestingLevel == 0)
+            {
+                // Top-level kvlist: use ThreadStatic buffer
+                ThreadBuffer ??= new byte[2048];
+                buffer = ThreadBuffer;
+            }
+            else
+            {
+                // Nested kvlist: allocate new buffer to avoid overwriting parent
+                buffer = new byte[2048];
+            }
+
+            NestingLevel++;
+
+            return new OtlpTagWriterKvlistState
+            {
+                Buffer = buffer,
+                WritePosition = 0,
+            };
+        }
+
+        public override void WriteNullValue(ref OtlpTagWriterKvlistState state, string key)
+        {
+            // Calculate KeyValue message size: key field + empty value field
+            var keyUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(key.AsSpan());
+            var keyFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)keyUtf8Length) + keyUtf8Length; // tag + length + content
+            var valueFieldSize = 2; // tag + length(0)
+            var kvSize = keyFieldSize + valueFieldSize;
+
+            // Write KeyValueList.values tag and KeyValue message length
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, kvSize, ProtobufOtlpCommonFieldNumberConstants.KeyValueList_Values, ProtobufWireType.LEN);
+
+            // Write KeyValue.key
+            state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+            // Write KeyValue.value (empty)
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, 0, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        }
+
+        public override void WriteIntegralValue(ref OtlpTagWriterKvlistState state, string key, long value)
+        {
+            // Calculate sizes
+            var keyUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(key.AsSpan());
+            var keyFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)keyUtf8Length) + keyUtf8Length;
+            var intSize = ProtobufSerializer.ComputeVarInt64Size((ulong)value) + 1; // int value + tag
+            var valueFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)intSize) + intSize; // tag + length + content
+            var kvSize = keyFieldSize + valueFieldSize;
+
+            // Write KeyValueList.values tag and KeyValue message length
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, kvSize, ProtobufOtlpCommonFieldNumberConstants.KeyValueList_Values, ProtobufWireType.LEN);
+
+            // Write KeyValue.key
+            state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+            // Write KeyValue.value
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, intSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+            state.WritePosition = ProtobufSerializer.WriteInt64WithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Int_Value, (ulong)value);
+        }
+
+        public override void WriteFloatingPointValue(ref OtlpTagWriterKvlistState state, string key, double value)
+        {
+            // Calculate sizes
+            var keyUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(key.AsSpan());
+            var keyFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)keyUtf8Length) + keyUtf8Length;
+            var doubleSize = 9; // 8 bytes + tag
+            var valueFieldSize = 1 + 1 + doubleSize; // tag + length(1 byte for 9) + content
+            var kvSize = keyFieldSize + valueFieldSize;
+
+            // Write KeyValueList.values tag and KeyValue message length
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, kvSize, ProtobufOtlpCommonFieldNumberConstants.KeyValueList_Values, ProtobufWireType.LEN);
+
+            // Write KeyValue.key
+            state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+            // Write KeyValue.value
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, doubleSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+            state.WritePosition = ProtobufSerializer.WriteDoubleWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Double_Value, value);
+        }
+
+        public override void WriteBooleanValue(ref OtlpTagWriterKvlistState state, string key, bool value)
+        {
+            // Calculate sizes
+            var keyUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(key.AsSpan());
+            var keyFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)keyUtf8Length) + keyUtf8Length;
+            var boolSize = 2; // 1 byte + tag
+            var valueFieldSize = 1 + 1 + boolSize; // tag + length(1 byte for 2) + content
+            var kvSize = keyFieldSize + valueFieldSize;
+
+            // Write KeyValueList.values tag and KeyValue message length
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, kvSize, ProtobufOtlpCommonFieldNumberConstants.KeyValueList_Values, ProtobufWireType.LEN);
+
+            // Write KeyValue.key
+            state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+            // Write KeyValue.value
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, boolSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+            state.WritePosition = ProtobufSerializer.WriteBoolWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Bool_Value, value);
+        }
+
+        public override void WriteStringValue(ref OtlpTagWriterKvlistState state, string key, ReadOnlySpan<char> value)
+        {
+            // Calculate sizes
+            var keyUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(key.AsSpan());
+            var keyFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)keyUtf8Length) + keyUtf8Length;
+
+            var valueUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(value);
+            var stringFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)valueUtf8Length) + valueUtf8Length;
+            var anyValueSize = stringFieldSize;
+            var valueFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)anyValueSize) + anyValueSize;
+            var kvSize = keyFieldSize + valueFieldSize;
+
+            // Write KeyValueList.values tag and KeyValue message length
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, kvSize, ProtobufOtlpCommonFieldNumberConstants.KeyValueList_Values, ProtobufWireType.LEN);
+
+            // Write KeyValue.key
+            state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+            // Write KeyValue.value
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, anyValueSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+            state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, valueUtf8Length, value);
+        }
+
+        public override void WriteArrayValue<TArrayState>(ref OtlpTagWriterKvlistState state, string key, ref TArrayState arrayState)
+        {
+            if (arrayState is OtlpTagWriterArrayState typedArrayState)
+            {
+                // Calculate sizes
+                var keyUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(key.AsSpan());
+                var keyFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)keyUtf8Length) + keyUtf8Length;
+
+                var arrayContentSize = typedArrayState.WritePosition;
+                var arrayFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)arrayContentSize) + arrayContentSize; // tag + length + content
+                var anyValueSize = arrayFieldSize;
+                var valueFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)anyValueSize) + anyValueSize;
+                var kvSize = keyFieldSize + valueFieldSize;
+
+                // Write KeyValueList.values tag and KeyValue message length
+                state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, kvSize, ProtobufOtlpCommonFieldNumberConstants.KeyValueList_Values, ProtobufWireType.LEN);
+
+                // Write KeyValue.key
+                state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+                // Write KeyValue.value (AnyValue with array)
+                state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, anyValueSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+                state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, arrayContentSize, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Array_Value, ProtobufWireType.LEN);
+                Buffer.BlockCopy(typedArrayState.Buffer, 0, state.Buffer, state.WritePosition, arrayContentSize);
+                state.WritePosition += arrayContentSize;
+            }
+        }
+
+        public override void WriteKvlistValue(ref OtlpTagWriterKvlistState state, string key, ref OtlpTagWriterKvlistState nestedKvlistState)
+        {
+            // Calculate sizes
+            var keyUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(key.AsSpan());
+            var keyFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)keyUtf8Length) + keyUtf8Length;
+
+            var kvlistContentSize = nestedKvlistState.WritePosition;
+            var kvlistFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)kvlistContentSize) + kvlistContentSize; // tag + length + content
+            var anyValueSize = kvlistFieldSize;
+            var valueFieldSize = 1 + ProtobufSerializer.ComputeVarInt64Size((ulong)anyValueSize) + anyValueSize;
+            var kvSize = keyFieldSize + valueFieldSize;
+
+            // Write KeyValueList.values tag and KeyValue message length
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, kvSize, ProtobufOtlpCommonFieldNumberConstants.KeyValueList_Values, ProtobufWireType.LEN);
+
+            // Write KeyValue.key
+            state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+            // Write KeyValue.value (AnyValue with kvlist)
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, anyValueSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, kvlistContentSize, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Kvlist_Value, ProtobufWireType.LEN);
+            Buffer.BlockCopy(nestedKvlistState.Buffer, 0, state.Buffer, state.WritePosition, kvlistContentSize);
+            state.WritePosition += kvlistContentSize;
+        }
+
+        public override void EndWriteKvlist(ref OtlpTagWriterKvlistState state)
+        {
+            NestingLevel--;
+        }
+
+        public override bool TryResize()
+        {
+            var buffer = ThreadBuffer;
+
+            Debug.Assert(buffer != null, "buffer was null");
+
+            if (buffer!.Length >= MaxBufferSize)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.ArrayBufferExceededMaxSize();
+                return false;
+            }
+
+            try
+            {
+                ThreadBuffer = new byte[buffer.Length * 2];
+                return true;
+            }
+            catch (OutOfMemoryException)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.BufferResizeFailedDueToMemory(nameof(OtlpKvlistTagWriter));
                 return false;
             }
         }

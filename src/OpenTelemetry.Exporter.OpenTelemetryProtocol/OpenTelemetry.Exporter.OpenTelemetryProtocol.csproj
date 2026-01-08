@@ -37,6 +37,7 @@
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\Shared\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\TagWriter\ArrayTagWriter.cs" Link="Includes\TagWriter\ArrayTagWriter.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\TagWriter\KvlistTagWriter.cs" Link="Includes\TagWriter\KvlistTagWriter.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\TagWriter\TagWriter.cs" Link="Includes\TagWriter\TagWriter.cs" />
   </ItemGroup>
 
