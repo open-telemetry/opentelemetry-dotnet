@@ -33,6 +33,7 @@ internal static class OtlpSecureHttpClientFactory
         }
 
         X509Certificate2? caCertificate = null;
+        byte[]? caCertificateData = null;
         X509Certificate2? clientCertificate = null;
         TlsHttpClientHandler? handler = null;
 
@@ -49,6 +50,8 @@ internal static class OtlpSecureHttpClientFactory
                         caCertificate,
                         OtlpCertificateManager.CaCertificateType);
                 }
+
+                caCertificateData = caCertificate.RawData;
             }
 
             if (tlsOptions is OtlpMtlsOptions mtlsOptions && mtlsOptions.IsMtlsEnabled)
@@ -79,11 +82,14 @@ internal static class OtlpSecureHttpClientFactory
 
             // Create HttpClientHandler and apply TLS configuration
 #pragma warning disable CA2000 // Dispose objects before losing scope - HttpClientHandler is disposed by HttpClient
-            handler = new TlsHttpClientHandler(caCertificate, clientCertificate);
+            handler = new TlsHttpClientHandler(caCertificateData, clientCertificate);
 #pragma warning restore CA2000
 
-            // Handler keeps certificates alive; do not dispose in handler to avoid TLS callback races.
+            // Handler copies CA cert data; release the original handle now.
+            caCertificate?.Dispose();
             caCertificate = null;
+
+            // Client certificate lifetime is tied to the handler.
             clientCertificate = null;
 
 #pragma warning disable CA5399 // CheckCertificateRevocationList is set in ConfigureTls.
@@ -130,14 +136,14 @@ internal static class OtlpSecureHttpClientFactory
     /// </summary>
     private sealed class TlsHttpClientHandler : HttpClientHandler
     {
-        private readonly X509Certificate2? caCertificate;
+        private readonly byte[]? caCertificateData;
         private readonly X509Certificate2? clientCertificate;
 
         internal TlsHttpClientHandler(
-            X509Certificate2? caCertificate,
+            byte[]? caCertificateData,
             X509Certificate2? clientCertificate)
         {
-            this.caCertificate = caCertificate;
+            this.caCertificateData = caCertificateData;
             this.clientCertificate = clientCertificate;
 
             this.ConfigureTls();
@@ -145,8 +151,12 @@ internal static class OtlpSecureHttpClientFactory
 
         protected override void Dispose(bool disposing)
         {
-            // Intentionally do not dispose certificates here; TLS callbacks can run after disposal.
             base.Dispose(disposing);
+
+            if (disposing)
+            {
+                this.clientCertificate?.Dispose();
+            }
         }
 
         private void ConfigureTls()
@@ -170,13 +180,12 @@ internal static class OtlpSecureHttpClientFactory
 
         private void ConfigureCaCertificateValidation()
         {
-            if (this.caCertificate == null)
+            if (this.caCertificateData == null)
             {
                 return;
             }
 
-            // Capture the reference for the callback; this does not clone the cert or change its lifetime.
-            var caCert = this.caCertificate;
+            var caCertData = this.caCertificateData;
             this.ServerCertificateCustomValidationCallback = (
                 httpRequestMessage,
                 cert,
@@ -188,6 +197,7 @@ internal static class OtlpSecureHttpClientFactory
                     return false;
                 }
 
+                using var caCert = new X509Certificate2(caCertData);
                 return OtlpCertificateManager.ValidateServerCertificate(
                     cert,
                     chain,
