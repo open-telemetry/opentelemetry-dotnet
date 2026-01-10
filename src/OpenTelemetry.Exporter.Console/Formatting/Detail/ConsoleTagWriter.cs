@@ -6,7 +6,7 @@ using System.Globalization;
 using System.Text;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter;
+namespace OpenTelemetry.Exporter.Formatting.Detail;
 
 internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWriter.ConsoleTag>
 {

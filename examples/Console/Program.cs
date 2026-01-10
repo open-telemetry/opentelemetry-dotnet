@@ -76,6 +76,9 @@ internal sealed class MetricsOptions
     [Option("useExporter", Default = "console", HelpText = "Options include otlp or console.", Required = false)]
     public string? UseExporter { get; set; }
 
+    [Option("useFormatter", Default = "compact", HelpText = "Formatter for console exporter include Compact or Detail).", Required = false)]
+    public string? UseFormatter { get; set; }
+
     [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send metrics (default value depends on protocol).", Default = null)]
     public string? Endpoint { get; set; }
 
@@ -96,6 +99,8 @@ internal sealed class HttpClientOptions
 [Verb("console", HelpText = "Specify the options required to test console exporter")]
 internal sealed class ConsoleOptions
 {
+    [Option("useFormatter", Default = "compact", HelpText = "Formatter for console exporter include Compact or Detail).", Required = false)]
+    public string? UseFormatter { get; set; }
 }
 
 [Verb("otelshim", HelpText = "Specify the options required to test OpenTelemetry Shim with console exporter")]
@@ -123,6 +128,9 @@ internal sealed class LogsOptions
 {
     [Option("useExporter", Default = "otlp", HelpText = "Options include otlp or console.", Required = false)]
     public string? UseExporter { get; set; }
+
+    [Option("useFormatter", Default = "compact", HelpText = "Formatter for console exporter include Compact or Detail).", Required = false)]
+    public string? UseFormatter { get; set; }
 
     [Option('e', "endpoint", HelpText = "Target to which the OTLP exporter is going to send logs (default value depends on protocol).", Default = null)]
     public string? Endpoint { get; set; }

@@ -71,6 +71,7 @@ internal sealed class TestMetrics
                 .AddConsoleExporter((exporterOptions, metricReaderOptions) =>
                 {
                     exporterOptions.Targets = ConsoleExporterOutputTargets.Console;
+                    exporterOptions.Formatter = options.UseFormatter ?? "Compact";
 
                     metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
                     metricReaderOptions.TemporalityPreference = options.IsDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
