@@ -13,11 +13,21 @@ service name, version and the machine on which this program is running.
 The sample rate is set to emit all the traces using `AlwaysOnSampler`.
 You can try out different samplers like `TraceIdRatioBasedSampler`.
 
+## Running the basic example
+
+The example by default writes telemetry to stdout.
+
+```powershell
+dotnet run --project examples/AspNetCore/Examples.AspNetCore.csproj
+```
+
+To call the web service, use a browser to request `https://localhost:5001/weatherforecast`
+
 ## Running Dependencies via Docker
 
-The example by default writes telemetry to stdout. To enable telemetry export
-via OTLP, update the `appsettings.json` file to replace `"console"` with
-`"otlp"`. Launching the application will then send telemetry data via OTLP.
+To enable telemetry export via OTLP, update the `appsettings.json` file
+to replace `"console"` with `"otlp"`. Launching the application will then
+send telemetry data via OTLP.
 
 Use the provided "docker-compose.yaml" file to spin up the
 required dependencies, including:
