@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
@@ -11,8 +12,17 @@ internal sealed class TestLogs
 {
     internal static int Run(LogsOptions options)
     {
+        // Add ActivitySource listener to enable activity (span) creation
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = _ => true,
+            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+        };
+        ActivitySource.AddActivityListener(listener);
+
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
+            builder.SetMinimumLevel(LogLevel.Debug);
             builder.AddOpenTelemetry((opt) =>
             {
                 opt.IncludeFormattedMessage = true;
@@ -107,16 +117,41 @@ internal sealed class TestLogs
                 }
                 else
                 {
-                    opt.AddConsoleExporter();
+                    opt.AddConsoleExporter(config => config.Formatter = options.UseFormatter ?? "Compact");
                 }
             });
         });
 
+        using var activitySource = new ActivitySource("Examples.Console");
         var logger = loggerFactory.CreateLogger<TestLogs>();
+
         using (logger.BeginCityScope("Seattle"))
         using (logger.BeginStoreTypeScope("Physical"))
         {
             logger.HelloFrom("tomato", 2.99);
+
+            using (var activity = activitySource.StartActivity("TestLogs", ActivityKind.Internal))
+            {
+                try
+                {
+#pragma warning disable CA1848 // For example purposes
+                    logger.LogWarning(1234, "Size exceeds {Limit}.", 5);
+#pragma warning restore CA1848
+
+                    using (var activity2 = activitySource.StartActivity("Inner", ActivityKind.Internal))
+                    {
+#pragma warning disable CA1848 // For example purposes
+                        logger.LogDebug("Random {Guid}", Guid.NewGuid());
+#pragma warning restore CA1848
+
+                        throw new NotImplementedException("TEST EXCEPTION");
+                    }
+                }
+                catch (NotImplementedException ex)
+                {
+                    logger.CrashMessage("test", ex);
+                }
+            }
         }
 
         return 0;

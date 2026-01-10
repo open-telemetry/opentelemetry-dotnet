@@ -17,11 +17,6 @@ internal sealed class TestConsoleExporter
     // dotnet run console
     internal static int Run(ConsoleOptions options)
     {
-        return RunWithActivitySource();
-    }
-
-    private static int RunWithActivitySource()
-    {
         // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
         // and use Console exporter.
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -30,7 +25,7 @@ internal sealed class TestConsoleExporter
 #pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
 #pragma warning restore CA2000 // Dispose objects before losing scope
-            .AddConsoleExporter()
+            .AddConsoleExporter(config => config.Formatter = options.UseFormatter ?? "Compact")
             .Build();
 
         // The above line is required only in applications

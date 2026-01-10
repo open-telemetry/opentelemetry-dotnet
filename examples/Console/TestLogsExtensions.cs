@@ -16,4 +16,7 @@ internal static partial class TestLogsExtensions
 
     [LoggerMessage(LogLevel.Information, "Hello from {Name} {Price}.")]
     public static partial void HelloFrom(this ILogger logger, string name, double price);
+
+    [LoggerMessage(LogLevel.Critical, "Critical Error from {Source}.")]
+    public static partial void CrashMessage(this ILogger logger, string source, Exception ex);
 }
