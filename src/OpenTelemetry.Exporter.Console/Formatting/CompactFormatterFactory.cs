@@ -12,7 +12,7 @@ namespace OpenTelemetry.Exporter.Formatting;
 internal sealed class CompactFormatterFactory : IFormatterFactory
 {
     public IConsoleFormatter<Activity> GetActivityFormatter(ConsoleExporterOptions options) =>
-        new DetailActivityFormatter(options);
+        new CompactActivityFormatter(options);
 
     public IConsoleFormatter<LogRecord> GetLogRecordFormatter(ConsoleExporterOptions options) =>
         new CompactLogRecordFormatter(options);
