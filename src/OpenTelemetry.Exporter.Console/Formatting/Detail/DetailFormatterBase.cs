@@ -29,7 +29,7 @@ internal abstract class DetailFormatterBase<T> : IConsoleFormatter<T>
     {
         if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))
         {
-            Console.WriteLine(message);
+            this.options.Console.WriteLine(message);
         }
 
         if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Debug))
@@ -50,10 +50,9 @@ internal abstract class DetailFormatterBase<T> : IConsoleFormatter<T>
     {
     }
 
-    private void OnUnsupportedTagDropped(
-        string tagKey,
-        string tagValueTypeFullName)
+    private void OnUnsupportedTagDropped(string tagKey, string tagValueTypeFullName)
     {
-        this.WriteLine($"Unsupported attribute value type '{tagValueTypeFullName}' for '{tagKey}'.");
+        this.WriteLine(
+            $"Unsupported attribute value type '{tagValueTypeFullName}' for '{tagKey}'.");
     }
 }
