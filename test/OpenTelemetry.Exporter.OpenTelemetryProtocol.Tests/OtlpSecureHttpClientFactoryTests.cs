@@ -74,7 +74,7 @@ public class OtlpSecureHttpClientFactoryTests
     [Fact]
     public void CreateHttpClient_ConfiguresServerCertificateValidation_WhenCaCertificatesProvided()
     {
-        RunWithCryptoSupportCheck(() =>
+        SkipTestIfCryptoNotSupported(() =>
         {
             var tempTrustStoreFile = Path.GetTempFileName();
             try
@@ -115,7 +115,7 @@ public class OtlpSecureHttpClientFactoryTests
     [Fact]
     public void CreateHttpClient_ConfiguresServerValidation_WithCaOnly()
     {
-        RunWithCryptoSupportCheck(() =>
+        SkipTestIfCryptoNotSupported(() =>
         {
             var tempTrustStoreFile = Path.GetTempFileName();
 
@@ -157,7 +157,7 @@ public class OtlpSecureHttpClientFactoryTests
     [Fact]
     public void CreateHttpClient_InvokesServerValidationCallbackAfterFactoryReturns()
     {
-        RunWithCryptoSupportCheck(() =>
+        SkipTestIfCryptoNotSupported(() =>
         {
             var tempTrustStoreFile = Path.GetTempFileName();
             try
@@ -439,7 +439,23 @@ public class OtlpSecureHttpClientFactoryTests
         return builder.ToString();
     }
 
-    private static void RunWithCryptoSupportCheck(Action testBody)
+    /// <summary>
+    /// Executes a test action and gracefully handles platforms where cryptographic operations are not supported.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Some platforms (e.g., certain CI environments or restricted OS configurations) may not support
+    /// specific cryptographic operations required for TLS/mTLS certificate handling. This method wraps
+    /// test execution to catch <see cref="PlatformNotSupportedException"/> and <see cref="CryptographicException"/>
+    /// (when indicating lack of support), allowing tests to pass gracefully on unsupported platforms.
+    /// </para>
+    /// <para>
+    /// Note: xUnit 2.x does not support runtime test skipping. The test will appear as "passed" rather than
+    /// "skipped" when crypto is not supported. Consider upgrading to xUnit v3 for proper <c>Assert.Skip()</c> support.
+    /// </para>
+    /// </remarks>
+    /// <param name="testBody">The test action to execute.</param>
+    private static void SkipTestIfCryptoNotSupported(Action testBody)
     {
         try
         {
@@ -447,11 +463,15 @@ public class OtlpSecureHttpClientFactoryTests
         }
         catch (PlatformNotSupportedException ex)
         {
-            Console.WriteLine($"Skipping mTLS HttpClient tests: {ex.Message}");
+            // Platform does not support the required cryptographic operations.
+            // Test is effectively skipped but will appear as passed in xUnit 2.x.
+            Console.WriteLine($"[SKIPPED] mTLS HttpClient test skipped due to platform limitation: {ex.Message}");
         }
         catch (CryptographicException ex) when (ex.Message.Contains("not supported", StringComparison.OrdinalIgnoreCase))
         {
-            Console.WriteLine($"Skipping mTLS HttpClient tests: {ex.Message}");
+            // Cryptographic operation not supported on this platform/configuration.
+            // Test is effectively skipped but will appear as passed in xUnit 2.x.
+            Console.WriteLine($"[SKIPPED] mTLS HttpClient test skipped due to crypto limitation: {ex.Message}");
         }
     }
 }
