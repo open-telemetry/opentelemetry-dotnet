@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Formatting;
-using OpenTelemetry.Exporter.Formatting.Detail;
 
 namespace OpenTelemetry.Exporter;
 
@@ -12,7 +11,9 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
     public ConsoleActivityExporter(ConsoleExporterOptions options)
         : base(options)
     {
-        this.ConsoleFormatter = new DetailActivityFormatter(options);
+        this.ConsoleFormatter = FormatterFactory
+            .GetFormatterFactory(options.Formatter)
+            .GetActivityFormatter(options);
     }
 
     public override ExportResult Export(in Batch<Activity> batch)

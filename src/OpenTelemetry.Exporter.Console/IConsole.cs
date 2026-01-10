@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-namespace OpenTelemetry.Exporter.Formatting.Compact;
+namespace OpenTelemetry.Exporter;
 
 /// <summary>
 /// Interface for console operations to support color output and testing.
@@ -17,6 +17,11 @@ internal interface IConsole
     /// Gets or sets the background color.
     /// </summary>
     ConsoleColor BackgroundColor { get; set; }
+
+    /// <summary>
+    /// Gets an object that can be used to synchronize access to the IConsole.
+    /// </summary>
+    object SyncRoot { get; }
 
     /// <summary>
     /// Resets the console colors to their defaults.

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Exporter.Formatting;
-using OpenTelemetry.Exporter.Formatting.Detail;
 using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Exporter;
@@ -12,7 +11,9 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
     public ConsoleLogRecordExporter(ConsoleExporterOptions options)
         : base(options)
     {
-        this.ConsoleFormatter = new DetailLogRecordFormatter(options);
+        this.ConsoleFormatter = FormatterFactory
+            .GetFormatterFactory(options.Formatter)
+            .GetLogRecordFormatter(options);
     }
 
     public override ExportResult Export(in Batch<LogRecord> batch)

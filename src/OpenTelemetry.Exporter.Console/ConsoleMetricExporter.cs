@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Exporter.Formatting;
-using OpenTelemetry.Exporter.Formatting.Detail;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter;
@@ -12,7 +11,9 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
     public ConsoleMetricExporter(ConsoleExporterOptions options)
         : base(options)
     {
-        this.ConsoleFormatter = new DetailMetricFormatter(options);
+        this.ConsoleFormatter = FormatterFactory
+            .GetFormatterFactory(options.Formatter)
+            .GetMetricFormatter(options);
     }
 
     public override ExportResult Export(in Batch<Metric> batch)

@@ -1,0 +1,6 @@
+OpenTelemetry.Exporter.ConsoleExporterOptions.Formatter.get -> string!
+OpenTelemetry.Exporter.ConsoleExporterOptions.Formatter.set -> void
+OpenTelemetry.Exporter.ConsoleExporterOptions.TimestampFormat.get -> string!
+OpenTelemetry.Exporter.ConsoleExporterOptions.TimestampFormat.set -> void
+OpenTelemetry.Exporter.ConsoleExporterOptions.UseUtcTimestamp.get -> bool
+OpenTelemetry.Exporter.ConsoleExporterOptions.UseUtcTimestamp.set -> void
