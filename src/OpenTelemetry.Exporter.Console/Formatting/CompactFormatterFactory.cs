@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Formatting.Compact;
-using OpenTelemetry.Exporter.Formatting.Detail;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 
@@ -18,5 +17,5 @@ internal sealed class CompactFormatterFactory : IFormatterFactory
         new CompactLogRecordFormatter(options);
 
     public IConsoleFormatter<Metric> GetMetricFormatter(ConsoleExporterOptions options) =>
-        new DetailMetricFormatter(options);
+        new CompactMetricFormatter(options);
 }
