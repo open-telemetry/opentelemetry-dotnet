@@ -130,6 +130,36 @@ values of the `PeriodicExportingMetricReaderOptions`
 | `OTEL_METRIC_EXPORT_INTERVAL` | `ExportIntervalMilliseconds`                    |
 | `OTEL_METRIC_EXPORT_TIMEOUT`  | `ExportTimeoutMilliseconds`                     |
 
+## Future features
+
+See issue [#6391](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6391)
+for original list.
+
+Potential features:
+
+* Custom formatting.
+* Colourisation of semantic logging values (when injected into the message template/body)
+* Filtering of messages, e.g. only certain logs/traces/metrics
+* Filtering of frequency. e.g. metrics may want to output once per minute or something
+* Support additional output attributes (the equivalent of the .NET supporting
+  output scopes)
+* Filtering of additional attributes to output
+* Support resource details output -- for OTLP resource is included with each
+  message, and often stored in a mixed database of distributed traces; however
+  a console output will only be one component, so no need to repeat each time.
+  e.g. could just output once from the first received record.
+
+Potential related or longer term features and formats:
+
+* ANSI console support
+* Separating formatting from the actual output
+* JSON output (including OTLP JSONL formatting)
+* OTEL standard console output (which might end up being OTLP JSON)
+* Production-level performance (the simple console is designed for a developer)
+* File output (including the many variations like file rotation)
+* Syslog format (like .NET console logger provider has)
+* YAML (or other structured) output
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
