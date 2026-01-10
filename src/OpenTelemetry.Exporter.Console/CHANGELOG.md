@@ -12,6 +12,12 @@ Notes](../../RELEASENOTES.md).
 * Added support for `Meter.TelemetrySchemaUrl` property.
   ([#6714](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6714))
 
+* Added formatter option to Console exporter with a new 'Compact' formatter,
+  suitable for everyday application development, with simplified single line
+  output, and colour. The default formatter ('Detail') is still available for
+  learning about OpenTelemetry.
+  ([#6801](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6801))
+
 ## 1.14.0
 
 Released 2025-Nov-12
