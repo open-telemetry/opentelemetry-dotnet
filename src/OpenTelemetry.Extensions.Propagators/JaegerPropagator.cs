@@ -10,6 +10,7 @@ namespace OpenTelemetry.Extensions.Propagators;
 /// <summary>
 /// A text map propagator for Jaeger trace context. See https://www.jaegertracing.io/docs/next-release/client-libraries/#propagation-format.
 /// </summary>
+[Obsolete("The Jaeger propagator is obsolete and will be removed in a future version. The Jaeger propagation format has been deprecated in favor of W3C Trace Context. Use TraceContextPropagator instead. See https://www.jaegertracing.io/sdk-migration/#propagation-format and https://github.com/open-telemetry/opentelemetry-specification/issues/4827 for more information.")]
 public class JaegerPropagator : TextMapPropagator
 {
     internal const string JaegerHeader = "uber-trace-id";
@@ -23,10 +24,14 @@ public class JaegerPropagator : TextMapPropagator
     private static readonly int SpanIdLength = "00f067aa0ba902b7".Length;
 
     /// <inheritdoc/>
+    [Obsolete("The Jaeger propagator is obsolete and will be removed in a future version. The Jaeger propagation format has been deprecated in favor of W3C Trace Context. Use TraceContextPropagator instead. See https://www.jaegertracing.io/sdk-migration/#propagation-format and https://github.com/open-telemetry/opentelemetry-specification/issues/4827 for more information.")]
     public override ISet<string> Fields => new HashSet<string> { JaegerHeader };
 
     /// <inheritdoc/>
+    [Obsolete("The Jaeger propagator is obsolete and will be removed in a future version. The Jaeger propagation format has been deprecated in favor of W3C Trace Context. Use TraceContextPropagator instead. See https://www.jaegertracing.io/sdk-migration/#propagation-format and https://github.com/open-telemetry/opentelemetry-specification/issues/4827 for more information.")]
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
     {
         if (context.ActivityContext.IsValid())
         {
@@ -81,7 +86,10 @@ public class JaegerPropagator : TextMapPropagator
     }
 
     /// <inheritdoc/>
+    [Obsolete("The Jaeger propagator is obsolete and will be removed in a future version. The Jaeger propagation format has been deprecated in favor of W3C Trace Context. Use TraceContextPropagator instead. See https://www.jaegertracing.io/sdk-migration/#propagation-format and https://github.com/open-telemetry/opentelemetry-specification/issues/4827 for more information.")]
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
     public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
     {
         // from https://www.jaegertracing.io/docs/next-release/client-libraries/#propagation-format
         // parent id is optional and deprecated, will not attempt to set it.
