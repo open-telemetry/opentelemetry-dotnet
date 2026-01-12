@@ -10,11 +10,15 @@ using System.Security.Cryptography.X509Certificates;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 /// <summary>
-/// Manages certificate loading, validation, and security checks for mTLS connections.
+/// Manages certificate loading, validation, and security checks for TLS connections.
 /// </summary>
+/// <remarks>
+/// This class provides functionality for both simple server certificate trust
+/// (for self-signed certificates) and mTLS client authentication scenarios.
+/// </remarks>
 internal static class OtlpCertificateManager
 {
-    internal const string CaCertificateType = "CA certificate";
+    internal const string CaCertificateType = "CA Certificate";
     internal const string ClientCertificateType = "Client certificate";
     internal const string ClientPrivateKeyType = "Client private key";
 
@@ -218,6 +222,10 @@ internal static class OtlpCertificateManager
     /// <param name="sslPolicyErrors">The SSL policy errors.</param>
     /// <param name="caCertificate">The CA certificate to validate against.</param>
     /// <returns>True if the certificate is valid; otherwise, false.</returns>
+    /// <remarks>
+    /// This method is used to validate server certificates against a CA.
+    /// Common use case: connecting to a server with a self-signed certificate.
+    /// </remarks>
     internal static bool ValidateServerCertificate(
         X509Certificate2 serverCert,
         X509Chain chain,
@@ -244,6 +252,8 @@ internal static class OtlpCertificateManager
                 X509VerificationFlags.AllowUnknownCertificateAuthority;
             chain.ChainPolicy.CustomTrustStore.Add(caCertificate);
             chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+
+            // Skip CRL/OCSP checks for custom CA validation to avoid network-dependent failures.
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
             chain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
 
