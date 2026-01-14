@@ -1062,6 +1062,113 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal(30, sumReceived);
     }
 
+    [Theory(Skip = "Known issue. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5950")]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest(MetricReaderTemporalityPreference temporality)
+    {
+        // dotnet test --filter "FullyQualifiedName~ObservableUpDownCounterReportsActiveMeasurementsOnlyTest" --framework net10.0
+        // Testing
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader
+        // For asynchronous instruments with Delta or Cumulative aggregation
+        // temporality, MetricReader.Collect MUST only receive data points with
+        // measurements recorded since the previous collection. These rules
+        // apply to all metrics, not just those whose point kinds includes an
+        // aggregation temporality field.
+        var exportedItems = new List<Metric>();
+        var tags1 = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "value1"),
+        };
+
+        var tags2 = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "value2"),
+        };
+
+        int callbackInvocationCount = 0;
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
+        var counterLong = meter.CreateObservableUpDownCounter(
+            "observable-updowncounter",
+            () =>
+            {
+                callbackInvocationCount++;
+                if (callbackInvocationCount == 1)
+                {
+                    // First callback: Report 2 time series
+                    return new List<Measurement<long>>
+                    {
+                        new(10L, tags1),
+                        new(10L, tags2),
+                    };
+                }
+                else if (callbackInvocationCount == 2)
+                {
+                    // Second callback: Report 1 time series
+                    return new List<Measurement<long>>
+                    {
+                        new(10L, tags1),
+                    };
+                }
+                else
+                {
+                    // Third callback onwards: Report no time series
+                    return new List<Measurement<long>>();
+                }
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = temporality;
+            }));
+
+        // Export 1: Should get both time series
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("observable-updowncounter", metric.Name);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+
+        var metricPoint1 = metricPoints[0];
+        Assert.Equal(10, metricPoint1.GetSumLong());
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+        var metricPoint2 = metricPoints[1];
+        Assert.Equal(10, metricPoint2.GetSumLong());
+        ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+        // Export 2: Should get only timeseries1
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metric = exportedItems[0];
+        Assert.Equal("observable-updowncounter", metric.Name);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        metricPoint1 = metricPoints[0];
+        Assert.Equal(10, metricPoint1.GetSumLong());
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+        // Export 3: Should get nothing
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Empty(exportedItems);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
