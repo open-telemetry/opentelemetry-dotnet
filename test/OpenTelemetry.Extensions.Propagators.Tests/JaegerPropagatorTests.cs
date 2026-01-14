@@ -32,6 +32,7 @@ public class JaegerPropagatorTests
     };
 
     [Fact]
+    [Obsolete]
     public void ExtractReturnsOriginalContextIfContextIsAlreadyValid()
     {
         // arrange
@@ -51,6 +52,7 @@ public class JaegerPropagatorTests
     }
 
     [Fact]
+    [Obsolete]
     public void ExtractReturnsOriginalContextIfCarrierIsNull()
     {
         // arrange
@@ -64,6 +66,7 @@ public class JaegerPropagatorTests
     }
 
     [Fact]
+    [Obsolete]
     public void ExtractReturnsOriginalContextIfGetterIsNull()
     {
         // arrange
@@ -87,6 +90,7 @@ public class JaegerPropagatorTests
     [InlineData("invalid trace id", SpanId, ParentSpanId, FlagSampled, JaegerDelimiter)]
     [InlineData(TraceId, "invalid span id", ParentSpanId, FlagSampled, JaegerDelimiter)]
     [InlineData(TraceId, SpanId, $"too many {JaegerDelimiter} records", FlagSampled, JaegerDelimiter)]
+    [Obsolete]
     public void ExtractReturnsOriginalContextIfHeaderIsNotValid(string traceId, string spanId, string parentSpanId, string flags, string delimiter)
     {
         // arrange
@@ -111,6 +115,7 @@ public class JaegerPropagatorTests
     [Theory]
     [InlineData(TraceId, SpanId, ParentSpanId, FlagSampled, JaegerDelimiter)]
     [InlineData(TraceIdShort, SpanIdShort, ParentSpanId, FlagNotSampled, JaegerDelimiterEncoded)]
+    [Obsolete]
     public void ExtractReturnsNewContextIfHeaderIsValid(string traceId, string spanId, string parentSpanId, string flags, string delimiter)
     {
 #if NET
@@ -150,6 +155,7 @@ public class JaegerPropagatorTests
     }
 
     [Fact]
+    [Obsolete]
     public void InjectDoesNoopIfContextIsInvalid()
     {
         // arrange
@@ -165,6 +171,7 @@ public class JaegerPropagatorTests
     }
 
     [Fact]
+    [Obsolete]
     public void InjectDoesNoopIfCarrierIsNull()
     {
         // arrange
@@ -181,6 +188,7 @@ public class JaegerPropagatorTests
     }
 
     [Fact]
+    [Obsolete]
     public void InjectDoesNoopIfSetterIsNull()
     {
         // arrange
@@ -202,6 +210,7 @@ public class JaegerPropagatorTests
     [Theory]
     [InlineData(FlagSampled)]
     [InlineData(FlagNotSampled)]
+    [Obsolete]
     public void InjectWillAddJaegerFormattedTraceToCarrier(string sampledFlag)
     {
         // arrange
