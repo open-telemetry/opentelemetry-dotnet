@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -127,6 +128,12 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     /// <inheritdoc/>
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
+        Stopwatch? shutdownStopwatch = null;
+        if (timeoutMilliseconds > 0)
+        {
+            shutdownStopwatch = Stopwatch.StartNew();
+        }
+
         var result = this.worker.Shutdown(timeoutMilliseconds);
 
         OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.GetType().Name, this.exporter.GetType().Name, this.DroppedCount);
@@ -141,7 +148,18 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
             return this.exporter.Shutdown(0) && result;
         }
 
-        return this.exporter.Shutdown(timeoutMilliseconds) && result;
+        int remainingTimeout = timeoutMilliseconds;
+        if (shutdownStopwatch != null)
+        {
+            shutdownStopwatch.Stop();
+            remainingTimeout -= (int)shutdownStopwatch.ElapsedMilliseconds;
+            if (remainingTimeout < 0)
+            {
+                remainingTimeout = 0;
+            }
+        }
+
+        return this.exporter.Shutdown(remainingTimeout) && result;
     }
 
     /// <inheritdoc/>
