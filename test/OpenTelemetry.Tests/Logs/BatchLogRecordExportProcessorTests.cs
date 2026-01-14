@@ -26,13 +26,10 @@ public sealed class BatchLogRecordExportProcessorTests
 #pragma warning disable CA2000 // Dispose objects before losing scope
             new InMemoryExporter<LogRecord>(exportedItems),
 #pragma warning restore CA2000 // Dispose objects before losing scope
-            new()
-            {
-                MaxQueueSize = BatchLogRecordExportProcessor.DefaultMaxQueueSize,
-                MaxExportBatchSize = BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
-                ExporterTimeoutMilliseconds = BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
-                ScheduledDelayMilliseconds = int.MaxValue,
-            });
+            maxQueueSize: BatchLogRecordExportProcessor.DefaultMaxQueueSize,
+            scheduledDelayMilliseconds: int.MaxValue,
+            exporterTimeoutMilliseconds: BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
+            maxExportBatchSize: BatchLogRecordExportProcessor.DefaultMaxExportBatchSize);
 
         using var scope = scopeProvider.Push(exportedItems);
 
@@ -175,13 +172,10 @@ public sealed class BatchLogRecordExportProcessorTests
 #pragma warning disable CA2000 // Dispose objects before losing scope
             new InMemoryExporter<LogRecord>(exportedItems),
 #pragma warning restore CA2000 // Dispose objects before losing scope
-            new()
-            {
-                MaxQueueSize = BatchLogRecordExportProcessor.DefaultMaxQueueSize,
-                MaxExportBatchSize = BatchLogRecordExportProcessor.DefaultMaxExportBatchSize,
-                ExporterTimeoutMilliseconds = BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
-                ScheduledDelayMilliseconds = int.MaxValue,
-            });
+            maxQueueSize: BatchLogRecordExportProcessor.DefaultMaxQueueSize,
+            scheduledDelayMilliseconds: int.MaxValue,
+            exporterTimeoutMilliseconds: BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
+            maxExportBatchSize: BatchLogRecordExportProcessor.DefaultMaxExportBatchSize);
 
         processor.Dispose();
 

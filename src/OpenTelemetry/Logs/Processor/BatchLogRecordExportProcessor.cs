@@ -25,27 +25,12 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
         int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
         int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
         int maxExportBatchSize = DefaultMaxExportBatchSize)
-        : this(
+        : base(
             exporter,
-            new BatchExportProcessorOptions<LogRecord>
-            {
-                MaxQueueSize = maxQueueSize,
-                ScheduledDelayMilliseconds = scheduledDelayMilliseconds,
-                ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds,
-                MaxExportBatchSize = maxExportBatchSize,
-            })
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="BatchLogRecordExportProcessor"/> class.
-    /// </summary>
-    /// <param name="exporter">Log record exporter.</param>
-    /// <param name="options">Configuration options for the batch export processor.</param>
-    public BatchLogRecordExportProcessor(
-        BaseExporter<LogRecord> exporter,
-        BatchExportProcessorOptions<LogRecord> options)
-        : base(exporter, options)
+            maxQueueSize,
+            scheduledDelayMilliseconds,
+            exporterTimeoutMilliseconds,
+            maxExportBatchSize)
     {
     }
 

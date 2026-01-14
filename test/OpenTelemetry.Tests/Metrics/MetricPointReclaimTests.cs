@@ -28,10 +28,7 @@ public class MetricPointReclaimTests
         using var exporter = new CustomExporter(assertNoDroppedMeasurements: true);
         using var metricReader = new PeriodicExportingMetricReader(
             exporter,
-            new()
-            {
-                ExportIntervalMilliseconds = 10,
-            })
+            exportIntervalMilliseconds: 10)
         {
             TemporalityPreference = MetricReaderTemporalityPreference.Delta,
         };
