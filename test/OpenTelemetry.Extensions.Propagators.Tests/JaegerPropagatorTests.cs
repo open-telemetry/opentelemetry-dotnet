@@ -32,7 +32,6 @@ public class JaegerPropagatorTests
     };
 
     [Fact]
-    [Obsolete]
     public void ExtractReturnsOriginalContextIfContextIsAlreadyValid()
     {
         // arrange
@@ -45,28 +44,30 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]>();
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
+#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
     }
 
     [Fact]
-    [Obsolete]
     public void ExtractReturnsOriginalContextIfCarrierIsNull()
     {
         // arrange
         var propagationContext = default(PropagationContext);
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, null, Getter!);
+#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
     }
 
     [Fact]
-    [Obsolete]
     public void ExtractReturnsOriginalContextIfGetterIsNull()
     {
         // arrange
@@ -75,7 +76,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]>();
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, null!);
+#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
@@ -90,7 +93,6 @@ public class JaegerPropagatorTests
     [InlineData("invalid trace id", SpanId, ParentSpanId, FlagSampled, JaegerDelimiter)]
     [InlineData(TraceId, "invalid span id", ParentSpanId, FlagSampled, JaegerDelimiter)]
     [InlineData(TraceId, SpanId, $"too many {JaegerDelimiter} records", FlagSampled, JaegerDelimiter)]
-    [Obsolete]
     public void ExtractReturnsOriginalContextIfHeaderIsNotValid(string traceId, string spanId, string parentSpanId, string flags, string delimiter)
     {
         // arrange
@@ -106,7 +108,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]> { { JaegerHeader, [formattedHeader] } };
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
+#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
@@ -115,7 +119,6 @@ public class JaegerPropagatorTests
     [Theory]
     [InlineData(TraceId, SpanId, ParentSpanId, FlagSampled, JaegerDelimiter)]
     [InlineData(TraceIdShort, SpanIdShort, ParentSpanId, FlagNotSampled, JaegerDelimiterEncoded)]
-    [Obsolete]
     public void ExtractReturnsNewContextIfHeaderIsValid(string traceId, string spanId, string parentSpanId, string flags, string delimiter)
     {
 #if NET
@@ -146,7 +149,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]> { { JaegerHeader, [formattedHeader] } };
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
+#pragma warning restore CS0618
 
         // assert
         Assert.Equal(traceId.PadLeft(TraceId.Length, '0'), result.ActivityContext.TraceId.ToString());
@@ -155,7 +160,6 @@ public class JaegerPropagatorTests
     }
 
     [Fact]
-    [Obsolete]
     public void InjectDoesNoopIfContextIsInvalid()
     {
         // arrange
@@ -164,14 +168,15 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string>();
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, headers, Setter);
+#pragma warning restore CS0618
 
         // assert
         Assert.Empty(headers);
     }
 
     [Fact]
-    [Obsolete]
     public void InjectDoesNoopIfCarrierIsNull()
     {
         // arrange
@@ -182,13 +187,14 @@ public class JaegerPropagatorTests
             default);
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, null, Setter!);
+#pragma warning restore CS0618
 
         // assert
     }
 
     [Fact]
-    [Obsolete]
     public void InjectDoesNoopIfSetterIsNull()
     {
         // arrange
@@ -201,7 +207,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string>();
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, headers, null!);
+#pragma warning restore CS0618
 
         // assert
         Assert.Empty(headers);
@@ -210,7 +218,6 @@ public class JaegerPropagatorTests
     [Theory]
     [InlineData(FlagSampled)]
     [InlineData(FlagNotSampled)]
-    [Obsolete]
     public void InjectWillAddJaegerFormattedTraceToCarrier(string sampledFlag)
     {
         // arrange
@@ -230,7 +237,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string>();
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, headers, Setter);
+#pragma warning restore CS0618
 
         // assert
         Assert.Single(headers);
