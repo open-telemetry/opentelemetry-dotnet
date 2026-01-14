@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -72,6 +73,12 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
+        Stopwatch? shutdownStopwatch = null;
+        if (timeoutMilliseconds > 0)
+        {
+            shutdownStopwatch = Stopwatch.StartNew();
+        }
+
         var result = this.worker.Shutdown(timeoutMilliseconds);
 
         if (timeoutMilliseconds == Timeout.Infinite)
@@ -84,7 +91,18 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
             return this.exporter.Shutdown(0) && result;
         }
 
-        return this.exporter.Shutdown(timeoutMilliseconds) && result;
+        int remainingTimeout = timeoutMilliseconds;
+        if (shutdownStopwatch != null)
+        {
+            shutdownStopwatch.Stop();
+            remainingTimeout -= (int)shutdownStopwatch.ElapsedMilliseconds;
+            if (remainingTimeout < 0)
+            {
+                remainingTimeout = 0;
+            }
+        }
+
+        return this.exporter.Shutdown(remainingTimeout) && result;
     }
 
     /// <inheritdoc/>
