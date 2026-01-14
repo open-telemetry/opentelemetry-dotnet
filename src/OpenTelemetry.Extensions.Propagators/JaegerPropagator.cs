@@ -25,7 +25,9 @@ public class JaegerPropagator : TextMapPropagator
 
     /// <inheritdoc/>
     [Obsolete("The Jaeger propagator is obsolete and will be removed in a future version. The Jaeger propagation format has been deprecated in favor of W3C Trace Context. Use TraceContextPropagator instead. See https://www.jaegertracing.io/sdk-migration/#propagation-format and https://github.com/open-telemetry/opentelemetry-specification/issues/4827 for more information.")]
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
     public override ISet<string> Fields => new HashSet<string> { JaegerHeader };
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
 
     /// <inheritdoc/>
     [Obsolete("The Jaeger propagator is obsolete and will be removed in a future version. The Jaeger propagation format has been deprecated in favor of W3C Trace Context. Use TraceContextPropagator instead. See https://www.jaegertracing.io/sdk-migration/#propagation-format and https://github.com/open-telemetry/opentelemetry-specification/issues/4827 for more information.")]
