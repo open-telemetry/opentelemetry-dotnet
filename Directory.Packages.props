@@ -99,7 +99,7 @@
     <PackageVersion Include="Google.Protobuf" Version="3.33.2" />
     <PackageVersion Include="Grpc" Version="2.46.6" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.67.0" />
-    <PackageVersion Include="JunitXml.TestLogger" Version="7.1.0" />
+    <PackageVersion Include="JunitXml.TestLogger" Version="8.0.0" />
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
