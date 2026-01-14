@@ -31,29 +31,8 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         BaseExporter<Metric> exporter,
         int exportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
         int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
-        : this(exporter, new PeriodicExportingMetricReaderOptions
-        {
-            ExportIntervalMilliseconds = exportIntervalMilliseconds,
-            ExportTimeoutMilliseconds = exportTimeoutMilliseconds,
-        })
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PeriodicExportingMetricReader"/> class.
-    /// </summary>
-    /// <param name="exporter">Exporter instance to export Metrics to.</param>
-    /// <param name="options">Configuration options for the periodic exporting metric reader.</param>
-    public PeriodicExportingMetricReader(
-        BaseExporter<Metric> exporter,
-        PeriodicExportingMetricReaderOptions options)
         : base(exporter)
     {
-        Guard.ThrowIfNull(options);
-
-        var exportIntervalMilliseconds = options?.ExportIntervalMilliseconds ?? DefaultExportIntervalMilliseconds;
-        var exportTimeoutMilliseconds = options?.ExportTimeoutMilliseconds ?? DefaultExportTimeoutMilliseconds;
-
         Guard.ThrowIfInvalidTimeout(exportIntervalMilliseconds);
         Guard.ThrowIfZero(exportIntervalMilliseconds);
         Guard.ThrowIfInvalidTimeout(exportTimeoutMilliseconds);
@@ -128,7 +107,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     {
 #if NET
         // Use task-based worker for browser platform where threading may be limited
-    if (ThreadingHelper.IsThreadingDisabled())
+        if (ThreadingHelper.IsThreadingDisabled())
         {
             return new PeriodicExportingMetricReaderTaskWorker(
                 this,
