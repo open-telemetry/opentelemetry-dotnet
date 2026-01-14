@@ -41,39 +41,17 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
         int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
         int maxExportBatchSize = DefaultMaxExportBatchSize)
-        : this(exporter, new BatchExportProcessorOptions<T>
-        {
-            MaxQueueSize = maxQueueSize,
-            ScheduledDelayMilliseconds = scheduledDelayMilliseconds,
-            ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds,
-            MaxExportBatchSize = maxExportBatchSize,
-        })
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="BatchExportProcessor{T}"/> class.
-    /// </summary>
-    /// <param name="exporter">Exporter instance.</param>
-    /// <param name="options">Configuration options for the batch export processor.</param>
-    protected BatchExportProcessor(
-        BaseExporter<T> exporter,
-        BatchExportProcessorOptions<T> options)
         : base(exporter)
     {
-        Guard.ThrowIfNull(options);
-
-        var maxQueueSize = options?.MaxQueueSize ?? 0;
         Guard.ThrowIfOutOfRange(maxQueueSize, min: 1);
+        Guard.ThrowIfOutOfRange(maxExportBatchSize, min: 1, max: maxQueueSize, maxName: nameof(maxQueueSize));
+        Guard.ThrowIfOutOfRange(scheduledDelayMilliseconds, min: 1);
+        Guard.ThrowIfOutOfRange(exporterTimeoutMilliseconds, min: 0);
 
         this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
-        this.ScheduledDelayMilliseconds = options?.ScheduledDelayMilliseconds ?? 0;
-        this.ExporterTimeoutMilliseconds = options?.ExporterTimeoutMilliseconds ?? -1;
-        this.MaxExportBatchSize = options?.MaxExportBatchSize ?? 0;
-
-        Guard.ThrowIfOutOfRange(this.MaxExportBatchSize, min: 1, max: maxQueueSize, maxName: nameof(options.MaxQueueSize));
-        Guard.ThrowIfOutOfRange(this.ScheduledDelayMilliseconds, min: 1);
-        Guard.ThrowIfOutOfRange(this.ExporterTimeoutMilliseconds, min: 0);
+        this.ScheduledDelayMilliseconds = scheduledDelayMilliseconds;
+        this.ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
+        this.MaxExportBatchSize = maxExportBatchSize;
 
         this.worker = this.CreateWorker();
         this.worker.Start();
@@ -182,7 +160,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     {
 #if NET
         // Use task-based worker for browser platform where threading may be limited
-    if (ThreadingHelper.IsThreadingDisabled())
+        if (ThreadingHelper.IsThreadingDisabled())
         {
             return new BatchExportTaskWorker<T>(
                 this.circularBuffer,

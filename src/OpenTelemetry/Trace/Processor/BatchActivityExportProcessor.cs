@@ -25,27 +25,12 @@ public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
         int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
         int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
         int maxExportBatchSize = DefaultMaxExportBatchSize)
-        : this(
+        : base(
             exporter,
-            new BatchExportProcessorOptions<Activity>
-            {
-                MaxQueueSize = maxQueueSize,
-                ScheduledDelayMilliseconds = scheduledDelayMilliseconds,
-                ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds,
-                MaxExportBatchSize = maxExportBatchSize,
-            })
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="BatchActivityExportProcessor"/> class.
-    /// </summary>
-    /// <param name="exporter">Activity exporter.</param>
-    /// <param name="options">Configuration options for the batch export processor.</param>
-    public BatchActivityExportProcessor(
-        BaseExporter<Activity> exporter,
-        BatchExportProcessorOptions<Activity> options)
-        : base(exporter, options)
+            maxQueueSize,
+            scheduledDelayMilliseconds,
+            exporterTimeoutMilliseconds,
+            maxExportBatchSize)
     {
     }
 
