@@ -44,7 +44,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]>();
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
+#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
@@ -57,7 +59,9 @@ public class JaegerPropagatorTests
         var propagationContext = default(PropagationContext);
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, null, Getter!);
+#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
@@ -72,7 +76,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]>();
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, null!);
+#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
@@ -102,7 +108,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]> { { JaegerHeader, [formattedHeader] } };
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
+#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
@@ -141,7 +149,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]> { { JaegerHeader, [formattedHeader] } };
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
+#pragma warning restore CS0618
 
         // assert
         Assert.Equal(traceId.PadLeft(TraceId.Length, '0'), result.ActivityContext.TraceId.ToString());
@@ -158,7 +168,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string>();
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, headers, Setter);
+#pragma warning restore CS0618
 
         // assert
         Assert.Empty(headers);
@@ -175,7 +187,9 @@ public class JaegerPropagatorTests
             default);
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, null, Setter!);
+#pragma warning restore CS0618
 
         // assert
     }
@@ -193,7 +207,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string>();
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, headers, null!);
+#pragma warning restore CS0618
 
         // assert
         Assert.Empty(headers);
@@ -221,7 +237,9 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string>();
 
         // act
+#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, headers, Setter);
+#pragma warning restore CS0618
 
         // assert
         Assert.Single(headers);
