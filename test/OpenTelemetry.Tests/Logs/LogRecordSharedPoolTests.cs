@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Concurrent;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -259,6 +260,62 @@ public sealed class LogRecordSharedPoolTests
         await Task.WhenAll(tasks);
 
         Assert.True(pool.Count <= LogRecordSharedPool.DefaultMaxPoolSize, $"{pool.Count} > {LogRecordSharedPool.DefaultMaxPoolSize}");
+    }
+
+    /// <summary>
+    /// Regression test for https://github.com/open-telemetry/opentelemetry-dotnet/issues/6233
+    /// Verifies that Rent() never returns the same LogRecord instance to multiple threads concurrently.
+    /// </summary>
+    [Fact]
+    public async Task RentShouldNeverReturnSameInstanceConcurrently()
+    {
+        // Use a small pool to increase contention
+        LogRecordSharedPool.Resize(16);
+        var pool = LogRecordSharedPool.Current;
+
+        // Pre-warm the pool
+        for (int i = 0; i < 16; i++)
+        {
+            pool.Return(new LogRecord { Source = LogRecord.LogRecordSource.FromSharedPool, PoolReferenceCount = 1 });
+        }
+
+        var inUseRecords = new ConcurrentDictionary<LogRecord, int>();
+        var duplicateDetected = false;
+        var duplicateDetails = string.Empty;
+
+        var tasks = new List<Task>();
+        using var barrier = new Barrier(Environment.ProcessorCount);
+
+        for (int t = 0; t < Environment.ProcessorCount; t++)
+        {
+            tasks.Add(Task.Run(() =>
+            {
+                barrier.SignalAndWait(); // Synchronize start for maximum contention
+
+                for (int i = 0; i < 10_000; i++)
+                {
+                    var record = pool.Rent();
+
+                    // Check if this record is already in use by another thread
+                    if (!inUseRecords.TryAdd(record, Environment.CurrentManagedThreadId))
+                    {
+                        Volatile.Write(ref duplicateDetected, true);
+                        duplicateDetails = $"LogRecord {record.GetHashCode()} rented by thread {inUseRecords[record]} and {Environment.CurrentManagedThreadId}";
+                    }
+
+                    // Simulate some work
+                    Thread.SpinWait(10);
+
+                    // Remove from tracking before return
+                    inUseRecords.TryRemove(record, out _);
+                    pool.Return(record);
+                }
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+
+        Assert.False(duplicateDetected, $"Duplicate LogRecord detected: {duplicateDetails}");
     }
 
     private sealed class NoopExporter : BaseExporter<LogRecord>
