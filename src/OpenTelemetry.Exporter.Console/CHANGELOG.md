@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.0
+
+Released 2026-Jan-20
+
 * Added support for `ActivitySource.TelemetrySchemaUrl` property.
   ([#6713](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6713))
 

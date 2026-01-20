@@ -6,6 +6,10 @@ covering all components see: [Release Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.0
+
+Released 2026-Jan-20
+
 * Deprecated `JaegerPropagator`. It will be removed in a future version.
   ([#6819](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6819))
 
