@@ -1,4 +1,3 @@
-*REMOVED*OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version = null, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? tags = null) -> OpenTelemetry.Trace.Tracer!
 #nullable enable
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string!, System.Collections.Generic.IEnumerable<string!>?>! getter) -> OpenTelemetry.Context.Propagation.PropagationContext
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Fields.get -> System.Collections.Generic.ISet<string!>?
@@ -155,7 +154,6 @@ OpenTelemetry.Trace.Tracer.StartSpan(string! name, OpenTelemetry.Trace.SpanKind 
 OpenTelemetry.Trace.Tracer.StartSpan(string! name, OpenTelemetry.Trace.SpanKind kind, in OpenTelemetry.Trace.TelemetrySpan? parentSpan, OpenTelemetry.Trace.SpanAttributes? initialAttributes = null, System.Collections.Generic.IEnumerable<OpenTelemetry.Trace.Link>? links = null, System.DateTimeOffset startTime = default(System.DateTimeOffset)) -> OpenTelemetry.Trace.TelemetrySpan!
 OpenTelemetry.Trace.TracerProvider
 OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version = null, string? schemaUrl = null, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? tags = null) -> OpenTelemetry.Trace.Tracer!
-OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version = null, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? tags = null) -> OpenTelemetry.Trace.Tracer!
 OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? tags) -> OpenTelemetry.Trace.Tracer!
 OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version) -> OpenTelemetry.Trace.Tracer!
 OpenTelemetry.Trace.TracerProvider.TracerProvider() -> void
