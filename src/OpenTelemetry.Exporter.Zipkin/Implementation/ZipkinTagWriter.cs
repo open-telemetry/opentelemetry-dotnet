@@ -56,6 +56,12 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
         writer.WriteStringValue(arrayUtf8JsonBytes);
     }
 
+    protected override void WriteKvlistTag(ref Utf8JsonWriter writer, string key, ArraySegment<byte> kvlistUtf8JsonBytes)
+    {
+        writer.WritePropertyName(key);
+        writer.WriteStringValue(kvlistUtf8JsonBytes);
+    }
+
     protected override void OnUnsupportedTagDropped(
         string tagKey,
         string tagValueTypeFullName)
