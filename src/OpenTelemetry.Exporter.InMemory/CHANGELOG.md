@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.15.0
 
-Released 2026-Jan-20
+Released 2026-Jan-21
 
 * Added support for `Meter.TelemetrySchemaUrl` property.
   ([#6714](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6714))

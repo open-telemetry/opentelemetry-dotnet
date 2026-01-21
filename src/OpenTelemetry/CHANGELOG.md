@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.15.0
 
-Released 2026-Jan-20
+Released 2026-Jan-21
 
 * Added support for the `OTEL_SDK_DISABLED` environment variable in TracerProvider,
   MeterProvider, and LoggerProvider. When `OTEL_SDK_DISABLED=true`,

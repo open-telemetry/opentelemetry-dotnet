@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.15.0
 
-Released 2026-Jan-20
+Released 2026-Jan-21
 
 * Added a new overload for `TracerProvider.GetTracer` which accepts an optional
   `string? schemaUrl` parameter, allowing a schema URL to be set on the `Tracer`.
