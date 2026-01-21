@@ -227,6 +227,7 @@ jobs:
       env:
         GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
+        EXPECTED_COMMENT_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-login }}
         PACKAGES_URL: ${{ needs.build-pack-publish.outputs.artifact-url }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
@@ -236,4 +237,5 @@ jobs:
           -tag ${env:GITHUB_REF_NAME} `
           -tagSha ${env:GITHUB_SHA} `
           -packagesUrl ${env:PACKAGES_URL} `
-          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME}
+          -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
+          -expectedCommentAuthorUserName ${env:EXPECTED_COMMENT_AUTHOR_USER_NAME}
