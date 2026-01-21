@@ -10,7 +10,7 @@ Release details: [1.15.0](https://github.com/open-telemetry/opentelemetry-dotnet
 
 * Added support for `ActivitySource.TelemetrySchemaUrl`
   and `Meter.TelemetrySchemaUrl` properties across exporters.
-* Improved performance and reduced memory consumption for metrics histograms.  
+* Improved performance and reduced memory consumption for metrics histograms.
 * Added mTLS configuration support for the OTLP exporter (client cert/key and
   CA certificate options).
 * `OpenTelemetry.Exporter.Zipkin` is deprecated and will stop receiving updates
