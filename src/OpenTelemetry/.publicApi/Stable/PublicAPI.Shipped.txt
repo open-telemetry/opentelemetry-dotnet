@@ -191,6 +191,7 @@ OpenTelemetry.Metrics.Metric
 OpenTelemetry.Metrics.Metric.Description.get -> string!
 OpenTelemetry.Metrics.Metric.GetMetricPoints() -> OpenTelemetry.Metrics.MetricPointsAccessor
 OpenTelemetry.Metrics.Metric.MeterName.get -> string!
+OpenTelemetry.Metrics.Metric.MeterSchemaUrl.get -> string!
 OpenTelemetry.Metrics.Metric.MeterTags.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>?
 OpenTelemetry.Metrics.Metric.MeterVersion.get -> string!
 OpenTelemetry.Metrics.Metric.MetricType.get -> OpenTelemetry.Metrics.MetricType
@@ -235,6 +236,7 @@ OpenTelemetry.Metrics.MetricReaderOptions.TemporalityPreference.set -> void
 OpenTelemetry.Metrics.MetricReaderTemporalityPreference
 OpenTelemetry.Metrics.MetricReaderTemporalityPreference.Cumulative = 1 -> OpenTelemetry.Metrics.MetricReaderTemporalityPreference
 OpenTelemetry.Metrics.MetricReaderTemporalityPreference.Delta = 2 -> OpenTelemetry.Metrics.MetricReaderTemporalityPreference
+OpenTelemetry.Metrics.MetricReaderTemporalityPreference.LowMemory = 3 -> OpenTelemetry.Metrics.MetricReaderTemporalityPreference
 OpenTelemetry.Metrics.MetricStreamConfiguration
 OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.get -> int?
 OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void

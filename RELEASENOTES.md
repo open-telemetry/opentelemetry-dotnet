@@ -4,6 +4,20 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.15.0
+
+Release details: [1.15.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.15.0)
+
+* Added support for `ActivitySource.TelemetrySchemaUrl`
+  and `Meter.TelemetrySchemaUrl` properties across exporters.
+* Improved performance and reduced memory consumption for metrics histograms.
+* Added mTLS configuration support for the OTLP exporter (client cert/key and
+  CA certificate options).
+* `OpenTelemetry.Exporter.Zipkin` is deprecated and will stop receiving updates
+  in December 2026. Zipkin already supports OTLP ingestion.
+  Migrate to `OpenTelemetry.Exporter.OpenTelemetryProtocol` as stated
+  in the [Deprecating Zipkin Exporter blog post](https://opentelemetry.io/blog/2025/deprecating-zipkin-exporters/).
+
 ## 1.14.0
 
 Release details: [1.14.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.14.0)
