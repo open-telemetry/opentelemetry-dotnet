@@ -168,7 +168,9 @@ Once these packages have been validated have a maintainer post a comment with "/
 
     $pullRequestNumber = $pr.number
 
+    gh pr unlock $pullRequestNumber
     gh pr comment $pullRequestNumber --body $body
+    gh pr lock $pullRequestNumber
     return
   }
 
