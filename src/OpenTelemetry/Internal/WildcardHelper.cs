@@ -3,7 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
+using System.Globalization;
 
 namespace OpenTelemetry;
 
@@ -25,18 +25,63 @@ internal static class WildcardHelper
 #endif
     }
 
-    public static Regex GetWildcardRegex(IEnumerable<string> patterns)
+    public static bool MatchAny(IEnumerable<string> templates, string s)
     {
-        Debug.Assert(patterns?.Any() == true, "patterns was null or empty");
+        foreach (string wildcard in templates)
+        {
+            if (wildcard.WildcardMatch(s, 0, 0, true))
+            {
+                return true;
+            }
+        }
 
-        var convertedPattern = string.Join(
-            "|",
-#if NET || NETSTANDARD2_1_OR_GREATER
-            from p in patterns select "(?:" + Regex.Escape(p).Replace("\\*", ".*", StringComparison.Ordinal).Replace("\\?", ".", StringComparison.Ordinal) + ')');
-#else
-            from p in patterns select "(?:" + Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", ".") + ')');
-#endif
+        return false;
+    }
 
-        return new Regex("^(?:" + convertedPattern + ")$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    // Taken from https://github.com/picrap/WildcardMatch/blob/master/WildcardMatch/StringExtensions.cs
+    public static bool WildcardMatch(this string wildcard, string s, int wildcardIndex, int sIndex, bool ignoreCase)
+    {
+        for (; ;)
+        {
+            // in the wildcard end, if we are at tested string end, then strings match
+            if (wildcardIndex == wildcard.Length)
+            {
+                return sIndex == s.Length;
+            }
+
+            var c = wildcard[wildcardIndex];
+            switch (c)
+            {
+                // always a match
+                case '?':
+                    break;
+                case '*':
+                    // if this is the last wildcard char, then we have a match, whatever the tested string is
+                    if (wildcardIndex == wildcard.Length - 1)
+                    {
+                        return true;
+                    }
+
+                    // test if a match follows
+                    return Enumerable.Range(sIndex, s.Length - sIndex).Any(i => WildcardMatch(wildcard, s, wildcardIndex + 1, i, ignoreCase));
+                default:
+                    var cc = ignoreCase ? char.ToLower(c, CultureInfo.InvariantCulture) : c;
+                    if (s.Length == sIndex)
+                    {
+                        return false;
+                    }
+
+                    var sc = ignoreCase ? char.ToLower(s[sIndex], CultureInfo.InvariantCulture) : s[sIndex];
+                    if (cc != sc)
+                    {
+                        return false;
+                    }
+
+                    break;
+            }
+
+            wildcardIndex++;
+            sIndex++;
+        }
     }
 }

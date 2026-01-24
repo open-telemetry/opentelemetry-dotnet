@@ -4,7 +4,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace OpenTelemetry.Internal;
 
@@ -18,18 +17,6 @@ internal sealed class SelfDiagnosticsConfigParser
     /// ConfigBufferSize is the maximum bytes of config file that will be read.
     /// </summary>
     private const int ConfigBufferSize = 4 * 1024;
-
-    private static readonly Regex LogDirectoryRegex = new(
-        @"""LogDirectory""\s*:\s*""(?<LogDirectory>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    private static readonly Regex FileSizeRegex = new(
-        @"""FileSize""\s*:\s*(?<FileSize>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    private static readonly Regex LogLevelRegex = new(
-        @"""LogLevel""\s*:\s*""(?<LogLevel>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    private static readonly Regex FormatMessageRegex = new(
-        @"""FormatMessage""\s*:\s*(?:""(?<FormatMessage>.*?)""|(?<FormatMessage>true|false))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     // This class is called in SelfDiagnosticsConfigRefresher.UpdateMemoryMappedFileFromConfiguration
     // in both main thread and the worker thread.
@@ -86,13 +73,14 @@ internal sealed class SelfDiagnosticsConfigParser
             }
 
             string configJson = Encoding.UTF8.GetString(buffer, 0, totalBytesRead);
+            var config = ParseConfigFile(configJson);
 
-            if (!TryParseLogDirectory(configJson, out logDirectory))
+            if (!config.TryGetValue("LogDirectory", out logDirectory))
             {
                 return false;
             }
 
-            if (!TryParseFileSize(configJson, out fileSizeInKB))
+            if (!config.TryGetValue("FileSize", out string? fileSizeStr) || !int.TryParse(fileSizeStr, out fileSizeInKB))
             {
                 return false;
             }
@@ -107,13 +95,16 @@ internal sealed class SelfDiagnosticsConfigParser
                 fileSizeInKB = FileSizeUpperLimit;
             }
 
-            if (!TryParseLogLevel(configJson, out var logLevelString))
+            if (!config.TryGetValue("LogLevel", out var logLevelString))
             {
                 return false;
             }
 
             // FormatMessage is optional, defaults to false
-            _ = TryParseFormatMessage(configJson, out formatMessage);
+            if (config.TryGetValue("FormatMessage", out string? formatMessageStr))
+            {
+                _ = bool.TryParse(formatMessageStr, out formatMessage);
+            }
 
             return Enum.TryParse(logLevelString, out logLevel);
         }
@@ -124,42 +115,81 @@ internal sealed class SelfDiagnosticsConfigParser
         }
     }
 
-    internal static bool TryParseLogDirectory(
-        string configJson,
-        out string logDirectory)
+    internal static Dictionary<string, string> ParseConfigFile(string content)
     {
-        var logDirectoryResult = LogDirectoryRegex.Match(configJson);
-        logDirectory = logDirectoryResult.Groups["LogDirectory"].Value;
-        return logDirectoryResult.Success && !string.IsNullOrWhiteSpace(logDirectory);
-    }
+        Dictionary<string, string> result = new Dictionary<string, string>();
+        int pos = 0;
 
-    internal static bool TryParseFileSize(string configJson, out int fileSizeInKB)
-    {
-        fileSizeInKB = 0;
-        var fileSizeResult = FileSizeRegex.Match(configJson);
-        return fileSizeResult.Success && int.TryParse(fileSizeResult.Groups["FileSize"].Value, out fileSizeInKB);
-    }
-
-    internal static bool TryParseLogLevel(
-        string configJson,
-        [NotNullWhen(true)]
-        out string? logLevel)
-    {
-        var logLevelResult = LogLevelRegex.Match(configJson);
-        logLevel = logLevelResult.Groups["LogLevel"].Value;
-        return logLevelResult.Success && !string.IsNullOrWhiteSpace(logLevel);
-    }
-
-    internal static bool TryParseFormatMessage(string configJson, out bool formatMessage)
-    {
-        formatMessage = false;
-        var formatMessageResult = FormatMessageRegex.Match(configJson);
-        if (formatMessageResult.Success)
+        SkipVoid(content, ref pos);
+        ReadSymbol(content, '{', ref pos);
+        while (pos < content.Length)
         {
-            var formatMessageValue = formatMessageResult.Groups["FormatMessage"].Value;
-            return bool.TryParse(formatMessageValue, out formatMessage);
+            string fieldName = ReadToken(content, ref pos);
+            ReadSymbol(content, ':', ref pos);
+            string value = ReadToken(content, ref pos);
+            result.Add(fieldName, value);
+            if (content[pos] == '}')
+    {
+                break;
+            }
+            else
+            {
+                pos++;
+            }
+    }
+
+        ReadSymbol(content, '}', ref pos);
+        return result;
+
+        static bool ReadSymbol(string content, char target, ref int pos)
+    {
+            if (pos < content.Length && content[pos] == target)
+            {
+                pos++;
+                return true;
+            }
+            else
+            {
+                throw new FormatException("Invalid JSON data in " + ConfigFileName);
+            }
+    }
+
+        static void SkipVoid(string content, ref int pos)
+        {
+            while (pos < content.Length && char.IsWhiteSpace(content[pos]))
+    {
+                pos++;
+            }
+    }
+
+        static string ReadToken(string content, ref int pos)
+    {
+            SkipVoid(content, ref pos);
+            int start = pos;
+            ReadOnlySpan<char> endings = stackalloc char[] { ':', ',', '}', '\n', '\r' };
+            if (content[pos] == '"') // if quoted
+        {
+                pos++;
+                while (pos < content.Length && content[pos] != '"')
+                {
+                    pos++;
         }
 
-        return true;
+                int end = pos++;
+                SkipVoid(content, ref pos);
+                return content.Substring(start + 1, end - start - 1);
+            }
+            else
+            {
+                while (pos < content.Length && endings.IndexOf(content[pos]) == -1)
+                {
+                    pos++;
+                }
+
+                int end = pos;
+                SkipVoid(content, ref pos);
+                return content.Substring(start, pos - start);
+            }
+        }
     }
 }

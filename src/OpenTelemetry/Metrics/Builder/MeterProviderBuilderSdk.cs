@@ -27,14 +27,6 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
         this.serviceProvider = serviceProvider;
     }
 
-    // Note: We don't use static readonly here because some customers
-    // replace this using reflection which is not allowed on initonly static
-    // fields. See: https://github.com/dotnet/runtime/issues/11571.
-    // Customers: This is not guaranteed to work forever. We may change this
-    // mechanism in the future do this at your own risk.
-    public static Regex InstrumentNameRegex { get; set; } = new(
-        @"^[a-z][a-z0-9-._/]{0,254}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
     public List<InstrumentationRegistration> Instrumentation { get; } = new();
 
     public ResourceBuilder? ResourceBuilder { get; private set; }
@@ -66,7 +58,7 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
             return false;
         }
 
-        return InstrumentNameRegex.IsMatch(instrumentName);
+        return IsValidName(instrumentName);
     }
 
     /// <summary>
@@ -83,7 +75,7 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
             return true;
         }
 
-        return InstrumentNameRegex.IsMatch(customViewName);
+        return IsValidName(customViewName);
     }
 
     public void RegisterProvider(MeterProviderSdk meterProvider)
@@ -214,6 +206,29 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
     MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
         => this.ConfigureBuilder(configure);
+
+    private static bool IsValidName(string name)
+    {
+        if (name.Length > 254)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < name.Length; i++)
+        {
+            if ((name[i] >= '-' && name[i] <= '9' && i > 0) ||
+                (name[i] >= 'A' && name[i] <= 'Z') ||
+                (name[i] >= 'a' && name[i] <= 'z') ||
+                (name[i] == '_' && i > 0))
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
 
     internal readonly struct InstrumentationRegistration
     {
