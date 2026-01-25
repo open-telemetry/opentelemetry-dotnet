@@ -129,20 +129,20 @@ internal sealed class SelfDiagnosticsConfigParser
             string value = ReadToken(content, ref pos);
             result.Add(fieldName, value);
             if (content[pos] == '}')
-    {
+            {
                 break;
             }
             else
             {
                 pos++;
             }
-    }
+        }
 
         ReadSymbol(content, '}', ref pos);
         return result;
 
         static bool ReadSymbol(string content, char target, ref int pos)
-    {
+        {
             if (pos < content.Length && content[pos] == target)
             {
                 pos++;
@@ -152,28 +152,28 @@ internal sealed class SelfDiagnosticsConfigParser
             {
                 throw new FormatException("Invalid JSON data in " + ConfigFileName);
             }
-    }
+        }
 
         static void SkipVoid(string content, ref int pos)
         {
             while (pos < content.Length && char.IsWhiteSpace(content[pos]))
-    {
+            {
                 pos++;
             }
-    }
+        }
 
         static string ReadToken(string content, ref int pos)
-    {
+        {
             SkipVoid(content, ref pos);
             int start = pos;
             ReadOnlySpan<char> endings = stackalloc char[] { ':', ',', '}', '\n', '\r' };
-            if (content[pos] == '"') // if quoted
-        {
+            if (content[pos] == '"') // if token is quoted
+            {
                 pos++;
                 while (pos < content.Length && content[pos] != '"')
                 {
                     pos++;
-        }
+                }
 
                 int end = pos++;
                 SkipVoid(content, ref pos);
