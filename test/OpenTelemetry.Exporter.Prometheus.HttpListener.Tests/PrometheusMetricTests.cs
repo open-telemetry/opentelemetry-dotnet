@@ -394,6 +394,98 @@ public sealed class PrometheusMetricTests
     }
 
     [Theory]
+    [InlineData("requests/custom", "requests_per_custom")]
+    [InlineData("events/quarter", "events_per_quarter")]
+    [InlineData("packets/tick", "packets_per_tick")]
+    [InlineData("items/unknown_unit", "items_per_unknown_unit")]
+    public void Name_RateUnitsWithUnknownPerUnit_UsedAsIs(string unit, string expectedUnit)
+    {
+        // Per units not in the known list (s, m, h, d, w, mo, y) should be used as-is
+        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
+    }
+
+    [Theory]
+    [InlineData("By/custom", "bytes_per_custom")]
+    [InlineData("%/unknown", "percent_per_unknown")]
+    public void Name_RateUnitsWithMappedNumeratorAndUnknownDenominator_MapsCorrectly(string unit, string expectedUnit)
+    {
+        // Numerator should be mapped, denominator used as-is if unknown
+        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
+    }
+
+    [Fact]
+    public void Name_UntypedMetricType_WorksCorrectly()
+    {
+        var metric = new PrometheusMetric("metric", "s", PrometheusType.Untyped, false);
+
+        Assert.Equal("metric_seconds", metric.Name);
+        Assert.Equal(PrometheusType.Untyped, metric.Type);
+    }
+
+    [Fact]
+    public void Name_SummaryMetricType_WorksCorrectly()
+    {
+        var metric = new PrometheusMetric("latency", "ms", PrometheusType.Summary, false);
+
+        Assert.Equal("latency_milliseconds", metric.Name);
+        Assert.Equal(PrometheusType.Summary, metric.Type);
+    }
+
+    [Fact]
+    public void Name_SummaryWithTotal_DoesNotAppendTotal()
+    {
+        // Summary metrics should not have _total appended even if not already present
+        AssertName("requests", "1", PrometheusType.Summary, false, "requests");
+    }
+
+    [Fact]
+    public void GetPrometheusType_Summary_ReturnsSummary()
+    {
+        // MetricType enum value that maps to Summary (case 3 in switch)
+        var result = PrometheusMetric.GetPrometheusType((MetricType)0x30);
+        Assert.Equal(PrometheusType.Summary, result);
+    }
+
+    [Fact]
+    public void GetPrometheusType_Untyped_ReturnsUntyped()
+    {
+        // MetricType enum value that maps to Untyped (case 0 in switch)
+        var result = PrometheusMetric.GetPrometheusType((MetricType)0x00);
+        Assert.Equal(PrometheusType.Untyped, result);
+    }
+
+    [Fact]
+    public void GetPrometheusType_InvalidMetricType_ThrowsInvalidOperationException()
+    {
+        // Test default case in switch statement - invalid MetricType value
+        var invalidMetricType = (MetricType)0xFF;
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            PrometheusMetric.GetPrometheusType(invalidMetricType));
+
+        Assert.Contains("Invalid", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("MetricType", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(0x40)]
+    [InlineData(0x50)]
+    [InlineData(0x60)]
+    [InlineData(0x70)]
+    public void GetPrometheusType_HistogramVariants_ReturnsHistogram(int metricTypeValue)
+    {
+        var result = PrometheusMetric.GetPrometheusType((MetricType)metricTypeValue);
+        Assert.Equal(PrometheusType.Histogram, result);
+    }
+
+    [Fact]
+    public void Name_MultipleSlashesInUnit_FirstSlashProcessed()
+    {
+        // Multiple slashes
+        AssertName("metric", "req/s/extra", PrometheusType.Gauge, false, "metric_req_per_s/extra");
+    }
+
+    [Theory]
     [InlineData(PrometheusType.Counter)]
     [InlineData(PrometheusType.Gauge)]
     [InlineData(PrometheusType.Histogram)]
