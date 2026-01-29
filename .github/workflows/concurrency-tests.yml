@@ -27,7 +27,10 @@ jobs:
 
     - name: Run Coyote Tests
       shell: pwsh
-      run: .\build\scripts\test-threadSafety.ps1 -testProjectName ${{ matrix.project }} -targetFramework ${{ matrix.version }}
+      run: .\build\scripts\test-threadSafety.ps1 -testProjectName ${env:PROJECT_NAME} -targetFramework ${env:VERSION}
+      env:
+        PROJECT_NAME: ${{ matrix.project }}
+        VERSION: ${{ matrix.version }}
 
     - name: Publish Artifacts
       if: always() && !cancelled()
