@@ -27,11 +27,12 @@ jobs:
           Import-Module .\build\scripts\add-labels.psm1
 
           AddLabelsOnIssuesForPackageFoundInBody `
-            -issueNumber ${{ github.event.issue.number }} `
+            -issueNumber ${env:ISSUE_NUMBER} `
             -issueBody $env:ISSUE_BODY
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
 
   add-labels-on-pull-requests:
     permissions:
@@ -52,7 +53,8 @@ jobs:
           Import-Module .\build\scripts\add-labels.psm1
 
           AddLabelsOnPullRequestsBasedOnFilesChanged `
-            -pullRequestNumber ${{ github.event.pull_request.number }} `
+            -pullRequestNumber ${env:PR_NUMBER} `
             -labelPackagePrefix 'pkg:'
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
