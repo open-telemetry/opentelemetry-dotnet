@@ -1,2 +1,0 @@
-OpenTelemetry.Metrics.Metric.MeterSchemaUrl.get -> string!
-OpenTelemetry.Metrics.MetricReaderTemporalityPreference.LowMemory = 3 -> OpenTelemetry.Metrics.MetricReaderTemporalityPreference

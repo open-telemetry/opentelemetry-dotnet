@@ -153,7 +153,8 @@ OpenTelemetry.Trace.Tracer.StartRootSpan(string! name, OpenTelemetry.Trace.SpanK
 OpenTelemetry.Trace.Tracer.StartSpan(string! name, OpenTelemetry.Trace.SpanKind kind = OpenTelemetry.Trace.SpanKind.Internal, in OpenTelemetry.Trace.SpanContext parentContext = default(OpenTelemetry.Trace.SpanContext), OpenTelemetry.Trace.SpanAttributes? initialAttributes = null, System.Collections.Generic.IEnumerable<OpenTelemetry.Trace.Link>? links = null, System.DateTimeOffset startTime = default(System.DateTimeOffset)) -> OpenTelemetry.Trace.TelemetrySpan!
 OpenTelemetry.Trace.Tracer.StartSpan(string! name, OpenTelemetry.Trace.SpanKind kind, in OpenTelemetry.Trace.TelemetrySpan? parentSpan, OpenTelemetry.Trace.SpanAttributes? initialAttributes = null, System.Collections.Generic.IEnumerable<OpenTelemetry.Trace.Link>? links = null, System.DateTimeOffset startTime = default(System.DateTimeOffset)) -> OpenTelemetry.Trace.TelemetrySpan!
 OpenTelemetry.Trace.TracerProvider
-OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version = null, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? tags = null) -> OpenTelemetry.Trace.Tracer!
+OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version = null, string? schemaUrl = null, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? tags = null) -> OpenTelemetry.Trace.Tracer!
+OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? tags) -> OpenTelemetry.Trace.Tracer!
 OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version) -> OpenTelemetry.Trace.Tracer!
 OpenTelemetry.Trace.TracerProvider.TracerProvider() -> void
 OpenTelemetry.Trace.TracerProviderBuilder

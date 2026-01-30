@@ -1,3 +1,0 @@
-OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version = null, string? schemaUrl = null, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? tags = null) -> OpenTelemetry.Trace.Tracer!
-OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? tags) -> OpenTelemetry.Trace.Tracer!
-*REMOVED*OpenTelemetry.Trace.TracerProvider.GetTracer(string! name, string? version = null, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? tags = null) -> OpenTelemetry.Trace.Tracer!

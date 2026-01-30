@@ -10,17 +10,6 @@ namespace OpenTelemetry.Exporter.Prometheus;
 
 internal sealed class PrometheusMetric
 {
-    /* Counter becomes counter
-       Gauge becomes gauge
-       Histogram becomes histogram
-       UpDownCounter becomes gauge
-     * https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#otlp-metric-points-to-prometheus
-    */
-    private static readonly PrometheusType[] MetricTypes =
-    [
-        PrometheusType.Untyped, PrometheusType.Counter, PrometheusType.Gauge, PrometheusType.Summary, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Gauge,
-    ];
-
     public PrometheusMetric(string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters)
     {
         // The metric name is
@@ -87,9 +76,7 @@ internal sealed class PrometheusMetric
     public PrometheusType Type { get; }
 
     public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
-    {
-        return new PrometheusMetric(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters);
-    }
+        => new(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters);
 
     internal static string SanitizeMetricName(string metricName)
     {
@@ -180,18 +167,27 @@ internal sealed class PrometheusMetric
     internal static PrometheusType GetPrometheusType(MetricType openTelemetryMetricType)
     {
         int metricType = (int)openTelemetryMetricType >> 4;
-        return MetricTypes[metricType];
+
+        /* Counter becomes counter
+           Gauge becomes gauge
+           Histogram becomes histogram
+           UpDownCounter becomes gauge
+         * https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#otlp-metric-points-to-prometheus
+        */
+        return metricType switch
+        {
+            0 => PrometheusType.Untyped,
+            1 => PrometheusType.Counter,
+            2 => PrometheusType.Gauge,
+            3 => PrometheusType.Summary,
+            4 or 5 or 6 or 7 => PrometheusType.Histogram,
+            8 => PrometheusType.Gauge,
+            _ => throw new InvalidOperationException($"Invalid {nameof(MetricType)} value."),
+        };
     }
 
     private static string SanitizeOpenMetricsName(string metricName)
-    {
-        if (metricName.EndsWith("_total", StringComparison.Ordinal))
-        {
-            return metricName.Substring(0, metricName.Length - 6);
-        }
-
-        return metricName;
-    }
+        => metricName.EndsWith("_total", StringComparison.Ordinal) ? metricName.Substring(0, metricName.Length - 6) : metricName;
 
     private static string GetUnit(string unit)
     {
@@ -242,67 +238,61 @@ internal sealed class PrometheusMetric
     // (See also https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/metrics.md#instrument-units)
     // Prometheus best practices for units: https://prometheus.io/docs/practices/naming/#base-units
     // OpenMetrics specification for units: https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#units-and-base-units
-    private static string MapUnit(ReadOnlySpan<char> unit)
+    private static string MapUnit(ReadOnlySpan<char> unit) => unit switch
     {
-        return unit switch
-        {
-            // Time
-            "d" => "days",
-            "h" => "hours",
-            "min" => "minutes",
-            "s" => "seconds",
-            "ms" => "milliseconds",
-            "us" => "microseconds",
-            "ns" => "nanoseconds",
+        // Time
+        "d" => "days",
+        "h" => "hours",
+        "min" => "minutes",
+        "s" => "seconds",
+        "ms" => "milliseconds",
+        "us" => "microseconds",
+        "ns" => "nanoseconds",
 
-            // Bytes
-            "By" => "bytes",
-            "KiBy" => "kibibytes",
-            "MiBy" => "mebibytes",
-            "GiBy" => "gibibytes",
-            "TiBy" => "tibibytes",
-            "KBy" => "kilobytes",
-            "MBy" => "megabytes",
-            "GBy" => "gigabytes",
-            "TBy" => "terabytes",
-            "B" => "bytes",
-            "KB" => "kilobytes",
-            "MB" => "megabytes",
-            "GB" => "gigabytes",
-            "TB" => "terabytes",
+        // Bytes
+        "By" => "bytes",
+        "KiBy" => "kibibytes",
+        "MiBy" => "mebibytes",
+        "GiBy" => "gibibytes",
+        "TiBy" => "tibibytes",
+        "KBy" => "kilobytes",
+        "MBy" => "megabytes",
+        "GBy" => "gigabytes",
+        "TBy" => "terabytes",
+        "B" => "bytes",
+        "KB" => "kilobytes",
+        "MB" => "megabytes",
+        "GB" => "gigabytes",
+        "TB" => "terabytes",
 
-            // SI
-            "m" => "meters",
-            "V" => "volts",
-            "A" => "amperes",
-            "J" => "joules",
-            "W" => "watts",
-            "g" => "grams",
+        // SI
+        "m" => "meters",
+        "V" => "volts",
+        "A" => "amperes",
+        "J" => "joules",
+        "W" => "watts",
+        "g" => "grams",
 
-            // Misc
-            "Cel" => "celsius",
-            "Hz" => "hertz",
-            "1" => string.Empty,
-            "%" => "percent",
-            "$" => "dollars",
-            _ => unit.ToString(),
-        };
-    }
+        // Misc
+        "Cel" => "celsius",
+        "Hz" => "hertz",
+        "1" => string.Empty,
+        "%" => "percent",
+        "$" => "dollars",
+        _ => unit.ToString(),
+    };
 
     // The map that translates the "per" unit
     // Example: s => per second (singular)
-    private static string MapPerUnit(ReadOnlySpan<char> perUnit)
+    private static string MapPerUnit(ReadOnlySpan<char> perUnit) => perUnit switch
     {
-        return perUnit switch
-        {
-            "s" => "second",
-            "m" => "minute",
-            "h" => "hour",
-            "d" => "day",
-            "w" => "week",
-            "mo" => "month",
-            "y" => "year",
-            _ => perUnit.ToString(),
-        };
-    }
+        "s" => "second",
+        "m" => "minute",
+        "h" => "hour",
+        "d" => "day",
+        "w" => "week",
+        "mo" => "month",
+        "y" => "year",
+        _ => perUnit.ToString(),
+    };
 }

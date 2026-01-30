@@ -8,7 +8,7 @@ services:
 # You can choose to configure different visualization backends by modifying the otel-collector-config.yaml file.
 # Alternatively, you can have the services export traces directly to Zipkin by https://github.com/openzipkin-contrib/zipkin-otel.
   otel-collector:
-    image: otel/opentelemetry-collector:0.143.1@sha256:e38787c822875f4afe459a4e4b798b0cbfb7372669f06643ad293793d25762ce
+    image: otel/opentelemetry-collector:0.144.0@sha256:a43e68866ce4cfa701fb6711de3111b72660e40ebb05a79d1759b002938b608f
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -18,7 +18,7 @@ services:
       - zipkin
 
   rabbitmq:
-    image: rabbitmq:4-management-alpine@sha256:52a1120ca9e85e7cc80af73b6c17d42393c78ae32606fffc3ad895adc051e18b
+    image: rabbitmq:4-management-alpine@sha256:f012bdaab5c1551591bed24579ea744e01f34e2ff52c9c284ccde59bf0ec247a
     ports:
       - 5672:5672
       - 15672:15672
