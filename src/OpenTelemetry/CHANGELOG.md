@@ -6,11 +6,8 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Fixed a thread-safety issue in `LogRecordSharedPool.Rent()` where the same
-  `LogRecord` instance could be returned to multiple threads concurrently under
-  high contention.
-  ([#6833](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6833),
-  Fixes [#6233](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6233))
+* Fixed a thread-safety issue in `LogRecordSharedPool.Rent()`.
+  ([#6833](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6833)
 
 ## 1.15.0
 
