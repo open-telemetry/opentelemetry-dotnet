@@ -280,8 +280,7 @@ public sealed class LogRecordSharedPoolTests
         }
 
         var inUseRecords = new ConcurrentDictionary<LogRecord, int>();
-        var duplicateDetected = false;
-        var duplicateDetails = string.Empty;
+        var duplicateMessages = new ConcurrentQueue<string>();
 
         var tasks = new List<Task>();
         using var barrier = new Barrier(Environment.ProcessorCount);
@@ -299,8 +298,16 @@ public sealed class LogRecordSharedPoolTests
                     // Check if this record is already in use by another thread
                     if (!inUseRecords.TryAdd(record, Environment.CurrentManagedThreadId))
                     {
-                        Volatile.Write(ref duplicateDetected, true);
-                        duplicateDetails = $"LogRecord {record.GetHashCode()} rented by thread {inUseRecords[record]} and {Environment.CurrentManagedThreadId}";
+                        if (inUseRecords.TryGetValue(record, out var firstThreadId))
+                        {
+                            duplicateMessages.Enqueue(
+                                $"LogRecord {record.GetHashCode()} rented by thread {firstThreadId} and {Environment.CurrentManagedThreadId}");
+                        }
+                        else
+                        {
+                            duplicateMessages.Enqueue(
+                                $"LogRecord {record.GetHashCode()} duplicate rental detected by thread {Environment.CurrentManagedThreadId}");
+                        }
                     }
 
                     // Simulate some work
@@ -315,7 +322,7 @@ public sealed class LogRecordSharedPoolTests
 
         await Task.WhenAll(tasks);
 
-        Assert.False(duplicateDetected, $"Duplicate LogRecord detected: {duplicateDetails}");
+        Assert.True(duplicateMessages.IsEmpty, string.Join(Environment.NewLine, duplicateMessages));
     }
 
     private sealed class NoopExporter : BaseExporter<LogRecord>
