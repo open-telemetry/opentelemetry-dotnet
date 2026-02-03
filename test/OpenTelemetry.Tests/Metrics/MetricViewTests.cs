@@ -791,24 +791,32 @@ public class MetricViewTests : MetricTestsBase
         // Verify the bucket boundaries maintain proper precision
         // The key assertion is that the boundaries should be clean decimal values
         // not values with floating-point precision errors like 0.02500000037252903
-        var buckets = histogramPoint.GetHistogramBuckets().ToArray();
-        
+
         // Expected clean boundaries (converted from float to double with proper precision)
         var expectedBoundaries = new double[]
         {
             0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120,
         };
 
-        Assert.Equal(expectedBoundaries.Length + 1, buckets.Length); // +1 for the infinity bucket
-
-        for (int i = 0; i < expectedBoundaries.Length; i++)
+        var index = 0;
+        foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
         {
-            // Verify each boundary is the expected clean value
-            Assert.Equal(expectedBoundaries[i], buckets[i].ExplicitBound);
+            if (index < expectedBoundaries.Length)
+            {
+                // Verify each boundary is the expected clean value
+                Assert.Equal(expectedBoundaries[index], histogramMeasurement.ExplicitBound);
+            }
+            else
+            {
+                // Verify the last bucket is positive infinity
+                Assert.Equal(double.PositiveInfinity, histogramMeasurement.ExplicitBound);
+            }
+
+            index++;
         }
 
-        // Verify the last bucket is positive infinity
-        Assert.Equal(double.PositiveInfinity, buckets[^1].ExplicitBound);
+        // Verify we got the expected number of buckets
+        Assert.Equal(expectedBoundaries.Length + 1, index);
     }
 
     [Fact]
