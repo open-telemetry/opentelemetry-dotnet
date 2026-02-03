@@ -742,6 +742,76 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
+    public void HistogramWithFloatAdviceBoundaries_MaintainsPrecision()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        // Use float boundaries that are known to have precision issues when converted to double
+        // These are the exact values from issue #6803
+        var floatBoundaries = new float[]
+        {
+            0.001f, 0.005f, 0.01f, 0.025f, 0.05f, 0.1f, 0.25f, 0.5f, 1f, 2.5f, 5f, 10f, 30f, 60f, 120f,
+        };
+
+        using var container = BuildMeterProvider(out var meterProvider, builder =>
+        {
+            builder.AddMeter(meter.Name);
+            builder.AddInMemoryExporter(exportedItems);
+        });
+
+        var histogram = meter.CreateHistogram<float>(
+            "my_histogram",
+            unit: "s",
+            description: null,
+            tags: null,
+            new()
+            {
+                HistogramBucketBoundaries = floatBoundaries,
+            });
+
+        // Record some values
+        histogram.Record(0.02f);
+        histogram.Record(0.5f);
+        histogram.Record(5.0f);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        var histogramPoint = metricPoints[0];
+
+        // Verify the bucket boundaries maintain proper precision
+        // The key assertion is that the boundaries should be clean decimal values
+        // not values with floating-point precision errors like 0.02500000037252903
+        var buckets = histogramPoint.GetHistogramBuckets().ToArray();
+        
+        // Expected clean boundaries (converted from float to double with proper precision)
+        var expectedBoundaries = new double[]
+        {
+            0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120,
+        };
+
+        Assert.Equal(expectedBoundaries.Length + 1, buckets.Length); // +1 for the infinity bucket
+
+        for (int i = 0; i < expectedBoundaries.Length; i++)
+        {
+            // Verify each boundary is the expected clean value
+            Assert.Equal(expectedBoundaries[i], buckets[i].ExplicitBound);
+        }
+
+        // Verify the last bucket is positive infinity
+        Assert.Equal(double.PositiveInfinity, buckets[^1].ExplicitBound);
+    }
+
+    [Fact]
     public void ViewToProduceExponentialHistogram()
     {
         var valuesToRecord = new[] { -10, 0, 1, 9, 10, 11, 19 };
