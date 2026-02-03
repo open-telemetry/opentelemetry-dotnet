@@ -9,25 +9,31 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposable
 {
-    private readonly MeterProviderSdk meterProviderSdk;
+    private readonly MeterProviderSdk? meterProviderSdk;
     private IObservableInstrumentsSource? observableInstrumentsSource;
 
     public OpenTelemetryMetricsListener(MeterProvider meterProvider)
     {
-        var meterProviderSdk = meterProvider as MeterProviderSdk;
+        this.meterProviderSdk = meterProvider as MeterProviderSdk;
 
-        Debug.Assert(meterProviderSdk != null, "meterProvider was not MeterProviderSdk");
+        Debug.Assert(this.meterProviderSdk != null, "meterProvider was not MeterProviderSdk");
 
-        this.meterProviderSdk = meterProviderSdk!;
-
-        this.meterProviderSdk.OnCollectObservableInstruments += this.OnCollectObservableInstruments;
+#pragma warning disable CA1508 // Avoid dead conditional code
+        if (this.meterProviderSdk != null)
+#pragma warning restore CA1508 // Avoid dead conditional code
+        {
+            this.meterProviderSdk.OnCollectObservableInstruments += this.OnCollectObservableInstruments;
+        }
     }
 
     public string Name => "OpenTelemetry";
 
     public void Dispose()
     {
-        this.meterProviderSdk.OnCollectObservableInstruments -= this.OnCollectObservableInstruments;
+        if (this.meterProviderSdk != null)
+        {
+            this.meterProviderSdk.OnCollectObservableInstruments -= this.OnCollectObservableInstruments;
+        }
     }
 
     public MeasurementHandlers GetMeasurementHandlers()
@@ -49,6 +55,12 @@ internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposab
 
     public bool InstrumentPublished(Instrument instrument, out object? userState)
     {
+        if (this.meterProviderSdk == null)
+        {
+            userState = null;
+            return false;
+        }
+
         userState = this.meterProviderSdk.InstrumentPublished(instrument, listeningIsManagedExternally: true);
         return userState != null;
     }

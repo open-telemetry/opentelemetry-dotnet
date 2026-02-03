@@ -223,6 +223,37 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         Assert.Single(metricInstrumentRemovedEvents);
     }
 
+    [Fact]
+    public void WithMetricsWhenSdkDisabledTest()
+    {
+        // Test for: https://github.com/open-telemetry/opentelemetry-dotnet/issues/XXXX
+        // When OTEL_SDK_DISABLED is set to true, WithMetrics should not crash
+        using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", "true"))
+        {
+            var services = new ServiceCollection();
+
+            services
+                .AddOpenTelemetry()
+                .WithMetrics(metricsProviderBuilder =>
+                {
+                    // Add some configuration to match the bug report scenario
+                    metricsProviderBuilder.AddMeter("TestMeter");
+                });
+
+            // This should not throw NullReferenceException
+            using var sp = services.BuildServiceProvider();
+
+            // Verify we get a NoopMeterProvider when SDK is disabled
+            var meterProvider = sp.GetRequiredService<MeterProvider>();
+            Assert.IsType<OpenTelemetrySdk.NoopMeterProvider>(meterProvider);
+
+            // Create and use a meter to ensure no crashes during operation
+            using var meter = new Meter("TestMeter");
+            var counter = meter.CreateCounter<long>("test_counter");
+            counter.Add(1); // Should not crash even though SDK is disabled
+        }
+    }
+
     private static void AssertSingleMetricWithLongSum(List<Metric> exportedItems, long expectedValue = 1)
     {
         Assert.Single(exportedItems);
