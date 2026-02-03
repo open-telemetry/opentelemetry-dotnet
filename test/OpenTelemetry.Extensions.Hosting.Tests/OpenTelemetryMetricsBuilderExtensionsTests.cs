@@ -226,7 +226,6 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     [Fact]
     public void WithMetricsWhenSdkDisabledTest()
     {
-        // Test for: https://github.com/open-telemetry/opentelemetry-dotnet/issues/XXXX
         // When OTEL_SDK_DISABLED is set to true, WithMetrics should not crash
         using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", "true"))
         {
