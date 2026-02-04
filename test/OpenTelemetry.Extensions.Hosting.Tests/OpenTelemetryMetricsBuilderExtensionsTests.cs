@@ -27,7 +27,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
 
-        using (var host = MetricTestsBase.BuildHost(
+        using (MetricTestsBase.BuildHost(
             useWithMetricsStyle,
             configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
             configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
@@ -47,7 +47,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
 
-        using (var host = MetricTestsBase.BuildHost(
+        using (MetricTestsBase.BuildHost(
             useWithMetricsStyle,
             configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
             configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
@@ -67,7 +67,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
 
-        using (var host = MetricTestsBase.BuildHost(
+        using (MetricTestsBase.BuildHost(
             useWithMetricsStyle,
             configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
             configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
@@ -87,7 +87,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
 
-        using (var host = MetricTestsBase.BuildHost(
+        using (MetricTestsBase.BuildHost(
             useWithMetricsStyle,
             configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
             configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
@@ -107,7 +107,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
 
-        using (var host = MetricTestsBase.BuildHost(
+        using (MetricTestsBase.BuildHost(
             useWithMetricsStyle,
             configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
             configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
@@ -127,7 +127,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
 
-        using (var host = MetricTestsBase.BuildHost(
+        using (MetricTestsBase.BuildHost(
             useWithMetricsStyle,
             configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
             configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
@@ -147,7 +147,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
 
-        using (var host = MetricTestsBase.BuildHost(
+        using (MetricTestsBase.BuildHost(
             useWithMetricsStyle,
             configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
             configureMeterProviderBuilder: builder => builder
