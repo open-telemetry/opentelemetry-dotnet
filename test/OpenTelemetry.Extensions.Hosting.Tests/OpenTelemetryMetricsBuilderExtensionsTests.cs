@@ -224,32 +224,30 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     }
 
     [Fact]
-    public void WithMetricsWhenSdkDisabledTest()
+    public void WhenOpenTelemetrySdkIsDisabledExceptionNoThrown()
     {
-        // When OTEL_SDK_DISABLED is set to true, WithMetrics should not crash
+        // Arrange
+        string meterName = "TestMeter";
+
         using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", "true"))
         {
             var services = new ServiceCollection();
 
             services
                 .AddOpenTelemetry()
-                .WithMetrics(metricsProviderBuilder =>
-                {
-                    // Add some configuration to match the bug report scenario
-                    metricsProviderBuilder.AddMeter("TestMeter");
-                });
+                .WithMetrics((p) => p.AddMeter(meterName));
 
-            // This should not throw NullReferenceException
-            using var sp = services.BuildServiceProvider();
+            // Act
+            using var provider = services.BuildServiceProvider();
 
-            // Verify we get a NoopMeterProvider when SDK is disabled
-            var meterProvider = sp.GetRequiredService<MeterProvider>();
+            // Assert - No-op implementation is in use
+            var meterProvider = provider.GetRequiredService<MeterProvider>();
             Assert.IsType<OpenTelemetrySdk.NoopMeterProvider>(meterProvider);
 
-            // Create and use a meter to ensure no crashes during operation
-            using var meter = new Meter("TestMeter");
+            // Verify that no exception is thrown when using a meter
+            using var meter = new Meter(meterName);
             var counter = meter.CreateCounter<long>("test_counter");
-            counter.Add(1); // Should not crash even though SDK is disabled
+            counter.Add(1);
         }
     }
 
