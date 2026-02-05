@@ -9,7 +9,7 @@
 - **Worker services** (`BackgroundService` / `IHostedService`).
 - Any application that already calls `Host.CreateDefaultBuilder()` or
   `WebApplication.CreateBuilder()`.
-- Production services where you want **automatic lifecycle management** — no
+- Production services where you want **automatic lifecycle management** -- no
   manual `Dispose()` calls.
 
 ## Minimal example
@@ -90,7 +90,7 @@ host.Run();
 `IOpenTelemetryBuilder`:
 
 | Method | Purpose |
-|---|---|
+| --- | --- |
 | `.WithTracing(Action<TracerProviderBuilder>)` | Configure tracing |
 | `.WithMetrics(Action<MeterProviderBuilder>)` | Configure metrics |
 | `.WithLogging(Action<LoggerProviderBuilder>)` | Configure logging |
@@ -101,7 +101,7 @@ host.Run();
 - **Host-managed.** The host starts the SDK via an `IHostedService` and
   disposes it on graceful shutdown. You do **not** call `Dispose()` yourself.
 - **Safe to call multiple times.** Calling `AddOpenTelemetry()` from multiple
-  libraries or configuration modules is safe — only one `TracerProvider` and
+  libraries or configuration modules is safe -- only one `TracerProvider` and
   one `MeterProvider` are created per `IServiceCollection`.
 - **DI-integrated.** Processors, exporters, and any custom services registered
   in the DI container are available to the SDK. You can inject
@@ -133,11 +133,11 @@ builder.Services.AddSingleton<MyFilteringProcessor>();
 ## Comparison with the non-hosted builders
 
 | Concern | `AddOpenTelemetry()` | `OpenTelemetrySdk.Create()` |
-|---|---|---|
-| Requires Generic Host | ✅ | ❌ |
+| --- | --- | --- |
+| Requires Generic Host | Yes | No |
 | Lifecycle | Automatic (host) | Manual (`Dispose()`) |
 | DI container | App's container | SDK-internal container |
-| Safe to call multiple times | ✅ | N/A (single call) |
+| Safe to call multiple times | Yes | N/A (single call) |
 | Builder API | Same `IOpenTelemetryBuilder` | Same `IOpenTelemetryBuilder` |
 
 > **No host?** Use

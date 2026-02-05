@@ -1,6 +1,6 @@
 # Sdk.CreateTracerProviderBuilder / Sdk.CreateMeterProviderBuilder
 
-> ⚠️ **Legacy pattern (≤ 1.9.0).** These APIs still work but are no longer the
+> **Legacy pattern (<= 1.9.0).** These APIs still work but are no longer the
 > recommended path. For new code, prefer
 > [`OpenTelemetrySdk.Create()`](./opentelemetry-sdk-create.md) (non-hosted) or
 > [`services.AddOpenTelemetry()`](./add-opentelemetry.md) (hosted).
@@ -11,7 +11,7 @@
 - **Single-signal** scenarios (e.g., only tracing in a unit test).
 - Quick benchmarks or throwaway scripts where minimal setup is preferred.
 
-## Minimal example — tracing only
+## Minimal example - tracing only
 
 ```csharp
 using System.Diagnostics;
@@ -78,7 +78,7 @@ logger.LogInformation("Application started");
 ### TracerProviderBuilder
 
 | Method | Purpose |
-|---|---|
+| --- | --- |
 | `.AddSource(params string[] names)` | Subscribe to `ActivitySource` names |
 | `.AddProcessor(BaseProcessor<Activity>)` | Add a span processor |
 | `.SetSampler(Sampler)` | Set the sampling strategy |
@@ -90,7 +90,7 @@ logger.LogInformation("Application started");
 ### MeterProviderBuilder
 
 | Method | Purpose |
-|---|---|
+| --- | --- |
 | `.AddMeter(params string[] names)` | Subscribe to `Meter` names |
 | `.AddView(...)` | Configure metric views |
 | `.SetExemplarFilter(ExemplarFilterType)` | Control exemplar collection |
@@ -103,7 +103,7 @@ logger.LogInformation("Application started");
 
 - **Caller owns disposal.** You must call `Dispose()` (or use `using`) on each
   provider to flush pending telemetry and release resources.
-- Each provider is **independent** — disposing one does not affect the others.
+- Each provider is **independent** -- disposing one does not affect the others.
 - In a typical app, create providers at startup and dispose at shutdown.
 
 ## Why this pattern is considered legacy
@@ -114,5 +114,5 @@ logger.LogInformation("Application started");
    dependency injection must be constructed manually.
 3. **No unified lifecycle.** Each signal must be coordinated separately.
 
-`OpenTelemetrySdk.Create()` (≥ 1.10.0) resolves all three issues while staying
+`OpenTelemetrySdk.Create()` (>= 1.10.0) resolves all three issues while staying
 host-free.

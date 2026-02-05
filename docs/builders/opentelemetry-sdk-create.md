@@ -88,7 +88,7 @@ builder exposes the same extension methods used by the hosted
 `AddOpenTelemetry()` path:
 
 | Method | Purpose |
-|---|---|
+| --- | --- |
 | `.WithTracing(Action<TracerProviderBuilder>)` | Configure tracing |
 | `.WithMetrics(Action<MeterProviderBuilder>)` | Configure metrics |
 | `.WithLogging(Action<LoggerProviderBuilder>)` | Configure logging |
@@ -96,15 +96,15 @@ builder exposes the same extension methods used by the hosted
 
 ## Returned object
 
-```
+```text
 OpenTelemetrySdk : IDisposable
-├── .TracerProvider   → TracerProvider
-├── .MeterProvider    → MeterProvider
-├── .LoggerProvider   → LoggerProvider
-└── .GetLoggerFactory() → ILoggerFactory   (extension method)
+|-- .TracerProvider      -> TracerProvider
+|-- .MeterProvider       -> MeterProvider
+|-- .LoggerProvider      -> LoggerProvider
++-- .GetLoggerFactory()  -> ILoggerFactory   (extension method)
 ```
 
-Unconfigured signals return **no-op** provider instances — safe to access but
+Unconfigured signals return **no-op** provider instances -- safe to access but
 they emit nothing.
 
 ## Lifecycle
@@ -122,13 +122,13 @@ they emit nothing.
 ## Comparison with the per-signal builders
 
 | Concern | `OpenTelemetrySdk.Create()` | `Sdk.CreateTracerProviderBuilder()` |
-|---|---|---|
+| --- | --- | --- |
 | Signals | All in one builder | One builder per signal |
 | Resource config | Shared `.ConfigureResource()` | Must repeat per builder |
 | Disposal | Single `Dispose()` | One `Dispose()` per provider |
-| Internal DI | ✅ | ❌ |
+| Internal DI | Yes | No |
 | Minimum SDK version | 1.10.0 | Any |
 
 > **Need the .NET Host?** Use
-> [`services.AddOpenTelemetry()`](./add-opentelemetry.md) instead — same
+> [`services.AddOpenTelemetry()`](./add-opentelemetry.md) instead -- same
 > builder API, but lifecycle is managed by the host.
