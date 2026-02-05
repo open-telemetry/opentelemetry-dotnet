@@ -348,6 +348,7 @@ ASALocalRun/
 /src/LastMajorVersionBinaries
 
 # Tempo files
+loki-data/
 tempo-data/
 
 # Coyote Rewrite Files
