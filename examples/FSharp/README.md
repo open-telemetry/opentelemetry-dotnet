@@ -22,7 +22,8 @@ via OTLP, update the `appsettings.json` file to replace `"console"` with
 Use the provided "docker-compose.yaml" file to spin up the
 required dependencies, including:
 
-- **OTel Collector** Accept telemetry and forwards them to Tempo, Prometheus and Loki
+- **OTel Collector** Accept telemetry and forwards them to Tempo, Prometheus
+  and Loki
 - **Prometheus** to store metrics
 - **Grafana (UI)** UI to view metrics, traces. (Exemplars can be used to jump
   from metrics to traces)
