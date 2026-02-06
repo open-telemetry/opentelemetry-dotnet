@@ -43,8 +43,6 @@ public partial class WeatherForecastController : ControllerBase
     [HttpGet]
     public async Task<IEnumerable<WeatherForecast>> Get()
     {
-        using var scope = Logger.BeginIdScope(this.logger, Guid.NewGuid().ToString("N"));
-
         // Making an HTTP call here to serve as an example of
         // how dependency calls will be captured and treated
         // automatically as child of incoming request.
@@ -78,10 +76,6 @@ public partial class WeatherForecastController : ControllerBase
 
     private static partial class Logger
     {
-        private static readonly Func<ILogger, string, IDisposable?> Scope = LoggerMessage.DefineScope<string>("{Id}");
-
-        public static IDisposable? BeginIdScope(ILogger logger, string id) => Scope(logger, id);
-
         [LoggerMessage(
             EventId = 1,
             Level = LogLevel.Information,
