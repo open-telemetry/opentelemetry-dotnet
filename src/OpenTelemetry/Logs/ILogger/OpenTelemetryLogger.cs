@@ -214,17 +214,18 @@ internal sealed class OpenTelemetryLogger : ILogger
         IReadOnlyList<KeyValuePair<string, object?>>? attributes,
         [NotNullWhen(true)] out string? originalFormat)
     {
-        if (attributes != null && attributes.Count > 0)
+        if (attributes != null)
         {
-            var lastAttribute = attributes[attributes.Count - 1];
-            if (lastAttribute.Key == "{OriginalFormat}"
-                && lastAttribute.Value is string tempOriginalFormat)
+            for (int i = 0; i < attributes.Count; i++)
             {
-                originalFormat = tempOriginalFormat;
-                return true;
+                if (attributes[i].Key == "{OriginalFormat}"
+                    && attributes[i].Value is string tempOriginalFormat)
+                {
+                    originalFormat = tempOriginalFormat;
+                    return true;
+                }
             }
         }
-
         originalFormat = null;
         return false;
     }
