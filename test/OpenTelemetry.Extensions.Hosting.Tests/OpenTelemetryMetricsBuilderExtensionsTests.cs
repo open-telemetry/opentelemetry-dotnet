@@ -22,12 +22,72 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void EnableMetricsTest(bool useWithMetricsStyle)
+    public void EnableMetricsTestByte(bool useWithMetricsStyle)
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
 
-        using (var host = MetricTestsBase.BuildHost(
+        using (MetricTestsBase.BuildHost(
+            useWithMetricsStyle,
+            configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
+            configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
+        {
+            var counter = meter.CreateCounter<byte>("TestCounter");
+            counter.Add(1);
+        }
+
+        AssertSingleMetricWithLongSum(exportedItems);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EnableMetricsTestShort(bool useWithMetricsStyle)
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        List<Metric> exportedItems = [];
+
+        using (MetricTestsBase.BuildHost(
+            useWithMetricsStyle,
+            configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
+            configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
+        {
+            var counter = meter.CreateCounter<short>("TestCounter");
+            counter.Add(1);
+        }
+
+        AssertSingleMetricWithLongSum(exportedItems);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EnableMetricsTestInt(bool useWithMetricsStyle)
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        List<Metric> exportedItems = [];
+
+        using (MetricTestsBase.BuildHost(
+            useWithMetricsStyle,
+            configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
+            configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
+        {
+            var counter = meter.CreateCounter<int>("TestCounter");
+            counter.Add(1);
+        }
+
+        AssertSingleMetricWithLongSum(exportedItems);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EnableMetricsTestLong(bool useWithMetricsStyle)
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        List<Metric> exportedItems = [];
+
+        using (MetricTestsBase.BuildHost(
             useWithMetricsStyle,
             configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
             configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
@@ -42,12 +102,52 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public void EnableMetricsTestFloat(bool useWithMetricsStyle)
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        List<Metric> exportedItems = [];
+
+        using (MetricTestsBase.BuildHost(
+            useWithMetricsStyle,
+            configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
+            configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
+        {
+            var counter = meter.CreateCounter<float>("TestCounter");
+            counter.Add(1);
+        }
+
+        AssertSingleMetricWithDoubleSum(exportedItems);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EnableMetricsTestDouble(bool useWithMetricsStyle)
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        List<Metric> exportedItems = [];
+
+        using (MetricTestsBase.BuildHost(
+            useWithMetricsStyle,
+            configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
+            configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
+        {
+            var counter = meter.CreateCounter<double>("TestCounter");
+            counter.Add(1);
+        }
+
+        AssertSingleMetricWithDoubleSum(exportedItems);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public void EnableMetricsWithAddMeterTest(bool useWithMetricsStyle)
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
 
-        using (var host = MetricTestsBase.BuildHost(
+        using (MetricTestsBase.BuildHost(
             useWithMetricsStyle,
             configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
             configureMeterProviderBuilder: builder => builder
@@ -223,6 +323,36 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         Assert.Single(metricInstrumentRemovedEvents);
     }
 
+    [Fact]
+    public void WhenOpenTelemetrySdkIsDisabledExceptionNotThrown()
+    {
+        // Arrange
+        string meterName = "TestMeter";
+
+        using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", "true"))
+        {
+            var services = new ServiceCollection();
+
+            services
+                .AddOpenTelemetry()
+                .WithMetrics((p) => p.AddMeter(meterName));
+
+            // Act
+            using var provider = services.BuildServiceProvider();
+
+            // Assert - No-op implementation is in use
+            var meterProvider = provider.GetRequiredService<MeterProvider>();
+            Assert.IsType<OpenTelemetrySdk.NoopMeterProvider>(meterProvider);
+
+            // Verify that no exception is thrown when using a meter
+            using var meter = new Meter(meterName);
+            var counter = meter.CreateCounter<long>("test_counter");
+            counter.Add(1);
+
+            meterProvider.ForceFlush();
+        }
+    }
+
     private static void AssertSingleMetricWithLongSum(List<Metric> exportedItems, long expectedValue = 1)
     {
         Assert.Single(exportedItems);
@@ -242,5 +372,26 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         var metricPoint = metricPoints[0];
         Assert.Equal(expectedValue, metricPoint.GetSumLong());
+    }
+
+    private static void AssertSingleMetricWithDoubleSum(List<Metric> exportedItems, double expectedValue = 1)
+    {
+        Assert.Single(exportedItems);
+
+        AssertMetricWithDoubleSum(exportedItems[0], expectedValue);
+    }
+
+    private static void AssertMetricWithDoubleSum(Metric metric, double expectedValue = 1)
+    {
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+
+        var metricPoint = metricPoints[0];
+        Assert.Equal(expectedValue, metricPoint.GetSumDouble());
     }
 }
