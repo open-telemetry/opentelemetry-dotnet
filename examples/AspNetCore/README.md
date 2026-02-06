@@ -25,7 +25,7 @@ required dependencies, including:
 - **OTel Collector** Accept telemetry and forwards them to Loki, Tempo,
   and Prometheus
 - **Prometheus** to store metrics
-- **Grafana (UI)** UI to view log, metrics and traces. (Exemplars can be used
+- **Grafana (UI)** UI to view logs, metrics and traces. (Exemplars can be used
   to jump from metrics to traces)
 - **Tempo** to store traces
 - **Loki** to store logs
