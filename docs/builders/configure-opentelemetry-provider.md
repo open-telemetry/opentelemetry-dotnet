@@ -22,9 +22,9 @@ configure OpenTelemetry providers. They work anywhere you have access to an
 > [!IMPORTANT]
 > These methods register configuration but **do not create a
 > provider**. A provider must still be created - via
-- [Host & DI-Integrated (`AddOpenTelemetry`)][add]
-- [Unified Multi-Signal (`OpenTelemetrySdk.Create`)][create]
-- [Per-Signal / Legacy (`Sdk.CreateTracerProviderBuilder`)][tracer]
+> - [Host & DI-Integrated (`AddOpenTelemetry`)][add]
+> - [Unified Multi-Signal (`OpenTelemetrySdk.Create`)][create]
+> - [Per-Signal / Legacy (`Sdk.CreateTracerProviderBuilder`)][tracer]
 > - for the configuration to take effect.
 
 ## Namespaces
