@@ -13,11 +13,12 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Stores state used to build a <see cref="MeterProvider"/>.
 /// </summary>
-internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProviderBuilder
+internal sealed partial class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProviderBuilder
 {
     public const int DefaultMetricLimit = 1000;
     public const int DefaultCardinalityLimit = 2000;
     private const string DefaultInstrumentationVersion = "1.0.0.0";
+    private const string InstrumentNameRegexPattern = @"^[a-z][a-z0-9-._/]{0,254}$";
 
     private readonly IServiceProvider serviceProvider;
     private MeterProviderSdk? meterProvider;
@@ -32,10 +33,9 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
     // fields. See: https://github.com/dotnet/runtime/issues/11571.
     // Customers: This is not guaranteed to work forever. We may change this
     // mechanism in the future do this at your own risk.
-    public static Regex InstrumentNameRegex { get; set; } = new(
-        @"^[a-z][a-z0-9-._/]{0,254}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    public static Regex InstrumentNameRegex { get; set; } = GetInstrumentNameRegex();
 
-    public List<InstrumentationRegistration> Instrumentation { get; } = new();
+    public List<InstrumentationRegistration> Instrumentation { get; } = [];
 
     public ResourceBuilder? ResourceBuilder { get; private set; }
 
@@ -43,11 +43,11 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
 
     public MeterProvider? Provider => this.meterProvider;
 
-    public List<MetricReader> Readers { get; } = new();
+    public List<MetricReader> Readers { get; } = [];
 
-    public List<string> MeterSources { get; } = new();
+    public List<string> MeterSources { get; } = [];
 
-    public List<Func<Instrument, MetricStreamConfiguration?>> ViewConfigs { get; } = new();
+    public List<Func<Instrument, MetricStreamConfiguration?>> ViewConfigs { get; } = [];
 
     public int MetricLimit { get; private set; } = DefaultMetricLimit;
 
@@ -60,14 +60,7 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
     /// <param name="instrumentName">The instrument name.</param>
     /// <returns>Boolean indicating if the instrument is valid.</returns>
     public static bool IsValidInstrumentName(string instrumentName)
-    {
-        if (string.IsNullOrWhiteSpace(instrumentName))
-        {
-            return false;
-        }
-
-        return InstrumentNameRegex.IsMatch(instrumentName);
-    }
+        => !string.IsNullOrWhiteSpace(instrumentName) && InstrumentNameRegex.IsMatch(instrumentName);
 
     /// <summary>
     /// Returns whether the given custom view name is valid according to the specification.
@@ -75,16 +68,9 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
     /// <remarks>See specification: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument"/>.</remarks>
     /// <param name="customViewName">The view name.</param>
     /// <returns>Boolean indicating if the instrument is valid.</returns>
-    public static bool IsValidViewName(string customViewName)
-    {
-        // Only validate the view name in case it's not null. In case it's null, the view name will be the instrument name as per the spec.
-        if (customViewName == null)
-        {
-            return true;
-        }
-
-        return InstrumentNameRegex.IsMatch(customViewName);
-    }
+    public static bool IsValidViewName(string customViewName) =>
+        /* Only validate the view name in case it's not null. In case it's null, the view name will be the instrument name as per the spec. */
+        customViewName == null || InstrumentNameRegex.IsMatch(customViewName);
 
     public void RegisterProvider(MeterProviderSdk meterProvider)
     {
@@ -208,12 +194,17 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
     }
 
     public MeterProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
-    {
-        throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
-    }
+        => throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
 
     MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
         => this.ConfigureBuilder(configure);
+
+#if NET
+    [GeneratedRegex(InstrumentNameRegexPattern, RegexOptions.IgnoreCase)]
+    private static partial Regex GetInstrumentNameRegex();
+#else
+    private static Regex GetInstrumentNameRegex() => new(InstrumentNameRegexPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+#endif
 
     internal readonly struct InstrumentationRegistration
     {
