@@ -215,13 +215,16 @@ internal sealed class OpenTelemetryLogger : ILogger
         [NotNullWhen(true)] out string? originalFormat)
     {
         if (attributes != null && attributes.Count > 0)
-        {
-            var lastAttribute = attributes[attributes.Count - 1];
-            if (lastAttribute.Key == "{OriginalFormat}"
-                && lastAttribute.Value is string tempOriginalFormat)
+        { 
+            for (int i = attributes.Count - 1; i >= 0; i--)
             {
-                originalFormat = tempOriginalFormat;
-                return true;
+                var attribute = attributes[i];
+                if (attribute.Key == "{OriginalFormat}" 
+                    && attribute.Value is string tempOriginalFormat)
+                {
+                    originalFormat = tempOriginalFormat;
+                    return true;
+                }
             }
         }
 
