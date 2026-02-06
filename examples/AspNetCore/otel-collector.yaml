@@ -15,11 +15,11 @@ exporters:
     metric_expiration: 180m
     enable_open_metrics: true
   otlphttp/logs:
-    endpoint: loki:3100/otlp
+    endpoint: http://loki:3100/otlp
     tls:
       insecure: true
   otlphttp/traces:
-    endpoint: tempo:4317
+    endpoint: http://tempo:4318
     tls:
       insecure: true
 
