@@ -14,7 +14,7 @@ project:
       affiliation: New Relic
       social: https://github.com/alanwest
       primary: true
-    - name: Piotr Kiełkowicz
+    - name: Piotr Kie\u0142kowicz
       affiliation: Splunk
       social: https://github.com/Kielek
     - name: Rajkumar Rangaraj
@@ -37,7 +37,7 @@ project:
       email: security@opentelemetry.io
       primary: true
     comment: |
-      Report security vulnerabilities via https://github.com/open-telemetry/opentelemetry-dotnet/security/advisories.
+      Report security vulnerabilities via https://github.com/open-telemetry/opentelemetry-dotnet/security.
 
 repository:
   url: https://github.com/open-telemetry/opentelemetry-dotnet
@@ -60,7 +60,7 @@ repository:
     - name: Mikel Blanchard
       affiliation: Microsoft
       social: https://github.com/CodeBlanch
-    - name: Piotr Kiełkowicz
+    - name: Piotr Kie\u0142kowicz
       affiliation: Splunk
       social: https://github.com/Kielek
     - name: Rajkumar Rangaraj
@@ -81,5 +81,5 @@ repository:
   security:
     assessments:
       self:
-        evidence: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/SECURITY-INSIGHTS.yml
+        evidence: https://github.com/open-telemetry/opentelemetry-dotnet/pull/6878
         date: '2026-02-06'
