@@ -2,7 +2,7 @@
 
 These `IServiceCollection` extension methods register actions used to
 configure OpenTelemetry providers. They work anywhere you have access to an
-`IServiceCollection` -- in application startup, inside a builder's
+`IServiceCollection` - in application startup, inside a builder's
 `ConfigureServices` callback, or in a shared extension method.
 
 ## When to use
@@ -19,12 +19,13 @@ configure OpenTelemetry providers. They work anywhere you have access to an
 - You need access to `IServiceProvider` at configuration time to resolve
   services such as `IConfiguration`.
 
-> **Important:** These methods register configuration but **do not create a
-> provider**. A provider must still be created -- via
-> [`services.AddOpenTelemetry()`](./add-opentelemetry.md),
-> [`OpenTelemetrySdk.Create()`](./opentelemetry-sdk-create.md), or
-> [`Sdk.CreateTracerProviderBuilder().Build()`](./sdk-create-tracer-provider-builder.md)
-> -- for the configuration to take effect.
+> [!IMPORTANT] 
+> These methods register configuration but **do not create a
+> provider**. A provider must still be created - via
+- [Host & DI-Integrated (`AddOpenTelemetry`)][add]
+- [Unified Multi-Signal (`OpenTelemetrySdk.Create`)][create]
+- [Per-Signal / Legacy (`Sdk.CreateTracerProviderBuilder`)][tracer]
+> - for the configuration to take effect.
 
 ## Namespaces
 
@@ -86,7 +87,7 @@ This overload registers the delegate as an `IConfigureTracerProviderBuilder` /
 in the `IServiceCollection`. The delegate is **not invoked until the provider
 is being constructed** (when the `IServiceProvider` is available). Because the
 service container is already built at that point, **you cannot register new
-services** inside this callback -- many builder helper extensions that register
+services** inside this callback - many builder helper extensions that register
 services will throw `NotSupportedException`.
 
 ## Example - separating source registration from exporter setup
@@ -224,7 +225,8 @@ services.ConfigureOpenTelemetryTracerProvider((sp, tracing) =>
 });
 ```
 
-> **Warning:** You cannot register new services inside this callback --
+> [!WARNING]  
+> You cannot register new services inside this callback -
 > the `IServiceProvider` is already built at this point. Adding services
 > (many helper extensions do this) will throw `NotSupportedException`. If you
 > don't need `IServiceProvider` access, use the simpler overload which is
@@ -260,11 +262,11 @@ resource configuration to each signal.
 
 - With `AddOpenTelemetry()` from `OpenTelemetry.Extensions.Hosting` (hosted
   apps).
-- With `OpenTelemetrySdk.Create()` (non-hosted apps) -- the `IServiceCollection`
+- With `OpenTelemetrySdk.Create()` (non-hosted apps) - the `IServiceCollection`
   is created internally, and the `IOpenTelemetryBuilder.Services` property
   exposes it.
 - With `Sdk.CreateTracerProviderBuilder()` /
-  `Sdk.CreateMeterProviderBuilder()` / `Sdk.CreateLoggerProviderBuilder()` --
+  `Sdk.CreateMeterProviderBuilder()` / `Sdk.CreateLoggerProviderBuilder()` -
   accessible via `.ConfigureServices(services => ...)`.
 - In any custom code that creates its own `ServiceCollection` and resolves a
   provider from it.
@@ -276,13 +278,17 @@ the same `IServiceCollection` for the queued actions to take effect.
 
 | Method | Defined on | Purpose |
 | --- | --- | --- |
-| [`AddOpenTelemetry()`](./add-opentelemetry.md) | `IServiceCollection` | Creates the provider and starts the hosted service |
+| [Host & DI-Integrated (`AddOpenTelemetry`)][add] | `IServiceCollection` | Creates the provider and starts the hosted service |
 | `.WithTracing()` / `.WithMetrics()` / `.WithLogging()` | `IOpenTelemetryBuilder` | Registers a provider for the signal and optionally configures it |
 | `.ConfigureResource()` | `IOpenTelemetryBuilder` | Shared resource configuration (internally uses `ConfigureOpenTelemetry*Provider`) |
 
-> These methods work with **any `IServiceCollection`** -- hosted or not. For
+> These methods work with **any `IServiceCollection`** - hosted or not. For
 > non-hosted apps, use them with
 > [`OpenTelemetrySdk.Create()`](./opentelemetry-sdk-create.md) via
 > `builder.Services`, or with the per-signal
 > [`Sdk.CreateTracerProviderBuilder()`](./sdk-create-tracer-provider-builder.md)
 > via `.ConfigureServices(services => ...)`.
+
+[add]: ./add-opentelemetry.md
+[create]: ./opentelemetry-sdk-create.md
+[tracer]: ./sdk-create-tracer-provider-builder.md

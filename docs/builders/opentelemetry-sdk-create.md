@@ -1,5 +1,6 @@
 # OpenTelemetrySdk.Create()
 
+> [!IMPORTANT]
 > **Introduced in 1.10.0.** This is the recommended way to initialize the SDK
 > in non-hosted applications.
 
@@ -96,15 +97,19 @@ builder exposes the same extension methods used by the hosted
 
 ## Returned object
 
-```text
-OpenTelemetrySdk : IDisposable
-|-- .TracerProvider      -> TracerProvider
-|-- .MeterProvider       -> MeterProvider
-|-- .LoggerProvider      -> LoggerProvider
-+-- .GetLoggerFactory()  -> ILoggerFactory   (extension method)
+```mermaid
+classDiagram
+    class OpenTelemetrySdk {
+        +IDisposable
+        +TracerProvider TracerProvider
+        +MeterProvider MeterProvider
+        +LoggerProvider LoggerProvider
+        +GetLoggerFactory() ILoggerFactory
+    }
+    note for OpenTelemetrySdk "GetLoggerFactory() is an extension method"
 ```
 
-Unconfigured signals return **no-op** provider instances -- safe to access but
+Unconfigured signals return **no-op** provider instances - safe to access but
 they emit nothing.
 
 ## Lifecycle
@@ -129,6 +134,7 @@ they emit nothing.
 | Internal DI | Yes | No |
 | Minimum SDK version | 1.10.0 | Any |
 
+> [!TIP]
 > **Need the .NET Host?** Use
 > [`services.AddOpenTelemetry()`](./add-opentelemetry.md) instead -- same
 > builder API, but lifecycle is managed by the host.

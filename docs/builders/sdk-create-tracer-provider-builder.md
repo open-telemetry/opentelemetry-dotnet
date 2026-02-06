@@ -1,9 +1,10 @@
 # Sdk.CreateTracerProviderBuilder / Sdk.CreateMeterProviderBuilder
 
+> [!WARNING]
 > **Legacy pattern (<= 1.9.0).** These APIs still work but are no longer the
 > recommended path. For new code, prefer
-> [`OpenTelemetrySdk.Create()`](./opentelemetry-sdk-create.md) (non-hosted) or
-> [`services.AddOpenTelemetry()`](./add-opentelemetry.md) (hosted).
+> [Unified Multi-Signal (`OpenTelemetrySdk.Create`)][create] (non-hosted) or
+> [Host & DI-Integrated (`AddOpenTelemetry`)][add] (hosted).
 
 ## When to use
 
@@ -69,8 +70,9 @@ var logger = loggerFactory.CreateLogger<Program>();
 logger.LogInformation("Application started");
 ```
 
-> **Note:** Compare the above with
-> [`OpenTelemetrySdk.Create()`](./opentelemetry-sdk-create.md), which achieves
+> [!NOTE]
+> Compare the above with
+> [Unified Multi-Signal (`OpenTelemetrySdk.Create`)][create], which achieves
 > the same result with a single builder and a single `Dispose()`.
 
 ## API surface
@@ -103,7 +105,7 @@ logger.LogInformation("Application started");
 
 - **Caller owns disposal.** You must call `Dispose()` (or use `using`) on each
   provider to flush pending telemetry and release resources.
-- Each provider is **independent** -- disposing one does not affect the others.
+- Each provider is **independent** - disposing one does not affect the others.
 - In a typical app, create providers at startup and dispose at shutdown.
 
 ## Why this pattern is considered legacy
@@ -116,3 +118,6 @@ logger.LogInformation("Application started");
 
 `OpenTelemetrySdk.Create()` (>= 1.10.0) resolves all three issues while staying
 host-free.
+
+[add]: ./add-opentelemetry.md
+[create]: ./opentelemetry-sdk-create.md

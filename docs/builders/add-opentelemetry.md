@@ -1,7 +1,8 @@
 # services.AddOpenTelemetry()
 
-> **This is the recommended approach for any application using the .NET Generic
-> Host** (ASP.NET Core, Worker Services, MAUI, etc.).
+> [!NOTE]  
+> This is the recommended approach for any application using the .NET Generic
+> Host (ASP.NET Core, Worker Services, MAUI, etc.).
 
 ## When to use
 
@@ -9,7 +10,7 @@
 - **Worker services** (`BackgroundService` / `IHostedService`).
 - Any application that already calls `Host.CreateDefaultBuilder()` or
   `WebApplication.CreateBuilder()`.
-- Production services where you want **automatic lifecycle management** -- no
+- Production services where you want **automatic lifecycle management** - no
   manual `Dispose()` calls.
 
 ## Minimal example
@@ -101,7 +102,7 @@ host.Run();
 - **Host-managed.** The host starts the SDK via an `IHostedService` and
   disposes it on graceful shutdown. You do **not** call `Dispose()` yourself.
 - **Safe to call multiple times.** Calling `AddOpenTelemetry()` from multiple
-  libraries or configuration modules is safe -- only one `TracerProvider` and
+  libraries or configuration modules is safe - only one `TracerProvider` and
   one `MeterProvider` are created per `IServiceCollection`.
 - **DI-integrated.** Processors, exporters, and any custom services registered
   in the DI container are available to the SDK. You can inject
@@ -140,6 +141,7 @@ builder.Services.AddSingleton<MyFilteringProcessor>();
 | Safe to call multiple times | Yes | N/A (single call) |
 | Builder API | Same `IOpenTelemetryBuilder` | Same `IOpenTelemetryBuilder` |
 
+> [!TIP]
 > **No host?** Use
 > [`OpenTelemetrySdk.Create()`](./opentelemetry-sdk-create.md) for the same
 > builder API with manual lifecycle control.
