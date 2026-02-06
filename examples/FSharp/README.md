@@ -1,7 +1,7 @@
-# OpenTelemetry ASP.NET Core Web API Example using F#
+# OpenTelemetry ASP.NET Core Web API Example
 
 This example uses the new WebApplication host that ships with .NET
-and shows how to setup
+written using F# that shows how to setup:
 
 1. OpenTelemetry logging
 2. OpenTelemetry metrics
@@ -26,8 +26,8 @@ required dependencies, including:
 - **Prometheus** to store metrics
 - **Grafana (UI)** UI to view metrics, traces. (Exemplars can be used to jump
   from metrics to traces)
-- **Loki** to store logs
 - **Tempo** to store traces
+- **Loki** to store logs
 
 Once the Docker containers are running, you can access the **Grafana UI** at:
 [http://localhost:3000/](http://localhost:3000/)
@@ -37,5 +37,5 @@ Once the Docker containers are running, you can access the **Grafana UI** at:
 - [ASP.NET Core](https://learn.microsoft.com/aspnet/core/introduction-to-aspnet-core)
 - [Docker](http://docker.com)
 - [Prometheus](http://prometheus.io/docs)
-- [Loki](https://github.com/grafana/loki)
 - [Tempo](https://github.com/grafana/tempo)
+- [Loki](https://github.com/grafana/loki)

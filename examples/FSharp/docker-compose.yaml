@@ -11,18 +11,6 @@ services:
       - "4318:4318"
       - "9201:9201"
 
-  # Exports Logs to Loki
-  loki:
-    image: grafana/loki:3.6.4@sha256:be31579ac047e9f78b81e48f3b69d3af709e7299b431d5aa78bcda43382f9511
-    command: [ "-config.file=/etc/loki.yaml" ]
-    volumes:
-      - ./loki.yaml:/etc/loki.yaml
-      - ./loki-data:/tmp/loki
-    ports:
-      - "3100"  # loki
-      - "4317"  # otlp grpc
-      - "4318"  # otlp http
-
   # Exports Traces to Tempo
   tempo:
     image: grafana/tempo:2.10.0@sha256:d7f4c72e0bad2b42b4e7263b0addaf3f5bbc105cec6b1917eba0aae3b9b70364
@@ -46,6 +34,18 @@ services:
       - ./prometheus.yaml:/etc/prometheus.yaml
     ports:
       - "9090:9090"
+
+  # Exports Logs to Loki
+  loki:
+    image: grafana/loki:3.6.4@sha256:be31579ac047e9f78b81e48f3b69d3af709e7299b431d5aa78bcda43382f9511
+    command: [ "-config.file=/etc/loki.yaml" ]
+    volumes:
+      - ./loki.yaml:/etc/loki.yaml
+      - ./loki-data:/tmp/loki
+    ports:
+      - "3100"  # loki
+      - "4317"  # otlp grpc
+      - "4318"  # otlp http
 
 # UI to query traces and metrics
   grafana:

@@ -42,7 +42,3 @@ datasources:
   editable: false
   apiVersion: 1
   uid: loki
-  jsonData:
-    httpMethod: GET
-    serviceMap:
-      datasourceUid: prometheus

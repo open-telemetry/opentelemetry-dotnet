@@ -15,22 +15,28 @@ exporters:
     metric_expiration: 180m
     enable_open_metrics: true
   otlphttp/logs:
-    endpoint: loki:3100/otlp
+    endpoint: http://loki:3100/otlp
     tls:
       insecure: true
   otlphttp/traces:
-    endpoint: tempo:4317
+    endpoint: http://tempo:4318
     tls:
       insecure: true
+
+processors:
+  batch:
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       exporters: [debug, otlphttp/traces]
+      processors: [batch]
     metrics:
       receivers: [otlp]
       exporters: [debug, prometheus]
+      processors: [batch]
     logs:
       receivers: [otlp]
       exporters: [debug, otlphttp/logs]
+      processors: [batch]
