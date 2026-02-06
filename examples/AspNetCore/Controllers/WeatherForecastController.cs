@@ -11,37 +11,44 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("[controller]")]
-public class WeatherForecastController : ControllerBase
+public partial class WeatherForecastController : ControllerBase
 {
+    private static readonly Uri RequestUri = new("http://google.com");
+
     private static readonly string[] Summaries =
     [
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
     ];
 
-    private static readonly HttpClient HttpClient = new();
-
+    private readonly HttpClient httpClient;
     private readonly ILogger<WeatherForecastController> logger;
     private readonly ActivitySource activitySource;
     private readonly Counter<long> freezingDaysCounter;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, InstrumentationSource instrumentationSource)
+    public WeatherForecastController(
+        HttpClient httpClient,
+        InstrumentationSource instrumentationSource,
+        ILogger<WeatherForecastController> logger)
     {
-        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
+        ArgumentNullException.ThrowIfNull(httpClient);
         ArgumentNullException.ThrowIfNull(instrumentationSource);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        this.httpClient = httpClient;
+        this.logger = logger;
         this.activitySource = instrumentationSource.ActivitySource;
         this.freezingDaysCounter = instrumentationSource.FreezingDaysCounter;
     }
 
     [HttpGet]
-    public IEnumerable<WeatherForecast> Get()
+    public async Task<IEnumerable<WeatherForecast>> Get()
     {
-        using var scope = this.logger.BeginIdScope(Guid.NewGuid().ToString("N"));
+        using var scope = Logger.BeginIdScope(this.logger, Guid.NewGuid().ToString("N"));
 
-        // Making a http call here to serve as an example of
+        // Making an HTTP call here to serve as an example of
         // how dependency calls will be captured and treated
         // automatically as child of incoming request.
-        var res = HttpClient.GetStringAsync(new Uri("http://google.com")).Result;
+        _ = await this.httpClient.GetStringAsync(RequestUri);
 
         // Optional: Manually create an activity. This will become a child of
         // the activity created from the instrumentation library for AspNetCore.
@@ -64,8 +71,21 @@ public class WeatherForecastController : ControllerBase
         // Optional: Count the freezing days
         this.freezingDaysCounter.Add(forecast.Count(f => f.TemperatureC < 0));
 
-        this.logger.WeatherForecastGenerated(LogLevel.Information, forecast.Length, forecast);
+        Logger.WeatherForecastGenerated(this.logger, forecast.Length, forecast);
 
         return forecast;
+    }
+
+    private static partial class Logger
+    {
+        private static readonly Func<ILogger, string, IDisposable?> Scope = LoggerMessage.DefineScope<string>("{Id}");
+
+        public static IDisposable? BeginIdScope(ILogger logger, string id) => Scope(logger, id);
+
+        [LoggerMessage(
+            EventId = 1,
+            Level = LogLevel.Information,
+            Message = "WeatherForecasts generated {Count}: {Forecasts}")]
+        public static partial void WeatherForecastGenerated(ILogger logger, int count, WeatherForecast[] forecasts);
     }
 }
