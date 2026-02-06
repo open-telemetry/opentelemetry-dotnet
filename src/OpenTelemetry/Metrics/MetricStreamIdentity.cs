@@ -129,6 +129,26 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         || this.InstrumentType == typeof(Histogram<float>)
         || this.InstrumentType == typeof(Histogram<double>);
 
+    public bool IsAsynchronous =>
+        this.InstrumentType == typeof(ObservableCounter<long>)
+        || this.InstrumentType == typeof(ObservableCounter<int>)
+        || this.InstrumentType == typeof(ObservableCounter<short>)
+        || this.InstrumentType == typeof(ObservableCounter<byte>)
+        || this.InstrumentType == typeof(ObservableCounter<float>)
+        || this.InstrumentType == typeof(ObservableCounter<double>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<long>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<int>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<short>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<byte>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<float>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<double>)
+        || this.InstrumentType == typeof(ObservableGauge<long>)
+        || this.InstrumentType == typeof(ObservableGauge<int>)
+        || this.InstrumentType == typeof(ObservableGauge<short>)
+        || this.InstrumentType == typeof(ObservableGauge<byte>)
+        || this.InstrumentType == typeof(ObservableGauge<float>)
+        || this.InstrumentType == typeof(ObservableGauge<double>);
+
     public static bool operator ==(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
 
     public static bool operator !=(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => !metricIdentity1.Equals(metricIdentity2);
