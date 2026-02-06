@@ -49,10 +49,17 @@ internal sealed class LogRecordSharedPool : ILogRecordPool
 
             if (Interlocked.CompareExchange(ref this.rentIndex, rentSnapshot + 1, rentSnapshot) == rentSnapshot)
             {
-                var logRecord = Interlocked.Exchange(ref this.pool[rentSnapshot % this.Capacity], null);
-                if (logRecord == null && !this.TryRentCoreRare(rentSnapshot, out logRecord))
+                var slotIndex = (int)(rentSnapshot % this.Capacity);
+                var logRecord = Interlocked.Exchange(ref this.pool[slotIndex], null);
+                if (logRecord == null && !this.TryRentCoreRare(slotIndex, out logRecord))
                 {
-                    continue;
+                    // Note: The index is already consumed (incremented above).
+                    // When TryRentCoreRare fails after spinning, continuing to
+                    // retry with a new index can cause a race where two threads
+                    // end up with the same LogRecord instance. Instead, we break
+                    // out and create a new LogRecord. See:
+                    // https://github.com/open-telemetry/opentelemetry-dotnet/issues/6233
+                    break;
                 }
 
                 Debug.Assert(logRecord.Source == LogRecord.LogRecordSource.FromSharedPool, "logRecord.Source was not FromSharedPool");
@@ -108,7 +115,7 @@ internal sealed class LogRecordSharedPool : ILogRecordPool
         }
     }
 
-    private bool TryRentCoreRare(long rentSnapshot, [NotNullWhen(true)] out LogRecord? logRecord)
+    private bool TryRentCoreRare(int slotIndex, [NotNullWhen(true)] out LogRecord? logRecord)
     {
         SpinWait wait = default;
         while (true)
@@ -121,15 +128,15 @@ internal sealed class LogRecordSharedPool : ILogRecordPool
                 // wrap around. When the yielded thread wakes up its read
                 // index could have been stolen by another thread. To
                 // prevent deadlock, bail out of read after spinning. This
-                // will cause either a successful rent from another index,
-                // or a new record to be created
+                // will cause a new record to be created. See:
+                // https://github.com/open-telemetry/opentelemetry-dotnet/issues/6233
                 logRecord = null;
                 return false;
             }
 
             wait.SpinOnce();
 
-            logRecord = Interlocked.Exchange(ref this.pool[rentSnapshot % this.Capacity], null);
+            logRecord = Interlocked.Exchange(ref this.pool[slotIndex], null);
             if (logRecord != null)
             {
                 // Rare case where the write was still working when the read came in
