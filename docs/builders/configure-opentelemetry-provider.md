@@ -19,7 +19,7 @@ configure OpenTelemetry providers. They work anywhere you have access to an
 - You need access to `IServiceProvider` at configuration time to resolve
   services such as `IConfiguration`.
 
-> [!IMPORTANT] 
+> [!IMPORTANT]
 > These methods register configuration but **do not create a
 > provider**. A provider must still be created - via
 - [Host & DI-Integrated (`AddOpenTelemetry`)][add]
@@ -225,7 +225,7 @@ services.ConfigureOpenTelemetryTracerProvider((sp, tracing) =>
 });
 ```
 
-> [!WARNING]  
+> [!WARNING]
 > You cannot register new services inside this callback -
 > the `IServiceProvider` is already built at this point. Adding services
 > (many helper extensions do this) will throw `NotSupportedException`. If you

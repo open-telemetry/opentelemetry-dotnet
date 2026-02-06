@@ -1,6 +1,6 @@
 # services.AddOpenTelemetry()
 
-> [!NOTE]  
+> [!NOTE]
 > This is the recommended approach for any application using the .NET Generic
 > Host (ASP.NET Core, Worker Services, MAUI, etc.).
 
