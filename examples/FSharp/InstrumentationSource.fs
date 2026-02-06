@@ -12,10 +12,7 @@ open System.Diagnostics
 // with other components in the DI container.
 type InstrumentationSource() =
     
-    [<Literal>]
-    static let activitySourceName = "Examples.AspNetCore"
-    
-    [<Literal>]
+    static let activitySourceName = "Examples.AspNetCore"    
     static let meterName = "Examples.AspNetCore"
     
     let version = 

@@ -26,7 +26,7 @@ type WeatherForecastController(
     let freezingDaysCounter = instrumentationSource.FreezingDaysCounter
 
     [<HttpGet>]
-    member this.Get() : Async<WeatherForecast seq> = async {
+    member this.Get() = task {
         use _ = logger.BeginScope("{Id}", Guid.NewGuid().ToString("N"))
 
         // Making a http call here to serve as an example of
