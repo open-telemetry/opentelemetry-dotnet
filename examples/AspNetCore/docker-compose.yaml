@@ -35,6 +35,18 @@ services:
     ports:
       - "9090:9090"
 
+  # Exports Logs to Loki
+  loki:
+    image: grafana/loki:3.6.4@sha256:be31579ac047e9f78b81e48f3b69d3af709e7299b431d5aa78bcda43382f9511
+    command: [ "-config.file=/etc/loki.yaml" ]
+    volumes:
+      - ./loki.yaml:/etc/loki.yaml
+      - ./loki-data:/tmp/loki
+    ports:
+      - "3100"  # loki
+      - "4317"  # otlp grpc
+      - "4318"  # otlp http
+
 # UI to query traces and metrics
   grafana:
     image: grafana/grafana:12.3.2@sha256:ba93c9d192e58b23e064c7f501d453426ccf4a85065bf25b705ab1e98602bfb1
