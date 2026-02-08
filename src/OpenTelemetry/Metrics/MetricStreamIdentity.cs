@@ -201,7 +201,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
                 // and avoid floating-point representation issues (e.g., 0.025f -> 0.025 instead of 0.02500000037252903)
                 explicitBucketBoundaries[i] = typeof(T) == typeof(float)
                     ? double.Parse(
-                        adviceExplicitBucketBoundaries[i].ToString(CultureInfo.InvariantCulture)!,
+                        Convert.ToString(adviceExplicitBucketBoundaries[i], CultureInfo.InvariantCulture)!,
                         CultureInfo.InvariantCulture)
                     : Convert.ToDouble(
                         adviceExplicitBucketBoundaries[i],
