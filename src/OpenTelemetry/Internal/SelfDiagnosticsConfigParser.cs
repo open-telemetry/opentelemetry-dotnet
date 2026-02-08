@@ -8,7 +8,10 @@ using System.Text.RegularExpressions;
 
 namespace OpenTelemetry.Internal;
 
-internal sealed class SelfDiagnosticsConfigParser
+/// <summary>
+/// Reads diagnostic configuration from OTEL_DIAGNOSTICS.json file.
+/// </summary>
+internal sealed partial class SelfDiagnosticsConfigParser
 {
     public const string ConfigFileName = "OTEL_DIAGNOSTICS.json";
     private const int FileSizeLowerLimit = 1024;  // Lower limit for log file size in KB: 1MB
@@ -19,6 +22,7 @@ internal sealed class SelfDiagnosticsConfigParser
     /// </summary>
     private const int ConfigBufferSize = 4 * 1024;
 
+#if !NET7_0_OR_GREATER
     private static readonly Regex LogDirectoryRegex = new(
         @"""LogDirectory""\s*:\s*""(?<LogDirectory>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -30,6 +34,7 @@ internal sealed class SelfDiagnosticsConfigParser
 
     private static readonly Regex FormatMessageRegex = new(
         @"""FormatMessage""\s*:\s*(?:""(?<FormatMessage>.*?)""|(?<FormatMessage>true|false))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+#endif
 
     // This class is called in SelfDiagnosticsConfigRefresher.UpdateMemoryMappedFileFromConfiguration
     // in both main thread and the worker thread.
@@ -87,6 +92,48 @@ internal sealed class SelfDiagnosticsConfigParser
 
             string configJson = Encoding.UTF8.GetString(buffer, 0, totalBytesRead);
 
+#if NET7_0_OR_GREATER
+            Dictionary<string, string> configDict = new Dictionary<string, string>();
+            for (Match m = JsonRegex().Match(configJson); m.Success; m = m.NextMatch())
+            {
+                switch (m.Groups[1].Value)
+                {
+                    case "LogDirectory":
+                        logDirectory = m.Groups[2].Value;
+                        break;
+                    case "FileSize":
+                        if (int.TryParse(m.Groups[2].Value, out fileSizeInKB))
+                        {
+                            if (fileSizeInKB < FileSizeLowerLimit)
+                            {
+                                fileSizeInKB = FileSizeLowerLimit;
+                            }
+
+                            if (fileSizeInKB > FileSizeUpperLimit)
+                            {
+                                fileSizeInKB = FileSizeUpperLimit;
+                            }
+                        }
+
+                        break;
+                    case "LogLevel":
+                        if (!Enum.TryParse(m.Groups[2].Value, true, out logLevel))
+                        {
+                            return false;
+                        }
+
+                        break;
+                    case "FormatMessage":
+                        _ = bool.TryParse(m.Groups[2].Value, out formatMessage);
+                        break;
+                    default:
+                        // Ignore unknown fields
+                        break;
+                }
+            }
+
+            return !string.IsNullOrEmpty(logDirectory) && fileSizeInKB > 0;
+#else
             if (!TryParseLogDirectory(configJson, out logDirectory))
             {
                 return false;
@@ -116,6 +163,7 @@ internal sealed class SelfDiagnosticsConfigParser
             _ = TryParseFormatMessage(configJson, out formatMessage);
 
             return Enum.TryParse(logLevelString, out logLevel);
+#endif
         }
         catch (Exception)
         {
@@ -124,6 +172,13 @@ internal sealed class SelfDiagnosticsConfigParser
         }
     }
 
+    /// <summary>
+    /// Regex for parsing JSON into "field":"value" pairs. Will work on the flat JSONs.
+    /// </summary>
+#if NET7_0_OR_GREATER
+    [GeneratedRegex(@"\""(\w+)\""[\s\r\n]*:[\s\r\n]*\""?([^},]*?)[""},]", RegexOptions.CultureInvariant)]
+    internal static partial Regex JsonRegex();
+#else
     internal static bool TryParseLogDirectory(
         string configJson,
         out string logDirectory)
@@ -162,4 +217,5 @@ internal sealed class SelfDiagnosticsConfigParser
 
         return true;
     }
+#endif
 }

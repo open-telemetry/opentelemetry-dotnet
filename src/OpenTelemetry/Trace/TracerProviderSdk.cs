@@ -67,16 +67,6 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 
-        Regex? legacyActivityWildcardModeRegex = null;
-        foreach (var legacyName in state.LegacyActivityOperationNames)
-        {
-            if (WildcardHelper.ContainsWildcard(legacyName))
-            {
-                legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex(state.LegacyActivityOperationNames);
-                break;
-            }
-        }
-
         // Note: Linq OrderBy performs a stable sort, which is a requirement here
         IEnumerable<BaseProcessor<Activity>> processors = state.Processors.OrderBy(p => p.PipelineWeight);
 
@@ -116,23 +106,13 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         if (this.supportLegacyActivity)
         {
-            Func<Activity, bool>? legacyActivityPredicate = null;
-            if (legacyActivityWildcardModeRegex != null)
-            {
-                legacyActivityPredicate = activity => legacyActivityWildcardModeRegex.IsMatch(activity.OperationName);
-            }
-            else
-            {
-                legacyActivityPredicate = activity => state.LegacyActivityOperationNames.Contains(activity.OperationName);
-            }
-
             activityListener.ActivityStarted = activity =>
             {
                 OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
                 if (string.IsNullOrEmpty(activity.Source.Name))
                 {
-                    if (legacyActivityPredicate(activity))
+                    if (WildcardHelper.MatchAny(state.LegacyActivityOperationNames, activity.OperationName))
                     {
                         // Legacy activity matches the user configured list.
                         // Call sampler for the legacy activity
@@ -168,7 +148,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             {
                 OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
 
-                if (string.IsNullOrEmpty(activity.Source.Name) && !legacyActivityPredicate(activity))
+                if (string.IsNullOrEmpty(activity.Source.Name) && !WildcardHelper.MatchAny(state.LegacyActivityOperationNames, activity.OperationName))
                 {
                     // Legacy activity doesn't match the user configured list. No need to proceed further.
                     return;
@@ -257,14 +237,12 @@ internal sealed class TracerProviderSdk : TracerProvider
             // Validation of source name is already done in builder.
             if (state.Sources.Any(s => WildcardHelper.ContainsWildcard(s)))
             {
-                var regex = WildcardHelper.GetWildcardRegex(state.Sources);
-
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                 // or not.
                 activityListener.ShouldListenTo = activitySource =>
                     this.supportLegacyActivity ?
-                    string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
-                    regex.IsMatch(activitySource.Name);
+                    string.IsNullOrEmpty(activitySource.Name) || WildcardHelper.MatchAny(state.Sources, activitySource.Name) :
+                    WildcardHelper.MatchAny(state.Sources, activitySource.Name);
             }
             else
             {
