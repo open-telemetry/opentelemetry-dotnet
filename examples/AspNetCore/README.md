@@ -1,7 +1,7 @@
 # OpenTelemetry ASP.NET Core Web API Example
 
 This example uses the new WebApplication host that ships with .NET
-and shows how to setup
+and shows how to setup:
 
 1. OpenTelemetry logging
 2. OpenTelemetry metrics
@@ -22,15 +22,16 @@ via OTLP, update the `appsettings.json` file to replace `"console"` with
 Use the provided "docker-compose.yaml" file to spin up the
 required dependencies, including:
 
-- **OTel Collector** Accept telemetry and forwards them to Tempo, Prometheus
+- **OTel Collector** Accept telemetry and forwards them to Loki, Tempo,
+  and Prometheus
 - **Prometheus** to store metrics
-- **Grafana (UI)** UI to view metrics, traces. (Exemplars can be used to jump
-  from metrics to traces)
+- **Grafana (UI)** UI to view logs, metrics and traces. (Exemplars can be used
+  to jump from metrics to traces)
 - **Tempo** to store traces
 - **Loki** to store logs
 
 Once the Docker containers are running, you can access the **Grafana UI** at:
-[http://localhost:3000/](http://localhost:3000/)
+<http://localhost:3000>
 
 ## References
 
