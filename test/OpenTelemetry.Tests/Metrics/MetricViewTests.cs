@@ -653,10 +653,15 @@ public class MetricViewTests : MetricTestsBase
             var index = 0;
             var actualCount = 0;
             long[] expectedBucketCounts = [2, 1, 0];
+            double[] expectedBounds = [10.0, 20.0, double.PositiveInfinity];
 
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
                 Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+
+                // Verify bucket boundaries are correct for all types including float
+                Assert.Equal(expectedBounds[index], histogramMeasurement.ExplicitBound);
+
                 index++;
                 actualCount++;
             }
@@ -770,10 +775,13 @@ public class MetricViewTests : MetricTestsBase
                 HistogramBucketBoundaries = floatBoundaries,
             });
 
-        // Record some values
-        histogram.Record(0.02f);
-        histogram.Record(0.5f);
-        histogram.Record(5.0f);
+        // Record values that are exactly equal to float boundaries to verify
+        // they land in the correct (inclusive) bucket after float->double conversion
+        // Bucket boundaries are: 0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120
+        // A value equal to a boundary should be counted in the bucket where that boundary is the upper limit
+        histogram.Record(0.025f);  // Should be in bucket with upper bound 0.025 (index 3)
+        histogram.Record(0.1f);    // Should be in bucket with upper bound 0.1 (index 5)
+        histogram.Record(0.5f);    // Should be in bucket with upper bound 0.5 (index 7)
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
@@ -798,6 +806,12 @@ public class MetricViewTests : MetricTestsBase
             0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120,
         };
 
+        // Expected bucket counts for boundary-equal values:
+        // Index 3 (le 0.025): 1 count (0.025f)
+        // Index 5 (le 0.1): 1 count (0.1f)
+        // Index 7 (le 0.5): 1 count (0.5f)
+        var expectedBucketCounts = new long[] { 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
+
         var index = 0;
         foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
         {
@@ -805,11 +819,17 @@ public class MetricViewTests : MetricTestsBase
             {
                 // Verify each boundary is the expected clean value
                 Assert.Equal(expectedBoundaries[index], histogramMeasurement.ExplicitBound);
+
+                // Verify boundary-equal measurements land in correct buckets
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
             }
             else
             {
                 // Verify the last bucket is positive infinity
                 Assert.Equal(double.PositiveInfinity, histogramMeasurement.ExplicitBound);
+
+                // Last bucket should be empty
+                Assert.Equal(0, histogramMeasurement.BucketCount);
             }
 
             index++;
