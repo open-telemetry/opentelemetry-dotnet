@@ -26,7 +26,8 @@ required dependencies, including:
 - **Prometheus** to store metrics
 - **Grafana (UI)** UI to view metrics, traces. (Exemplars can be used to jump
   from metrics to traces)
-- **Tempo** to store traces // TODO: Add a logging store also.
+- **Tempo** to store traces
+- **Loki** to store logs
 
 Once the Docker containers are running, you can access the **Grafana UI** at:
 [http://localhost:3000/](http://localhost:3000/)
@@ -37,3 +38,4 @@ Once the Docker containers are running, you can access the **Grafana UI** at:
 - [Docker](http://docker.com)
 - [Prometheus](http://prometheus.io/docs)
 - [Tempo](https://github.com/grafana/tempo)
+- [Loki](https://github.com/grafana/loki)
