@@ -7,9 +7,7 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Fixed precision issues when using `Histogram<float>` with custom
-  `HistogramBucketBoundaries`. Float boundaries are now converted to double
-  with proper precision (e.g., `0.025f` becomes `0.025` instead of
-  `0.02500000037252903`).
+  `HistogramBucketBoundaries`.
   ([#6803](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6803))
 
 ## 1.15.0
