@@ -347,9 +347,6 @@ ASALocalRun/
 
 /src/LastMajorVersionBinaries
 
-# Tempo files
-tempo-data/
-
 # Coyote Rewrite Files
 rewrite.coyote.json
 
