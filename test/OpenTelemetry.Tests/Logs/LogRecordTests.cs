@@ -1020,7 +1020,7 @@ public sealed class LogRecordTests
 
     [Theory]
     [InlineData(true, 0)]
-    [InlineData(false, 0)]}
+    [InlineData(false, 0)]
     [InlineData(true, 1)]
     [InlineData(false, 1)]
     [InlineData(true, 2)]
