@@ -1,0 +1,12 @@
+services:
+
+  # OTEL Collector to receive logs, metrics and traces from the application
+  # plus a UI to query logs, traces and metrics and visualize them.
+  otel-lgtm:
+    image: grafana/otel-lgtm:0.17.1@sha256:557ddac3121c7b470b59dfb4f69a4d24d9f6a3c9d63b330152498a3650f720bf
+
+    ports:
+      - 3000:3000 # UI
+      - 4317:4317 # OTLP over gRPC for logs, metrics and traces
+      - 4318:4318 # OTLP over HTTP for logs, metrics and traces
+      - 9090:9090 # Prometheus
