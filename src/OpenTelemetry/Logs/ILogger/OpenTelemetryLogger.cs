@@ -215,7 +215,7 @@ internal sealed class OpenTelemetryLogger : ILogger
         [NotNullWhen(true)] out string? originalFormat)
     {
         if (attributes != null && attributes.Count > 0)
-        { 
+        {
             for (int i = attributes.Count - 1; i >= 0; i--)
             {
                 var attribute = attributes[i];
