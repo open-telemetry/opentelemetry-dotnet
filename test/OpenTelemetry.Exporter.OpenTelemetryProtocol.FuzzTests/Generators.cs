@@ -156,11 +156,21 @@ internal static class Generators
             {
                 using var meter = new Meter("FuzzTest.Meter", "1.0.0");
 
-                var counter = meter.CreateCounter<long>("test.counter");
+                var counterByte = meter.CreateCounter<byte>("test.counter.byte");
+                var counterInt16 = meter.CreateCounter<short>("test.counter.int16");
+                var counterInt32 = meter.CreateCounter<int>("test.counter.int32");
+                var counterInt64 = meter.CreateCounter<long>("test.counter.int64");
+                var counterSingle = meter.CreateCounter<float>("test.counter.single");
+                var counterDouble = meter.CreateCounter<double>("test.counter.double");
 
                 for (int i = 0; i < size; i++)
                 {
-                    counter.Add(100 * i);
+                    counterByte.Add((byte)(100 * i));
+                    counterInt16.Add((short)(100 * i));
+                    counterInt32.Add(100 * i);
+                    counterInt64.Add(100 * i);
+                    counterSingle.Add(100 * i);
+                    counterDouble.Add(100 * i);
                 }
 
                 var gauge = meter.CreateGauge<double>("test.gauge");

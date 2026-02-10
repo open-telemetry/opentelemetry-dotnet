@@ -1842,15 +1842,98 @@ public class MetricApiTests : MetricTestsBase
     }
 
     [Fact]
+    public void MultithreadedByteCounterTest()
+    {
+        this.MultithreadedCounterTest((byte)DeltaLongValueUpdatedByEachCall);
+    }
+
+    [Fact]
+    public void MultithreadedShortCounterTest()
+    {
+        this.MultithreadedCounterTest((short)DeltaLongValueUpdatedByEachCall);
+    }
+
+    [Fact]
+    public void MultithreadedIntCounterTest()
+    {
+        this.MultithreadedCounterTest((int)DeltaLongValueUpdatedByEachCall);
+    }
+
+    [Fact]
     public void MultithreadedLongCounterTest()
     {
         this.MultithreadedCounterTest(DeltaLongValueUpdatedByEachCall);
+    }
+
+    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/6803")]
+    public void MultithreadedSingleCounterTest()
+    {
+        this.MultithreadedCounterTest((float)DeltaDoubleValueUpdatedByEachCall);
     }
 
     [Fact]
     public void MultithreadedDoubleCounterTest()
     {
         this.MultithreadedCounterTest(DeltaDoubleValueUpdatedByEachCall);
+    }
+
+    [Fact]
+    public void MultithreadedByteHistogramTest()
+    {
+        var expected = new long[16]
+        {
+            NumberOfThreads * NumberOfMetricUpdateByEachThread * 9,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        };
+
+        // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
+        var values = new byte[] { 0, 1, 6, 20, 40, 60, 80, 200, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        this.MultithreadedHistogramTest(expected, values);
+    }
+
+    [Fact]
+    public void MultithreadedShortHistogramTest()
+    {
+        var expected = new long[16];
+        for (var i = 0; i < expected.Length; i++)
+        {
+            expected[i] = NumberOfThreads * NumberOfMetricUpdateByEachThread;
+        }
+
+        // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
+        var values = new short[] { -1, 1, 6, 20, 40, 60, 80, 200, 300, 600, 800, 1001, 3000, 6000, 8000, 10001 };
+
+        this.MultithreadedHistogramTest(expected, values);
+    }
+
+    [Fact]
+    public void MultithreadedIntHistogramTest()
+    {
+        var expected = new long[16];
+        for (var i = 0; i < expected.Length; i++)
+        {
+            expected[i] = NumberOfThreads * NumberOfMetricUpdateByEachThread;
+        }
+
+        // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
+        var values = new int[] { -1, 1, 6, 20, 40, 60, 80, 200, 300, 600, 800, 1001, 3000, 6000, 8000, 10001 };
+
+        this.MultithreadedHistogramTest(expected, values);
     }
 
     [Fact]
@@ -1864,6 +1947,21 @@ public class MetricApiTests : MetricTestsBase
 
         // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
         var values = new long[] { -1, 1, 6, 20, 40, 60, 80, 200, 300, 600, 800, 1001, 3000, 6000, 8000, 10001 };
+
+        this.MultithreadedHistogramTest(expected, values);
+    }
+
+    [Fact]
+    public void MultithreadedSingleHistogramTest()
+    {
+        var expected = new long[16];
+        for (var i = 0; i < expected.Length; i++)
+        {
+            expected[i] = NumberOfThreads * NumberOfMetricUpdateByEachThread;
+        }
+
+        // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
+        var values = new float[] { -1.0f, 1.0f, 6.0f, 20.0f, 40.0f, 60.0f, 80.0f, 200.0f, 300.0f, 600.0f, 800.0f, 1001.0f, 3000.0f, 6000.0f, 8000.0f, 10001.0f };
 
         this.MultithreadedHistogramTest(expected, values);
     }
@@ -2158,13 +2256,13 @@ public class MetricApiTests : MetricTestsBase
 
         meterProvider.ForceFlush();
 
-        if (typeof(T) == typeof(long))
+        if (typeof(T) == typeof(byte) || typeof(T) == typeof(short) || typeof(T) == typeof(int) || typeof(T) == typeof(long))
         {
             var sumReceived = GetLongSum(metricItems);
             var expectedSum = DeltaLongValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;
             Assert.Equal(expectedSum, sumReceived);
         }
-        else if (typeof(T) == typeof(double))
+        else if (typeof(T) == typeof(float) || typeof(T) == typeof(double))
         {
             var sumReceived = GetDoubleSum(metricItems);
             var expectedSum = DeltaDoubleValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;
