@@ -219,7 +219,7 @@ internal sealed class OpenTelemetryLogger : ILogger
             for (int i = attributes.Count - 1; i >= 0; i--)
             {
                 var attribute = attributes[i];
-                if (attribute.Key == "{OriginalFormat}" 
+                if (attribute.Key == "{OriginalFormat}"
                     && attribute.Value is string tempOriginalFormat)
                 {
                     originalFormat = tempOriginalFormat;
