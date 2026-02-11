@@ -8,8 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed observable instruments (ObservableCounter, ObservableUpDownCounter,
   ObservableGauge) continuing to export stale data points after a callback
-  stops reporting a series. Per the spec, only measurements recorded since
-  the previous collection should be exported for asynchronous instruments.
+  stops reporting a series.
   ([#5950](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5950))
 
 ## 1.15.0
