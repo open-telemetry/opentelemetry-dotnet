@@ -1029,25 +1029,23 @@ public sealed class LogRecordTests
     {
         // This test verifies the fix for the bug where {OriginalFormat} was only found
         // at the last position. The fix ensures it's found at ANY position.
-        // This is important because different logging implementations place {OriginalFormat}
-        // at different positions (e.g., MS Telemetry Abstractions uses first position).
-        
+
         using var loggerFactory = InitializeLoggerFactory(
-            out List<LogRecord> exportedItems, 
+            out List<LogRecord> exportedItems,
             configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
-        
+
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        // Build attributes list with {OriginalFormat} at specified position
         var attributes = new List<KeyValuePair<string, object?>>
         {
             new("Property1", "value1"),
             new("Property2", 42),
-            new("Property3", true)
+            new("Property3", true),
         };
-        
-        // Insert {OriginalFormat} at the specified position
-        attributes.Insert(originalFormatPosition, new("{OriginalFormat}", "Log event with {Property1} {Property2} {Property3}"));
+
+        attributes.Insert(
+            originalFormatPosition,
+            new("{OriginalFormat}", "Log event with {Property1} {Property2} {Property3}"));
 
         logger.Log(
             LogLevel.Information,
@@ -1057,26 +1055,32 @@ public sealed class LogRecordTests
             (state, ex) => "Log event with value1 42 True");
 
         var logRecord = exportedItems[0];
-        
-        // The bug: When {OriginalFormat} wasn't at last position, Body would be the formatted message
-        // The fix: Body is always the template, regardless of {OriginalFormat} position
-        Assert.Equal("Log event with {Property1} {Property2} {Property3}", logRecord.Body);
-        
+
+        Assert.Equal(
+            "Log event with {Property1} {Property2} {Property3}",
+            logRecord.Body);
+
         if (includeFormattedMessage)
         {
-            Assert.Equal("Log event with value1 42 True", logRecord.FormattedMessage);
+            Assert.Equal(
+                "Log event with value1 42 True",
+                logRecord.FormattedMessage);
         }
         else
         {
             Assert.Null(logRecord.FormattedMessage);
         }
-        
-        // Verify {OriginalFormat} attribute exists
+
         var logRecordAttributes = logRecord.Attributes;
+
         Assert.NotNull(logRecordAttributes);
-        Assert.Contains(logRecordAttributes, item => item.Key == "{OriginalFormat}");
-        Assert.Equal("Log event with {Property1} {Property2} {Property3}", 
-            logRecordAttributes.First(item => item.Key == "{OriginalFormat}").Value);
+
+        var originalFormatAttribute = logRecordAttributes!
+            .First(item => item.Key == "{OriginalFormat}");
+
+        Assert.Equal(
+            "Log event with {Property1} {Property2} {Property3}",
+            originalFormatAttribute.Value);
     }
 
     private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions>? configure = null)
