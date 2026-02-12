@@ -26,4 +26,6 @@ jobs:
 
     - name: publish AOT testApp, assert static analysis warning count, and run the app
       shell: pwsh
-      run: .\build\scripts\test-aot-compatibility.ps1 ${{ matrix.version }}
+      run: .\build\scripts\test-aot-compatibility.ps1 ${env:TARGET_FRAMEWORK}
+      env:
+        TARGET_FRAMEWORK: ${{ matrix.version }}

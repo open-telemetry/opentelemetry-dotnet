@@ -127,7 +127,9 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Run OTLP Exporter docker compose
-        run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
+        run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${VERSION}.yml" --project-directory=. up --exit-code-from=tests --build
+        env:
+          VERSION: ${{ matrix.version }}
 
   w3c-trace-context-integration-test:
     needs: detect-changes
@@ -145,7 +147,9 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Run W3C Trace Context docker compose
-        run: docker compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
+        run: docker compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml "--file=build/docker-compose.${VERSION}.yml" --project-directory=. up --exit-code-from=tests --build
+        env:
+          VERSION: ${{ matrix.version }}
 
   validate-packages:
     needs: detect-changes
