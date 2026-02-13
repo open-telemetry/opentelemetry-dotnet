@@ -9,8 +9,6 @@ namespace OpenTelemetry.Tests;
 public class EventSourceTests
 {
     [Fact]
-    public void EventSourceTest_OpenTelemetrySdkEventSource()
-    {
-        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetrySdkEventSource.Log);
-    }
+    public void EventSourceTests_OpenTelemetrySdkEventSource() =>
+         EventSourceTestHelper.ValidateEventSourceIds<OpenTelemetrySdkEventSource>();
 }
