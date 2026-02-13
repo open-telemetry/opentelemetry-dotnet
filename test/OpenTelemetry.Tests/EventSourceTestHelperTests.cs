@@ -65,6 +65,8 @@ public static class EventSourceTestHelperTests
     public static void ValidateEventSourceIds_PassesForEventSourceWithMultipleParameterTypes() =>
         EventSourceTestHelper.ValidateEventSourceIds<MultiParamEventSource>();
 
+#pragma warning disable CA1812
+
     // -- Test-only EventSource implementations --
 
     [EventSource(Name = "Test-Correct")]
@@ -118,4 +120,6 @@ public static class EventSourceTestHelperTests
         [Event(5, Level = EventLevel.Informational)]
         public void EventWithNoArgs() => this.WriteEvent(5);
     }
+
+#pragma warning restore CA1812
 }
