@@ -131,7 +131,7 @@ jobs:
       - name: Remove any existing otel-test-image
         run: docker image rm -f "otel-test-image:${FRAMEWORK_VERSION}" || true
       - name: Run OTLP Exporter docker compose
-        run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" -e FRAMEWORK_VERSION --project-directory=. up --exit-code-from=tests --build
+        run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. up --exit-code-from=tests --build
 
   w3c-trace-context-integration-test:
     needs: detect-changes
