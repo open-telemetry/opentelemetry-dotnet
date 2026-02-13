@@ -130,6 +130,7 @@
   <Folder Name="/examples/">
     <Project Path="examples/AspNetCore/Examples.AspNetCore.csproj" />
     <Project Path="examples/Console/Examples.Console.csproj" />
+    <Project Path="examples/FSharp/Examples.FSharp.fsproj" />
     <Project Path="examples/GrpcService/Examples.GrpcService.csproj" />
   </Folder>
   <Folder Name="/examples/MicroserviceExample/">
