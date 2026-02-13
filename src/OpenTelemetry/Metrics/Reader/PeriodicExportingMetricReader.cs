@@ -18,9 +18,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
 
     internal readonly int ExportIntervalMilliseconds;
     internal readonly int ExportTimeoutMilliseconds;
-    private readonly Thread exporterThread;
-    private readonly AutoResetEvent exportTrigger = new(false);
-    private readonly ManualResetEvent shutdownTrigger = new(false);
+    private readonly PeriodicExportingMetricReaderWorker worker;
     private bool disposed;
 
     /// <summary>
@@ -47,44 +45,43 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         this.ExportIntervalMilliseconds = exportIntervalMilliseconds;
         this.ExportTimeoutMilliseconds = exportTimeoutMilliseconds;
 
-        this.exporterThread = new Thread(this.ExporterProc)
-        {
-            IsBackground = true,
-#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
-            Name = $"OpenTelemetry-{nameof(PeriodicExportingMetricReader)}-{exporter.GetType().Name}",
-#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
-        };
-        this.exporterThread.Start();
+        this.worker = this.CreateWorker();
+        this.worker.Start();
     }
 
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        var result = true;
+        Stopwatch? shutdownStopwatch = null;
+        if (timeoutMilliseconds > 0)
+        {
+            shutdownStopwatch = Stopwatch.StartNew();
+        }
 
-        try
-        {
-            this.shutdownTrigger.Set();
-        }
-        catch (ObjectDisposedException)
-        {
-            return false;
-        }
+        var result = this.worker.Shutdown(timeoutMilliseconds);
 
         if (timeoutMilliseconds == Timeout.Infinite)
         {
-            this.exporterThread.Join();
-            result = this.exporter.Shutdown() && result;
-        }
-        else
-        {
-            var sw = Stopwatch.StartNew();
-            result = this.exporterThread.Join(timeoutMilliseconds) && result;
-            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-            result = this.exporter.Shutdown((int)Math.Max(timeout, 0)) && result;
+            return this.exporter.Shutdown() && result;
         }
 
-        return result;
+        if (timeoutMilliseconds == 0)
+        {
+            return this.exporter.Shutdown(0) && result;
+        }
+
+        int remainingTimeout = timeoutMilliseconds;
+        if (shutdownStopwatch != null)
+        {
+            shutdownStopwatch.Stop();
+            remainingTimeout -= (int)shutdownStopwatch.ElapsedMilliseconds;
+            if (remainingTimeout < 0)
+            {
+                remainingTimeout = 0;
+            }
+        }
+
+        return this.exporter.Shutdown(remainingTimeout) && result;
     }
 
     /// <inheritdoc/>
@@ -94,8 +91,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         {
             if (disposing)
             {
-                this.exportTrigger.Dispose();
-                this.shutdownTrigger.Dispose();
+                this.worker?.Dispose();
             }
 
             this.disposed = true;
@@ -104,41 +100,26 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         base.Dispose(disposing);
     }
 
-    private void ExporterProc()
+#pragma warning disable CA1859 // Change return type of method 'CreateWorker' from 'PeriodicExportingMetricReaderWorker' to 'PeriodicExportingMetricReaderThreadWorker' for improved performance
+
+    private PeriodicExportingMetricReaderWorker CreateWorker()
+#pragma warning restore CA1859
     {
-        int index;
-        int timeout;
-        var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
-        var sw = Stopwatch.StartNew();
-
-        while (true)
+#if NET
+        // Use task-based worker for browser platform where threading may be limited
+        if (ThreadingHelper.IsThreadingDisabled())
         {
-            timeout = (int)(this.ExportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.ExportIntervalMilliseconds));
-
-            try
-            {
-                index = WaitHandle.WaitAny(triggers, timeout);
-            }
-            catch (ObjectDisposedException)
-            {
-                return;
-            }
-
-            switch (index)
-            {
-                case 0: // export
-                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Export was triggered.");
-                    this.Collect(this.ExportTimeoutMilliseconds);
-                    break;
-                case 1: // shutdown
-                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Shutdown was triggered.");
-                    this.Collect(this.ExportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
-                    return;
-                case WaitHandle.WaitTimeout: // timer
-                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
-                    this.Collect(this.ExportTimeoutMilliseconds);
-                    break;
-            }
+            return new PeriodicExportingMetricReaderTaskWorker(
+                this,
+                this.ExportIntervalMilliseconds,
+                this.ExportTimeoutMilliseconds);
         }
+#endif
+
+        // Use thread-based worker for all other platforms
+        return new PeriodicExportingMetricReaderThreadWorker(
+            this,
+            this.ExportIntervalMilliseconds,
+            this.ExportTimeoutMilliseconds);
     }
 }
