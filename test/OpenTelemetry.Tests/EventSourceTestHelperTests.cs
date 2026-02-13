@@ -4,7 +4,6 @@
 // Adapted from https://github.com/dotnet/aspnetcore/blob/3a973a5f4d28242262f27c86eb3f14299fe712ba/src/Testing/test/EventSourceValidatorTests.cs
 
 using System.Diagnostics.Tracing;
-using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Tests;
