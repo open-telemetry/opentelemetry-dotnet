@@ -8,7 +8,9 @@ namespace OpenTelemetry.Tests;
 /// <summary>
 /// Event listener for testing event sources.
 /// </summary>
+#pragma warning disable CA1812
 internal sealed class TestEventListener : EventListener
+#pragma warning restore CA1812
 {
     /// <summary>Unique Id used to identify events from the test thread.</summary>
     private readonly Guid activityId;

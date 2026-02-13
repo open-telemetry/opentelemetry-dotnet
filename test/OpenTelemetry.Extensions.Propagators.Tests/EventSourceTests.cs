@@ -10,8 +10,6 @@ namespace OpenTelemetry.Extensions.Propagators.Tests;
 public class EventSourceTests
 {
     [Fact]
-    public void EventSourceTest_PropagatorsEventSource()
-    {
-        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetryPropagatorsEventSource.Log);
-    }
+    public void EventSourceTests_OpenTelemetryPropagatorsEventSource() =>
+        EventSourceTestHelper.ValidateEventSourceIds<OpenTelemetryPropagatorsEventSource>();
 }

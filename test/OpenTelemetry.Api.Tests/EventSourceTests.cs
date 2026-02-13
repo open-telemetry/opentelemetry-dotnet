@@ -10,8 +10,6 @@ namespace OpenTelemetry.Api.Tests;
 public class EventSourceTests
 {
     [Fact]
-    public void EventSourceTest_OpenTelemetryApiEventSource()
-    {
-        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetryApiEventSource.Log);
-    }
+    public void EventSourceTests_OpenTelemetryApiEventSource() =>
+        EventSourceTestHelper.ValidateEventSourceIds<OpenTelemetryApiEventSource>();
 }
