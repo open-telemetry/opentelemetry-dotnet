@@ -1342,6 +1342,14 @@ public class MetricApiTests : MetricTestsBase
 
         Assert.Equal(2, metricPoints.Count);
 
+        var metricPoint1 = metricPoints[0];
+        Assert.Equal(10, metricPoint1.GetSumLong());
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+        var metricPoint2 = metricPoints[1];
+        Assert.Equal(10, metricPoint2.GetSumLong());
+        ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
         // Export 2: Should get only tags1
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -1355,6 +1363,10 @@ public class MetricApiTests : MetricTestsBase
         }
 
         Assert.Single(metricPoints);
+        metricPoint1 = metricPoints[0];
+        Assert.Equal(temporality == MetricReaderTemporalityPreference.Cumulative ? 20 : 10, metricPoint1.GetSumLong());
+
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
 
         // Export 3: Should get nothing
         exportedItems.Clear();
