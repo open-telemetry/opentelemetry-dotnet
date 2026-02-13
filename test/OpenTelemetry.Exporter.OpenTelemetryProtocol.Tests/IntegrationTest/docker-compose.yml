@@ -4,7 +4,7 @@
 
 services:
   init-service:
-    image: otel-test-image
+    image: "otel-test-image:${FRAMEWORK_VERSION:-latest}"
     build:
       context: .
       dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
@@ -27,7 +27,7 @@ services:
       - init-service
 
   tests:
-    image: otel-test-image
+    image: "otel-test-image:${FRAMEWORK_VERSION:-latest}"
     build:
       context: .
       dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
