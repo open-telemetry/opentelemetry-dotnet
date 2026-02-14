@@ -45,9 +45,8 @@ public class LogBenchmarks
     private readonly ILoggerFactory loggerFactoryWithBatchProcessor;
     private readonly ILoggerFactory loggerFactoryWithTwoProcessor;
     private readonly ILoggerFactory loggerFactoryWithThreeProcessor;
-    private readonly List<KeyValuePair<string, object>> attributesAtLast;
-    private readonly List<KeyValuePair<string, object>> attributesAtFirst;
-    private readonly List<KeyValuePair<string, object>> attributesAtMiddle;
+    private readonly ILoggerFactory loggerFactoryForOriginalFormat;
+    private readonly ILogger loggerForOriginalFormat;
 
     public LogBenchmarks()
     {
@@ -85,32 +84,12 @@ public class LogBenchmarks
         });
         this.loggerWithThreeProcessors = this.loggerFactoryWithThreeProcessor.CreateLogger<LogBenchmarks>();
 
-        this.attributesAtLast = new List<KeyValuePair<string, object>>
+        this.loggerFactoryForOriginalFormat = LoggerFactory.Create(builder =>
         {
-            new("userId", "123"),
-            new("action", "login"),
-            new("timestamp", "2024-01-01"),
-            new("category", "Authentication"),
-            new("{OriginalFormat}", "User {userId} performed {action} at {timestamp}"),
-        };
-
-        this.attributesAtFirst = new List<KeyValuePair<string, object>>
-        {
-            new("{OriginalFormat}", "User {userId} performed {action}"),
-            new("userId", "123"),
-            new("action", "login"),
-            new("timestamp", "2024-01-01"),
-            new("category", "Authentication"),
-        };
-
-        this.attributesAtMiddle = new List<KeyValuePair<string, object>>
-        {
-            new("userId", "123"),
-            new("{OriginalFormat}", "User {userId} performed {action}"),
-            new("action", "login"),
-            new("timestamp", "2024-01-01"),
-            new("category", "Authentication"),
-        };
+            builder.UseOpenTelemetry(logging => logging
+                .AddProcessor(new NoopLogProcessor()));
+        });
+        this.loggerForOriginalFormat = this.loggerFactoryForOriginalFormat.CreateLogger<LogBenchmarks>();
     }
 
     [GlobalCleanup]
@@ -120,6 +99,7 @@ public class LogBenchmarks
         this.loggerFactoryWithOneProcessor.Dispose();
         this.loggerFactoryWithTwoProcessor.Dispose();
         this.loggerFactoryWithThreeProcessor.Dispose();
+        this.loggerFactoryForOriginalFormat.Dispose();
     }
 
     [Benchmark]
@@ -221,143 +201,35 @@ public class LogBenchmarks
                 companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
+#pragma warning disable CA1848
+#pragma warning disable CA1727
     [Benchmark]
-    public string? Current_AtLast()
+    public void OriginalFormatSearch_CommonCase()
     {
-        if (this.attributesAtLast.Count > 0 &&
-            this.attributesAtLast[this.attributesAtLast.Count - 1].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-        {
-            return this.attributesAtLast[this.attributesAtLast.Count - 1].Value?.ToString();
-        }
-
-        return null;
+        this.loggerForOriginalFormat.FoodRecallNotice(
+            brandName: "Contoso",
+            productDescription: "Salads",
+            productType: "Food & Beverages",
+            recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+            companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
     [Benchmark]
-    public string? ReverseIteration_AtLast()
+    public void OriginalFormatSearch_ManyAttributes()
     {
-        for (int i = this.attributesAtLast.Count - 1; i >= 0; i--)
-        {
-            if (this.attributesAtLast[i].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-            {
-                return this.attributesAtLast[i].Value?.ToString();
-            }
-        }
-
-        return null;
+        this.loggerForOriginalFormat.LogInformation(
+            "User {userId} with email {email} from {country} in {region} performed {action} at {timestamp} with status {status} and result {result}",
+            "123",
+            "user@example.com",
+            "USA",
+            "West",
+            "login",
+            "2024-01-01",
+            "success",
+            "completed");
     }
-
-    [Benchmark]
-    public string? CheckLastThenForward_AtLast()
-    {
-        if (this.attributesAtLast.Count > 0 &&
-            this.attributesAtLast[this.attributesAtLast.Count - 1].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-        {
-            return this.attributesAtLast[this.attributesAtLast.Count - 1].Value?.ToString();
-        }
-
-        for (int i = 0; i < this.attributesAtLast.Count - 1; i++)
-        {
-            if (this.attributesAtLast[i].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-            {
-                return this.attributesAtLast[i].Value?.ToString();
-            }
-        }
-
-        return null;
-    }
-
-    [Benchmark]
-    public string? Current_AtFirst()
-    {
-        if (this.attributesAtFirst.Count > 0 &&
-            this.attributesAtFirst[this.attributesAtFirst.Count - 1].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-        {
-            return this.attributesAtFirst[this.attributesAtFirst.Count - 1].Value?.ToString();
-        }
-
-        return null;
-    }
-
-    [Benchmark]
-    public string? ReverseIteration_AtFirst()
-    {
-        for (int i = this.attributesAtFirst.Count - 1; i >= 0; i--)
-        {
-            if (this.attributesAtFirst[i].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-            {
-                return this.attributesAtFirst[i].Value?.ToString();
-            }
-        }
-
-        return null;
-    }
-
-    [Benchmark]
-    public string? CheckLastThenForward_AtFirst()
-    {
-        if (this.attributesAtFirst.Count > 0 &&
-            this.attributesAtFirst[this.attributesAtFirst.Count - 1].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-        {
-            return this.attributesAtFirst[this.attributesAtFirst.Count - 1].Value?.ToString();
-        }
-
-        for (int i = 0; i < this.attributesAtFirst.Count - 1; i++)
-        {
-            if (this.attributesAtFirst[i].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-            {
-                return this.attributesAtFirst[i].Value?.ToString();
-            }
-        }
-
-        return null;
-    }
-
-    [Benchmark]
-    public string? Current_AtMiddle()
-    {
-        if (this.attributesAtMiddle.Count > 0 &&
-            this.attributesAtMiddle[this.attributesAtMiddle.Count - 1].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-        {
-            return this.attributesAtMiddle[this.attributesAtMiddle.Count - 1].Value?.ToString();
-        }
-
-        return null;
-    }
-
-    [Benchmark]
-    public string? ReverseIteration_AtMiddle()
-    {
-        for (int i = this.attributesAtMiddle.Count - 1; i >= 0; i--)
-        {
-            if (this.attributesAtMiddle[i].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-            {
-                return this.attributesAtMiddle[i].Value?.ToString();
-            }
-        }
-
-        return null;
-    }
-
-    [Benchmark]
-    public string? CheckLastThenForward_AtMiddle()
-    {
-        if (this.attributesAtMiddle.Count > 0 &&
-            this.attributesAtMiddle[this.attributesAtMiddle.Count - 1].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-        {
-            return this.attributesAtMiddle[this.attributesAtMiddle.Count - 1].Value?.ToString();
-        }
-
-        for (int i = 0; i < this.attributesAtMiddle.Count - 1; i++)
-        {
-            if (this.attributesAtMiddle[i].Key.Equals("{OriginalFormat}", StringComparison.Ordinal))
-            {
-                return this.attributesAtMiddle[i].Value?.ToString();
-            }
-        }
-
-        return null;
-    }
+#pragma warning restore CA1848
+#pragma warning restore CA2254
 
     internal sealed class NoopLogProcessor : BaseProcessor<LogRecord>
     {
