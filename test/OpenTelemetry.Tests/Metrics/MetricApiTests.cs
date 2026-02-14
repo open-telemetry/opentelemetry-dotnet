@@ -2043,7 +2043,8 @@ public class MetricApiTests : MetricTestsBase
         }
     }
 
-    private static void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest<T>(MetricReaderTemporalityPreference temporality, Func<byte, T> convertFromByte)
+    private static void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest<T>(
+        MetricReaderTemporalityPreference temporality, Func<byte, T> convertFromByte)
         where T : struct
     {
         // https://github.com/open-telemetry/opentelemetry-specification/blob/cadd629bb244d6f439721b213051ae508996eb73/specification/metrics/sdk.md?plain=1#L1263
@@ -2151,7 +2152,8 @@ public class MetricApiTests : MetricTestsBase
         Assert.Empty(exportedItems);
     }
 
-    private static void ObservableGaugeReportsActiveMeasurementsOnlyTest<T>(MetricReaderTemporalityPreference temporality, Func<byte, T> convertFromByte)
+    private static void ObservableGaugeReportsActiveMeasurementsOnlyTest<T>(
+        MetricReaderTemporalityPreference temporality, Func<byte, T> convertFromByte)
         where T : struct
     {
         // https://github.com/open-telemetry/opentelemetry-specification/blob/cadd629bb244d6f439721b213051ae508996eb73/specification/metrics/sdk.md?plain=1#L1263
@@ -2256,7 +2258,8 @@ public class MetricApiTests : MetricTestsBase
         Assert.Empty(exportedItems);
     }
 
-    private static void ObservableCounterReportsActiveMeasurementsOnlyTest<T>(MetricReaderTemporalityPreference temporality, Func<byte, T> convertFromByte)
+    private static void ObservableCounterReportsActiveMeasurementsOnlyTest<T>(
+        MetricReaderTemporalityPreference temporality, Func<byte, T> convertFromByte)
         where T : struct
     {
         // https://github.com/open-telemetry/opentelemetry-specification/blob/cadd629bb244d6f439721b213051ae508996eb73/specification/metrics/sdk.md?plain=1#L1263
@@ -2360,7 +2363,6 @@ public class MetricApiTests : MetricTestsBase
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Empty(exportedItems);
     }
-
 
     private void MultithreadedCounterTest<T>(T deltaValueUpdatedByEachCall)
         where T : struct, IComparable
