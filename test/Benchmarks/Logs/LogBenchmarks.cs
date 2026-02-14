@@ -45,6 +45,8 @@ public class LogBenchmarks
     private readonly ILoggerFactory loggerFactoryWithBatchProcessor;
     private readonly ILoggerFactory loggerFactoryWithTwoProcessor;
     private readonly ILoggerFactory loggerFactoryWithThreeProcessor;
+    private readonly ILoggerFactory loggerFactoryForOriginalFormat;
+    private readonly ILogger loggerForOriginalFormat;
 
     public LogBenchmarks()
     {
@@ -81,6 +83,13 @@ public class LogBenchmarks
                 .AddProcessor(new NoopLogProcessor()));
         });
         this.loggerWithThreeProcessors = this.loggerFactoryWithThreeProcessor.CreateLogger<LogBenchmarks>();
+
+        this.loggerFactoryForOriginalFormat = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(logging => logging
+                .AddProcessor(new NoopLogProcessor()));
+        });
+        this.loggerForOriginalFormat = this.loggerFactoryForOriginalFormat.CreateLogger<LogBenchmarks>();
     }
 
     [GlobalCleanup]
@@ -90,6 +99,7 @@ public class LogBenchmarks
         this.loggerFactoryWithOneProcessor.Dispose();
         this.loggerFactoryWithTwoProcessor.Dispose();
         this.loggerFactoryWithThreeProcessor.Dispose();
+        this.loggerFactoryForOriginalFormat.Dispose();
     }
 
     [Benchmark]
@@ -190,6 +200,36 @@ public class LogBenchmarks
                 recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
                 companyName: "Contoso Fresh Vegetables, Inc.");
     }
+
+#pragma warning disable CA1848
+#pragma warning disable CA1727
+    [Benchmark]
+    public void OriginalFormatSearch_CommonCase()
+    {
+        this.loggerForOriginalFormat.FoodRecallNotice(
+            brandName: "Contoso",
+            productDescription: "Salads",
+            productType: "Food & Beverages",
+            recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+            companyName: "Contoso Fresh Vegetables, Inc.");
+    }
+
+    [Benchmark]
+    public void OriginalFormatSearch_ManyAttributes()
+    {
+        this.loggerForOriginalFormat.LogInformation(
+            "User {userId} with email {email} from {country} in {region} performed {action} at {timestamp} with status {status} and result {result}",
+            "123",
+            "user@example.com",
+            "USA",
+            "West",
+            "login",
+            "2024-01-01",
+            "success",
+            "completed");
+    }
+#pragma warning restore CA1848
+#pragma warning restore CA2254
 
     internal sealed class NoopLogProcessor : BaseProcessor<LogRecord>
     {
