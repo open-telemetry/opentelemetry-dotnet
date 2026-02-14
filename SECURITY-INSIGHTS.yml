@@ -1,0 +1,85 @@
+header:
+  schema-version: 2.0.0
+  last-updated: '2026-02-06'
+  last-reviewed: '2026-02-06'
+  url: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/SECURITY-INSIGHTS.yml
+  comment: |
+    This file contains the minimum information for https://github.com/open-telemetry/opentelemetry-dotnet.
+
+project:
+  name: OpenTelemetry .NET
+  homepage: https://opentelemetry.io/docs/languages/dotnet/
+  administrators:
+    - name: Alan West
+      affiliation: New Relic
+      social: https://github.com/alanwest
+      primary: true
+    - name: Piotr Kie\u0142kowicz
+      affiliation: Splunk
+      social: https://github.com/Kielek
+    - name: Rajkumar Rangaraj
+      affiliation: Microsoft
+      social: https://github.com/rajkumar-rangaraj
+  documentation:
+    code-of-conduct: https://github.com/open-telemetry/.github/blob/main/CODE_OF_CONDUCT.md
+    quickstart-guide: https://opentelemetry.io/docs/languages/dotnet/getting-started/
+  repositories:
+    - name: opentelemetry-dotnet
+      url: https://github.com/open-telemetry/opentelemetry-dotnet
+      comment: |
+        The OpenTelemetry .NET Client repository.
+  vulnerability-reporting:
+    bug-bounty-available: false
+    reports-accepted: true
+    policy: https://opentelemetry.io/docs/security/security-response/
+    contact:
+      name: The OpenTelemetry security team
+      email: security@opentelemetry.io
+      primary: true
+    comment: |
+      Report security vulnerabilities via https://github.com/open-telemetry/opentelemetry-dotnet/security.
+
+repository:
+  url: https://github.com/open-telemetry/opentelemetry-dotnet
+  status: active
+  accepts-automated-change-request: true
+  accepts-change-request: true
+  bug-fixes-only: false
+  no-third-party-packages: false
+  core-team:
+    - name: Alan West
+      affiliation: New Relic
+      social: https://github.com/alanwest
+      primary: true
+    - name: Cijo Thomas
+      affiliation: Microsoft
+      social: https://github.com/cijothomas
+    - name: Martin Costello
+      affiliation: Grafana Labs
+      social: https://github.com/martincostello
+    - name: Mikel Blanchard
+      affiliation: Microsoft
+      social: https://github.com/CodeBlanch
+    - name: Piotr Kie\u0142kowicz
+      affiliation: Splunk
+      social: https://github.com/Kielek
+    - name: Rajkumar Rangaraj
+      affiliation: Microsoft
+      social: https://github.com/rajkumar-rangaraj
+  documentation:
+    contributing-guide: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md
+    dependency-management-policy: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/renovate.json
+  license:
+    url: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/LICENSE.TXT
+    expression: Apache-2.0
+  release:
+    automated-pipeline: true
+    distribution-points:
+      - uri: https://www.nuget.org/profiles/OpenTelemetry
+        comment: |
+          NuGet.org is the primary distribution point for OpenTelemetry .NET packages.
+  security:
+    assessments:
+      self:
+        evidence: https://github.com/open-telemetry/opentelemetry-dotnet/pull/6878
+        date: '2026-02-06'
