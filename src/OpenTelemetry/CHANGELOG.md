@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed observable instruments (ObservableCounter, ObservableUpDownCounter,
+  ObservableGauge) continuing to export stale data points after a callback
+  stops reporting a series.
+  ([#5950](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5950))
+
 ## 1.15.0
 
 Released 2026-Jan-21

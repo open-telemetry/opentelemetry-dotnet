@@ -1062,61 +1062,139 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal(30, sumReceived);
     }
 
-    [Theory(Skip = "Known issue. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5950")]
+    [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
-    public void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest(MetricReaderTemporalityPreference temporality)
+    public void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest_Byte(
+        MetricReaderTemporalityPreference temporality) =>
+        ObservableUpDownCounterReportsActiveMeasurementsOnlyTest<byte>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest_Short(
+        MetricReaderTemporalityPreference temporality) =>
+        ObservableUpDownCounterReportsActiveMeasurementsOnlyTest<short>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest_Int(
+        MetricReaderTemporalityPreference temporality) =>
+        ObservableUpDownCounterReportsActiveMeasurementsOnlyTest<int>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest_Long(
+        MetricReaderTemporalityPreference temporality) =>
+        ObservableUpDownCounterReportsActiveMeasurementsOnlyTest<long>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest_Float(
+        MetricReaderTemporalityPreference temporality) =>
+        ObservableUpDownCounterReportsActiveMeasurementsOnlyTest<float>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest_Double(
+        MetricReaderTemporalityPreference temporality) =>
+        ObservableUpDownCounterReportsActiveMeasurementsOnlyTest<double>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableGaugeReportsActiveMeasurementsOnlyTest_Byte(MetricReaderTemporalityPreference temporality) =>
+        ObservableGaugeReportsActiveMeasurementsOnlyTest<byte>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableGaugeReportsActiveMeasurementsOnlyTest_Short(MetricReaderTemporalityPreference temporality) =>
+        ObservableGaugeReportsActiveMeasurementsOnlyTest<short>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableGaugeReportsActiveMeasurementsOnlyTest_Int(MetricReaderTemporalityPreference temporality) =>
+        ObservableGaugeReportsActiveMeasurementsOnlyTest<int>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableGaugeReportsActiveMeasurementsOnlyTest_Long(MetricReaderTemporalityPreference temporality) =>
+        ObservableGaugeReportsActiveMeasurementsOnlyTest<long>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableGaugeReportsActiveMeasurementsOnlyTest_Float(MetricReaderTemporalityPreference temporality) =>
+        ObservableGaugeReportsActiveMeasurementsOnlyTest<float>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void
+        ObservableGaugeReportsActiveMeasurementsOnlyTest_Double(MetricReaderTemporalityPreference temporality) =>
+        ObservableGaugeReportsActiveMeasurementsOnlyTest<double>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void
+        ObservableCounterReportsActiveMeasurementsOnlyTest_Byte(MetricReaderTemporalityPreference temporality) =>
+        ObservableCounterReportsActiveMeasurementsOnlyTest<byte>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void
+        ObservableCounterReportsActiveMeasurementsOnlyTest_Short(MetricReaderTemporalityPreference temporality) =>
+        ObservableCounterReportsActiveMeasurementsOnlyTest<short>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableCounterReportsActiveMeasurementsOnlyTest_Int(MetricReaderTemporalityPreference temporality) =>
+        ObservableCounterReportsActiveMeasurementsOnlyTest<int>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void
+        ObservableCounterReportsActiveMeasurementsOnlyTest_Long(MetricReaderTemporalityPreference temporality) =>
+        ObservableCounterReportsActiveMeasurementsOnlyTest<long>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void
+        ObservableCounterReportsActiveMeasurementsOnlyTest_Float(MetricReaderTemporalityPreference temporality) =>
+        ObservableCounterReportsActiveMeasurementsOnlyTest<float>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void
+        ObservableCounterReportsActiveMeasurementsOnlyTest_Double(MetricReaderTemporalityPreference temporality) =>
+        ObservableCounterReportsActiveMeasurementsOnlyTest<double>(temporality, b => b);
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void SynchronousCounterCumulativeCarriesForwardTest(MetricReaderTemporalityPreference temporality)
     {
-        // dotnet test --filter "FullyQualifiedName~ObservableUpDownCounterReportsActiveMeasurementsOnlyTest" --framework net10.0
-        // Testing
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader
-        // For asynchronous instruments with Delta or Cumulative aggregation
-        // temporality, MetricReader.Collect MUST only receive data points with
-        // measurements recorded since the previous collection. These rules
-        // apply to all metrics, not just those whose point kinds includes an
-        // aggregation temporality field.
         var exportedItems = new List<Metric>();
         var tags1 = new List<KeyValuePair<string, object?>>
         {
             new("key", "value1"),
         };
 
-        var tags2 = new List<KeyValuePair<string, object?>>
-        {
-            new("key", "value2"),
-        };
-
-        int callbackInvocationCount = 0;
-
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
-        var counterLong = meter.CreateObservableUpDownCounter(
-            "observable-updowncounter",
-            () =>
-            {
-                callbackInvocationCount++;
-                if (callbackInvocationCount == 1)
-                {
-                    // First callback: Report 2 time series
-                    return new List<Measurement<long>>
-                    {
-                        new(10L, tags1),
-                        new(10L, tags2),
-                    };
-                }
-                else if (callbackInvocationCount == 2)
-                {
-                    // Second callback: Report 1 time series
-                    return new List<Measurement<long>>
-                    {
-                        new(10L, tags1),
-                    };
-                }
-                else
-                {
-                    // Third callback onwards: Report no time series
-                    return new List<Measurement<long>>();
-                }
-            });
+        var counter = meter.CreateCounter<long>("sync-counter");
 
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
@@ -1125,48 +1203,40 @@ public class MetricApiTests : MetricTestsBase
                 metricReaderOptions.TemporalityPreference = temporality;
             }));
 
-        // Export 1: Should get both time series
+        // Record a measurement then export
+        counter.Add(10, tags1.ToArray());
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
-        Assert.Equal("observable-updowncounter", metric.Name);
+        Assert.Equal("sync-counter", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
         }
 
-        Assert.Equal(2, metricPoints.Count);
-
-        var metricPoint1 = metricPoints[0];
-        Assert.Equal(10, metricPoint1.GetSumLong());
-        ValidateMetricPointTags(tags1, metricPoint1.Tags);
-
-        var metricPoint2 = metricPoints[1];
-        Assert.Equal(10, metricPoint2.GetSumLong());
-        ValidateMetricPointTags(tags2, metricPoint2.Tags);
-
-        // Export 2: Should get only timeseries1
-        exportedItems.Clear();
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        metric = exportedItems[0];
-        Assert.Equal("observable-updowncounter", metric.Name);
-        metricPoints.Clear();
-        foreach (ref readonly var mp in metric.GetMetricPoints())
-        {
-            metricPoints.Add(mp);
-        }
-
         Assert.Single(metricPoints);
-        metricPoint1 = metricPoints[0];
-        Assert.Equal(10, metricPoint1.GetSumLong());
-        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+        Assert.Equal(10, metricPoints[0].GetSumLong());
 
-        // Export 3: Should get nothing
+        // Export again without recording new measurements.
+        // For Cumulative temporality, synchronous counters must carry forward the total.
+        // For Delta temporality, they should report 0 delta (no new measurements).
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Empty(exportedItems);
+
+        if (temporality == MetricReaderTemporalityPreference.Cumulative)
+        {
+            Assert.Single(exportedItems);
+            metric = exportedItems[0];
+            metricPoints.Clear();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            Assert.Equal(10, metricPoints[0].GetSumLong());
+        }
     }
 
     [Theory]
@@ -1971,6 +2041,327 @@ public class MetricApiTests : MetricTestsBase
                 histogram!.Record(arguments.ValuesToRecord[j]);
             }
         }
+    }
+
+    private static void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest<T>(
+        MetricReaderTemporalityPreference temporality, Func<byte, T> convertFromByte)
+        where T : struct
+    {
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/cadd629bb244d6f439721b213051ae508996eb73/specification/metrics/sdk.md?plain=1#L1263
+        // For asynchronous instruments with Delta or Cumulative aggregation
+        // temporality, MetricReader.Collect MUST only receive data points with
+        // measurements recorded since the previous collection. These rules
+        // apply to all metrics, not just those whose point kinds includes an
+        // aggregation temporality field.
+
+        Func<MetricPoint, byte> getSum = typeof(T) == typeof(double) || typeof(T) == typeof(float)
+            ? point => (byte)point.GetSumDouble()
+            : point => (byte)point.GetSumLong();
+        var exportedItems = new List<Metric>();
+
+        var tags1 = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "value1"),
+        };
+
+        var tags2 = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "value2"),
+        };
+
+        int callbackInvocationCount = 0;
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
+        var counter = meter.CreateObservableUpDownCounter(
+            "observable-updowncounter",
+            () =>
+            {
+                callbackInvocationCount++;
+                if (callbackInvocationCount == 1)
+                {
+                    // First callback: Report 2 time series
+                    return new List<Measurement<T>>
+                    {
+                        new(convertFromByte(10), tags1),
+                        new(convertFromByte(10), tags2),
+                    };
+                }
+                else if (callbackInvocationCount == 2)
+                {
+                    // Second callback: Report 1 time series
+                    return new List<Measurement<T>>
+                    {
+                        new(convertFromByte(10), tags1),
+                    };
+                }
+                else
+                {
+                    // Third callback onwards: Report no time series
+                    return new List<Measurement<T>>();
+                }
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = temporality;
+            }));
+
+        // Export 1: Should get both time series
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("observable-updowncounter", metric.Name);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+
+        var metricPoint1 = metricPoints[0];
+        Assert.Equal(10, getSum(metricPoint1));
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+        var metricPoint2 = metricPoints[1];
+        Assert.Equal(10, getSum(metricPoint2));
+        ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+        // Export 2: Should get only timeseries1
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metric = exportedItems[0];
+        Assert.Equal("observable-updowncounter", metric.Name);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        metricPoint1 = metricPoints[0];
+        Assert.Equal(10, getSum(metricPoint1));
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+        // Export 3: Should get nothing
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Empty(exportedItems);
+    }
+
+    private static void ObservableGaugeReportsActiveMeasurementsOnlyTest<T>(
+        MetricReaderTemporalityPreference temporality, Func<byte, T> convertFromByte)
+        where T : struct
+    {
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/cadd629bb244d6f439721b213051ae508996eb73/specification/metrics/sdk.md?plain=1#L1263
+        // For asynchronous instruments with Delta or Cumulative aggregation
+        // temporality, MetricReader.Collect MUST only receive data points with
+        // measurements recorded since the previous collection. These rules
+        // apply to all metrics, not just those whose point kinds includes an
+        // aggregation temporality field.
+
+        Func<MetricPoint, byte> getLastValue = typeof(T) == typeof(double) || typeof(T) == typeof(float)
+            ? point => (byte)point.GetGaugeLastValueDouble()
+            : point => (byte)point.GetGaugeLastValueLong();
+        var exportedItems = new List<Metric>();
+
+        var tags1 = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "value1"),
+        };
+
+        var tags2 = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "value2"),
+        };
+
+        int callbackInvocationCount = 0;
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
+        var gauge = meter.CreateObservableGauge(
+            "observable-gauge",
+            () =>
+            {
+                callbackInvocationCount++;
+                if (callbackInvocationCount == 1)
+                {
+                    return new List<Measurement<T>>
+                    {
+                        new(convertFromByte(10), tags1),
+                        new(convertFromByte(20), tags2),
+                    };
+                }
+                else if (callbackInvocationCount == 2)
+                {
+                    return new List<Measurement<T>>
+                    {
+                        new(convertFromByte(30), tags1),
+                    };
+                }
+                else
+                {
+                    return new List<Measurement<T>>();
+                }
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = temporality;
+            }));
+
+        // Export 1: Should get both time series
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("observable-gauge", metric.Name);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+
+        var metricPoint1 = metricPoints[0];
+        Assert.Equal(10, getLastValue(metricPoint1));
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+        var metricPoint2 = metricPoints[1];
+        Assert.Equal(20, getLastValue(metricPoint2));
+        ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+        // Export 2: Should get only tags1
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metric = exportedItems[0];
+        Assert.Equal("observable-gauge", metric.Name);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        metricPoint1 = metricPoints[0];
+        Assert.Equal(30, getLastValue(metricPoint1));
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+        // Export 3: Should get nothing
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Empty(exportedItems);
+    }
+
+    private static void ObservableCounterReportsActiveMeasurementsOnlyTest<T>(
+        MetricReaderTemporalityPreference temporality, Func<byte, T> convertFromByte)
+        where T : struct
+    {
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/cadd629bb244d6f439721b213051ae508996eb73/specification/metrics/sdk.md?plain=1#L1263
+        // For asynchronous instruments with Delta or Cumulative aggregation
+        // temporality, MetricReader.Collect MUST only receive data points with
+        // measurements recorded since the previous collection. These rules
+        // apply to all metrics, not just those whose point kinds includes an
+        // aggregation temporality field.
+
+        Func<MetricPoint, byte> getSum = typeof(T) == typeof(double) || typeof(T) == typeof(float)
+            ? point => (byte)point.GetSumDouble()
+            : point => (byte)point.GetSumLong();
+        var exportedItems = new List<Metric>();
+
+        var tags1 = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "value1"),
+        };
+
+        var tags2 = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "value2"),
+        };
+
+        int callbackInvocationCount = 0;
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
+        var counter = meter.CreateObservableCounter<T>(
+            "observable-counter",
+            () =>
+            {
+                callbackInvocationCount++;
+                if (callbackInvocationCount == 1)
+                {
+                    return new List<Measurement<T>>
+                    {
+                        new(convertFromByte(10), tags1),
+                        new(convertFromByte(10), tags2),
+                    };
+                }
+                else if (callbackInvocationCount == 2)
+                {
+                    return new List<Measurement<T>>
+                    {
+                        new(convertFromByte(20), tags1),
+                    };
+                }
+                else
+                {
+                    return new List<Measurement<T>>();
+                }
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = temporality;
+            }));
+
+        // Export 1: Should get both time series
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("observable-counter", metric.Name);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+
+        var metricPoint1 = metricPoints[0];
+        Assert.Equal(10, getSum(metricPoint1));
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+        var metricPoint2 = metricPoints[1];
+        Assert.Equal(10, getSum(metricPoint2));
+        ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+        // Export 2: Should get only tags1
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metric = exportedItems[0];
+        Assert.Equal("observable-counter", metric.Name);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        metricPoint1 = metricPoints[0];
+        Assert.Equal(temporality == MetricReaderTemporalityPreference.Cumulative ? 20 : 10, getSum(metricPoint1));
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+        // Export 3: Should get nothing
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Empty(exportedItems);
     }
 
     private void MultithreadedCounterTest<T>(T deltaValueUpdatedByEachCall)
