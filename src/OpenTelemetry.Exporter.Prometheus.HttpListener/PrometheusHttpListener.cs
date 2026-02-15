@@ -42,7 +42,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
 
 #if NET11_0_OR_GREATER
-        if (!path.StartsWith('/', StringComparison.Ordinal))
+        if (!path.EndsWith('/', StringComparison.Ordinal))
 #elif NET
         if (!path.EndsWith('/'))
 #else
