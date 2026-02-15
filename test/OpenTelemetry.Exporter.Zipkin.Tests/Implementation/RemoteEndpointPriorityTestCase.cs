@@ -10,6 +10,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
 public class RemoteEndpointPriorityTestCase
 #pragma warning restore CA1515 // Consider making public types internal
 {
+#pragma warning disable CA1825 // Workaround false positive in .NET 11
     public static TheoryData<RemoteEndpointPriorityTestCase> TestCases =>
     [
         new()
@@ -146,6 +147,7 @@ public class RemoteEndpointPriorityTestCase
             },
         },
     ];
+#pragma warning restore CA1825
 
     public string? Name { get; private set; }
 

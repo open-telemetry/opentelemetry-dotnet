@@ -325,13 +325,8 @@ public class OtlpSecureHttpClientFactoryTests
         var cert = req.CreateSelfSigned(
             DateTimeOffset.UtcNow.AddDays(-1),
             DateTimeOffset.UtcNow.AddDays(30));
-#if NET9_0_OR_GREATER
+
         return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#else
-#pragma warning disable SYSLIB0057
-        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#pragma warning restore SYSLIB0057
-#endif
     }
 
     private static X509Certificate2 CreateCertificateAuthority()
@@ -353,13 +348,7 @@ public class OtlpSecureHttpClientFactoryTests
             DateTimeOffset.UtcNow.AddDays(-1),
             DateTimeOffset.UtcNow.AddYears(1));
 
-#if NET9_0_OR_GREATER
         return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#else
-#pragma warning disable SYSLIB0057
-        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#pragma warning restore SYSLIB0057
-#endif
     }
 
     private static X509Certificate2 CreateServerCertificate(X509Certificate2 issuer)
@@ -390,13 +379,7 @@ public class OtlpSecureHttpClientFactoryTests
             DateTimeOffset.UtcNow.AddDays(30),
             serialNumber);
 
-#if NET9_0_OR_GREATER
         return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#else
-#pragma warning disable SYSLIB0057
-        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#pragma warning restore SYSLIB0057
-#endif
     }
 
     private static X509Certificate2 CreateExpiredCertificate()
@@ -414,13 +397,7 @@ public class OtlpSecureHttpClientFactoryTests
             DateTimeOffset.UtcNow.AddDays(-30),
             DateTimeOffset.UtcNow.AddDays(-1));
 
-#if NET9_0_OR_GREATER
         return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#else
-#pragma warning disable SYSLIB0057
-        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#pragma warning restore SYSLIB0057
-#endif
     }
 
     private static string ExportCertificateWithPrivateKey(X509Certificate2 certificate)

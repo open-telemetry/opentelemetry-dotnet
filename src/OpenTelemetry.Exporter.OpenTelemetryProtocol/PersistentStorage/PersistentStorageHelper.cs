@@ -37,7 +37,13 @@ internal static class PersistentStorageHelper
             var fileDateTime = GetDateTimeFromLeaseName(filePath);
             if (fileDateTime < leaseDeadline)
             {
-                var newFilePath = filePath.Substring(0, filePath.LastIndexOf('@'));
+                var newFilePath =
+#if NET11_0_OR_GREATER
+                    filePath.Substring(0, filePath.LastIndexOf('@', StringComparison.Ordinal));
+#else
+                    filePath.Substring(0, filePath.LastIndexOf('@'));
+#endif
+
                 try
                 {
                     File.Move(filePath, newFilePath);
@@ -133,7 +139,13 @@ internal static class PersistentStorageHelper
     internal static DateTime GetDateTimeFromBlobName(string filePath)
     {
         var fileName = Path.GetFileNameWithoutExtension(filePath);
-        var time = fileName.Substring(0, fileName.LastIndexOf('-'));
+
+        var time =
+#if NET11_0_OR_GREATER
+            fileName.Substring(0, fileName.LastIndexOf('-', StringComparison.Ordinal));
+#else
+            fileName.Substring(0, fileName.LastIndexOf('-'));
+#endif
 
         // TODO:Handle possible parsing failure.
         DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime);
@@ -143,7 +155,15 @@ internal static class PersistentStorageHelper
     internal static DateTime GetDateTimeFromLeaseName(string filePath)
     {
         var fileName = Path.GetFileNameWithoutExtension(filePath);
-        var startIndex = fileName.LastIndexOf('@') + 1;
+
+        var startIndex =
+#if NET11_0_OR_GREATER
+            fileName.LastIndexOf('@', StringComparison.Ordinal)
+#else
+            fileName.LastIndexOf('@')
+#endif
+             + 1;
+
         var time = fileName.Substring(startIndex);
         DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime);
         return dateTime.ToUniversalTime();
