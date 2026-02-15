@@ -18,7 +18,7 @@ public class Base2ExponentialBucketHistogramHelperTests
 
     public static TheoryData<int> GetNonPositiveScales()
     {
-#pragma warning disable CA1825 // Workaround false positive in .NET 11
+#pragma warning disable CA1825 // HACK Workaround for https://github.com/dotnet/sdk/issues/53047
         TheoryData<int> theoryData = [];
 #pragma warning restore CA1825
         for (var i = -11; i <= 0; ++i)
@@ -31,7 +31,7 @@ public class Base2ExponentialBucketHistogramHelperTests
 
     public static TheoryData<int> GetPositiveScales()
     {
-#pragma warning disable CA1825 // Workaround false positive in .NET 11
+#pragma warning disable CA1825 // HACK Workaround for https://github.com/dotnet/sdk/issues/53047
         TheoryData<int> theoryData = [];
 #pragma warning restore CA1825
         for (var i = 1; i <= 20; ++i)
