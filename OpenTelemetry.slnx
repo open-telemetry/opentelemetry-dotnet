@@ -35,8 +35,7 @@
     <File Path="build/debug.snk" />
     <File Path="build/docfx.cmd" />
     <File Path="build/docker-compose.net10.0.yml" />
-    <File Path="build/docker-compose.net8.0.yml" />
-    <File Path="build/docker-compose.net9.0.yml" />
+    <File Path="build/docker-compose.net11.0.yml" />
     <File Path="build/GlobalAttrExclusions.txt" />
     <File Path="build/opentelemetry-icon-color.png" />
     <File Path="build/OpenTelemetry.prod.loose.ruleset" />

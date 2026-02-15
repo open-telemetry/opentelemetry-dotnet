@@ -24,7 +24,7 @@ on:
         required: false
         type: string
       tfm-list:
-        default: '[ "net462", "net8.0", "net9.0", "net10.0" ]'
+        default: '[ "net462", "net10.0", "net11.0" ]'
         required: false
         type: string
 
@@ -44,10 +44,6 @@ jobs:
           version: net462
         - os: ubuntu-22.04-arm
           version: net462
-        - os: ubuntu-22.04-arm
-          version: net10.0
-        - os: windows-11-arm
-          version: net10.0
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -69,8 +65,7 @@ jobs:
       uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
       with:
         dotnet-version: |
-          8.0.x
-          9.0.x
+          10.0.x
 
     - name: Setup .NET
       uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0

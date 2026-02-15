@@ -26,6 +26,7 @@ public class GrpcRetryTestCase
 
     public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases()
     {
+#pragma warning disable CA1825 // Workaround false positive in .NET 11
         return
         [
             new("Cancelled", [new(StatusCode.Cancelled)]),
@@ -84,6 +85,7 @@ public class GrpcRetryTestCase
                 ],
                 expectedRetryAttempts: 9),
         ];
+#pragma warning restore CA1825
     }
 
     public override string ToString()

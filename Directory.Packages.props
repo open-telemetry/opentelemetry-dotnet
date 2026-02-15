@@ -12,29 +12,23 @@
   -->
   <ItemGroup>
     <!-- Default to latest versions for all TFMs -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[10.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[10.0.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[10.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[11.0.0-preview.1.26104.118,)" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[11.0.0-preview.1.26104.118,)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[11.0.0-preview.1.26104.118,)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[11.0.0-preview.1.26104.118,)" />
   </ItemGroup>
   <!-- Version overrides for specific netX.0 TFMs -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[8.0.0,)" />
-    <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[8.0.0,)" />
-    <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[8.0.0,)" />
-    <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[8.0.0,)" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[9.0.0,)" />
-    <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[9.0.0,)" />
-  </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10.0.0,)" />
     <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[10.0.0,)" />
     <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[10.0.0,)" />
     <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[10.0.0,)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
+    <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[11.0.0-preview.1.26104.118,)" />
+    <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[11.0.0-preview.1.26104.118,)" />
+    <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[11.0.0-preview.1.26104.118,)" />
+    <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[11.0.0-preview.1.26104.118,)" />
   </ItemGroup>
 
   <!--
@@ -78,10 +72,6 @@
     <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
     <PackageVersion Include="System.Text.Json" Version="4.7.2" />
 
-    <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
-    <!-- Newer NETCoreApp runtimes need to be redirected to safe versions. -->
-    <PackageVersion Update="System.Text.Encodings.Web" Version="[8.0.0,)" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
-    <PackageVersion Update="System.Text.Json" Version="[8.0.5,)" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
   </ItemGroup>
 
   <!--
@@ -124,16 +114,12 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="[2.8.2,)" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="8.0.24" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="9.0.13" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="11.0.0-preview.1.26104.118" />
   </ItemGroup>
 
 </Project>

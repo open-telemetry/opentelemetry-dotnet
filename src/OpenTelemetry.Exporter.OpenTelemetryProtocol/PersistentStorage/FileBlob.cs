@@ -88,7 +88,12 @@ public class FileBlob : PersistentBlob
         var leaseTimestamp = DateTime.UtcNow + TimeSpan.FromMilliseconds(leasePeriodMilliseconds);
         if (path.EndsWith(".lock", StringComparison.OrdinalIgnoreCase))
         {
-            path = path.Substring(0, path.LastIndexOf('@'));
+            path =
+#if NET11_0_OR_GREATER
+                path.Substring(0, path.LastIndexOf('@', StringComparison.Ordinal));
+#else
+                path.Substring(0, path.LastIndexOf('@'));
+#endif
         }
 
         path += $"@{leaseTimestamp:yyyy-MM-ddTHHmmss.fffffffZ}.lock";

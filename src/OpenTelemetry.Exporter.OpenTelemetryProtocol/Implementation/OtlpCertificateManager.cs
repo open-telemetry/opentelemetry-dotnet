@@ -80,11 +80,7 @@ internal static class OtlpCertificateManager
                 // Try to load as PKCS#12 first, then as PEM
                 try
                 {
-#if NET9_0_OR_GREATER
                     clientCertificate = X509CertificateLoader.LoadPkcs12FromFile(clientCertificatePath, (string?)null);
-#else
-                    clientCertificate = new X509Certificate2(clientCertificatePath);
-#endif
                 }
                 catch (Exception ex) when (ex is CryptographicException || ex is InvalidDataException || ex is FormatException)
                 {
