@@ -38,7 +38,7 @@
     <!-- HACK Workaround for https://github.com/dotnet/aspnetcore/issues/65410 -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
   </ItemGroup>
 
 </Project>

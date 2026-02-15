@@ -28,7 +28,7 @@ public class HttpRetryTestCase
 
     public static TheoryData<HttpRetryTestCase> GetHttpTestCases()
     {
-#pragma warning disable CA1825 // Workaround false positive in .NET 11
+#pragma warning disable CA1825 // HACK Workaround for https://github.com/dotnet/sdk/issues/53047
         return
         [
             new("NetworkError", [new(statusCode: null)]),
