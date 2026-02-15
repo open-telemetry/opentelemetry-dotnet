@@ -39,8 +39,8 @@ body:
       value: |
         | Package Name                          | Version |
         | ------------------------------------- | ------- |
-        | OpenTelemetry.Api                     | 1.8.0   |
-        | OpenTelemetry                         | 1.8.0   |
+        | OpenTelemetry.Api                     | 1.15.0  |
+        | OpenTelemetry                         | 1.15.0  |
         | TBD                                   | TBD     |
     validations:
       required: true
@@ -48,7 +48,7 @@ body:
   - type: input
     attributes:
       label: Runtime Version
-      description: What .NET runtime version did you use? (e.g. `net462`, `net48`, `net8.0`, etc. You can find this information from the `*.csproj` file)
+      description: What .NET runtime version did you use? (e.g. `net462`, `net48`, `net10.0`, etc. You can find this information from the `*.csproj` file)
     validations:
       required: true
 

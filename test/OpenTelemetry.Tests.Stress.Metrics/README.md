@@ -10,14 +10,14 @@ This stress test is specifically for Metrics SDK, and is based on the
 Open a console, run the following command from the current folder:
 
 ```sh
-dotnet run --framework net8.0 --configuration Release
+dotnet run --framework net10.0 --configuration Release
 ```
 
 To see command line options available, run the following command from the
 current folder:
 
 ```sh
-dotnet run --framework net8.0 --configuration Release -- --help
+dotnet run --framework net10.0 --configuration Release -- --help
 ```
 
 The help output includes settings and their explanations:
