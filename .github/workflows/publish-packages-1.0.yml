@@ -158,6 +158,20 @@ jobs:
             Write-Output "Signature verification succeeded for $dllFilePath"
         }
 
+    - name: Generate SBOM
+      uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
+      with:
+        output-file: ./artifacts/package/release/sbom.spdx.json
+        path: ./artifacts/bin
+        upload-artifact: false
+        upload-release-assets: false
+
+    - name: Create GitHub attestation for SBOM
+      uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+      with:
+        subject-path: |
+          ./artifacts/package/release/sbom.spdx.json
+
     - name: Publish Artifacts
       id: upload-artifacts
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -198,17 +212,11 @@ jobs:
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Download Artifacts
-      env:
-        ARTIFACT_ID: ${{ needs.build-pack-publish.outputs.artifact-id }}
-        ARTIFACT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        curl \
-          -H "Accept: application/vnd.github+json" \
-          -H "Authorization: token ${ARTIFACT_TOKEN}" \
-          -L \
-          -o "${GITHUB_WORKSPACE}/artifacts/${GITHUB_REF_NAME}-packages.zip" \
-          --create-dirs \
-          "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip"
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      with:
+        artifact-ids: ${{ needs.build-pack-publish.outputs.artifact-id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path: ./artifacts
 
     - name: Create GitHub Release draft
       shell: pwsh
@@ -220,7 +228,7 @@ jobs:
         CreateDraftRelease `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -tag ${env:GITHUB_REF_NAME} `
-          -releaseFiles "${env:GITHUB_WORKSPACE}/artifacts/${env:GITHUB_REF_NAME}-packages.zip"
+          -releaseFiles "${env:GITHUB_WORKSPACE}/artifacts/*"
 
     - name: Post notice when packages are ready
       shell: pwsh
