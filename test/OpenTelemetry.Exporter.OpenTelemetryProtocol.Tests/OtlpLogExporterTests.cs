@@ -174,8 +174,11 @@ public class OtlpLogExporterTests
                 logRecords: logRecords);
         });
 
+#pragma warning disable CA1873
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
         logger.Log(LogLevel.Information, default, new { propertyA = "valueA" }, null, (s, e) => "Custom state log message");
+#pragma warning restore CA1873
+
         Assert.Single(logRecords);
 
         var logRecord = logRecords[0];
@@ -220,8 +223,12 @@ public class OtlpLogExporterTests
         var host = hostBuilder.Build();
         var loggerFactory = host.Services.GetService<ILoggerFactory>();
         Assert.NotNull(loggerFactory);
+
+#pragma warning disable CA1873
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
         logger.Log(LogLevel.Information, default, new { propertyA = "valueA" }, null, (s, e) => "Custom state log message");
+#pragma warning restore CA1873
+
         Assert.Single(logRecords);
 
         var logRecord = logRecords[0];
