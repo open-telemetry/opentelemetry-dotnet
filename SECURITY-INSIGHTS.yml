@@ -1,0 +1,126 @@
+header:
+  schema-version: '1.0.0'
+  expiration-date: '2027-02-14T00:00:00.000Z'
+  last-updated: '2026-02-14'
+  last-reviewed: '2026-02-14'
+  project-url: https://github.com/open-telemetry/opentelemetry-dotnet
+  changelog: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/RELEASENOTES.md
+  license: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/LICENSE.TXT
+
+project-lifecycle:
+  status: active
+  bug-fixes-only: false
+  core-maintainers:
+    - https://github.com/alanwest
+    - https://github.com/cijothomas
+    - https://github.com/CodeBlanch
+    - https://github.com/Kielek
+    - https://github.com/martincostello
+    - https://github.com/rajkumar-rangaraj
+
+contribution-policy:
+  accepts-pull-requests: true
+  accepts-automated-pull-requests: true
+  contributing-policy: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md
+  code-of-conduct: https://github.com/open-telemetry/.github/blob/main/CODE_OF_CONDUCT.md
+  automated-tools-list:
+    - automated-tool: renovatebot
+      action: allowed
+      comment: Automated dependency updates are accepted.
+
+documentation:
+  - https://opentelemetry.io/docs/languages/dotnet/
+
+distribution-points:
+  - pkg:nuget/OpenTelemetry
+  - pkg:nuget/OpenTelemetry.Api
+  - pkg:nuget/OpenTelemetry.Api.ProviderBuilderExtensions
+  - pkg:nuget/OpenTelemetry.Exporter.Console
+  - pkg:nuget/OpenTelemetry.Exporter.InMemory
+  - pkg:nuget/OpenTelemetry.Exporter.OpenTelemetryProtocol
+  - pkg:nuget/OpenTelemetry.Exporter.Prometheus.AspNetCore
+  - pkg:nuget/OpenTelemetry.Exporter.Prometheus.HttpListener
+  - pkg:nuget/OpenTelemetry.Exporter.Zipkin
+  - pkg:nuget/OpenTelemetry.Extensions.Hosting
+  - pkg:nuget/OpenTelemetry.Extensions.Propagators
+  - pkg:nuget/OpenTelemetry.Shims.OpenTracing
+
+security-artifacts:
+  threat-model:
+    threat-model-created: false
+    comment: |
+      No formal threat model created yet.
+  self-assessment:
+    self-assessment-created: false
+    comment: |
+      No formal self-assessment yet.
+
+security-contacts:
+  - type: website
+    value: https://github.com/open-telemetry/opentelemetry-dotnet/security
+    primary: true
+  - type: email
+    value: security@opentelemetry.io
+    primary: false
+  - type: email
+    value: cncf-opentelemetry-security@lists.cncf.io
+    primary: false
+
+security-testing:
+  - tool-type: sca
+    tool-name: Renovate
+    tool-version: latest
+    tool-url: https://docs.renovatebot.com/
+    tool-rulesets:
+      - built-in
+    integration:
+      ad-hoc: false
+      ci: true
+      before-release: true
+    comment: |
+      Automated dependency updates.
+  - tool-type: fuzzing
+    tool-name: FsCheck
+    tool-version: latest
+    tool-url: https://fscheck.github.io/FsCheck/
+    tool-rulesets:
+      - default
+    integration:
+      ad-hoc: false
+      ci: true
+      before-release: false
+    comment: |
+      FsCheck is used for fuzz testing as part of CI.
+  - tool-type: sast
+    tool-name: CodeQL
+    tool-version: latest
+    tool-url: https://github.com/github/codeql
+    tool-rulesets:
+      - default
+    integration:
+      ad-hoc: false
+      ci: true
+      before-release: true
+    comment: |
+      CodeQL static analysis is run in CI for all commits and pull requests to detect security vulnerabilities.
+
+vulnerability-reporting:
+  accepts-vulnerability-reports: true
+  email-contact: security@opentelemetry.io
+  security-policy: https://opentelemetry.io/docs/security/security-response/
+  bug-bounty-available: false
+  comment: |
+    Report security vulnerabilities via https://github.com/open-telemetry/opentelemetry-dotnet/security.
+
+dependencies:
+  third-party-packages: true
+  dependencies-lists:
+    - https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/Directory.Packages.props
+  dependencies-lifecycle:
+    policy-url: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/renovate.json
+    comment: |
+      Dependencies are kept up to date by Renovate.
+  env-dependencies-policy:
+    policy-url: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/renovate.json
+    comment: |
+      Dependencies are kept up to date by Renovate.

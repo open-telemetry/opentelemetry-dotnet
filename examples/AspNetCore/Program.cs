@@ -27,6 +27,9 @@ var histogramAggregation = appBuilder.Configuration.GetValue("HistogramAggregati
 // for manual instrumentation
 appBuilder.Services.AddSingleton<InstrumentationSource>();
 
+// Add HttpClient to the service provider for dependency injection.
+appBuilder.Services.AddHttpClient();
+
 // Clear default logging providers used by WebApplication host.
 appBuilder.Logging.ClearProviders();
 
