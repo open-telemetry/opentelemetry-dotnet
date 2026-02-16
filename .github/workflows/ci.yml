@@ -124,12 +124,12 @@ jobs:
       fail-fast: false
       matrix:
         version: [ net8.0, net9.0, net10.0 ]
+    env:
+      FRAMEWORK_VERSION: ${{ matrix.version }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Run OTLP Exporter docker compose
-        run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${VERSION}.yml" --project-directory=. up --exit-code-from=tests --build
-        env:
-          VERSION: ${{ matrix.version }}
+        run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. up --exit-code-from=tests --build
 
   w3c-trace-context-integration-test:
     needs: detect-changes
