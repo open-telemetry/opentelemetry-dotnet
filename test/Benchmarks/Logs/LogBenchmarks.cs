@@ -45,8 +45,6 @@ public class LogBenchmarks
     private readonly ILoggerFactory loggerFactoryWithBatchProcessor;
     private readonly ILoggerFactory loggerFactoryWithTwoProcessor;
     private readonly ILoggerFactory loggerFactoryWithThreeProcessor;
-    private readonly ILoggerFactory loggerFactoryForOriginalFormat;
-    private readonly ILogger loggerForOriginalFormat;
 
     public LogBenchmarks()
     {
@@ -83,13 +81,6 @@ public class LogBenchmarks
                 .AddProcessor(new NoopLogProcessor()));
         });
         this.loggerWithThreeProcessors = this.loggerFactoryWithThreeProcessor.CreateLogger<LogBenchmarks>();
-
-        this.loggerFactoryForOriginalFormat = LoggerFactory.Create(builder =>
-        {
-            builder.UseOpenTelemetry(logging => logging
-                .AddProcessor(new NoopLogProcessor()));
-        });
-        this.loggerForOriginalFormat = this.loggerFactoryForOriginalFormat.CreateLogger<LogBenchmarks>();
     }
 
     [GlobalCleanup]
@@ -99,7 +90,6 @@ public class LogBenchmarks
         this.loggerFactoryWithOneProcessor.Dispose();
         this.loggerFactoryWithTwoProcessor.Dispose();
         this.loggerFactoryWithThreeProcessor.Dispose();
-        this.loggerFactoryForOriginalFormat.Dispose();
     }
 
     [Benchmark]
