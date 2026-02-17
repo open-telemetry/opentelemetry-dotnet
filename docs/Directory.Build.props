@@ -3,6 +3,7 @@
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.slnx'))\build\Common.nonprod.props" />
 
   <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1873</NoWarn>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>$(TargetFrameworksForDocs)</TargetFrameworks>
     <!-- Opt-out of Artifacts Output for docs as there are duplicated project names -->
