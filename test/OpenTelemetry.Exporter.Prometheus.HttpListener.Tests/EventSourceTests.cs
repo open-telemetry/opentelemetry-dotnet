@@ -9,8 +9,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 public class EventSourceTests
 {
     [Fact]
-    public void EventSourceTest_PrometheusExporterEventSource()
-    {
-        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(PrometheusExporterEventSource.Log);
-    }
+    public void EventSourceTests_PrometheusExporterEventSource() =>
+        EventSourceTestHelper.ValidateEventSourceIds<PrometheusExporterEventSource>();
 }
