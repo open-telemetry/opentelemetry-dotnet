@@ -11,20 +11,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 public class EventSourceTests
 {
     [Fact]
-    public void EventSourceTest_OpenTelemetryProtocolExporterEventSource()
-    {
-        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetryProtocolExporterEventSource.Log);
-    }
+    public void EventSourceTests_OpenTelemetryProtocolExporterEventSource() =>
+        EventSourceTestHelper.ValidateEventSourceIds<OpenTelemetryProtocolExporterEventSource>();
 
     [Fact]
-    public void EventSourceTest_PersistentStorageAbstractionsEventSource()
-    {
-        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(PersistentStorageAbstractionsEventSource.Log);
-    }
+    public void EventSourceTests_PersistentStorageAbstractionsEventSource() =>
+        EventSourceTestHelper.ValidateEventSourceIds<PersistentStorageAbstractionsEventSource>();
 
     [Fact]
-    public void EventSourceTest_PersistentStorageEventSource()
-    {
-        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(PersistentStorageEventSource.Log);
-    }
+    public void EventSourceTests_PersistentStorageEventSource() =>
+        EventSourceTestHelper.ValidateEventSourceIds<PersistentStorageEventSource>();
 }

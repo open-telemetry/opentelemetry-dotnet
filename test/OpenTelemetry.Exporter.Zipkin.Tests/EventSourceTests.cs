@@ -10,8 +10,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests;
 public class EventSourceTests
 {
     [Fact]
-    public void EventSourceTest_ZipkinExporterEventSource()
-    {
-        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(ZipkinExporterEventSource.Log);
-    }
+    public void EventSourceTests_ZipkinExporterEventSource() =>
+        EventSourceTestHelper.ValidateEventSourceIds<ZipkinExporterEventSource>();
 }

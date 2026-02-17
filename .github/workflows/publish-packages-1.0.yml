@@ -21,11 +21,13 @@ permissions:
 
 jobs:
   automation:
+    if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
     uses: ./.github/workflows/automation.yml
     secrets:
       OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   build-pack-publish:
+    if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
     runs-on: windows-latest
     permissions:
       attestations: write
