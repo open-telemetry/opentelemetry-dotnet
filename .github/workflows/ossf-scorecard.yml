@@ -12,6 +12,7 @@ permissions: read-all
 
 jobs:
   analysis:
+    if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
     runs-on: ubuntu-latest
     permissions:
       # Needed for Code scanning upload
