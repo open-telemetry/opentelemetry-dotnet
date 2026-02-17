@@ -201,36 +201,6 @@ public class LogBenchmarks
                 companyName: "Contoso Fresh Vegetables, Inc.");
     }
 
-#pragma warning disable CA1848
-#pragma warning disable CA1727
-    [Benchmark]
-    public void OriginalFormatSearch_CommonCase()
-    {
-        this.loggerForOriginalFormat.FoodRecallNotice(
-            brandName: "Contoso",
-            productDescription: "Salads",
-            productType: "Food & Beverages",
-            recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
-            companyName: "Contoso Fresh Vegetables, Inc.");
-    }
-
-    [Benchmark]
-    public void OriginalFormatSearch_ManyAttributes()
-    {
-        this.loggerForOriginalFormat.LogInformation(
-            "User {userId} with email {email} from {country} in {region} performed {action} at {timestamp} with status {status} and result {result}",
-            "123",
-            "user@example.com",
-            "USA",
-            "West",
-            "login",
-            "2024-01-01",
-            "success",
-            "completed");
-    }
-#pragma warning restore CA1848
-#pragma warning restore CA2254
-
     internal sealed class NoopLogProcessor : BaseProcessor<LogRecord>
     {
     }
