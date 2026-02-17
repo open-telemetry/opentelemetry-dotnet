@@ -3,11 +3,17 @@
 #    docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
 
 services:
-  init-service:
-    image: otel-test-image
+  build-image:
+    image: "otel-test-image:${FRAMEWORK_VERSION:-latest}"
     build:
       context: .
       dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
+    command: "true"
+    profiles:
+      - build
+
+  init-service:
+    image: "otel-test-image:${FRAMEWORK_VERSION:-latest}"
     volumes:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: >
@@ -27,10 +33,7 @@ services:
       - init-service
 
   tests:
-    image: otel-test-image
-    build:
-      context: .
-      dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
+    image: "otel-test-image:${FRAMEWORK_VERSION:-latest}"
     volumes:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: /cfg/run-test.sh
