@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed a thread-safety issue in `LogRecordSharedPool.Rent()`.
+  ([#6833](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6833)
+
 ## 1.15.0
 
 Released 2026-Jan-21
