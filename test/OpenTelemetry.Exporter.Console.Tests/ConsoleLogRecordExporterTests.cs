@@ -60,8 +60,7 @@ public class ConsoleLogRecordExporterTests
         activity.Stop();
 
         // Assert
-        Assert.Single(records);
-        var logRecord = records[0];
+        var logRecord = Assert.Single(records);
 
         // Act
         using var exporter = new ConsoleLogRecordExporter(new ConsoleExporterOptions());
