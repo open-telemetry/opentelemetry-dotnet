@@ -51,6 +51,12 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+
+    env:
+      PROJECT_NAME: ${{ inputs.project-name }}
+      PROJECT_BUILD_COMMANDS: ${{ inputs.project-build-commands }}
+      TARGET_FRAMEWORK: ${{ matrix.version }}
+
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
@@ -70,17 +76,20 @@ jobs:
       uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
 
     - name: dotnet restore ${{ inputs.project-name }}
-      run: dotnet restore ${{ inputs.project-name }} ${{ inputs.project-build-commands }}
+      shell: pwsh
+      run: dotnet restore ${env:PROJECT_NAME} ${env:PROJECT_BUILD_COMMANDS}
 
     - name: dotnet build ${{ inputs.project-name }}
-      run: dotnet build ${{ inputs.project-name }} --configuration Release --no-restore ${{ inputs.project-build-commands }}
+      shell: pwsh
+      run: dotnet build ${env:PROJECT_NAME} --configuration Release --no-restore ${env:PROJECT_BUILD_COMMANDS}
 
     - name: dotnet test ${{ inputs.project-name }}
+      shell: pwsh
       run: >
-        dotnet test ${{ inputs.project-name }}
+        dotnet test ${env:PROJECT_NAME}
         --collect:"Code Coverage"
         --results-directory:TestResults
-        --framework ${{ matrix.version }}
+        --framework ${env:TARGET_FRAMEWORK}
         --configuration Release
         --no-restore
         --no-build
