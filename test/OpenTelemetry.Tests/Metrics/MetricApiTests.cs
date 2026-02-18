@@ -1171,15 +1171,13 @@ public class MetricApiTests : MetricTestsBase
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
-    public void
-        ObservableCounterReportsActiveMeasurementsOnlyTest_Float(MetricReaderTemporalityPreference temporality) =>
+    public void ObservableCounterReportsActiveMeasurementsOnlyTest_Float(MetricReaderTemporalityPreference temporality) =>
         ObservableCounterReportsActiveMeasurementsOnlyTest<float>(temporality, b => b);
 
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
-    public void
-        ObservableCounterReportsActiveMeasurementsOnlyTest_Double(MetricReaderTemporalityPreference temporality) =>
+    public void ObservableCounterReportsActiveMeasurementsOnlyTest_Double(MetricReaderTemporalityPreference temporality) =>
         ObservableCounterReportsActiveMeasurementsOnlyTest<double>(temporality, b => b);
 
     [Theory]
@@ -1204,7 +1202,7 @@ public class MetricApiTests : MetricTestsBase
             }));
 
         // Record a measurement then export
-        counter.Add(10, tags1.ToArray());
+        counter.Add(10, [.. tags1]);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
