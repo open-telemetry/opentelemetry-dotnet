@@ -93,7 +93,7 @@ jobs:
     - name: Install NuGet package validation tools
       env:
         # renovate: datasource=nuget depName=dotnet-validate
-        DOTNET_VALIDATE_VERSION: '0.0.1-preview.537'
+        DOTNET_VALIDATE_VERSION: '0.0.1-preview.582'
         # renovate: datasource=nuget depName=Meziantou.Framework.NuGetPackageValidation.Tool
         MEZIANTOU_VALIDATE_NUGET_PACKAGE_VERSION: '1.0.43'
       run: |
