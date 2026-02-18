@@ -12,6 +12,8 @@ using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
 
+#pragma warning disable CA1873 // Avoid potentially expensive logging
+
 public sealed class LogRecordTests
 {
     private enum Field
@@ -1085,7 +1087,7 @@ public sealed class LogRecordTests
 
     private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions>? configure = null)
     {
-        var items = exportedItems = new List<LogRecord>();
+        var items = exportedItems = [];
 
         return LoggerFactory.Create(builder =>
         {
@@ -1119,19 +1121,14 @@ public sealed class LogRecordTests
         public KeyValuePair<string, object> this[int index] => this.list[index];
 
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
-        {
-            return this.list.GetEnumerator();
-        }
+            => this.list.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.list.GetEnumerator();
-        }
+            => this.list.GetEnumerator();
     }
 
     internal sealed class DisposingState : IReadOnlyList<KeyValuePair<string, object?>>, IDisposable
     {
-        private string? value;
         private bool disposed;
 
         public DisposingState(string? value)
@@ -1154,9 +1151,9 @@ public sealed class LogRecordTests
                 }
 #endif
 
-                return this.value;
+                return field;
             }
-            private set => this.value = value;
+            private set;
         }
 
         public KeyValuePair<string, object?> this[int index] => index switch
@@ -1168,9 +1165,7 @@ public sealed class LogRecordTests
         };
 
         public void Dispose()
-        {
-            this.disposed = true;
-        }
+            => this.disposed = true;
 
         public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
         {
@@ -1200,7 +1195,7 @@ public sealed class LogRecordTests
             }
             else if (this.fieldToUpdate == Field.StateValues)
             {
-                logRecord.StateValues = new List<KeyValuePair<string, object?>> { new("newStateValueKey", "newStateValueValue") };
+                logRecord.StateValues = [new("newStateValueKey", "newStateValueValue")];
             }
             else
             {
@@ -1219,14 +1214,10 @@ public sealed class LogRecordTests
         }
 
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
-        {
-            return this.list.GetEnumerator();
-        }
+            => this.list.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.list.GetEnumerator();
-        }
+            => this.list.GetEnumerator();
     }
 
     private sealed class CustomState
@@ -1248,7 +1239,7 @@ public sealed class LogRecordTests
             this.buffer = buffer;
         }
 
-        public List<object?> Scopes { get; } = new();
+        public List<object?> Scopes { get; } = [];
 
         public override void OnEnd(LogRecord data)
         {
