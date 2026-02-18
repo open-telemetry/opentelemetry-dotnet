@@ -171,7 +171,9 @@ internal static class OtlpExporterOptionsExtensions
         var absoluteUri = uri.AbsoluteUri;
         var separator = string.Empty;
 
-#if NET || NETSTANDARD2_1_OR_GREATER
+#if NET11_0_OR_GREATER
+        if (absoluteUri.EndsWith('/', StringComparison.Ordinal))
+#elif NET || NETSTANDARD2_1_OR_GREATER
         if (absoluteUri.EndsWith('/'))
 #else
         if (absoluteUri.EndsWith("/", StringComparison.Ordinal))

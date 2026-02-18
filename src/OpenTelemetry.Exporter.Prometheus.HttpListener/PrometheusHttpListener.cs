@@ -30,7 +30,9 @@ internal sealed class PrometheusHttpListener : IDisposable
 
         string path = options.ScrapeEndpointPath ?? PrometheusHttpListenerOptions.DefaultScrapeEndpointPath;
 
-#if NET
+#if NET11_0_OR_GREATER
+        if (!path.StartsWith('/', StringComparison.Ordinal))
+#elif NET
         if (!path.StartsWith('/'))
 #else
         if (!path.StartsWith("/", StringComparison.Ordinal))
@@ -39,7 +41,9 @@ internal sealed class PrometheusHttpListener : IDisposable
             path = $"/{path}";
         }
 
-#if NET
+#if NET11_0_OR_GREATER
+        if (!path.EndsWith('/', StringComparison.Ordinal))
+#elif NET
         if (!path.EndsWith('/'))
 #else
         if (!path.EndsWith("/", StringComparison.Ordinal))

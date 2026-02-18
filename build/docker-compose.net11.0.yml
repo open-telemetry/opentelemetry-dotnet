@@ -2,6 +2,6 @@ services:
   tests:
     build:
       args:
-        PUBLISH_FRAMEWORK: net10.0
-        TEST_SDK_VERSION: "10.0"
+        PUBLISH_FRAMEWORK: net11.0
+        TEST_SDK_VERSION: "11.0"
         BUILD_SDK_VERSION: "11.0"

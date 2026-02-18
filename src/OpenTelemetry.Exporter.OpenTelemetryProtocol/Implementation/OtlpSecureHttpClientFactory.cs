@@ -197,11 +197,8 @@ internal static class OtlpSecureHttpClientFactory
                     return false;
                 }
 
-#if NET9_0_OR_GREATER
                 using var caCert = X509CertificateLoader.LoadCertificate(caCertData);
-#else
-                using var caCert = new X509Certificate2(caCertData);
-#endif
+
                 return OtlpCertificateManager.ValidateServerCertificate(
                     cert,
                     chain,
