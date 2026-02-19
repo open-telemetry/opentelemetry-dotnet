@@ -1137,22 +1137,19 @@ public class MetricApiTests : MetricTestsBase
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
-    public void
-        ObservableGaugeReportsActiveMeasurementsOnlyTest_Double(MetricReaderTemporalityPreference temporality) =>
+    public void ObservableGaugeReportsActiveMeasurementsOnlyTest_Double(MetricReaderTemporalityPreference temporality) =>
         ObservableGaugeReportsActiveMeasurementsOnlyTest<double>(temporality, b => b);
 
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
-    public void
-        ObservableCounterReportsActiveMeasurementsOnlyTest_Byte(MetricReaderTemporalityPreference temporality) =>
+    public void ObservableCounterReportsActiveMeasurementsOnlyTest_Byte(MetricReaderTemporalityPreference temporality) =>
         ObservableCounterReportsActiveMeasurementsOnlyTest<byte>(temporality, b => b);
 
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
-    public void
-        ObservableCounterReportsActiveMeasurementsOnlyTest_Short(MetricReaderTemporalityPreference temporality) =>
+    public void ObservableCounterReportsActiveMeasurementsOnlyTest_Short(MetricReaderTemporalityPreference temporality) =>
         ObservableCounterReportsActiveMeasurementsOnlyTest<short>(temporality, b => b);
 
     [Theory]
@@ -1164,8 +1161,7 @@ public class MetricApiTests : MetricTestsBase
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
-    public void
-        ObservableCounterReportsActiveMeasurementsOnlyTest_Long(MetricReaderTemporalityPreference temporality) =>
+    public void ObservableCounterReportsActiveMeasurementsOnlyTest_Long(MetricReaderTemporalityPreference temporality) =>
         ObservableCounterReportsActiveMeasurementsOnlyTest<long>(temporality, b => b);
 
     [Theory]
@@ -1181,13 +1177,11 @@ public class MetricApiTests : MetricTestsBase
         ObservableCounterReportsActiveMeasurementsOnlyTest<double>(temporality, b => b);
 
     [Fact]
-    public void
-        ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Byte() =>
+    public void ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Byte() =>
         ObservableCounterDeltaAttributeSetReappearsAfterGapTest<byte>(b => b);
 
     [Fact]
-    public void
-        ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Short() =>
+    public void ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Short() =>
         ObservableCounterDeltaAttributeSetReappearsAfterGapTest<short>(b => b);
 
     [Fact]
