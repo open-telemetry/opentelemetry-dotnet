@@ -1067,7 +1067,7 @@ public class MetricApiTests : MetricTestsBase
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
     public void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest_Byte(
         MetricReaderTemporalityPreference temporality) =>
-        ObservableUpDownCounterReportsActiveMeasurementsOnlyTest<byte>(temporality, b => b);
+        ObservableUpDownCounterReportsActiveMeasurementsOnlyTest(temporality, b => b);
 
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
@@ -1108,7 +1108,7 @@ public class MetricApiTests : MetricTestsBase
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
     public void ObservableGaugeReportsActiveMeasurementsOnlyTest_Byte(MetricReaderTemporalityPreference temporality) =>
-        ObservableGaugeReportsActiveMeasurementsOnlyTest<byte>(temporality, b => b);
+        ObservableGaugeReportsActiveMeasurementsOnlyTest(temporality, b => b);
 
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
@@ -1144,7 +1144,7 @@ public class MetricApiTests : MetricTestsBase
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
     public void ObservableCounterReportsActiveMeasurementsOnlyTest_Byte(MetricReaderTemporalityPreference temporality) =>
-        ObservableCounterReportsActiveMeasurementsOnlyTest<byte>(temporality, b => b);
+        ObservableCounterReportsActiveMeasurementsOnlyTest(temporality, b => b);
 
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
@@ -1178,7 +1178,7 @@ public class MetricApiTests : MetricTestsBase
 
     [Fact]
     public void ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Byte() =>
-        ObservableCounterDeltaAttributeSetReappearsAfterGapTest<byte>(b => b);
+        ObservableCounterDeltaAttributeSetReappearsAfterGapTest(b => b);
 
     [Fact]
     public void ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Short() =>
@@ -2312,7 +2312,7 @@ public class MetricApiTests : MetricTestsBase
         int callbackInvocationCount = 0;
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
-        var counter = meter.CreateObservableCounter<T>(
+        meter.CreateObservableCounter(
             "my_observable_counter",
             () =>
             {
@@ -2444,7 +2444,7 @@ public class MetricApiTests : MetricTestsBase
         int callbackInvocationCount = 0;
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
-        var counter = meter.CreateObservableCounter<T>(
+        meter.CreateObservableCounter(
             "observable-counter",
             () =>
             {
