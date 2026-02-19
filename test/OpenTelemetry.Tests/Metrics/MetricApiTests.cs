@@ -1180,6 +1180,32 @@ public class MetricApiTests : MetricTestsBase
     public void ObservableCounterReportsActiveMeasurementsOnlyTest_Double(MetricReaderTemporalityPreference temporality) =>
         ObservableCounterReportsActiveMeasurementsOnlyTest<double>(temporality, b => b);
 
+    [Fact]
+    public void
+        ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Byte() =>
+        ObservableCounterDeltaAttributeSetReappearsAfterGapTest<byte>(b => b);
+
+    [Fact]
+    public void
+        ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Short() =>
+        ObservableCounterDeltaAttributeSetReappearsAfterGapTest<short>(b => b);
+
+    [Fact]
+    public void ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Int() =>
+        ObservableCounterDeltaAttributeSetReappearsAfterGapTest<int>(b => b);
+
+    [Fact]
+    public void ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Long() =>
+        ObservableCounterDeltaAttributeSetReappearsAfterGapTest<long>(b => b);
+
+    [Fact]
+    public void ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Float() =>
+        ObservableCounterDeltaAttributeSetReappearsAfterGapTest<float>(b => b);
+
+    [Fact]
+    public void ObservableCounterDeltaAttributeSetReappearsAfterGapTest_Double() =>
+        ObservableCounterDeltaAttributeSetReappearsAfterGapTest<double>(b => b);
+
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
@@ -2254,6 +2280,144 @@ public class MetricApiTests : MetricTestsBase
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Empty(exportedItems);
+    }
+
+    private static void ObservableCounterDeltaAttributeSetReappearsAfterGapTest<T>(
+        Func<byte, T> convertFromByte)
+        where T : struct
+    {
+        // This test verifies the behavior when an attribute set is not reported
+        // for one collection cycle and then reappears.
+        // See: https://github.com/open-telemetry/opentelemetry-specification/issues/4861
+        //
+        // Scenario (Observable Counter with Delta temporality):
+        // | Collection | Callback Reports | Expected Delta Export |
+        // |------------|-------------------|------------------------|
+        // | 1          | A=100, B=50       | A=100, B=50            |
+        // | 2          | A=150 (B missing) | A=50 (B not exported)  |
+        // | 3          | A=200, B=80       | A=50, B=80             |
+        //
+        // Current implementation: When B reappears, its delta is calculated from zero
+        // (fresh start), not from the last known value. This is Option 1 from the spec issue.
+
+        Func<MetricPoint, byte> getSum = typeof(T) == typeof(double) || typeof(T) == typeof(float)
+            ? point => (byte)point.GetSumDouble()
+            : point => (byte)point.GetSumLong();
+        var exportedItems = new List<Metric>();
+
+        var tagsA = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "A"),
+        };
+
+        var tagsB = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "B"),
+        };
+
+        int callbackInvocationCount = 0;
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateObservableCounter<T>(
+            "my_observable_counter",
+            () =>
+            {
+                callbackInvocationCount++;
+                if (callbackInvocationCount == 1)
+                {
+                    return new List<Measurement<T>>
+                    {
+                        new(convertFromByte(100), tagsA),
+                        new(convertFromByte(50), tagsB),
+                    };
+                }
+                else if (callbackInvocationCount == 2)
+                {
+                    return new List<Measurement<T>>
+                    {
+                        new(convertFromByte(150), tagsA),
+                    };
+                }
+                else
+                {
+                    return new List<Measurement<T>>
+                    {
+                        new(convertFromByte(200), tagsA),
+                        new(convertFromByte(80), tagsB),
+                    };
+                }
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+            }));
+
+        // Collection 1: A=100, B=50
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("my_observable_counter", metric.Name);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+
+        var metricPointA = metricPoints[0];
+        Assert.Equal(100, getSum(metricPointA));
+        ValidateMetricPointTags(tagsA, metricPointA.Tags);
+
+        var metricPointB = metricPoints[1];
+        Assert.Equal(50, getSum(metricPointB));
+        ValidateMetricPointTags(tagsB, metricPointB.Tags);
+
+        // Collection 2: A=150, B missing
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metric = exportedItems[0];
+        Assert.Equal("my_observable_counter", metric.Name);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        metricPointA = metricPoints[0];
+        Assert.Equal(50, getSum(metricPointA));
+        ValidateMetricPointTags(tagsA, metricPointA.Tags);
+
+        // Collection 3: A=200, B=80 (B reappears)
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metric = exportedItems[0];
+        Assert.Equal("my_observable_counter", metric.Name);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+
+        metricPointA = metricPoints[0];
+        Assert.Equal(50, getSum(metricPointA));
+        ValidateMetricPointTags(tagsA, metricPointA.Tags);
+
+        metricPointB = metricPoints[1];
+        // B reappears after a gap. Delta is calculated from zero (Option 1).
+        // B's delta = 80 - 0 = 80, not 80 - 50 = 30.
+        // See: https://github.com/open-telemetry/opentelemetry-specification/issues/4861
+        // TODO: Watch for spec clarification on this behavior.
+        Assert.Equal(80, getSum(metricPointB));
+        ValidateMetricPointTags(tagsB, metricPointB.Tags);
     }
 
     private static void ObservableCounterReportsActiveMeasurementsOnlyTest<T>(
