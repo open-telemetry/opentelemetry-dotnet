@@ -2412,6 +2412,7 @@ public class MetricApiTests : MetricTestsBase
         ValidateMetricPointTags(tagsA, metricPointA.Tags);
 
         metricPointB = metricPoints[1];
+
         // B reappears after a gap. Delta is calculated from zero (Option 1).
         // B's delta = 80 - 0 = 80, not 80 - 50 = 30.
         // See: https://github.com/open-telemetry/opentelemetry-specification/issues/4861
