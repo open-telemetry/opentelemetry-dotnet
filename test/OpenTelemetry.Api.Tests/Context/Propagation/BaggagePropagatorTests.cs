@@ -206,4 +206,124 @@ public class BaggagePropagatorTests
         Assert.Single(carrier);
         Assert.Equal("key+1=value+1,key2=!x_x%2Cx-x%26x(x%22)%3B%3A", carrier[BaggagePropagator.BaggageHeaderName]);
     }
+
+    [Fact]
+    public void ValidateMultipleEqualsInValue()
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, "SomeKey=SomeValue=equals"},
+        };
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Single(propagationContext.Baggage.GetBaggage());
+        
+        var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
+
+        Assert.Equal("SomeKey", baggage.Key);
+        Assert.Equal("SomeValue=equals", baggage.Value);
+    }
+
+    [Fact]
+    public void ValidateEmptyValueSkipped()
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, "SomeKey="},
+        };
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Empty(propagationContext.Baggage.GetBaggage());
+    }
+
+    [Fact]
+    public void ValidateOWSOnExtraction()
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, "SomeKey \t = \t SomeValue \t , \t SomeKey2 \t = \t SomeValue2"},
+        };
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+
+        Assert.Equal(2, propagationContext.Baggage.GetBaggage().Count);
+
+        var baggage = propagationContext.Baggage.GetBaggage().ToArray();
+
+        Assert.Equal("SomeKey", baggage[0].Key);
+        Assert.Equal("SomeValue", baggage[0].Value);
+
+        Assert.Equal("SomeKey2", baggage[1].Key);
+        Assert.Equal("SomeValue2", baggage[1].Value);
+    }
+
+    [Fact]
+    public void ValidateSemicolonMetadataIgnoredOnExtraction()
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, "SomeKey=SomeValue;metadata"},
+        };
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Single(propagationContext.Baggage.GetBaggage());
+        
+        var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
+
+        Assert.Equal("SomeKey", baggage.Key);
+        Assert.Equal("SomeValue", baggage.Value);
+    }
+
+    [Fact]
+    public void ValidatePercentEncoding()
+    {
+        var originalValue = "\t \"\';=asdf!@#$%^&*()";
+        var encodedValue = Uri.EscapeDataString(originalValue);
+
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, $"SomeKey={encodedValue}" },
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Single(propagationContext.Baggage.GetBaggage());
+        
+        var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
+
+        Assert.Equal("SomeKey", baggage.Key);
+        Assert.Equal(originalValue, baggage.Value);
+    }
+
+    [Fact]
+    public void ValidateInvalidFormatSkipped()
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            // "noequals" has no = sign, "=orphanvalue" has no key
+            // "validkey=validvalue," has trailing comma
+            { BaggagePropagator.BaggageHeaderName, "noequals,=orphanvalue,validkey=validvalue," },
+        };
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Single(propagationContext.Baggage.GetBaggage());
+        
+        var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
+
+        Assert.Equal("validkey", baggage.Key);
+        Assert.Equal("validvalue", baggage.Value);
+
+    }
+
+    [Fact]
+    public void ValidatePercentEncodedComplexCharactersDecodesCorrectly()
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, "SomeKey=%09%20%22%27%3B%3Dasdf%21%40%23%24%25%5E%26%2A%28%29" },
+        };
+        
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        
+        Assert.Single(propagationContext.Baggage.GetBaggage());
+        
+        var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
+        
+        Assert.Equal("SomeKey", baggage.Key);
+        Assert.Equal("\t \"';=asdf!@#$%^&*()", baggage.Value);
+    }
 }
