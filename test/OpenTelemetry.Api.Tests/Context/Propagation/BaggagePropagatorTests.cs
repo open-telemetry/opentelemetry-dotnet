@@ -212,11 +212,11 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, "SomeKey=SomeValue=equals"},
+            { BaggagePropagator.BaggageHeaderName, "SomeKey=SomeValue=equals" },
         };
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
         Assert.Single(propagationContext.Baggage.GetBaggage());
-        
+
         var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
 
         Assert.Equal("SomeKey", baggage.Key);
@@ -228,7 +228,7 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, "SomeKey="},
+            { BaggagePropagator.BaggageHeaderName, "SomeKey=" },
         };
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
         Assert.Empty(propagationContext.Baggage.GetBaggage());
@@ -239,7 +239,7 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, "SomeKey \t = \t SomeValue \t , \t SomeKey2 \t = \t SomeValue2"},
+            { BaggagePropagator.BaggageHeaderName, "SomeKey \t = \t SomeValue \t , \t SomeKey2 \t = \t SomeValue2" },
         };
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
 
@@ -259,11 +259,11 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, "SomeKey=SomeValue;metadata"},
+            { BaggagePropagator.BaggageHeaderName, "SomeKey=SomeValue;metadata" },
         };
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
         Assert.Single(propagationContext.Baggage.GetBaggage());
-        
+
         var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
 
         Assert.Equal("SomeKey", baggage.Key);
@@ -283,7 +283,7 @@ public class BaggagePropagatorTests
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
         Assert.Single(propagationContext.Baggage.GetBaggage());
-        
+
         var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
 
         Assert.Equal("SomeKey", baggage.Key);
@@ -301,7 +301,12 @@ public class BaggagePropagatorTests
         };
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
         Assert.Single(propagationContext.Baggage.GetBaggage());
-        
+
+        var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
+
+        Assert.Equal("validkey", baggage.Key);
+        Assert.Equal("validvalue", baggage.Value);
+
         var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
 
         Assert.Equal("validkey", baggage.Key);
@@ -316,13 +321,13 @@ public class BaggagePropagatorTests
         {
             { BaggagePropagator.BaggageHeaderName, "SomeKey=%09%20%22%27%3B%3Dasdf%21%40%23%24%25%5E%26%2A%28%29" },
         };
-        
+
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        
+
         Assert.Single(propagationContext.Baggage.GetBaggage());
-        
+
         var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
-        
+
         Assert.Equal("SomeKey", baggage.Key);
         Assert.Equal("\t \"';=asdf!@#$%^&*()", baggage.Value);
     }
