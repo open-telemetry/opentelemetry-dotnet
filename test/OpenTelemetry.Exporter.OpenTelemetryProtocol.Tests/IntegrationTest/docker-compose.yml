@@ -3,11 +3,17 @@
 #    docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
 
 services:
-  init-service:
-    image: otel-test-image
+  build-image:
+    image: "otel-test-image:${FRAMEWORK_VERSION:-latest}"
     build:
       context: .
       dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
+    command: "true"
+    profiles:
+      - build
+
+  init-service:
+    image: "otel-test-image:${FRAMEWORK_VERSION:-latest}"
     volumes:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: >
@@ -19,7 +25,7 @@ services:
       "
 
   otel-collector:
-    image: otel/opentelemetry-collector:0.144.0@sha256:a43e68866ce4cfa701fb6711de3111b72660e40ebb05a79d1759b002938b608f
+    image: otel/opentelemetry-collector:0.145.0@sha256:8cad95dd3fe0304fbc5652373cc392be4ac915c4c210d2c425d3f1a1f7c3c3ca
     volumes:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: --config=/cfg/otel-collector-config.yaml
@@ -27,10 +33,7 @@ services:
       - init-service
 
   tests:
-    image: otel-test-image
-    build:
-      context: .
-      dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
+    image: "otel-test-image:${FRAMEWORK_VERSION:-latest}"
     volumes:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: /cfg/run-test.sh
