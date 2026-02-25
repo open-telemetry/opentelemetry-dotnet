@@ -255,16 +255,15 @@ internal sealed class TracerProviderSdk : TracerProvider
         if (state.Sources.Count > 0)
         {
             // Validation of source name is already done in builder.
-            if (state.Sources.Any(s => WildcardHelper.ContainsWildcard(s)))
+            if (state.Sources.Any(WildcardHelper.ContainsWildcard))
             {
                 var regex = WildcardHelper.GetWildcardRegex(state.Sources);
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                 // or not.
-                activityListener.ShouldListenTo = activitySource =>
-                    this.supportLegacyActivity ?
-                    string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
-                    regex.IsMatch(activitySource.Name);
+                activityListener.ShouldListenTo = this.supportLegacyActivity ?
+                    (activitySource) => string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
+                    (activitySource) => regex.IsMatch(activitySource.Name);
             }
             else
             {

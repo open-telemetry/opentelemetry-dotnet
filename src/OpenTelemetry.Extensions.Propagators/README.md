@@ -8,6 +8,14 @@ propagators by following the [OpenTelemetry specification](https://opentelemetry
 (currently supporting [B3](https://github.com/openzipkin/b3-propagation) format)
 for tracing.
 
+> [!NOTE]
+> `JaegerPropagator` is deprecated and will be removed in a future version.
+> The Jaeger propagation format has been deprecated in favor of W3C Trace Context.
+> Use `TraceContextPropagator` from the `OpenTelemetry` package instead.
+> See [Jaeger's migration guide](https://www.jaegertracing.io/sdk-migration/#propagation-format)
+> and [OpenTelemetry specification issue #4827](https://github.com/open-telemetry/opentelemetry-specification/issues/4827)
+> for more information.
+
 ## Installation
 
 Add a reference to the

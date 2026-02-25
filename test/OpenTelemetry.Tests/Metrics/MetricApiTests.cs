@@ -1062,6 +1062,113 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal(30, sumReceived);
     }
 
+    [Theory(Skip = "Known issue. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5950")]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void ObservableUpDownCounterReportsActiveMeasurementsOnlyTest(MetricReaderTemporalityPreference temporality)
+    {
+        // dotnet test --filter "FullyQualifiedName~ObservableUpDownCounterReportsActiveMeasurementsOnlyTest" --framework net10.0
+        // Testing
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader
+        // For asynchronous instruments with Delta or Cumulative aggregation
+        // temporality, MetricReader.Collect MUST only receive data points with
+        // measurements recorded since the previous collection. These rules
+        // apply to all metrics, not just those whose point kinds includes an
+        // aggregation temporality field.
+        var exportedItems = new List<Metric>();
+        var tags1 = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "value1"),
+        };
+
+        var tags2 = new List<KeyValuePair<string, object?>>
+        {
+            new("key", "value2"),
+        };
+
+        int callbackInvocationCount = 0;
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
+        var counterLong = meter.CreateObservableUpDownCounter(
+            "observable-updowncounter",
+            () =>
+            {
+                callbackInvocationCount++;
+                if (callbackInvocationCount == 1)
+                {
+                    // First callback: Report 2 time series
+                    return new List<Measurement<long>>
+                    {
+                        new(10L, tags1),
+                        new(10L, tags2),
+                    };
+                }
+                else if (callbackInvocationCount == 2)
+                {
+                    // Second callback: Report 1 time series
+                    return new List<Measurement<long>>
+                    {
+                        new(10L, tags1),
+                    };
+                }
+                else
+                {
+                    // Third callback onwards: Report no time series
+                    return new List<Measurement<long>>();
+                }
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = temporality;
+            }));
+
+        // Export 1: Should get both time series
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("observable-updowncounter", metric.Name);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+
+        var metricPoint1 = metricPoints[0];
+        Assert.Equal(10, metricPoint1.GetSumLong());
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+        var metricPoint2 = metricPoints[1];
+        Assert.Equal(10, metricPoint2.GetSumLong());
+        ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+        // Export 2: Should get only timeseries1
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metric = exportedItems[0];
+        Assert.Equal("observable-updowncounter", metric.Name);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        metricPoint1 = metricPoints[0];
+        Assert.Equal(10, metricPoint1.GetSumLong());
+        ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+        // Export 3: Should get nothing
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Empty(exportedItems);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -1485,15 +1592,98 @@ public class MetricApiTests : MetricTestsBase
     }
 
     [Fact]
+    public void MultithreadedByteCounterTest()
+    {
+        this.MultithreadedCounterTest((byte)DeltaLongValueUpdatedByEachCall);
+    }
+
+    [Fact]
+    public void MultithreadedShortCounterTest()
+    {
+        this.MultithreadedCounterTest((short)DeltaLongValueUpdatedByEachCall);
+    }
+
+    [Fact]
+    public void MultithreadedIntCounterTest()
+    {
+        this.MultithreadedCounterTest((int)DeltaLongValueUpdatedByEachCall);
+    }
+
+    [Fact]
     public void MultithreadedLongCounterTest()
     {
         this.MultithreadedCounterTest(DeltaLongValueUpdatedByEachCall);
+    }
+
+    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/6803")]
+    public void MultithreadedSingleCounterTest()
+    {
+        this.MultithreadedCounterTest((float)DeltaDoubleValueUpdatedByEachCall);
     }
 
     [Fact]
     public void MultithreadedDoubleCounterTest()
     {
         this.MultithreadedCounterTest(DeltaDoubleValueUpdatedByEachCall);
+    }
+
+    [Fact]
+    public void MultithreadedByteHistogramTest()
+    {
+        var expected = new long[16]
+        {
+            NumberOfThreads * NumberOfMetricUpdateByEachThread * 9,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            NumberOfThreads * NumberOfMetricUpdateByEachThread,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        };
+
+        // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
+        var values = new byte[] { 0, 1, 6, 20, 40, 60, 80, 200, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        this.MultithreadedHistogramTest(expected, values);
+    }
+
+    [Fact]
+    public void MultithreadedShortHistogramTest()
+    {
+        var expected = new long[16];
+        for (var i = 0; i < expected.Length; i++)
+        {
+            expected[i] = NumberOfThreads * NumberOfMetricUpdateByEachThread;
+        }
+
+        // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
+        var values = new short[] { -1, 1, 6, 20, 40, 60, 80, 200, 300, 600, 800, 1001, 3000, 6000, 8000, 10001 };
+
+        this.MultithreadedHistogramTest(expected, values);
+    }
+
+    [Fact]
+    public void MultithreadedIntHistogramTest()
+    {
+        var expected = new long[16];
+        for (var i = 0; i < expected.Length; i++)
+        {
+            expected[i] = NumberOfThreads * NumberOfMetricUpdateByEachThread;
+        }
+
+        // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
+        var values = new int[] { -1, 1, 6, 20, 40, 60, 80, 200, 300, 600, 800, 1001, 3000, 6000, 8000, 10001 };
+
+        this.MultithreadedHistogramTest(expected, values);
     }
 
     [Fact]
@@ -1507,6 +1697,21 @@ public class MetricApiTests : MetricTestsBase
 
         // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
         var values = new long[] { -1, 1, 6, 20, 40, 60, 80, 200, 300, 600, 800, 1001, 3000, 6000, 8000, 10001 };
+
+        this.MultithreadedHistogramTest(expected, values);
+    }
+
+    [Fact]
+    public void MultithreadedSingleHistogramTest()
+    {
+        var expected = new long[16];
+        for (var i = 0; i < expected.Length; i++)
+        {
+            expected[i] = NumberOfThreads * NumberOfMetricUpdateByEachThread;
+        }
+
+        // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
+        var values = new float[] { -1.0f, 1.0f, 6.0f, 20.0f, 40.0f, 60.0f, 80.0f, 200.0f, 300.0f, 600.0f, 800.0f, 1001.0f, 3000.0f, 6000.0f, 8000.0f, 10001.0f };
 
         this.MultithreadedHistogramTest(expected, values);
     }
@@ -1801,13 +2006,13 @@ public class MetricApiTests : MetricTestsBase
 
         meterProvider.ForceFlush();
 
-        if (typeof(T) == typeof(long))
+        if (typeof(T) == typeof(byte) || typeof(T) == typeof(short) || typeof(T) == typeof(int) || typeof(T) == typeof(long))
         {
             var sumReceived = GetLongSum(metricItems);
             var expectedSum = DeltaLongValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;
             Assert.Equal(expectedSum, sumReceived);
         }
-        else if (typeof(T) == typeof(double))
+        else if (typeof(T) == typeof(float) || typeof(T) == typeof(double))
         {
             var sumReceived = GetDoubleSum(metricItems);
             var expectedSum = DeltaDoubleValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;

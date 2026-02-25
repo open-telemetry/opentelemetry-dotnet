@@ -51,8 +51,14 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+
+    env:
+      PROJECT_NAME: ${{ inputs.project-name }}
+      PROJECT_BUILD_COMMANDS: ${{ inputs.project-build-commands }}
+      TARGET_FRAMEWORK: ${{ matrix.version }}
+
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
@@ -60,27 +66,30 @@ jobs:
         fetch-depth: 0
 
     - name: Setup previous .NET runtimes
-      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
+      uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
       with:
         dotnet-version: |
           8.0.x
           9.0.x
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
+      uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
 
     - name: dotnet restore ${{ inputs.project-name }}
-      run: dotnet restore ${{ inputs.project-name }} ${{ inputs.project-build-commands }}
+      shell: pwsh
+      run: dotnet restore ${env:PROJECT_NAME} ${env:PROJECT_BUILD_COMMANDS}
 
     - name: dotnet build ${{ inputs.project-name }}
-      run: dotnet build ${{ inputs.project-name }} --configuration Release --no-restore ${{ inputs.project-build-commands }}
+      shell: pwsh
+      run: dotnet build ${env:PROJECT_NAME} --configuration Release --no-restore ${env:PROJECT_BUILD_COMMANDS}
 
     - name: dotnet test ${{ inputs.project-name }}
+      shell: pwsh
       run: >
-        dotnet test ${{ inputs.project-name }}
+        dotnet test ${env:PROJECT_NAME}
         --collect:"Code Coverage"
         --results-directory:TestResults
-        --framework ${{ matrix.version }}
+        --framework ${env:TARGET_FRAMEWORK}
         --configuration Release
         --no-restore
         --no-build

@@ -51,13 +51,13 @@ jobs:
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
     - name: Check out code
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         token: ${{ steps.otelbot-token.outputs.token }}
         ref: ${{ github.event.repository.default_branch }}
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
+      uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
 
     - name: NuGet log in
       uses: NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544 # v1.1.0
@@ -70,6 +70,7 @@ jobs:
       env:
         GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
+        EXPECTED_COMMENT_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-login }}
         COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         NUGET_TOKEN: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
@@ -81,6 +82,7 @@ jobs:
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -pullRequestNumber ${env:ISSUE_NUMBER} `
           -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
+          -expectedCommentAuthorUserName ${env:EXPECTED_COMMENT_AUTHOR_USER_NAME} `
           -commentUserName ${env:COMMENT_USER_NAME} `
           -artifactDownloadPath "${env:GITHUB_WORKSPACE}/artifacts" `
           -pushToNuget $HasToken
@@ -102,7 +104,7 @@ jobs:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit. We need all the tags
         # for this work.
@@ -111,7 +113,7 @@ jobs:
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
+      uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
 
     - name: Create GitHub Pull Request to update stable build version in props
       if: |
@@ -153,6 +155,7 @@ jobs:
       env:
         GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         EXPECTED_PR_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-name }}
+        EXPECTED_COMMENT_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-login }}
         TAG: ${{ inputs.tag || github.ref_name }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
@@ -160,4 +163,5 @@ jobs:
         TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
+          -expectedCommentAuthorUserName ${env:EXPECTED_COMMENT_AUTHOR_USER_NAME} `
           -tag ${env:TAG}

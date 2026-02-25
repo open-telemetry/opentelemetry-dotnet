@@ -10,7 +10,7 @@ using System.Text;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public class OtlpMtlsHttpClientFactoryTests
+public class OtlpSecureHttpClientFactoryTests
 {
     [Fact]
     public void CreateHttpClient_ThrowsInvalidOperationException_WhenMtlsIsDisabled()
@@ -18,7 +18,7 @@ public class OtlpMtlsHttpClientFactoryTests
         var options = new OtlpMtlsOptions(); // Disabled by default
 
         Assert.Throws<InvalidOperationException>(() =>
-            OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options));
+            OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options));
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public class OtlpMtlsHttpClientFactoryTests
         var options = new OtlpMtlsOptions { ClientCertificatePath = "/nonexistent/client.crt" };
 
         var exception = Assert.Throws<FileNotFoundException>(() =>
-            OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options));
+            OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options));
 
         Assert.Contains("Certificate file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -49,7 +49,7 @@ public class OtlpMtlsHttpClientFactoryTests
                 EnableCertificateChainValidation = false, // Ignore validation for test cert
             };
 
-            using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
+            using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
             Assert.NotNull(httpClient);
 
@@ -72,16 +72,16 @@ public class OtlpMtlsHttpClientFactoryTests
     }
 
     [Fact]
-    public void CreateHttpClient_ConfiguresServerCertificateValidation_WhenTrustedRootCertificatesProvided()
+    public void CreateHttpClient_ConfiguresServerCertificateValidation_WhenCaCertificatesProvided()
     {
-        RunWithCryptoSupportCheck(() =>
+        SkipTestIfCryptoNotSupported(() =>
         {
             var tempTrustStoreFile = Path.GetTempFileName();
             try
             {
-                // Create a self-signed certificate for testing as trusted root
-                using var trustedCert = CreateSelfSignedCertificate();
-                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(trustedCert));
+                // Create a self-signed certificate for testing as CA root
+                using var caCert = CreateSelfSignedCertificate();
+                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(caCert));
 
                 var options = new OtlpMtlsOptions
                 {
@@ -89,7 +89,7 @@ public class OtlpMtlsHttpClientFactoryTests
                     EnableCertificateChainValidation = false, // Avoid platform-specific chain build differences
                 };
 
-                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
+                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
                 Assert.NotNull(httpClient);
 
@@ -115,7 +115,7 @@ public class OtlpMtlsHttpClientFactoryTests
     [Fact]
     public void CreateHttpClient_ConfiguresServerValidation_WithCaOnly()
     {
-        RunWithCryptoSupportCheck(() =>
+        SkipTestIfCryptoNotSupported(() =>
         {
             var tempTrustStoreFile = Path.GetTempFileName();
 
@@ -130,7 +130,7 @@ public class OtlpMtlsHttpClientFactoryTests
                     EnableCertificateChainValidation = false, // Avoid platform-specific chain build differences
                 };
 
-                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
+                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
                 var handlerField = typeof(HttpMessageInvoker).GetField(
                     "_handler",
@@ -157,7 +157,7 @@ public class OtlpMtlsHttpClientFactoryTests
     [Fact]
     public void CreateHttpClient_InvokesServerValidationCallbackAfterFactoryReturns()
     {
-        RunWithCryptoSupportCheck(() =>
+        SkipTestIfCryptoNotSupported(() =>
         {
             var tempTrustStoreFile = Path.GetTempFileName();
             try
@@ -171,7 +171,7 @@ public class OtlpMtlsHttpClientFactoryTests
                     EnableCertificateChainValidation = false,
                 };
 
-                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(options);
+                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
                 var handlerField = typeof(HttpMessageInvoker).GetField(
                     "_handler",
@@ -212,13 +212,30 @@ public class OtlpMtlsHttpClientFactoryTests
         using var chain = new X509Chain();
         chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateServerCertificate(
+        var result = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ValidateServerCertificate(
             serverCertificate,
             chain,
             SslPolicyErrors.None,
             caCertificate);
 
         Assert.True(result);
+    }
+
+    [Fact]
+    public void ValidateServerCertificate_ReturnsFalse_WhenNameMismatch()
+    {
+        using var caCertificate = CreateCertificateAuthority();
+        using var serverCertificate = CreateServerCertificate(caCertificate);
+        using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+        var result = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ValidateServerCertificate(
+            serverCertificate,
+            chain,
+            SslPolicyErrors.RemoteCertificateNameMismatch,
+            caCertificate);
+
+        Assert.False(result);
     }
 
     [Fact]
@@ -229,7 +246,7 @@ public class OtlpMtlsHttpClientFactoryTests
         using var chain = new X509Chain();
         chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateServerCertificate(
+        var result = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ValidateServerCertificate(
             serverCertificate,
             chain,
             SslPolicyErrors.RemoteCertificateChainErrors,
@@ -248,10 +265,28 @@ public class OtlpMtlsHttpClientFactoryTests
         using var chain = new X509Chain();
         chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateServerCertificate(
+        var result = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ValidateServerCertificate(
             serverCertificate,
             chain,
             SslPolicyErrors.RemoteCertificateChainErrors,
+            otherCaCertificate);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void ValidateServerCertificate_ReturnsFalse_WhenCaDoesNotMatch_EvenIfSslPolicyErrorsNone()
+    {
+        using var caCertificate = CreateCertificateAuthority();
+        using var otherCaCertificate = CreateCertificateAuthority();
+        using var serverCertificate = CreateServerCertificate(caCertificate);
+        using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+        var result = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ValidateServerCertificate(
+            serverCertificate,
+            chain,
+            SslPolicyErrors.None,
             otherCaCertificate);
 
         Assert.False(result);
@@ -262,20 +297,20 @@ public class OtlpMtlsHttpClientFactoryTests
     {
         using var expiredCertificate = CreateExpiredCertificate();
 
-        var result = OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ValidateCertificateChain(
+        var result = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ValidateCertificateChain(
             expiredCertificate,
-            OpenTelemetryProtocol.Implementation.OtlpMtlsCertificateManager.ClientCertificateType);
+            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ClientCertificateType);
 
         Assert.False(result);
     }
 
     [Fact]
-    public void CreateMtlsHttpClient_ThrowsArgumentNullException_WhenOptionsIsNull()
+    public void CreateSecureHttpClient_ThrowsArgumentNullException_WhenOptionsIsNull()
     {
         var exception = Assert.Throws<ArgumentNullException>(() =>
-            OpenTelemetryProtocol.Implementation.OtlpMtlsHttpClientFactory.CreateMtlsHttpClient(null!));
+            OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(null!));
 
-        Assert.Equal("mtlsOptions", exception.ParamName);
+        Assert.Equal("tlsOptions", exception.ParamName);
     }
 
     private static X509Certificate2 CreateSelfSignedCertificate()
@@ -404,7 +439,23 @@ public class OtlpMtlsHttpClientFactoryTests
         return builder.ToString();
     }
 
-    private static void RunWithCryptoSupportCheck(Action testBody)
+    /// <summary>
+    /// Executes a test action and gracefully handles platforms where cryptographic operations are not supported.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Some platforms (e.g., certain CI environments or restricted OS configurations) may not support
+    /// specific cryptographic operations required for TLS/mTLS certificate handling. This method wraps
+    /// test execution to catch <see cref="PlatformNotSupportedException"/> and <see cref="CryptographicException"/>
+    /// (when indicating lack of support), allowing tests to pass gracefully on unsupported platforms.
+    /// </para>
+    /// <para>
+    /// Note: xUnit 2.x does not support runtime test skipping. The test will appear as "passed" rather than
+    /// "skipped" when crypto is not supported. Consider upgrading to xUnit v3 for proper <c>Assert.Skip()</c> support.
+    /// </para>
+    /// </remarks>
+    /// <param name="testBody">The test action to execute.</param>
+    private static void SkipTestIfCryptoNotSupported(Action testBody)
     {
         try
         {
@@ -412,11 +463,15 @@ public class OtlpMtlsHttpClientFactoryTests
         }
         catch (PlatformNotSupportedException ex)
         {
-            Console.WriteLine($"Skipping mTLS HttpClient tests: {ex.Message}");
+            // Platform does not support the required cryptographic operations.
+            // Test is effectively skipped but will appear as passed in xUnit 2.x.
+            Console.WriteLine($"[SKIPPED] mTLS HttpClient test skipped due to platform limitation: {ex.Message}");
         }
         catch (CryptographicException ex) when (ex.Message.Contains("not supported", StringComparison.OrdinalIgnoreCase))
         {
-            Console.WriteLine($"Skipping mTLS HttpClient tests: {ex.Message}");
+            // Cryptographic operation not supported on this platform/configuration.
+            // Test is effectively skipped but will appear as passed in xUnit 2.x.
+            Console.WriteLine($"[SKIPPED] mTLS HttpClient test skipped due to crypto limitation: {ex.Message}");
         }
     }
 }

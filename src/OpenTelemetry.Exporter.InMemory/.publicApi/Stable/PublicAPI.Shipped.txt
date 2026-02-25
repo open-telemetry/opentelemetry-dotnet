@@ -6,6 +6,7 @@ OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions
 OpenTelemetry.Metrics.MetricSnapshot
 OpenTelemetry.Metrics.MetricSnapshot.Description.get -> string!
 OpenTelemetry.Metrics.MetricSnapshot.MeterName.get -> string!
+OpenTelemetry.Metrics.MetricSnapshot.MeterSchemaUrl.get -> string!
 OpenTelemetry.Metrics.MetricSnapshot.MeterVersion.get -> string!
 OpenTelemetry.Metrics.MetricSnapshot.MetricPoints.get -> System.Collections.Generic.IReadOnlyList<OpenTelemetry.Metrics.MetricPoint>!
 OpenTelemetry.Metrics.MetricSnapshot.MetricSnapshot(OpenTelemetry.Metrics.Metric! metric) -> void

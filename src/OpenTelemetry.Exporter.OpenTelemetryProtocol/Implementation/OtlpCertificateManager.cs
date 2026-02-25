@@ -10,11 +10,15 @@ using System.Security.Cryptography.X509Certificates;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 /// <summary>
-/// Manages certificate loading, validation, and security checks for mTLS connections.
+/// Manages certificate loading, validation, and security checks for TLS connections.
 /// </summary>
-internal static class OtlpMtlsCertificateManager
+/// <remarks>
+/// This class provides functionality for both simple server certificate trust
+/// (for self-signed certificates) and mTLS client authentication scenarios.
+/// </remarks>
+internal static class OtlpCertificateManager
 {
-    internal const string CaCertificateType = "CA certificate";
+    internal const string CaCertificateType = "CA Certificate";
     internal const string ClientCertificateType = "Client certificate";
     internal const string ClientPrivateKeyType = "Client private key";
 
@@ -218,6 +222,10 @@ internal static class OtlpMtlsCertificateManager
     /// <param name="sslPolicyErrors">The SSL policy errors.</param>
     /// <param name="caCertificate">The CA certificate to validate against.</param>
     /// <returns>True if the certificate is valid; otherwise, false.</returns>
+    /// <remarks>
+    /// This method is used to validate server certificates against a CA.
+    /// Common use case: connecting to a server with a self-signed certificate.
+    /// </remarks>
     internal static bool ValidateServerCertificate(
         X509Certificate2 serverCert,
         X509Chain chain,
@@ -226,40 +234,44 @@ internal static class OtlpMtlsCertificateManager
     {
         try
         {
-            // If there are no SSL policy errors, accept the certificate
-            if (sslPolicyErrors == SslPolicyErrors.None)
+            // Fail fast for any non-chain-related SSL policy errors (e.g., name mismatch).
+            var nonChainErrors = sslPolicyErrors & ~SslPolicyErrors.RemoteCertificateChainErrors;
+            if (nonChainErrors != SslPolicyErrors.None)
             {
-                return true;
+                OpenTelemetryProtocolExporterEventSource.Log.MtlsServerCertificateValidationFailed(
+                    serverCert.Subject,
+                    sslPolicyErrors.ToString());
+                return false;
             }
 
-            // If the only error is an untrusted root, validate against our CA
-            if (sslPolicyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
+            // Always validate against the provided CA to enforce custom trust restrictions.
+            chain.ChainPolicy.ExtraStore.Clear();
+            chain.ChainPolicy.CustomTrustStore.Clear();
+            chain.ChainPolicy.ExtraStore.Add(caCertificate);
+            chain.ChainPolicy.VerificationFlags =
+                X509VerificationFlags.AllowUnknownCertificateAuthority;
+            chain.ChainPolicy.CustomTrustStore.Add(caCertificate);
+            chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+
+            // Skip CRL/OCSP checks for custom CA validation to avoid network-dependent failures.
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            chain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
+
+            bool isValid = chain.Build(serverCert);
+
+            if (isValid)
             {
-                // Add our CA certificate to the chain
-                chain.ChainPolicy.ExtraStore.Add(caCertificate);
-                chain.ChainPolicy.VerificationFlags =
-                    X509VerificationFlags.AllowUnknownCertificateAuthority;
-                chain.ChainPolicy.CustomTrustStore.Add(caCertificate);
-                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
-                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                chain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
-
-                bool isValid = chain.Build(serverCert);
-
-                if (isValid)
+                // Verify that the chain terminates with our CA
+                var rootCert = chain.ChainElements[^1].Certificate;
+                if (
+                    string.Equals(
+                        rootCert.Thumbprint,
+                        caCertificate.Thumbprint,
+                        StringComparison.OrdinalIgnoreCase))
                 {
-                    // Verify that the chain terminates with our CA
-                    var rootCert = chain.ChainElements[^1].Certificate;
-                    if (
-                        string.Equals(
-                            rootCert.Thumbprint,
-                            caCertificate.Thumbprint,
-                            StringComparison.OrdinalIgnoreCase))
-                    {
-                        OpenTelemetryProtocolExporterEventSource.Log.MtlsServerCertificateValidated(
-                            serverCert.Subject);
-                        return true;
-                    }
+                    OpenTelemetryProtocolExporterEventSource.Log.MtlsServerCertificateValidated(
+                        serverCert.Subject);
+                    return true;
                 }
             }
 

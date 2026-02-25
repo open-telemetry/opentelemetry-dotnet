@@ -40,11 +40,33 @@ You can configure the `ConsoleExporter` through `Options` types properties
 and environment variables.
 The `Options` type setters take precedence over the environment variables.
 
+### MetricReaderOptions (metrics)
+
+For metrics, `AddConsoleExporter()` pairs the exporter with a
+`PeriodicExportingMetricReader`. Use `MetricReaderOptions` to configure
+temporality and export interval/timeout:
+
+```csharp
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    // rest of config not shown here.
+    .AddConsoleExporter((_, metricReaderOptions) =>
+    {
+        metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+
+        metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
+        metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds = 5_000;
+    })
+    .Build();
+```
+
+See [`TestMetrics.cs`](../../examples/Console/TestMetrics.cs) for a runnable
+example.
+
 ## Environment Variables
 
 The following environment variables can be used to override the default
 values of the `PeriodicExportingMetricReaderOptions`
-(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.12.0/specification/sdk-environment-variables.md#periodic-exporting-metricreader).
+(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#periodic-exporting-metricreader)).
 
 | Environment variable          | `PeriodicExportingMetricReaderOptions` property |
 | ------------------------------| ------------------------------------------------|

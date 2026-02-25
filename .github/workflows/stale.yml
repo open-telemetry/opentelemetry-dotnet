@@ -11,12 +11,13 @@ permissions:
 
 jobs:
   stale:
+    if: github.event.repository.fork == false
     permissions:
       issues: write  # for actions/stale to close stale issues
       pull-requests: write  # for actions/stale to close stale PRs
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/stale@997185467fa4f803885201cee163a9f38240193d # v10.1.1
+      - uses: actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f # v10.2.0
         with:
           stale-issue-message: 'This issue was marked stale due to lack of activity and will be closed in 7 days. Commenting will instruct the bot to automatically remove the label. This bot runs once per day.'
           close-issue-message: 'Closed as inactive. Feel free to reopen if this issue is still a concern.'

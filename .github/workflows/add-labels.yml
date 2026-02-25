@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: check out code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Add labels for package found in bug issue descriptions
         shell: pwsh
@@ -27,11 +27,12 @@ jobs:
           Import-Module .\build\scripts\add-labels.psm1
 
           AddLabelsOnIssuesForPackageFoundInBody `
-            -issueNumber ${{ github.event.issue.number }} `
+            -issueNumber ${env:ISSUE_NUMBER} `
             -issueBody $env:ISSUE_BODY
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
 
   add-labels-on-pull-requests:
     permissions:
@@ -42,7 +43,7 @@ jobs:
 
     steps:
       - name: check out code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.repository.default_branch }} # Note: Do not run on the PR branch we want to execute add-labels.psm1 from main on the base repo only because pull_request_target can see secrets
 
@@ -52,7 +53,8 @@ jobs:
           Import-Module .\build\scripts\add-labels.psm1
 
           AddLabelsOnPullRequestsBasedOnFilesChanged `
-            -pullRequestNumber ${{ github.event.pull_request.number }} `
+            -pullRequestNumber ${env:PR_NUMBER} `
             -labelPackagePrefix 'pkg:'
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}

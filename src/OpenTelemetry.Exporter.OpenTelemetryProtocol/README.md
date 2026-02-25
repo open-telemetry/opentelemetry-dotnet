@@ -394,20 +394,24 @@ appBuilder.Services.Configure<LogRecordExportProcessorOptions>(
 ### MetricReaderOptions
 
 The `MetricReaderOptions` class may be used to configure reader settings for
-metrics:
+metrics (e.g. `TemporalityPreference` and `PeriodicExportingMetricReaderOptions`):
 
 ```csharp
 // Set via delegate using code:
 appBuilder.Services.AddOpenTelemetry()
     .WithMetrics(builder => builder.AddOtlpExporter((exporterOptions, readerOptions) =>
     {
+        readerOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
         readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
+        readerOptions.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds = 5_000;
     }));
 
 // Set via Options API using code:
 appBuilder.Services.Configure<MetricReaderOptions>(o =>
 {
+    o.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
     o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
+    o.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds = 5_000;
 });
 
 // Set via Options API using configuration:
@@ -484,13 +488,21 @@ or reader
 
 * Metrics:
 
-  The following environment variables can be used to override the default value
-  of the `TemporalityPreference` setting for the reader configured for metrics
-  when using OTLP exporter:
+  The following environment variables can be used to override the default values
+  for the reader configured for metrics when using OTLP exporter:
 
-  | Environment variable                                | `MetricReaderOptions` property                  |
-  | ----------------------------------------------------| ------------------------------------------------|
-  | `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` | `TemporalityPreference`                         |
+  | Environment variable                                        | `MetricReaderOptions` property                  |
+  | ------------------------------------------------------------| ------------------------------------------------|
+  | `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE`         | `TemporalityPreference`                         |
+  | `OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION`  | `DefaultHistogramAggregation`                   |
+
+  `OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION` specifies the
+  default aggregation to use for histogram instruments. Valid values are:
+  * `explicit_bucket_histogram` (default)
+  * `base2_exponential_bucket_histogram`
+
+  Note: Explicit views configured via `AddView` take precedence over the
+  default histogram aggregation.
 
   The following environment variables can be used to override the default values
   of the periodic exporting metric reader configured for metrics:
