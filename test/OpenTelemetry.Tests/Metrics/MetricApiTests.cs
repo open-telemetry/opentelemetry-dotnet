@@ -1615,7 +1615,7 @@ public class MetricApiTests : MetricTestsBase
         this.MultithreadedCounterTest(DeltaLongValueUpdatedByEachCall);
     }
 
-    [Fact]
+    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/6803")]
     public void MultithreadedSingleCounterTest()
     {
         this.MultithreadedCounterTest((float)DeltaDoubleValueUpdatedByEachCall);
