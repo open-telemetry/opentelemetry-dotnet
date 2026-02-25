@@ -462,9 +462,9 @@ public class BaggagePropagatorTests
 
         var baggageHeader = carrier[BaggagePropagator.BaggageHeaderName];
 
-        Assert.Contains("%09", baggageHeader);  // Tab
-        Assert.Contains("%20", baggageHeader);  // Space
-        Assert.Contains("%22", baggageHeader);  // Quote
+        Assert.Contains("%09", baggageHeader, StringComparison.Ordinal);  // Tab
+        Assert.Contains("%20", baggageHeader, StringComparison.Ordinal);  // Space
+        Assert.Contains("%22", baggageHeader, StringComparison.Ordinal);  // Quote
 
         var extractedContext = this.baggage.Extract(default, carrier, Getter);
         var extractedBaggage = extractedContext.Baggage.GetBaggage();
