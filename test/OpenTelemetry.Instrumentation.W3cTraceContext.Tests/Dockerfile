@@ -11,9 +11,9 @@ WORKDIR /w3c
 RUN apt-get update && apt-get install -y git
 RUN git clone --branch level-1 https://github.com/w3c/trace-context.git
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.418@sha256:58359d0b8fe8237be1d63ac335ca378e2857f976c7f92791f7c84b3c117037f5 AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.311@sha256:03a7d87512a743b3d53416adae79eb89d2a7163de78bb58e7bc7b7e262e25750 AS dotnet-sdk-9.0
-FROM mcr.microsoft.com/dotnet/sdk:10.0.103@sha256:0a506ab0c8aa077361af42f82569d364ab1b8741e967955d883e3f23683d473a AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:8.0.418@sha256:bfb6ed602caa605141700aea7dc7d42574b74b704368e67d683c71a002123808 AS dotnet-sdk-8.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0.311@sha256:7ba12a329980dad8291cc7339ad073a8666ed949a78138eb8543a8cc8ccaa0de AS dotnet-sdk-9.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.103@sha256:e362a8dbcd691522456da26a5198b8f3ca1d7641c95624fadc5e3e82678bd08a AS dotnet-sdk-10.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
