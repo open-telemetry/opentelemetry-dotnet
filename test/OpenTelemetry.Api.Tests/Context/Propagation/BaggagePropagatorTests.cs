@@ -238,7 +238,7 @@ public class BaggagePropagatorTests
         Assert.Empty(propagationContext.Baggage.GetBaggage());
     }
 
-    [Fact(Skip = "Fails due to spec mismatch")]
+    [Fact(Skip = "Fails due to spec mismatch, tracked in https://github.com/open-telemetry/opentelemetry-dotnet/issues/5210")]
     public void ValidateOWSOnExtraction()
     {
         var carrier = new Dictionary<string, string>
@@ -259,7 +259,7 @@ public class BaggagePropagatorTests
         Assert.Equal("SomeValue2", baggage[1].Value);
     }
 
-    [Fact(Skip = "Fails due to spec mismatch")]
+    [Fact(Skip = "Fails due to spec mismatch, tracked in https://github.com/open-telemetry/opentelemetry-dotnet/issues/5210")]
     public void ValidateSemicolonMetadataIgnoredOnExtraction()
     {
         var carrier = new Dictionary<string, string>
@@ -446,7 +446,7 @@ public class BaggagePropagatorTests
         Assert.Equal("value=more=equals", extractedBaggage["key"]);
     }
 
-    [Fact(Skip = "Fails due to spec mismatch")]
+    [Fact(Skip = "Fails due to spec mismatch, tracked in https://github.com/open-telemetry/opentelemetry-dotnet/issues/5210")]
     public void ValidateSpecialCharactersInjection()
     {
         var propagationContext = new PropagationContext(
