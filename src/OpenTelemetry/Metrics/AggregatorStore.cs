@@ -20,6 +20,7 @@ internal sealed class AggregatorStore
     internal readonly HashSet<string>? TagKeysInteresting;
 #endif
     internal readonly bool OutputDelta;
+    internal readonly bool IsAsynchronous;
     internal readonly int NumberOfMetricPoints;
     internal readonly ConcurrentDictionary<Tags, LookupData>? TagsToMetricPointIndexDictionaryDelta;
     internal readonly Func<ExemplarReservoir?>? ExemplarReservoirFactory;
@@ -74,6 +75,7 @@ internal sealed class AggregatorStore
         this.currentMetricPointBatch = new int[this.NumberOfMetricPoints];
         this.aggType = aggType;
         this.OutputDelta = temporality == AggregationTemporality.Delta;
+        this.IsAsynchronous = metricStreamIdentity.IsAsynchronous;
         this.histogramExplicitBounds = new(metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity));
         this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
@@ -284,6 +286,14 @@ internal sealed class AggregatorStore
         {
             ref var metricPoint = ref this.metricPoints[i];
             if (!metricPoint.IsInitialized)
+            {
+                continue;
+            }
+
+            // For asynchronous instruments, only export points observed this cycle.
+            // Synchronous instruments carry forward all cumulative values.
+            if (this.IsAsynchronous
+                && metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
             {
                 continue;
             }
