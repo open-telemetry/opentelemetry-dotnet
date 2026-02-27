@@ -637,6 +637,13 @@ public struct MetricPoint
                     else
                     {
                         this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
+
+                        // For asynchronous instruments, reset status so that points
+                        // not reported in the next callback are treated as stale.
+                        if (this.aggregatorStore.IsAsynchronous)
+                        {
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                        }
                     }
 
                     break;
@@ -662,6 +669,13 @@ public struct MetricPoint
                     else
                     {
                         this.snapshotValue.AsDouble = InterlockedHelper.Read(ref this.runningValue.AsDouble);
+
+                        // For asynchronous instruments, reset status so that points
+                        // not reported in the next callback are treated as stale.
+                        if (this.aggregatorStore.IsAsynchronous)
+                        {
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                        }
                     }
 
                     break;
