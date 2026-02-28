@@ -361,11 +361,11 @@ public class BaggagePropagatorTests
         var longValue = new string('0', 8190);
 
         var propagationContext = new PropagationContext(
-        default,
-        new Baggage(new Dictionary<string, string>
-        {
-            { "a", longValue },
-        }));
+            default,
+            new Baggage(new Dictionary<string, string>
+            {
+                { "a", longValue },
+            }));
 
         var carrier = new Dictionary<string, string>();
 
@@ -431,9 +431,9 @@ public class BaggagePropagatorTests
         var propagationContext = new PropagationContext(
             default,
             new Baggage(new Dictionary<string, string>
-        {
-            { "key", "value=more=equals" },
-        }));
+            {
+                { "key", "value=more=equals" },
+            }));
 
         var carrier = new Dictionary<string, string>();
 
@@ -450,11 +450,11 @@ public class BaggagePropagatorTests
     public void ValidateSpecialCharactersInjection()
     {
         var propagationContext = new PropagationContext(
-        default,
-        new Baggage(new Dictionary<string, string>
-        {
-            { "key", "\t \"';=asdf!@#$%^&*()" },
-        }));
+            default,
+            new Baggage(new Dictionary<string, string>
+            {
+                { "key", "\t \"';=asdf!@#$%^&*()" },
+            }));
 
         var carrier = new Dictionary<string, string>();
 
