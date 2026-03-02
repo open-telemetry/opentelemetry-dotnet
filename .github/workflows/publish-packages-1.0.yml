@@ -34,7 +34,6 @@ jobs:
       attestations: write
       contents: read
       id-token: write
-      
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       COSIGN_YES: "yes"
