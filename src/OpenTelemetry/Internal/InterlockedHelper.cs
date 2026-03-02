@@ -32,7 +32,7 @@ internal static class InterlockedHelper
         var sw = default(SpinWait);
         while (true)
         {
-            sw.SpinOnce();
+            sw.SpinOnce(-1);
 
             var returnedValue = Interlocked.CompareExchange(ref location, currentValue + value, currentValue);
             if (returnedValue == currentValue)
