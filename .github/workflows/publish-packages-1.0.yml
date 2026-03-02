@@ -30,10 +30,11 @@ jobs:
     if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
     runs-on: windows-latest
     permissions:
+      artifact-metadata: write
       attestations: write
       contents: read
       id-token: write
-      artifact-metadata: write
+      
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       COSIGN_YES: "yes"
