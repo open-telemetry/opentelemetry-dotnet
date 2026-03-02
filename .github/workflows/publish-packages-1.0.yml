@@ -30,6 +30,7 @@ jobs:
     if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
     runs-on: windows-latest
     permissions:
+      artifact-metadata: write
       attestations: write
       contents: read
       id-token: write
@@ -79,7 +80,7 @@ jobs:
         }
 
     - name: Create GitHub attestations for DLLs
-      uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+      uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
       with:
         subject-path: |
           ./artifacts/bin/*/release_*/OpenTelemetry*.dll
