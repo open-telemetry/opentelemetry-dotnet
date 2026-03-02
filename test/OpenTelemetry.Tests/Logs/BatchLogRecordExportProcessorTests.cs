@@ -4,15 +4,20 @@
 #if !NETFRAMEWORK
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
 
 public sealed class BatchLogRecordExportProcessorTests
 {
-    [Fact]
-    public void StateValuesAndScopeBufferingTest()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void StateValuesAndScopeBufferingTest(bool threadingDisabled)
     {
+        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(threadingDisabled);
+
         var scopeProvider = new LoggerExternalScopeProvider();
 
         List<LogRecord> exportedItems = new();
@@ -21,7 +26,10 @@ public sealed class BatchLogRecordExportProcessorTests
 #pragma warning disable CA2000 // Dispose objects before losing scope
             new InMemoryExporter<LogRecord>(exportedItems),
 #pragma warning restore CA2000 // Dispose objects before losing scope
-            scheduledDelayMilliseconds: int.MaxValue);
+            maxQueueSize: BatchLogRecordExportProcessor.DefaultMaxQueueSize,
+            scheduledDelayMilliseconds: int.MaxValue,
+            exporterTimeoutMilliseconds: BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
+            maxExportBatchSize: BatchLogRecordExportProcessor.DefaultMaxExportBatchSize);
 
         using var scope = scopeProvider.Push(exportedItems);
 
@@ -147,6 +155,46 @@ public sealed class BatchLogRecordExportProcessorTests
 
         Assert.Single(exportedItems);
         Assert.Same(logRecord, exportedItems[0]);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void DisposeWithoutShutdown(bool threadingDisabled)
+    {
+        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(threadingDisabled);
+
+        var scopeProvider = new LoggerExternalScopeProvider();
+
+        List<LogRecord> exportedItems = new();
+
+        var processor = new BatchLogRecordExportProcessor(
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            new InMemoryExporter<LogRecord>(exportedItems),
+#pragma warning restore CA2000 // Dispose objects before losing scope
+            maxQueueSize: BatchLogRecordExportProcessor.DefaultMaxQueueSize,
+            scheduledDelayMilliseconds: int.MaxValue,
+            exporterTimeoutMilliseconds: BatchLogRecordExportProcessor.DefaultExporterTimeoutMilliseconds,
+            maxExportBatchSize: BatchLogRecordExportProcessor.DefaultMaxExportBatchSize);
+
+        processor.Dispose();
+
+        using var scope = scopeProvider.Push(exportedItems);
+
+        var pool = LogRecordSharedPool.Current;
+
+        var logRecord = pool.Rent();
+
+        var state = new LogRecordTests.DisposingState("Hello world");
+
+        logRecord.ILoggerData.ScopeProvider = scopeProvider;
+        logRecord.StateValues = state;
+
+        processor.OnEnd(logRecord);
+
+        state.Dispose();
+
+        Assert.Empty(exportedItems);
     }
 }
 #endif
