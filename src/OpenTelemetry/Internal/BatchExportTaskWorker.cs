@@ -40,11 +40,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
     /// <inheritdoc/>
     public override void Start()
     {
-        this.workerTask = Task.Factory.StartNew(
-            this.ExporterProcAsync,
-            this.cancellationTokenSource.Token,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default).Unwrap();
+        this.workerTask = Task.Run(this.ExporterProcAsync, this.cancellationTokenSource.Token);
     }
 
     /// <inheritdoc/>
@@ -177,6 +173,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                     this.dataExportedNotification.Task,
                     this.shutdownCompletionSource.Task,
                     Task.Delay(timeout, combinedTokenSource.Token)).ConfigureAwait(false);
+                combinedTokenSource.Cancel();
             }
             catch (ObjectDisposedException)
             {
@@ -212,9 +209,11 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                 {
                     try
                     {
+                        using var delayCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                         await Task.WhenAny(
                             this.exportTrigger.WaitAsync(cancellationToken),
-                            Task.Delay(this.ScheduledDelayMilliseconds, cancellationToken)).ConfigureAwait(false);
+                            Task.Delay(this.ScheduledDelayMilliseconds, delayCts.Token)).ConfigureAwait(false);
+                        delayCts.Cancel();
                     }
                     catch (OperationCanceledException)
                     {
