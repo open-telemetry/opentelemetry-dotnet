@@ -34,11 +34,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
     /// <inheritdoc/>
     public override void Start()
     {
-        this.workerTask = Task.Factory.StartNew(
-            this.ExporterProcAsync,
-            this.cancellationTokenSource.Token,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default).Unwrap();
+        this.workerTask = Task.Run(this.ExporterProcAsync, this.cancellationTokenSource.Token);
     }
 
     /// <inheritdoc/>
@@ -129,9 +125,11 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
 
                 try
                 {
+                    using var delayCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                     triggeredTask = await Task.WhenAny(
                         exportTriggerTask,
-                        Task.Delay(timeout, cancellationToken)).ConfigureAwait(false);
+                        Task.Delay(timeout, delayCts.Token)).ConfigureAwait(false);
+                    delayCts.Cancel();
                 }
                 catch (OperationCanceledException)
                 {
