@@ -58,11 +58,7 @@ public sealed class LoggerProviderTests
 
     private sealed class TestLoggerProvider : LoggerProvider
     {
-#if OPENTELEMETRY_API_EXPERIMENTAL_FEATURES_EXPOSED
         protected override bool TryCreateLogger(
-#else
-        internal override bool TryCreateLogger(
-#endif
             string? name,
             [NotNullWhen(true)]
             out Logger? logger)
