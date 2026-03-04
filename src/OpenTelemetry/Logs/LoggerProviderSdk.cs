@@ -191,13 +191,8 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         }
     }
 
-    /// <inheritdoc />
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    protected
-#else
-    internal
-#endif
-        override bool TryCreateLogger(
+    /// <inheritdoc/>
+    protected override bool TryCreateLogger(
         string? name,
         [NotNullWhen(true)]
         out Logger? logger)
