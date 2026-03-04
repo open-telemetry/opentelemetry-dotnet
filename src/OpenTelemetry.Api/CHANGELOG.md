@@ -6,8 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* **Breaking change:** The Baggage API now treats baggage names as
-  case sensitive.
+* **Breaking change:** The Baggage API implements the latest [Baggage API
+  specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.36.0/specification/baggage/api.md),
+  which disallows empty baggage names and treats baggage names and values as case
+  sensitive.
+  ([#6931](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6931))
 
 ## 1.15.0
 
