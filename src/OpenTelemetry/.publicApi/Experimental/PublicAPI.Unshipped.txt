@@ -1,11 +1,6 @@
 [OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
 [OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<double> measurement) -> void
 [OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<long> measurement) -> void
-OpenTelemetry.Logs.LogRecord.Logger.get -> OpenTelemetry.Logs.Logger!
-OpenTelemetry.Logs.LogRecord.Severity.get -> OpenTelemetry.Logs.LogRecordSeverity?
-OpenTelemetry.Logs.LogRecord.Severity.set -> void
-OpenTelemetry.Logs.LogRecord.SeverityText.get -> string?
-OpenTelemetry.Logs.LogRecord.SeverityText.set -> void
 [OTEL1004]OpenTelemetry.Metrics.ExemplarMeasurement<T>
 [OTEL1004]OpenTelemetry.Metrics.ExemplarMeasurement<T>.ExemplarMeasurement() -> void
 [OTEL1004]OpenTelemetry.Metrics.ExemplarMeasurement<T>.Tags.get -> System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string!, object?>>
