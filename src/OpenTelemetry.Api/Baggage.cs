@@ -94,7 +94,7 @@ public readonly struct Baggage : IEquatable<Baggage>
             return default;
         }
 
-        Dictionary<string, string> baggageCopy = new Dictionary<string, string>(baggageItems.Count, StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, string> baggageCopy = new Dictionary<string, string>(baggageItems.Count, StringComparer.Ordinal);
         foreach (KeyValuePair<string, string> baggageItem in baggageItems)
         {
             if (string.IsNullOrEmpty(baggageItem.Value))
@@ -245,7 +245,7 @@ public readonly struct Baggage : IEquatable<Baggage>
         }
 
         return new Baggage(
-            new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase)
+            new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal)
             {
                 [name] = value!,
             });
@@ -271,7 +271,7 @@ public readonly struct Baggage : IEquatable<Baggage>
             return this;
         }
 
-        var newBaggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase);
+        var newBaggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
 
         foreach (var item in baggageItems)
         {
@@ -295,7 +295,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>New <see cref="Baggage"/> with the key/value pair removed.</returns>
     public Baggage RemoveBaggage(string name)
     {
-        var baggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase);
+        var baggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
         baggage.Remove(name);
 
         return new Baggage(baggage);
