@@ -1,11 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NETSTANDARD2_1_OR_GREATER || NET || EXPOSE_EXPERIMENTAL_FEATURES
+#if NETSTANDARD2_1_OR_GREATER || NET
 using System.Diagnostics.CodeAnalysis;
-#endif
-#if EXPOSE_EXPERIMENTAL_FEATURES
-using OpenTelemetry.Internal;
 #endif
 
 namespace OpenTelemetry.Logs;
@@ -24,49 +21,28 @@ public class LoggerProvider : BaseProvider
     {
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets a logger.
     /// </summary>
-    /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
     /// <returns><see cref="Logger"/> instance.</returns>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-    public
-#else
-    internal
-#endif
-        Logger GetLogger()
+    public Logger GetLogger()
         => this.GetLogger(name: null, version: null);
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets a logger with the given name.
     /// </summary>
-    /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-    public
-#else
-    internal
-#endif
-        Logger GetLogger(string? name)
+    public Logger GetLogger(string? name)
         => this.GetLogger(name, version: null);
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets a logger with the given name and version.
     /// </summary>
-    /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <param name="version">Optional version of the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-    public
-#else
-    internal
-#endif
-        Logger GetLogger(string? name, string? version)
+    public Logger GetLogger(string? name, string? version)
     {
         if (!this.TryCreateLogger(name, out var logger))
         {
@@ -78,20 +54,13 @@ public class LoggerProvider : BaseProvider
         return logger;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Try to create a logger with the given name.
     /// </summary>
-    /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <param name="logger"><see cref="Logger"/>.</param>
     /// <returns><see langword="true"/> if the logger was created.</returns>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-    protected
-#else
-    internal
-#endif
-        virtual bool TryCreateLogger(
+    protected virtual bool TryCreateLogger(
         string? name,
 #if NETSTANDARD2_1_OR_GREATER || NET
         [NotNullWhen(true)]

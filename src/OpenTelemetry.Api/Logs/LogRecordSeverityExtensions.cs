@@ -1,27 +1,12 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-using System.Diagnostics.CodeAnalysis;
-using OpenTelemetry.Internal;
-#endif
-
 namespace OpenTelemetry.Logs;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Contains extension methods for the <see cref="LogRecordSeverity"/> enum.
 /// </summary>
-/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
-[Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-public
-#else
-/// <summary>
-/// Contains extension methods for the <see cref="LogRecordSeverity"/> enum.
-/// </summary>
-internal
-#endif
-    static class LogRecordSeverityExtensions
+public static class LogRecordSeverityExtensions
 {
     internal const string UnspecifiedShortName = "UNSPECIFIED";
 

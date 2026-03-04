@@ -85,7 +85,6 @@
   </Folder>
   <Folder Name="/docs/diagnostics/experimental-apis/">
     <File Path="docs/diagnostics/experimental-apis/OTEL1000.md" />
-    <File Path="docs/diagnostics/experimental-apis/OTEL1001.md" />
     <File Path="docs/diagnostics/experimental-apis/OTEL1004.md" />
     <File Path="docs/diagnostics/experimental-apis/README.md" />
   </Folder>
