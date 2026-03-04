@@ -76,6 +76,21 @@ public class BaggageTests
     }
 
     [Fact]
+    public void SetEmptyNameTest()
+    {
+        var baggage = Baggage.Current;
+        baggage = Baggage.SetBaggage(K1, V1, baggage);
+
+        Assert.Equal(1, Baggage.Current.Count);
+        Assert.Equal(1, baggage.Count);
+
+        baggage = Baggage.Current.SetBaggage(string.Empty, "unused-value-1");
+
+        Assert.Equal(1, baggage.Count);
+        Assert.Contains(baggage.GetBaggage(), kvp => kvp.Key == K1);
+    }
+
+    [Fact]
     public void SetNullValueTest()
     {
         var baggage = Baggage.Current;

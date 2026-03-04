@@ -239,6 +239,11 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
     public Baggage SetBaggage(string name, string? value)
     {
+        if (string.IsNullOrEmpty(name))
+        {
+            return this;
+        }
+
         if (string.IsNullOrEmpty(value))
         {
             return this.RemoveBaggage(name);
@@ -275,7 +280,11 @@ public readonly struct Baggage : IEquatable<Baggage>
 
         foreach (var item in baggageItems)
         {
-            if (string.IsNullOrEmpty(item.Value))
+            if (string.IsNullOrEmpty(item.Key))
+            {
+                continue;
+            }
+            else if (string.IsNullOrEmpty(item.Value))
             {
                 newBaggage.Remove(item.Key);
             }
