@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Stabilized `Sdk.CreateLoggerProviderBuilder()` and `LogRecord.Severity`,
+  `LogRecord.SeverityText`, and `LogRecord.Logger` properties. These APIs
+  are no longer experimental and no longer require the `OTEL1001` diagnostic
+  suppression.
+  ([#6942](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6942))
+
 * Fixed a thread-safety issue in `LogRecordSharedPool.Rent()`.
   ([#6833](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6833)
 

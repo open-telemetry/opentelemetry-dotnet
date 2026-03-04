@@ -6,6 +6,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Stabilized the Logs Bridge API. The following types are no longer
+  experimental and no longer require the `OTEL1001` diagnostic suppression:
+  `Logger`, `LoggerProvider.GetLogger`, `LoggerProvider.TryCreateLogger`,
+  `LogRecordData`, `LogRecordAttributeList`, `LogRecordSeverity`, and
+  `LogRecordSeverityExtensions`.
+  ([#6942](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6942))
+
 ## 1.15.0
 
 Released 2026-Jan-21
