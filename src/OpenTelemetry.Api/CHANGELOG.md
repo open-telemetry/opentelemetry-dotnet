@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking change:** The Baggage API now treats baggage names as
+  case sensitive.
+
 ## 1.15.0
 
 Released 2026-Jan-21
