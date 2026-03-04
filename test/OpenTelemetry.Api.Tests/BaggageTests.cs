@@ -26,16 +26,18 @@ public class BaggageTests
     [Fact]
     public void SetAndGetTest()
     {
-        var list = new List<KeyValuePair<string, string>>(3)
+        var list = new List<KeyValuePair<string, string>>(4)
         {
             new(K1, V1),
             new("key2", "value2"),
             new("KEY2", "VALUE2"),
+            new("a ✅", "B% 💼"),
         };
 
         Baggage.SetBaggage(K1, V1);
         var baggage = Baggage.Current.SetBaggage(new KeyValuePair<string, string?>("key2", "value2"));
         baggage = baggage.SetBaggage(new KeyValuePair<string, string?>("KEY2", "VALUE2"));
+        baggage = baggage.SetBaggage("a ✅", "B% 💼");
         Baggage.Current = baggage;
 
         Assert.NotEmpty(Baggage.GetBaggage());
@@ -49,6 +51,7 @@ public class BaggageTests
         Assert.Null(Baggage.GetBaggage("NO_KEY"));
         Assert.Equal("value2", Baggage.Current.GetBaggage("key2"));
         Assert.Equal("VALUE2", Baggage.Current.GetBaggage("KEY2"));
+        Assert.Equal("B% 💼", Baggage.Current.GetBaggage("a ✅"));
 
         Assert.Throws<ArgumentException>(() => Baggage.GetBaggage(null!));
     }
