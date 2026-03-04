@@ -29,13 +29,14 @@ public class BaggageTests
         var list = new List<KeyValuePair<string, string>>(4)
         {
             new(K1, V1),
-            new("key2", "value2"),
+            new("key2", "VALUE2"),
             new("KEY2", "VALUE2"),
             new("a ✅", "B% 💼"),
         };
 
         Baggage.SetBaggage(K1, V1);
         var baggage = Baggage.Current.SetBaggage(new KeyValuePair<string, string?>("key2", "value2"));
+        baggage = baggage.SetBaggage(new KeyValuePair<string, string?>("key2", "VALUE2"));
         baggage = baggage.SetBaggage(new KeyValuePair<string, string?>("KEY2", "VALUE2"));
         baggage = baggage.SetBaggage("a ✅", "B% 💼");
         Baggage.Current = baggage;
@@ -49,7 +50,7 @@ public class BaggageTests
 #pragma warning restore CA1308 // Normalize strings to uppercase
         Assert.Null(Baggage.GetBaggage(K1.ToUpper(CultureInfo.InvariantCulture)));
         Assert.Null(Baggage.GetBaggage("NO_KEY"));
-        Assert.Equal("value2", Baggage.Current.GetBaggage("key2"));
+        Assert.Equal("VALUE2", Baggage.Current.GetBaggage("key2"));
         Assert.Equal("VALUE2", Baggage.Current.GetBaggage("KEY2"));
         Assert.Equal("B% 💼", Baggage.Current.GetBaggage("a ✅"));
 
