@@ -31,14 +31,17 @@ public class BaggageTests
             new(K1, V1),
             new("key2", "VALUE2"),
             new("KEY2", "VALUE2"),
-            new("a ✅", "B% 💼"),
+
+            // Encode Unicode characters in Basic Multilingual Plane (U+0000 to U+FFFF)
+            // and in supplementary code points (U+10000 to U+10FFFF)
+            new("key \U000000A9", "value \U0001F600"),
         };
 
         Baggage.SetBaggage(K1, V1);
         var baggage = Baggage.Current.SetBaggage(new KeyValuePair<string, string?>("key2", "value2"));
         baggage = baggage.SetBaggage(new KeyValuePair<string, string?>("key2", "VALUE2"));
         baggage = baggage.SetBaggage(new KeyValuePair<string, string?>("KEY2", "VALUE2"));
-        baggage = baggage.SetBaggage("a ✅", "B% 💼");
+        baggage = baggage.SetBaggage("key \U000000A9", "value \U0001F600");
         Baggage.Current = baggage;
 
         Assert.NotEmpty(Baggage.GetBaggage());
@@ -52,7 +55,7 @@ public class BaggageTests
         Assert.Null(Baggage.GetBaggage("NO_KEY"));
         Assert.Equal("VALUE2", Baggage.Current.GetBaggage("key2"));
         Assert.Equal("VALUE2", Baggage.Current.GetBaggage("KEY2"));
-        Assert.Equal("B% 💼", Baggage.Current.GetBaggage("a ✅"));
+        Assert.Equal("value \U0001F600", Baggage.Current.GetBaggage("key \U000000A9"));
 
         Assert.Throws<ArgumentException>(() => Baggage.GetBaggage(null!));
     }
