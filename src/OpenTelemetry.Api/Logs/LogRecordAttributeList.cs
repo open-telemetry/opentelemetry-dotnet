@@ -4,29 +4,16 @@
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
-#if EXPOSE_EXPERIMENTAL_FEATURES
-using System.Diagnostics.CodeAnalysis;
-#endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Logs;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Stores attributes to be added to a log message.
 /// </summary>
-/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
-[Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-public
-#else
-/// <summary>
-/// Stores attributes to be added to a log message.
-/// </summary>
-internal
-#endif
 #pragma warning disable CA1815 // Override equals and operator equals on value types
-    struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
+public struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 {
     internal const int OverflowMaxCount = 8;

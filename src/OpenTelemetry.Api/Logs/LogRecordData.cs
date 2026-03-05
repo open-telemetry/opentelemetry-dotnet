@@ -2,28 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if EXPOSE_EXPERIMENTAL_FEATURES
-using System.Diagnostics.CodeAnalysis;
-using OpenTelemetry.Internal;
-#endif
 
 namespace OpenTelemetry.Logs;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Stores details about a log message.
 /// </summary>
-/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
-[Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-public
-#else
-/// <summary>
-/// Stores details about a log message.
-/// </summary>
-internal
-#endif
 #pragma warning disable CA1815 // Override equals and operator equals on value types
-    struct LogRecordData
+public struct LogRecordData
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 {
     internal DateTime TimestampBacking = DateTime.UtcNow;

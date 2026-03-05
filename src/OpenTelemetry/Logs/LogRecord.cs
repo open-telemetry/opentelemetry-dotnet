@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if EXPOSE_EXPERIMENTAL_FEATURES
-using System.Diagnostics.CodeAnalysis;
-#endif
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -349,67 +346,36 @@ public sealed class LogRecord
         set => this.ILoggerData.Exception = value;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets or sets the original string representation of the severity as it is
     /// known at the source.
     /// </summary>
-    /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-    public
-#else
-    /// <summary>
-    /// Gets or sets the original string representation of the severity as it is
-    /// known at the source.
-    /// </summary>
-    internal
-#endif
-    string? SeverityText
+    public string? SeverityText
     {
         get => this.Data.SeverityText;
         set => this.Data.SeverityText = value;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets or sets the log <see cref="LogRecordSeverity"/>.
     /// </summary>
-    /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-    public
-#else
-    /// <summary>
-    /// Gets or sets the log <see cref="LogRecordSeverity"/>.
-    /// </summary>
-    internal
-#endif
-        LogRecordSeverity? Severity
+    public LogRecordSeverity? Severity
     {
         get => this.Data.Severity;
         set => this.Data.Severity = value;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets the <see cref="Logs.Logger"/> associated with the <see
     /// cref="LogRecord"/>.
     /// </summary>
     /// <remarks>
-    /// <para><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></para>
     /// Note: When using the Log Bridge API (for example <see
     /// cref="Logger.EmitLog(in LogRecordData)"/>) <see cref="Logger"/> is
     /// typically the <see cref="Logs.Logger"/> which emitted the <see
     /// cref="LogRecord"/> however the value may be different if <see
     /// cref="CategoryName"/> is modified.</remarks>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public Logger Logger { get; internal set; } = InstrumentationScopeLogger.Default;
-#else
-    /// <summary>
-    /// Gets or sets the <see cref="Logs.Logger"/> associated with the <see
-    /// cref="LogRecord"/>.
-    /// </summary>
-    internal Logger Logger { get; set; } = InstrumentationScopeLogger.Default;
-#endif
 
     /// <summary>
     /// Executes callback for each currently active scope objects in order

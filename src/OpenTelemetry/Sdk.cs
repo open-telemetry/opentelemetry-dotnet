@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if EXPOSE_EXPERIMENTAL_FEATURES
-using System.Diagnostics.CodeAnalysis;
-#endif
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
@@ -78,20 +75,6 @@ public static class Sdk
         return new TracerProviderBuilderBase();
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Creates a <see cref="LoggerProviderBuilder"/> which is used to build
-    /// a <see cref="LoggerProvider"/>. In a typical application, a single
-    /// <see cref="LoggerProvider"/> is created at application startup and
-    /// disposed at application shutdown. It is important to ensure that the
-    /// provider is not disposed too early.
-    /// </summary>
-    /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
-    /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
-    /// to build a <see cref="LoggerProvider"/>.</returns>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-    public
-#else
     /// <summary>
     /// Creates a <see cref="LoggerProviderBuilder"/> which is used to build
     /// a <see cref="LoggerProvider"/>. In a typical application, a single
@@ -101,9 +84,7 @@ public static class Sdk
     /// </summary>
     /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
     /// to build a <see cref="LoggerProvider"/>.</returns>
-    internal
-#endif
-            static LoggerProviderBuilder CreateLoggerProviderBuilder()
+    public static LoggerProviderBuilder CreateLoggerProviderBuilder()
     {
         return new LoggerProviderBuilderBase();
     }

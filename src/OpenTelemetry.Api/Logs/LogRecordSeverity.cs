@@ -1,27 +1,12 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-using System.Diagnostics.CodeAnalysis;
-using OpenTelemetry.Internal;
-#endif
-
 namespace OpenTelemetry.Logs;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Describes the severity level of a log record.
 /// </summary>
-/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
-[Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-public
-#else
-/// <summary>
-/// Describes the severity level of a log record.
-/// </summary>
-internal
-#endif
-    enum LogRecordSeverity
+public enum LogRecordSeverity
 {
     /// <summary>Unspecified severity (0).</summary>
     Unspecified = 0,
