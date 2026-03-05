@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed precision issues when using `Histogram<float>` with custom
+  `HistogramBucketBoundaries`.
+  ([#6803](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6803))
 * Fixed a thread-safety issue in `LogRecordSharedPool.Rent()`.
   ([#6833](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6833)
 
