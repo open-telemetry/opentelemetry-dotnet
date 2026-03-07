@@ -210,7 +210,11 @@ public struct Exemplar
         SpinWait spinWait = default;
         do
         {
+#if NET
+            spinWait.SpinOnce(-1);
+#else
             spinWait.SpinOnce();
+#endif
         }
         while (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0);
     }

@@ -59,7 +59,11 @@ internal sealed class MetricPointOptionalComponents
         var sw = default(SpinWait);
         do
         {
+#if NET
+            sw.SpinOnce(-1);
+#else
             sw.SpinOnce();
+#endif
         }
         while (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0);
     }
