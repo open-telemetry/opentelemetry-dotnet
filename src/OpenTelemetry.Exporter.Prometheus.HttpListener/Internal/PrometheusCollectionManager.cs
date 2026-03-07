@@ -181,7 +181,11 @@ internal sealed class PrometheusCollectionManager
         {
             if (Interlocked.CompareExchange(ref this.globalLockState, 1, this.globalLockState) != 0)
             {
+#if NET
+                lockWait.SpinOnce(-1);
+#else
                 lockWait.SpinOnce();
+#endif
                 continue;
             }
 
@@ -203,7 +207,11 @@ internal sealed class PrometheusCollectionManager
         {
             if (Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) != 0)
             {
+#if NET
+                readWait.SpinOnce(-1);
+#else
                 readWait.SpinOnce();
+#endif
                 continue;
             }
 
