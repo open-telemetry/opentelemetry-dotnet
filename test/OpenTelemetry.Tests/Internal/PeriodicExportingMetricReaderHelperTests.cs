@@ -4,7 +4,6 @@
 using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using Xunit;
 
