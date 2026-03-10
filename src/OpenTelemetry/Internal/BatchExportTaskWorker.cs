@@ -173,7 +173,11 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                     this.dataExportedNotification.Task,
                     this.shutdownCompletionSource.Task,
                     Task.Delay(timeout, combinedTokenSource.Token)).ConfigureAwait(false);
+#if NET8_0_OR_GREATER
+                await combinedTokenSource.CancelAsync().ConfigureAwait(false);
+#else
                 combinedTokenSource.Cancel();
+#endif
             }
             catch (ObjectDisposedException)
             {
@@ -213,7 +217,11 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                         await Task.WhenAny(
                             this.exportTrigger.WaitAsync(cancellationToken),
                             Task.Delay(this.ScheduledDelayMilliseconds, delayCts.Token)).ConfigureAwait(false);
+#if NET8_0_OR_GREATER
+                        await delayCts.CancelAsync().ConfigureAwait(false);
+#else
                         delayCts.Cancel();
+#endif
                     }
                     catch (OperationCanceledException)
                     {
