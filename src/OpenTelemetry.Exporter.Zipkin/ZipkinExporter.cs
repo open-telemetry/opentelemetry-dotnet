@@ -78,6 +78,7 @@ public class ZipkinExporter : BaseExporter<Activity>
                 Content = new JsonContent(this, batch),
             };
 
+#pragma warning disable CA2025 // Do not pass 'IDisposable' instances into unawaited tasks
 #if NET
             using var response = this.synchronousSendSupportedByCurrentPlatform
             ? this.httpClient.Send(request, CancellationToken.None)
@@ -85,6 +86,7 @@ public class ZipkinExporter : BaseExporter<Activity>
 #else
             using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
 #endif
+#pragma warning restore CA2025 // Do not pass 'IDisposable' instances into unawaited tasks
 
             response.EnsureSuccessStatusCode();
 
@@ -211,9 +213,7 @@ public class ZipkinExporter : BaseExporter<Activity>
 
 #if NET
         protected override void SerializeToStream(Stream stream, TransportContext? context, CancellationToken cancellationToken)
-        {
-            this.SerializeToStreamInternal(stream);
-        }
+            => this.SerializeToStreamInternal(stream);
 #endif
 
         protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)

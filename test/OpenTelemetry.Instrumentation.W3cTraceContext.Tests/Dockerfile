@@ -5,13 +5,13 @@
 ARG BUILD_SDK_VERSION=11.0
 ARG TEST_SDK_VERSION=11.0
 
-FROM ubuntu:24.04@sha256:cd1dba651b3080c3686ecf4e3c4220f026b521fb76978881737d24f200828b2b AS w3c
+FROM ubuntu:24.04@sha256:d1e2e92c075e5ca139d51a140fff46f84315c0fdce203eab2807c7e495eff4f9 AS w3c
 #Install git
 WORKDIR /w3c
 RUN apt-get update && apt-get install -y git
 RUN git clone --branch level-1 https://github.com/w3c/trace-context.git
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.103@sha256:0a506ab0c8aa077361af42f82569d364ab1b8741e967955d883e3f23683d473a AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.200@sha256:ea13841f10c6c410a6df63c6c97ab549dfd2b5fcfff1c00186531ba30208117d AS dotnet-sdk-10.0
 FROM mcr.microsoft.com/dotnet/sdk:11.0-preview@sha256:c5aa0a301759a1b07654450e10e3ec78c3d476d0537263ca1ab5850d9f302fca AS dotnet-sdk-11.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build

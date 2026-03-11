@@ -12,6 +12,8 @@ using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
 
+#pragma warning disable CA1873 // Avoid potentially expensive logging
+
 public sealed class LogRecordTests
 {
     private enum Field
@@ -1018,9 +1020,74 @@ public sealed class LogRecordTests
         Assert.Equal(exportedItems[0].CategoryName, exportedItems[0].Logger.Name);
     }
 
+    [Theory]
+    [InlineData(true, 0)]
+    [InlineData(false, 0)]
+    [InlineData(true, 1)]
+    [InlineData(false, 1)]
+    [InlineData(true, 2)]
+    [InlineData(false, 2)]
+    public void CheckOriginalFormatAtArbitraryPosition(bool includeFormattedMessage, int originalFormatPosition)
+    {
+        // This test verifies the fix for the bug where {OriginalFormat} was only found
+        // at the last position. The fix ensures it's found at ANY position.
+
+        using var loggerFactory = InitializeLoggerFactory(
+            out List<LogRecord> exportedItems,
+            configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
+
+        var logger = loggerFactory.CreateLogger<LogRecordTests>();
+
+        var attributes = new List<KeyValuePair<string, object?>>
+        {
+            new("Property1", "value1"),
+            new("Property2", 42),
+            new("Property3", true),
+        };
+
+        attributes.Insert(
+            originalFormatPosition,
+            new("{OriginalFormat}", "Log event with {Property1} {Property2} {Property3}"));
+
+        logger.Log(
+            LogLevel.Information,
+            new EventId(1),
+            attributes,
+            null,
+            (state, ex) => "Log event with value1 42 True");
+
+        var logRecord = exportedItems[0];
+
+        Assert.Equal(
+            "Log event with {Property1} {Property2} {Property3}",
+            logRecord.Body);
+
+        if (includeFormattedMessage)
+        {
+            Assert.Equal(
+                "Log event with value1 42 True",
+                logRecord.FormattedMessage);
+        }
+        else
+        {
+            Assert.Null(logRecord.FormattedMessage);
+        }
+
+        var logRecordAttributes = logRecord.Attributes;
+
+        Assert.NotNull(logRecordAttributes);
+
+        var originalFormatAttribute = logRecordAttributes!
+            .First(item => item.Key == "{OriginalFormat}");
+
+        Assert.Equal(
+            "Log event with {Property1} {Property2} {Property3}",
+            originalFormatAttribute.Value);
+    }
+
     private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions>? configure = null)
     {
-        var items = exportedItems = new List<LogRecord>();
+        var items = exportedItems = [];
 
         return LoggerFactory.Create(builder =>
         {
@@ -1054,19 +1121,14 @@ public sealed class LogRecordTests
         public KeyValuePair<string, object> this[int index] => this.list[index];
 
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
-        {
-            return this.list.GetEnumerator();
-        }
+            => this.list.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.list.GetEnumerator();
-        }
+            => this.list.GetEnumerator();
     }
 
     internal sealed class DisposingState : IReadOnlyList<KeyValuePair<string, object?>>, IDisposable
     {
-        private string? value;
         private bool disposed;
 
         public DisposingState(string? value)
@@ -1089,9 +1151,9 @@ public sealed class LogRecordTests
                 }
 #endif
 
-                return this.value;
+                return field;
             }
-            private set => this.value = value;
+            private set;
         }
 
         public KeyValuePair<string, object?> this[int index] => index switch
@@ -1103,9 +1165,7 @@ public sealed class LogRecordTests
         };
 
         public void Dispose()
-        {
-            this.disposed = true;
-        }
+            => this.disposed = true;
 
         public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
         {
@@ -1135,7 +1195,7 @@ public sealed class LogRecordTests
             }
             else if (this.fieldToUpdate == Field.StateValues)
             {
-                logRecord.StateValues = new List<KeyValuePair<string, object?>> { new("newStateValueKey", "newStateValueValue") };
+                logRecord.StateValues = [new("newStateValueKey", "newStateValueValue")];
             }
             else
             {
@@ -1154,14 +1214,10 @@ public sealed class LogRecordTests
         }
 
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
-        {
-            return this.list.GetEnumerator();
-        }
+            => this.list.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.list.GetEnumerator();
-        }
+            => this.list.GetEnumerator();
     }
 
     private sealed class CustomState
@@ -1183,7 +1239,7 @@ public sealed class LogRecordTests
             this.buffer = buffer;
         }
 
-        public List<object?> Scopes { get; } = new();
+        public List<object?> Scopes { get; } = [];
 
         public override void OnEnd(LogRecord data)
         {
