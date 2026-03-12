@@ -64,6 +64,22 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case double:
                 this.WriteFloatingPointTag(ref state, key, Convert.ToDouble(value, CultureInfo.InvariantCulture));
                 break;
+            case IEnumerable<KeyValuePair<string, object?>> kvList:
+                try
+                {
+                    this.WriteKvListTag(ref state, key, kvList, tagValueMaxLength);
+                }
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                {
+                    throw;
+                }
+                catch
+                {
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                }
+
+                break;
+
             case Array array:
                 if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, ((byte[])value).AsSpan()))
                 {
@@ -133,6 +149,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
     protected abstract void WriteStringTag(ref TTagState state, string key, ReadOnlySpan<char> value);
 
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
+
+    protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
 
     protected abstract void OnUnsupportedTagDropped(
         string tagKey,

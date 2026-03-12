@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using Microsoft.Extensions.Primitives;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter;
@@ -83,6 +84,18 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         consoleTag.Key = key;
         consoleTag.Value = null;
         return true;
+    }
+
+    protected override void WriteKvListTag(ref ConsoleTag state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength)
+    {
+        var stringValue = Convert.ToString(kvList, CultureInfo.InvariantCulture);
+
+        if (stringValue is null)
+        {
+            return;
+        }
+
+        this.TryWriteTag(ref state, key, stringValue);
     }
 
     internal struct ConsoleTag
