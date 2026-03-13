@@ -91,7 +91,7 @@
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
-    <PackageVersion Include="FSharp.Core" Version="10.0.104" />
+    <PackageVersion Include="FSharp.Core" Version="10.1.201" />
     <PackageVersion Include="FsCheck.Xunit" Version="3.3.2" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.1" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
@@ -104,10 +104,10 @@
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.4" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.4" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.4" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.4" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="9.10.0" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
@@ -134,7 +134,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.4" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.5" />
   </ItemGroup>
 
 </Project>
