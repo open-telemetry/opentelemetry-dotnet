@@ -121,9 +121,7 @@ namespace OpenTelemetry.Internal
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ThrowIfInvalidTimeout(int value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
-        {
-            ThrowIfOutOfRange(value, paramName, min: Timeout.Infinite, message: $"Must be non-negative or '{nameof(Timeout)}.{nameof(Timeout.Infinite)}'");
-        }
+            => ThrowIfOutOfRange(value, paramName, min: Timeout.Infinite, message: $"Must be non-negative or '{nameof(Timeout)}.{nameof(Timeout.Infinite)}'");
 
         /// <summary>
         /// Throw an exception if the value is not within the given range.
@@ -138,9 +136,7 @@ namespace OpenTelemetry.Internal
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ThrowIfOutOfRange(int value, [CallerArgumentExpression(nameof(value))] string? paramName = null, int min = int.MinValue, int max = int.MaxValue, string? minName = null, string? maxName = null, string? message = null)
-        {
-            Range(value, paramName, min, max, minName, maxName, message);
-        }
+            => Range(value, paramName, min, max, minName, maxName, message);
 
         /// <summary>
         /// Throw an exception if the value is not within the given range.
@@ -155,9 +151,7 @@ namespace OpenTelemetry.Internal
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ThrowIfOutOfRange(double value, [CallerArgumentExpression(nameof(value))] string? paramName = null, double min = double.MinValue, double max = double.MaxValue, string? minName = null, string? maxName = null, string? message = null)
-        {
-            Range(value, paramName, min, max, minName, maxName, message);
-        }
+            => Range(value, paramName, min, max, minName, maxName, message);
 
         /// <summary>
         /// Throw an exception if the value is not of the expected type.
@@ -169,14 +163,9 @@ namespace OpenTelemetry.Internal
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T ThrowIfNotOfType<T>([NotNull] object? value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
-        {
-            if (value is not T result)
-            {
-                throw new InvalidCastException($"Cannot cast '{paramName}' from '{value?.GetType().ToString() ?? "null"}' to '{typeof(T)}'");
-            }
-
-            return result;
-        }
+            => value is not T result
+               ? throw new InvalidCastException($"Cannot cast '{paramName}' from '{value?.GetType().ToString() ?? "null"}' to '{typeof(T)}'")
+               : result;
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
