@@ -30,7 +30,7 @@ internal static class Program
             .Build();
 
         var random = new Random();
-        for (int i = 0; i < 1000; i++)
+        for (var i = 0; i < 1000; i++)
         {
             MyHistogram.Record(random.Next(1, 1000));
         }

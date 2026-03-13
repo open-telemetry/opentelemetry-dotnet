@@ -5,22 +5,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace TestApp.AspNetCore.Controllers;
 
+#pragma warning disable IDE0060 // Remove unused parameter
+
 [Route("api/[controller]")]
 public class ValuesController : Controller
 {
     // GET api/values
     [HttpGet]
-    public IEnumerable<string> Get()
-    {
-        return ["value1", "value2"];
-    }
+    public IEnumerable<string> Get() => ["value1", "value2"];
 
     // GET api/values/5
     [HttpGet("{id}")]
-    public string Get(int id)
-    {
-        return "value";
-    }
+    public string Get(int id) => "value";
 
     // POST api/values
     [HttpPost]

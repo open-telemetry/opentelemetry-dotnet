@@ -22,7 +22,7 @@ internal sealed class ThreadStaticStorage
 
     private ThreadStaticStorage()
     {
-        for (int i = 0; i < MaxTagCacheSize; i++)
+        for (var i = 0; i < MaxTagCacheSize; i++)
         {
             this.primaryTagStorage[i] = new TagStorage(i + 1);
             this.secondaryTagStorage[i] = new TagStorage(i + 1);
@@ -41,14 +41,9 @@ internal sealed class ThreadStaticStorage
     {
         Guard.ThrowIfZero(tagLength, $"There must be at least one tag to use {nameof(ThreadStaticStorage)}");
 
-        if (tagLength <= MaxTagCacheSize)
-        {
-            tagKeysAndValues = this.primaryTagStorage[tagLength - 1].TagKeysAndValues;
-        }
-        else
-        {
-            tagKeysAndValues = new KeyValuePair<string, object?>[tagLength];
-        }
+        tagKeysAndValues = tagLength <= MaxTagCacheSize
+            ? this.primaryTagStorage[tagLength - 1].TagKeysAndValues
+            : (new KeyValuePair<string, object?>[tagLength]);
 
         tags.CopyTo(tagKeysAndValues);
     }
@@ -67,18 +62,11 @@ internal sealed class ThreadStaticStorage
     {
         // We do not know ahead the actual length, so start with max possible length.
         var maxLength = Math.Min(tagKeysInteresting.Count, tagLength);
-        if (maxLength == 0)
-        {
-            tagKeysAndValues = null;
-        }
-        else if (maxLength <= MaxTagCacheSize)
-        {
-            tagKeysAndValues = this.primaryTagStorage[maxLength - 1].TagKeysAndValues;
-        }
-        else
-        {
-            tagKeysAndValues = new KeyValuePair<string, object?>[maxLength];
-        }
+        tagKeysAndValues = maxLength == 0
+            ? null
+            : maxLength <= MaxTagCacheSize
+                ? this.primaryTagStorage[maxLength - 1].TagKeysAndValues
+                : (new KeyValuePair<string, object?>[maxLength]);
 
         actualLength = 0;
         for (var n = 0; n < tagLength; n++)
@@ -86,8 +74,6 @@ internal sealed class ThreadStaticStorage
             // Copy only interesting tags, and keep count.
             if (tagKeysInteresting.Contains(tags[n].Key))
             {
-                Debug.Assert(tagKeysAndValues != null, "tagKeysAndValues was null");
-
                 tagKeysAndValues![actualLength] = tags[n];
                 actualLength++;
             }
@@ -138,14 +124,9 @@ internal sealed class ThreadStaticStorage
     {
         Guard.ThrowIfZero(tagLength, $"There must be at least one tag to use {nameof(ThreadStaticStorage)}", $"{nameof(tagLength)}");
 
-        if (tagLength <= MaxTagCacheSize)
-        {
-            clonedTagKeysAndValues = this.secondaryTagStorage[tagLength - 1].TagKeysAndValues;
-        }
-        else
-        {
-            clonedTagKeysAndValues = new KeyValuePair<string, object?>[tagLength];
-        }
+        clonedTagKeysAndValues = tagLength <= MaxTagCacheSize
+            ? this.secondaryTagStorage[tagLength - 1].TagKeysAndValues
+            : (new KeyValuePair<string, object?>[tagLength]);
 
         Array.Copy(inputTagKeysAndValues, 0, clonedTagKeysAndValues, 0, tagLength);
     }

@@ -47,14 +47,14 @@ public readonly struct LogRecordScope
             }
             else if (scope is IEnumerable<KeyValuePair<string, object?>> scopeEnumerable)
             {
-                this.scope = new List<KeyValuePair<string, object?>>(scopeEnumerable);
+                this.scope = [.. scopeEnumerable];
             }
             else
             {
-                this.scope = new List<KeyValuePair<string, object?>>
-                {
+                this.scope =
+                [
                     new KeyValuePair<string, object?>(string.Empty, scope),
-                };
+                ];
             }
 
             this.position = 0;
@@ -64,7 +64,7 @@ public readonly struct LogRecordScope
         /// <inheritdoc/>
         public KeyValuePair<string, object?> Current { get; private set; }
 
-        object IEnumerator.Current => this.Current;
+        readonly object IEnumerator.Current => this.Current;
 
         /// <inheritdoc/>
         public bool MoveNext()
@@ -79,7 +79,7 @@ public readonly struct LogRecordScope
         }
 
         /// <inheritdoc/>
-        public void Dispose()
+        public readonly void Dispose()
         {
         }
 

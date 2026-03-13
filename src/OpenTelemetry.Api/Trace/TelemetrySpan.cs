@@ -300,7 +300,7 @@ public class TelemetrySpan : IDisposable
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     public TelemetrySpan RecordException(string? type, string? message, string? stacktrace)
     {
-        SpanAttributes attributes = new SpanAttributes();
+        var attributes = new SpanAttributes();
 
         if (!string.IsNullOrWhiteSpace(type))
         {

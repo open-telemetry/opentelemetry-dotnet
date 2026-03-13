@@ -267,7 +267,7 @@ internal static class ProtobufSerializer
             }
         }
 #else
-        int numberOfUtf8CharsInString = Utf8Encoding.GetByteCount(value);
+        var numberOfUtf8CharsInString = Utf8Encoding.GetByteCount(value);
 #endif
         return numberOfUtf8CharsInString;
     }

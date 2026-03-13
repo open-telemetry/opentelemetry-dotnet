@@ -21,8 +21,6 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
 
-    private Resource? resource;
-
     // Initial buffer size set to ~732KB.
     // This choice allows us to gradually grow the buffer while targeting a final capacity of around 100 MB,
     // by the 7th doubling to maintain efficient allocation without frequent resizing.
@@ -33,7 +31,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
     public OtlpTraceExporter(OtlpExporterOptions options)
-        : this(options, sdkLimitOptions: new(), experimentalOptions: new(), transmissionHandler: null)
+        : this(options ?? throw new ArgumentNullException(nameof(options)), sdkLimitOptions: new(), experimentalOptions: new(), transmissionHandler: null)
     {
     }
 
@@ -50,17 +48,14 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
-        Debug.Assert(exporterOptions != null, "exporterOptions was null");
-        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
-
-        this.sdkLimitOptions = sdkLimitOptions!;
+        this.sdkLimitOptions = sdkLimitOptions;
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-        this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
+        this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
     }
 
-    internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
+    internal Resource Resource { get => field ??= this.ParentProvider.GetResource(); private set; }
 
     /// <inheritdoc/>
 #pragma warning disable CA1725 // Parameter names should match base declaration
@@ -72,7 +67,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
 
         try
         {
-            int writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref this.buffer, this.startWritePosition, this.sdkLimitOptions, this.Resource, activityBatch);
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref this.buffer, this.startWritePosition, this.sdkLimitOptions, this.Resource, activityBatch);
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
@@ -80,7 +75,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
                 // byte 0 - Specifying if the payload is compressed.
                 // 1-4 byte - Specifies the length of payload in big endian format.
                 // 5 and above -  Protobuf serialized data.
-                Span<byte> data = new Span<byte>(this.buffer, 1, 4);
+                var data = new Span<byte>(this.buffer, 1, 4);
                 var dataLength = writePosition - GrpcStartWritePosition;
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }

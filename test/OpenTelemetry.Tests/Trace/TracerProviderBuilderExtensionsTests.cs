@@ -139,8 +139,9 @@ public class TracerProviderBuilderExtensionsTests
     [Fact]
     public void AddProcessorTest()
     {
-        List<MyProcessor> processorsToAdd = new()
-        {
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        List<MyProcessor> processorsToAdd =
+        [
             new MyProcessor()
             {
                 Name = "A",
@@ -153,7 +154,8 @@ public class TracerProviderBuilderExtensionsTests
             {
                 Name = "C",
             },
-        };
+        ];
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         var builder = Sdk.CreateTracerProviderBuilder();
         foreach (var processor in processorsToAdd)
@@ -161,14 +163,14 @@ public class TracerProviderBuilderExtensionsTests
             builder.AddProcessor(processor);
         }
 
-        List<MyProcessor> expectedProcessors = new()
-        {
+        List<MyProcessor> expectedProcessors =
+        [
             processorsToAdd.First(p => p.Name == "A"),
             processorsToAdd.First(p => p.Name == "B"),
             processorsToAdd.First(p => p.Name == "C"),
-        };
+        ];
 
-        List<MyProcessor> actualProcessors = new();
+        List<MyProcessor> actualProcessors = [];
 
         using (var provider = builder.Build() as TracerProviderSdk)
         {
@@ -203,8 +205,9 @@ public class TracerProviderBuilderExtensionsTests
     [Fact]
     public void AddProcessorWithWeightTest()
     {
-        List<MyProcessor> processorsToAdd = new()
-        {
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        List<MyProcessor> processorsToAdd =
+        [
             new MyProcessor()
             {
                 Name = "C",
@@ -235,7 +238,8 @@ public class TracerProviderBuilderExtensionsTests
                 Name = "D",
                 PipelineWeight = 0,
             },
-        };
+        ];
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         var builder = Sdk.CreateTracerProviderBuilder();
         foreach (var processor in processorsToAdd)
@@ -243,17 +247,17 @@ public class TracerProviderBuilderExtensionsTests
             builder.AddProcessor(processor);
         }
 
-        List<MyProcessor> expectedProcessors = new()
-        {
+        List<MyProcessor> expectedProcessors =
+        [
             processorsToAdd.First(p => p.Name == "A"),
             processorsToAdd.First(p => p.Name == "B"),
             processorsToAdd.First(p => p.Name == "C"),
             processorsToAdd.First(p => p.Name == "D"),
             processorsToAdd.First(p => p.Name == "E"),
             processorsToAdd.First(p => p.Name == "F"),
-        };
+        ];
 
-        List<MyProcessor> actualProcessors = new();
+        List<MyProcessor> actualProcessors = [];
 
         using (var provider = builder
             .SetErrorStatusOnException() // Forced to be first processor
@@ -266,7 +270,7 @@ public class TracerProviderBuilderExtensionsTests
 
             Assert.NotNull(compositeProcessor);
 
-            bool isFirstProcessor = true;
+            var isFirstProcessor = true;
             var lastWeight = int.MinValue;
             var current = compositeProcessor.Head;
             while (current != null)
@@ -370,8 +374,8 @@ public class TracerProviderBuilderExtensionsTests
     {
         var builder = Sdk.CreateTracerProviderBuilder();
 
-        int configureInvocations = 0;
-        bool serviceProviderTestExecuted = false;
+        var configureInvocations = 0;
+        var serviceProviderTestExecuted = false;
 
         builder.SetResourceBuilder(ResourceBuilder.CreateEmpty().AddService("Test"));
         builder.ConfigureResource(builder =>
@@ -415,7 +419,7 @@ public class TracerProviderBuilderExtensionsTests
     {
         Environment.SetEnvironmentVariable("TEST_KEY", "TEST_KEY_VALUE");
 
-        bool configureBuilderCalled = false;
+        var configureBuilderCalled = false;
 
         using var provider = Sdk.CreateTracerProviderBuilder()
             .ConfigureBuilder((sp, builder) =>
@@ -438,7 +442,7 @@ public class TracerProviderBuilderExtensionsTests
     [Fact]
     public void ConfigureBuilderIConfigurationModifiableTest()
     {
-        bool configureBuilderCalled = false;
+        var configureBuilderCalled = false;
 
         using var provider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
@@ -469,9 +473,9 @@ public class TracerProviderBuilderExtensionsTests
     [InlineData(false)]
     public void TracerProviderNestedResolutionUsingBuilderTest(bool callNestedConfigure)
     {
-        bool innerConfigureBuilderTestExecuted = false;
-        bool innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
-        bool innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = false;
+        var innerConfigureBuilderTestExecuted = false;
+        var innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
+        var innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = false;
 
         using var provider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
@@ -520,7 +524,7 @@ public class TracerProviderBuilderExtensionsTests
     [Fact]
     public void TracerProviderSetSamplerFactoryTest()
     {
-        bool factoryInvoked = false;
+        var factoryInvoked = false;
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .SetSampler(sp =>
@@ -542,7 +546,7 @@ public class TracerProviderBuilderExtensionsTests
     [Fact]
     public void TracerProviderAddProcessorFactoryTest()
     {
-        bool factoryInvoked = false;
+        var factoryInvoked = false;
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddProcessor(sp =>
@@ -566,7 +570,7 @@ public class TracerProviderBuilderExtensionsTests
     {
         var builder = new MyTracerProviderBuilder();
 
-        Assert.Throws<NotSupportedException>(() => builder.Build());
+        Assert.Throws<NotSupportedException>(builder.Build);
     }
 
     private static void RunBuilderServiceLifecycleTest(
@@ -581,7 +585,7 @@ public class TracerProviderBuilderExtensionsTests
             .AddLegacySource("TestLegacySource1")
             .SetSampler<MySampler>();
 
-        bool configureServicesCalled = false;
+        var configureServicesCalled = false;
         builder.ConfigureServices(services =>
         {
             configureServicesCalled = true;
@@ -600,7 +604,7 @@ public class TracerProviderBuilderExtensionsTests
             });
         });
 
-        int configureBuilderInvocations = 0;
+        var configureBuilderInvocations = 0;
         builder.ConfigureBuilder((sp, builder) =>
         {
             configureBuilderInvocations++;
@@ -651,9 +655,7 @@ public class TracerProviderBuilderExtensionsTests
     private sealed class MySampler : Sampler
     {
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-        {
-            return new SamplingResult(SamplingDecision.RecordAndSample);
-        }
+            => new(SamplingDecision.RecordAndSample);
     }
 
     private sealed class MyInstrumentation : IDisposable
@@ -661,10 +663,7 @@ public class TracerProviderBuilderExtensionsTests
         internal TracerProvider? Provider;
         internal bool Disposed;
 
-        public void Dispose()
-        {
-            this.Disposed = true;
-        }
+        public void Dispose() => this.Disposed = true;
     }
 
     private sealed class MyProcessor : BaseProcessor<Activity>
@@ -683,18 +682,12 @@ public class TracerProviderBuilderExtensionsTests
     private sealed class MyTracerProviderBuilder : TracerProviderBuilder
     {
         public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
 
         public override TracerProviderBuilder AddLegacySource(string operationName)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
 
         public override TracerProviderBuilder AddSource(params string[] names)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
     }
 }

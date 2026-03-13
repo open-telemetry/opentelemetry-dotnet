@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
@@ -14,7 +13,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public abstract partial class MetricReader
 {
-    private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> metricStreamNames = [with(StringComparer.OrdinalIgnoreCase)];
     private readonly ConcurrentDictionary<MetricStreamIdentity, Metric?> instrumentIdentityToMetric = new();
     private readonly Lock instrumentCreationLock = new();
     private int metricLimit;
@@ -43,24 +42,19 @@ public abstract partial class MetricReader
     }
 
     internal AggregationTemporality GetAggregationTemporality(Type instrumentType)
-    {
-        return this.temporalityFunc(instrumentType);
-    }
+        => this.temporalityFunc(instrumentType);
 
     internal virtual List<Metric> AddMetricWithNoViews(Instrument instrument)
     {
-        Debug.Assert(instrument != null, "instrument was null");
-        Debug.Assert(this.metrics != null, "this.metrics was null");
-
         MetricStreamConfiguration? metricStreamConfiguration = null;
 
         // Apply default histogram aggregation if configured
         if (this.DefaultHistogramAggregation is { } aggregation)
         {
-            metricStreamConfiguration = CreateDefaultHistogramConfiguration(instrument!, aggregation);
+            metricStreamConfiguration = CreateDefaultHistogramConfiguration(instrument, aggregation);
         }
 
-        var metricStreamIdentity = new MetricStreamIdentity(instrument!, metricStreamConfiguration);
+        var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration);
 
         var exemplarFilter = metricStreamIdentity.IsHistogram
             ? this.exemplarFilterForHistograms ?? this.exemplarFilter
@@ -70,14 +64,14 @@ public abstract partial class MetricReader
         {
             if (this.TryGetExistingMetric(in metricStreamIdentity, out var existingMetric))
             {
-                return new() { existingMetric };
+                return [existingMetric];
             }
 
             var index = ++this.metricIndex;
             if (index >= this.metricLimit)
             {
                 OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricStreamIdentity.InstrumentName, metricStreamIdentity.MeterName, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProviderBuilder.AddView to drop unused instruments. Or use MeterProviderBuilder.SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
-                return new();
+                return [];
             }
             else
             {
@@ -97,26 +91,22 @@ public abstract partial class MetricReader
                     // Also the message could call out what Instruments
                     // and types (eg: int, long etc) are supported.
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricStreamIdentity.InstrumentName, metricStreamIdentity.MeterName, "Unsupported instrument. Details: " + nse.Message, "Switch to a supported instrument type.");
-                    return new();
+                    return [];
                 }
 
                 this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
-                this.metrics![index] = metric;
+                this.metrics[index] = metric;
 
                 this.CreateOrUpdateMetricStreamRegistration(in metricStreamIdentity);
 
-                return new() { metric };
+                return [metric];
             }
         }
     }
 
     internal virtual List<Metric> AddMetricWithViews(Instrument instrument, List<MetricStreamConfiguration?> metricStreamConfigs)
     {
-        Debug.Assert(instrument != null, "instrument was null");
-        Debug.Assert(metricStreamConfigs != null, "metricStreamConfigs was null");
-        Debug.Assert(this.metrics != null, "this.metrics was null");
-
-        var maxCountMetricsToBeCreated = metricStreamConfigs!.Count;
+        var maxCountMetricsToBeCreated = metricStreamConfigs.Count;
 
         // Create list with initial capacity as the max metric count.
         // Due to duplicate/max limit, we may not end up using them
@@ -125,17 +115,17 @@ public abstract partial class MetricReader
         var metrics = new List<Metric>(maxCountMetricsToBeCreated);
         lock (this.instrumentCreationLock)
         {
-            for (int i = 0; i < maxCountMetricsToBeCreated; i++)
+            for (var i = 0; i < maxCountMetricsToBeCreated; i++)
             {
                 var metricStreamConfig = metricStreamConfigs[i];
 
                 // Apply default histogram aggregation if no explicit view is provided
                 if (metricStreamConfig == null && this.DefaultHistogramAggregation is { } aggregation)
                 {
-                    metricStreamConfig = CreateDefaultHistogramConfiguration(instrument!, aggregation);
+                    metricStreamConfig = CreateDefaultHistogramConfiguration(instrument, aggregation);
                 }
 
-                var metricStreamIdentity = new MetricStreamIdentity(instrument!, metricStreamConfig);
+                var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfig);
 
                 var exemplarFilter = metricStreamIdentity.IsHistogram
                     ? this.exemplarFilterForHistograms ?? this.exemplarFilter
@@ -179,7 +169,7 @@ public abstract partial class MetricReader
                         metricStreamConfig?.ExemplarReservoirFactory);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
-                    this.metrics![index] = metric;
+                    this.metrics[index] = metric;
                     metrics.Add(metric);
 
                     this.CreateOrUpdateMetricStreamRegistration(in metricStreamIdentity);
@@ -206,9 +196,7 @@ public abstract partial class MetricReader
 
     private static MetricStreamConfiguration? CreateDefaultHistogramConfiguration(Instrument instrument, MetricReaderHistogramAggregation aggregation)
     {
-        Debug.Assert(instrument != null, "instrument was null");
-
-        var instrumentType = instrument!.GetType();
+        var instrumentType = instrument.GetType();
         if (instrumentType.IsGenericType)
         {
             var genericType = instrumentType.GetGenericTypeDefinition();
@@ -243,24 +231,21 @@ public abstract partial class MetricReader
 
     private Batch<Metric> GetMetricsBatch()
     {
-        Debug.Assert(this.metrics != null, "this.metrics was null");
-        Debug.Assert(this.metricsCurrentBatch != null, "this.metricsCurrentBatch was null");
-
         try
         {
             var indexSnapshot = Math.Min(this.metricIndex, this.metricLimit - 1);
             var target = indexSnapshot + 1;
-            int metricCountCurrentBatch = 0;
-            for (int i = 0; i < target; i++)
+            var metricCountCurrentBatch = 0;
+            for (var i = 0; i < target; i++)
             {
-                ref var metric = ref this.metrics![i];
+                ref var metric = ref this.metrics[i];
                 if (metric != null)
                 {
-                    int metricPointSize = metric.Snapshot();
+                    var metricPointSize = metric.Snapshot();
 
                     if (metricPointSize > 0)
                     {
-                        this.metricsCurrentBatch![metricCountCurrentBatch++] = metric;
+                        this.metricsCurrentBatch[metricCountCurrentBatch++] = metric;
                     }
 
                     if (!metric.Active)
@@ -270,7 +255,7 @@ public abstract partial class MetricReader
                 }
             }
 
-            return (metricCountCurrentBatch > 0) ? new Batch<Metric>(this.metricsCurrentBatch!, metricCountCurrentBatch) : default;
+            return (metricCountCurrentBatch > 0) ? new Batch<Metric>(this.metricsCurrentBatch, metricCountCurrentBatch) : default;
         }
         catch (Exception ex)
         {
@@ -281,8 +266,6 @@ public abstract partial class MetricReader
 
     private void RemoveMetric(ref Metric? metric)
     {
-        Debug.Assert(metric != null, "metric was null");
-
         // TODO: This logic removes the metric. If the same
         // metric is published again we will create a new metric
         // for it. If this happens often we will run out of

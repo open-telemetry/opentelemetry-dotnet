@@ -66,8 +66,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         OtlpExporterOptionsConfigurationType configurationType,
         BatchExportActivityProcessorOptions defaultBatchOptions)
     {
-        Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
-
         this.ApplyConfiguration(configuration, configurationType);
 
         this.DefaultHttpClientFactory = () =>
@@ -90,7 +88,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             };
         };
 
-        this.BatchExportProcessorOptions = defaultBatchOptions!;
+        this.BatchExportProcessorOptions = defaultBatchOptions;
     }
 
     /// <inheritdoc/>
@@ -256,8 +254,6 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         IConfiguration configuration,
         OtlpExporterOptionsConfigurationType configurationType)
     {
-        Debug.Assert(configuration != null, "configuration was null");
-
         // Note: When using the "AddOtlpExporter" extensions configurationType
         // never has a value other than "Default" because OtlpExporterOptions is
         // shared by all signals and there is no way to differentiate which
@@ -265,7 +261,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         if (configurationType == OtlpExporterOptionsConfigurationType.Default)
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration!,
+                configuration,
                 OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName,
                 appendSignalPathToEndpoint: true,
                 OtlpSpecConfigDefinitions.DefaultProtocolEnvVarName,
@@ -275,7 +271,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         else if (configurationType == OtlpExporterOptionsConfigurationType.Logs)
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration!,
+                configuration,
                 OtlpSpecConfigDefinitions.LogsEndpointEnvVarName,
                 appendSignalPathToEndpoint: false,
                 OtlpSpecConfigDefinitions.LogsProtocolEnvVarName,
@@ -285,7 +281,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         else if (configurationType == OtlpExporterOptionsConfigurationType.Metrics)
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration!,
+                configuration,
                 OtlpSpecConfigDefinitions.MetricsEndpointEnvVarName,
                 appendSignalPathToEndpoint: false,
                 OtlpSpecConfigDefinitions.MetricsProtocolEnvVarName,
@@ -295,7 +291,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         else if (configurationType == OtlpExporterOptionsConfigurationType.Traces)
         {
             this.ApplyConfigurationUsingSpecificationEnvVars(
-                configuration!,
+                configuration,
                 OtlpSpecConfigDefinitions.TracesEndpointEnvVarName,
                 appendSignalPathToEndpoint: false,
                 OtlpSpecConfigDefinitions.TracesProtocolEnvVarName,

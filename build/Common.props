@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
-    <LangVersion>latest</LangVersion>
+    <!-- TODO Restore to latest once .NET 11 is stable -->
+    <LangVersion>preview</LangVersion>
     <SignAssembly>true</SignAssembly>
     <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)debug.snk</AssemblyOriginatorKeyFile>

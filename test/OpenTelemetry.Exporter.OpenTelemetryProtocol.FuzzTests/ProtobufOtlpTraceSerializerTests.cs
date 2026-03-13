@@ -228,7 +228,7 @@ public class ProtobufOtlpTraceSerializerTests
                 }
 
                 // Content should match
-                for (int i = 0; i < writePos1; i++)
+                for (var i = 0; i < writePos1; i++)
                 {
                     if (buffer1[i] != buffer2[i])
                     {

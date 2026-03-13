@@ -24,7 +24,7 @@ public sealed class LogRecord
     internal LogRecordSource Source = LogRecordSource.CreatedManually;
     internal int PoolReferenceCount = int.MaxValue;
 
-    private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
+    private static readonly Action<object?, List<object?>> AddScopeToBufferedList = static (scope, state) =>
     {
         state.Add(scope);
     };
@@ -193,8 +193,8 @@ public sealed class LogRecord
         {
             if (this.Data.Severity.HasValue)
             {
-                uint severity = (uint)this.Data.Severity.Value;
-                if (severity >= 1 && severity <= 24)
+                var severity = (uint)this.Data.Severity.Value;
+                if (severity is >= 1 and <= 24)
                 {
                     return (LogLevel)((severity - 1) / 4);
                 }
@@ -203,10 +203,7 @@ public sealed class LogRecord
             return LogLevel.Trace;
         }
 
-        set
-        {
-            OpenTelemetryLogger.SetLogRecordSeverityFields(ref this.Data, value);
-        }
+        set => OpenTelemetryLogger.SetLogRecordSeverityFields(ref this.Data, value);
     }
 
     /// <summary>
@@ -426,7 +423,7 @@ public sealed class LogRecord
         var bufferedScopes = this.ILoggerData.BufferedScopes;
         if (bufferedScopes != null)
         {
-            foreach (object? scope in bufferedScopes)
+            foreach (var scope in bufferedScopes)
             {
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
                 callback(new(scope), state);
@@ -444,27 +441,19 @@ public sealed class LogRecord
     /// </summary>
     /// <returns><see cref="LogRecordData"/>.</returns>
     internal ref LogRecordData GetDataRef()
-    {
-        return ref this.Data;
-    }
+        => ref this.Data;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ResetReferenceCount()
-    {
-        this.PoolReferenceCount = 1;
-    }
+        => this.PoolReferenceCount = 1;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddReference()
-    {
-        Interlocked.Increment(ref this.PoolReferenceCount);
-    }
+        => Interlocked.Increment(ref this.PoolReferenceCount);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int RemoveReference()
-    {
-        return Interlocked.Decrement(ref this.PoolReferenceCount);
-    }
+        => Interlocked.Decrement(ref this.PoolReferenceCount);
 
     // Note: Typically called when LogRecords are added into a batch so they
     // can be safely processed outside of the log call chain.
@@ -505,7 +494,7 @@ public sealed class LogRecord
             return;
         }
 
-        var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(attributes.Count);
+        var attributeStorage = this.AttributeStorage ??= [with(attributes.Count)];
 
         // Note: AddRange here will copy all of the KeyValuePairs from
         // attributes to AttributeStorage. This "captures" the state and
@@ -529,7 +518,7 @@ public sealed class LogRecord
             return;
         }
 
-        var scopeStorage = this.ScopeStorage ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes);
+        var scopeStorage = this.ScopeStorage ??= [with(LogRecordPoolHelper.DefaultMaxNumberOfScopes)];
 
         scopeProvider.ForEachScope(AddScopeToBufferedList, scopeStorage);
 
@@ -562,7 +551,7 @@ public sealed class LogRecord
             var bufferedScopes = this.BufferedScopes;
             if (bufferedScopes != null)
             {
-                copy.BufferedScopes = new List<object?>(bufferedScopes);
+                copy.BufferedScopes = [.. bufferedScopes];
             }
 
             return copy;
@@ -571,9 +560,9 @@ public sealed class LogRecord
 
     private readonly struct ScopeForEachState<TState>
     {
-        public static readonly Action<object?, ScopeForEachState<TState>> ForEachScope = (object? scope, ScopeForEachState<TState> state) =>
+        public static readonly Action<object?, ScopeForEachState<TState>> ForEachScope = static (scope, state) =>
         {
-            LogRecordScope logRecordScope = new LogRecordScope(scope);
+            var logRecordScope = new LogRecordScope(scope);
 
             state.Callback(logRecordScope, state.UserState);
         };

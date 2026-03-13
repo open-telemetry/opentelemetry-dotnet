@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
@@ -163,14 +162,9 @@ public static class OtlpMetricExporterExtensions
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<Metric>, BaseExporter<Metric>>? configureExporterInstance = null)
     {
-        Debug.Assert(serviceProvider != null, "serviceProvider was null");
-        Debug.Assert(exporterOptions != null, "exporterOptions was null");
-        Debug.Assert(metricReaderOptions != null, "metricReaderOptions was null");
-        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
-
 #if NETFRAMEWORK || NETSTANDARD2_0
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-        if (exporterOptions!.Protocol == OtlpExportProtocol.Grpc &&
+        if (exporterOptions.Protocol == OtlpExportProtocol.Grpc &&
             ReferenceEquals(exporterOptions.HttpClientFactory, exporterOptions.DefaultHttpClientFactory))
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
         {
@@ -181,13 +175,13 @@ public static class OtlpMetricExporterExtensions
 
         if (!skipUseOtlpExporterRegistrationCheck)
         {
-            serviceProvider!.EnsureNoUseOtlpExporterRegistrations();
+            serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        exporterOptions!.TryEnableIHttpClientFactoryIntegration(serviceProvider!, "OtlpMetricExporter");
+        exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions!, experimentalOptions!);
+        BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions, experimentalOptions);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
         if (configureExporterInstance != null)
@@ -197,6 +191,6 @@ public static class OtlpMetricExporterExtensions
 
         return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
             metricExporter,
-            metricReaderOptions!);
+            metricReaderOptions);
     }
 }

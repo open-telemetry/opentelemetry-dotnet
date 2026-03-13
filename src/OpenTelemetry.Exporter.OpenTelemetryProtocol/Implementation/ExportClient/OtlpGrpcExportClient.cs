@@ -51,7 +51,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             httpResponse.EnsureSuccessStatusCode();
 
             var trailingHeaders = httpResponse.TrailingHeaders();
-            Status status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
+            var status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
 
             if (status.Detail.Equals(Status.NoReplyDetailMessage, StringComparison.Ordinal))
             {
@@ -60,7 +60,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 #else
                 using var responseStream = httpResponse.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
 #endif
-                int firstByte = responseStream.ReadByte();
+                var firstByte = responseStream.ReadByte();
 
                 if (firstByte == -1)
                 {
@@ -95,7 +95,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             }
 
             string? grpcStatusDetailsHeader = null;
-            if (status.StatusCode == StatusCode.ResourceExhausted || status.StatusCode == StatusCode.Unavailable)
+            if (status.StatusCode is StatusCode.ResourceExhausted or StatusCode.Unavailable)
             {
                 grpcStatusDetailsHeader = GrpcProtocolHelpers.GetHeaderValue(trailingHeaders, GrpcStatusDetailsHeader);
             }

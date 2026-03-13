@@ -51,7 +51,7 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
 
     private static bool IsSortedAndDistinct(double[] values)
     {
-        for (int i = 1; i < values.Length; i++)
+        for (var i = 1; i < values.Length; i++)
         {
             if (values[i] <= values[i - 1])
             {

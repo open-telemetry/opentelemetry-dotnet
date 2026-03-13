@@ -98,7 +98,7 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
         this.innerBuilder.Services = null;
 
 #if DEBUG
-        bool validateScopes = true;
+        var validateScopes = true;
 #else
         bool validateScopes = false;
 #endif
@@ -116,7 +116,7 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
 
     private static bool IsOtelSdkDisabled(IConfiguration configuration)
     {
-        bool isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out bool result) && result;
+        var isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out var result) && result;
         if (isDisabled)
         {
             OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent($"Disabled because {SdkConfigDefinitions.SdkDisableEnvVarName} is true.");

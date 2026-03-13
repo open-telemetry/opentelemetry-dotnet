@@ -28,7 +28,7 @@ public class MultipleReadersTests
             .AddReader(reader);
 
         using var meterProvider1 = meterProviderBuilder1.Build();
-        Assert.Throws<NotSupportedException>(() => meterProviderBuilder2.Build());
+        Assert.Throws<NotSupportedException>(meterProviderBuilder2.Build);
     }
 
     [Fact]
@@ -115,18 +115,28 @@ public class MultipleReadersTests
 
         var counter = meter.CreateCounter<long>("counter");
 
-        int index = 0;
+        var index = 0;
         var values = new long[] { 100, 200, 300, 400 };
-        long GetValue() => values[index++];
-        var gauge = meter.CreateObservableGauge("gauge", () => GetValue());
 
-        int indexSum = 0;
+        long GetValue()
+        {
+            return values[index++];
+        }
+
+        var gauge = meter.CreateObservableGauge("gauge", GetValue);
+
+        var indexSum = 0;
         var valuesSum = new long[] { 1000, 1200, 1300, 1400 };
-        long GetSum() => valuesSum[indexSum++];
-        var observableCounter = meter.CreateObservableCounter("obs-counter", () => GetSum());
 
-        bool defaultNamedOptionsConfigureCalled = false;
-        bool namedOptionsConfigureCalled = false;
+        long GetSum()
+        {
+            return valuesSum[indexSum++];
+        }
+
+        var observableCounter = meter.CreateObservableCounter("obs-counter", GetSum);
+
+        var defaultNamedOptionsConfigureCalled = false;
+        var namedOptionsConfigureCalled = false;
 
         var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
             .ConfigureServices(services =>
@@ -256,7 +266,7 @@ public class MultipleReadersTests
         var exportedItems1 = new List<Metric>();
         var exportedItems2 = new List<Metric>();
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{hasViews}");
-        int callbackInvocationCount = 0;
+        var callbackInvocationCount = 0;
         var gauge = meter.CreateObservableGauge("gauge", () =>
         {
             callbackInvocationCount++;

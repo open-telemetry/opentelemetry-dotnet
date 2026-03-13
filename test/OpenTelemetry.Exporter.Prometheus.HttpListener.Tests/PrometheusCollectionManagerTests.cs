@@ -22,7 +22,7 @@ public sealed class PrometheusCollectionManagerTests
         var testTimeout = TimeSpan.FromMinutes(1);
         using var cts = new CancellationTokenSource(testTimeout);
 
-        bool cacheEnabled = scrapeResponseCacheDurationMilliseconds != 0;
+        var cacheEnabled = scrapeResponseCacheDurationMilliseconds != 0;
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
         using (var provider = Sdk.CreateMeterProviderBuilder()
@@ -41,11 +41,11 @@ public sealed class PrometheusCollectionManagerTests
                 throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
             }
 
-            int runningCollectCount = 0;
+            var runningCollectCount = 0;
             var collectFunc = exporter.Collect;
             exporter.Collect = (timeout) =>
             {
-                bool result = collectFunc!(timeout);
+                var result = collectFunc!(timeout);
                 runningCollectCount++;
 
                 cts.Token.ThrowIfCancellationRequested();
@@ -114,9 +114,9 @@ public sealed class PrometheusCollectionManagerTests
                 return [.. bag.Select((r) => Task.FromResult(r))];
 #else
 
-                Task<Response>[] tasks = new Task<Response>[parallelism];
+                var tasks = new Task<Response>[parallelism];
 
-                for (int i = 0; i < tasks.Length; i++)
+                for (var i = 0; i < tasks.Length; i++)
                 {
                     tasks[i] = Task.Run(() => CollectAsync(advanceClock), cts.Token);
                 }
@@ -140,7 +140,7 @@ public sealed class PrometheusCollectionManagerTests
 
             Assert.False(firstResponse.CollectionResponse.FromCache, "Response was served from the cache.");
 
-            for (int i = 1; i < collectTasks.Length; i++)
+            for (var i = 1; i < collectTasks.Length; i++)
             {
                 var response = await collectTasks[i];
 
@@ -195,7 +195,7 @@ public sealed class PrometheusCollectionManagerTests
 
             Assert.False(firstResponse.CollectionResponse.FromCache, "Response was served from the cache.");
 
-            for (int i = 1; i < collectTasks.Length; i++)
+            for (var i = 1; i < collectTasks.Length; i++)
             {
                 var response = await collectTasks[i];
 

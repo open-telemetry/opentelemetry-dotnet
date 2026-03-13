@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Metrics;
 
@@ -132,12 +131,8 @@ internal sealed class PrometheusCollectionManager
         try
         {
             this.collectionRunning = false;
-
-            if (this.collectionTcs != null)
-            {
-                this.collectionTcs.SetResult(response);
-                this.collectionTcs = null;
-            }
+            this.collectionTcs?.SetResult(response);
+            this.collectionTcs = null;
         }
         finally
         {
@@ -153,9 +148,7 @@ internal sealed class PrometheusCollectionManager
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ExitCollect()
-    {
-        Interlocked.Decrement(ref this.readerCount);
-    }
+        => Interlocked.Decrement(ref this.readerCount);
 
     private static bool IncreaseBufferSize(ref byte[] buffer)
     {
@@ -191,9 +184,7 @@ internal sealed class PrometheusCollectionManager
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ExitGlobalLock()
-    {
-        Interlocked.Exchange(ref this.globalLockState, 0);
-    }
+        => Interlocked.Exchange(ref this.globalLockState, 0);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void WaitForReadersToComplete()
@@ -214,8 +205,6 @@ internal sealed class PrometheusCollectionManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ExecuteCollect(bool openMetricsRequested)
     {
-        Debug.Assert(this.exporter.Collect != null, "this.exporter.Collect was null");
-
         this.exporter.OnExport = this.onCollectRef;
         this.exporter.OpenMetricsRequested = openMetricsRequested;
         var result = this.exporter.Collect!(Timeout.Infinite);
@@ -226,7 +215,7 @@ internal sealed class PrometheusCollectionManager
     private ExportResult OnCollect(in Batch<Metric> metrics)
     {
         var cursor = 0;
-        ref byte[] buffer = ref (this.exporter.OpenMetricsRequested ? ref this.openMetricsBuffer : ref this.plainTextBuffer);
+        ref var buffer = ref (this.exporter.OpenMetricsRequested ? ref this.openMetricsBuffer : ref this.plainTextBuffer);
 
         try
         {

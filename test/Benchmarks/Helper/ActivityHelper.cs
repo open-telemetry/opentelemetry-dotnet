@@ -14,7 +14,7 @@ internal static class ActivityHelper
         var eventTimestamp = DateTime.UtcNow;
 
         var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
-        var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
+        var parentSpanId = ActivitySpanId.CreateFromBytes([12, 23, 34, 45, 56, 67, 78, 89]);
 
         var attributes = new Dictionary<string, object>
         {
@@ -28,20 +28,20 @@ internal static class ActivityHelper
 
         var events = new List<ActivityEvent>
         {
-            new ActivityEvent(
+            new(
                 "Event1",
                 eventTimestamp,
-                new ActivityTagsCollection(new Dictionary<string, object?>
+                [with(new Dictionary<string, object?>
                 {
                     { "key", "value" },
-                })),
-            new ActivityEvent(
+                })]),
+            new(
                 "Event2",
                 eventTimestamp,
-                new ActivityTagsCollection(new Dictionary<string, object?>
+                [with(new Dictionary<string, object?>
                 {
                     { "key", "value" },
-                })),
+                })]),
         };
 
         var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
@@ -60,7 +60,7 @@ internal static class ActivityHelper
         using var listener = new ActivityListener()
         {
             ShouldListenTo = a => a.Name == nameof(CreateTestActivity),
-            Sample = (ref ActivityCreationOptions<ActivityContext> a) => ActivitySamplingResult.AllDataAndRecorded,
+            Sample = (ref a) => ActivitySamplingResult.AllDataAndRecorded,
         };
 
         ActivitySource.AddActivityListener(listener);

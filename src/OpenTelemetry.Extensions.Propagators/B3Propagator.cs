@@ -38,7 +38,7 @@ public sealed class B3Propagator : TextMapPropagator
 
     private static readonly HashSet<string> AllFields = [XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags];
 
-    private static readonly HashSet<string> SampledValues = new(StringComparer.Ordinal) { SampledValue, LegacySampledValue };
+    private static readonly HashSet<string> SampledValues = [with(StringComparer.Ordinal), SampledValue, LegacySampledValue];
 
     private readonly bool singleHeader;
 
@@ -201,7 +201,7 @@ public sealed class B3Propagator : TextMapPropagator
             }
 
             var parts = header.Split(XB3CombinedDelimiter);
-            if (parts.Length < 2 || parts.Length > 4)
+            if (parts.Length is < 2 or > 4)
             {
                 return context;
             }

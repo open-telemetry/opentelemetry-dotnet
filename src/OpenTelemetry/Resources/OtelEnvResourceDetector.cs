@@ -23,7 +23,7 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
     {
         var resource = Resource.Empty;
 
-        if (this.configuration.TryGetStringValue(EnvVarKey, out string? envResourceAttributeValue))
+        if (this.configuration.TryGetStringValue(EnvVarKey, out var envResourceAttributeValue))
         {
             var attributes = ParseResourceAttributes(envResourceAttributeValue);
             resource = new Resource(attributes);
@@ -36,10 +36,10 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
     {
         var attributes = new List<KeyValuePair<string, object>>();
 
-        string[] rawAttributes = resourceAttributes.Split(AttributeListSplitter);
-        foreach (string rawKeyValuePair in rawAttributes)
+        var rawAttributes = resourceAttributes.Split(AttributeListSplitter);
+        foreach (var rawKeyValuePair in rawAttributes)
         {
-            string[] keyValuePair = rawKeyValuePair.Split(AttributeKeyValueSplitter, 2);
+            var keyValuePair = rawKeyValuePair.Split(AttributeKeyValueSplitter, 2);
             if (keyValuePair.Length != 2)
             {
                 continue;

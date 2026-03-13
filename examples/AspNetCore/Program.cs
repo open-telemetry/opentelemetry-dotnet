@@ -38,7 +38,7 @@ appBuilder.Logging.ClearProviders();
 appBuilder.Services.AddOpenTelemetry()
     .ConfigureResource(r => r
         .AddService(
-            serviceName: appBuilder.Configuration.GetValue("ServiceName", defaultValue: "otel-test")!,
+            serviceName: appBuilder.Configuration.GetValue("ServiceName", defaultValue: "otel-test"),
             serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown",
             serviceInstanceId: Environment.MachineName))
     .WithTracing(builder =>
@@ -107,7 +107,7 @@ appBuilder.Services.AddOpenTelemetry()
                 builder.AddOtlpExporter(otlpOptions =>
                 {
                     // Use IConfiguration directly for Otlp exporter endpoint option.
-                    otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317")!);
+                    otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317"));
                 });
                 break;
             default:

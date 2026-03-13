@@ -52,9 +52,16 @@ public class BaggagePropagator : TextMapPropagator
             var baggageCollection = getter(carrier, BaggageHeaderName);
             if (baggageCollection?.Any() ?? false)
             {
-                if (TryExtractBaggage([.. baggageCollection], out var baggage))
+                if (TryExtractBaggage([.. baggageCollection], out var baggageItems))
                 {
-                    return new PropagationContext(context.ActivityContext, new Baggage(baggage!));
+                    Baggage baggage =
+#if NET
+                        new(baggageItems);
+#else
+                        new(baggageItems!);
+#endif
+
+                    return new PropagationContext(context.ActivityContext, baggage);
                 }
             }
 
@@ -85,13 +92,13 @@ public class BaggagePropagator : TextMapPropagator
 
         using var e = context.Baggage.GetEnumerator();
 
-        if (e.MoveNext() == true)
+        if (e.MoveNext())
         {
-            int itemCount = 0;
-            StringBuilder baggage = new StringBuilder();
+            var itemCount = 0;
+            var baggage = new StringBuilder();
             do
             {
-                KeyValuePair<string, string> item = e.Current;
+                var item = e.Current;
                 if (string.IsNullOrEmpty(item.Value))
                 {
                     continue;
@@ -112,8 +119,8 @@ public class BaggagePropagator : TextMapPropagator
 #endif
         out Dictionary<string, string>? baggage)
     {
-        int baggageLength = -1;
-        bool done = false;
+        var baggageLength = -1;
+        var done = false;
         Dictionary<string, string>? baggageDictionary = null;
 
         foreach (var item in baggageCollection)

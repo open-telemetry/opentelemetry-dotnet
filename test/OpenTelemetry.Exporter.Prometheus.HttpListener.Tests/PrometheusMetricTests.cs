@@ -26,243 +26,162 @@ public sealed class PrometheusMetricTests
 
     [Fact]
     public void SanitizeMetricName_Valid()
-    {
-        AssertSanitizeMetricName("active_directory_ds_replication_network_io", "active_directory_ds_replication_network_io");
-    }
+        => AssertSanitizeMetricName("active_directory_ds_replication_network_io", "active_directory_ds_replication_network_io");
 
     [Fact]
     public void SanitizeMetricName_RemoveConsecutiveUnderscores()
-    {
-        AssertSanitizeMetricName("cpu_sp__d_hertz", "cpu_sp_d_hertz");
-    }
+        => AssertSanitizeMetricName("cpu_sp__d_hertz", "cpu_sp_d_hertz");
 
     [Fact]
     public void SanitizeMetricName_SupportLeadingAndTrailingUnderscores()
-    {
-        AssertSanitizeMetricName("_cpu_speed_hertz_", "_cpu_speed_hertz_");
-    }
+        => AssertSanitizeMetricName("_cpu_speed_hertz_", "_cpu_speed_hertz_");
 
     [Fact]
     public void SanitizeMetricName_RemoveUnsupportedCharacters()
-    {
-        AssertSanitizeMetricName("metric_unit_$1000", "metric_unit_1000");
-    }
+        => AssertSanitizeMetricName("metric_unit_$1000", "metric_unit_1000");
 
     [Fact]
     public void SanitizeMetricName_RemoveWhitespace()
-    {
-        AssertSanitizeMetricName("unit include", "unit_include");
-    }
+        => AssertSanitizeMetricName("unit include", "unit_include");
 
     [Fact]
     public void SanitizeMetricName_RemoveMultipleUnsupportedChracters()
-    {
-        AssertSanitizeMetricName("sample_me%%$$$_count_ !!@unit include", "sample_me_count_unit_include");
-    }
+        => AssertSanitizeMetricName("sample_me%%$$$_count_ !!@unit include", "sample_me_count_unit_include");
 
     [Fact]
     public void SanitizeMetricName_RemoveStartingNumber()
-    {
-        AssertSanitizeMetricName("1_some_metric_name", "_some_metric_name");
-    }
+        => AssertSanitizeMetricName("1_some_metric_name", "_some_metric_name");
 
     [Fact]
     public void SanitizeMetricName_SupportColon()
-    {
-        AssertSanitizeMetricName("sample_metric_name__:_per_meter", "sample_metric_name_:_per_meter");
-    }
+        => AssertSanitizeMetricName("sample_metric_name__:_per_meter", "sample_metric_name_:_per_meter");
 
     [Fact]
     public void Unit_Annotation_None()
-    {
-        Assert.Equal("Test", PrometheusMetric.RemoveAnnotations("Test"));
-    }
+        => Assert.Equal("Test", PrometheusMetric.RemoveAnnotations("Test"));
 
     [Fact]
     public void Unit_Annotation_RemoveLeading()
-    {
-        Assert.Equal("%", PrometheusMetric.RemoveAnnotations("%{percentage}"));
-    }
+        => Assert.Equal("%", PrometheusMetric.RemoveAnnotations("%{percentage}"));
 
     [Fact]
     public void Unit_Annotation_RemoveTrailing()
-    {
-        Assert.Equal("%", PrometheusMetric.RemoveAnnotations("{percentage}%"));
-    }
+        => Assert.Equal("%", PrometheusMetric.RemoveAnnotations("{percentage}%"));
 
     [Fact]
     public void Unit_Annotation_RemoveLeadingAndTrailing()
-    {
-        Assert.Equal("%", PrometheusMetric.RemoveAnnotations("{percentage}%{percentage}"));
-    }
+        => Assert.Equal("%", PrometheusMetric.RemoveAnnotations("{percentage}%{percentage}"));
 
     [Fact]
     public void Unit_Annotation_RemoveMiddle()
-    {
-        Assert.Equal("startend", PrometheusMetric.RemoveAnnotations("start{percentage}end"));
-    }
+        => Assert.Equal("startend", PrometheusMetric.RemoveAnnotations("start{percentage}end"));
 
     [Fact]
     public void Unit_Annotation_RemoveEverything()
-    {
-        Assert.Equal(string.Empty, PrometheusMetric.RemoveAnnotations("{percentage}"));
-    }
+        => Assert.Equal(string.Empty, PrometheusMetric.RemoveAnnotations("{percentage}"));
 
     [Fact]
     public void Unit_Annotation_Multiple_RemoveEverything()
-    {
-        Assert.Equal(string.Empty, PrometheusMetric.RemoveAnnotations("{one}{two}"));
-    }
+        => Assert.Equal(string.Empty, PrometheusMetric.RemoveAnnotations("{one}{two}"));
 
     [Fact]
     public void Unit_Annotation_NoClose()
-    {
-        Assert.Equal("{one", PrometheusMetric.RemoveAnnotations("{one"));
-    }
+        => Assert.Equal("{one", PrometheusMetric.RemoveAnnotations("{one"));
 
     [Fact]
     public void Unit_AnnotationMismatch_NoClose()
-    {
-        Assert.Equal("}", PrometheusMetric.RemoveAnnotations("{{one}}"));
-    }
+        => Assert.Equal("}", PrometheusMetric.RemoveAnnotations("{{one}}"));
 
     [Fact]
     public void Unit_AnnotationMismatch_Close()
-    {
-        Assert.Equal(string.Empty, PrometheusMetric.RemoveAnnotations("{{one}"));
-    }
+        => Assert.Equal(string.Empty, PrometheusMetric.RemoveAnnotations("{{one}"));
 
     [Fact]
     public void Name_GaugeWithUnit_NoAppendRatio()
-    {
-        AssertName("sample", "unit", PrometheusType.Gauge, false, "sample_unit");
-    }
+        => AssertName("sample", "unit", PrometheusType.Gauge, false, "sample_unit");
 
     [Fact]
     public void Name_SpecialCaseCounter_AppendTotal()
-    {
-        AssertName("sample", "unit", PrometheusType.Counter, false, "sample_unit_total");
-    }
+        => AssertName("sample", "unit", PrometheusType.Counter, false, "sample_unit_total");
 
     [Fact]
     public void Name_SpecialCaseCounterWithoutUnit_DropUnitAppendTotal()
-    {
-        AssertName("sample", "1", PrometheusType.Counter, false, "sample_total");
-    }
+        => AssertName("sample", "1", PrometheusType.Counter, false, "sample_total");
 
     [Fact]
     public void Name_DisableTotalSuffixAddition_TotalNotAppended()
-    {
-        AssertName("sample", "1", PrometheusType.Counter, true, "sample");
-    }
+        => AssertName("sample", "1", PrometheusType.Counter, true, "sample");
 
     [Fact]
     public void Name_TotalSuffixAlreadyPresent_DisableTotalSuffixAddition_TotalNotRemoved()
-    {
-        AssertName("sample_total", "1", PrometheusType.Counter, true, "sample_total");
-    }
+        => AssertName("sample_total", "1", PrometheusType.Counter, true, "sample_total");
 
     [Fact]
     public void Name_SpecialCaseCounterWithNumber_AppendTotal()
-    {
-        AssertName("sample", "2", PrometheusType.Counter, false, "sample_2_total");
-    }
+        => AssertName("sample", "2", PrometheusType.Counter, false, "sample_2_total");
 
     [Fact]
     public void Name_UnsupportedMetricNameChars_Drop()
-    {
-        AssertName("s%%ple", "%/m", PrometheusType.Summary, false, "s_ple_percent_per_minute");
-    }
+        => AssertName("s%%ple", "%/m", PrometheusType.Summary, false, "s_ple_percent_per_minute");
 
     [Fact]
     public void Name_UnitOtherThanOne_Normal()
-    {
-        AssertName("metric_name", "2", PrometheusType.Summary, false, "metric_name_2");
-    }
+        => AssertName("metric_name", "2", PrometheusType.Summary, false, "metric_name_2");
 
     [Fact]
     public void Name_UnitAlreadyPresentInName_NotAppended()
-    {
-        AssertName("metric_name_total", "total", PrometheusType.Counter, false, "metric_name_total");
-    }
+        => AssertName("metric_name_total", "total", PrometheusType.Counter, false, "metric_name_total");
 
     [Fact]
     public void Name_UnitAlreadyPresentInName_TotalNonCounterType_NotAppended()
-    {
-        AssertName("metric_name_total", "total", PrometheusType.Summary, false, "metric_name_total");
-    }
+        => AssertName("metric_name_total", "total", PrometheusType.Summary, false, "metric_name_total");
 
     [Fact]
     public void Name_UnitAlreadyPresentInName_CustomGauge_NotAppended()
-    {
-        AssertName("metric_hertz", "hertz", PrometheusType.Gauge, false, "metric_hertz");
-    }
+        => AssertName("metric_hertz", "hertz", PrometheusType.Gauge, false, "metric_hertz");
 
     [Fact]
     public void Name_UnitAlreadyPresentInName_CustomCounter_NotAppended()
-    {
-        AssertName("metric_hertz_total", "hertz_total", PrometheusType.Counter, false, "metric_hertz_total");
-    }
+        => AssertName("metric_hertz_total", "hertz_total", PrometheusType.Counter, false, "metric_hertz_total");
 
     [Fact]
     public void Name_UnitAlreadyPresentInName_OrderMatters_Appended()
-    {
-        AssertName("metric_total_hertz", "hertz_total", PrometheusType.Counter, false, "metric_total_hertz_hertz_total");
-    }
+        => AssertName("metric_total_hertz", "hertz_total", PrometheusType.Counter, false, "metric_total_hertz_hertz_total");
 
     [Fact]
     public void Name_StartWithNumber_UnderscoreStart()
-    {
-        AssertName("2_metric_name", "By", PrometheusType.Summary, false, "_metric_name_bytes");
-    }
+        => AssertName("2_metric_name", "By", PrometheusType.Summary, false, "_metric_name_bytes");
 
     [Fact]
     public void OpenMetricsName_UnitAlreadyPresentInName_Appended()
-    {
-        AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Gauge, false, "db_bytes_written_bytes");
-    }
+        => AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Gauge, false, "db_bytes_written_bytes");
 
     [Fact]
     public void OpenMetricsName_SuffixedWithUnit_NotAppended()
-    {
-        AssertOpenMetricsName("db_written_bytes", "By", PrometheusType.Gauge, false, "db_written_bytes");
-    }
+        => AssertOpenMetricsName("db_written_bytes", "By", PrometheusType.Gauge, false, "db_written_bytes");
 
     [Fact]
     public void OpenMetricsName_Counter_AppendTotal()
-    {
-        AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Counter, false, "db_bytes_written_bytes_total");
-    }
+        => AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Counter, false, "db_bytes_written_bytes_total");
 
     [Fact]
     public void OpenMetricsName_Counter_DisableSuffixTotal_AppendTotal()
-    {
-        AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Counter, true, "db_bytes_written_bytes_total");
-    }
+        => AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Counter, true, "db_bytes_written_bytes_total");
 
     [Fact]
     public void OpenMetricsName_CounterSuffixedWithTotal_AppendUnitAndTotal()
-    {
-        AssertOpenMetricsName("db_bytes_written_total", "By", PrometheusType.Counter, false, "db_bytes_written_bytes_total");
-    }
+        => AssertOpenMetricsName("db_bytes_written_total", "By", PrometheusType.Counter, false, "db_bytes_written_bytes_total");
 
     [Fact]
     public void OpenMetricsName_CounterSuffixedWithTotal_DisableSuffixTotal_AppendTotal()
-    {
-        AssertOpenMetricsName("db_bytes_written_total", "By", PrometheusType.Counter, false, "db_bytes_written_bytes_total");
-    }
+        => AssertOpenMetricsName("db_bytes_written_total", "By", PrometheusType.Counter, false, "db_bytes_written_bytes_total");
 
     [Fact]
-    public void OpenMetricsMetadataName_Counter_NotAppendTotal()
-    {
-        AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, false, "db_bytes_written_bytes");
-    }
+    public void OpenMetricsMetadataName_Counter_NotAppendTotal() => AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, false, "db_bytes_written_bytes");
 
     [Fact]
     public void OpenMetricsMetadataName_Counter_DisableSuffixTotal_NotAppendTotal()
-    {
-        AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, true, "db_bytes_written_bytes");
-    }
+        => AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, true, "db_bytes_written_bytes");
 
     [Theory]
     [MemberData(nameof(GetPrometheusType_Data))]
@@ -280,10 +199,7 @@ public sealed class PrometheusMetricTests
     [InlineData("ms", "milliseconds")]
     [InlineData("us", "microseconds")]
     [InlineData("ns", "nanoseconds")]
-    public void Name_TimeUnits_MappedCorrectly(string unit, string expectedUnit)
-    {
-        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
-    }
+    public void Name_TimeUnits_MappedCorrectly(string unit, string expectedUnit) => AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
 
     [Theory]
     [InlineData("By", "bytes")]
@@ -300,10 +216,7 @@ public sealed class PrometheusMetricTests
     [InlineData("MB", "megabytes")]
     [InlineData("GB", "gigabytes")]
     [InlineData("TB", "terabytes")]
-    public void Name_ByteUnits_MappedCorrectly(string unit, string expectedUnit)
-    {
-        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
-    }
+    public void Name_ByteUnits_MappedCorrectly(string unit, string expectedUnit) => AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
 
     [Theory]
     [InlineData("m", "meters")]
@@ -312,26 +225,17 @@ public sealed class PrometheusMetricTests
     [InlineData("J", "joules")]
     [InlineData("W", "watts")]
     [InlineData("g", "grams")]
-    public void Name_SIUnits_MappedCorrectly(string unit, string expectedUnit)
-    {
-        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
-    }
+    public void Name_SIUnits_MappedCorrectly(string unit, string expectedUnit) => AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
 
     [Theory]
     [InlineData("Cel", "celsius")]
     [InlineData("Hz", "hertz")]
     [InlineData("%", "percent")]
     [InlineData("$", "dollars")]
-    public void Name_MiscUnits_MappedCorrectly(string unit, string expectedUnit)
-    {
-        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
-    }
+    public void Name_MiscUnits_MappedCorrectly(string unit, string expectedUnit) => AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
 
     [Fact]
-    public void Name_UnknownUnit_UsedAsIs()
-    {
-        AssertName("metric", "custom_unit", PrometheusType.Gauge, false, "metric_custom_unit");
-    }
+    public void Name_UnknownUnit_UsedAsIs() => AssertName("metric", "custom_unit", PrometheusType.Gauge, false, "metric_custom_unit");
 
     [Theory]
     [InlineData("requests/s", "requests_per_second")]
@@ -342,37 +246,22 @@ public sealed class PrometheusMetricTests
     [InlineData("tasks/w", "tasks_per_week")]
     [InlineData("jobs/mo", "jobs_per_month")]
     [InlineData("cycles/y", "cycles_per_year")]
-    public void Name_RateUnits_MappedCorrectly(string unit, string expectedUnit)
-    {
-        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
-    }
+    public void Name_RateUnits_MappedCorrectly(string unit, string expectedUnit) => AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
 
     [Theory]
     [InlineData("By/s", "bytes_per_second")]
     [InlineData("ms/m", "milliseconds_per_minute")]
     [InlineData("%/h", "percent_per_hour")]
-    public void Name_RateUnitsWithMapping_MappedCorrectly(string unit, string expectedUnit)
-    {
-        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
-    }
+    public void Name_RateUnitsWithMapping_MappedCorrectly(string unit, string expectedUnit) => AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
 
     [Fact]
-    public void Name_UnitWithAnnotations_AnnotationsRemoved()
-    {
-        AssertName("metric", "{packet}By", PrometheusType.Gauge, false, "metric_bytes");
-    }
+    public void Name_UnitWithAnnotations_AnnotationsRemoved() => AssertName("metric", "{packet}By", PrometheusType.Gauge, false, "metric_bytes");
 
     [Fact]
-    public void Name_ComplexUnitWithAnnotations_AnnotationsRemoved()
-    {
-        AssertName("metric", "{CPU}%{usage}", PrometheusType.Gauge, false, "metric_percent");
-    }
+    public void Name_ComplexUnitWithAnnotations_AnnotationsRemoved() => AssertName("metric", "{CPU}%{usage}", PrometheusType.Gauge, false, "metric_percent");
 
     [Fact]
-    public void Name_EmptyUnit_NoSuffixAdded()
-    {
-        AssertName("metric", string.Empty, PrometheusType.Gauge, false, "metric");
-    }
+    public void Name_EmptyUnit_NoSuffixAdded() => AssertName("metric", string.Empty, PrometheusType.Gauge, false, "metric");
 
     [Fact]
     public void Name_NullUnit_NoSuffixAdded()
@@ -398,20 +287,14 @@ public sealed class PrometheusMetricTests
     [InlineData("events/quarter", "events_per_quarter")]
     [InlineData("packets/tick", "packets_per_tick")]
     [InlineData("items/unknown_unit", "items_per_unknown_unit")]
-    public void Name_RateUnitsWithUnknownPerUnit_UsedAsIs(string unit, string expectedUnit)
-    {
-        // Per units not in the known list (s, m, h, d, w, mo, y) should be used as-is
-        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
-    }
+    public void Name_RateUnitsWithUnknownPerUnit_UsedAsIs(string unit, string expectedUnit) =>
+        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}"); // Per units not in the known list (s, m, h, d, w, mo, y) should be used as-is
 
     [Theory]
     [InlineData("By/custom", "bytes_per_custom")]
     [InlineData("%/unknown", "percent_per_unknown")]
-    public void Name_RateUnitsWithMappedNumeratorAndUnknownDenominator_MapsCorrectly(string unit, string expectedUnit)
-    {
-        // Numerator should be mapped, denominator used as-is if unknown
-        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}");
-    }
+    public void Name_RateUnitsWithMappedNumeratorAndUnknownDenominator_MapsCorrectly(string unit, string expectedUnit) =>
+        AssertName("metric", unit, PrometheusType.Gauge, false, $"metric_{expectedUnit}"); // Numerator should be mapped, denominator used as-is if unknown
 
     [Fact]
     public void Name_UntypedMetricType_WorksCorrectly()
@@ -431,12 +314,10 @@ public sealed class PrometheusMetricTests
         Assert.Equal(PrometheusType.Summary, metric.Type);
     }
 
+    // Summary metrics should not have _total appended even if not already present
     [Fact]
     public void Name_SummaryWithTotal_DoesNotAppendTotal()
-    {
-        // Summary metrics should not have _total appended even if not already present
-        AssertName("requests", "1", PrometheusType.Summary, false, "requests");
-    }
+        => AssertName("requests", "1", PrometheusType.Summary, false, "requests");
 
     [Fact]
     public void GetPrometheusType_Summary_ReturnsSummary()
@@ -450,7 +331,7 @@ public sealed class PrometheusMetricTests
     public void GetPrometheusType_Untyped_ReturnsUntyped()
     {
         // MetricType enum value that maps to Untyped (case 0 in switch)
-        var result = PrometheusMetric.GetPrometheusType((MetricType)0x00);
+        var result = PrometheusMetric.GetPrometheusType(0);
         Assert.Equal(PrometheusType.Untyped, result);
     }
 
@@ -480,10 +361,7 @@ public sealed class PrometheusMetricTests
 
     [Fact]
     public void Name_MultipleSlashesInUnit_FirstSlashProcessed()
-    {
-        // Multiple slashes
-        AssertName("metric", "req/s/extra", PrometheusType.Gauge, false, "metric_req_per_s/extra");
-    }
+        => AssertName("metric", "req/s/extra", PrometheusType.Gauge, false, "metric_req_per_s/extra"); // // Multiple slashes
 
     [Theory]
     [InlineData(PrometheusType.Counter)]

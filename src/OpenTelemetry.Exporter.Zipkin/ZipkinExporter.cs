@@ -108,8 +108,10 @@ public class ZipkinExporter : BaseExporter<Activity>
         string? ipv6 = null;
         if (!string.IsNullOrEmpty(hostName))
         {
+#pragma warning disable IDE0370 // Remove unnecessary suppression
             ipv4 = ResolveHostAddress(hostName!, AddressFamily.InterNetwork);
             ipv6 = ResolveHostAddress(hostName!, AddressFamily.InterNetworkV6);
+#pragma warning restore IDE0370 // Remove unnecessary suppression
         }
 
         string? serviceName = null;
@@ -124,8 +126,8 @@ public class ZipkinExporter : BaseExporter<Activity>
 
         if (string.IsNullOrEmpty(serviceName))
         {
-            serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
-                pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
+            serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.FirstOrDefault(
+                pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).Value;
         }
 
         this.LocalEndpoint = new ZipkinEndpoint(
