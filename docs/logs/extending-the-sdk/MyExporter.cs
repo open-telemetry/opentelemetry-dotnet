@@ -30,7 +30,7 @@ internal sealed class MyExporter : BaseExporter<LogRecord>
 
             sb.Append($"{record}(");
 
-            int scopeDepth = -1;
+            var scopeDepth = -1;
 
             record.ForEachScope(ProcessScope, sb);
 

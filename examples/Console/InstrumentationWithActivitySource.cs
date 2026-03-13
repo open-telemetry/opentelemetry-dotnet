@@ -53,7 +53,7 @@ internal sealed class InstrumentationWithActivitySource : IDisposable
                         var headerKeys = context.Request.Headers.AllKeys;
                         foreach (var headerKey in headerKeys)
                         {
-                            string? headerValue = context.Request.Headers[headerKey];
+                            var headerValue = context.Request.Headers[headerKey];
                             activity?.SetTag($"http.header.{headerKey}", headerValue);
                         }
 

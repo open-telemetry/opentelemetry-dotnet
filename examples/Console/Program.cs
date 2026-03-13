@@ -28,8 +28,7 @@ internal static class Program
     /// (eg: C:\repos\opentelemetry-dotnet\examples\Console\).
     /// </summary>
     /// <param name="args">Arguments from command line.</param>
-    public static void Main(string[] args)
-    {
+    public static void Main(string[] args) =>
         Parser.Default.ParseArguments<PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
             .MapResult(
                 (PrometheusOptions options) => TestPrometheusExporter.Run(options),
@@ -37,13 +36,12 @@ internal static class Program
                 (LogsOptions options) => TestLogs.Run(options),
                 (GrpcNetClientOptions options) => TestGrpcNetClient.Run(options),
                 (HttpClientOptions options) => TestHttpClient.Run(options),
-                (ConsoleOptions options) => TestConsoleExporter.Run(options),
-                (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(options),
-                (OpenTracingShimOptions options) => TestOpenTracingShim.Run(options),
+                (ConsoleOptions options) => TestConsoleExporter.Run(),
+                (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(),
+                (OpenTracingShimOptions options) => TestOpenTracingShim.Run(),
                 (OtlpOptions options) => TestOtlpExporter.Run(options),
-                (InMemoryOptions options) => TestInMemoryExporter.Run(options),
-                errs => 1);
-    }
+                (InMemoryOptions options) => TestInMemoryExporter.Run(),
+                _ => 1);
 }
 
 #pragma warning disable SA1402 // File may only contain a single type
@@ -84,29 +82,19 @@ internal sealed class MetricsOptions
 }
 
 [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]
-internal sealed class GrpcNetClientOptions
-{
-}
+internal sealed class GrpcNetClientOptions;
 
 [Verb("httpclient", HelpText = "Specify the options required to test HttpClient")]
-internal sealed class HttpClientOptions
-{
-}
+internal sealed class HttpClientOptions;
 
 [Verb("console", HelpText = "Specify the options required to test console exporter")]
-internal sealed class ConsoleOptions
-{
-}
+internal sealed class ConsoleOptions;
 
 [Verb("otelshim", HelpText = "Specify the options required to test OpenTelemetry Shim with console exporter")]
-internal sealed class OpenTelemetryShimOptions
-{
-}
+internal sealed class OpenTelemetryShimOptions;
 
 [Verb("opentracing", HelpText = "Specify the options required to test OpenTracing Shim with console exporter")]
-internal sealed class OpenTracingShimOptions
-{
-}
+internal sealed class OpenTracingShimOptions;
 
 [Verb("otlp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP)")]
 internal sealed class OtlpOptions
@@ -138,8 +126,6 @@ internal sealed class LogsOptions
 }
 
 [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]
-internal sealed class InMemoryOptions
-{
-}
+internal sealed class InMemoryOptions;
 
 #pragma warning restore SA1402 // File may only contain a single type

@@ -21,10 +21,7 @@ var logger = loggerFactory.CreateLogger<Program>();
 
 logger.FoodPriceChanged("artichoke", 9.99);
 
-using (logger.BeginScope(new List<KeyValuePair<string, object>>
-{
-    new KeyValuePair<string, object>("store", "Seattle"),
-}))
+using (logger.BeginScope(new List<KeyValuePair<string, object>> { new("store", "Seattle") }))
 {
     logger.FoodPriceChanged("truffle", 999.99);
 }
