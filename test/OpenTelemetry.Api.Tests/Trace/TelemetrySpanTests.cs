@@ -11,28 +11,28 @@ public class TelemetrySpanTests
     [Fact]
     public void CheckRecordExceptionData()
     {
-        string message = "message";
+        var message = "message";
 
-        using Activity activity = new Activity("exception-test");
-        using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
+        using var activity = new Activity("exception-test");
+        using var telemetrySpan = new TelemetrySpan(activity);
         telemetrySpan.RecordException(new ArgumentNullException(message, new InvalidOperationException("new-exception")));
         Assert.Single(activity.Events);
 
         Assert.NotNull(telemetrySpan.Activity);
         var @event = telemetrySpan.Activity.Events.FirstOrDefault(q => q.Name == SemanticConventions.AttributeExceptionEventName);
         Assert.Equal(message, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
-        Assert.Equal(typeof(ArgumentNullException).Name, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
+        Assert.Equal(nameof(ArgumentNullException), @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
     }
 
     [Fact]
     public void CheckRecordExceptionData2()
     {
-        string type = "ArgumentNullException";
-        string message = "message";
-        string stack = "stack";
+        var type = "ArgumentNullException";
+        var message = "message";
+        var stack = "stack";
 
-        using Activity activity = new Activity("exception-test");
-        using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
+        using var activity = new Activity("exception-test");
+        using var telemetrySpan = new TelemetrySpan(activity);
         telemetrySpan.RecordException(type, message, stack);
         Assert.Single(activity.Events);
 
@@ -46,8 +46,8 @@ public class TelemetrySpanTests
     [Fact]
     public void CheckRecordExceptionEmpty()
     {
-        using Activity activity = new Activity("exception-test");
-        using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
+        using var activity = new Activity("exception-test");
+        using var telemetrySpan = new TelemetrySpan(activity);
         telemetrySpan.RecordException(string.Empty, string.Empty, string.Empty);
         Assert.Empty(activity.Events);
 

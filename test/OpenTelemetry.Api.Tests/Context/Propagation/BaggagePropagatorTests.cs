@@ -336,7 +336,7 @@ public class BaggagePropagatorTests
     public void ValidateInjectionOfSixtyFourEntries()
     {
         var baggageDict = new Dictionary<string, string>();
-        for (int i = 0; i < 64; i++)
+        for (var i = 0; i < 64; i++)
         {
             baggageDict[$"key{i}"] = "value";
         }
@@ -383,7 +383,7 @@ public class BaggagePropagatorTests
     {
         var baggageDict = new Dictionary<string, string>();
 
-        for (int i = 0; i < 512; i++)
+        for (var i = 0; i < 512; i++)
         {
             baggageDict[$"{i:D3}"] = "0123456789a";
         }

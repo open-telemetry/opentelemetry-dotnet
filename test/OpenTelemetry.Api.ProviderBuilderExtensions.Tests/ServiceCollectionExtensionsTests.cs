@@ -22,7 +22,7 @@ public class ServiceCollectionExtensionsTests
 
         var services = new ServiceCollection();
 
-        for (int i = 0; i < numberOfCalls; i++)
+        for (var i = 0; i < numberOfCalls; i++)
         {
             services.ConfigureOpenTelemetryTracerProvider(builder => beforeServiceProviderInvocations++);
             services.ConfigureOpenTelemetryTracerProvider((sp, builder) => afterServiceProviderInvocations++);
@@ -57,7 +57,7 @@ public class ServiceCollectionExtensionsTests
 
         var services = new ServiceCollection();
 
-        for (int i = 0; i < numberOfCalls; i++)
+        for (var i = 0; i < numberOfCalls; i++)
         {
             services.ConfigureOpenTelemetryMeterProvider(builder => beforeServiceProviderInvocations++);
             services.ConfigureOpenTelemetryMeterProvider((sp, builder) => afterServiceProviderInvocations++);
@@ -92,7 +92,7 @@ public class ServiceCollectionExtensionsTests
 
         var services = new ServiceCollection();
 
-        for (int i = 0; i < numberOfCalls; i++)
+        for (var i = 0; i < numberOfCalls; i++)
         {
             services.ConfigureOpenTelemetryLoggerProvider(builder => beforeServiceProviderInvocations++);
             services.ConfigureOpenTelemetryLoggerProvider((sp, builder) => afterServiceProviderInvocations++);

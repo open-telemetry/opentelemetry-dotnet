@@ -122,7 +122,7 @@ public class TraceContextPropagator : TextMapPropagator
 
         setter(carrier, TraceParent, traceparent);
 
-        string? tracestateStr = context.ActivityContext.TraceState;
+        var tracestateStr = context.ActivityContext.TraceState;
         if (tracestateStr?.Length > 0)
         {
             setter(carrier, TraceState, tracestateStr);
@@ -228,13 +228,13 @@ public class TraceContextPropagator : TextMapPropagator
         {
             var keySet = new HashSet<string>();
             var result = new StringBuilder();
-            for (int i = 0; i < tracestateCollection.Length; ++i)
+            for (var i = 0; i < tracestateCollection.Length; ++i)
             {
                 var tracestate = tracestateCollection[i].AsSpan();
-                int begin = 0;
+                var begin = 0;
                 while (begin < tracestate.Length)
                 {
-                    int length = tracestate.Slice(begin).IndexOf(',');
+                    var length = tracestate.Slice(begin).IndexOf(',');
                     ReadOnlySpan<char> listMember;
                     if (length != -1)
                     {
@@ -262,7 +262,7 @@ public class TraceContextPropagator : TextMapPropagator
                         return false;
                     }
 
-                    int keyLength = listMember.IndexOf('=');
+                    var keyLength = listMember.IndexOf('=');
                     if (keyLength == listMember.Length || keyLength == -1)
                     {
                         // Missing key or value in tracestate
@@ -312,19 +312,11 @@ public class TraceContextPropagator : TextMapPropagator
     }
 
     private static byte HexCharToByte(char c)
-    {
-        if ((c >= '0') && (c <= '9'))
-        {
-            return (byte)(c - '0');
-        }
-
-        if ((c >= 'a') && (c <= 'f'))
-        {
-            return (byte)(c - 'a' + 10);
-        }
-
-        throw new ArgumentOutOfRangeException(nameof(c), c, "Must be within: [0-9] or [a-f]");
-    }
+        => c is >= '0' and <= '9'
+           ? (byte)(c - '0')
+           : c is >= 'a' and <= 'f'
+           ? (byte)(c - 'a' + 10)
+           : throw new ArgumentOutOfRangeException(nameof(c), c, "Must be within: [0-9] or [a-f]");
 
     private static bool ValidateKey(ReadOnlySpan<char> key)
     {
@@ -333,7 +325,7 @@ public class TraceContextPropagator : TextMapPropagator
         // It will be slightly differently from the next version of specification in GitHub repository.
 
         // There are two format for the key. The length rule applies to both.
-        if (key.Length <= 0 || key.Length > TraceStateKeyMaxLength)
+        if (key.Length is <= 0 or > TraceStateKeyMaxLength)
         {
             return false;
         }
@@ -349,10 +341,10 @@ public class TraceContextPropagator : TextMapPropagator
             return false;
         }
 
-        int tenantLength = -1;
-        for (int i = 1; i < key.Length; ++i)
+        var tenantLength = -1;
+        for (var i = 1; i < key.Length; ++i)
         {
-            char ch = key[i];
+            var ch = key[i];
             if (ch == '@')
             {
                 tenantLength = i;
@@ -377,20 +369,20 @@ public class TraceContextPropagator : TextMapPropagator
 
         // The second format:
         // key = (lcalpha / DIGIT) 0 * 240(lcalpha / DIGIT / "_" / "-" / "*" / "/") "@" lcalpha 0 * 13(lcalpha / DIGIT / "_" / "-" / "*" / "/")
-        if (tenantLength == 0 || tenantLength > TraceStateKeyTenantMaxLength)
+        if (tenantLength is 0 or > TraceStateKeyTenantMaxLength)
         {
             return false;
         }
 
-        int vendorLength = key.Length - tenantLength - 1;
-        if (vendorLength == 0 || vendorLength > TraceStateKeyVendorMaxLength)
+        var vendorLength = key.Length - tenantLength - 1;
+        if (vendorLength is 0 or > TraceStateKeyVendorMaxLength)
         {
             return false;
         }
 
-        for (int i = tenantLength + 1; i < key.Length; ++i)
+        for (var i = tenantLength + 1; i < key.Length; ++i)
         {
-            char ch = key[i];
+            var ch = key[i];
             if (!(IsLowerAlphaDigit(ch)
                 || ch == '_'
                 || ch == '-'
@@ -410,29 +402,27 @@ public class TraceContextPropagator : TextMapPropagator
         // value      = 0*255(chr) nblk-chr
         // nblk - chr = % x21 - 2B / % x2D - 3C / % x3E - 7E
         // chr        = % x20 / nblk - chr
-        if (value.Length <= 0 || value.Length > TraceStateValueMaxLength)
+        if (value.Length is <= 0 or > TraceStateValueMaxLength)
         {
             return false;
         }
 
-        for (int i = 0; i < value.Length - 1; ++i)
+        for (var i = 0; i < value.Length - 1; ++i)
         {
-            char c = value[i];
-            if (!(c >= 0x20 && c <= 0x7E && c != 0x2C && c != 0x3D))
+            var c = value[i];
+            if (c is not (>= (char)0x20 and <= (char)0x7E and not (char)0x2C and not (char)0x3D))
             {
                 return false;
             }
         }
 
-        char last = value[value.Length - 1];
-        return last >= 0x21 && last <= 0x7E && last != 0x2C && last != 0x3D;
+        var last = value[value.Length - 1];
+        return last is >= (char)0x21 and <= (char)0x7E and not (char)0x2C and not (char)0x3D;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsLowerAlphaDigit(char c)
-    {
-        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z');
-    }
+        => c is (>= '0' and <= '9') or (>= 'a' and <= 'z');
 
 #if NET
     private static void WriteTraceParentIntoSpan(Span<char> destination, ActivityContext context)
