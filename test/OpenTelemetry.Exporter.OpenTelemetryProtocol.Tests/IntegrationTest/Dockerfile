@@ -4,7 +4,7 @@
 
 ARG BUILD_SDK_VERSION=11.0
 ARG TEST_SDK_VERSION=11.0
-FROM mcr.microsoft.com/dotnet/sdk:10.0.200@sha256:ea13841f10c6c410a6df63c6c97ab549dfd2b5fcfff1c00186531ba30208117d AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.201@sha256:478b9038d187e5b5c29bfa8173ded5d29e864b5ad06102a12106380ee01e2e49 AS dotnet-sdk-10.0
 FROM mcr.microsoft.com/dotnet/sdk:11.0-preview@sha256:97f9050efe8b816bd5e616997f754f31ab8ccbdd536272c639f94b1c23d96c53 AS dotnet-sdk-11.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
