@@ -75,7 +75,7 @@ internal static class Base2ExponentialBucketHistogramHelper
         // the correct biased exponent. If n is greater than the maximum exponent (1023) or less than
         // the minimum exponent (-1022), adjust x and n to compute correct result.
 
-        double y = x;
+        var y = x;
         if (n > 1023)
         {
             y *= SCALEB_C1;
@@ -105,7 +105,7 @@ internal static class Base2ExponentialBucketHistogramHelper
             }
         }
 
-        double u = BitConverter.Int64BitsToDouble((long)(0x3ff + n) << 52);
+        var u = BitConverter.Int64BitsToDouble((long)(0x3ff + n) << 52);
         return y * u;
     }
 #pragma warning restore SA1119 // Statement should not use unnecessary parenthesis
