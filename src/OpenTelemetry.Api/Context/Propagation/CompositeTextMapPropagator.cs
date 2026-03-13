@@ -43,13 +43,13 @@ public class CompositeTextMapPropagator : TextMapPropagator
         }
         else
         {
-            ISet<string>? fields = this.propagators[0].Fields;
+            var fields = this.propagators[0].Fields;
 
             var output = fields is not null
                 ? new HashSet<string>(fields)
                 : [];
 
-            for (int i = 1; i < this.propagators.Count; i++)
+            for (var i = 1; i < this.propagators.Count; i++)
             {
                 fields = this.propagators[i].Fields;
                 if (fields is not null)
@@ -68,7 +68,7 @@ public class CompositeTextMapPropagator : TextMapPropagator
     /// <inheritdoc/>
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
     {
-        for (int i = 0; i < this.propagators.Count; i++)
+        for (var i = 0; i < this.propagators.Count; i++)
         {
             context = this.propagators[i].Extract(context, carrier, getter);
         }
@@ -79,7 +79,7 @@ public class CompositeTextMapPropagator : TextMapPropagator
     /// <inheritdoc/>
     public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
     {
-        for (int i = 0; i < this.propagators.Count; i++)
+        for (var i = 0; i < this.propagators.Count; i++)
         {
             this.propagators[i].Inject(context, carrier, setter);
         }

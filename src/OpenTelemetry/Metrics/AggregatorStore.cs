@@ -101,9 +101,7 @@ internal sealed class AggregatorStore
 
         this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
         Debug.Assert(
-            this.exemplarFilter == ExemplarFilterType.AlwaysOff
-            || this.exemplarFilter == ExemplarFilterType.AlwaysOn
-            || this.exemplarFilter == ExemplarFilterType.TraceBased,
+            this.exemplarFilter is ExemplarFilterType.AlwaysOff or ExemplarFilterType.AlwaysOn or ExemplarFilterType.TraceBased,
             "this.exemplarFilter had an unexpected value");
 
         // Setting metricPointIndex to 1 as we would reserve the metricPoints[1] for overflow attribute.
@@ -124,7 +122,7 @@ internal sealed class AggregatorStore
             // Add all the indices except for the reserved ones to the queue so that threads have
             // readily available access to these MetricPoints for their use.
             // Index 0 and 1 are reserved for no tags and overflow
-            for (int i = 2; i < this.NumberOfMetricPoints; i++)
+            for (var i = 2; i < this.NumberOfMetricPoints; i++)
             {
                 this.availableMetricPoints.Enqueue(i);
             }
@@ -147,12 +145,9 @@ internal sealed class AggregatorStore
 
     internal double[] HistogramBounds => this.histogramExplicitBounds.Bounds;
 
-    internal bool IsExemplarEnabled()
-    {
-        // Using this filter to indicate On/Off
-        // instead of another separate flag.
-        return this.exemplarFilter != ExemplarFilterType.AlwaysOff;
-    }
+    // Using this filter to indicate On/Off
+    // instead of another separate flag.
+    internal bool IsExemplarEnabled() => this.exemplarFilter != ExemplarFilterType.AlwaysOff;
 
     internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
@@ -220,14 +215,14 @@ internal sealed class AggregatorStore
         }
 
         // Index 0 and 1 are reserved for no tags and overflow
-        for (int i = 2; i < this.NumberOfMetricPoints; i++)
+        for (var i = 2; i < this.NumberOfMetricPoints; i++)
         {
             ref var metricPoint = ref this.metricPoints[i];
 
             if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
             {
                 // Reclaim the MetricPoint if it was marked for it in the previous collect cycle
-                if (metricPoint.LookupData != null && metricPoint.LookupData.DeferredReclaim == true)
+                if (metricPoint.LookupData != null && metricPoint.LookupData.DeferredReclaim)
                 {
                     this.ReclaimMetricPoint(ref metricPoint, i);
                     continue;
@@ -282,7 +277,7 @@ internal sealed class AggregatorStore
 
     internal void SnapshotCumulative(int indexSnapshot)
     {
-        for (int i = 0; i <= indexSnapshot; i++)
+        for (var i = 0; i <= indexSnapshot; i++)
         {
             ref var metricPoint = ref this.metricPoints[i];
             if (!metricPoint.IsInitialized)
@@ -353,19 +348,14 @@ internal sealed class AggregatorStore
              to use this MetricPoint to track newer dimension combinations.
         */
 
-        var lookupData = metricPoint.LookupData;
-
-        // This method is only called after checking that `metricPoint.LookupData` is not `null`.
-        Debug.Assert(lookupData != null, "LookupData for the provided MetricPoint was null");
+        var lookupData = metricPoint.LookupData!;
 
         metricPoint.NullifyMetricPointState();
-
-        Debug.Assert(this.TagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
 
         lock (this.TagsToMetricPointIndexDictionaryDelta!)
         {
             LookupData? dictionaryValue;
-            if (lookupData!.SortedTags != Tags.EmptyTags)
+            if (lookupData.SortedTags != Tags.EmptyTags)
             {
                 // Check if no other thread added a new entry for the same Tags.
                 // If no, then remove the existing entries.
@@ -575,9 +565,7 @@ internal sealed class AggregatorStore
         int index;
         var givenTags = new Tags(tagKeysAndValues);
 
-        Debug.Assert(this.TagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
-
-        bool newMetricPointCreated = false;
+        var newMetricPointCreated = false;
 
         if (!this.TagsToMetricPointIndexDictionaryDelta!.TryGetValue(givenTags, out var lookupData))
         {
@@ -760,9 +748,6 @@ internal sealed class AggregatorStore
         out LookupData? lookupData,
         out bool newMetricPointCreated)
     {
-        Debug.Assert(this.TagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
-        Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
-
         int index;
         newMetricPointCreated = false;
 
@@ -837,8 +822,8 @@ internal sealed class AggregatorStore
     // This method acquires `lock (this.tagsToMetricPointIndexDictionaryDelta)`
     private int RemoveStaleEntriesAndGetAvailableMetricPointRare(LookupData lookupData, int length)
     {
-        bool foundMetricPoint = false;
-        bool newMetricPointCreated = false;
+        var foundMetricPoint = false;
+        var newMetricPointCreated = false;
         var sortedTags = lookupData.SortedTags;
         var inputTags = lookupData.GivenTags;
 
@@ -847,9 +832,6 @@ internal sealed class AggregatorStore
         // Get the index for a new MetricPoint (it could be self-claimed or from another thread that added a fresh entry)
         // If self-claimed, then add a fresh entry to the dictionary
         // If an available MetricPoint is found, then only increment the ReferenceCount
-
-        Debug.Assert(this.TagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
-
         // Delete the entry for these Tags and get another MetricPoint.
         lock (this.TagsToMetricPointIndexDictionaryDelta!)
         {
@@ -1041,7 +1023,7 @@ internal sealed class AggregatorStore
 
     private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
-        int tagLength = tags.Length;
+        var tagLength = tags.Length;
         if (tagLength == 0)
         {
             this.InitializeZeroTagPointIfNotInitialized();
@@ -1057,7 +1039,7 @@ internal sealed class AggregatorStore
 
     private int FindMetricAggregatorsCustomTag(ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
-        int tagLength = tags.Length;
+        var tagLength = tags.Length;
         if (tagLength == 0 || this.tagsKeysInterestingCount == 0)
         {
             this.InitializeZeroTagPointIfNotInitialized();
@@ -1065,8 +1047,6 @@ internal sealed class AggregatorStore
         }
 
         var storage = ThreadStaticStorage.GetStorage();
-
-        Debug.Assert(this.TagKeysInteresting != null, "this.tagKeysInteresting was null");
 
         storage.SplitToKeysAndValues(tags, tagLength, this.TagKeysInteresting!, out var tagKeysAndValues, out var actualLength);
 
@@ -1078,8 +1058,6 @@ internal sealed class AggregatorStore
             this.InitializeZeroTagPointIfNotInitialized();
             return 0;
         }
-
-        Debug.Assert(tagKeysAndValues != null, "tagKeysAndValues was null");
 
         return this.lookupAggregatorStore(tagKeysAndValues!, actualLength);
     }

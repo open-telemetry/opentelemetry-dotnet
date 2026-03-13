@@ -81,12 +81,12 @@ internal static class OtlpCertificateManager
                 try
                 {
 #if NET9_0_OR_GREATER
-                    clientCertificate = X509CertificateLoader.LoadPkcs12FromFile(clientCertificatePath, (string?)null);
+                    clientCertificate = X509CertificateLoader.LoadPkcs12FromFile(clientCertificatePath, null);
 #else
                     clientCertificate = new X509Certificate2(clientCertificatePath);
 #endif
                 }
-                catch (Exception ex) when (ex is CryptographicException || ex is InvalidDataException || ex is FormatException)
+                catch (Exception ex) when (ex is CryptographicException or InvalidDataException or FormatException)
                 {
                     // If PKCS#12 fails, try PEM format
                     clientCertificate = X509Certificate2.CreateFromPemFile(clientCertificatePath);
@@ -122,7 +122,7 @@ internal static class OtlpCertificateManager
 
         try
         {
-            X509Certificate2 clientCertificate = X509Certificate2.CreateFromPemFile(
+            var clientCertificate = X509Certificate2.CreateFromPemFile(
                 clientCertificatePath,
                 clientKeyPath);
 
@@ -169,7 +169,7 @@ internal static class OtlpCertificateManager
             chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
             chain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
 
-            bool isValid = chain.Build(certificate);
+            var isValid = chain.Build(certificate);
 
             if (!isValid)
             {
@@ -184,18 +184,14 @@ internal static class OtlpCertificateManager
                     string.Join("; ", errors));
 
                 // Check if certificate is expired - this should throw an exception
-                bool isExpired = chain.ChainStatus.Any(status =>
-                    status.Status == X509ChainStatusFlags.NotTimeValid ||
-                    status.Status == X509ChainStatusFlags.NotTimeNested);
+                var isExpired = chain.ChainStatus.Any(status =>
+                    status.Status is X509ChainStatusFlags.NotTimeValid or X509ChainStatusFlags.NotTimeNested);
 
-                if (isExpired)
-                {
-                    throw new InvalidOperationException(
+                return isExpired
+                    ? throw new InvalidOperationException(
                         $"Certificate chain validation failed for {certificateType}: Certificate is expired. " +
-                        $"Errors: {string.Join("; ", errors)}");
-                }
-
-                return false;
+                        $"Errors: {string.Join("; ", errors)}")
+                    : false;
             }
 
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateChainValidated(
@@ -257,7 +253,7 @@ internal static class OtlpCertificateManager
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
             chain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
 
-            bool isValid = chain.Build(serverCert);
+            var isValid = chain.Build(serverCert);
 
             if (isValid)
             {

@@ -85,7 +85,7 @@ public abstract class MetricTestsBase
     // For Delta AggregationTemporality, this holds true only until the AggregatorStore has not begun recaliming the MetricPoints.
     internal static void ValidateMetricPointTags(List<KeyValuePair<string, object?>> expectedTags, ReadOnlyTagCollection actualTags)
     {
-        int tagIndex = 0;
+        var tagIndex = 0;
         foreach (var tag in actualTags)
         {
             Assert.Equal(expectedTags[tagIndex].Key, tag.Key);
@@ -140,7 +140,7 @@ public abstract class MetricTestsBase
 
     internal static int GetNumberOfMetricPoints(List<Metric> metrics)
     {
-        int count = 0;
+        var count = 0;
         foreach (var metric in metrics)
         {
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
@@ -173,12 +173,12 @@ public abstract class MetricTestsBase
         var metric = metrics[0];
         var metricPointEnumerator = metric.GetMetricPoints().GetEnumerator();
 
-        for (int i = 0; i < n; i++)
+        for (var i = 0; i < n; i++)
         {
             Assert.True(metricPointEnumerator.MoveNext());
         }
 
-        int index = 0;
+        var index = 0;
         var metricPoint = metricPointEnumerator.Current;
         foreach (var tag in metricPoint.Tags)
         {
@@ -189,11 +189,7 @@ public abstract class MetricTestsBase
     }
 
     internal static IReadOnlyList<Exemplar> GetExemplars(MetricPoint mp)
-    {
-        return mp.TryGetExemplars(out var exemplars)
-            ? exemplars.ToReadOnlyList()
-            : [];
-    }
+        => mp.TryGetExemplars(out var exemplars) ? exemplars.ToReadOnlyList() : [];
 
     internal static IDisposable BuildMeterProvider(
         out MeterProvider meterProvider,
@@ -225,25 +221,21 @@ public abstract class MetricTestsBase
     {
         private readonly object metricsSubscriptionManager;
 
+#pragma warning disable IDE0370 // Suppression is unnecessary
         public MetricsSubscriptionManagerCleanupHostedService(IServiceProvider serviceProvider)
         {
             this.metricsSubscriptionManager = serviceProvider.GetRequiredService(
-                typeof(ConsoleMetrics).Assembly.GetType("Microsoft.Extensions.Diagnostics.Metrics.MetricsSubscriptionManager")!);
-
-            if (this.metricsSubscriptionManager == null)
-            {
+                typeof(ConsoleMetrics).Assembly.GetType("Microsoft.Extensions.Diagnostics.Metrics.MetricsSubscriptionManager")!) ??
                 throw new InvalidOperationException("MetricsSubscriptionManager could not be found reflectively.");
-            }
         }
 
+        // Note: The current version of MetricsSubscriptionManager seems to
+        // be bugged in that it doesn't implement IDisposable. This hack
+        // manually invokes Dispose so that tests don't clobber each other.
+        // See: https://github.com/dotnet/runtime/issues/94434.
         public void Dispose()
-        {
-            // Note: The current version of MetricsSubscriptionManager seems to
-            // be bugged in that it doesn't implement IDisposable. This hack
-            // manually invokes Dispose so that tests don't clobber each other.
-            // See: https://github.com/dotnet/runtime/issues/94434.
-            this.metricsSubscriptionManager.GetType().GetMethod("Dispose")!.Invoke(this.metricsSubscriptionManager, null);
-        }
+            => this.metricsSubscriptionManager.GetType().GetMethod("Dispose")!.Invoke(this.metricsSubscriptionManager, null);
+#pragma warning restore IDE0370 // Suppression is unnecessary
 
         public Task StartAsync(CancellationToken cancellationToken)
             => Task.CompletedTask;

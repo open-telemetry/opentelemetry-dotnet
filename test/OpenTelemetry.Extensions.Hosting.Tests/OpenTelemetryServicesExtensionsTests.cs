@@ -32,7 +32,7 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public async Task AddOpenTelemetry_StartWithExceptionsThrows()
     {
-        bool expectedInnerExceptionThrown = false;
+        var expectedInnerExceptionThrown = false;
 
         var builder = new HostBuilder().ConfigureServices(services =>
         {
@@ -92,7 +92,7 @@ public class OpenTelemetryServicesExtensionsTests
     {
         var services = new ServiceCollection();
 
-        bool testRun = false;
+        var testRun = false;
 
         services.AddOpenTelemetry().WithTracing(builder =>
         {
@@ -124,7 +124,7 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public async Task AddOpenTelemetry_WithTracing_HostConfigurationHonoredTest()
     {
-        bool configureBuilderCalled = false;
+        var configureBuilderCalled = false;
 
         var builder = new HostBuilder()
             .ConfigureAppConfiguration(builder =>
@@ -171,7 +171,7 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public void AddOpenTelemetry_WithTracing_NestedResolutionUsingConfigureTest()
     {
-        bool innerTestExecuted = false;
+        var innerTestExecuted = false;
 
         var services = new ServiceCollection();
 
@@ -215,7 +215,7 @@ public class OpenTelemetryServicesExtensionsTests
     {
         var services = new ServiceCollection();
 
-        bool testRun = false;
+        var testRun = false;
 
         services.AddOpenTelemetry().WithMetrics(builder =>
         {
@@ -247,7 +247,7 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public async Task AddOpenTelemetry_WithMetrics_HostConfigurationHonoredTest()
     {
-        bool configureBuilderCalled = false;
+        var configureBuilderCalled = false;
 
         var builder = new HostBuilder()
             .ConfigureAppConfiguration(builder =>
@@ -294,7 +294,7 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public void AddOpenTelemetry_WithMetrics_NestedResolutionUsingConfigureTest()
     {
-        bool innerTestExecuted = false;
+        var innerTestExecuted = false;
 
         var services = new ServiceCollection();
 
@@ -338,7 +338,7 @@ public class OpenTelemetryServicesExtensionsTests
     {
         var services = new ServiceCollection();
 
-        bool testRun = false;
+        var testRun = false;
 
         services.AddOpenTelemetry().WithLogging(builder =>
         {
@@ -370,7 +370,7 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public void AddOpenTelemetry_WithLogging_HostConfigurationHonoredTest()
     {
-        bool configureBuilderCalled = false;
+        var configureBuilderCalled = false;
 
         var builder = new HostBuilder()
             .ConfigureAppConfiguration(builder =>
@@ -411,7 +411,7 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public void AddOpenTelemetry_WithLogging_NestedResolutionUsingConfigureTest()
     {
-        bool innerTestExecuted = false;
+        var innerTestExecuted = false;
 
         var services = new ServiceCollection();
 
@@ -460,7 +460,7 @@ public class OpenTelemetryServicesExtensionsTests
             .Single();
 
         // Give the background service some time to run.
-        await Task.WhenAny(service.ExecuteTask!, Task.Delay(TimeSpan.FromSeconds(5)));
+        await Task.WhenAny(service.ExecuteTask!, Task.Delay(TimeSpan.FromSeconds(5), CancellationToken.None));
 
         await host.StopAsync();
 

@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 #if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
@@ -22,20 +21,17 @@ internal static class DelegatingOptionsFactoryServiceCollectionExtensions
         Func<IConfiguration, T> optionsFactoryFunc)
         where T : class
     {
-        Debug.Assert(services != null, "services was null");
-        Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
-
-        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
+        services.TryAddSingleton<IOptionsFactory<T>>(sp =>
         {
             return new DelegatingOptionsFactory<T>(
-                (c, n) => optionsFactoryFunc!(c),
+                (c, n) => optionsFactoryFunc(c),
                 sp.GetRequiredService<IConfiguration>(),
                 sp.GetServices<IConfigureOptions<T>>(),
                 sp.GetServices<IPostConfigureOptions<T>>(),
                 sp.GetServices<IValidateOptions<T>>());
         });
 
-        return services!;
+        return services;
     }
 
 #if NET
@@ -47,20 +43,17 @@ internal static class DelegatingOptionsFactoryServiceCollectionExtensions
         Func<IServiceProvider, IConfiguration, string, T> optionsFactoryFunc)
         where T : class
     {
-        Debug.Assert(services != null, "services was null");
-        Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
-
-        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
+        services.TryAddSingleton<IOptionsFactory<T>>(sp =>
         {
             return new DelegatingOptionsFactory<T>(
-                (c, n) => optionsFactoryFunc!(sp, c, n),
+                (c, n) => optionsFactoryFunc(sp, c, n),
                 sp.GetRequiredService<IConfiguration>(),
                 sp.GetServices<IConfigureOptions<T>>(),
                 sp.GetServices<IPostConfigureOptions<T>>(),
                 sp.GetServices<IValidateOptions<T>>());
         });
 
-        return services!;
+        return services;
     }
 
 #if NET
@@ -71,11 +64,9 @@ internal static class DelegatingOptionsFactoryServiceCollectionExtensions
         this IServiceCollection services)
         where T : class
     {
-        Debug.Assert(services != null, "services was null");
+        services.TryAddSingleton<IOptionsMonitor<T>, SingletonOptionsManager<T>>();
+        services.TryAddScoped<IOptionsSnapshot<T>, SingletonOptionsManager<T>>();
 
-        services!.TryAddSingleton<IOptionsMonitor<T>, SingletonOptionsManager<T>>();
-        services!.TryAddScoped<IOptionsSnapshot<T>, SingletonOptionsManager<T>>();
-
-        return services!;
+        return services;
     }
 }

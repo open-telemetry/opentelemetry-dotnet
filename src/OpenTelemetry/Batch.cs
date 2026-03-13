@@ -52,10 +52,9 @@ public readonly struct Batch<T> : IDisposable
     internal Batch(CircularBuffer<T> circularBuffer, int maxSize)
     {
         Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
-        Debug.Assert(circularBuffer != null, $"{nameof(circularBuffer)} was null.");
 
         this.circularBuffer = circularBuffer;
-        this.Count = Math.Min(maxSize, circularBuffer!.Count);
+        this.Count = Math.Min(maxSize, circularBuffer.Count);
         this.targetCount = circularBuffer.RemovedCount + this.Count;
     }
 
@@ -74,7 +73,7 @@ public readonly struct Batch<T> : IDisposable
             // Drain anything left in the batch.
             while (this.circularBuffer.RemovedCount < this.targetCount)
             {
-                T item = this.circularBuffer.Read();
+                var item = this.circularBuffer.Read();
                 if (typeof(T) == typeof(LogRecord))
                 {
                     var logRecord = (LogRecord)(object)item;
@@ -92,21 +91,19 @@ public readonly struct Batch<T> : IDisposable
     /// </summary>
     /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator()
-    {
-        return this.circularBuffer != null
-            ? new Enumerator(this.circularBuffer, this.targetCount)
-            : this.item != null
-                ? new Enumerator(this.item)
-                /* In the event someone uses default/new Batch() to create Batch we fallback to empty items mode. */
-                : new Enumerator(this.items ?? Array.Empty<T>(), this.targetCount);
-    }
+        => this.circularBuffer != null
+           ? new Enumerator(this.circularBuffer, this.targetCount)
+           : this.item != null
+               ? new Enumerator(this.item)
+               /* In the event someone uses default/new Batch() to create Batch we fallback to empty items mode. */
+               : new Enumerator(this.items ?? [], this.targetCount);
 
     /// <summary>
     /// Enumerates the elements of a <see cref="Batch{T}"/>.
     /// </summary>
     public struct Enumerator : IEnumerator<T>
     {
-        private static readonly BatchEnumeratorMoveNextFunc MoveNextSingleItem = (ref Enumerator enumerator) =>
+        private static readonly BatchEnumeratorMoveNextFunc MoveNextSingleItem = (ref enumerator) =>
         {
             if (enumerator.targetCount >= 0)
             {
@@ -118,7 +115,7 @@ public readonly struct Batch<T> : IDisposable
             return true;
         };
 
-        private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBuffer = (ref Enumerator enumerator) =>
+        private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBuffer = (ref enumerator) =>
         {
             var circularBuffer = enumerator.circularBuffer;
 
@@ -132,7 +129,7 @@ public readonly struct Batch<T> : IDisposable
             return false;
         };
 
-        private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBufferLogRecord = (ref Enumerator enumerator) =>
+        private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBufferLogRecord = (ref enumerator) =>
         {
             // Note: This type check here is to give the JIT a hint it can
             // remove all of this code when T != LogRecord
@@ -163,7 +160,7 @@ public readonly struct Batch<T> : IDisposable
             return false;
         };
 
-        private static readonly BatchEnumeratorMoveNextFunc MoveNextArray = (ref Enumerator enumerator) =>
+        private static readonly BatchEnumeratorMoveNextFunc MoveNextArray = (ref enumerator) =>
         {
             var items = enumerator.items;
 
@@ -242,9 +239,7 @@ public readonly struct Batch<T> : IDisposable
 
         /// <inheritdoc/>
         public bool MoveNext()
-        {
-            return this.moveNextFunc(ref this);
-        }
+            => this.moveNextFunc(ref this);
 
         /// <inheritdoc/>
         public readonly void Reset()

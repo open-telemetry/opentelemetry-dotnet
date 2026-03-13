@@ -13,7 +13,6 @@ namespace OpenTelemetry.Metrics;
 internal sealed class CircularBufferBuckets
 {
     private long[]? trait;
-    private int begin;
     private int end = -1;
 
     public CircularBufferBuckets(int capacity)
@@ -31,12 +30,12 @@ internal sealed class CircularBufferBuckets
     /// <summary>
     /// Gets the offset of the start index for the <see cref="CircularBufferBuckets"/>.
     /// </summary>
-    public int Offset => this.begin;
+    public int Offset { get; private set; }
 
     /// <summary>
     /// Gets the size of the <see cref="CircularBufferBuckets"/>.
     /// </summary>
-    public int Size => this.end - this.begin + 1;
+    public int Size => this.end - this.Offset + 1;
 
     /// <summary>
     /// Returns the value of <c>Bucket[index]</c>.
@@ -47,15 +46,7 @@ internal sealed class CircularBufferBuckets
     /// This method does not validate if "index" falls into [begin, end],
     /// the caller is responsible for the validation.
     /// </remarks>
-    public long this[int index]
-    {
-        get
-        {
-            Debug.Assert(this.trait != null, "trait was null");
-
-            return this.trait![this.ModuloIndex(index)];
-        }
-    }
+    public long this[int index] => this.trait![this.ModuloIndex(index)];
 
     /// <summary>
     /// Attempts to increment the value of <c>Bucket[index]</c> by <c>value</c>.
@@ -79,14 +70,14 @@ internal sealed class CircularBufferBuckets
         {
             this.trait = new long[capacity];
 
-            this.begin = index;
+            this.Offset = index;
             this.end = index;
             this.trait[this.ModuloIndex(index)] += value;
 
             return 0;
         }
 
-        var begin = this.begin;
+        var begin = this.Offset;
         var end = this.end;
 
         if (index > end)
@@ -111,7 +102,7 @@ internal sealed class CircularBufferBuckets
             return CalculateScaleReduction(begin, end, capacity);
         }
 
-        this.begin = begin;
+        this.Offset = begin;
         this.end = end;
 
         this.trait[this.ModuloIndex(index)] += value;
@@ -147,13 +138,13 @@ internal sealed class CircularBufferBuckets
         }
 
         // 0 <= offset < capacity <= 2147483647
-        uint capacity = (uint)this.Capacity;
-        var offset = (uint)this.ModuloIndex(this.begin);
+        var capacity = (uint)this.Capacity;
+        var offset = (uint)this.ModuloIndex(this.Offset);
 
-        var currentBegin = this.begin;
+        var currentBegin = this.Offset;
         var currentEnd = this.end;
 
-        for (int i = 0; i < level; i++)
+        for (var i = 0; i < level; i++)
         {
             var newBegin = currentBegin >> 1;
             var newEnd = currentEnd >> 1;
@@ -179,7 +170,7 @@ internal sealed class CircularBufferBuckets
             currentEnd = newEnd;
         }
 
-        this.begin = currentBegin;
+        this.Offset = currentBegin;
         this.end = currentEnd;
 
         if (capacity > 1)
@@ -284,7 +275,5 @@ internal sealed class CircularBufferBuckets
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int ModuloIndex(int value)
-    {
-        return MathHelper.PositiveModulo32(value, this.Capacity);
-    }
+        => MathHelper.PositiveModulo32(value, this.Capacity);
 }

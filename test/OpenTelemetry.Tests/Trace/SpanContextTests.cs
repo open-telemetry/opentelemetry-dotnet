@@ -99,7 +99,7 @@ public class SpanContextTests
     {
         var traceId = ActivityTraceId.CreateRandom();
         var spanId = ActivitySpanId.CreateRandom();
-        IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
+        IEnumerable<KeyValuePair<string, string>> tracestate = [];
         var context1 = new SpanContext(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
         var context2 = new SpanContext(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
 
@@ -112,7 +112,7 @@ public class SpanContextTests
     {
         var traceId = ActivityTraceId.CreateRandom();
         var spanId = ActivitySpanId.CreateRandom();
-        IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
+        IEnumerable<KeyValuePair<string, string>> tracestate = [];
         var context1 = new SpanContext(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
         object context2 = new SpanContext(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
 
@@ -147,7 +147,7 @@ public class SpanContextTests
     {
         var traceId = ActivityTraceId.CreateRandom();
         var spanId = ActivitySpanId.CreateRandom();
-        IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
+        IEnumerable<KeyValuePair<string, string>> tracestate = [];
         var context1 = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded, false, tracestate);
         var context2 = new SpanContext(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
 
@@ -160,7 +160,7 @@ public class SpanContextTests
     {
         var traceId = ActivityTraceId.CreateRandom();
         var spanId = ActivitySpanId.CreateRandom();
-        IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
+        IEnumerable<KeyValuePair<string, string>> tracestate = [];
         var context1 = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate);
         var context2 = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded, false, tracestate);
 
@@ -173,8 +173,8 @@ public class SpanContextTests
     {
         var traceId = ActivityTraceId.CreateRandom();
         var spanId = ActivitySpanId.CreateRandom();
-        IEnumerable<KeyValuePair<string, string>> tracestate1 = new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>("k", "v1") };
-        IEnumerable<KeyValuePair<string, string>> tracestate2 = new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>("k", "v2") };
+        IEnumerable<KeyValuePair<string, string>> tracestate1 = [new KeyValuePair<string, string>("k", "v1")];
+        IEnumerable<KeyValuePair<string, string>> tracestate2 = [new KeyValuePair<string, string>("k", "v2")];
         var context1 = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate1);
         var context2 = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate2);
 
@@ -187,7 +187,7 @@ public class SpanContextTests
     {
         var traceId = ActivityTraceId.CreateRandom();
         var spanId = ActivitySpanId.CreateRandom();
-        IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
+        IEnumerable<KeyValuePair<string, string>> tracestate = [];
         var context1 = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate);
 
         Assert.NotEqual(0, context1.GetHashCode());

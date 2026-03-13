@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections;
-using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -66,11 +65,8 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
         OpenTelemetryLoggerOptions options,
         bool disposeProvider)
     {
-        Debug.Assert(loggerProvider != null, "loggerProvider was null");
-        Debug.Assert(options != null, "options was null");
-
-        this.Provider = loggerProvider!;
-        this.Options = options!.Copy();
+        this.Provider = loggerProvider;
+        this.Options = options.Copy();
         this.ownsProvider = disposeProvider;
     }
 
@@ -110,18 +106,12 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
                 logger = (this.loggers[categoryName] as ILogger)!;
                 if (logger == null)
                 {
-                    var loggerProviderSdk = this.Provider as LoggerProviderSdk;
-                    if (loggerProviderSdk == null)
-                    {
-                        logger = NullLogger.Instance;
-                    }
-                    else
-                    {
-                        logger = new OpenTelemetryLogger(loggerProviderSdk, this.Options, categoryName)
+                    logger = this.Provider is not LoggerProviderSdk loggerProviderSdk
+                        ? NullLogger.Instance
+                        : new OpenTelemetryLogger(loggerProviderSdk, this.Options, categoryName)
                         {
                             ScopeProvider = this.ScopeProvider,
                         };
-                    }
 
                     this.loggers[categoryName] = logger;
                 }

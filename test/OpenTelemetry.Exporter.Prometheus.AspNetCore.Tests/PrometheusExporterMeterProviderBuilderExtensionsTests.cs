@@ -12,8 +12,8 @@ public sealed class PrometheusExporterMeterProviderBuilderExtensionsTests
     [Fact]
     public void TestAddPrometheusExporter_NamedOptions()
     {
-        int defaultExporterOptionsConfigureOptionsInvocations = 0;
-        int namedExporterOptionsConfigureOptionsInvocations = 0;
+        var defaultExporterOptionsConfigureOptionsInvocations = 0;
+        var namedExporterOptionsConfigureOptionsInvocations = 0;
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .ConfigureServices(services =>

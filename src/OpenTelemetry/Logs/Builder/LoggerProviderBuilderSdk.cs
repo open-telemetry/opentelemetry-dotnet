@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Resources;
 
@@ -22,18 +21,16 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
         this.serviceProvider = serviceProvider;
     }
 
-    public List<InstrumentationRegistration> Instrumentation { get; } = new();
+    public List<InstrumentationRegistration> Instrumentation { get; } = [];
 
     public ResourceBuilder? ResourceBuilder { get; private set; }
 
     public LoggerProvider? Provider => this.loggerProvider;
 
-    public List<BaseProcessor<LogRecord>> Processors { get; } = new();
+    public List<BaseProcessor<LogRecord>> Processors { get; } = [];
 
     public void RegisterProvider(LoggerProviderSdk loggerProvider)
     {
-        Debug.Assert(loggerProvider != null, "loggerProvider was null");
-
         if (this.loggerProvider != null)
         {
             throw new NotSupportedException("LoggerProvider cannot be accessed while build is executing.");
@@ -44,59 +41,46 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
 
     public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
-        Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
+        var instance = instrumentationFactory();
 
         this.Instrumentation.Add(
             new InstrumentationRegistration(
                 typeof(TInstrumentation).Name,
                 typeof(TInstrumentation).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
-                instrumentationFactory!()));
+                instance));
 
         return this;
     }
 
     public LoggerProviderBuilder ConfigureResource(Action<ResourceBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
         var resourceBuilder = this.ResourceBuilder ??= ResourceBuilder.CreateDefault();
 
-        configure!(resourceBuilder);
+        configure(resourceBuilder);
 
         return this;
     }
 
     public LoggerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
     {
-        Debug.Assert(resourceBuilder != null, "resourceBuilder was null");
-
         this.ResourceBuilder = resourceBuilder;
-
         return this;
     }
 
     public LoggerProviderBuilder AddProcessor(BaseProcessor<LogRecord> processor)
     {
-        Debug.Assert(processor != null, "processor was null");
-
-        this.Processors.Add(processor!);
-
+        this.Processors.Add(processor);
         return this;
     }
 
     public LoggerProviderBuilder ConfigureBuilder(Action<IServiceProvider, LoggerProviderBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
-        configure!(this.serviceProvider, this);
-
+        configure(this.serviceProvider, this);
         return this;
     }
 
     public LoggerProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
-    {
-        throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
-    }
+        => throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
 
     LoggerProviderBuilder IDeferredLoggerProviderBuilder.Configure(Action<IServiceProvider, LoggerProviderBuilder> configure)
         => this.ConfigureBuilder(configure);

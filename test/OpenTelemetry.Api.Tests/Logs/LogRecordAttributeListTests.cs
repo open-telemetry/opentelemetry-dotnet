@@ -17,14 +17,14 @@ public sealed class LogRecordAttributeListTests
     {
         LogRecordAttributeList attributes = default;
 
-        for (int i = 0; i < numberOfItems; i++)
+        for (var i = 0; i < numberOfItems; i++)
         {
             attributes.Add($"key{i}", i);
         }
 
         Assert.Equal(numberOfItems, attributes.Count);
 
-        for (int i = 0; i < numberOfItems; i++)
+        for (var i = 0; i < numberOfItems; i++)
         {
             var item = attributes[i];
 
@@ -33,8 +33,8 @@ public sealed class LogRecordAttributeListTests
             Assert.Equal(i, (int)item.Value);
         }
 
-        int index = 0;
-        foreach (KeyValuePair<string, object?> item in attributes)
+        var index = 0;
+        foreach (var item in attributes)
         {
             Assert.Equal($"key{index}", item.Key);
             Assert.NotNull(item.Value);
@@ -62,16 +62,16 @@ public sealed class LogRecordAttributeListTests
     {
         LogRecordAttributeList attributes = default;
 
-        for (int c = 0; c <= 1; c++)
+        for (var c = 0; c <= 1; c++)
         {
-            for (int i = 0; i < numberOfItems; i++)
+            for (var i = 0; i < numberOfItems; i++)
             {
                 attributes.Add($"key{i}", i);
             }
 
             Assert.Equal(numberOfItems, attributes.Count);
 
-            for (int i = 0; i < numberOfItems; i++)
+            for (var i = 0; i < numberOfItems; i++)
             {
                 var item = attributes[i];
 
@@ -96,7 +96,7 @@ public sealed class LogRecordAttributeListTests
     {
         LogRecordAttributeList attributes = default;
 
-        for (int i = 0; i < numberOfItems; i++)
+        for (var i = 0; i < numberOfItems; i++)
         {
             attributes.Add($"key{i}", i);
         }
@@ -124,8 +124,8 @@ public sealed class LogRecordAttributeListTests
             Assert.Null(storage);
         }
 
-        int index = 0;
-        foreach (KeyValuePair<string, object?> item in exportedAttributes)
+        var index = 0;
+        foreach (var item in exportedAttributes)
         {
             Assert.Equal($"key{index}", item.Key);
             Assert.NotNull(item.Value);
@@ -137,7 +137,7 @@ public sealed class LogRecordAttributeListTests
     [Fact]
     public void InitializerAddSyntaxTest()
     {
-        LogRecordAttributeList list = new LogRecordAttributeList
+        var list = new LogRecordAttributeList
         {
             { "key1", new object() },
             { "key2", 2 },
@@ -149,7 +149,7 @@ public sealed class LogRecordAttributeListTests
     [Fact]
     public void InitializerIndexesSyntaxTest()
     {
-        LogRecordAttributeList list = new LogRecordAttributeList
+        var list = new LogRecordAttributeList
         {
             ["key1"] = new object(),
             ["key2"] = 2,

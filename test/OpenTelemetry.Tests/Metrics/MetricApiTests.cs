@@ -225,7 +225,7 @@ public class MetricApiTests : MetricTestsBase
 
         Assert.Equal(2, exportedItems.Count);
 
-        bool TagComparator(KeyValuePair<string, object?> lhs, KeyValuePair<string, object?> rhs)
+        static bool TagComparator(KeyValuePair<string, object?> lhs, KeyValuePair<string, object?> rhs)
         {
             return lhs.Key.Equals(rhs.Key, StringComparison.Ordinal) && lhs.Value!.GetHashCode().Equals(rhs.Value!.GetHashCode());
         }
@@ -637,7 +637,7 @@ public class MetricApiTests : MetricTestsBase
     [InlineData(false)]
     public void CounterAggregationTest(bool exportDelta)
     {
-        DateTime testStartTime = DateTime.UtcNow;
+        var testStartTime = DateTime.UtcNow;
 
         var exportedItems = new List<Metric>();
 
@@ -654,7 +654,7 @@ public class MetricApiTests : MetricTestsBase
         counterLong.Add(10);
         counterLong.Add(10);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        long sumReceived = GetLongSum(exportedItems);
+        var sumReceived = GetLongSum(exportedItems);
         Assert.Equal(20, sumReceived);
 
         var metricPoint = GetFirstMetricPoint(exportedItems);
@@ -662,8 +662,8 @@ public class MetricApiTests : MetricTestsBase
         Assert.True(metricPoint.Value.StartTime >= testStartTime);
         Assert.True(metricPoint.Value.EndTime != default);
 
-        DateTimeOffset firstRunStartTime = metricPoint.Value.StartTime;
-        DateTimeOffset firstRunEndTime = metricPoint.Value.EndTime;
+        var firstRunStartTime = metricPoint.Value.StartTime;
+        var firstRunEndTime = metricPoint.Value.EndTime;
 
         exportedItems.Clear();
 
@@ -734,7 +734,7 @@ public class MetricApiTests : MetricTestsBase
         var exportedItems = new List<Metric>();
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
-        int i = 1;
+        var i = 1;
         var counterLong = meter.CreateObservableCounter(
             "observable-counter",
             () =>
@@ -753,7 +753,7 @@ public class MetricApiTests : MetricTestsBase
             }));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        long sumReceived = GetLongSum(exportedItems);
+        var sumReceived = GetLongSum(exportedItems);
         Assert.Equal(10, sumReceived);
 
         exportedItems.Clear();
@@ -877,7 +877,7 @@ public class MetricApiTests : MetricTestsBase
         ValidateMetricPointTags(tags3, metricPoint3.Tags);
     }
 
-    [Theory(Skip = "Known issue.")]
+    [Theory(Skip = "https://github.com/open-telemetry/opentelemetry-specification/issues/1874")]
     [InlineData(true)]
     [InlineData(false)]
     public void ObservableCounterSpatialAggregationTest(bool exportDelta)
@@ -948,7 +948,7 @@ public class MetricApiTests : MetricTestsBase
     [InlineData(false)]
     public void UpDownCounterAggregationTest(bool exportDelta)
     {
-        DateTime testStartTime = DateTime.UtcNow;
+        var testStartTime = DateTime.UtcNow;
 
         var exportedItems = new List<Metric>();
 
@@ -965,7 +965,7 @@ public class MetricApiTests : MetricTestsBase
         counterLong.Add(10);
         counterLong.Add(-5);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        long sumReceived = GetLongSum(exportedItems);
+        var sumReceived = GetLongSum(exportedItems);
         Assert.Equal(5, sumReceived);
 
         var metricPoint = GetFirstMetricPoint(exportedItems);
@@ -973,8 +973,8 @@ public class MetricApiTests : MetricTestsBase
         Assert.True(metricPoint.Value.StartTime >= testStartTime);
         Assert.True(metricPoint.Value.EndTime != default);
 
-        DateTimeOffset firstRunStartTime = metricPoint.Value.StartTime;
-        DateTimeOffset firstRunEndTime = metricPoint.Value.EndTime;
+        var firstRunStartTime = metricPoint.Value.StartTime;
+        var firstRunEndTime = metricPoint.Value.EndTime;
 
         exportedItems.Clear();
 
@@ -1025,7 +1025,7 @@ public class MetricApiTests : MetricTestsBase
         var exportedItems = new List<Metric>();
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
-        int i = 1;
+        var i = 1;
         var counterLong = meter.CreateObservableUpDownCounter(
             "observable-counter",
             () =>
@@ -1044,7 +1044,7 @@ public class MetricApiTests : MetricTestsBase
             }));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        long sumReceived = GetLongSum(exportedItems);
+        var sumReceived = GetLongSum(exportedItems);
         Assert.Equal(10, sumReceived);
 
         exportedItems.Clear();
@@ -1415,7 +1415,7 @@ public class MetricApiTests : MetricTestsBase
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, 4);
-        long sumReceived = GetLongSum(exportedItems);
+        var sumReceived = GetLongSum(exportedItems);
         Assert.Equal(75, sumReceived);
 
         exportedItems.Clear();
@@ -1506,7 +1506,7 @@ public class MetricApiTests : MetricTestsBase
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, 4);
-        long sumReceived = GetLongSum(exportedItems);
+        var sumReceived = GetLongSum(exportedItems);
         Assert.Equal(75, sumReceived);
 
         exportedItems.Clear();
@@ -1646,7 +1646,7 @@ public class MetricApiTests : MetricTestsBase
         // for no tag point!
         // This may be changed later.
         counterLong.Add(10);
-        for (int i = 0; i < MeterProviderBuilderSdk.DefaultCardinalityLimit + 1; i++)
+        for (var i = 0; i < MeterProviderBuilderSdk.DefaultCardinalityLimit + 1; i++)
         {
             counterLong.Add(10, new KeyValuePair<string, object?>("key", "value" + i));
         }
@@ -1656,7 +1656,7 @@ public class MetricApiTests : MetricTestsBase
 
         exportedItems.Clear();
         counterLong.Add(10);
-        for (int i = 0; i < MeterProviderBuilderSdk.DefaultCardinalityLimit + 1; i++)
+        for (var i = 0; i < MeterProviderBuilderSdk.DefaultCardinalityLimit + 1; i++)
         {
             counterLong.Add(10, new KeyValuePair<string, object?>("key", "value" + i));
         }
@@ -1665,7 +1665,7 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal(MeterProviderBuilderSdk.DefaultCardinalityLimit, MetricPointCount());
 
         counterLong.Add(10);
-        for (int i = 0; i < MeterProviderBuilderSdk.DefaultCardinalityLimit + 1; i++)
+        for (var i = 0; i < MeterProviderBuilderSdk.DefaultCardinalityLimit + 1; i++)
         {
             counterLong.Add(10, new KeyValuePair<string, object?>("key", "value" + i));
         }
@@ -1681,39 +1681,27 @@ public class MetricApiTests : MetricTestsBase
 
     [Fact]
     public void MultithreadedByteCounterTest()
-    {
-        this.MultithreadedCounterTest((byte)DeltaLongValueUpdatedByEachCall);
-    }
+        => this.MultithreadedCounterTest((byte)DeltaLongValueUpdatedByEachCall);
 
     [Fact]
     public void MultithreadedShortCounterTest()
-    {
-        this.MultithreadedCounterTest((short)DeltaLongValueUpdatedByEachCall);
-    }
+        => this.MultithreadedCounterTest((short)DeltaLongValueUpdatedByEachCall);
 
     [Fact]
     public void MultithreadedIntCounterTest()
-    {
-        this.MultithreadedCounterTest((int)DeltaLongValueUpdatedByEachCall);
-    }
+        => this.MultithreadedCounterTest((int)DeltaLongValueUpdatedByEachCall);
 
     [Fact]
     public void MultithreadedLongCounterTest()
-    {
-        this.MultithreadedCounterTest(DeltaLongValueUpdatedByEachCall);
-    }
+        => this.MultithreadedCounterTest(DeltaLongValueUpdatedByEachCall);
 
     [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/6803")]
     public void MultithreadedSingleCounterTest()
-    {
-        this.MultithreadedCounterTest((float)DeltaDoubleValueUpdatedByEachCall);
-    }
+        => this.MultithreadedCounterTest((float)DeltaDoubleValueUpdatedByEachCall);
 
     [Fact]
     public void MultithreadedDoubleCounterTest()
-    {
-        this.MultithreadedCounterTest(DeltaDoubleValueUpdatedByEachCall);
-    }
+        => this.MultithreadedCounterTest(DeltaDoubleValueUpdatedByEachCall);
 
     [Fact]
     public void MultithreadedByteHistogramTest()
@@ -2010,14 +1998,14 @@ public class MetricApiTests : MetricTestsBase
         where T : struct, IComparable
     {
         var arguments = obj as UpdateThreadArguments<T>;
-        Debug.Assert(arguments != null, "arguments was null");
+        Assert.NotNull(arguments);
 
-        var mre = arguments!.MreToBlockUpdateThread;
+        var mre = arguments.MreToBlockUpdateThread;
         var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
         var valueToUpdate = arguments.ValuesToRecord[0];
 
         var counter = arguments.Instrument as Counter<T>;
-        Debug.Assert(counter != null, "counter was null");
+        Assert.NotNull(counter);
 
         if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == NumberOfThreads)
         {
@@ -2027,9 +2015,9 @@ public class MetricApiTests : MetricTestsBase
         // Wait until signalled to start calling update on aggregator
         mre.WaitOne();
 
-        for (int i = 0; i < NumberOfMetricUpdateByEachThread; i++)
+        for (var i = 0; i < NumberOfMetricUpdateByEachThread; i++)
         {
-            counter!.Add(valueToUpdate, new KeyValuePair<string, object?>("verb", "GET"));
+            counter.Add(valueToUpdate, new KeyValuePair<string, object?>("verb", "GET"));
         }
     }
 
@@ -2037,12 +2025,12 @@ public class MetricApiTests : MetricTestsBase
         where T : struct, IComparable
     {
         var arguments = obj as UpdateThreadArguments<T>;
-        Debug.Assert(arguments != null, "arguments was null");
+        Assert.NotNull(arguments);
 
-        var mre = arguments!.MreToBlockUpdateThread;
+        var mre = arguments.MreToBlockUpdateThread;
         var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
         var histogram = arguments.Instrument as Histogram<T>;
-        Debug.Assert(histogram != null, "histogram was null");
+        Assert.NotNull(histogram);
 
         if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == NumberOfThreads)
         {
@@ -2052,11 +2040,11 @@ public class MetricApiTests : MetricTestsBase
         // Wait until signalled to start calling update on aggregator
         mre.WaitOne();
 
-        for (int i = 0; i < NumberOfMetricUpdateByEachThread; i++)
+        for (var i = 0; i < NumberOfMetricUpdateByEachThread; i++)
         {
-            for (int j = 0; j < arguments.ValuesToRecord.Length; j++)
+            for (var j = 0; j < arguments.ValuesToRecord.Length; j++)
             {
-                histogram!.Record(arguments.ValuesToRecord[j]);
+                histogram.Record(arguments.ValuesToRecord[j]);
             }
         }
     }
@@ -2087,10 +2075,10 @@ public class MetricApiTests : MetricTestsBase
             new("key", "value2"),
         };
 
-        int callbackInvocationCount = 0;
+        var callbackInvocationCount = 0;
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
-        var counter = meter.CreateObservableUpDownCounter(
+        var counter = meter.CreateObservableUpDownCounter<T>(
             "observable-updowncounter",
             () =>
             {
@@ -2098,24 +2086,24 @@ public class MetricApiTests : MetricTestsBase
                 if (callbackInvocationCount == 1)
                 {
                     // First callback: Report 2 time series
-                    return new List<Measurement<T>>
-                    {
+                    return
+                    [
                         new(convertFromByte(10), tags1),
                         new(convertFromByte(10), tags2),
-                    };
+                    ];
                 }
                 else if (callbackInvocationCount == 2)
                 {
                     // Second callback: Report 1 time series
-                    return new List<Measurement<T>>
-                    {
+                    return
+                    [
                         new(convertFromByte(10), tags1),
-                    };
+                    ];
                 }
                 else
                 {
                     // Third callback onwards: Report no time series
-                    return new List<Measurement<T>>();
+                    return [];
                 }
             });
 
@@ -2196,33 +2184,20 @@ public class MetricApiTests : MetricTestsBase
             new("key", "value2"),
         };
 
-        int callbackInvocationCount = 0;
+        var callbackInvocationCount = 0;
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
-        var gauge = meter.CreateObservableGauge(
+        var gauge = meter.CreateObservableGauge<T>(
             "observable-gauge",
             () =>
             {
                 callbackInvocationCount++;
-                if (callbackInvocationCount == 1)
+                return callbackInvocationCount switch
                 {
-                    return new List<Measurement<T>>
-                    {
-                        new(convertFromByte(10), tags1),
-                        new(convertFromByte(20), tags2),
-                    };
-                }
-                else if (callbackInvocationCount == 2)
-                {
-                    return new List<Measurement<T>>
-                    {
-                        new(convertFromByte(30), tags1),
-                    };
-                }
-                else
-                {
-                    return new List<Measurement<T>>();
-                }
+                    1 => [new(convertFromByte(10), tags1), new(convertFromByte(20), tags2)],
+                    2 => [new(convertFromByte(30), tags1)],
+                    _ => [],
+                };
             });
 
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
@@ -2309,37 +2284,20 @@ public class MetricApiTests : MetricTestsBase
             new("key", "B"),
         };
 
-        int callbackInvocationCount = 0;
+        var callbackInvocationCount = 0;
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
-        meter.CreateObservableCounter(
+        meter.CreateObservableCounter<T>(
             "my_observable_counter",
             () =>
             {
                 callbackInvocationCount++;
-                if (callbackInvocationCount == 1)
+                return callbackInvocationCount switch
                 {
-                    return new List<Measurement<T>>
-                    {
-                        new(convertFromByte(100), tagsA),
-                        new(convertFromByte(50), tagsB),
-                    };
-                }
-                else if (callbackInvocationCount == 2)
-                {
-                    return new List<Measurement<T>>
-                    {
-                        new(convertFromByte(150), tagsA),
-                    };
-                }
-                else
-                {
-                    return new List<Measurement<T>>
-                    {
-                        new(convertFromByte(200), tagsA),
-                        new(convertFromByte(80), tagsB),
-                    };
-                }
+                    1 => [new(convertFromByte(100), tagsA), new(convertFromByte(50), tagsB)],
+                    2 => [new(convertFromByte(150), tagsA)],
+                    _ => [new(convertFromByte(200), tagsA), new(convertFromByte(80), tagsB)],
+                };
             });
 
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
@@ -2441,33 +2399,20 @@ public class MetricApiTests : MetricTestsBase
             new("key", "value2"),
         };
 
-        int callbackInvocationCount = 0;
+        var callbackInvocationCount = 0;
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
-        meter.CreateObservableCounter(
+        meter.CreateObservableCounter<T>(
             "observable-counter",
             () =>
             {
                 callbackInvocationCount++;
-                if (callbackInvocationCount == 1)
+                return callbackInvocationCount switch
                 {
-                    return new List<Measurement<T>>
-                    {
-                        new(convertFromByte(10), tags1),
-                        new(convertFromByte(10), tags2),
-                    };
-                }
-                else if (callbackInvocationCount == 2)
-                {
-                    return new List<Measurement<T>>
-                    {
-                        new(convertFromByte(20), tags1),
-                    };
-                }
-                else
-                {
-                    return new List<Measurement<T>>();
-                }
+                    1 => [new(convertFromByte(10), tags1), new(convertFromByte(10), tags2)],
+                    2 => [new(convertFromByte(20), tags1)],
+                    _ => [],
+                };
             });
 
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
@@ -2534,18 +2479,18 @@ public class MetricApiTests : MetricTestsBase
 
         var argToThread = new UpdateThreadArguments<T>(new ManualResetEvent(false), new ManualResetEvent(false), meter.CreateCounter<T>("counter"), [deltaValueUpdatedByEachCall]);
 
-        Thread[] t = new Thread[NumberOfThreads];
-        for (int i = 0; i < NumberOfThreads; i++)
+        var t = new Thread[NumberOfThreads];
+        for (var i = 0; i < NumberOfThreads; i++)
         {
             t[i] = new Thread(CounterUpdateThread<T>);
             t[i].Start(argToThread);
         }
 
         argToThread.MreToEnsureAllThreadsStart.WaitOne();
-        Stopwatch sw = Stopwatch.StartNew();
+        var sw = Stopwatch.StartNew();
         argToThread.MreToBlockUpdateThread.Set();
 
-        for (int i = 0; i < NumberOfThreads; i++)
+        for (var i = 0; i < NumberOfThreads; i++)
         {
             t[i].Join();
         }
@@ -2586,18 +2531,18 @@ public class MetricApiTests : MetricTestsBase
 
         var argsToThread = new UpdateThreadArguments<T>(new ManualResetEvent(false), new ManualResetEvent(false), meter.CreateHistogram<T>("histogram"), values);
 
-        Thread[] t = new Thread[NumberOfThreads];
-        for (int i = 0; i < NumberOfThreads; i++)
+        var t = new Thread[NumberOfThreads];
+        for (var i = 0; i < NumberOfThreads; i++)
         {
             t[i] = new Thread(HistogramUpdateThread<T>);
             t[i].Start(argsToThread);
         }
 
         argsToThread.MreToEnsureAllThreadsStart.WaitOne();
-        Stopwatch sw = Stopwatch.StartNew();
+        var sw = Stopwatch.StartNew();
         argsToThread.MreToBlockUpdateThread.Set();
 
-        for (int i = 0; i < NumberOfThreads; i++)
+        for (var i = 0; i < NumberOfThreads; i++)
         {
             t[i].Join();
         }
@@ -2610,7 +2555,7 @@ public class MetricApiTests : MetricTestsBase
         {
             foreach (var metricPoint in metric.GetMetricPoints())
             {
-                bucketCounts = metricPoint.GetHistogramBuckets().BucketCounts.Select(v => v.RunningValue).ToArray();
+                bucketCounts = [.. metricPoint.GetHistogramBuckets().BucketCounts.Select(v => v.RunningValue)];
             }
         }
 

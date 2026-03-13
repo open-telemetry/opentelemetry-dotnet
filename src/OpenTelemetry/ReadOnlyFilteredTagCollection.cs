@@ -4,7 +4,6 @@
 #if NET
 using System.Collections.Frozen;
 #endif
-using System.Diagnostics;
 
 namespace OpenTelemetry;
 
@@ -34,9 +33,6 @@ public readonly struct ReadOnlyFilteredTagCollection
         KeyValuePair<string, object?>[] tags,
         int count)
     {
-        Debug.Assert(tags != null, "tags was null");
-        Debug.Assert(count <= tags!.Length, "count was invalid");
-
         this.excludedKeys = excludedKeys;
         this.tags = tags;
         this.MaximumCount = count;
@@ -104,7 +100,7 @@ public readonly struct ReadOnlyFilteredTagCollection
         {
             while (true)
             {
-                int index = ++this.index;
+                var index = ++this.index;
                 if (index < this.source.MaximumCount)
                 {
                     if (this.source.excludedKeys?.Contains(this.source.tags[index].Key) ?? false)

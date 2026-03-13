@@ -19,20 +19,16 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     internal IDisposable? OwnedServiceProvider;
     internal bool Disposed;
     internal int ShutdownCount;
-
-    private readonly List<object> instrumentations = [];
     private ILogRecordPool? threadStaticPool = LogRecordThreadStaticPool.Instance;
 
     public LoggerProviderSdk(
         IServiceProvider serviceProvider,
         bool ownsServiceProvider)
     {
-        Debug.Assert(serviceProvider != null, "serviceProvider was null");
-
-        var state = serviceProvider!.GetRequiredService<LoggerProviderBuilderSdk>();
+        var state = serviceProvider.GetRequiredService<LoggerProviderBuilderSdk>();
         state.RegisterProvider(this);
 
-        this.ServiceProvider = serviceProvider!;
+        this.ServiceProvider = serviceProvider;
 
         if (ownsServiceProvider)
         {
@@ -42,10 +38,10 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
         OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("Building LoggerProvider.");
 
-        var configureProviderBuilders = serviceProvider!.GetServices<IConfigureLoggerProviderBuilder>();
+        var configureProviderBuilders = serviceProvider.GetServices<IConfigureLoggerProviderBuilder>();
         foreach (var configureProviderBuilder in configureProviderBuilders)
         {
-            configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
+            configureProviderBuilder.ConfigureBuilder(serviceProvider, state);
         }
 
         var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
@@ -58,13 +54,13 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             this.AddProcessor(processor);
         }
 
-        StringBuilder instrumentationFactoriesAdded = new StringBuilder();
+        var instrumentationFactoriesAdded = new StringBuilder();
 
         foreach (var instrumentation in state.Instrumentation)
         {
             if (instrumentation.Instance is not null)
             {
-                this.instrumentations.Add(instrumentation.Instance);
+                this.Instrumentations.Add(instrumentation.Instance);
             }
 
             instrumentationFactoriesAdded.Append(instrumentation.Name);
@@ -82,7 +78,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
     public Resource Resource { get; }
 
-    public List<object> Instrumentations => this.instrumentations;
+    public List<object> Instrumentations { get; } = [];
 
     public BaseProcessor<LogRecord>? Processor { get; private set; }
 
@@ -124,7 +120,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             this.threadStaticPool = null;
         }
 
-        StringBuilder processorAdded = new StringBuilder();
+        var processorAdded = new StringBuilder();
 
         if (this.Processor == null)
         {
@@ -213,12 +209,12 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         {
             if (disposing)
             {
-                foreach (var item in this.instrumentations)
+                foreach (var item in this.Instrumentations)
                 {
                     (item as IDisposable)?.Dispose();
                 }
 
-                this.instrumentations.Clear();
+                this.Instrumentations.Clear();
 
                 // Wait for up to 5 seconds grace period
                 this.Processor?.Shutdown(5000);

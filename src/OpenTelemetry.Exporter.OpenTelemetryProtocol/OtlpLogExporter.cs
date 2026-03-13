@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers.Binary;
-using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -23,8 +22,6 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
 
-    private Resource? resource;
-
     // Initial buffer size set to ~732KB.
     // This choice allows us to gradually grow the buffer while targeting a final capacity of around 100 MB,
     // by the 7th doubling to maintain efficient allocation without frequent resizing.
@@ -35,7 +32,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// </summary>
     /// <param name="options">Configuration options for the exporter.</param>
     public OtlpLogExporter(OtlpExporterOptions options)
-        : this(options, sdkLimitOptions: new(), experimentalOptions: new(), transmissionHandler: null)
+        : this(options ?? throw new ArgumentNullException(nameof(options)), sdkLimitOptions: new(), experimentalOptions: new(), transmissionHandler: null)
     {
     }
 
@@ -52,19 +49,19 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
-        Debug.Assert(exporterOptions != null, "exporterOptions was null");
-        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
-        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
-
-        this.experimentalOptions = experimentalOptions!;
-        this.sdkLimitOptions = sdkLimitOptions!;
+        this.experimentalOptions = experimentalOptions;
+        this.sdkLimitOptions = sdkLimitOptions;
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-        this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
+        this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Logs);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs);
     }
 
-    internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
+    internal Resource Resource
+    {
+        get => field ??= this.ParentProvider.GetResource();
+        private set;
+    }
 
     /// <inheritdoc/>
 #pragma warning disable CA1725 // Parameter names should match base declaration
@@ -76,7 +73,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 
         try
         {
-            int writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref this.buffer, this.startWritePosition, this.sdkLimitOptions, this.experimentalOptions, this.Resource, logRecordBatch);
+            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref this.buffer, this.startWritePosition, this.sdkLimitOptions, this.experimentalOptions, this.Resource, logRecordBatch);
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
@@ -84,7 +81,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                 // byte 0 - Specifying if the payload is compressed.
                 // 1-4 byte - Specifies the length of payload in big endian format.
                 // 5 and above -  Protobuf serialized data.
-                Span<byte> data = new Span<byte>(this.buffer, 1, 4);
+                var data = new Span<byte>(this.buffer, 1, 4);
                 var dataLength = writePosition - GrpcStartWritePosition;
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }

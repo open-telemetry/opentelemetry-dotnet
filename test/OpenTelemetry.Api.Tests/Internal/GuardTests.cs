@@ -186,6 +186,8 @@ public class CallerArgumentExpressionAttributeTests
         Assert.Equal("new object()", GetValue(new object()));
     }
 
+#pragma warning disable IDE0060 // Remove unused parameter
     private static string? GetValue(object? argument, [CallerArgumentExpression(nameof(argument))] string? expr = null) => expr;
+#pragma warning restore IDE0060 // Remove unused parameter
 }
 #endif

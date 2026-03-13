@@ -28,8 +28,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
     internal OtlpExporterPersistentStorageTransmissionHandler(PersistentBlobProvider persistentBlobProvider, IExportClient exportClient, double timeoutMilliseconds)
         : base(exportClient, timeoutMilliseconds)
     {
-        Debug.Assert(persistentBlobProvider != null, "persistentBlobProvider was null");
-        this.persistentBlobProvider = persistentBlobProvider!;
+        this.persistentBlobProvider = persistentBlobProvider;
 
         this.thread = new Thread(this.RetryStoredRequests)
         {
@@ -49,10 +48,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
     }
 
     protected override bool OnSubmitRequestFailure(byte[] request, int contentLength, ExportClientResponse response)
-    {
-        Debug.Assert(request != null, "request was null");
-        return RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out _) && this.persistentBlobProvider.TryCreateBlob(request!, out _);
-    }
+        => RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out _) && this.persistentBlobProvider.TryCreateBlob(request, out _);
 
     protected override void OnShutdown(int timeoutMilliseconds)
     {
@@ -113,7 +109,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
                     break;
                 }
 
-                int fileCount = 0;
+                var fileCount = 0;
 
                 // TODO: Run maintenance job.
                 // Transmit 10 files at a time.

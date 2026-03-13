@@ -23,12 +23,12 @@ public class OtlpExporterHelperExtensionsTests
 
         using var sp = services.BuildServiceProvider();
 
-        Assert.Throws<NotSupportedException>(() => sp.GetRequiredService<TracerProvider>());
+        Assert.Throws<NotSupportedException>(sp.GetRequiredService<TracerProvider>);
 
         var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder()
                                         .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.Grpc);
 
-        Assert.Throws<NotSupportedException>(() => tracerProviderBuilder.Build());
+        Assert.Throws<NotSupportedException>(tracerProviderBuilder.Build);
     }
 
     [Fact]
@@ -41,12 +41,12 @@ public class OtlpExporterHelperExtensionsTests
 
         using var sp = services.BuildServiceProvider();
 
-        Assert.Throws<NotSupportedException>(() => sp.GetRequiredService<MeterProvider>());
+        Assert.Throws<NotSupportedException>(sp.GetRequiredService<MeterProvider>);
 
         var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                                     .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.Grpc);
 
-        Assert.Throws<NotSupportedException>(() => meterProviderBuilder.Build());
+        Assert.Throws<NotSupportedException>(meterProviderBuilder.Build);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class OtlpExporterHelperExtensionsTests
 
         using var sp = services.BuildServiceProvider();
 
-        Assert.Throws<NotSupportedException>(() => sp.GetRequiredService<ILoggerProvider>());
+        Assert.Throws<NotSupportedException>(sp.GetRequiredService<ILoggerProvider>);
 
         Assert.Throws<NotSupportedException>(() => LoggerFactory.Create(builder =>
         {

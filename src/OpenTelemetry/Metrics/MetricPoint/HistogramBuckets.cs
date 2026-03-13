@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics;
@@ -42,7 +41,7 @@ public class HistogramBuckets
 
     internal HistogramBuckets Copy()
     {
-        HistogramBuckets copy = new HistogramBuckets(this.histogramExplicitBounds);
+        var copy = new HistogramBuckets(this.histogramExplicitBounds);
 
         Array.Copy(this.BucketCounts, copy.BucketCounts, this.BucketCounts.Length);
         copy.SnapshotSum = this.SnapshotSum;
@@ -54,10 +53,7 @@ public class HistogramBuckets
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int FindBucketIndex(double value)
-    {
-        Debug.Assert(this.histogramExplicitBounds != null, "histogramExplicitBounds was null.");
-        return this.histogramExplicitBounds!.FindBucketIndex(value);
-    }
+        => this.histogramExplicitBounds!.FindBucketIndex(value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void Snapshot(bool outputDelta)
@@ -66,7 +62,7 @@ public class HistogramBuckets
 
         if (outputDelta)
         {
-            for (int i = 0; i < bucketCounts.Length; i++)
+            for (var i = 0; i < bucketCounts.Length; i++)
             {
                 ref var values = ref bucketCounts[i];
                 ref var running = ref values.RunningValue;
@@ -76,7 +72,7 @@ public class HistogramBuckets
         }
         else
         {
-            for (int i = 0; i < bucketCounts.Length; i++)
+            for (var i = 0; i < bucketCounts.Length; i++)
             {
                 ref var values = ref bucketCounts[i];
                 values.SnapshotValue = values.RunningValue;
@@ -121,10 +117,10 @@ public class HistogramBuckets
         {
             if (this.index < this.numberOfBuckets)
             {
-                double explicitBound = this.index < this.numberOfBuckets - 1
+                var explicitBound = this.index < this.numberOfBuckets - 1
                     ? this.histogramMeasurements.ExplicitBounds![this.index]
                     : double.PositiveInfinity;
-                long bucketCount = this.histogramMeasurements.BucketCounts[this.index].SnapshotValue;
+                var bucketCount = this.histogramMeasurements.BucketCounts[this.index].SnapshotValue;
                 this.Current = new HistogramBucket(explicitBound, bucketCount);
                 this.index++;
                 return true;

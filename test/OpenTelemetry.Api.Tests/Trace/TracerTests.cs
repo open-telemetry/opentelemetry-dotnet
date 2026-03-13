@@ -338,7 +338,7 @@ public sealed class TracerTests : IDisposable
         this.output.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
 
         var dir = Directory.GetCurrentDirectory();
-        if (test.TryEmitReports(dir, $"{nameof(this.TracerConcurrencyTest)}_CoyoteOutput", out IEnumerable<string> reportPaths))
+        if (test.TryEmitReports(dir, $"{nameof(this.TracerConcurrencyTest)}_CoyoteOutput", out var reportPaths))
         {
             foreach (var reportPath in reportPaths)
             {
@@ -367,8 +367,8 @@ public sealed class TracerTests : IDisposable
 
             Assert.NotNull(tracers);
 
-            Thread[] getTracerThreads = new Thread[testTracerProvider.ExpectedNumberOfThreads];
-            for (int i = 0; i < testTracerProvider.ExpectedNumberOfThreads; i++)
+            var getTracerThreads = new Thread[testTracerProvider.ExpectedNumberOfThreads];
+            for (var i = 0; i < testTracerProvider.ExpectedNumberOfThreads; i++)
             {
                 getTracerThreads[i] = new Thread(state =>
                 {

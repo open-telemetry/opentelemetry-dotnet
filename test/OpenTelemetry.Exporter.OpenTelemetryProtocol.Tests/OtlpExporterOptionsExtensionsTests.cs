@@ -27,7 +27,7 @@ public class OtlpExporterOptionsExtensionsTests
 
         Assert.Equal(options.StandardHeaders.Length, headers.Count);
 
-        for (int i = 0; i < options.StandardHeaders.Length; i++)
+        for (var i = 0; i < options.StandardHeaders.Length; i++)
         {
             Assert.Contains(headers, entry => entry.Key == options.StandardHeaders[i].Key && entry.Value == options.StandardHeaders[i].Value);
         }
@@ -39,9 +39,7 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData(",,key1=value1,,key2=value2,,")]
     [InlineData("key1")]
     public void GetHeaders_InvalidOptionHeaders_ThrowsArgumentException(string inputOptionHeaders)
-    {
-        VerifyHeaders(inputOptionHeaders, string.Empty, true);
-    }
+        => VerifyHeaders(inputOptionHeaders, string.Empty, true);
 
     [Theory]
     [InlineData("", "")]
@@ -55,9 +53,7 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("key1=value1%2Ckey2=value2", "key1=value1,key2=value2")]
     [InlineData("key1=value1%2Ckey2=value2%2Ckey3=value3", "key1=value1,key2=value2,key3=value3")]
     public void GetHeaders_ValidAndUrlEncodedHeaders_ReturnsCorrectHeaders(string inputOptionHeaders, string expectedNormalizedOptional)
-    {
-        VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);
-    }
+        => VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);
 
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
@@ -136,15 +132,15 @@ public class OtlpExporterOptionsExtensionsTests
     {
         if (retryStrategy == "in_memory")
         {
-            Assert.True(transmissionHandler is OtlpExporterRetryTransmissionHandler);
+            Assert.IsType<OtlpExporterRetryTransmissionHandler>(transmissionHandler);
         }
         else if (retryStrategy == "disk")
         {
-            Assert.True(transmissionHandler is OtlpExporterPersistentStorageTransmissionHandler);
+            Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(transmissionHandler);
         }
         else
         {
-            Assert.True(transmissionHandler is OtlpExporterTransmissionHandler);
+            Assert.IsType<OtlpExporterTransmissionHandler>(transmissionHandler);
         }
 
         Assert.Equal(exportClientType, transmissionHandler.ExportClient.GetType());
