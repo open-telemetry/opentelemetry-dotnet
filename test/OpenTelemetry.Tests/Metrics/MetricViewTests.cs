@@ -653,10 +653,15 @@ public class MetricViewTests : MetricTestsBase
             var index = 0;
             var actualCount = 0;
             long[] expectedBucketCounts = [2, 1, 0];
+            double[] expectedBounds = [10.0, 20.0, double.PositiveInfinity];
 
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
                 Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+
+                // Verify bucket boundaries are correct for all types including float
+                Assert.Equal(expectedBounds[index], histogramMeasurement.ExplicitBound);
+
                 index++;
                 actualCount++;
             }
@@ -739,6 +744,89 @@ public class MetricViewTests : MetricTestsBase
         }
 
         Assert.Equal(useViewToOverride ? viewBoundaries.Length + 1 : adviceBoundaries.Count + 1, actualCount);
+    }
+
+    [Fact]
+    public void HistogramWithFloatAdviceBoundaries_MaintainsPrecision()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        // Use float boundaries that are known to have precision issues when converted to double
+        // These are the exact values from issue #6803
+        var floatBoundaries = new float[]
+        {
+            0.001f, 0.005f, 0.01f, 0.025f, 0.05f, 0.1f, 0.25f, 0.5f, 1f, 2.5f, 5f, 10f, 30f, 60f, 120f,
+        };
+
+        using var container = BuildMeterProvider(out var meterProvider, builder =>
+        {
+            builder.AddMeter(meter.Name);
+            builder.AddInMemoryExporter(exportedItems);
+        });
+
+        var histogram = meter.CreateHistogram<float>(
+            "my_histogram",
+            unit: "s",
+            description: null,
+            tags: null,
+            new()
+            {
+                HistogramBucketBoundaries = floatBoundaries,
+            });
+
+        // Record values that clearly fall within specific buckets (not on boundaries)
+        // to avoid float->double precision issues at boundary edges
+        histogram.Record(0.02f);   // Should be in bucket with upper bound 0.025 (index 3)
+        histogram.Record(0.07f);   // Should be in bucket with upper bound 0.1 (index 5)
+        histogram.Record(0.3f);    // Should be in bucket with upper bound 0.5 (index 7)
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        var histogramPoint = metricPoints[0];
+
+        // Verify the bucket boundaries maintain proper precision
+        // The key assertion is that the boundaries should be clean decimal values
+        // not values with floating-point precision errors like 0.02500000037252903
+        var expectedBoundaries = new double[]
+        {
+            0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120,
+        };
+
+        // Expected bucket counts:
+        // Index 3 (le 0.025): 1 count (0.02f)
+        // Index 5 (le 0.1): 1 count (0.07f)
+        // Index 7 (le 0.5): 1 count (0.3f)
+        var expectedBucketCounts = new long[] { 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        var index = 0;
+        foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+        {
+            if (index < expectedBoundaries.Length)
+            {
+                Assert.Equal(expectedBoundaries[index], histogramMeasurement.ExplicitBound);
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+            }
+            else
+            {
+                Assert.Equal(double.PositiveInfinity, histogramMeasurement.ExplicitBound);
+                Assert.Equal(0, histogramMeasurement.BucketCount);
+            }
+
+            index++;
+        }
+
+        // Verify we got the expected number of buckets
+        Assert.Equal(expectedBoundaries.Length + 1, index);
     }
 
     [Fact]
